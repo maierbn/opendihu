@@ -1,0 +1,20 @@
+# This script declares to SCons how to compile opendihu core.
+# It has to be called from a SConstruct file.
+# The 'env' object is passed from there and contains further specification like directory and debug/release flags.
+
+Import('env')     # import Environment object from calling SConstruct
+
+# define the source files
+src_files = Glob('src/*/*.cpp') + Glob('src/*.cpp') + Glob('src/*/*/*.cpp')
+
+# define include directory for source files
+env.Append(CPPPATH = 'src')
+  
+# depending on the variable BUILD_TYPE either build with debug or release settings
+if env["BUILD_TYPE"] == "debug":    # will build debug version
+  target = 'opendihud'
+else:
+  target = 'opendihu'       # will build release version
+
+# build the library  
+env.Library(target = target, source = src_files)

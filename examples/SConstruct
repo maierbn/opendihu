@@ -1,0 +1,10 @@
+# This is the top-level SConscript file for the examples
+
+# define all existing examples to be build
+examples = [
+  "build-test",
+]
+
+# loop over examples and call SConscript file
+for example in examples:
+  SConscript(example+'/SConstruct')

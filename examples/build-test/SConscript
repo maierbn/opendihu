@@ -1,0 +1,19 @@
+# This script declares to SCons how to compile the example.
+# It has to be called from a SConstruct file.
+# The 'env' object is passed from there and contains further specification like directory and debug/release flags.
+
+Import('env')     # import Environment object from calling SConstruct
+
+# define the source files
+src_files = Split(
+"""
+  main.cpp
+""")
+
+if env['BUILD_TYPE'] == "debug":
+  libs = 'opendihud'
+else:
+  libs = 'opendihu'
+
+# create the main executable
+env.Program(target = 'build-test', source = src_files, LIBS=libs)

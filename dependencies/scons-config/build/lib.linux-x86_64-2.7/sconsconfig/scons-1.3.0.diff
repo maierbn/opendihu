@@ -1,0 +1,13 @@
+diff -r scons-1.3.0-patched/engine/SCons/SConf.py scons-1.3.0/engine/SCons/SConf.py
+620c620
+<     def TryRun(self, text, extension, prog_prefix='' ):
+---
+>     def TryRun(self, text, extension ):
+631,635c631
+<             if prog_prefix:
+<                 action = [prog_prefix + ' ' + pname + ' > ${TARGET}']
+<             else:
+<                 action = [ [ pname, ">", "${TARGET}"] ]
+<             node = self.env.Command(output, prog, action)
+---
+>             node = self.env.Command(output, prog, [ [ pname, ">", "${TARGET}"] ])

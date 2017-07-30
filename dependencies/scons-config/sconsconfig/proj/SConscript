@@ -1,0 +1,31 @@
+Import('env')
+Export('env')
+
+# Set the project name. This is passed on to sub-scripts.
+env['PROJ'] = 'proj-name'
+
+# Call the 'src' SConscript. It will return a dictionary containing
+# a mapping from the object path basename to the object.
+obj_map = SConscript('src/SConscript', duplicate=0)
+
+# Build static libraries and install them, if required.
+if env['BUILD_STATIC_LIBS']:
+    lib = env.Library('#' + env['BUILD'] + '/lib/' + env['PROJ'], obj_map.values())
+    if env['PREFIX']:
+        env.Install(env['PREFIX'] + '/lib', lib)
+
+# Build shared libraries and install them, if required.
+if env['BUILD_SHARED_LIBS'] and env['PREFIX']:
+    env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJ'], obj_map.values())
+
+# Call the 'tests' SConscript, if required.
+if env['BUILD_TESTS']:
+    SConscript('tests/SConscript', duplicate=0, exports=['obj_map'])
+
+# Call the 'apps' SConscript, if required.
+if env['BUILD_APPS']:
+    SConscript('apps/SConscript', duplicate=0, exports=['obj_map'])
+
+# Build documentation.
+if env['BUILD_DOC']:
+    SConscript('doc/SConscript', duplicate=0)

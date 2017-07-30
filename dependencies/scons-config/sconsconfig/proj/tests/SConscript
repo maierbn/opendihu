@@ -1,0 +1,18 @@
+Import('env', 'obj_map')
+
+suite_ext = '_suite.c'
+tests = [
+    ('suite-name', ['src-file-1.c', 'src-file-2.c']),
+]
+
+for test in tests:
+
+    # Extract the name of the test suite.
+    name = test[0]
+
+    # Map sources to objects.
+    objs = [obj_map[o] for o in test[1]]
+
+    # Build the suite object. Usually this should be replaced by an appropriate
+    # unit-test framework builder.
+    suite = env.SharedObject(name + suite_ext)

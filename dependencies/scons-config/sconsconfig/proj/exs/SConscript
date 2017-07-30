@@ -1,0 +1,8 @@
+import os
+Import('env obj_map')
+
+objs = obj_map.values()
+libs = env.get('LIBS', [])
+dst_dir = '#' + env['BUILD'] + '/exs/'
+
+#env.Program(dst_dir + 'ex', ['ex.cc'] + objs, LIBS=libs)

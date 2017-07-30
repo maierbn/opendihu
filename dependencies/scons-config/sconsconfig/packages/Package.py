@@ -243,8 +243,9 @@ class Package(object):
       print '  - Define %s_DIR with a directory containing "include" and "lib" or "lib64" subdirectories.'%upp
       print '  - Define %s_INC_DIR, %s_LIB_DIR and %s_LIBS'%(upp, upp, upp)
       print '  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp
-      print '    If you additionally set %s_REDOWNLOAD to True it forces the downloads if it was already done earlier.'%upp
-      print 'If you did one of that the build system might have a bug. Inspect "config.log" to see what went wrong.'
+      print '    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp
+      print '    if it was already done earlier.'
+      print 'If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.'
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor
@@ -575,6 +576,8 @@ class Package(object):
       res = (ctx.TryLink(text, self.ext), '')
     if not res[0]:
       env_restore(ctx.env, bkp)
+    else:
+      ctx.Log("Program output:\n"+res[1])
     return res
 
   def try_libs(self, ctx, libs, extra_libs=[], **kwargs):

@@ -58,13 +58,12 @@ int main(int argc, char* argv[]) {
           
         # cmake based, dynamic libraries
         self.set_build_handler([
-          'mkdir ${PREFIX}',
-          'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DLAPACKE=ON ${SOURCE_DIR}',
-          '!cd ${PREFIX} && make && make install',
-          'cd ${PREFIX} && make && make install',
-          'mkdir ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
+          'mkdir -p ${PREFIX}',
+          'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
+          'cd ${PREFIX} && make',
+          'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
         ])
-        self.number_output_lines = 3399
+        self.number_output_lines = 4626
         
         self.libs = ["lapack", "blas"]
         self.headers = ["lapacke.h"]

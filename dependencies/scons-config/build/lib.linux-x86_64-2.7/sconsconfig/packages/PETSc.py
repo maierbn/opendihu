@@ -64,9 +64,9 @@ class PETSc(Package):
         
         # Setup the build handler.
         self.set_build_handler([
-            './configure --prefix=${PREFIX} --with-shared-libraries=0 \
-            --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.a\
-            --with-blas-lib=${LAPACK_DIR}/lib/librefblas.a',
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 \
+            --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.so\
+            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so',
             'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
             'make install',
             'make test',

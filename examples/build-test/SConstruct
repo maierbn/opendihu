@@ -38,6 +38,7 @@ else:
   env.ParseFlags('-O3')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = '../../../core/build/release')
 
+# Set the include path for header files
 env.Append(CPPPATH = '../../../core/src')
   
 # call SConscript file for the actual build in the specified build directory variant_dir

@@ -5,6 +5,6 @@ examples = [
   "build-test",
 ]
 
-# loop over examples and call SConscript file
+# loop over examples and call SConstruct file
 for example in examples:
   SConscript(example+'/SConstruct')

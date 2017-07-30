@@ -1,40 +1,71 @@
 # This is the top-level SConstruct file for opendihu core
 #
 # Usage: `scons BUILD_TYPE=debug` will build debug version, `scons` will build release version.
+import os
+import sys
+
+sys.path.append("../dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")
+
+import sconsconfig
+from sconsconfig import packages, tools
+
+#
+# Select the packages we want to use in the configuration.
+#
+sconsconfig.select(
+    packages.MPI(required=True),
+    packages.LAPACK(required=True),
+    packages.PETSc(required=True),
+)
 
 
-# read variables from user file 'config.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
-vars = Variables('config.py', ARGUMENTS)
+# read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
+vars = Variables('user-variables.scons.py', ARGUMENTS)
 
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
-vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. (Shortcuts: ''d'',''r'')',
-                    'release', allowed_values=('debug', 'release'), ignorecase = 2, map={'d':'debug', 'r':'release'}))
+vars.AddVariables(
+  EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. (Shortcuts: ''d'',''r'')',
+                    'release', allowed_values=('debug', 'release'), ignorecase = 2, map={'d':'debug', 'r':'release'}),
+)
+    
+# Add options from any packages we want to use.
+sconsconfig.add_options(vars)
 
 # initialize environment object containing build system settings such as compilers and flags
 # command line options are considered
-env = Environment(variables = vars)
+env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = vars, ENV = os.environ)
 
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
 if unknown:
   print "WARNING: Unknown variables from command line arguments or config file `config.py`:", unknown.keys()
-    
+
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
 
+# Create our configuration environment, passing the set of custom tests.
+sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+
+# Run our custom tests with any options needed.
+sconsconfig.check(sconf)
+
+# Finish the configuration and save it to file.
+sconf.Finish()
+
 # -----------------------------------------------
+
 # depending on the variable BUILD_TYPE either build with debug or release settings
 if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.ParseFlags('-DDEBUG -ggdb -O0')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0')   # gcc flags, will be sorted automatically into linker and compiler flags
   
 else:
   # release build
   variant_dir = 'build/release'         # folder of build
-  env.ParseFlags('-O3')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O3')   # gcc flags, will be sorted automatically into linker and compiler flags
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs='.',

@@ -7,7 +7,7 @@ Import('env')     # import Environment object from calling SConstruct
 # define the source files
 src_files = Glob('src/*/*.cpp') + Glob('src/*.cpp') + Glob('src/*/*/*.cpp')
 
-# define include directory for source files
+# define include directory for header files
 env.Append(CPPPATH = 'src')
   
 # depending on the variable BUILD_TYPE either build with debug or release settings

@@ -1,0 +1,20 @@
+
+
+
+OperatorSplitting::OperatorSplitting <- OperatorSplitting::Godunov<Runnable, Runnable> (Runnable)
+
+TimeSteppingScheme::TimeSteppingScheme<DiscretizableInTime> <- TimeSteppingScheme::ExplicitEuler<DiscretizableInTime>  (Runnable)
+TimeSteppingScheme::TimeSteppingScheme<DiscretizableInTime> <- TimeSteppingScheme::CrankNicholson<DiscretizableInTime> (Runnable)
+
+Equation::Equation <- Equation::Dynamic::Dynamic
+Equation::Dynamic::Dynamic <- Equation::Dynamic::ReactionDiffusion (has ReactionTerm, DiffusionTerm) 
+Equation::Dynamic::Dynamic<- Equation::Dynamic::Diffusion (DiscretizableInSpace)
+
+SpatialDiscretization::SpatialDiscretization
+<- SpatialDiscretization::FiniteElementMethod<Mesh, BasisFunction, DiscretizationInSpace> (DiscretizableInTime)
+
+Mesh::Mesh <- Mesh::Regular<D>
+BasisFunction::BasisFunction <- BasisFunction::Lagrange<D>
+
+DiHuContext
+Computation(DihuContext, Runnable)

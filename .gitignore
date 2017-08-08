@@ -5,3 +5,5 @@
 config.log
 dependencies/lapack
 dependencies/petsc
+build_debug
+build_release

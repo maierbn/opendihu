@@ -1,3 +1,7 @@
 .sconsign.dblite
 *.o
 *.a
+.sconf_temp*
+config.log
+dependencies/lapack
+dependencies/petsc

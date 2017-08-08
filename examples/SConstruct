@@ -3,6 +3,7 @@
 # define all existing examples to be build
 examples = [
   "build-test",
+  "templates",
 ]
 
 # loop over examples and call SConstruct file

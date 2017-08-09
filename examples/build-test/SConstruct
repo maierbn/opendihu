@@ -23,23 +23,27 @@ if unknown:
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
 
+# add library paths of petsc and lapack
+env.Append(LIBPATH = ['../../../dependencies/petsc/install/lib'])
+env.Append(LIBPATH = ['../../../dependencies/lapack/install/lib'])
+
 # -----------------------------------------------
 # depending on the variable BUILD_TYPE either build with debug or release settings
 if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build_debug"           # folder of build
-  env.ParseFlags('-DDEBUG -ggdb -O0')   # gcc flags, will be sorted automatically into linker and compiler flags
-  env.Append(LIBPATH = '../../../core/build/debug')
+  env.ParseFlags('-DDEBUG -ggdb -O0 -std=c++1z')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = ['../../../core/build/debug'])
   
 else:
   # release build
   variant_dir = 'build_release'         # folder of build
-  env.ParseFlags('-O3')   # gcc flags, will be sorted automatically into linker and compiler flags
-  env.Append(LIBPATH = '../../../core/build/release')
+  env.ParseFlags('-O3 -std=c++1z')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = ['../../../core/build/release'])
 
 # Set the include path for header files
-env.Append(CPPPATH = '../../../core/src')
+env.Append(CPPPATH = ['../../../core/src', '/usr/include/mpi', '../../../dependencies/petsc/install/include'])
   
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs='.',

@@ -60,12 +60,14 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
   
 else:
   # release build
   variant_dir = 'build/release'         # folder of build
-  env.MergeFlags('-O3')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
+
+env.Append(CPPPATH = ['../../../core/src', '/usr/include/mpi', '../../../dependencies/petsc/install/include'])
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs='.',

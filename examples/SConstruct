@@ -3,6 +3,7 @@
 # define all existing examples to be build
 examples = [
   "build-test",
+  "laplace",
   "templates",
 ]
 

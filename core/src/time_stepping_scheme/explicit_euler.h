@@ -7,7 +7,7 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-class ExplicitEuler : public TimeSteppingScheme, Runnable
+class ExplicitEuler : public TimeSteppingScheme, public Runnable
 {
 public:
 private:

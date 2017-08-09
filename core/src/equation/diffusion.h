@@ -2,7 +2,9 @@
 
 #include "equation/dynamic.h"
 
-namespace Equation::Dynamic
+namespace Equation
+{
+namespace Dynamic
 {
 
 class Diffusion : public Dynamic
@@ -11,4 +13,5 @@ public:
 private:
 };
 
+}  // namespace
 }  // namespace

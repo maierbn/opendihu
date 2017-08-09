@@ -2,7 +2,9 @@
 
 #include "equation/equation.h"
 
-namespace Equation::Dynamic
+namespace Equation
+{
+namespace Dynamic
 {
 
 class Dynamic : public Equation
@@ -12,4 +14,5 @@ public:
 private:
 };
 
+}  // namespace
 }  // namespace

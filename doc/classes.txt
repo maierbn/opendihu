@@ -10,8 +10,11 @@ Equation::Equation <- Equation::Dynamic::Dynamic
 Equation::Dynamic::Dynamic <- Equation::Dynamic::ReactionDiffusion (has ReactionTerm, DiffusionTerm) 
 Equation::Dynamic::Dynamic<- Equation::Dynamic::Diffusion (DiscretizableInSpace)
 
+Equation::Equation <- Equation::Static::Static
+Equation::Static::Static <- Equation::Static::Laplace (DiscretizableInSpace)
+
 SpatialDiscretization::SpatialDiscretization
-<- SpatialDiscretization::FiniteElementMethod<Mesh, BasisFunction, DiscretizationInSpace> (DiscretizableInTime)
+<- SpatialDiscretization::FiniteElementMethod<Mesh, BasisFunction, DiscretizationInSpace> (DiscretizableInTime, Runnable)
 
 Mesh::Mesh <- Mesh::Regular<D>
 BasisFunction::BasisFunction <- BasisFunction::Lagrange<D>

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "opendihu.h"
+//#include "opendihu.h"
 
 template<class T1>
 class A
@@ -62,6 +62,15 @@ class C<float> : public B1
 template<>
 class C<A<int> > : public B2
 {
+};
+
+template<const char *id>
+class D
+{
+  void print()
+  {
+    std::cout<<"D, id=["<<id<<"]"<<std::endl;
+  }
 };
 
 int main(int argc, char *argv[])

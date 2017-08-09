@@ -7,7 +7,7 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-class CrankNicholson : public TimeSteppingScheme, Runnable
+class CrankNicholson : public TimeSteppingScheme, public Runnable
 {
 public:
 private:

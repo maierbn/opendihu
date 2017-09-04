@@ -8,3 +8,6 @@ dependencies/petsc
 build_debug
 build_release
 .kdev4
+*.pyc
+*.aux
+*.log

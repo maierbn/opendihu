@@ -1,0 +1,432 @@
+\input{header.tex}
+
+\graphicspath{
+{images/png/}{images/}{images/plots/}
+}
+
+
+\begin{document}
+
+%\setcounter{tocdepth}{2}
+%\tableofcontents
+%\newpage
+
+\section{Laplace equation}
+
+For a computational domain $\Omega\subset \R^d$ the Laplace equation reads
+\begin{equation}\label{eq:laplace}
+  \begin{array}{ll}
+    Δu = 0 \quad \text{on }\Omega.
+  \end{array}
+\end{equation}
+A classical solution $u: \Omega \to \R$ fulfills \eqref{eq:laplace}. For a unique solution also boundary conditions have to be specified, e.g.
+\begin{equation}
+  \begin{array}{rcll}
+    ∇u(\bfx) \cdot \bfn &=& 0 \quad &\text{on } \Gamma_N,\\[4mm]
+    u(\bfx) &=& u_0(\bfx) \quad &\text{on } \Gamma_D,
+  \end{array}
+\end{equation}
+where the homogeneous Neumann-type boundary conditions for $\bfx \in \Gamma_N$ set the flux over the boundary in normal direction $\bfn$ to zero and the Dirichlet-type boundary conditions on $\Gamma_D$ prescribe a value for $u$ on the boundary.
+
+\subsection{Finite Element formulation}
+
+By multiplication of a testfunction $\phi\in H^1_0(\Omega)$ and integration follows the weak formulation of \eqref{eq:laplace}:
+\begin{equation}
+  \begin{array}{ll}
+    \ds\int_{\Omega}Δu\,\phi\,\d \bfx = 0 \quad \forall \phi\in H^1_0(\Omega)
+  \end{array}
+\end{equation}
+For a definition of $H^1_0$ see section \ref{sec:hilbert}.
+
+The Laplace operator can be written as $Δu=∇\cdot(∇u)$. Applying divergence theorem in form of \eqref{eq:gauss1} with $f=\phi$ and $\bfF=∇u$ yields
+\begin{equation}
+  \begin{array}{ll}
+    -\ds\int_{\Omega}∇u \cdot ∇\phi \,\d \bfx + \ds\int_{\p \Omega} (\phi\,∇u)\cdot\bfn\,\d \bfx  = 0 \quad \forall \phi\in H^1_0(\Omega)
+  \end{array}
+\end{equation}
+Because $\phi$ is zero on the boundary, the second term vanishes:
+\begin{equation}\label{eq:laplace_weak}
+  \begin{array}{ll}
+    -\ds\int_{\Omega}∇u \cdot ∇\phi \,\d \bfx = 0 \quad \forall \phi\in H^1_0(\Omega)
+  \end{array}
+\end{equation}
+
+Now we have to specify a finite-dimensional ansatz space to choose the solution function from. We do this by specifying a basis and take the span of it: $V:=\span\{\phi_1, \dots \phi_n\}$.
+
+The numerical solution is given by
+\begin{equation}
+  \begin{array}{ll}
+    u_h(\bfx) = \s{i=1}{N} u_i\,\phi_i(\bfx).
+  \end{array}
+\end{equation}
+We also take $V$ as the space of testfunctions.
+Plugging this into \eqref{eq:laplace_weak} yields
+\begin{equation}\label{eq:laplace_discretized}
+  \begin{array}{ll}
+    -\s{i=1}{N} u_i \ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx = 0 \quad \text{for }j=1,\dots,N.
+  \end{array}
+\end{equation}
+The minus sign is kept for similarity with other problems.
+
+A reasonable choice of ansatz functions are functions that have limited support. We discretize the domain $\Omega$ by Finite Elements $\Omega_e$,
+\begin{equation}
+  \begin{array}{ll}
+    \Omega = \overset{M}{\underset{e=1}{\bigcup}} \,\Omega_e = \Omega_1 \dot{\cup} \cdots \dot{\cup} \Omega_M,
+  \end{array}
+\end{equation} and define nodes with global indices $N(e)$ on each element $e$. Interpolating ansatz functions are now chosen such that they have the value 1 at only one node and the value 0 at all other nodes. The support is contained just within the elements that are adjacent to the node where the function is 1.
+
+\subsection{Ansatz functions}
+A simple choice that fulfills the requirements are first-order Lagrange functions $L_{i,p},p=1$ which are defined a follows for $d=1$ and depicted in \cref{fig:lagrange}.
+\begin{equation}
+  \begin{array}{ll}
+    \varphi_i: [0,1] \to \R,\quad
+    \varphi_1(x) = L_{1,1}(x) := 1-x, \qquad \varphi_2(x) = L_{2,1}(x) := x
+  \end{array}
+\end{equation}
+For higher dimensions they are composed by a tensor product ansatz.
+\begin{equation}
+  \begin{array}{ll}
+    \varphi_i(\bfx) = \bfL_{i}(\bfx) := \prod\limits_{k=1}^{d} L_{j,1}(x_k)
+  \end{array}
+\end{equation}
+The local numbering of the ansatz functions of an element proceeds fastest in the first dimension then in the second and so on as shown in \cref{fig:element1}
+
+\begin{figure}
+  \centering
+  \subfig{element1}{4cm}{Numbering and element coordinate system for a 2D first-order Lagrange element}\,
+  \subfig{element2}{4.5cm}{Arbitrarily shaped element}
+  \,
+  \subfigpdf{lagrange}{6cm}{first order Lagrange ansatz functions}
+  \caption{2D first-order Lagrange element}
+  \label{fig:2d-lagrange}
+\end{figure}
+
+The definition of the ansatz functions was in parameter space, i.e. on the unit interval $[0,1]^d$. The corresponding coordinate system is $\bfxi = \{\xi_1, \dots \xi_d\}$. The node coordinates are given in the global coordinate system $\bfx = \{x_1, \dots x_d\}$. A mapping from $\bfxi$ to $\bfx$ can be performed using multi-linear interpolation between the nodal coordinates $\bfx^i$:
+\begin{equation}\label{eq:multilagrange}
+  \begin{array}{ll}
+    \bfx(\bfxi) = \Phi(\bfxi) := \ds\sum\limits_{i} \bfL_i(\bfxi)\,\bfx^i.
+  \end{array}
+\end{equation}
+Note that again Lagrange functions of first order appear, but this is independent of the choosen ansatz functions. For 1D and 2D  \eqref{eq:multilagrange}  reads as:
+\begin{equation}\label{eq:fe_phi}
+  \begin{array}{ll}
+    \text{1D:}\quad
+    \Phi(\xi_1) = (1-\xi_1)\,\bfx^1 + \xi_1\,\bfx^2\\[4mm]
+    \text{2D:}\quad
+    \Phi(\bfxi) = (1-\xi_1)\,(1-\xi_2)\,\bfx^1 + \xi_1\,(1-\xi_2)\,\bfx^2 + (1-\xi_1)\,\xi_2\,\bfx^3 + \xi_1\,\xi_2\,\bfx^4.
+  \end{array}
+\end{equation}
+The nodes and coordinate frame is as defined in \cref{fig:element2}.
+
+Starting from \eqref{eq:laplace_discretized} we now plug in the Lagrange ansatz functions for $\phi$. Then the respective functions only have to be integrated over the elements where they are defined.
+We get
+\begin{equation}
+  \begin{array}{ll}
+     -\s{e=1}{M} \sum_{i\in N(e)} u_i \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 0 \quad \text{for }j=1,\dots,N,
+  \end{array}
+\end{equation}
+where the sum over $i\in N(e)$ is over the nodes of element $e$.
+%
+We transform the integration domain from global to local coordinate frame using  \eqref{eq:integration_transformation} and get:
+\begin{equation}\label{eq:fe_integral}
+  \begin{array}{ll}
+     -\s{e=1}{M} \sum_{i\in N(e)} u_i \ds\int_{[0,1]^d} ∇\phi_i(\bfxi)\cdot ∇\phi_j(\bfxi)\,|\det(D\Phi(\bfxi))|\,\d\bfxi = 0 \quad \text{for }j=1,\dots,N.
+  \end{array}
+\end{equation}
+(Note that this is not quite correct for the 1D case, where $\Phi$ depends on a scalar variable $\bfxi=\xi_1$ and maps to $\R^3$ and thus $\det(D\Phi)$ is undefined. In this case we mean $|\det(D\Phi(\xi_1))| := \Vert \Phi'(\xi_1) \Vert_2$.)
+
+\subsection{Evaluation of integral}
+The integral in \eqref{eq:fe_integral} defines for $i$ and $j$ the entries $m_{ij}$ of the \emph{stiffness matrix} $M$. It looks similar for different underlying problem equations. The integral depends via $\Phi$ on the shape of the elements. In general, it has to be evaluated numerically. However, for the simple case of the Laplace equation in 1D it can be computed analytically. Also for $d=2,3$ analytical computation is possible, but involves more lengthy derivations that are usually performed using a computer algebra system such as \verb|sympy|. In this section the 1D and 2D cases are derived, the python \verb|sympy| code for 2D and 3D is contained in the \verb|doc| directory for further reference.
+
+We start with computing the integral analytically. We use the derivatives of the Lagrange functions,
+\begin{equation}
+  \begin{array}{ll}
+    L_{1,1}'(\xi) = -1, \quad L_{2,1}'(\xi) = 1.\\[4mm]
+  \end{array}
+\end{equation}
+
+For 1D meshes and rectangular cartesian 2D and 3D meshes the term $|\det(D\Phi(\bfxi))|$ is constant within each element, i.e. it does not depend on $\bfxi$. In that case one can take it as a constant out of the integral.
+
+Starting from  \eqref{eq:fe_phi} we get for 1D:
+\begin{equation}
+  \begin{array}{ll}
+    |\det(D\Phi(\bfxi))| = \Vert\p{\Phi(\xi_1)}{\xi_1}\Vert_2 = \Vert\bfx^2 - \bfx^1\Vert_2,
+  \end{array}
+\end{equation}
+which is the length of the element. We define $l_e := \Vert\bfx^2-\bfx^1\Vert_2$ to be the length of the 1D element $e$ with nodes $\bfx^1$ and $\bfx^2$.
+
+For 2D we assume a rectangular element with lengths $l_{1,e}$ and $l_{2,e}$ in $\xi_1$ and $\xi_2$ directions.
+The mapping from $\bfxi=(\xi_1,\xi_2)$ to $\bfx$ coordinate frame is then
+\begin{equation}
+  \begin{array}{ll}
+    \Phi(\bfxi) = \bfx^1 + \mat{\xi_1\,l_{1,e} \\[2mm] \xi_2\,l_{2,e}}
+  \end{array}
+\end{equation}
+with 
+\begin{equation}\label{eq:2d_det}
+  \begin{array}{ll}
+    |\det(D\Phi(\bfxi))| = \left|\det\mat{l_{1,e}  & 0 \\[2mm] 0 & l_{2,e}}\right| = |l_{1,e}\,l_{2,e}|.
+  \end{array}
+\end{equation}
+
+Now the term $-\int ∇\phi_i\cdot ∇\phi_j \,\d\xi$, remains to be computed. We compute values at the nodes and visualize them using \emph{stencil notation}. For a fixed node $i$ we compute the respective values for adjacent nodes $j$. The result for $i=j$ is underlined in the stencil, the values for adjacent nodes are placed left, right, top and bottom, in the position of the respective nodes.
+
+We first compute element-wise stencils that state the contribution of a single element. If all elements have the same length properties, the element contributions can be summed up to get the total value at the nodes which is shown in the nodal stencils. From these stencils we can easily set up the stiffness matrix for a non-varying, equidistant mesh.
+
+\begin{tabular}{l|l|l|l}
+    dim & element contribution & node stencil\\
+    \hline
+    1D: &
+\begin{minipage}{6cm}
+  \begin{equation*}
+     \left[\begin{array}{ccc}
+        \underline{-1} & 1\\
+    \end{array}\right] \quad 
+  \end{equation*}
+\end{minipage} 
+    &
+\begin{minipage}{6cm}
+  \begin{equation*}
+    \left[\begin{array}{ccc}
+        1 & \underline{-2} & 1\\
+    \end{array}\right]
+  \end{equation*}
+\end{minipage} 
+     \\[4mm]
+     \hline
+    2D:&
+\begin{minipage}{6cm}
+  \begin{equation*}
+    \left[
+      \begin{array}{ccc}
+        1/6 & 1/3 \\
+        \underline{-2/3} & 1/6
+      \end{array}
+    \right]
+  \end{equation*}
+\end{minipage}  &
+\begin{minipage}{6cm}
+  \begin{equation*}
+      \dfrac13\left[
+        \begin{array}{ccc}
+          1 & 1 & 1\\
+          1 & \underline{-8} & 1 \\
+          1 & 1 & 1
+        \end{array}
+      \right]
+  \end{equation*}
+\end{minipage}  \\[4mm]
+    \hline
+    3D: &
+\begin{minipage}{6cm}
+  \begin{equation*}
+    \begin{array}{ll}
+      \text{center:} &
+      \left[\begin{array}{ccc}
+          0 & 1/12\\
+          \underline{-1/3} & 0\\
+      \end{array}\right] \\[4mm]
+      \text{top:}& 
+      \left[\begin{array}{ccc}
+          1/12 & 1/12\\
+             0 & 1/12\\
+      \end{array}\right]
+    \end{array}
+  \end{equation*}
+\end{minipage} &
+\begin{minipage}{6cm}
+  \begin{equation*}
+    \begin{array}{ll}
+      \text{bottom:} &
+      \dfrac1{12}
+      \left[\begin{array}{ccc}
+          1 & 2 & 1\\
+          2 & 0 & 2\\
+          1 & 2 & 1
+      \end{array}\right] \\[4mm]
+      \text{center:} &
+      \dfrac1{12}
+      \left[\begin{array}{ccc}
+          2 & 0 & 2\\
+          0 & \underline{-32} & 0\\
+          2 & 0 & 2
+      \end{array}\right] \\[4mm]
+      \text{top:}& 
+      \dfrac1{12}
+      \left[\begin{array}{ccc}
+          1 & 2 & 1\\
+          2 & 0 & 2\\
+          1 & 2 & 1 
+      \end{array}\right]
+    \end{array}  
+  \end{equation*}
+\end{minipage}
+\end{tabular}
+
+For possibly deforming meshes in 2D and 3D, the term $|\det(D\Phi(\bfxi))|$ depends on $\bfxi$, as is shown here for the 2D case:
+\begin{equation}
+  \begin{array}{ll}
+    |\det(D\Phi(\bfxi))|\\[4mm]
+     = \left|\det
+     \left(
+    \begin{array}{ll}
+      -\bfx^1_1+\bfx^2_1 + \xi_2\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) & 
+      -\bfx^1_1+\bfx^3_1 + \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) \\[4mm]
+      -\bfx^1_2+\bfx^2_2 + \xi_2\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2) & 
+      -\bfx^1_2+\bfx^3_2 + \xi_1\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2)
+    \end{array}\right)
+    \right|\\[12mm]
+%  = |(-\bfx^1_1+\bfx^2_1 + \xi_2\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1))  * (-\bfx^1_2+\bfx^3_2 + \xi_1\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2)) - (-\bfx^1_1+\bfx^3_1 + \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)) * (-\bfx^1_2+\bfx^2_2 + \xi_2\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))
+%    |\\[4mm]
+%  = |((-\bfx^1_1+\bfx^2_1)*(-\bfx^1_2+\bfx^3_2) + (-\bfx^1_1+\bfx^2_1)*\xi_1\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2) 
+%  +  (-\bfx^1_2+\bfx^3_2)  * \xi_2\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) + \xi_2\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)*\xi_1\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))
+%  - 
+%  ((-\bfx^1_1+\bfx^3_1)*(-\bfx^1_2+\bfx^2_2) + (-\bfx^1_1+\bfx^3_1)*\xi_2\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2)
+%  + (-\bfx^1_2+\bfx^2_2) * \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) + \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)*\xi_2\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))\\[4mm]
+%= (-\bfx^1_1+\bfx^2_1)*(-\bfx^1_2+\bfx^3_2) - (-\bfx^1_1+\bfx^3_1)*(-\bfx^1_2+\bfx^2_2)\\
+%  + \xi_1*((-\bfx^1_1+\bfx^2_1)*(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2) - (-\bfx^1_2+\bfx^2_2)*(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1))\\
+%  + \xi_2*((-\bfx^1_2+\bfx^3_2)*(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) - (-\bfx^1_1+\bfx^3_1)*(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))\\
+%  + \xi_1\,\xi_2*((\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)*(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2) - (\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)*(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))\\[4mm]
+%  + (-\bfx^1_2+\bfx^2_2) * \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1) + \xi_1\,(\bfx^1_1-\bfx^2_1-\bfx^3_1+\bfx^4_1)*\xi_2\,(\bfx^1_2-\bfx^2_2-\bfx^3_2+\bfx^4_2))\\[4mm]
+%=  ((\bfx^1_1\,\bfx^1_2 - \bfx^1_1\,\bfx^3_2 - \bfx^2_1\,\bfx^1_2 + \bfx^2_1\,\bfx^3_2)
+%  - (\bfx^1_1\,\bfx^1_2 - \bfx^1_1\,\bfx^2_2 - \bfx^3_1\,\bfx^1_2 + \bfx^3_1\,\bfx^2_2))\\
+%  + \xi_1*((-\bfx^1_1\,\bfx^1_2+\bfx^1_1\,\bfx^2_2+\bfx^1_1\,\bfx^3_2-\bfx^1_1\,\bfx^4_2+\bfx^2_1\,\bfx^1_2-\bfx^2_1\,\bfx^2_2-\bfx^2_1\,\bfx^3_2+\bfx^2_1\,\bfx^4_2) 
+%  - (-\bfx^1_2\,\bfx^1_1+\bfx^1_2\,\bfx^2_1+\bfx^1_2\,\bfx^3_1-\bfx^1_2\,\bfx^4_1 + \bfx^2_2\,\bfx^1_1-\bfx^2_2\,\bfx^2_1-\bfx^2_2\,\bfx^3_1+\bfx^2_2\,\bfx^4_1))\\
+  
+%  + \xi_2*((-\bfx^1_2\,\bfx^1_1+\bfx^1_2\,\bfx^2_1+\bfx^1_2\,\bfx^3_1-\bfx^1_2\,\bfx^4_1+\bfx^3_2\,\bfx^1_1-\bfx^3_2\,\bfx^2_1-\bfx^3_2\,\bfx^3_1+\bfx^3_2\,\bfx^4_1) 
+%  - (-\bfx^1_1\,\bfx^1_2+\bfx^1_1\,\bfx^2_2+\bfx^1_1\,\bfx^3_2-\bfx^1_1\,\bfx^4_2 + \bfx^3_1\,\bfx^1_2-\bfx^3_1\,\bfx^2_2-\bfx^3_1\,\bfx^3_2+\bfx^3_1\,\bfx^4_2))\\[4mm]
+
+=  (\bfx^1_1\,\bfx^2_2 - \bfx^1_1\,\bfx^3_2 - \bfx^2_1\,\bfx^1_2 + \bfx^2_1\,\bfx^3_2 + \bfx^3_1\,\bfx^1_2 - \bfx^3_1\,\bfx^2_2)\\[4mm]
+  
+  \quad + \xi_1\,(\bfx^1_1\,\bfx^3_2-\bfx^1_1\,\bfx^4_2-\bfx^2_1\,\bfx^3_2+\bfx^2_1\,\bfx^4_2-\bfx^1_2\,\bfx^3_1+\bfx^1_2\,\bfx^4_1 +\bfx^2_2\,\bfx^3_1-\bfx^2_2\,\bfx^4_1)\\[4mm]
+  
+  \quad + \xi_2\,(\bfx^1_2\,\bfx^2_1-\bfx^1_2\,\bfx^4_1-\bfx^3_2\,\bfx^2_1+\bfx^3_2\,\bfx^4_1 - \bfx^1_1\,\bfx^2_2+\bfx^1_1\,\bfx^4_2+\bfx^3_1\,\bfx^2_2-\bfx^3_1\,\bfx^4_2)\\[4mm]
+
+  \end{array}
+\end{equation}
+If one assumes a rectangular element with lengths $l_{1,e}, l_{2,e}$ the formula reduces to \eqref{eq:2d_det} with constant result $|l_{1,e}\,l_{2,e}|$.
+
+\subsection{Functions spaces}
+\label{sec:hilbert}
+%
+For the weak solutions $u$ of the problems we do not need to request $\CC^2(\Omega)$, since only the first derivatives are needed and only in a weak sense. Therefore $u\in H^1_0(\Omega)$ suffices.
+
+The Hilbert space $H^1(\Omega)$ is the Sobolev space $\W^{1,2}(\Omega)$ which is defined using weak derivatives. The concept of weak derivatives generalizes the classical derivatives.
+
+Let $u,v\in \Lloc(\Omega)$ and $\alpha \in \N^d_0$ a multi-index. Then $v$ is called \emph{weak derivative} of $u$ of order $\alpha$ iff
+\begin{equation}
+  \begin{array}{ll}
+    \i{\Omega}{}u(\bfx) \D^\alpha \phi(\bfx) \,\d \bfx = (-1)^{|\alpha|} \i{\Omega}{} v(\bfx)\,\phi(\bfx)\,\d \bfx
+  \end{array}
+\end{equation}
+for all $\phi \in \CC^\infty_0(\Omega)$. We then write $\D^\alpha u = v$. The derivative with the multi-index, $\D^\alpha$ is given by
+\begin{equation}
+  \begin{array}{ll}
+    \D^\alpha = \dfrac{\p^{|\alpha|}}{\p^{\alpha_1}_{x_1} \cdots \p^{\alpha_d}_{x_d}}
+  \end{array}
+\end{equation}
+
+If $u$ is differentable in a classical sense, the classical derivatives are also the weak derivatives. 
+
+Now we define the \emph{Sobolev} space $\W^{1,2}(\Omega)$ (1=first order weak derivatives, 2=derivatives in $\L^2(\Omega)$)) as follows:
+\begin{equation}
+  \begin{array}{ll}
+    \W^{1,2}(\Omega) := \{ u \in \Lloc(\Omega) \mid |\alpha| \in \N^d_0, |\alpha| \leq 1, \D^\alpha u \text{ exists}, \D^\alpha u \in \L^2(\Omega)\}.
+  \end{array}
+\end{equation}
+With an appropriate Sobolev norm, $\W^{1,2}$ is a Banach space, i.e. complete (Cauchy series converge in it).
+
+Together with the scalar product
+\begin{equation}
+  \begin{array}{ll}
+    (u,v)_{H^1} := \sum\limits_{|\alpha|\leq 1} \i{\Omega}{}{\D^\alpha u(\bfx) \,\D^\alpha v(\bfx) \,\d\bfx}
+  \end{array}
+\end{equation}
+we get the Hilbert space $H^1(\Omega) := \W^{1,2}(\Omega)$.
+
+With $H^1_0(\Omega) := \{u \in H^1(\Omega) \mid u(\bfx) = 0 \text{ for } \bfx \in \p \Omega\}$ we denote the subspace of functions that are 0 on the boundary.
+
+\section{Propositions}
+In this section some propositions are collected such that they can be referenced when needed.
+
+\subsection{Divergence theorem}
+\textit{Also called Gauss's theorem.}
+Let $U \subset \R^d$ be a compact set with a piecewise smooth boundary $\p U$, $\bfF: U \to \R^d$ a continuously differentiable vector field. Then:
+\begin{equation}\label{eq:gauss}
+  \begin{array}{ll}
+    \ds\int_U ∇\cdot\bfF(\bfx) \,\d \bfx = \ds\int_{\p U} \bfF(\bfx)\cdot \bfn\,\d \bfx.
+  \end{array}
+\end{equation}
+For $d=2$ one gets \emph{Stoke's theorem}.
+
+\subsubsection{Corollary}
+Replacing $\bfF$ of \eqref{eq:gauss} by ${f\,\bfF}$ yields the following proposition:
+
+For a differentable function $f: U \to \R$ and a vector field $\bfF: U \to \R^d$ it holds:
+\begin{equation}\label{eq:gauss1}
+  \begin{array}{ll}
+     \ds\int_U f(∇\cdot\bfF) \,\d \bfx = \ds\int_{\p U} (f\,\bfF)\cdot\bfn\,\d \bfx -\ds\int_U \bfF \cdot ∇f \,\d \bfx
+  \end{array}
+\end{equation}
+Now set $\bfF\equiv (1,0,\dots), (0,1,\dots), \dots$ to get the following vector-valued identity:
+
+For a differentable function $f: U \to \R$ it holds:
+\begin{equation}
+  \begin{array}{ll}
+    \ds\int_U ∇f(\bfx) \,\d \bfx = \ds\int_{\p U} f(\bfx)\,\bfn\,\d \bfx
+  \end{array}
+\end{equation}
+
+\subsection{Classical Stoke's theorem}
+Let $U\subset \R^3$ be an open set, $V$ a 2-manifold in $U$ with boundary $\p V$ and $\bfF: U \to \R^3$ a continuously differentiable vector field. Then:
+\begin{equation}
+  \begin{array}{ll}
+    \ds\varointctrclockwise_{\p V} \bfF\cdot\d s = \ds\int_{V} \big(∇\times \bfF\big) \cdot \bfn \,\d\bfx,
+  \end{array}
+\end{equation}
+where $\bfn$ is the normal on the surface $V$.
+
+\subsection{Integration on manifolds}
+In the following it is outlined how to integrate on 1D and 2D domains that are embedded in $\R^d$. The formalism of manifolds is omitted for simplicity.
+
+\subsubsection{1D curve integrals}
+Let $U\subset \R$ be an open set (the parameter space) and $\Phi:U \to \R^d$ a smooth mapping that defines a curve $\Omega=\Phi(U)$ embedded in $\R^d$. An integrable function $f:\Omega \to \R$ can then be integrated as follows:
+%
+\begin{equation}
+  \begin{array}{ll}
+    \ds\int_{\Phi(U)} f(\bfx) \,\d\bfx = \int_{U} f\big(\Phi(\xi)\big)\,\Vert \Phi'(\xi)\Vert_2 \, \d \xi
+  \end{array}
+\end{equation}
+
+
+\subsubsection{2D surface integrals}
+Let $U \subset \R^2$ be an open set (parameter space), $\Phi:U \to \Phi(U)=:\Omega \subset\R^3$ a diffeomorphism, $\Phi$ maps parameters $\bfxi=(\xi_1,\xi_2) \in U$ to points in world space $\bfx \in \Omega$. The inverse map $\Phi^{-1} : \Omega \subset \R^3 \to \R^2$ assigns coordinates $(\xi_1,\xi_2)$ to each point $\bfx\in\Omega$. We name $\Phi^{-1}(\bfx) = (x(\bfx),y(\bfx))$ in the following formula. The integration of a 2-dimensional function $f:U\to\R$ is performed as follows.
+%
+\begin{equation}
+  \begin{array}{ll}
+    \ds\int_{\Phi(U)} f(\bfx) \,\d\bfx  = \ds\int_{U} f(\bfxi) \Big(\d{x\big(\Phi(\bfxi)\big)}{\xi_1}\,\d{y\big(\Phi(\bfxi)\big)}{\xi_2} - \p{x\big(\Phi(\bfxi)\big)}{\xi_2}\,\p{y(\Phi(\bfxi)\big)}{\xi_1}\Big) \,\d\bfxi
+  \end{array}
+\end{equation}
+
+\subsubsection{Substitution on domains with same dimensionality}
+\emph{Integration by substitution}, \textit{German \say{Transformationssatz}}, also \emph{change of variables rule}.
+Let $U \subset \R^d$ be an open set, $\Phi:U \to \Phi(U) \subset\R^d$ a diffeomorphism ($\Phi$ bijective and continuously differentiable, inverse map $\Phi^{-1}$ also continuously differentiable).
+
+Then $f:\Phi(U) \to \R$ is integrable on $\Phi(U)$ if and only if the function $x \mapsto f(\Phi(x))\,|\det(D\Phi(x))|$ is integrable on $U$. It holds:
+\begin{equation}\label{eq:integration_transformation}
+  \begin{array}{ll}
+    \ds\int_{\Phi(U)} f(\bfy)\,\d \bfy = \ds\int_U f(\Phi(\bfx))\,|\det(D\Phi(\bfx))|\,\d \bfx,
+  \end{array}
+\end{equation}
+where $D\Phi$ is the Jacobian of $\Phi$.
+
+% -------------- Literaturseite --------------------
+%\newpage
+%\bibliography{literatur}{}
+%\bibliographystyle{abbrv}
+
+% -------------- Anhang ------------
+%\appendix
+%\input{8_anhang.tex}
+
+\end{document}

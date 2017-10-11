@@ -7,8 +7,9 @@ custom_tests = {}
 
 def select(*args):
     packages = args
+    
     for pkg in packages:
-        if pkg in enabled_packages:
+        if type(pkg) in map(type, enabled_packages):    # if an object of the same class ('type') is already in enabled_packages, skip
             continue
         enabled_packages.append(pkg)
         package_map[pkg.__module__] = pkg

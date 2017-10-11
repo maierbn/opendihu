@@ -13,11 +13,5 @@ src_files = Split(
   main.cpp
 """)
 
-# take the debug or release version of the opendihu library depending on build type
-if env['BUILD_TYPE'] == "debug":
-  libs = 'opendihud'
-else:
-  libs = 'opendihu'
-
 # create the main executable
-env.Program(target = 'build-test', source = src_files, LIBS=libs)
+env.Program(target = 'diffusion_1d', source = src_files, LIBS=libs)

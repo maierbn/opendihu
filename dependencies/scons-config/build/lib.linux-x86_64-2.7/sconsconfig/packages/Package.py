@@ -105,7 +105,7 @@ class Package(object):
       ctx.Log('Found option %s = %s\n'%(upp + '_DIR', value))
       res = self.try_location(ctx, value, **kwargs)
       if not res[0]:
-        self._msg = '\n\nUnable to validate an %s installation at:\n %s\nInspect "config.log" to see what went wrong.'%(name, value)
+        self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.'%(name, value)
         # ctx.Log(msg)
         # print msg
         # env.Exit(1)
@@ -177,7 +177,7 @@ class Package(object):
 
       if not res[0]:
         ctx.Log('  Trying common locations.\n')
-        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
         res = (0, '')
         
         # loop over common directories
@@ -614,7 +614,8 @@ class Package(object):
   def try_headers(self, ctx, inc_dirs, **kwargs):
     ctx.Log('Trying to find headers in %s\n'%repr(inc_dirs))
     found_headers = True
-    for hdr in self.headers:
+    new_inc_dirs = []
+    for (i,hdr) in enumerate(self.headers):
       found = False
       for path in inc_dirs:
         hdr_path = os.path.join(path, hdr)
@@ -623,11 +624,25 @@ class Package(object):
           ctx.Log('yes.\n')
           found = True
           break
+          
+        # remove leading "../" and see if file is there
+        if hdr_path.find("../") == 0:
+          new_hdr_path = hdr_path[3:]
+          new_path = path[3:]
+          ctx.Log('no.\n')
+          ctx.Log(' ' + new_hdr_path + ' ... ')
+          if os.path.exists(new_hdr_path):
+            new_inc_dirs.append(new_path)
+            ctx.Log('(yes, here it is, but this directory is not considered)\n')
+            #found = True
+            break
+          
         ctx.Log('no.\n')
       if not found:
         ctx.Log('Failed to find ' + hdr + '\n')
         found_headers = False
         break
+    #inc_dirs.append(new_inc_dirs)    # append path with "../" removed to include directories
     return found_headers
 
   def try_location(self, ctx, base_dirs, **kwargs):
@@ -655,10 +670,10 @@ class Package(object):
           if not os.path.isabs(lib_sub_dirs[i]):
             lib_sub_dirs[i] = os.path.join(base, lib_sub_dirs[i])
 
-        # Remove any directories that can already be found in
+        # Remove any directories that can already be found
         # in their respective lists.
-        inc_sub_dirs = [d for d in inc_sub_dirs if d not in ctx.env.get('CPPPATH', [])]
-        lib_sub_dirs = [d for d in lib_sub_dirs if d not in ctx.env.get('LIBPATH', [])]
+        #inc_sub_dirs = [d for d in inc_sub_dirs if d not in ctx.env.get('CPPPATH', [])]
+        #lib_sub_dirs = [d for d in lib_sub_dirs if d not in ctx.env.get('LIBPATH', [])]
 
         if loc_callback:
           loc_callback(ctx, base, inc_sub_dirs, lib_sub_dirs, libs, extra_libs)

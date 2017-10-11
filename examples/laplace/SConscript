@@ -10,7 +10,8 @@ Import('env')     # import Environment object from calling SConstruct
 # define the source files
 src_files = Split(
 """
-  main.cpp
+  laplace_example.cpp
 """)
+
 # create the main executable
-env.Program(target = 'templates', source = src_files, LIBS=libs)
+env.Program(target = 'laplace_example', source = src_files)

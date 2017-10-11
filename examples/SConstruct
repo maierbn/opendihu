@@ -9,4 +9,6 @@ examples = [
 
 # loop over examples and call SConstruct file
 for example in examples:
+  print ""
+  print "example",example
   SConscript(example+'/SConstruct')

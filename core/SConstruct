@@ -39,7 +39,7 @@ env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = 
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
 if unknown:
-  print "WARNING: Unknown variables from command line arguments or config file `config.py`:", unknown.keys()
+  print "WARNING: Unknown variables from command line arguments or config file `user-variables.scons.py`:", unknown.keys()
 
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))

@@ -1,4 +1,5 @@
 # SConstruct file for a single example.
+# laplace example
 #
 # Usage: `scons BUILD_TYPE=debug` will build debug version, `scons` will build release version.
 import os

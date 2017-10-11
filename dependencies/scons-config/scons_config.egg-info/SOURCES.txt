@@ -27,6 +27,7 @@ sconsconfig/packages/PTScotch.py
 sconsconfig/packages/Package.py
 sconsconfig/packages/ParMETIS.py
 sconsconfig/packages/PostgreSQL.py
+sconsconfig/packages/Python.py
 sconsconfig/packages/SOCI.py
 sconsconfig/packages/SkyMaker.py
 sconsconfig/packages/UTBot.py

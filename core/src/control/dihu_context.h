@@ -12,5 +12,9 @@ public:
   PetscErrorCode &ierr();
   
 private:
+  
+  /// execute python script and store global variables
+  void loadPythonScript(std::string filename);
+  
   PetscErrorCode ierr_;     ///< temporary variable for petsc error codes
 };

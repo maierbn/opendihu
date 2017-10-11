@@ -28,3 +28,4 @@ from CUDA import CUDA
 from glut import glut
 from AntTweakBar import AntTweakBar
 from LAPACK import LAPACK
+from Python import Python

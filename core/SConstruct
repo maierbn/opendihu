@@ -9,6 +9,8 @@ sys.path.append("../dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")
 import sconsconfig
 from sconsconfig import packages, tools
 
+print "core"
+
 #
 # Select the packages we want to use in the configuration.
 #

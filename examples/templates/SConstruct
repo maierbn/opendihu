@@ -6,4 +6,4 @@
 # Pass the name of the current example to build that.
 
 
-SConscript('../SConstruct', exports={"example": "templates"})
+SConscript('../SConstructSingleExample', exports={"example": "templates"})

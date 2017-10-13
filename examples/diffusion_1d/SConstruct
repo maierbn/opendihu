@@ -6,4 +6,4 @@
 # Pass the name of the current example to build that.
 
 
-SConscript('../SConstruct', exports={"example": "diffusion_1d"})
+SConscript('../SConstructSingleExample', exports={"example": "diffusion_1d"})

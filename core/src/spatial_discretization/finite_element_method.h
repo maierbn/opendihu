@@ -18,8 +18,13 @@ public:
   
   // perform computation
   void run();
-  static void run(ProblemData &data, PyObject *settings);
+  void run(ProblemData &data, PyObject *settings);
 private:
+ 
+  void setRightHandSide(ProblemData &data, PyObject *specificSettings); 
+  void applyBoundaryConditions(ProblemData &data, PyObject *specificSettings);
+  void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings);
+ 
   DihuContext &context_;    ///< the context object containing everything to be stored
   ProblemData data_;
 };

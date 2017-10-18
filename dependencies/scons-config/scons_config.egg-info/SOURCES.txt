@@ -11,6 +11,7 @@ sconsconfig/setup.py
 sconsconfig/data/patches/rapidxml.patch
 sconsconfig/packages/AntTweakBar.py
 sconsconfig/packages/CUDA.py
+sconsconfig/packages/EasyLoggingPP.py
 sconsconfig/packages/Eigen.py
 sconsconfig/packages/FFTW.py
 sconsconfig/packages/FFTW3.py

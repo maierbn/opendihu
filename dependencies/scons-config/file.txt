@@ -27,6 +27,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/re2.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MySQL.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/METIS.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/EasyLoggingPP.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MySQL.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/PETSc.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/PTScotch.pyc
@@ -55,6 +56,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MPI.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SkyMaker.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/ParMETIS.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/EasyLoggingPP.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/rapidxml.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/LAPACK.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/KLEE.py

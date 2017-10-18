@@ -18,7 +18,8 @@ sconsconfig.select(
     packages.MPI(required=True),
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
-    packages.Python(required=True)
+    packages.Python(required=True),
+    packages.EasyLoggingPP(required=True),
 )
 
 

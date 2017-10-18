@@ -306,7 +306,44 @@ For possibly deforming meshes in 2D and 3D, the term $|\det(D\Phi(\bfxi))|$ depe
 \end{equation}
 If one assumes a rectangular element with lengths $l_{1,e}, l_{2,e}$ the formula reduces to \eqref{eq:2d_det} with constant result $|l_{1,e}\,l_{2,e}|$.
 
-\subsection{Functions spaces}
+\subsection{Boundary Conditions}
+\label{sec:bc}
+The Dirichlet-type boundary condition
+%
+\begin{equation*}
+  \begin{array}{lll}
+    ∇u(\bfx)\cdot \bfn = 0 \qquad \text{on }\Gamma_N
+  \end{array}
+\end{equation*}
+%
+is satisfied automatically by the Galerkin finite element formulation. Starting from the left hand side of \eqref{eq:laplace_weak} and using Divergence theorem we get:
+%
+\begin{equation*}
+  \begin{array}{lll}
+    -\i{\Omega}{} ∇u\cdot ∇\phi \,\d \bfx = -\i{∂\Omega}{} \phi\,\big(∇u\cdot \bfn\big) \,\d \bfx + \i{\Omega}{} Δu\,\phi  \,\d \bfx = 0 \qquad ∀ \phi \in H^1_0(\Omega)
+  \end{array}
+\end{equation*}
+%
+Because $Δu = 0$ on $\Omega$ we get $∇u\cdot \bfn=0$ on the boundary.
+
+Neumann boundary conditions can be easily considered at the discretized system. For each condition $u_i = u_{0,i}$ that enforces the degree of freedom $i$ to have the value $u_{0,i}$ we modify the linear system of equations. In the  right hand side vector we subtract from the value $f_{j}$ the product of $a_{ji}$ and the given value $u_{0,i}$ for every $j\neq i$, i.e. the new value is $\hat{f_j} = f_j - a_{ji}\,u_{0,i}$. We set $f_i = u_{0,i}$. In the matrix we zero the row and column that contain the entry $a_{ii}$, i.e. $a_{ij} = a_{ji} = 0, ∀j\neq i$ and set $a_{ii}=1$. As an example, consider the system
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \mat{m_{11} & m_{12} & m_{13} \\ m_{21} & m_{22} & m_{23} \\ m_{31} & m_{32} & m_{33}}
+    \mat{u_1 \\ u_2 \\ u_3} = \mat{0 \\ 0 \\ 0}
+  \end{array}
+\end{equation*}
+with the Dirichlet boundary condition $u_3 = u_{0,3}$. The modified system then reads
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \mat{m_{11} & m_{12} & 0 \\ m_{21} & m_{22} & 0 \\ 0 & 0 & 1}
+    \mat{u_1 \\ u_2 \\ u_3} = \mat{-m_{13}\,u_{0,3} \\ -m_{23}\,u_{0,3} \\ u_{0,3}}.
+  \end{array}
+\end{equation*}
+
+\subsection{Function spaces}
 \label{sec:hilbert}
 %
 For the weak solutions $u$ of the problems we do not need to request $\CC^2(\Omega)$, since only the first derivatives are needed and only in a weak sense. Therefore $u\in H^1_0(\Omega)$ suffices.

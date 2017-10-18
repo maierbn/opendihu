@@ -55,24 +55,26 @@ class Package(object):
     self.name = self.__class__.__name__
     self.required = required
     self.found = False
-    self.headers = []
-    self.libs = []
-    self.extra_libs = []
+    self.headers = []         # header files of this package, that need to be included by the main program, have to be in directory "include"
+    self.libs = []            # libraries of this package, that need to be linked against by the main program, have to be in directory "lib" or "lib64"
+    self.extra_libs = []      # extra i.e. extern libraries that are required for the package
+    self.sources = []         # sources that need to be compiled with every program, have to be in subdirectory "src", note, these are not the sources needed to compile the library
     self.sub_dirs = self.DEFAULT_SUB_DIRS
-    self.check_text = ''
-    self.options = []
-    self.one_shot_options = []
+    self.check_text = ''      # a test program that checks if the package is included successfully
+    self.ext = '.c'           # extension of the check program, this determines if it is compiled with g++ or gcc
+    self.options = []         # scons options that should be available to the user via the config script (default includes *_DIR, *_DOWNLOAD etc.)
+    self.one_shot_options = []  
     self.test_names = ['Check' + self.name]
     self.custom_tests = {'Check' + self.name: self.check}
     self.auto_add_libs=True
     self.run=True
-    self.ext = '.c'
-    self.download_url = download_url
-    self.build_handlers = {}
-    self.number_output_lines = False
-    self.static = False
-
-    self.base_dir = None
+    self.download_url = download_url    # the url from where to download the package
+    self.build_handlers = {}            # the build handlers, use set_build_handler to set
+    self.build_flags = ''               # additional C flags to use for compiling the test program
+    self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
+    self.static = False                 # if the compiled test program is a static library
+    
+    self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
 
@@ -92,6 +94,7 @@ class Package(object):
   ## Run the configuration checks for this package.
   # @param[in,out] ctx The configuration context, retrieved from SCons.
   def check(self, ctx, **kwargs):
+    ctx.Log('\n====================================\n')
     ctx.Log('Beginning check for %s\n'%self.name)
     env = ctx.env
     name = self.name
@@ -173,6 +176,7 @@ class Package(object):
 
     else:
       ctx.Log('No options found, trying empty location.\n')
+      self.base_dir = "."
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
       if not res[0]:
@@ -213,7 +217,7 @@ class Package(object):
       ctx.Log("    Directory %s\n"%d)
       
       # descend if subdirectory is "install" or "build" or contains name of package
-      if d.lower() == "install" or d.lower() == "build" or d.lower().find(name.lower()) != -1:
+      if (d.lower() == "install" or d.lower() == "build" or d.lower().find(name.lower()) != -1) and os.path.isdir(os.path.join(cd, d)):
         d = os.path.join(cd, d)
         ctx.Log('  Descend to %s\n'%d)
         
@@ -559,7 +563,15 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11");
+    ctx.env.MergeFlags("-ldl -lm -lX11")
+    ctx.env.PrependUnique(CCFLAGS = self.build_flags)
+    
+    # add sources directly to test program
+    for source in self.sources:
+      object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
+      ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      #with open(filename) as file:
+      #  text += "\n"+file.read()
     
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
@@ -570,14 +582,18 @@ class Package(object):
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
     ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")
     
+    # compile / run test program
     if self.run:
       res = ctx.TryRun(text, self.ext)
     else:
       res = (ctx.TryLink(text, self.ext), '')
+        
+      
     if not res[0]:
       env_restore(ctx.env, bkp)
     else:
       ctx.Log("Program output:\n"+res[1])
+        
     return res
 
   def try_libs(self, ctx, libs, extra_libs=[], **kwargs):
@@ -585,13 +601,14 @@ class Package(object):
       libs = [[]]
     if not extra_libs:
       extra_libs = [[]]
+      
     for l in libs:
       l = conv.to_iter(l)
       l_bkp = self.env_setup_libs(ctx.env, l)
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e)
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)
@@ -689,6 +706,8 @@ class Package(object):
                 CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
                 LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
                 RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs)
+        
+        self.base_dir = base  # set base directory (is needed by try_libs)
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)
         if res[0]:
           self.base_dir = base # set base directory

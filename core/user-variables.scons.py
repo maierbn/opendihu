@@ -26,3 +26,7 @@ LAPACK_REDOWNLOAD=False      # force download, even if the files are already pre
 PETSC_DOWNLOAD=False
 PETSC_REDOWNLOAD=False
 #PETSC_DIR="../dependencies/petsc"
+
+# EasyLoggingPP
+#EASYLOGGINGPP_DOWNLOAD=True
+#EASYLOGGINGPP_REDOWNLOAD=True

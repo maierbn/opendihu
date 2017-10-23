@@ -580,7 +580,7 @@ class Package(object):
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
-    ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")
+    #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
     
     # compile / run test program
     if self.run:
@@ -702,10 +702,15 @@ class Package(object):
         if not self.try_headers(ctx, inc_sub_dirs, **kwargs):
           continue
 
+        system_inc_dirs = []
+        for inc_dir in inc_sub_dirs:
+          system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
+            
         bkp = env_setup(ctx.env,
-                CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
+                #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
                 LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
-                RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs)
+                RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs,
+                CCFLAGS=ctx.env.get('CCFLAGS', []) + system_inc_dirs)
         
         self.base_dir = base  # set base directory (is needed by try_libs)
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)

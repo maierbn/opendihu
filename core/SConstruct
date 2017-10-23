@@ -64,20 +64,16 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z')   # gcc flags, will be sorted automatically into linker and compiler flags
   
 else:
   # release build
   variant_dir = 'build/release'         # folder of build
-  env.MergeFlags('-O2 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -std=c++1z')   # gcc flags, will be sorted automatically into linker and compiler flags
+
+env.MergeFlags('-isystem')   # disable respective warnings that come from easylogging++
 
 env.Append(CPPPATH = ['../../../core/src', '/usr/include/mpi', '../../../dependencies/petsc/install/include'])
-
-#env.MergeFlags('-I/usr/include/python2.7 -I/usr/include/x86_64-linux-gnu/python2.7 -lpython2.7 -lpthread -ldl  -lutil -lm')
-# cflags
-#env.MergeFlags('-I/usr/include/python2.7 -I/usr/include/x86_64-linux-gnu/python2.7  -fno-strict-aliasing -Wdate-time -D_FORTIFY_SOURCE=2 -g -fstack-protector-strong -Wformat -Werror=format-security  -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes')
-# ldflags
-#env.MergeFlags('-L/usr/lib/python2.7/config-x86_64-linux-gnu -L/usr/lib -lpython2.7 -lpthread -ldl  -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions')
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs='.',

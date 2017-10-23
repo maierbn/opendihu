@@ -9,7 +9,10 @@
 #include "equation/diffusion.h"
 #include "equation/reaction_diffusion.h"
 
-#include "mesh/regular.h"
+#include "mesh/deformable.h"
+#include "mesh/nonrectilinear_fixed.h"
+#include "mesh/rectilinear_fixed.h"
+#include "mesh/regular_fixed.h"
 
 #include "operator_splitting/godunov.h"
 

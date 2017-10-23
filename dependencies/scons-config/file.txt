@@ -111,3 +111,4 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/tools/__init__.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/data/patches/rapidxml.patch
 /usr/local/bin/easy_install
+/usr/local/bin/easy_install-3.6

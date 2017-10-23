@@ -24,7 +24,8 @@ private:
   void setRightHandSide(ProblemData &data, PyObject *specificSettings); 
   void applyBoundaryConditions(ProblemData &data, PyObject *specificSettings);
   void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings);
- 
+  void solve(ProblemData &data, PyObject *specificSettings);
+  
   DihuContext &context_;    ///< the context object containing everything to be stored
   ProblemData data_;
 };

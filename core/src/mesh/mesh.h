@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Python.h>
+#include <control/types.h>
 
 namespace Mesh
 {
@@ -12,6 +13,7 @@ public:
   Mesh(PyObject *specificSettings);
   virtual ~Mesh() {}
   virtual int dimension() = 0;
+  virtual element_idx_t nDegreesOfFreedom() = 0;
 private:
 };
 
@@ -23,6 +25,7 @@ public:
   MeshD(PyObject *specificSettings);
   virtual ~MeshD() {}
   virtual int dimension();
+  virtual element_idx_t nDegreesOfFreedom() = 0;
 private:
 };
 

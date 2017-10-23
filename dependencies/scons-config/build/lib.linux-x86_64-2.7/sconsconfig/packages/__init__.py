@@ -30,3 +30,4 @@ from AntTweakBar import AntTweakBar
 from LAPACK import LAPACK
 from Python import Python
 from EasyLoggingPP import EasyLoggingPP
+from Base64 import Base64

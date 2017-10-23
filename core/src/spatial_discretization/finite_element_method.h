@@ -32,5 +32,6 @@ private:
 
 }  // namespace
 
-#include "spatial_discretization/finite_element_method_regular_lagrange_laplace.tpp"
+#include "spatial_discretization/finite_element_method_regular_lagrange_laplace_1d.tpp"
+#include "spatial_discretization/finite_element_method_regular_lagrange_laplace_2d.tpp"
 #include "spatial_discretization/finite_element_method.tpp"

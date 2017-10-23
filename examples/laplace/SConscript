@@ -10,7 +10,7 @@ Import('env')     # import Environment object from calling SConstruct
 # define the source files
 src_files = Split(
 """
-  laplace_example.cpp
+  laplace_example_2d.cpp
 """)
 
 # create the main executable

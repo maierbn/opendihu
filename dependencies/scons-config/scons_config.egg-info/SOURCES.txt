@@ -10,6 +10,7 @@ sconsconfig/__init__.py
 sconsconfig/setup.py
 sconsconfig/data/patches/rapidxml.patch
 sconsconfig/packages/AntTweakBar.py
+sconsconfig/packages/Base64.py
 sconsconfig/packages/CUDA.py
 sconsconfig/packages/EasyLoggingPP.py
 sconsconfig/packages/Eigen.py

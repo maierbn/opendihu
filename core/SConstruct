@@ -19,7 +19,8 @@ sconsconfig.select(
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
     packages.Python(required=True),
-    packages.EasyLoggingPP(required=True),
+    packages.Base64(required=True),
+    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 
 

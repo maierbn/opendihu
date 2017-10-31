@@ -4,6 +4,42 @@
 from sympy import *
 from sympy.abc import *
 
+# compute stencil for FE Δ
+
+xi,xi1,xi2,xi3 = symbols('xi xi1 xi2 xi3')
+
+### 1D element contributions for linear Lagrange ansatz function (phi)
+def phi0(xi):
+  return (1-xi)
+  
+def phi1(xi):
+  return xi
+  
+print "1D stencil"
+print "=========="
+
+# left node
+integrand = diff(phi0(xi),xi)**2
+entry0 = integrate(-integrand,(xi,0,1))
+
+# right node
+integrand = diff(phi0(xi),xi)*diff(phi1(xi),xi)
+entry1 = integrate(-integrand,(xi,0,1))
+
+print "element contribution:"
+print "[",entry0,entry1,"]"
+
+print "nodal stencil:"
+print "[",entry1,2*entry0,entry1,"]"
+
+  
+  
+#
+### 2D element contributions for linear Lagrange ansatz function (phi)
+
+# 2 3
+# 0 1
+
 def phi0(xi1,xi2):
   return (1-xi1)*(1-xi2)
   
@@ -16,14 +52,8 @@ def phi2(xi1,xi2):
 def phi3(xi1,xi2):
   return xi1*xi2
   
-  
-# compute stencil for FE Δ
-#
-### 2D element contributions for linear Lagrange ansatxi3 function (phi)
 print "2D stencil"
 print "=========="
-
-xi1,xi2,xi3 = symbols('xi1 xi2 xi3')
 
 # lower left node
 integrand = diff(phi0(xi1,xi2),xi1)**2 + diff(phi0(xi1,xi2),xi2)**2

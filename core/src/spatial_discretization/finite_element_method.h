@@ -6,29 +6,67 @@
 #include "control/runnable.h"
 #include "control/dihu_context.h"
 #include "control/problem_data.h"
+#include "equation/laplace.h"
 
 namespace SpatialDiscretization
 {
-
-template<typename Mesh, typename BasisFunction, typename Term>
-class FiniteElementMethod : public SpatialDiscretization, public Runnable
+ 
+template<typename Mesh, typename BasisFunction>
+class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
-  FiniteElementMethod(DihuContext &context);
+  FiniteElementMethodBase(DihuContext &context);
   
   // perform computation
   void run();
   void run(ProblemData &data, PyObject *settings);
-private:
+  
+protected:
  
-  void setRightHandSide(ProblemData &data, PyObject *specificSettings); 
+  virtual void setRightHandSide(ProblemData &data, PyObject *specificSettings) = 0;
   void applyBoundaryConditions(ProblemData &data, PyObject *specificSettings);
-  void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings);
-  void solve(ProblemData &data, PyObject *specificSettings);
+  virtual void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings) = 0;
+  virtual void solve(ProblemData &data, PyObject *specificSettings);
   
   DihuContext &context_;    ///< the context object containing everything to be stored
   ProblemData data_;
 };
+ 
+// inherited class that has additional Term template parameter
+template<typename Mesh, typename BasisFunction, typename Term>
+class FiniteElementMethod : public FiniteElementMethodBase<Mesh, BasisFunction>
+{
+};
+
+// partial specialisation for Equation::Static::Laplace
+template<typename Mesh, typename BasisFunction>
+class FiniteElementMethod<Mesh, BasisFunction, Equation::Static::Laplace> :
+  public FiniteElementMethodBase<Mesh, BasisFunction>
+{
+public:
+  FiniteElementMethod(DihuContext &context);
+ 
+private:
+  void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings);
+  void setRightHandSide(ProblemData &data, PyObject *specificSettings); 
+  void applyBoundaryConditions(ProblemData &data, PyObject *specificSettings);
+};
+
+// partial specialisation for Equation::Static::Poisson
+template<typename Mesh, typename BasisFunction>
+class FiniteElementMethod<Mesh, BasisFunction, Equation::Static::Poisson> :
+  public FiniteElementMethodBase<Mesh, BasisFunction>
+{
+public:
+  FiniteElementMethod(DihuContext &context);
+ 
+private:
+  void setStiffnessMatrix(ProblemData &data, PyObject *specificSettings);
+  void setRightHandSide(ProblemData &data, PyObject *specificSettings); 
+  void applyBoundaryConditions(ProblemData &data, PyObject *specificSettings);
+};
+
+
 
 }  // namespace
 

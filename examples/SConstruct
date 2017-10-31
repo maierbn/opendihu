@@ -3,10 +3,11 @@
 # define all existing examples to be build
 examples = [
   "build-test",
-  "laplace",
+  "laplace1d",
+  "laplace2d",
   "templates",
 ]
-examples = ["laplace"]
+examples = ["diffusion1d"]
 
 # loop over examples and call SConstruct file
 for example in examples:

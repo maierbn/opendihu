@@ -194,11 +194,11 @@
   "header.tex" 1504168624 13157 8b05f3de8a3af77aa77aa93729b8b2bf ""
   "images/element1.pdf_tex" 1502704669 2997 aeeb45cabc0a919f990b34accfa22e05 ""
   (generated)
-  "doc.dvi"
-  "doc.out"
   "doc.aux"
+  "doc.out"
   "doc.log"
-["pdflatex"] 1508332942 "doc.tex" "doc.pdf" "doc" 1508332943
+  "doc.dvi"
+["pdflatex"] 1509403892 "doc.tex" "doc.pdf" "doc" 1509403892
   "/etc/texmf/web2c/texmf.cnf" 1485431283 1101 af7716885e081ab43982cab7b4672c1a ""
   "/home/maierbn/.texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1488285866 1874508 b318d11ebad0a08b583bc5eec5a5ad2a ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
@@ -421,9 +421,9 @@
   "/usr/share/texmf/tex/latex/tipa/tipa.sty" 1414244106 21394 82fa9965637ca62399434739ae5998f6 ""
   "/usr/share/texmf/web2c/texmf.cnf" 1503343927 31343 93828589fb0cea665e553ee5a17ad2d4 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1505299487 3857879 1200f29652e6abb90707a83e3d511daf ""
-  "doc.aux" 1508332943 5141 318dabddfa1efd98de05a67abdc3fd87 ""
-  "doc.out" 1508332943 1043 2e21ce661bf86801d376216f68c50f81 ""
-  "doc.tex" 1508332941 23017 11437a55b6e93f03e447bcc5b224e9b0 ""
+  "doc.aux" 1509403892 6270 c5c730428e0cfd0f92f868d503c195a7 ""
+  "doc.out" 1509403892 1333 53d64a5eff38f0dce1240c5772bb415d ""
+  "doc.tex" 1509403890 27959 29494ab12666c41887d7a4ee6ea51a86 ""
   "header.tex" 1504508292 13157 8b05f3de8a3af77aa77aa93729b8b2bf ""
   "images/element1.pdf" 1504508292 3797 bb63bd32e0ab1730dfefcd6e540ced86 ""
   "images/element1.pdf_tex" 1504508292 2997 aeeb45cabc0a919f990b34accfa22e05 ""
@@ -432,6 +432,6 @@
   "images/lagrange.pdf" 1504508292 12538 2a2b821bd77c48c31b8f166ee0223448 ""
   (generated)
   "doc.pdf"
-  "doc.log"
-  "doc.out"
   "doc.aux"
+  "doc.out"
+  "doc.log"

@@ -31,3 +31,5 @@ from LAPACK import LAPACK
 from Python import Python
 from EasyLoggingPP import EasyLoggingPP
 from Base64 import Base64
+from Cython import Cython
+from NumpyC import NumpyC

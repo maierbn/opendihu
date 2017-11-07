@@ -41,6 +41,7 @@ sconsconfig/packages/boost.py
 sconsconfig/packages/cfitsio.py
 sconsconfig/packages/clock.py
 sconsconfig/packages/glut.py
+sconsconfig/packages/googletest.py
 sconsconfig/packages/libhpc.py
 sconsconfig/packages/libsamplerate.py
 sconsconfig/packages/libsndfile.py

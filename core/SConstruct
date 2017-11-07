@@ -22,6 +22,7 @@ sconsconfig.select(
     packages.Base64(required=True),
     packages.Cython(required=True),
     packages.NumpyC(required=True),
+    packages.googletest(required=True),
     packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 

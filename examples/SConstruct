@@ -5,6 +5,9 @@ examples = [
   "build-test",
   "laplace1d",
   "laplace2d",
+  "poisson1d",
+  "poisson2d",
+  "diffusion1d",
   "templates",
 ]
 examples = ["diffusion1d"]

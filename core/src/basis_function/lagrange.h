@@ -5,7 +5,6 @@
 namespace BasisFunction
 {
 
-template<int D>
 class Lagrange : public BasisFunction
 {
 public:

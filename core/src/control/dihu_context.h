@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <output_writer/generic.h>
+#include <data_management/data.h>
 
 class DihuContext
 {
@@ -19,9 +20,9 @@ public:
   ///! get reference to a PetscErrorCode temporary variable to be used to assign petsc error codes
   PetscErrorCode &ierr();
   
-  ///! call all output writers to write output 
-  void writeOutput(ProblemData &problemData, PyObject *specificSettings);
-  
+  ///! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
+  void writeOutput(Data::Data &problemData, PyObject *specificSettings, 
+                   int timeStepNo = -1, double currentTime = 0.0);
   
   ///! destructor
   ~DihuContext();

@@ -24,7 +24,6 @@ public:
   
   // perform computation
   void run();
-  virtual void evaluateTimesteppingRightHandSide(Vec &input, Vec &output) = 0;
   
   //! initialize for use with timestepping
   void initialize();

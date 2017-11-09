@@ -14,6 +14,9 @@ public:
   ///! constructor, initialize context, parse command line parameters and input file
   DihuContext(int argc, char *argv[]);
   
+  ///! constructor for test cases
+  DihuContext(int argc, char *argv[], std::string pythonSettings);
+  
   ///! return the top-level python config object
   PyObject *getPythonConfig();
   
@@ -28,9 +31,11 @@ public:
   ~DihuContext();
   
 private:
+  ///! read in file and execute python script and store global variables
+  void loadPythonScriptFromFile(std::string filename);
   
   ///! execute python script and store global variables
-  void loadPythonScript(std::string filename);
+  void loadPythonScript(std::string text);
   
   ///! create output writer from settings
   void initializeOutputWriter();

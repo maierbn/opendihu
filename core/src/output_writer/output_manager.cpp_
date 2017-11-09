@@ -1,0 +1,663 @@
+#include "output_manager.h"
+
+#include <cstdlib>
+#include <fstream>
+#include <algorithm>
+#include <cstring>
+#include <sstream>
+#include <thread>
+#include <chrono>
+
+#include "control/misc.h"
+
+using namespace std;
+using namespace chrono;
+
+RealType OutputManager::interpolate_u (RealType x,				///< [in] x coordinate, where u should be interpolated
+							RealType y,							///< [in] y coordinate, where u should be interpolated
+							GridFunction & u,					///< [in] field of values of u
+							const PointType & mesh_width,		///< [in] The mesh width in x direction and y direction.
+							int discretization		            ///< [in] which discretization scheme is used (0=FD, 1=FE)
+							)
+{
+    MultiIndexType index;
+    RealType x1=0, x2=0, y1=0, y2=0;
+
+
+	if (discretization == 0)	//Finite Differences Discretization
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|...
+		// |>|L|_|... <- position of (x,y) = (0,0) (bottom left corner of cell)
+		// |x|_|_|... <- position of (i,j) = (0,0) (center of cell)
+
+		// Index of the next lower left point where u is defined
+		index[0] = int(x / mesh_width[0]);					 // 0 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1] + 0.5);             // 1 <= index[1] < max_j
+
+		// points where next values of u are defined
+		x1 = (index[0]) * mesh_width[0];			// left
+		x2 = (index[0] + 1.0) * mesh_width[0];		// right
+		y1 = (index[1] - 0.5) * mesh_width[1];     // lower
+		y2 = (index[1] + 0.5) * mesh_width[1];     // upper
+	}
+	else if (discretization == 1)	//Finite Elements Discretization
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|. . . 
+		// |_|_|_|. . . 
+		// |L|_|_|. . . <- position of (i,j) = (0,0), position of (x,y) = (0,0) (bottom left corner of cell)
+
+		// Index of the next lower left point where u is defined
+		index[0] = int(x / mesh_width[0]);			 // 0 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1]);             // 0 <= index[1] < max_j
+
+		// points where next values of u are defined
+		x1 = (index[0]) * mesh_width[0];      // left
+		x2 = (index[0]+1) * mesh_width[0];			 // right
+		y1 = (index[1]) * mesh_width[1];      // lower
+		y2 = (index[1]+1) * mesh_width[1];			 // upper
+	}
+
+    // indices of all nearest points, where u is defined
+    MultiIndexType index_lower_left, index_lower_right, index_upper_left, index_upper_right;
+
+    index_lower_left[0]  = index[0];
+    index_lower_left[1]  = index[1];
+
+    index_lower_right[0] = index[0]+1;
+    index_lower_right[1] = index[1];
+
+    index_upper_left[0]  = index[0];
+    index_upper_left[1]  = index[1]+1;
+
+    index_upper_right[0] = index[0]+1;
+    index_upper_right[1] = index[1]+1;
+
+    // evaluate u at indices
+    RealType u_lower_left  = u.data(index_lower_left);
+	RealType u_lower_right = u.data(index_lower_right);
+	RealType u_upper_left =  u.data(index_upper_left);
+	RealType u_upper_right = u.data(index_upper_right);
+
+    // baricentric interpolation
+	return 1.0 / (mesh_width[0] * mesh_width[1])
+                    * (
+                          (x2 - x) * (y2 - y) * u_lower_left
+                        + (x - x1) * (y2 - y) * u_lower_right
+                        + (x2 - x) * (y - y1) * u_upper_left
+                        + (x - x1) * (y - y1) * u_upper_right
+                       );
+}
+
+RealType OutputManager::interpolate_v(RealType x,							///< [in] x coordinate, where v should be interpolated
+							RealType y,							///< [in] y coordinate, where v should be interpolated
+							GridFunction & v,				///< [in] field of values of v
+							const PointType & mesh_width,		///< [in] The mesh width in x direction and y direction.
+							int discretization		            ///< [in] which discretization scheme is used (0=FD, 1=FE)							
+)
+{
+    MultiIndexType index;
+    RealType x1=0, x2=0, y1=0, y2=0;
+
+	
+	if (discretization == 0)	//Finite Differences Discretization
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|...
+		// |>|L|_|... <- position of (x,y) = (0,0) (bottom left corner of cell)
+		// |x|_|_|... <- position of (i,j) = (0,0) (center of cell)
+
+		// Index of the next lower left point where v is defined
+		index[0] = int(x / mesh_width[0] + 0.5);             // 1 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1]);                   // 0 <= index[1] < max_j
+
+		// points where next values of v are defined
+		x1 = (index[0] - 0.5) * mesh_width[0];      // left
+		x2 = (index[0] + 0.5) * mesh_width[0];      // right
+		y1 = (index[1]) * mesh_width[1];		     // lower
+		y2 = (index[1] + 1.0) * mesh_width[1];      // upper
+
+	}
+	else	//Finite Element Discretization
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|. . .
+		// |_|_|_|. . . 
+		// |L|_|_|. . . <- position of (i,j) = (0,0), position of (x,y) = (0,0) (bottom left corner of cell)
+
+
+		// Index of the next lower left point where u is defined
+		index[0] = int(x / mesh_width[0]);			 // 0 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1]);             // 0 <= index[1] < max_j
+
+		// points where next values of u are defined
+		x1 = (index[0]) * mesh_width[0];      // left
+		x2 = (index[0]+1) * mesh_width[0];			 // right
+		y1 = (index[1]) * mesh_width[1];      // lower
+		y2 = (index[1]+1) * mesh_width[1];			 // upper
+	}
+
+    // indices of all nearest points, where v is defined
+    MultiIndexType index_lower_left, index_lower_right, index_upper_left, index_upper_right;
+
+    index_lower_left[0]  = index[0];
+    index_lower_left[1]  = index[1];
+
+    index_lower_right[0] = index[0]+1;
+    index_lower_right[1] = index[1];
+
+    index_upper_left[0]  = index[0];
+    index_upper_left[1]  = index[1]+1;
+
+    index_upper_right[0] = index[0]+1;
+    index_upper_right[1] = index[1]+1;
+
+    // evaluate v at indices
+    RealType v_lower_left  = v.data(index_lower_left);
+	RealType v_lower_right = v.data(index_lower_right);
+	RealType v_upper_left  = v.data(index_upper_left);
+	RealType v_upper_right = v.data(index_upper_right);
+
+    // baricentric interpolation
+    return 1.0 / (mesh_width[0] * mesh_width[1])
+                    * (
+                          (x2 - x) * (y2 - y) * v_lower_left
+                        + (x - x1) * (y2 - y) * v_lower_right
+                        + (x2 - x) * (y - y1) * v_upper_left
+                        + (x - x1) * (y - y1) * v_upper_right
+                       );
+}
+
+RealType OutputManager::interpolate_p(RealType x,							///< [in] x coordinate, where p should be interpolated
+							RealType y,							///< [in] y coordinate, where p should be interpolated
+							GridFunction & p,				///< [in] field of values of p
+							const PointType & mesh_width,		///< [in] The mesh width in x direction and y direction.
+							int discretization		            ///< [in] which discretization scheme is used (0=FD, 1=FE)	
+							)
+{
+    // Index of the next lower left point where p is defined
+    MultiIndexType index;
+    RealType x1=0, x2=0, y1=0, y2=0;
+
+	if (discretization == 0)	//Finite Differences Discretization
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|...
+		// |>|L|_|... <- position of (x,y) = (0,0) (bottom left corner of cell)
+		// |x|_|_|... <- position of (i,j) = (0,0) (center of cell)
+
+		index[0] = int(x / mesh_width[0] + 0.5);             // 0 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1] + 0.5);             // 1 <= index[1] < max_j
+
+		// points where next values of p are defined
+		x1 = (index[0] - 0.5) * mesh_width[0];      // left
+		x2 = (index[0] + 0.5) * mesh_width[0];      // right
+		y1 = (index[1] - 0.5) * mesh_width[1];      // lower
+		y2 = (index[1] + 0.5) * mesh_width[1];      // upper
+	}
+	else if(discretization == 1)		//FE
+	{
+		// . . .   .
+		// . . .  .
+		// ._._._.
+		// |_|_|_|. . .
+		// |_|_|_|. . . 
+		// |L|_|_|. . . <- position of (i,j) = (0,0) (center of cell), position of (x,y) = (0,0) (bottom left corner of cell)
+
+
+		// Index of the next lower left point where u is defined
+		index[0] = int(x / mesh_width[0]);			 // 0 <= index[0] < max_i
+		index[1] = int(y / mesh_width[1]);             // 0 <= index[1] < max_j
+
+		// points where next values of u are defined
+		x1 = (index[0]) * mesh_width[0];      // left
+		x2 = (index[0]+1) * mesh_width[0];			 // right
+		y1 = (index[1]) * mesh_width[1];      // lower
+		y2 = (index[1]+1) * mesh_width[1];			 // upper
+	}
+
+    // indices of all nearest points, where p is defined
+    MultiIndexType index_lower_left, index_lower_right, index_upper_left, index_upper_right;
+
+    index_lower_left[0]  = index[0];
+    index_lower_left[1]  = index[1];
+
+    index_lower_right[0] = index[0]+1;
+    index_lower_right[1] = index[1];
+
+    index_upper_left[0]  = index[0];
+    index_upper_left[1]  = index[1]+1;
+
+    index_upper_right[0] = index[0]+1;
+    index_upper_right[1] = index[1]+1;
+
+    // evaluate u at indices
+    RealType u_lower_left  = p.data(index_lower_left);
+	RealType u_lower_right = p.data(index_lower_right);
+	RealType u_upper_left =  p.data(index_upper_left);
+	RealType u_upper_right = p.data(index_upper_right);
+
+    // baricentric interpolation
+    return 1.0 / (mesh_width[0] * mesh_width[1])
+                    * (
+                          (x2 - x) * (y2 - y) * u_lower_left
+                        + (x - x1) * (y2 - y) * u_lower_right
+                        + (x2 - x) * (y - y1) * u_upper_left
+                        + (x - x1) * (y - y1) * u_upper_right
+                       );
+}
+
+void OutputManager::writeVTKMasterFile(
+	int step,					///< [in] number of time step
+	Communication *comm			///< [in] Communication object
+)
+{
+    stringstream filename;
+    filename<<"output/field_"<<step<<".pvtr";
+
+	filebuf fb;
+	fb.open(const_cast<char *>(filename.str().c_str()), ios::out);
+
+	if (!fb.is_open())
+	{
+		system("mkdir output");
+		this_thread::sleep_for(milliseconds(500));
+		fb.open(const_cast<char *>(filename.str().c_str()), ios::out);
+	}
+	
+	ostream os(&fb);
+
+	os<<"<?xml version=\"1.0\"?>"<<endl;
+	os<<"<VTKFile type=\"PRectilinearGrid\">"<<endl;
+	os<<"<PRectilinearGrid WholeExtent=\"0 "<<comm->get_global_dimension()[0]<<" 0 "
+			<<comm->get_global_dimension()[1]<<" 0 0\" GhostLevel=\"0\">"
+			<<endl;
+	os<<"<PCoordinates>"<<endl;
+	os<<"<PDataArray type=\"Float64\"/>"<<endl;
+	os<<"<PDataArray type=\"Float64\"/>"<<endl;
+	os<<"<PDataArray type=\"Float64\"/>"<<endl;
+	os<<"</PCoordinates>"<<endl;
+
+    MultiIndexType n_subareas = comm->get_n_subareas();
+
+    int x_begin = 0;
+    int y_begin = 0;
+    
+    MultiIndexType local_dimension;
+    
+    for(int y = 0; y < n_subareas[1]; y++)      // iterate over row (y-direction)
+    {
+        x_begin = 0;
+        for(int x = 0; x < n_subareas[0]; x++)      // iterate over column (x-direction)
+        {
+            local_dimension = comm->get_local_dimension(x, y);
+            
+            os<<"<Piece Extent=\""
+              <<x_begin<<" "<<x_begin+local_dimension[0]<<" "
+              <<y_begin<<" "<<y_begin+local_dimension[1]<<" 0 0\" "
+              <<"Source=\"field_"<<step<<"_processor_"<<y<<"_"<<x<<".vtr\"/>"<<endl;
+              
+            x_begin += local_dimension[0];
+        }
+        y_begin += local_dimension[1];
+    }
+
+	os<<"<PPointData Vectors=\"field\" Scalars=\"p, vorticity, stream\">"<<endl;
+	os<<"<PDataArray type=\"Float64\" NumberOfComponents=\"3\" Name=\"field\"     format=\"ascii\"/>"<<endl;
+	os<<"<PDataArray type=\"Float64\"                          Name=\"p\"         format=\"ascii\"/>"<<endl;
+	os<<"<PDataArray type=\"Float64\"                          Name=\"vorticity\" format=\"ascii\"/>"<<endl;
+	os<<"<PDataArray type=\"Float64\"                          Name=\"stream\"    format=\"ascii\"/>"<<endl;
+    os<<"<PDataArray type=\"Float64\"                          Name=\"rhs\"       format=\"ascii\"/>"<<endl;
+    os<<"<PDataArray type=\"Float64\"                          Name=\"partitioning\"    format=\"ascii\"/>"<<endl;
+	os<<"</PPointData>"<<endl;
+
+	os<<"</PRectilinearGrid>"<<endl;
+    
+    os<<"<PUnstructuredGrid GhostLevel=\"0\">"<<endl;
+    os<<"<PPointData></PPointData>"<<endl;
+    os<<"<PCellData>"<<endl;
+    os<<"<DataArray type=\"Float32\" Name=\"particles\" format=\"ascii\">"<<endl;
+    os<<"</DataArray>"<<endl;
+    os<<"</PCellData>"<<endl;
+    os<<"<PPoints>"<<endl;
+    os<<"<PDataArray NumberOfComponents=\"3\">"<<endl;
+    os<<"</PDataArray>"<<endl;
+    os<<"</PPoints>"<<endl;
+    os<<"<Piece Source=\"particles_"<<step<<".vtu\"/>"<<endl;
+
+    os<<"</PUnstructuredGrid> "<<endl;
+    
+	os<<"</VTKFile>"<<endl;
+}
+
+void OutputManager::writeVTKSlaveFile(
+	GridFunction &u,			///< [in] grid function of velocity u
+	GridFunction &v,			///< [in] grid function of velocity v
+	GridFunction &p,			///< [in] grid function of pressure p
+	GridFunction &stream,		///< [in] grid function of stream
+	GridFunction &rhs,		    ///< [in] grid function of right hand side of pressure poisson equation
+	const PointType &physical_length,	///< [in] the mesh width in x- and y-direction
+	int discretization,			///< [in] type of discretization (0=FD, 1=FE)
+	int step,					///< [in] number of time step
+	Communication *comm			///< [in] Communication object
+)
+{
+	// point (0,0) in paraview coordinates is at left bottom corner of cell p[1][1]
+	// the area per slave file is always [0,local_dimension[0]*mesh_width[1]] x [0,local_dimension[1]*mesh_width[1]]
+	// it contains (local_dimension[0]+1)*(local_dimension[1]+1) points, that are on the corners between the cells
+	
+    // open output file
+	stringstream filename;
+#ifndef _WIN32
+	filename << "./";
+#endif
+	filename<< "output/field_" << step << "_processor_"
+        <<comm->get_index()[1]<<"_"<<comm->get_index()[0]<<".vtr";
+
+	filebuf fb;
+	fb.open(const_cast<char *>(filename.str().c_str()), ios::out);
+
+	if (!fb.is_open())
+	{
+		system("mkdir output");
+		this_thread::sleep_for(milliseconds(500));
+		fb.open(const_cast<char *>(filename.str().c_str()), ios::out);
+	}
+
+    if(!fb.is_open())
+    {
+        cout<<"WARNING! File \""<<filename.str()<<"\" could not be opened."<<endl;
+    }
+
+	ostream os(&fb);
+
+    MultiIndexType normal_local_dimension = comm->get_normal_local_dimension();
+    MultiIndexType local_dimension = comm->get_local_dimension();
+    PointType mesh_width = comm->get_h(physical_length);
+
+    MultiIndexType index = comm->get_index();
+
+    RealType offset_x = mesh_width[0] * normal_local_dimension[0] * index[0];
+    RealType offset_y = mesh_width[1] * normal_local_dimension[1] * index[1];
+
+    os<<"<?xml version=\"1.0\"?>"<<endl;
+    os<<"<VTKFile type=\"RectilinearGrid\">"<<endl;
+  
+#ifdef USE_OLD_PARAVIEW
+    // whole extent = whole extent in master (for paraview version 3.10.1 (Windows on VISGS-Pool computer?))
+    os<<"<RectilinearGrid WholeExtent=\""
+        <<"0 "<<comm->get_global_dimension()[0]<<" "
+        <<"0 "<<comm->get_global_dimension()[1]<<" "
+        <<"0 0\" GhostLevel=\"0\">"
+        <<endl;
+       
+#else  
+    // whole extent = piece extent in slave (for paraview version 3.98.1 (Linux on VISGS-Pool computers))
+    os<<"<RectilinearGrid WholeExtent=\""
+        <<index[0]*normal_local_dimension[0]<<" "<<index[0]*normal_local_dimension[0]+local_dimension[0]<<" "
+        <<index[1]*normal_local_dimension[1]<<" "<<index[1]*normal_local_dimension[1]+local_dimension[1]<<" "
+        <<"0 0\" GhostLevel=\"0\">"
+        <<endl;
+#endif
+        
+    os<<"<Piece Extent=\""
+        <<index[0]*normal_local_dimension[0]<<" "<<index[0]*normal_local_dimension[0]+local_dimension[0]<<" "
+        <<index[1]*normal_local_dimension[1]<<" "<<index[1]*normal_local_dimension[1]+local_dimension[1]<<" "
+        <<"0 0\">"<<endl;
+
+    // write coordinates of grid points to output
+    
+    //os<<"index[0]="<<index[0]<<", local_dimension[0]="<<local_dimension[0]<<", offset_x="<<offset_x<<endl
+    //    <<"index[1]="<<index[1]<<", local_dimension[1]="<<local_dimension[1]<<", offset_y="<<offset_y<<endl;
+    
+        
+	os<<"<Coordinates>"<<endl;
+
+	os<<"<DataArray type=\"Float64\" format=\"ascii\">"<<endl;
+	for(int j = 0; j < local_dimension[0]+1; j++)     // columns (x-direction)
+    {
+        os<<scientific<<offset_x+j*mesh_width[0]<<" ";
+    }
+	os<<endl;
+	os<<"</DataArray>"<<endl;
+
+	os<<"<DataArray type=\"Float64\" format=\"ascii\">"<<endl;
+    for(int i = 0; i < local_dimension[1]+1; i++)     // rows (y-direction)
+    {
+        os<<scientific<<offset_y+i*mesh_width[1]<<" ";
+    }
+	os<<endl;
+	os<<"</DataArray>"<<endl;
+
+	os<<"<DataArray type=\"Float64\" format=\"ascii\">0 0</DataArray>"<<endl;
+
+	os<<"</Coordinates>"<<endl;
+
+	os<<"<PointData Vectors=\"field\" Scalars=\"p, vorticity, stream, rhs, partitioning\">"<<endl;
+
+	// write velocity field to output
+	os<<"<DataArray Name=\"field\" NumberOfComponents=\"3\" type=\"Float64\" format=\"ascii\">"<<endl;
+	for (int row = 0; row < local_dimension[1]+1; row++)
+	{
+        RealType y = row * mesh_width[1];
+
+		for (int column = 0; column < local_dimension[0]+1; column++)
+		{
+            RealType x = column * mesh_width[0];
+			RealType u_value = interpolate_u(x, y, u, mesh_width, discretization);
+			RealType v_value = interpolate_v(x, y, v, mesh_width, discretization);
+
+			os<<scientific
+              <<u_value<<" "
+			  <<v_value<< " "
+              <<0.<<" ";
+		}
+		os<<endl;
+	}
+	os<<"</DataArray>"<<endl;
+
+    // write pressure field to output
+	os<<"<DataArray type=\"Float64\" Name=\"p\" format=\"ascii\">"<<endl;
+	for (int row = 0; row < local_dimension[1]+1; row++)
+	{
+        RealType y = (row) * mesh_width[1];
+
+		for (int column = 0; column < local_dimension[0]+1; column++)
+		{
+            RealType x = (column) * mesh_width[0];
+			os<<scientific
+				<< interpolate_p(x, y, p, mesh_width, discretization) << " ";
+		}
+		os<<endl;
+	}
+	os<<"</DataArray>"<<endl;
+
+    // write vorticity field to output
+	os<<"<DataArray type=\"Float64\" Name=\"vorticity\" format=\"ascii\">"<<endl;
+	for (int row = 1; row <= local_dimension[1]+1; row++)
+	{
+		for (int column = 1; column <= local_dimension[0]+1; column++)
+		{
+		    RealType vorticity = (u.data(column-1, row) - u.data(column-1, row-1)) / mesh_width[1]
+                                 - (v.data(column, row-1) - v.data(column-1, row-1)) / mesh_width[0];
+			os<<scientific<<vorticity<<" ";
+		}
+		os<<endl;
+	}
+	os<<"</DataArray>"<<endl;
+
+    
+    // write stream field to output
+    os<<"<DataArray type=\"Float64\" Name=\"stream\" format=\"ascii\">"<<endl;
+	if(discretization == 0)		//FD
+	{
+		for (int row = 1; row <= local_dimension[1]; row++)
+		{
+			for (int column = 1; column <= local_dimension[0]; column++)
+			{
+				os<<scientific<<0.25*(stream.data(column, row-1) + stream.data(column-1, row-1)
+					 + stream.data(column-1, row) + stream.data(column, row))<<" ";
+			}
+			os << scientific << 0.0<< " ";
+			os<<endl;
+		}
+		for (int column = 1; column <= local_dimension[0]+1; column++)
+		{
+			os << scientific << .0 << " ";
+		}
+	}
+	else		//FE
+	{
+		for (int row = 0; row < local_dimension[1]+1; row++)
+		{
+			RealType y = (row) * mesh_width[1];
+
+			for (int column = 0; column < local_dimension[0]+1; column++)
+			{
+				RealType x = (column) * mesh_width[0];
+				os<<scientific
+					<< interpolate_p(x, y, stream, mesh_width, discretization) << " ";
+			}
+			os<<endl;
+		}
+	}
+
+    os<<"</DataArray>"<<endl;
+    
+	
+    // write rhs field to output
+	os<<"<DataArray type=\"Float64\" Name=\"rhs\" format=\"ascii\">"<<endl;
+	for (int row = 0; row < local_dimension[1]+1; row++)
+	{
+        RealType y = (row) * mesh_width[1];
+
+		for (int column = 0; column < local_dimension[0]+1; column++)
+		{
+            RealType x = (column) * mesh_width[0];
+			os<<scientific
+				<< interpolate_p(x, y, rhs, mesh_width, discretization) << " ";
+		}
+		os<<endl;
+	}
+	os<<"</DataArray>"<<endl;
+
+
+    // write stream field to output
+    os<<"<DataArray type=\"Float64\" Name=\"partitioning\" format=\"ascii\">"<<endl;
+    for (int row = 1; row <= local_dimension[1]+1; row++)
+    {
+        for (int column = 1; column <= local_dimension[0]+1; column++)
+        {
+            os<<scientific<<comm->get_id()<<" ";
+        }
+        os<<endl;
+    }
+    os<<"</DataArray>"<<endl;
+    
+	os<<"</PointData>"<<endl;
+	os<<"</Piece>"<<endl;
+
+	os<<"</RectilinearGrid>"<<endl;
+	os<<"</VTKFile>"<<endl;
+}
+
+void OutputManager::writeCSVFile(
+	GridFunction &u,			///< [in] grid function of velocity u
+	GridFunction &v,			///< [in] grid function of velocity v	
+	const PointType &physical_length,	///< [in] physical length of domain
+	RealType reynolds_number,	///< [in] reynolds number
+	double current_time,		///< [in] current time
+	Communication *comm			///< [in] Communication object
+)
+{
+
+	// find max vorticity in bottom right corner
+	if (comm->get_global_dimension()[0] != 128 || comm->get_global_dimension()[1] != 128)
+	{
+		cout << "WARNING! UQ not possible with a dimension unequal to (128,128)." << endl;
+		return;
+	}
+
+	PointType mesh_width = comm->get_h(physical_length);
+	RealType max_vorticity = 0;
+	int max_vorticity_pos_x = 0;
+	int max_vorticity_pos_y = 0;
+
+	for (int row = 1; row <= 64; row++)
+	{
+		for (int column = 70; column <= 128; column++)
+		{
+			if (row-64 > column-70)
+				continue;
+
+			RealType vorticity = (u.data(column-1, row) - u.data(column-1, row-1)) / mesh_width[1]
+				- (v.data(column, row-1) - v.data(column-1, row-1)) / mesh_width[0];
+			if (vorticity > max_vorticity)
+			{
+				max_vorticity = vorticity;
+				max_vorticity_pos_x = column;
+				max_vorticity_pos_y = row;
+			}
+		}
+	}
+
+	// open output file
+	stringstream filename;
+#ifndef _WIN32
+	filename << "./";
+#endif
+	filename << "uq.csv";
+
+	fstream file;
+	file.open(filename.str().c_str(), ios::out | ios::app);
+	
+	if (!file.is_open())
+	{
+		system("mkdir output");
+		this_thread::sleep_for(milliseconds(500));
+		cout << "Created folder output." << endl;
+		file.open(filename.str().c_str(), ios::out |  ios::app);
+	}
+
+	if (!file.is_open())
+	{
+		cout << "WARNING! File \"" << filename.str() << "\" could not be opened." << endl;
+	}
+
+
+	time_t now = time(NULL);
+	tm *tm_time = localtime(&now);
+	stringstream time_stamp;
+	time_stamp << tm_time->tm_mday << "." << tm_time->tm_mon + 1 << "." << tm_time->tm_year + 1900 << " "
+		<< tm_time->tm_hour << ":" << tm_time->tm_min << ":" << tm_time->tm_sec;
+
+	//Re, step no., (120,5), (64,64), (5,120), max. vorticity, (i,j) position of max. vorticity
+	file 
+		<< time_stamp.str() << ";"
+		<< machine_id_ << ";"
+		<< reynolds_number << ";"
+		<< current_time << ";"
+		<< scientific << u.data(120, 5) << ";"
+		<< scientific << v.data(120, 5) << ";"
+		<< scientific << u.data(64, 64) << ";"
+		<< scientific << v.data(64, 64) << ";"
+		<< scientific << u.data(5, 120) << ";"
+		<< scientific << v.data(5, 120) << ";"
+		<< scientific << max_vorticity << ";"
+		<< max_vorticity_pos_x << ";"
+		<< max_vorticity_pos_y
+		<< endl;
+
+	file.close();
+}

@@ -4,12 +4,12 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <numeric>
 
 #include "easylogging++.h"
 
 #include "control/python_utility.h"
 #include "control/dihu_context.h"
+#include <control/petsc_utility.h>
 
 namespace Data
 {
@@ -137,23 +137,11 @@ void FiniteElements::print()
   
   if (!disableMatrixPrinting_)
   {
+    std::vector<double> matrixValues; 
+    std::vector<double> vectorValues;
     
-    std::vector<int> rowIndices(nRows);
-    std::iota(rowIndices.begin(), rowIndices.end(), 0);
-    std::vector<int> columnIndices(nColumns);
-    std::iota(columnIndices.begin(), columnIndices.end(), 0);
-    std::vector<double> matrixValues(nRows*nColumns);
-    
-    MatGetValues(stiffnessMatrix_, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
-      
-    int nEntries;
-    VecGetSize(rhs_, &nEntries);
-    
-    std::vector<int> indices(nEntries);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<double> vectorValues(nEntries);
-    
-    VecGetValues(rhs_, nEntries, indices.data(), vectorValues.data());
+    PetscUtility::getMatrixEntries(stiffnessMatrix_, matrixValues);
+    PetscUtility::getVectorEntries(rhs_, vectorValues);
     
     std::stringstream s;
     s<<"    ";
@@ -228,11 +216,8 @@ void FiniteElements::print()
   
   LOG(INFO)<<"rhs ("<<nEntries<<" entries):";
   
-  std::vector<int> indices(nEntries);
-  std::iota(indices.begin(), indices.end(), 0);
-  std::vector<double> vectorValues(nEntries);
-  
-  VecGetValues(rhs_, nEntries, indices.data(), vectorValues.data());
+  std::vector<double> vectorValues;
+  PetscUtility::getVectorEntries(rhs_, vectorValues);
   
   std::stringstream s;
   for (int i=0; i<nEntries; i++)
@@ -246,11 +231,7 @@ void FiniteElements::print()
   
   LOG(INFO)<<"solution ("<<nEntries<<" entries):";
     
-  indices.resize(nEntries);
-  std::iota(indices.begin(), indices.end(), 0);
-  vectorValues.resize(nEntries);
-  VecGetValues(solution_, nEntries, indices.data(), vectorValues.data());
-  
+  PetscUtility::getVectorEntries(solution_, vectorValues);
   s.str("");
   for (int i=0; i<nEntries; i++)
   {

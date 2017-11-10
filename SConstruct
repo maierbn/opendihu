@@ -5,7 +5,7 @@
 SConscript('core/SConstruct')
 
 # build tests
-SConscript('testing/SConstruct3')
+SConscript('testing/SConstruct')
 
 # build examples
 SConscript('examples/SConstruct')

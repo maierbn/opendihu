@@ -158,7 +158,7 @@ PyObject *PythonUtility::extractDict(PyObject *dict, std::string keyString)
     }
     else
     {
-      LOG(FATAL) << "Dict does not contain key \""<<keyString<<"\"!"<<std::endl;
+      LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\"!"<<std::endl;
       return NULL;
     }
   }

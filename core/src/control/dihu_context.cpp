@@ -22,6 +22,9 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
   
   LOG(DEBUG) << "DihuContext constructor";
   
+  // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
+  MPI_Init(&argc, &argv);
+  
   // initialize PETSc
   PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
   
@@ -235,6 +238,8 @@ void DihuContext::createOutputWriterFromSettings(PyObject *dict)
 
 DihuContext::~DihuContext()
 {
+  LOG(DEBUG) << "DihuContext destructor";
+  
   Py_Finalize();
   if (pythonConfig_)
     Py_DECREF(pythonConfig_);

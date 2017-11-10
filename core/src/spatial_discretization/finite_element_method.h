@@ -13,6 +13,8 @@
 #include "equation/type_traits.h"
 #include "mesh/mesh.h"
 
+#include "gtest/gtest_prod.h"
+
 namespace SpatialDiscretization
 {
  
@@ -27,11 +29,16 @@ public:
   
   //! initialize for use with timestepping
   void initialize();
-  
+    
   //! get the stored mesh
   std::shared_ptr<Mesh::Mesh> mesh();
   
+  friend class FunctionTester;    ///< a class used for testing 
+  
 protected:
+ 
+  FRIEND_TEST(LaplaceTest, MatrixIsCorrect);
+ 
   virtual void setRightHandSide() = 0;
   virtual void applyBoundaryConditions();
   virtual void setStiffnessMatrix();

@@ -14,7 +14,8 @@ namespace SpatialDiscretization
 {
 
 template<typename Mesh, typename BasisFunction>
-FiniteElementMethodBase<Mesh, BasisFunction>::FiniteElementMethodBase(DihuContext &context) :
+FiniteElementMethodBase<Mesh, BasisFunction>::
+FiniteElementMethodBase(DihuContext &context) :
   context_(context), data_(context)
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
@@ -364,13 +365,15 @@ setStiffnessMatrix()
 }
   
 template<typename MeshT, typename BasisFunction>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<MeshT, BasisFunction>::mesh()
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<MeshT, BasisFunction>::
+mesh()
 {
   return data_.mesh();
 }
   
 template<typename Mesh, typename BasisFunction>
-void FiniteElementMethodBase<Mesh, BasisFunction>::initialize()
+void FiniteElementMethodBase<Mesh, BasisFunction>::
+initialize()
 {
   setStiffnessMatrix();
   setRightHandSide();
@@ -380,7 +383,8 @@ void FiniteElementMethodBase<Mesh, BasisFunction>::initialize()
 }
   
 template<typename Mesh, typename BasisFunction>
-void FiniteElementMethodBase<Mesh, BasisFunction>::run()
+void FiniteElementMethodBase<Mesh, BasisFunction>::
+run()
 {
   initialize();
   solve();
@@ -390,7 +394,8 @@ void FiniteElementMethodBase<Mesh, BasisFunction>::run()
 }
 
 template<typename Mesh, typename BasisFunction>
-void FiniteElementMethodBase<Mesh, BasisFunction>::solve()
+void FiniteElementMethodBase<Mesh, BasisFunction>::
+solve()
 {
   LOG(DEBUG) << "FiniteElementMethod::solve";
   

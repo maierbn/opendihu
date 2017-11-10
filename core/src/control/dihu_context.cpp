@@ -17,13 +17,10 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
 {
   START_EASYLOGGINGPP(argc, argv);
 
-  // load configuration from file
-  el::Configurations conf("logging.conf");
+  // load configuration from file if it exits
+  initializeLogging();
   
-  // reconfigure all loggers
-  el::Loggers::reconfigureAllLoggers(conf);
-  
-  LOG(DEBUG) << "DihuContext constructor" << std::endl;
+  LOG(DEBUG) << "DihuContext constructor";
   
   // initialize PETSc
   PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
@@ -39,9 +36,8 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
   loadPythonScriptFromFile(filename);
 }  
 
-DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings)
-{ 
-  DihuContext(argc, argv);
+DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv)
+{
   loadPythonScript(pythonSettings);
 }
 
@@ -56,10 +52,6 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 {
   LOG(DEBUG)<<"loadPythonScriptFromFile";
   // initialize python interpreter
-  
-  char const *programName = "dihu";
-  Py_SetProgramName((char *)programName);  /* optional but recommended */
-  Py_Initialize();
   
   std::ifstream file(filename);
   if (!file.is_open())
@@ -87,7 +79,12 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  LOG(DEBUG)<<"loadPythonScript: "<<text;
+  
+  char const *programName = "dihu";
+  Py_SetProgramName((char *)programName);  /* optional but recommended */
+  Py_Initialize();
+  
+  LOG(DEBUG)<<"loadPythonScript";
   
   // execute python code
   int ret = 0;
@@ -127,6 +124,47 @@ void DihuContext::loadPythonScript(std::string text)
     initializeOutputWriter();
   }
 }
+
+void DihuContext::initializeLogging()
+{
+  std::ifstream file("logging.conf");
+  if (!file.is_open())
+  {
+    // if file does not exist, create it
+    std::ofstream out("logging.conf");
+    if (!out.is_open())
+    {
+      LOG(ERROR) << "Could not open logging file for output";
+    }
+    out << R"(
+* GLOBAL:
+   FORMAT               =  "INFO : %msg"
+   FILENAME             =  "/tmp/logs/my.log"
+   ENABLED              =  true
+   TO_FILE              =  true
+   TO_STANDARD_OUTPUT   =  true
+   SUBSECOND_PRECISION  =  1
+   PERFORMANCE_TRACKING =  false
+   MAX_LOG_FILE_SIZE    =  2097152 ## 2MB - Comment starts with two hashes (##)
+   LOG_FLUSH_THRESHOLD  =  100 ## Flush after every 100 logs
+* DEBUG:
+   FORMAT               = "DEBUG: %msg"
+* WARNING:
+   FORMAT               = "WARN : %loc %func: Warning: %msg"
+* ERROR:
+   FORMAT               = "ERROR: %loc %func: Error: %msg"
+* FATAL:
+   FORMAT               = "FATAL: %loc %func: Fatal error: %msg"
+    )";
+  }
+  file.close();
+  
+  el::Configurations conf("logging.conf");
+  
+  // reconfigure all loggers
+  el::Loggers::reconfigureAllLoggers(conf);
+}
+
 
 void DihuContext::initializeOutputWriter()
 {

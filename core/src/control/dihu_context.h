@@ -37,6 +37,9 @@ private:
   ///! execute python script and store global variables
   void loadPythonScript(std::string text);
   
+  ///! initiaize the easylogging++ framework
+  void initializeLogging();
+  
   ///! create output writer from settings
   void initializeOutputWriter();
   

@@ -24,8 +24,7 @@ public:
   PetscErrorCode &ierr();
   
   ///! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
-  void writeOutput(Data::Data &problemData, PyObject *specificSettings, 
-                   int timeStepNo = -1, double currentTime = 0.0);
+  void writeOutput(Data::Data &problemData, int timeStepNo = -1, double currentTime = 0.0);
   
   ///! destructor
   ~DihuContext();

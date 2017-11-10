@@ -13,5 +13,11 @@ public:
 private:
 };
 
+class GeneralizedPoisson : public Static
+{
+public:
+private:
+};
+
 }  // namespace
 }  // namespace

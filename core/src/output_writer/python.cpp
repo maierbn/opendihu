@@ -22,7 +22,7 @@
 namespace OutputWriter
 {
 
-Python::Python(PyObject *settings) : settings_(settings)
+Python::Python(PyObject *settings) : Generic(settings)
 {
 
 }

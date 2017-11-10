@@ -28,6 +28,9 @@ public:
   //! return a reference to the increment vector
   Vec &increment();
  
+  //! print all stored data to stdout
+  void print();
+  
 private:
  
   //! initializes the vectors and stiffness matrix with size

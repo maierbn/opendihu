@@ -6,48 +6,11 @@
 #include "opendihu.h"
 #include <control/petsc_utility.h>
 #include "arg.h"
+#include "stiffness_matrix_tester.h"
 
 namespace SpatialDiscretization
 {
   
-class FunctionTester
-{
-public:
-  template<class MeshType, class BasisFunctionType, class EquationType>
-  static void compareMatrix(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod,
-    std::vector<double> &referenceMatrix
-                           )
-  {
-    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix();
-    std::vector<double> matrix;
-    PetscUtility::getMatrixEntries(stiffnessMatrix, matrix);
-    
-    ASSERT_EQ(matrix.size(), referenceMatrix.size()) << "Matrix has wrong number of entries";
-    for(unsigned int i=0; i<matrix.size(); i++)
-    {
-      EXPECT_EQ(matrix[i], referenceMatrix[i]) << "Matrix entry no. " << i << " differs";
-    }
-  }
-  
-  template<class MeshType, class BasisFunctionType, class EquationType>
-  static void compareRhs(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod,
-    std::vector<double> &referenceRhs
-                           )
-  {
-    Vec &rhsVector = finiteElementMethod.data_.rightHandSide();
-    std::vector<double> rhs;
-    PetscUtility::getVectorEntries(rhsVector, rhs);
-    
-    ASSERT_EQ(rhs.size(), referenceRhs.size()) << "Rhs has wrong number of entries";
-    for(unsigned int i=0; i<rhs.size(); i++)
-    {
-      EXPECT_EQ(rhs[i], referenceRhs[i]) << "Rhs entry no. " << i << " differs";
-    }
-  }
-};
-
 TEST(LaplaceTest, MatrixIsCorrect1DSmall)
 {
   std::string pythonConfig = R"(
@@ -67,11 +30,7 @@ config = {
     "physicalExtend": 4.0,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
-  },
-  "OutputWriter" : [
-    {"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-    {"format": "Python", "filename": "p"}
-  ]
+  }
 }
 )";
 
@@ -97,8 +56,11 @@ config = {
   std::vector<double> referenceRhs = {
     1, -0.8, 0, 0, 0, 0
   };
-  FunctionTester::compareMatrix(equationDiscretized, referenceMatrix);
-  FunctionTester::compareRhs(equationDiscretized, referenceRhs);
+  std::map<int, double> dirichletBC = {{0, 1.0}, {5,0.0}};
+  
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareRhs(equationDiscretized, referenceRhs);
+  StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
 }
 
 TEST(LaplaceTest, MatrixIsCorrect1DBig)
@@ -151,8 +113,10 @@ config = {
   std::vector<double> referenceRhs = {
     1, -0.05, 0, 0, 0, 0, 0, 0, 0, -0.1, 2
   };
-  FunctionTester::compareMatrix(equationDiscretized, referenceMatrix);
-  FunctionTester::compareRhs(equationDiscretized, referenceRhs);
+  std::map<int, double> dirichletBC = {{0, 1.0}, {10,2.0}};
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareRhs(equationDiscretized, referenceRhs);
+  StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
 }
 
 TEST(LaplaceTest, MatrixIsCorrect1DStencils)
@@ -208,7 +172,7 @@ config = {
     referenceMatrix[matrixIndex(node1, node1)] += stencil[0];
   }
   
-  FunctionTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
 
 TEST(LaplaceTest, MatrixIsCorrect2DSmall)
@@ -269,8 +233,11 @@ config = {
   std::vector<double> referenceRhs = {
     0, 1./3, 2./3, -1, -3, -2, -1, -3, -2, 0, 1./3, 2./3
   };
-  FunctionTester::compareMatrix(equationDiscretized, referenceMatrix);
-  FunctionTester::compareRhs(equationDiscretized, referenceRhs);
+  std::map<int, double> dirichletBC = {{0, 0.0}, {1,1./3}, {2,2./3}, {9,0}, {10,1./3}, {11,2./3}};
+  
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareRhs(equationDiscretized, referenceRhs);
+  StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
 }
 
 TEST(LaplaceTest, MatrixIsCorrect2DStencils)
@@ -348,7 +315,7 @@ config = {
     }
   }
     
-  FunctionTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
 };
 

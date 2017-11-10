@@ -36,6 +36,10 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
     filename = argv[1];
   }
   
+  char const *programName = "dihu";
+  Py_SetProgramName((char *)programName);  /* optional but recommended */
+  Py_Initialize();
+  
   loadPythonScriptFromFile(filename);
 }  
 
@@ -82,11 +86,6 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  
-  char const *programName = "dihu";
-  Py_SetProgramName((char *)programName);  /* optional but recommended */
-  Py_Initialize();
-  
   LOG(DEBUG)<<"loadPythonScript";
   
   // execute python code
@@ -130,6 +129,7 @@ void DihuContext::loadPythonScript(std::string text)
 
 void DihuContext::initializeLogging()
 {
+/*
   std::ifstream file("logging.conf");
   if (!file.is_open())
   {
@@ -163,6 +163,37 @@ void DihuContext::initializeLogging()
   file.close();
   
   el::Configurations conf("logging.conf");
+*/
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+  std::string separator(80, '_');
+  el::Configurations conf;
+  conf.setToDefault();
+  
+  conf.setGlobally(el::ConfigurationType::Format, "INFO : %msg");
+  conf.setGlobally(el::ConfigurationType::Filename, "/tmp/logs/my.log");
+  conf.setGlobally(el::ConfigurationType::Enabled, "true");
+  conf.setGlobally(el::ConfigurationType::ToFile, "true");
+  conf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
+  
+  // set format of outputs
+  conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
+  conf.set(el::Level::Warning, el::ConfigurationType::Format, 
+           "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
+  
+  conf.set(el::Level::Error, el::ConfigurationType::Format, 
+           "ERROR: %loc %func: \n" ANSI_COLOR_RED "\nError: %msg\n" ANSI_COLOR_RESET);
+  
+  conf.set(el::Level::Fatal, el::ConfigurationType::Format, 
+           std::string(ANSI_COLOR_MAGENTA)+"FATAL: %loc %func: \n"+separator
+           +"\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
   
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
@@ -240,12 +271,14 @@ DihuContext::~DihuContext()
 {
   LOG(DEBUG) << "DihuContext destructor";
   
-  Py_Finalize();
   if (pythonConfig_)
     Py_DECREF(pythonConfig_);
+  Py_Finalize();
 
-  PetscErrorCode ierr;
-  ierr = PetscFinalize(); CHKERRV(ierr);
+  // do not finalize Petsc because otherwise there can't be multiple DihuContext objects for testing
+  //PetscErrorCode ierr;
+  //ierr = PetscFinalize(); CHKERRV(ierr);
+  //MPI_Finalize();
 }
 
 PetscErrorCode &DihuContext::ierr()
@@ -253,10 +286,10 @@ PetscErrorCode &DihuContext::ierr()
   return ierr_;
 }
 
-void DihuContext::writeOutput(Data::Data &problemData, PyObject *specificSettings, int timeStepNo, double currentTime)
+void DihuContext::writeOutput(Data::Data &problemData, int timeStepNo, double currentTime)
 {
   for(auto &outputWriter : outputWriter_)
   {
-    outputWriter->write(problemData, specificSettings, timeStepNo, currentTime);
+    outputWriter->write(problemData, timeStepNo, currentTime);
   }
 }

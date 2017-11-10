@@ -20,10 +20,8 @@ public:
   void run();
 private:
  
-  void run(PyObject *specificSettings);
-  
   ///! read initial values from settings and set field accordingly
-  void setInitialValues(PyObject *specificSettings);
+  void setInitialValues();
  
   DihuContext &context_;    ///< the context object containing everything to be stored
   Data::TimeStepping data_;     ///< data object that holds all PETSc vectors and matrices
@@ -33,6 +31,7 @@ private:
   double endTime_;          ///< end time of simulation
   int numberTimeSteps_;     ///< number of time steps in simulation time
   double timeStepWidth_;    ///< computed time step width, endTime_/numberTimeSteps_
+  PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
 };
 
 }  // namespace

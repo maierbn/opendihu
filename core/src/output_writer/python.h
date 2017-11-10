@@ -15,7 +15,7 @@ class Python : public Generic
 public:
  
   //! constructor
-  Python(PyObject *settings);
+  Python(PyObject *specificSettings);
  
 private:
  
@@ -30,7 +30,6 @@ private:
   void writeToNumpyFile(std::vector<double> &data, std::string filename, int dimension, std::vector<long> &nEntries);
   
   std::string filenameBase_;
-  PyObject *settings_;
 };
 
 };

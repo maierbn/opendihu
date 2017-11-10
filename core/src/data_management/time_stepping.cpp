@@ -10,6 +10,7 @@
 
 #include "control/python_utility.h"
 #include "control/dihu_context.h"
+#include "control/petsc_utility.h"
 
 namespace Data 
 {
@@ -59,6 +60,26 @@ Vec& TimeStepping::increment()
 {
   return increment_;
 }
+
+void TimeStepping::print()
+{
+  if (disablePrinting_)
+    return;
+  
+  LOG(INFO)<<"======================";
+  
+  int nEntries;
+  VecGetSize(increment_, &nEntries);
+  LOG(INFO)<<"increment ("<<nEntries<<" entries):";
+  LOG(INFO)<<PetscUtility::getStringVector(increment_);
+  LOG(INFO)<<"======================";
+  
+  VecGetSize(solution_, &nEntries);
+  LOG(INFO)<<"solution ("<<nEntries<<" entries):";
+  LOG(INFO)<<PetscUtility::getStringVector(solution_);
+  LOG(INFO)<<"======================";
+}
+
 
 
 } // namespace

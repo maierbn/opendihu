@@ -8,9 +8,10 @@ examples = [
   "poisson1d",
   "poisson2d",
   "diffusion1d",
+  "diffusion2d",
   "templates",
 ]
-examples = ["diffusion1d"]
+examples = ["diffusion2d"]
 
 # loop over examples and call SConstruct file
 for example in examples:

@@ -13,8 +13,6 @@
 #include "equation/type_traits.h"
 #include "mesh/mesh.h"
 
-#include "gtest/gtest_prod.h"
-
 namespace SpatialDiscretization
 {
  
@@ -27,17 +25,14 @@ public:
   // perform computation
   void run();
   
-  //! initialize for use with timestepping
+  //! initialize for use as laplace or poisson equation, not for timestepping
   void initialize();
     
   //! get the stored mesh
   std::shared_ptr<Mesh::Mesh> mesh();
   
-  friend class FunctionTester;    ///< a class used for testing 
-  
+  friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
- 
-  FRIEND_TEST(LaplaceTest, MatrixIsCorrect);
  
   virtual void setRightHandSide() = 0;
   virtual void applyBoundaryConditions();
@@ -68,39 +63,55 @@ private:
 };
 
 
-// partial specialisation for Equation::hasLaplaceOperatorWithRhs, common base class for all meshtypes and basisfunction types
+// base class implementing right hand side, that can be set by user for poisson equation
 template<typename MeshType, typename BasisFunctionType>
 class FiniteElementMethodBaseRhs :
-  public FiniteElementMethodBase<MeshType, BasisFunctionType>, public DiscretizableInTime
+  public FiniteElementMethodBase<MeshType, BasisFunctionType>
 {
 public:
   FiniteElementMethodBaseRhs(DihuContext &context);
  
-  //! Extract from the rhs in weak formulation the rhs vector in strong formulation
-  void recoverRightHandSide(Vec &result);
-  
-  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output);
-  
-  //! initialize for use with timestepping
-  void initialize();
-  
-  //! get the stored mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
-  
+  friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
  
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
-  void multiplyRhsFactor();
+  void transferRhsToWeakForm();
   
-  //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  void createDiscretizationMatrix();
- 
+  //! read in rhs values from config and transfer to weak form
   void setRightHandSide();
-  
-  bool timeSteppingInitialized_;    ///< if for use with timestepping the stiffness matrix and rhs vector are initialized
 };
 
-// common class for not specialized MeshType, BasisFunctionType
+// base class implementing timestepping as for diffusion equation
+template<typename MeshType, typename BasisFunctionType>
+class FiniteElementMethodBaseTimeStepping :
+  public FiniteElementMethodBase<MeshType, BasisFunctionType>, 
+  public DiscretizableInTime
+{
+public:
+  FiniteElementMethodBaseTimeStepping(DihuContext &context);
+ 
+  //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
+  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output);
+  
+  //! initialize for use with timestepping
+  void initialize() override;
+  
+  friend class StiffnessMatrixTester;    ///< a class used for testing 
+protected:
+ 
+  //! do nothing, needed for initialize of base class that is overridden anyway
+  void setRightHandSide(){};
+  
+  //! Extract from the rhs in weak formulation the rhs vector in strong formulation
+  void recoverRightHandSide(Vec &result);
+  
+  //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
+  void createRhsDiscretizationMatrix();
+};
+
+
+
+// common class for not specialized MeshType, BasisFunctionType, for poisson equation
 template<typename MeshType, typename BasisFunctionType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplaceOperatorWithRhs<Term>> :
   public FiniteElementMethodBaseRhs<MeshType, BasisFunctionType>
@@ -111,8 +122,21 @@ public:
   
 };
 
+// common class for not specialized MeshType, BasisFunctionType, for time stepping
+template<typename MeshType, typename BasisFunctionType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>> :
+  public FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>
+{
+public:
+  //! constructor
+  FiniteElementMethod(DihuContext &context);
+  
+};
+
+
 }  // namespace
 
 #include "spatial_discretization/finite_element_method.tpp"
 #include "spatial_discretization/finite_element_method_laplace.tpp"
 #include "spatial_discretization/finite_element_method_poisson.tpp"
+#include "spatial_discretization/finite_element_method_timestepping.tpp"

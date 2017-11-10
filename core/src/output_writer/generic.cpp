@@ -8,11 +8,15 @@
 namespace OutputWriter
 {
  
-void Generic::write(Data::Data& data, PyObject* specificSettings, int timeStepNo, double currentTime)
+Generic::Generic(PyObject *specificSettings) : specificSettings_(specificSettings)
+{
+}
+
+void Generic::write(Data::Data& data, int timeStepNo, double currentTime)
 {
   LOG(DEBUG) << "Generic::write";
   
-  int outputFrequency = PythonUtility::getOptionInt(specificSettings, "frequency", 1);
+  int outputFrequency = PythonUtility::getOptionInt(specificSettings_, "frequency", 1);
   
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
@@ -24,7 +28,7 @@ void Generic::write(Data::Data& data, PyObject* specificSettings, int timeStepNo
   // determine filename base
   if (filenameBase_.empty())
   {
-    filenameBase_ = PythonUtility::getOptionString(specificSettings, "filename", "out");
+    filenameBase_ = PythonUtility::getOptionString(specificSettings_, "filename", "out");
   }
   
   // add time step number to file name base

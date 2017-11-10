@@ -158,7 +158,7 @@ PyObject *PythonUtility::extractDict(PyObject *dict, std::string keyString)
     }
     else
     {
-      LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\"!"<<std::endl;
+      LOG(WARNING) << "Dict does not contain Key \""<<keyString<<"\"!"<<std::endl;
       return NULL;
     }
   }
@@ -196,13 +196,13 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING)<<"Warning: Only using first value "<<result<<" of list of length "<<listNEntries
-                        <<" at key \""<<keyString<<"\"."<<std::endl;
+          LOG(WARNING)<<"Only using first value "<<result<<" of list of length "<<listNEntries
+                        <<" at Key \""<<keyString<<"\"."<<std::endl;
         }
       }
       else
       {
-        LOG(WARNING)<<"Warning: Empty list for key \""<<keyString<<"\"."<<std::endl;
+        LOG(WARNING)<<"Empty list for Key \""<<keyString<<"\"."<<std::endl;
       }
     }
     else
@@ -213,7 +213,7 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
   }
   else
   {
-    LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
   
   switch(validityCriterion)
@@ -221,7 +221,7 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
   case Positive:
     if (result <= 0.0)
     {
-      LOG(WARNING)<<"Warning: value "<<result<<" of key \""<<keyString<<"\" is invalid (not positive). Using default value "
+      LOG(WARNING)<<"value "<<result<<" of Key \""<<keyString<<"\" is invalid (not positive). Using default value "
         <<defaultValue<<".";
       result = defaultValue;
     }
@@ -264,13 +264,13 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING)<<"Warning: Only using first value "<<result<<" of list of length "<<listNEntries
-            <<" at key \""<<keyString<<"\"."<<std::endl;
+          LOG(WARNING)<<"Only using first value "<<result<<" of list of length "<<listNEntries
+            <<" at Key \""<<keyString<<"\"."<<std::endl;
         }
       }
       else
       {
-        LOG(WARNING)<<"Warning: Empty list for key \""<<keyString<<"\"."<<std::endl;
+        LOG(WARNING)<<"Empty list for Key \""<<keyString<<"\"."<<std::endl;
       }
     }
     else
@@ -281,7 +281,7 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
   }
   else
   {
-    LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
     
   switch(validityCriterion)
@@ -289,7 +289,7 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
     case Positive:
       if (result <= 0.0)
       {
-        LOG(WARNING)<<"Warning: value "<<result<<" of key \""<<keyString<<"\" is invalid (not positive). Using default value "
+        LOG(WARNING)<<"value "<<result<<" of Key \""<<keyString<<"\" is invalid (not positive). Using default value "
           <<defaultValue<<".";
         result = defaultValue;
       }
@@ -332,13 +332,13 @@ bool PythonUtility::getOptionBool(PyObject *settings, std::string keyString, boo
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING)<<"Warning: Only using first value "<<result<<" of list of length "<<listNEntries
-            <<" at key \""<<keyString<<"\"."<<std::endl;
+          LOG(WARNING)<<"Only using first value "<<result<<" of list of length "<<listNEntries
+            <<" at Key \""<<keyString<<"\"."<<std::endl;
         }
       }
       else
       {
-        LOG(WARNING)<<"Warning: Empty list for key \""<<keyString<<"\"."<<std::endl;
+        LOG(WARNING)<<"Empty list for Key \""<<keyString<<"\"."<<std::endl;
       }
     }
     else
@@ -349,7 +349,7 @@ bool PythonUtility::getOptionBool(PyObject *settings, std::string keyString, boo
   }
   else
   {
-    LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
   return result;
 }
@@ -373,7 +373,7 @@ std::string PythonUtility::getOptionString(PyObject *settings, std::string keySt
   }
   else
   {
-    LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
   
   return result;
@@ -449,4 +449,65 @@ bool PythonUtility::getOptionListEnd(PyObject *settings, std::string keyString)
   if (!list)
     return true;
   return listIndex >= PyList_Size(list);
+}
+
+void PythonUtility::getOptionVector(PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
+{
+  values.resize(nEntries);
+  
+  // check if input dictionary contains the key
+  PyObject *key = PyString_FromString(keyString.c_str());
+  if(PyDict_Contains(settings, key))
+  { 
+    // extract the value of the key and check its type
+    PyObject *value = PyDict_GetItem(settings, key);
+    if (PyList_Check(value))
+    {
+      // it is a list
+    
+      // get the first value from the list
+      double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
+      int i = 0; 
+    
+      // loop over other values
+      for (;
+          !PythonUtility::getOptionListEnd(settings, keyString)
+          && i < nEntries; 
+          PythonUtility::getOptionListNext<double>(settings, keyString, value), i++)
+      {
+        values[i] = value;
+      }
+    }
+    else if (PyDict_Check(value))
+    {
+      std::pair<int, double> dictItem 
+        = PythonUtility::getOptionDictBegin<int, double>(settings, keyString);
+      
+      // loop over Dirichlet boundary conditions
+      for (; !PythonUtility::getOptionDictEnd(settings, keyString); 
+          PythonUtility::getOptionDictNext<int, double>(settings, keyString, dictItem))
+      {
+        int index = dictItem.first;
+        double value = dictItem.second;
+        
+        if (index >= 0 && index < nEntries)
+        {
+          values[index] = value;
+        }
+        else
+        {
+          LOG(WARNING) << "In config dict, ignoring key "<<index<<", maximum key is "<<nEntries-1;
+        }
+      }
+    }
+    else 
+    {
+      double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
+      std::fill(values.begin(), values.end(), value);
+    }
+  }
+  else
+  {
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
+  }
 }

@@ -18,7 +18,7 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(PyObject *settings) : settings_(settings)
+Paraview::Paraview(PyObject *settings) : Generic(settings)
 {
 
 }
@@ -212,8 +212,8 @@ void Paraview::writeRectilinearGrid(Data::Data& data)
   // name of value field
   std::string scalarsName = "Solution";
   
-  bool binaryOutput = PythonUtility::getOptionBool(settings_, "binaryOutput", true);
-  bool fixedFormat = PythonUtility::getOptionBool(settings_, "fixedFormat", true);
+  bool binaryOutput = PythonUtility::getOptionBool(specificSettings_, "binaryOutput", true);
+  bool fixedFormat = PythonUtility::getOptionBool(specificSettings_, "fixedFormat", true);
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl

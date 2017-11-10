@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <array>
+#include <vector>
 
 class PythonUtility
 {
@@ -63,6 +64,9 @@ public:
   //! Increment the internal iterator of the list and set the next key,value pair in nextPair
   template<typename Value>
   static void getOptionListNext(PyObject *settings, std::string keyString, Value &value);
+
+  //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
+  static void getOptionVector(PyObject *settings, std::string keyString, int nEntries, std::vector<double> &values);
   
   //! print python dictionary to stdout
   static void printDict(PyObject *dict, int indent=0);

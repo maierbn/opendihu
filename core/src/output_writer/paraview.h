@@ -14,7 +14,7 @@ class Paraview : public Generic
 public:
  
   //! constructor
-  Paraview(PyObject *settings);
+  Paraview(PyObject *specificSettings);
  
 private:
  
@@ -43,8 +43,6 @@ private:
   //! convert to a string with space separated values
   std::string convertToAscii(Vec &vector, bool humanReadable);
   std::string convertToAscii(std::vector<double> &vector, bool humanReadable);
-  
-  PyObject *settings_;
 };
 
 };

@@ -132,68 +132,12 @@ void FiniteElements::print()
   LOG(INFO)<<"======================";
   int nRows, nColumns;
   MatGetSize(stiffnessMatrix_, &nRows, &nColumns);
-  
   LOG(INFO)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
   if (!disableMatrixPrinting_)
   {
-    std::vector<double> matrixValues; 
-    std::vector<double> vectorValues;
-    
-    PetscUtility::getMatrixEntries(stiffnessMatrix_, matrixValues);
-    PetscUtility::getVectorEntries(rhs_, vectorValues);
-    
-    std::stringstream s;
-    s<<"    ";
-    for (int j=0; j<nColumns; j++)
-    {
-      s<<std::setw(5)<<std::setfill('_')<<j;
-    }
-    s<<std::string(5,'_')<<" | rhs";
-    s<<std::endl;
-    for (int i=0; i<nRows; i++)
-    {
-      s<<std::setw(3)<<std::setfill(' ')<<i<<"| ";
-      for (int j=0; j<nColumns; j++)
-      {
-        if(matrixValues[i*nRows + j] == 0.0)
-          s<<std::string(5, ' ');
-        else
-          s<<std::setw(4)<<std::setfill(' ')<<matrixValues[i*nRows + j]<<" ";
-      }
-      s<<std::string(5, ' ')<<"| "<<vectorValues[i];
-      s<<std::endl;
-    }
-    s<<std::endl;
-    LOG(INFO) << std::endl<<s.str();
-    
-    
-    s.str("");
-    s<<" ";
-    for (int j=0; j<nColumns; j++)
-    {
-      if (j%10 == 0)
-        s<<"|";
-      else if (j%2 == 0)
-        s<<".";
-      else 
-        s<<" ";
-    }
-    s<<std::endl;
-    for (int i=0; i<nRows; i++)
-    {
-      s<<" ";
-      for (int j=0; j<nColumns; j++)
-      {
-        if(matrixValues[i*nRows + j] == 0.0)
-          s<<" ";
-        else
-          s<<"*";
-      }
-      s<<std::endl;
-    }
-    s<<std::endl;
-    LOG(INFO) << "sparsity pattern: " << std::endl<<s.str();
+    LOG(INFO) << std::endl<<PetscUtility::getStringMatrixVector(stiffnessMatrix_, rhs_);
+    LOG(INFO) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(stiffnessMatrix_);
   }
   
   MatInfo info;
@@ -213,31 +157,13 @@ void FiniteElements::print()
   
   int nEntries;
   VecGetSize(rhs_, &nEntries);
-  
   LOG(INFO)<<"rhs ("<<nEntries<<" entries):";
-  
-  std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(rhs_, vectorValues);
-  
-  std::stringstream s;
-  for (int i=0; i<nEntries; i++)
-  {
-    s<<vectorValues[i]<<" ";
-  }
-  LOG(INFO)<<s.str();
+  LOG(INFO)<<PetscUtility::getStringVector(rhs_);
   LOG(INFO)<<"======================";
   
   VecGetSize(solution_, &nEntries);
-  
   LOG(INFO)<<"solution ("<<nEntries<<" entries):";
-    
-  PetscUtility::getVectorEntries(solution_, vectorValues);
-  s.str("");
-  for (int i=0; i<nEntries; i++)
-  {
-    s<<vectorValues[i]<<" ";
-  }
-  LOG(INFO)<<s.str();
+  LOG(INFO)<<PetscUtility::getStringVector(solution_);
   LOG(INFO)<<"======================";
 }
 

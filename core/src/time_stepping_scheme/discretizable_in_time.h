@@ -1,6 +1,7 @@
 #pragma once
 
 #include <petscsys.h>
+#include <petscksp.h>
 
 class DiscretizableInTime
 {

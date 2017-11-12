@@ -16,6 +16,13 @@ class Python(Package):
         try:
           cflags = subprocess.check_output("python-config --cflags", shell=True)
           ldflags = subprocess.check_output("python-config --ldflags", shell=True)
+          
+          # remove "-Wstrict-prototypes" because it is only valid for c and not c++
+          if "-Wstrict-prototypes" in cflags:
+            startpos = cflags.index("-Wstrict-prototypes")
+            length = len("-Wstrict-prototypes")
+            cflags = cflags[0:startpos] + cflags[startpos+length:]
+            
         except:
           ctx.Result(False)
           return False

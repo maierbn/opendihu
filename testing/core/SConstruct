@@ -23,6 +23,9 @@ sconsconfig.select(
     packages.Cython(required=True),
     packages.NumpyC(required=True),
     packages.googletest(required=True),
+    packages.libxml2(required=True),
+    #packages.Sphinx(required=True),
+    packages.libcellml(required=True),          # relies on libxml2
     packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 
@@ -52,6 +55,13 @@ if unknown:
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
 
+# set console messages for compilation and linking
+#if ARGUMENTS.get('VERBOSE') != '1':
+env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
+env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
+           
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 

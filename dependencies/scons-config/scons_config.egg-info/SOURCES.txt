@@ -34,6 +34,7 @@ sconsconfig/packages/PostgreSQL.py
 sconsconfig/packages/Python.py
 sconsconfig/packages/SOCI.py
 sconsconfig/packages/SkyMaker.py
+sconsconfig/packages/Sphinx.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
@@ -42,10 +43,12 @@ sconsconfig/packages/cfitsio.py
 sconsconfig/packages/clock.py
 sconsconfig/packages/glut.py
 sconsconfig/packages/googletest.py
+sconsconfig/packages/libcellml.py
 sconsconfig/packages/libhpc.py
 sconsconfig/packages/libsamplerate.py
 sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
+sconsconfig/packages/libxml2.py
 sconsconfig/packages/pugixml.py
 sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py

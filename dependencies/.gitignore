@@ -1,0 +1,15 @@
+base64
+cython
+easyloggingpp
+googletest
+lapack
+libcellml
+libxml2
+numpyc
+petsc
+scons
+scons-config
+SConstruct
+sphinx
+test
+

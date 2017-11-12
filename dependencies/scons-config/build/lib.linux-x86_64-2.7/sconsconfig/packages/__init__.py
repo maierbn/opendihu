@@ -34,3 +34,6 @@ from Base64 import Base64
 from Cython import Cython
 from NumpyC import NumpyC
 from googletest import googletest
+from libcellml import libcellml
+from libxml2 import libxml2
+from Sphinx import Sphinx

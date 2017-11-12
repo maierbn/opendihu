@@ -11,11 +11,14 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/__init__.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/boost.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/cfitsio.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libcellml.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/GSL.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/clock.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/FFTW.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/__init__.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/FFTW3.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Sphinx.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Sphinx.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/re2.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/pugixml.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libusb.pyc
@@ -36,6 +39,8 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/pugixml.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/NLopt.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/glut.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libxml2.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libxml2.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/rapidxml.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SOCI.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MPI.pyc
@@ -77,6 +82,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SkyMaker.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Base64.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/ParMETIS.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libcellml.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Package.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libsamplerate.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/UTBot.py

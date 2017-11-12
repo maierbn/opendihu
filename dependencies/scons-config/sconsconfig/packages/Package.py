@@ -577,9 +577,16 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
       
+    # compile with C++11 for cpp test files
+    if 'cpp' in self.ext:
+      ctx.env.PrependUnique(CCFLAGS = "-std=c++11")
+      
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    ccflags = ctx.env["CCFLAGS"]
+    for i in ccflags:
+      ctx.Log("  CCFLAGS "+str(i)+"\n")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
     
     # compile / run test program
@@ -588,6 +595,16 @@ class Package(object):
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
+    # remove C++11 flag
+    if 'cpp' in self.ext:
+      ccflags = ctx.env["CCFLAGS"]
+      ccflags_new = []
+      for entry in ccflags:
+        if entry != "-std=c++11":
+          ccflags_new.append(entry)
+      ctx.Log("recovered ccflags:")
+      ctx.Log(str(ccflags_new))
+      ctx.env.Replace(CCFLAGS = ccflags_new)
       
     if not res[0]:
       env_restore(ctx.env, bkp)
@@ -637,7 +654,10 @@ class Package(object):
       for path in inc_dirs:
         hdr_path = os.path.join(path, hdr)
         ctx.Log(' ' + hdr_path + ' ... ')
-        if os.path.exists(hdr_path):
+        if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
+          ctx.Log('(is directory) ')
+          
+        if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
           ctx.Log('yes.\n')
           found = True
           break
@@ -649,17 +669,45 @@ class Package(object):
           ctx.Log('no.\n')
           ctx.Log(' ' + new_hdr_path + ' ... ')
           if os.path.exists(new_hdr_path):
-            new_inc_dirs.append(new_path)
+            #new_inc_dirs.append(new_path)
             ctx.Log('(yes, here it is, but this directory is not considered)\n')
             #found = True
             break
           
         ctx.Log('no.\n')
+        
+        # look in subdirectories
+        for (subpath, subdirectories, files) in os.walk(path):
+            
+          new_path = os.path.join(path, subpath)
+          hdr_path = os.path.join(new_path, hdr)
+          ctx.Log(' ' + hdr_path + ' ... ')
+          
+          if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
+            ctx.Log('(is directory) ')
+            
+          if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
+            ctx.Log('yes.\n')
+            new_inc_dirs.append(new_path)
+            found = True
+            break
+          ctx.Log('no.\n')
+        
+        if found:
+          break
+        
       if not found:
         ctx.Log('Failed to find ' + hdr + '\n')
         found_headers = False
         break
-    #inc_dirs.append(new_inc_dirs)    # append path with "../" removed to include directories
+        
+    if new_inc_dirs:
+      ctx.Log('add more inc_dirs: '+str(inc_dirs))
+    
+    inc_dirs += new_inc_dirs    # append path with new directories
+    
+    if new_inc_dirs:
+      ctx.Log(' -> '+str(inc_dirs)+'\n')
     return found_headers
 
   def try_location(self, ctx, base_dirs, **kwargs):
@@ -667,6 +715,8 @@ class Package(object):
       base_dirs = [base_dirs]
     for base in base_dirs:
       ctx.Log('Checking for %s in %s.\n'%(self.name, base))
+      ctx.Log('Searching for headers: '+str(self.headers)+", libs: "+str(self.libs)+'\n')
+      
       loc_callback = kwargs.get('loc_callback', None)
       libs = copy.deepcopy(conv.to_iter(self.libs))
       extra_libs = copy.deepcopy(conv.to_iter(self.extra_libs))

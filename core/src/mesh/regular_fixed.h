@@ -27,7 +27,7 @@ public:
   double meshWidth(int dimension);
   
   //! get the number of degrees of freedom
-  element_idx_t nDegreesOfFreedom();
+  element_idx_t nNodes();
   
 private:
  

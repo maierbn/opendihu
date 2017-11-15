@@ -14,8 +14,6 @@ Generic::Generic(PyObject *specificSettings) : specificSettings_(specificSetting
 
 void Generic::write(Data::Data& data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "Generic::write";
-  
   int outputFrequency = PythonUtility::getOptionInt(specificSettings_, "frequency", 1);
   
   int oldWriteCallCount = writeCallCount_;

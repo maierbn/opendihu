@@ -9,9 +9,10 @@ examples = [
   "poisson2d",
   "diffusion1d",
   "diffusion2d",
+  "cellml",
   "templates",
 ]
-examples = ["diffusion2d"]
+examples = ["cellml"]
 
 # loop over examples and call SConstruct file
 for example in examples:

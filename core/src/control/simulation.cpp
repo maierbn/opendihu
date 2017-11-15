@@ -6,5 +6,5 @@
 
 void Simulation::debug()
 {
-  LOG(INFO)<<"debug"<<std::endl;
+  LOG(DEBUG)<<"debug"<<std::endl;
 }

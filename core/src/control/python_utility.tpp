@@ -193,6 +193,16 @@ std::array<ValueType, D> PythonUtility::getOptionList(PyObject* settings, std::s
          result[i] = defaultValue[i];
        } 
       }
+    case PythonUtility::NonNegative:
+      for (unsigned long i=0; i<D; i++)
+      {
+       if (result[i] < 0.0)
+       {
+         LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not non-negative). Using default value "
+           <<defaultValue[i]<<".";
+         result[i] = defaultValue[i];
+       } 
+      }
       
     break;
     case PythonUtility::None:

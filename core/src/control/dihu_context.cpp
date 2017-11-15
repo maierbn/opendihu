@@ -15,10 +15,9 @@ INITIALIZE_EASYLOGGINGPP
 
 DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
 {
-  START_EASYLOGGINGPP(argc, argv);
 
   // load configuration from file if it exits
-  initializeLogging();
+  initializeLogging(argc, argv);
   
   LOG(DEBUG) << "DihuContext constructor";
   
@@ -33,7 +32,8 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
   
   if (argc > 1)
   {
-    filename = argv[1];
+    if (argv[1][0] != '-')
+      filename = argv[1];
   }
   
   char const *programName = "dihu";
@@ -127,8 +127,9 @@ void DihuContext::loadPythonScript(std::string text)
   }
 }
 
-void DihuContext::initializeLogging()
+void DihuContext::initializeLogging(int argc, char *argv[])
 {
+  START_EASYLOGGINGPP(argc, argv);
 /*
   std::ifstream file("logging.conf");
   if (!file.is_open())
@@ -189,14 +190,23 @@ void DihuContext::initializeLogging()
            "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
   
   conf.set(el::Level::Error, el::ConfigurationType::Format, 
-           "ERROR: %loc %func: \n" ANSI_COLOR_RED "\nError: %msg\n" ANSI_COLOR_RESET);
+           "ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);
   
   conf.set(el::Level::Fatal, el::ConfigurationType::Format, 
            std::string(ANSI_COLOR_MAGENTA)+"FATAL: %loc %func: \n"+separator
            +"\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
   
+  //el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
+  
+//#ifdef NDEBUG      // if release
+//  conf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+//  std::cout<<"DISABLE Debug"<<std::endl;
+//#endif
+  
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
+  
+  
 }
 
 

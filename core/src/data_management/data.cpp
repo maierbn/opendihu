@@ -14,13 +14,29 @@
 namespace Data
 {
 
-Data::Data(DihuContext &context) : context_(context)
+Data::Data(DihuContext &context) : context_(context), nDegreesOfFreedomPerNode_(1)
 {
 }
 
 Data::~Data()
 {
 }
+
+void Data::setNDegreesOfFreedomPerNode(int n)
+{
+  nDegreesOfFreedomPerNode_ = n;
+}
+
+int Data::nDegreesOfFreedomPerNode()
+{
+  return nDegreesOfFreedomPerNode_;
+}
+
+int Data::nDegreesOfFreedom()
+{
+  return mesh_->nNodes() * nDegreesOfFreedomPerNode_;
+}
+
 
 void Data::setMesh(std::shared_ptr<Mesh::Mesh> mesh)
 {

@@ -34,7 +34,7 @@ FiniteElements::~FiniteElements()
 
 void FiniteElements::createPetscObjects()
 {
-  element_idx_t n = mesh_->nDegreesOfFreedom();
+  element_idx_t n = mesh_->nNodes();
   
   LOG(DEBUG)<<"FiniteElements::initVectorSize("<<n<<")"<<std::endl;
   
@@ -129,21 +129,21 @@ void FiniteElements::print()
   if (disablePrinting_)
     return;
   
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"======================";
   int nRows, nColumns;
   MatGetSize(stiffnessMatrix_, &nRows, &nColumns);
-  LOG(INFO)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
+  LOG(VERBOSE)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
   if (!disableMatrixPrinting_)
   {
-    LOG(INFO) << std::endl<<PetscUtility::getStringMatrixVector(stiffnessMatrix_, rhs_);
-    LOG(INFO) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(stiffnessMatrix_);
+    LOG(VERBOSE) << std::endl<<PetscUtility::getStringMatrixVector(stiffnessMatrix_, rhs_);
+    LOG(VERBOSE) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(stiffnessMatrix_);
   }
   
   MatInfo info;
   MatGetInfo(stiffnessMatrix_, MAT_LOCAL, &info);
   
-  LOG(INFO)<<"Matrix info: "<<std::endl
+  LOG(VERBOSE)<<"Matrix info: "<<std::endl
     <<"block_size: "<<info.block_size<<std::endl
     <<"number of nonzeros: allocated: "<<info.nz_allocated<<", used: "<<info.nz_used<<", unneeded: "<<info.nz_unneeded<<std::endl
     <<"memory allocated: "<<info.memory<<std::endl
@@ -153,18 +153,18 @@ void FiniteElements::print()
     <<"number of mallocs during factorization: "<<info.factor_mallocs<<std::endl;
     
     
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"======================";
   
   int nEntries;
   VecGetSize(rhs_, &nEntries);
-  LOG(INFO)<<"rhs ("<<nEntries<<" entries):";
-  LOG(INFO)<<PetscUtility::getStringVector(rhs_);
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"rhs ("<<nEntries<<" entries):";
+  LOG(VERBOSE)<<PetscUtility::getStringVector(rhs_);
+  LOG(VERBOSE)<<"======================";
   
   VecGetSize(solution_, &nEntries);
-  LOG(INFO)<<"solution ("<<nEntries<<" entries):";
-  LOG(INFO)<<PetscUtility::getStringVector(solution_);
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"solution ("<<nEntries<<" entries):";
+  LOG(VERBOSE)<<PetscUtility::getStringVector(solution_);
+  LOG(VERBOSE)<<"======================";
 }
 
 bool FiniteElements::discretizationMatrixInitialized()

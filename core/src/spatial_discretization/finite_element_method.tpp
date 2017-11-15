@@ -46,7 +46,7 @@ applyBoundaryConditions()
  
   LOG(DEBUG)<<"applyBoundaryConditions for Laplace";
  
-  int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
+  int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
   Vec &rightHandSide = data_.rightHandSide();
   Mat &stiffnessMatrix = data_.stiffnessMatrix();

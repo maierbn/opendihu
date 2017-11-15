@@ -20,3 +20,5 @@
 
 #include "time_stepping_scheme/crank_nicholson.h"
 #include "time_stepping_scheme/explicit_euler.h"
+
+#include "cellml/cellml_adapter.h"

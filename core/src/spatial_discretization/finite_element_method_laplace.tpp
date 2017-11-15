@@ -27,7 +27,7 @@ setRightHandSide()
 {
  LOG(DEBUG)<<"setRightHandSide for Laplace equation";
 
- int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
+ int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
  // fill rhs vector
  PetscErrorCode ierr;

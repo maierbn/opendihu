@@ -91,7 +91,7 @@ public:
   FiniteElementMethodBaseTimeStepping(DihuContext &context);
  
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
-  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output);
+  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
   //! initialize for use with timestepping
   void initialize() override;

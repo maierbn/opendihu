@@ -22,17 +22,17 @@ TimeStepping::TimeStepping(DihuContext &context) : Data(context)
 
 TimeStepping::~TimeStepping()
 {
-  PetscErrorCode ierr;
   // free PETSc objects
   if (initialized_)
   {
-    ierr = VecDestroy(&solution_); CHKERRV(ierr);
+    //PetscErrorCode ierr;
+    //ierr = VecDestroy(&solution_); CHKERRV(ierr);
   }
 }
 
 void TimeStepping::createPetscObjects()
 {
-  element_idx_t n = mesh_->nDegreesOfFreedom();
+  element_idx_t n = nDegreesOfFreedom();
   
   LOG(DEBUG)<<"TimeStepping::createPetscObjects("<<n<<")"<<std::endl;
   
@@ -66,18 +66,18 @@ void TimeStepping::print()
   if (disablePrinting_)
     return;
   
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"======================";
   
   int nEntries;
   VecGetSize(increment_, &nEntries);
-  LOG(INFO)<<"increment ("<<nEntries<<" entries):";
-  LOG(INFO)<<PetscUtility::getStringVector(increment_);
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"increment ("<<nEntries<<" entries):";
+  LOG(VERBOSE)<<PetscUtility::getStringVector(increment_);
+  LOG(VERBOSE)<<"======================";
   
   VecGetSize(solution_, &nEntries);
-  LOG(INFO)<<"solution ("<<nEntries<<" entries):";
-  LOG(INFO)<<PetscUtility::getStringVector(solution_);
-  LOG(INFO)<<"======================";
+  LOG(VERBOSE)<<"solution ("<<nEntries<<" entries):";
+  LOG(VERBOSE)<<PetscUtility::getStringVector(solution_);
+  LOG(VERBOSE)<<"======================";
 }
 
 

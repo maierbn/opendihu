@@ -33,7 +33,7 @@ public:
   
 private:
  
-  //! initializes the vectors and stiffness matrix with size
+  //! initializes the vectors with size
   void createPetscObjects();
   
   bool disablePrinting_ = false;    ///< if printing vectors is disabled

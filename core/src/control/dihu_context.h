@@ -37,7 +37,7 @@ private:
   void loadPythonScript(std::string text);
   
   ///! initiaize the easylogging++ framework
-  void initializeLogging();
+  void initializeLogging(int argc, char *argv[]);
   
   ///! create output writer from settings
   void initializeOutputWriter();

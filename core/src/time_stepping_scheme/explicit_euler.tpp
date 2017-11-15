@@ -18,22 +18,25 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext &context) :
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::setInitialValues()
 {
-  int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
+  int nDegreesOfFreedom = data_.nDegreesOfFreedom();
   Vec &solution = data_.solution();
   
-  // initialize with 0
-  PetscErrorCode ierr;
-  ierr = VecSet(solution, 0.0); CHKERRV(ierr);
-  
-  // set from settings
-  std::vector<double> values;
-  PythonUtility::getOptionVector(specificSettings_, "initialValues", nDegreesOfFreedom, values);
-  
-  // loop over initialValues list
-  for(int i=0; i<nDegreesOfFreedom; i++)
+  if (!discretizableInTime.setInitialValues(solution))
   {
-    //                 vector    row  value
-    ierr = VecSetValue(solution, i, values[i], INSERT_VALUES); CHKERRV(ierr);
+   // initialize with 0
+   PetscErrorCode ierr;
+   ierr = VecSet(solution, 0.0); CHKERRV(ierr);
+   
+   // set from settings
+   std::vector<double> values;
+   PythonUtility::getOptionVector(specificSettings_, "initialValues", nDegreesOfFreedom, values);
+   
+   // loop over initialValues list
+   for(int i=0; i<nDegreesOfFreedom; i++)
+   {
+     //                 vector    row  value
+     ierr = VecSetValue(solution, i, values[i], INSERT_VALUES); CHKERRV(ierr);
+   }
   }
 }
 
@@ -48,6 +51,7 @@ void ExplicitEuler<DiscretizableInTime>::run()
  
   // initialize finite element part
   discretizableInTime.initialize();
+  data_.setNDegreesOfFreedomPerNode(discretizableInTime.numberDegreesOfFreedomPerNode());
   data_.setMesh(discretizableInTime.mesh());
   
   // set initial values from settings
@@ -59,10 +63,12 @@ void ExplicitEuler<DiscretizableInTime>::run()
   for(int timeStepNo = 0; timeStepNo < numberTimeSteps_; timeStepNo++)
   {
     currentTime = double(timeStepNo) / (numberTimeSteps_-1) * endTime_;
-    LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<numberTimeSteps_<<", t="<<currentTime;
+    
+    if (timeStepNo % 100 == 0)
+     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<numberTimeSteps_<<", t="<<currentTime;
     
     // compute next delta_u = f(u)
-    discretizableInTime.evaluateTimesteppingRightHandSide(data_.solution(), data_.increment());
+    discretizableInTime.evaluateTimesteppingRightHandSide(data_.solution(), data_.increment(), timeStepNo, currentTime);
     
     // integrate, y += dt * delta_u
     VecAXPY(data_.solution(), timeStepWidth_, data_.increment());

@@ -37,7 +37,7 @@ setRightHandSide()
 {
   LOG(DEBUG)<<"setRightHandSide for Poisson equation";
 
-  int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
+  int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   Vec &rightHandSide = this->data_.rightHandSide();
   
   std::vector<double> values;

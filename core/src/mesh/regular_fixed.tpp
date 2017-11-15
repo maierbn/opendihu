@@ -49,11 +49,11 @@ RegularFixed<D>::RegularFixed(PyObject *specificSettings) : MeshD<D>(specificSet
 
 template<unsigned long D>
 RegularFixed<D>::RegularFixed(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent) :
-  nElements_(nElements), meshWidth_(physicalExtent)
+ MeshD<D>(NULL), nElements_(nElements), meshWidth_(physicalExtent)
 {
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  auto nElementsIter = nElements_.begin();
-  for (auto &meshWidthIter = meshWidth_.begin(); meshWidthIter != meshWidth_.end(); meshWidthIter++, nElementsIter++)
+  typename std::array<element_idx_t, D>::iterator nElementsIter = nElements_.begin();
+  for (typename std::array<double, D>::iterator meshWidthIter = meshWidth_.begin(); meshWidthIter != meshWidth_.end(); meshWidthIter++, nElementsIter++)
   {
     *meshWidthIter = *meshWidthIter / *nElementsIter;
   }

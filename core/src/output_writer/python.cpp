@@ -55,15 +55,23 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
     LOG(ERROR) << "Could not write temporary files!";
     return;
   }
-  for(auto &value : data)
+  for(auto value : data)
   {
     union {
       double d;
       char c[8];
     };
-    d = value;
+    
+    if (std::isnan(d))
+      d = 0.0;
+    else
+      d = value;
+    
+    
     for(int i=0; i<8; i++)
-    file<<c[i];
+    {
+      file<<c[i];
+    }
   }
   
   file.close();
@@ -75,12 +83,25 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
     << "v = np.reshape(v," << shape.str() << ")" << std::endl
     << "np.save(\"" << filename << "\",v)";
   
-  int ret = PyRun_SimpleString(converterScript.str().c_str());
-  if (ret != 0)
-    LOG(WARNING) << "Conversion to numpy file \"" << filename << "\" failed.";
+  //LOG(DEBUG) << converterScript.str();
+    
+  if (1)
+  {
+    std::ofstream scriptFile("convert.py");
+    scriptFile<<converterScript.str();
+    scriptFile.close();
+    int ret = system("python convert.py");
+    std::remove("convert.py");
+  }
   else
-    LOG(INFO) << "Array of shape " << shape.str() << " exported to \"" << filename << "\"";
-  
+  {
+    
+    int ret = PyRun_SimpleString(converterScript.str().c_str());
+    if (ret != 0)
+      LOG(WARNING) << "Conversion to numpy file \"" << filename << "\" failed.";
+    else
+      LOG(INFO) << "Array of shape " << shape.str() << " exported to \"" << filename << "\"";
+  }
   // remove temporary file
   std::remove("temp1");
     
@@ -183,7 +204,7 @@ void Python::writeSolutionDim(Data::Data &data)
     std::vector<long int> nEntries(dimension);
     for (int i=0; i<dimension; i++)
     {
-      nEntries[i] = (mesh->nElements(i) + 1);
+      nEntries[i] = (mesh->nElements(i) + 1) * data.nDegreesOfFreedomPerNode();
     }
     std::vector<long int> singleEntry({(long)vectorValues.size()});
     

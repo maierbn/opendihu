@@ -95,7 +95,7 @@ recoverRightHandSide(Vec &result)
 
 template<class MeshType, class BasisFunctionType>
 void FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>::
-evaluateTimesteppingRightHandSide(Vec &input, Vec &output)
+evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
   Vec &rhs = this->data_.rightHandSide();

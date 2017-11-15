@@ -38,7 +38,7 @@ setStiffnessMatrix()
   int nElements = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(0);
   
-  int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
+  int nDegreesOfFreedom = data_.mesh()->nNodes();
   
   LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
  
@@ -289,7 +289,7 @@ transferRhsToWeakForm()
   int nElements = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->meshWidth(0);
   
-  int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
+  int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
   LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
  
@@ -558,7 +558,7 @@ createRhsDiscretizationMatrix()
     int nElements = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->nElements();
     double elementLength = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->meshWidth(0);
     
-    int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
+    int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
     
     LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
    

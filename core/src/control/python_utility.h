@@ -12,14 +12,18 @@ public:
   enum ValidityCriterion
   {
     None,
-    Positive
+    Positive,
+    NonNegative
   };
  
   //! constructor, initialize context, parse command line parameters and input file
   PythonUtility();
     
-  //! given a python dictionary in dict, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist
-  static PyObject *extractDict(PyObject *dict, std::string key);
+  //! checks if the settings contain the given key, no warning is printed
+  static bool containsKey(PyObject *settings, std::string key);
+  
+  //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
+  static PyObject *extractDict(PyObject *settings, std::string key);
   
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
   static double getOptionDouble(PyObject *settings, std::string key, double defaultValue, ValidityCriterion validityCriterion = None);

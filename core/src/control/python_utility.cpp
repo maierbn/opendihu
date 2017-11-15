@@ -145,16 +145,31 @@ std::string PythonUtility::convertFromPython(PyObject *object)
   return convertFromPython<std::string>(object, "");
 }
 
-PyObject *PythonUtility::extractDict(PyObject *dict, std::string keyString)
+bool PythonUtility::containsKey(PyObject* settings, std::string keyString)
 {
-  if (dict)
+  if (settings)
   {
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
     
-    if(PyDict_Contains(dict, key))
+    if(PyDict_Contains(settings, key))
     {
-      return PyDict_GetItem(dict, key);
+      return true;
+    }
+  }
+  return false;
+}
+
+PyObject *PythonUtility::extractDict(PyObject *settings, std::string keyString)
+{
+  if (settings)
+  {
+    // check if input dictionary contains the key
+    PyObject *key = PyString_FromString(keyString.c_str());
+    
+    if(PyDict_Contains(settings, key))
+    {
+      return PyDict_GetItem(settings, key);
     }
     else
     {
@@ -226,6 +241,14 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
       result = defaultValue;
     }
     break;
+  case NonNegative:
+    if (result < 0.0)
+    {
+      LOG(WARNING)<<"value "<<result<<" of Key \""<<keyString<<"\" is invalid (not non-negative). Using default value "
+        <<defaultValue<<".";
+      result = defaultValue;
+    }
+    break;
   case None:
     break;
   };
@@ -293,7 +316,15 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
           <<defaultValue<<".";
         result = defaultValue;
       }
-          break;
+      break;
+    case NonNegative:
+      if (result < 0.0)
+      {
+        LOG(WARNING)<<"value "<<result<<" of Key \""<<keyString<<"\" is invalid (not non-negative). Using default value "
+          <<defaultValue<<".";
+        result = defaultValue;
+      }
+      break;
     case None:
       break;
   };
@@ -387,52 +418,52 @@ void PythonUtility::printDict(PyObject *dict, int indent)
   
   while (PyDict_Next(dict, &pos, &key, &value))
   {
-    LOG(INFO)<<std::string(indent, ' ');
+    LOG(VERBOSE)<<std::string(indent, ' ');
     
     if (!PyString_Check(key))
     {
-      LOG(INFO)<<"key is not a string"<<std::endl;
+      LOG(VERBOSE)<<"key is not a string"<<std::endl;
     }
     else
     {
       std::string keyString = PyString_AsString(key);
-      LOG(INFO)<<keyString<<": ";
+      LOG(VERBOSE)<<keyString<<": ";
     }
                 
     if (PyString_CheckExact(value))
     {
       std::string valueString = PyString_AsString(value);
-      LOG(INFO)<<"\""<<valueString<<"\""<<std::endl;
+      LOG(VERBOSE)<<"\""<<valueString<<"\""<<std::endl;
     }
     else if (PyInt_CheckExact(value))
     {
       long valueLong = PyInt_AsLong(value);
-      LOG(INFO)<<valueLong<<std::endl;
+      LOG(VERBOSE)<<valueLong<<std::endl;
     }
     else if (PyLong_CheckExact(value))
     {
       long valueLong = PyLong_AsLong(value);
-      LOG(INFO)<<valueLong<<std::endl;
+      LOG(VERBOSE)<<valueLong<<std::endl;
     }
     else if (PyFloat_CheckExact(value))
     {
       double valueDouble = PyFloat_AsDouble(value);
-      LOG(INFO)<<valueDouble<<std::endl;
+      LOG(VERBOSE)<<valueDouble<<std::endl;
     }
     else if (PyBool_Check(value))
     {
       bool valueBool = PyObject_IsTrue(value);
-      LOG(INFO)<<std::boolalpha<<valueBool<<std::endl;
+      LOG(VERBOSE)<<std::boolalpha<<valueBool<<std::endl;
     }
     else if(PyDict_CheckExact(value))
     {
-      LOG(INFO)<<"{"<<std::endl;
+      LOG(VERBOSE)<<"{"<<std::endl;
       printDict(value, indent+2);
-      LOG(INFO)<<std::string(indent, ' ')<<"}"<<std::endl;
+      LOG(VERBOSE)<<std::string(indent, ' ')<<"}"<<std::endl;
     }
     else
     {
-      LOG(INFO)<<"<unknown>"<<std::endl;
+      LOG(VERBOSE)<<"<unknown>"<<std::endl;
     }
   }
 }

@@ -18,14 +18,19 @@ namespace SpatialDiscretization
   
 template<class MeshType, class BasisFunctionType>
 FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>::
-FiniteElementMethodBaseTimeStepping(DihuContext &context)
-  : FiniteElementMethodBase<MeshType, BasisFunctionType>(context)
+FiniteElementMethodBaseTimeStepping(const DihuContext &context)
+  : FiniteElementMethodBase<MeshType, BasisFunctionType>(context),
+  DiscretizableInTime(SolutionVectorMapping(true))
 {
+  // the solutionVectorMapping_ object stores the information which range of values of the solution will be further used 
+  // in methods that use the result of this method, e.g. in operator splittings. Since there are no internal values
+  // in this FEM, set the range to all values.
+  solutionVectorMapping_.setOutputRange(0, this->data_.mesh()->nNodes());
 }
 
 template<typename MeshType, typename BasisFunctionType, typename Term>
 FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>>::
-FiniteElementMethod(DihuContext &context) 
+FiniteElementMethod(const DihuContext &context) 
   : FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>(context)
 {
 }
@@ -37,12 +42,6 @@ initialize()
   this->setStiffnessMatrix();
   this->createRhsDiscretizationMatrix();
   this->data_.finalAssembly();
-}
-
-template<class MeshType, class BasisFunctionType>
-void FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>::
-createRhsDiscretizationMatrix()
-{
 }
 
 template<class MeshType, class BasisFunctionType>

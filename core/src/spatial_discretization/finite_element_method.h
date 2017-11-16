@@ -20,7 +20,7 @@ template<typename MeshType, typename BasisFunctionType>
 class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
-  FiniteElementMethodBase(DihuContext &context);
+  FiniteElementMethodBase(const DihuContext &context);
   
   // perform computation
   void run();
@@ -39,7 +39,7 @@ protected:
   virtual void setStiffnessMatrix();
   virtual void solve();
   
-  DihuContext &context_;    ///< the context object containing everything to be stored
+  const DihuContext &context_;    ///< the context object containing everything to be stored
   Data::FiniteElements data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
 };
@@ -56,7 +56,7 @@ class FiniteElementMethod<MeshType, BasisFunctionType, Equation::Static::Laplace
   public FiniteElementMethodBase<MeshType, BasisFunctionType>
 {
 public:
-  FiniteElementMethod(DihuContext &context);
+  FiniteElementMethod(const DihuContext &context);
  
 private:
   void setRightHandSide();
@@ -69,7 +69,7 @@ class FiniteElementMethodBaseRhs :
   public FiniteElementMethodBase<MeshType, BasisFunctionType>
 {
 public:
-  FiniteElementMethodBaseRhs(DihuContext &context);
+  FiniteElementMethodBaseRhs(const DihuContext &context);
  
   friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
@@ -88,7 +88,7 @@ class FiniteElementMethodBaseTimeStepping :
   public DiscretizableInTime
 {
 public:
-  FiniteElementMethodBaseTimeStepping(DihuContext &context);
+  FiniteElementMethodBaseTimeStepping(const DihuContext &context);
  
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
@@ -118,7 +118,7 @@ class FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplac
 {
 public:
   //! constructor
-  FiniteElementMethod(DihuContext &context);
+  FiniteElementMethod(const DihuContext &context);
   
 };
 
@@ -129,7 +129,7 @@ class FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplac
 {
 public:
   //! constructor
-  FiniteElementMethod(DihuContext &context);
+  FiniteElementMethod(const DihuContext &context);
   
 };
 

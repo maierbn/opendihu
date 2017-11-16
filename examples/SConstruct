@@ -3,6 +3,7 @@
 # define all existing examples to be build
 examples = [
   "build-test",
+  "templates",
   "laplace1d",
   "laplace2d",
   "poisson1d",
@@ -10,9 +11,9 @@ examples = [
   "diffusion1d",
   "diffusion2d",
   "cellml",
-  "templates",
+  "electrophysiology",
 ]
-examples = ["cellml"]
+examples = ["electrophysiology"]
 
 # loop over examples and call SConstruct file
 for example in examples:

@@ -63,11 +63,11 @@ if unknown:
 Help(vars.GenerateHelpText(env))
 
 # set console messages for compilation and linking
-#if ARGUMENTS.get('VERBOSE') != '1':
-env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
-env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
-env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
-env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
+if ARGUMENTS.get('VERBOSE') != '1':
+  env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
+  env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
            
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)

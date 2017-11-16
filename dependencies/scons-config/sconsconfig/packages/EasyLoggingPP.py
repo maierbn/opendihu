@@ -47,7 +47,7 @@ class EasyLoggingPP(Package):
             'mkdir -p  ${PREFIX}/src',
             'mv ${SOURCE_DIR}/easylogging++.h ${PREFIX}/include',
             'mv ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src',
-            'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -o ${PREFIX}/src/easylogging++.o',
+            'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -o ${PREFIX}/src/easylogging++.o',
         ])
         self.build_flags = '-std=c++1z'
         

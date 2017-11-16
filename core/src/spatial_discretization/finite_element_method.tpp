@@ -17,7 +17,7 @@ namespace SpatialDiscretization
 
 template<typename Mesh, typename BasisFunction>
 FiniteElementMethodBase<Mesh, BasisFunction>::
-FiniteElementMethodBase(DihuContext &context) :
+FiniteElementMethodBase(const DihuContext &context) :
   context_(context), data_(context)
 {
   PyObject *topLevelSettings = context_.getPythonConfig();

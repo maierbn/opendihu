@@ -15,7 +15,7 @@
 namespace Data 
 {
 
-TimeStepping::TimeStepping(DihuContext &context) : Data(context)
+TimeStepping::TimeStepping(const DihuContext &context) : Data(context)
 {
   disablePrinting_ = PythonUtility::getOptionBool(context_.getPythonConfig(), "disablePrinting", false);
 }
@@ -66,18 +66,18 @@ void TimeStepping::print()
   if (disablePrinting_)
     return;
   
-  LOG(VERBOSE)<<"======================";
+  VLOG(1)<<"======================";
   
   int nEntries;
   VecGetSize(increment_, &nEntries);
-  LOG(VERBOSE)<<"increment ("<<nEntries<<" entries):";
-  LOG(VERBOSE)<<PetscUtility::getStringVector(increment_);
-  LOG(VERBOSE)<<"======================";
+  VLOG(1)<<"increment ("<<nEntries<<" entries):";
+  VLOG(1)<<PetscUtility::getStringVector(increment_);
+  VLOG(1)<<"======================";
   
   VecGetSize(solution_, &nEntries);
-  LOG(VERBOSE)<<"solution ("<<nEntries<<" entries):";
-  LOG(VERBOSE)<<PetscUtility::getStringVector(solution_);
-  LOG(VERBOSE)<<"======================";
+  VLOG(1)<<"solution ("<<nEntries<<" entries):";
+  VLOG(1)<<PetscUtility::getStringVector(solution_);
+  VLOG(1)<<"======================";
 }
 
 

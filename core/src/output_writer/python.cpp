@@ -7,10 +7,14 @@
 
 #include "easylogging++.h"
 #include <Python.h>
+
+// numpy api
+#if 0
 #include <numpy/ndarraytypes.h>
 #include <numpy/npy_common.h>
 #include <numpy/npy_math.h>
 #include <numpy/ndarrayobject.h>
+#endif
 
 #include <control/python_utility.h>
 #include <mesh/regular_fixed.h>
@@ -29,6 +33,7 @@ Python::Python(PyObject *settings) : Generic(settings)
 
 void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, int dimension, std::vector<long> &nEntries)
 {
+#if 1
   long int nEntriesTotal = 1;
   std::stringstream shape;
   shape << "[";
@@ -84,18 +89,18 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
     << "np.save(\"" << filename << "\",v)";
   
   //LOG(DEBUG) << converterScript.str();
-    
-  if (1)
+  if (0)
   {
     std::ofstream scriptFile("convert.py");
     scriptFile<<converterScript.str();
     scriptFile.close();
     int ret = system("python convert.py");
+    if (ret)
+      LOG(DEBUG) << "convert script failed!";
     std::remove("convert.py");
   }
   else
   {
-    
     int ret = PyRun_SimpleString(converterScript.str().c_str());
     if (ret != 0)
       LOG(WARNING) << "Conversion to numpy file \"" << filename << "\" failed.";
@@ -104,26 +109,22 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
   }
   // remove temporary file
   std::remove("temp1");
-    
+#endif    
   // directly write npy file by using numpy c API (not working)
-#if 0    
+#if 0
   // construct numpy array object
   long int nEntriesTotal = 1;
-  std::vector<long int> nEntries(dimension);
   for (int i=0; i<dimension; i++)
   {
-    nEntries[i] = (mesh->nElements(i) + 1);
     nEntriesTotal *= nEntries[i];
     LOG(DEBUG) << "nEntries["<<i<<"] = "<<nEntries[i];
   }
   
-  if (nEntriesTotal != vectorSize) 
+  if (nEntriesTotal != data.size()) 
   {
-    LOG(ERROR) << "number of degrees of freedom " << nEntriesTotal << " does not match vector size of solution "<<vectorSize<<".";
+    LOG(ERROR) << "Number of entries " << nEntriesTotal << " does not match vector size "<<data.size()<<".";
     return;
   }
-  
-  LOG(DEBUG) << "vectorSize="<<vectorSize<<", "<<vectorValues.size()<<", nEntries size "<<nEntries.size();
   
   // test PyArray_SimpleNewFromData
   long int dims[2] = {2,2};
@@ -137,20 +138,24 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
   //PyArray_Dump(test, filename0, -1);
   
   
-  PyObject *solutionVector = PyArray_SimpleNewFromData(dimension, nEntries.data(), NPY_DOUBLE, vectorValues.data());
+  PyObject *solutionVector = PyArray_SimpleNewFromData(dimension, nEntries.data(), NPY_DOUBLE, data.data());
   
   // write numpy array object to file
-  PyObject *filename = PyString_FromString(filenameSolution.c_str());
-  PyArray_Dump(solutionVector, filename, -1);
+  PyObject *filenamePython = PyString_FromString(filename.c_str());
+  PyArray_Dump(solutionVector, filenamePython, -1);
   
   Py_XDECREF(solutionVector);
-  Py_XDECREF(filename);
+  Py_XDECREF(filenamePython);
 #endif
 
 }
 
 void Python::writeSolution(Data::Data& data)
 {
+  if (!data.mesh())
+  {
+    LOG(FATAL) << "mesh is not set!";
+  }
   const int dimension = data.mesh()->dimension();
   
   LOG(DEBUG) << "dimension: "<<dimension;

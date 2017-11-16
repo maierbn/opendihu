@@ -16,7 +16,8 @@ namespace SpatialDiscretization
 {
 
 template<typename Mesh, typename BasisFunction>
-FiniteElementMethod<Mesh, BasisFunction, Equation::Static::Laplace>::FiniteElementMethod(DihuContext &context)
+FiniteElementMethod<Mesh, BasisFunction, Equation::Static::Laplace>::
+FiniteElementMethod(const DihuContext &context)
   : FiniteElementMethodBase<Mesh, BasisFunction>(context)
 {
 }

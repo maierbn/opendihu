@@ -8,7 +8,7 @@
 #include "easylogging++.h"
 
 template<typename Key, typename Value>
-std::pair<Key, Value> PythonUtility::getOptionDictBegin(PyObject *settings, std::string keyString)
+std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString)
 {
   //PyDict_Check(settings
   
@@ -18,9 +18,9 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(PyObject *settings, std:
   {
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
-    if(PyDict_Contains(settings, key))
+    if(PyDict_Contains((PyObject *)settings, key))
     {
-      PyObject *dict = PyDict_GetItem(settings, key);
+      PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
       itemList = PyDict_Items(dict);
       itemListIndex = 0;
       
@@ -43,7 +43,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(PyObject *settings, std:
 }
 
 template<typename Key, typename Value>
-void PythonUtility::getOptionDictNext(PyObject *settings, std::string keyString, std::pair<Key, Value> &nextPair)
+void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyString, std::pair<Key, Value> &nextPair)
 {
   itemListIndex++;
   
@@ -58,16 +58,16 @@ void PythonUtility::getOptionDictNext(PyObject *settings, std::string keyString,
 }
 
 template<typename Value>
-Value PythonUtility::getOptionListBegin(PyObject *settings, std::string keyString)
+Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string keyString)
 {
   if (settings)
   {
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
-    if(PyDict_Contains(settings, key))
+    if(PyDict_Contains((PyObject *)settings, key))
     {
       // check if it is a list
-      list = PyDict_GetItem(settings, key);
+      list = PyDict_GetItem((PyObject *)settings, key);
       if (PyList_Check(list))
       {
         listIndex = 0;
@@ -95,7 +95,7 @@ Value PythonUtility::getOptionListBegin(PyObject *settings, std::string keyStrin
 }
 
 template<typename Value>
-void PythonUtility::getOptionListNext(PyObject *settings, std::string keyString, Value &value)
+void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyString, Value &value)
 {
   listIndex++;
   
@@ -168,10 +168,10 @@ std::array<ValueType, D> PythonUtility::getOptionList(PyObject* settings, std::s
   { 
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
-    if(PyDict_Contains(settings, key))
+    if(PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem(settings, key);
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
       result = PythonUtility::convertFromPython<ValueType, D>(value, defaultValue);
     }
     else

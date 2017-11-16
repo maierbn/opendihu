@@ -14,7 +14,8 @@
 namespace Data
 {
 
-Data::Data(DihuContext &context) : context_(context), nDegreesOfFreedomPerNode_(1)
+Data::Data(const DihuContext &context) : 
+  context_(context), nDegreesOfFreedomPerNode_(1)
 {
 }
 

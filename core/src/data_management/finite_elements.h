@@ -18,7 +18,7 @@ class FiniteElements : public Data
 public:
  
   //! constructor
-  FiniteElements(DihuContext &context);
+  FiniteElements(const DihuContext &context);
   
   //! destructur
   ~FiniteElements();

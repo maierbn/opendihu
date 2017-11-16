@@ -1,6 +1,6 @@
 #pragma once
 
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "control/runnable.h"
 #include "data_management/time_stepping.h"
 #include "control/dihu_context.h"
@@ -9,29 +9,20 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-class ExplicitEuler : public TimeSteppingScheme, public Runnable
+class ExplicitEuler : 
+  public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
 {
 public:
  
-  ///! constructor
-  ExplicitEuler(DihuContext &context);
+  //! constructor
+  ExplicitEuler(const DihuContext &context);
   
-  ///! run the simulation
+  //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
+  void advanceTimeSpan();
+  
+  //! run the simulation
   void run();
-private:
- 
-  ///! read initial values from settings and set field accordingly
-  void setInitialValues();
- 
-  DihuContext &context_;    ///< the context object containing everything to be stored
-  Data::TimeStepping data_;     ///< data object that holds all PETSc vectors and matrices
-  
-  DiscretizableInTime discretizableInTime;    ///< the object to be discretized
-  
-  double endTime_;          ///< end time of simulation
-  int numberTimeSteps_;     ///< number of time steps in simulation time
-  double timeStepWidth_;    ///< computed time step width, endTime_/numberTimeSteps_
-  PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+private: 
 };
 
 }  // namespace

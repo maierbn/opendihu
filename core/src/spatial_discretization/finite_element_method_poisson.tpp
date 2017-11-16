@@ -18,14 +18,14 @@ namespace SpatialDiscretization
   
 template<class MeshType, class BasisFunctionType>
 FiniteElementMethodBaseRhs<MeshType, BasisFunctionType>::
-FiniteElementMethodBaseRhs(DihuContext &context)
+FiniteElementMethodBaseRhs(const DihuContext &context)
   : FiniteElementMethodBase<MeshType, BasisFunctionType>(context)
 {
 }
 
 template<typename MeshType, typename BasisFunctionType, typename Term>
 FiniteElementMethod<MeshType, BasisFunctionType, Term, Equation::hasLaplaceOperatorWithRhs<Term>>::
-FiniteElementMethod(DihuContext &context) 
+FiniteElementMethod(const DihuContext &context) 
   : FiniteElementMethodBaseRhs<MeshType, BasisFunctionType>(context)
 {
 }

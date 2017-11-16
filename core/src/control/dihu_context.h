@@ -17,14 +17,17 @@ public:
   ///! constructor for test cases
   DihuContext(int argc, char *argv[], std::string pythonSettings);
   
+  ///! return a context object with config originated at child node with given key
+  const DihuContext &operator[](std::string keyString) const;
+  
   ///! return the top-level python config object
-  PyObject *getPythonConfig();
+  PyObject *getPythonConfig() const;
   
   ///! get reference to a PetscErrorCode temporary variable to be used to assign petsc error codes
   PetscErrorCode &ierr();
   
   ///! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
-  void writeOutput(Data::Data &problemData, int timeStepNo = -1, double currentTime = 0.0);
+  void writeOutput(Data::Data &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
   
   ///! destructor
   ~DihuContext();
@@ -48,5 +51,6 @@ private:
   PyObject *pythonConfig_;    ///< the top level python config dictionary
   
   PetscErrorCode ierr_;     ///< temporary variable for petsc error codes
-  std::list<std::unique_ptr<OutputWriter::Generic>> outputWriter_;    ///< list of active output writers
+  static std::list<std::unique_ptr<OutputWriter::Generic>> outputWriter_;    ///< list of active output writers
+  static bool initialized_;
 };

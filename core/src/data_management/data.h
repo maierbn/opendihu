@@ -16,7 +16,7 @@ class Data
 public:
  
   //! constructor
-  Data(DihuContext &context);
+  Data(const DihuContext &context);
   
   //! destructor
   virtual ~Data();
@@ -36,7 +36,7 @@ public:
   //! return the number of degrees of freedom per mesh node
   int nDegreesOfFreedomPerNode();
   
-  //! return the solution vector that will be written by an output writer
+  //! return the solution vector that can be written by an output writer
   virtual Vec &solution() = 0;
   
 protected:
@@ -44,7 +44,7 @@ protected:
   //! initializes the vectors and stiffness matrix with size
   virtual void createPetscObjects() = 0;
  
-  DihuContext &context_;
+  const DihuContext &context_;
   
   std::shared_ptr<Mesh::Mesh> mesh_;
   int nDegreesOfFreedomPerNode_;    ///< number of degrees of freedom per mesh node

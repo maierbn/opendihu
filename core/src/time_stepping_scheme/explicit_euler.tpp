@@ -8,76 +8,49 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext &context) : 
-  context_(context), data_(context_), discretizableInTime(context_)
+ExplicitEuler<DiscretizableInTime>::ExplicitEuler(const DihuContext &context) : 
+  TimeSteppingSchemeOde<DiscretizableInTime>(context)
 {
-  PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::extractDict(topLevelSettings, "ExplicitEuler");
+  PyObject *topLevelSettings = this->context_.getPythonConfig();
+  this->specificSettings_ = PythonUtility::extractDict(topLevelSettings, "ExplicitEuler");
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::setInitialValues()
+void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
-  int nDegreesOfFreedom = data_.nDegreesOfFreedom();
-  Vec &solution = data_.solution();
-  
-  if (!discretizableInTime.setInitialValues(solution))
+  // compute timestep width
+  double timeSpan = this->endTime_ - this->startTime_;
+  double timeStepWidth = timeSpan / this->numberTimeSteps_;
+ 
+  // loop over time steps
+  double currentTime = this->startTime_;
+  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-   // initialize with 0
-   PetscErrorCode ierr;
-   ierr = VecSet(solution, 0.0); CHKERRV(ierr);
-   
-   // set from settings
-   std::vector<double> values;
-   PythonUtility::getOptionVector(specificSettings_, "initialValues", nDegreesOfFreedom, values);
-   
-   // loop over initialValues list
-   for(int i=0; i<nDegreesOfFreedom; i++)
-   {
-     //                 vector    row  value
-     ierr = VecSetValue(solution, i, values[i], INSERT_VALUES); CHKERRV(ierr);
-   }
+    if (timeStepNo % this->timeStepOutputFrequency_ == 0)
+     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    
+    // advance computed value
+    // compute next delta_u = f(u)
+    this->discretizableInTime.evaluateTimesteppingRightHandSide(
+      this->data_.solution(), this->data_.increment(), timeStepNo, currentTime);
+    
+    // integrate, y += dt * delta_u
+    VecAXPY(this->data_.solution(), timeStepWidth, this->data_.increment());
+    
+    // advance simulation time
+    timeStepNo++;
+    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+    
+    // write current output values
+    this->context_.writeOutput(this->data_, timeStepNo, currentTime);
+    
+    this->data_.print();
   }
 }
 
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::run()
 {
-  // compute time stepping width
-  endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
-  numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
-  
-  timeStepWidth_ = endTime_ / numberTimeSteps_;
- 
-  // initialize finite element part
-  discretizableInTime.initialize();
-  data_.setNDegreesOfFreedomPerNode(discretizableInTime.numberDegreesOfFreedomPerNode());
-  data_.setMesh(discretizableInTime.mesh());
-  
-  // set initial values from settings
-  setInitialValues();
-  data_.print();
-  
-  // loop over time steps
-  double currentTime = 0.0;
-  for(int timeStepNo = 0; timeStepNo < numberTimeSteps_; timeStepNo++)
-  {
-    currentTime = double(timeStepNo) / (numberTimeSteps_-1) * endTime_;
-    
-    if (timeStepNo % 100 == 0)
-     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<numberTimeSteps_<<", t="<<currentTime;
-    
-    // compute next delta_u = f(u)
-    discretizableInTime.evaluateTimesteppingRightHandSide(data_.solution(), data_.increment(), timeStepNo, currentTime);
-    
-    // integrate, y += dt * delta_u
-    VecAXPY(data_.solution(), timeStepWidth_, data_.increment());
-    
-    // write current output values
-    context_.writeOutput(data_, timeStepNo, currentTime);
-    
-    data_.print();
-  }
+  TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }
-
 } // namespace TimeSteppingScheme

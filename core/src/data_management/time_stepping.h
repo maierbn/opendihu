@@ -17,7 +17,7 @@ class TimeStepping : public Data
 public:
  
   //! constructor
-  TimeStepping(DihuContext &context);
+  TimeStepping(const DihuContext &context);
   
   //! destructur
   ~TimeStepping();

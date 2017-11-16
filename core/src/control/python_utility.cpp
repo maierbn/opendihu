@@ -145,14 +145,14 @@ std::string PythonUtility::convertFromPython(PyObject *object)
   return convertFromPython<std::string>(object, "");
 }
 
-bool PythonUtility::containsKey(PyObject* settings, std::string keyString)
+bool PythonUtility::containsKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
   {
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
     
-    if(PyDict_Contains(settings, key))
+    if(PyDict_Contains((PyObject *)settings, key))
     {
       return true;
     }
@@ -160,16 +160,16 @@ bool PythonUtility::containsKey(PyObject* settings, std::string keyString)
   return false;
 }
 
-PyObject *PythonUtility::extractDict(PyObject *settings, std::string keyString)
+PyObject *PythonUtility::extractDict(const PyObject *settings, std::string keyString)
 {
   if (settings)
   {
     // check if input dictionary contains the key
     PyObject *key = PyString_FromString(keyString.c_str());
     
-    if(PyDict_Contains(settings, key))
+    if(PyDict_Contains((PyObject *)settings, key))
     {
-      return PyDict_GetItem(settings, key);
+      return PyDict_GetItem((PyObject *)settings, key);
     }
     else
     {
@@ -180,7 +180,7 @@ PyObject *PythonUtility::extractDict(PyObject *settings, std::string keyString)
   return NULL;
 }
 
-double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString, double defaultValue, ValidityCriterion validityCriterion)
+double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, double defaultValue, ValidityCriterion validityCriterion)
 {
   double result = defaultValue;
   
@@ -189,10 +189,10 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
   
   // check if input dictionary contains the key
   PyObject *key = PyString_FromString(keyString.c_str());
-  if(PyDict_Contains(settings, key))
+  if(PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
-    PyObject *value = PyDict_GetItem(settings, key);
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     if (PyList_Check(value))
     {
       // type is a list, determine how many entries it contains
@@ -256,7 +256,7 @@ double PythonUtility::getOptionDouble(PyObject* settings, std::string keyString,
   return result;
 }
 
-int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int defaultValue, ValidityCriterion validityCriterion)
+int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString, int defaultValue, ValidityCriterion validityCriterion)
 {
   int result = defaultValue;
   
@@ -265,10 +265,10 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
   
   // check if input dictionary contains the key
   PyObject *key = PyString_FromString(keyString.c_str());
-  if(PyDict_Contains(settings, key))
+  if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
-    PyObject *value = PyDict_GetItem(settings, key);
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     if (PyList_Check(value))
     {
       // type is a list, determine how many entries it contains
@@ -332,7 +332,7 @@ int PythonUtility::getOptionInt(PyObject *settings, std::string keyString, int d
   return result;
 }
 
-bool PythonUtility::getOptionBool(PyObject *settings, std::string keyString, bool defaultValue)
+bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyString, bool defaultValue)
 {
   int result = defaultValue;
   
@@ -341,10 +341,10 @@ bool PythonUtility::getOptionBool(PyObject *settings, std::string keyString, boo
   
   // check if input dictionary contains the key
   PyObject *key = PyString_FromString(keyString.c_str());
-  if(PyDict_Contains(settings, key))
+  if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
-    PyObject *value = PyDict_GetItem(settings, key);
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     if (PyList_Check(value))
     {
       // type is a list, determine how many entries it contains
@@ -385,7 +385,7 @@ bool PythonUtility::getOptionBool(PyObject *settings, std::string keyString, boo
   return result;
 }
 
-std::string PythonUtility::getOptionString(PyObject *settings, std::string keyString, std::string defaultValue)
+std::string PythonUtility::getOptionString(const PyObject *settings, std::string keyString, std::string defaultValue)
 {
   std::string result = defaultValue;
   
@@ -394,10 +394,10 @@ std::string PythonUtility::getOptionString(PyObject *settings, std::string keySt
   
   // check if input dictionary contains the key
   PyObject *key = PyString_FromString(keyString.c_str());
-  if(PyDict_Contains(settings, key))
+  if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
-    PyObject *value = PyDict_GetItem(settings, key);
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     
     // convert to std::string or try default value
     result = convertFromPython<std::string>(value, defaultValue);
@@ -410,6 +410,43 @@ std::string PythonUtility::getOptionString(PyObject *settings, std::string keySt
   return result;
 }
 
+PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string keyString)
+{
+  PyObject *result = NULL;
+  
+  if (!settings)
+    return result;
+  
+  // check if input dictionary contains the key
+  PyObject *key = PyString_FromString(keyString.c_str());
+  if(PyDict_Contains((PyObject *)settings, key))
+  { 
+    // extract the value of the key and check its type
+    PyObject *function = PyDict_GetItem((PyObject *)settings, key);
+    if (PyFunction_Check(function))
+    {
+      // type is a function
+      if (PyCallable_Check(function))
+      {
+        result = function;
+      }
+      else
+      {
+        LOG(WARNING)<<"Value for key \""<<keyString<<"\" is not a callable object.";
+      }
+    }
+    else
+    {
+      LOG(WARNING)<<"Value for key \""<<keyString<<"\" is not a function.";
+    }
+  }
+  else
+  {
+    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
+  }
+  return result;
+}
+
 void PythonUtility::printDict(PyObject *dict, int indent)
 {
   // iterate over top level key-value pairs
@@ -418,127 +455,131 @@ void PythonUtility::printDict(PyObject *dict, int indent)
   
   while (PyDict_Next(dict, &pos, &key, &value))
   {
-    LOG(VERBOSE)<<std::string(indent, ' ');
+    VLOG(1)<<std::string(indent, ' ');
     
     if (!PyString_Check(key))
     {
-      LOG(VERBOSE)<<"key is not a string"<<std::endl;
+      VLOG(1)<<"key is not a string"<<std::endl;
     }
     else
     {
       std::string keyString = PyString_AsString(key);
-      LOG(VERBOSE)<<keyString<<": ";
+      VLOG(1)<<keyString<<": ";
     }
                 
     if (PyString_CheckExact(value))
     {
       std::string valueString = PyString_AsString(value);
-      LOG(VERBOSE)<<"\""<<valueString<<"\""<<std::endl;
+      VLOG(1)<<"\""<<valueString<<"\""<<std::endl;
     }
     else if (PyInt_CheckExact(value))
     {
       long valueLong = PyInt_AsLong(value);
-      LOG(VERBOSE)<<valueLong<<std::endl;
+      VLOG(1)<<valueLong<<std::endl;
     }
     else if (PyLong_CheckExact(value))
     {
       long valueLong = PyLong_AsLong(value);
-      LOG(VERBOSE)<<valueLong<<std::endl;
+      VLOG(1)<<valueLong<<std::endl;
     }
     else if (PyFloat_CheckExact(value))
     {
       double valueDouble = PyFloat_AsDouble(value);
-      LOG(VERBOSE)<<valueDouble<<std::endl;
+      VLOG(1)<<valueDouble<<std::endl;
     }
     else if (PyBool_Check(value))
     {
       bool valueBool = PyObject_IsTrue(value);
-      LOG(VERBOSE)<<std::boolalpha<<valueBool<<std::endl;
+      VLOG(1)<<std::boolalpha<<valueBool<<std::endl;
     }
     else if(PyDict_CheckExact(value))
     {
-      LOG(VERBOSE)<<"{"<<std::endl;
+      VLOG(1)<<"{"<<std::endl;
       printDict(value, indent+2);
-      LOG(VERBOSE)<<std::string(indent, ' ')<<"}"<<std::endl;
+      VLOG(1)<<std::string(indent, ' ')<<"}"<<std::endl;
     }
     else
     {
-      LOG(VERBOSE)<<"<unknown>"<<std::endl;
+      VLOG(1)<<"<unknown>"<<std::endl;
     }
   }
 }
 
-bool PythonUtility::getOptionDictEnd(PyObject *settings, std::string keyString)
+bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString)
 {
   if (!itemList)
     return true;
   return itemListIndex >= PyList_Size(itemList);
 }
 
-bool PythonUtility::getOptionListEnd(PyObject *settings, std::string keyString)
+bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keyString)
 {
   if (!list)
     return true;
   return listIndex >= PyList_Size(list);
 }
 
-void PythonUtility::getOptionVector(PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
+void PythonUtility::getOptionVector(const PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
 {
   values.resize(nEntries);
   
-  // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
-  if(PyDict_Contains(settings, key))
-  { 
-    // extract the value of the key and check its type
-    PyObject *value = PyDict_GetItem(settings, key);
-    if (PyList_Check(value))
-    {
-      // it is a list
-    
-      // get the first value from the list
-      double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
-      int i = 0; 
-    
-      // loop over other values
-      for (;
-          !PythonUtility::getOptionListEnd(settings, keyString)
-          && i < nEntries; 
-          PythonUtility::getOptionListNext<double>(settings, keyString, value), i++)
-      {
-        values[i] = value;
-      }
-    }
-    else if (PyDict_Check(value))
-    {
-      std::pair<int, double> dictItem 
-        = PythonUtility::getOptionDictBegin<int, double>(settings, keyString);
-      
-      // loop over Dirichlet boundary conditions
-      for (; !PythonUtility::getOptionDictEnd(settings, keyString); 
-          PythonUtility::getOptionDictNext<int, double>(settings, keyString, dictItem))
-      {
-        int index = dictItem.first;
-        double value = dictItem.second;
-        
-        if (index >= 0 && index < nEntries)
-        {
-          values[index] = value;
-        }
-        else
-        {
-          LOG(WARNING) << "In config dict, ignoring key "<<index<<", maximum key is "<<nEntries-1;
-        }
-      }
-    }
-    else 
-    {
-      double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
-      std::fill(values.begin(), values.end(), value);
-    }
-  }
-  else
+  if (settings)
   {
-    LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
+    
+    // check if input dictionary contains the key
+    PyObject *key = PyString_FromString(keyString.c_str());
+    if(PyDict_Contains((PyObject *)settings, key))
+    { 
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+      
+        // get the first value from the list
+        double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
+        int i = 0; 
+      
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString)
+            && i < nEntries; 
+            PythonUtility::getOptionListNext<double>(settings, keyString, value), i++)
+        {
+          values[i] = value;
+        }
+      }
+      else if (PyDict_Check(value))
+      {
+        std::pair<int, double> dictItem 
+          = PythonUtility::getOptionDictBegin<int, double>(settings, keyString);
+        
+        // loop over Dirichlet boundary conditions
+        for (; !PythonUtility::getOptionDictEnd(settings, keyString); 
+            PythonUtility::getOptionDictNext<int, double>(settings, keyString, dictItem))
+        {
+          int index = dictItem.first;
+          double value = dictItem.second;
+          
+          if (index >= 0 && index < nEntries)
+          {
+            values[index] = value;
+          }
+          else
+          {
+            LOG(WARNING) << "In config dict, ignoring key "<<index<<", maximum key is "<<nEntries-1;
+          }
+        }
+      }
+      else 
+      {
+        double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
+        std::fill(values.begin(), values.end(), value);
+      }
+    }
+    else
+    {
+      LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
+    }
   }
 }

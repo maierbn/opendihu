@@ -9,6 +9,7 @@
 #include "base64.h"
 
 #include <control/python_utility.h>
+#include <control/petsc_utility.h>
 #include <mesh/regular_fixed.h>
 #include <mesh/rectilinear_fixed.h>
 #include <mesh/nonrectilinear_fixed.h>
@@ -20,34 +21,35 @@ namespace OutputWriter
 
 Paraview::Paraview(PyObject *settings) : Generic(settings)
 {
-
 }
 
-void Paraview::writeSolution(Data::Data& data)
+void Paraview::writeSolution(Data::Data& data, int timeStepNo, double currentTime)
 {
+  if (!data.mesh())
+  {
+    LOG(FATAL) << "mesh is not set!";
+  }
   const int dimension = data.mesh()->dimension();
-  
-  LOG(DEBUG) << "dimension: "<<dimension;
   
   // solution and rhs vectors in mesh shape
   switch(dimension)
   {
   case 1:
-    writeSolutionDim<1>(data);
+    writeSolutionDim<1>(data, timeStepNo, currentTime);
     break;
   case 2:
-    writeSolutionDim<2>(data);
+    writeSolutionDim<2>(data, timeStepNo, currentTime);
     break;
   case 3:
-    writeSolutionDim<3>(data);
+    writeSolutionDim<3>(data, timeStepNo, currentTime);
     break;
   };
 }
 
 template <int dimension>
-void Paraview::writeSolutionDim(Data::Data &data)
+void Paraview::writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "writeMesh<"<<dimension<<">()";
+  LOG(TRACE) << "writeMesh<"<<dimension<<">()";
   
   if (std::dynamic_pointer_cast<Mesh::RegularFixed<dimension>>(data.mesh()) != NULL)
   {
@@ -82,15 +84,10 @@ std::string Paraview::encodeBase64(Vec &vector)
 
 std::string Paraview::convertToAscii(Vec &vector, bool fixedFormat)
 {
-  int vectorSize = 0;
-  VecGetSize(vector, &vectorSize);
+  std::vector<double> vectorValues;
+  PetscUtility::getVectorEntries(vector, vectorValues);
   
-  std::vector<int> indices(vectorSize);
-  std::iota (indices.begin(), indices.end(), 0);    // fill with increasing numbers: 0,1,2,...
-  std::vector<double> values(vectorSize);
-  VecGetValues(vector, vectorSize, indices.data(), values.data());
-  
-  return convertToAscii(values, fixedFormat);
+  return convertToAscii(vectorValues, fixedFormat);
 }
 
 std::string Paraview::encodeBase64(std::vector<double> &vector)

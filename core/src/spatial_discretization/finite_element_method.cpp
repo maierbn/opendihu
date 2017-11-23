@@ -37,6 +37,9 @@ setStiffnessMatrix()
   // get settings values
   int nElements = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(0);
+  double prefactor = PythonUtility::getOptionDouble(specificSettings_, "prefactor", 1.0);
+  
+  double factor = prefactor*elementLength;
   
   int nDegreesOfFreedom = data_.mesh()->nNodes();
   
@@ -59,22 +62,22 @@ setStiffnessMatrix()
     // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
    
     //                 matrix           row        column
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo, stencilCenter[center]*elementLength, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo, stencilCenter[center]*factor, INSERT_VALUES); CHKERRV(ierr);
    
     if (dofNo+1 < nDegreesOfFreedom)
     {
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo+1, stencilCenter[center+1]*elementLength, INSERT_VALUES); CHKERRV(ierr);
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo+1, stencilCenter[center+1]*factor, INSERT_VALUES); CHKERRV(ierr);
     }
     if (dofNo-1 >= 0)
     {
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo-1, stencilCenter[center-1]*elementLength, INSERT_VALUES); CHKERRV(ierr);
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo-1, stencilCenter[center-1]*factor, INSERT_VALUES); CHKERRV(ierr);
     }
   }
   
   // set center values for boundaries
-  ierr = MatSetValue(stiffnessMatrix, 0, 0, stencilSide[0]*elementLength, INSERT_VALUES); CHKERRV(ierr);
+  ierr = MatSetValue(stiffnessMatrix, 0, 0, stencilSide[0]*factor, INSERT_VALUES); CHKERRV(ierr);
   ierr = MatSetValue(stiffnessMatrix, nDegreesOfFreedom-1, nDegreesOfFreedom-1, 
-                     stencilSide[0]*elementLength, INSERT_VALUES); CHKERRV(ierr);
+                     stencilSide[0]*factor, INSERT_VALUES); CHKERRV(ierr);
 }
 
 // 2D stiffness matrix
@@ -92,11 +95,14 @@ setStiffnessMatrix()
   double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(1);
   double integralFactor = elementLength0*elementLength1;
+  double prefactor = PythonUtility::getOptionDouble(specificSettings_, "prefactor", 1.0);
+  
+  double factor = prefactor*integralFactor;
   
   //int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
   
   LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<", elementLength="<<elementLength0<<"x"<<elementLength1;
-  LOG(DEBUG) << "integralFactor="<<integralFactor;
+  LOG(DEBUG) << "factor="<<factor;
   
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
@@ -125,63 +131,63 @@ setStiffnessMatrix()
       node_idx_t dofNo = dofIndex(x,y);
     
       // diagonal entry
-      value = stencilCenter[center][center]*integralFactor;
+      value = stencilCenter[center][center]*factor;
       //                 matrix           row    column
       ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
      
       // left
       if (x > 0)
       {
-        value = stencilCenter[center][center-1]*integralFactor;
+        value = stencilCenter[center][center-1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo+1, value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // right
       if (x < nNodes0-1)
       {
-        value = stencilCenter[center][center+1]*integralFactor;
+        value = stencilCenter[center][center+1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo-1, value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // bottom
       if (y > 0)
       {
-        value = stencilCenter[center-1][center]*integralFactor;
+        value = stencilCenter[center-1][center]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1), value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // top
       if (y < nNodes1-1)
       {
-        value = stencilCenter[center+1][center]*integralFactor;
+        value = stencilCenter[center+1][center]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1), value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // bottom left
       if (y > 0 && x > 0)
       {
-        value = stencilCenter[center-1][center-1]*integralFactor;
+        value = stencilCenter[center-1][center-1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // bottom right
       if (y > 0 && x < nNodes0-1)
       {
-        value = stencilCenter[center-1][center+1]*integralFactor;
+        value = stencilCenter[center-1][center+1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // top left
       if (y < nNodes1-1 && x > 0)
       {
-        value = stencilCenter[center+1][center-1]*integralFactor;
+        value = stencilCenter[center+1][center-1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), value, INSERT_VALUES); CHKERRV(ierr);
       }
       
       // top right
       if (y < nNodes1-1 && x < nNodes0-1)
       {
-        value = stencilCenter[center+1][center+1]*integralFactor;
+        value = stencilCenter[center+1][center+1]*factor;
         ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), value, INSERT_VALUES); CHKERRV(ierr);
       }
     }
@@ -193,12 +199,12 @@ setStiffnessMatrix()
   {
     int x = 0;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom 
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // top
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom 
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom right
   }
   
   // right boundary
@@ -206,12 +212,12 @@ setStiffnessMatrix()
   {
     int x = nNodes0-1;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom 
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // top
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom 
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom left
   }
   
   // bottom boundary
@@ -219,12 +225,12 @@ setStiffnessMatrix()
   {
     int y = 0;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // top right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top right
   }
   
   // top boundary
@@ -232,12 +238,12 @@ setStiffnessMatrix()
   {
     int y = nNodes1-1;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr); // bottom right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // right
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom left
+    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom right
   } 
   
   // corner nodes
@@ -245,37 +251,37 @@ setStiffnessMatrix()
   int x = 0;
   int y = 0;
   node_idx_t dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // right
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // top
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1),  1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // top right
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // right
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // top
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // top right
   
   // bottom right
   x = nNodes0-1;
   y = 0;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // left
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // top
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1),  1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // top left
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // left
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // top
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // top left
   
   // top left
   x = 0;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // right
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // bottom
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1),  1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // bottom right
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // right
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom right
   
   // top right
   x = nNodes0-1;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // left
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // bottom
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1),  1.0/3.*integralFactor, INSERT_VALUES); CHKERRV(ierr);    // bottom left
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // left
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom
+  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom left
 }
   
 // 1D rhs

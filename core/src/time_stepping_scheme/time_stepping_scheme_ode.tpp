@@ -8,8 +8,8 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-TimeSteppingSchemeOde<DiscretizableInTime>::TimeSteppingSchemeOde(const DihuContext &context) : 
-  TimeSteppingScheme(context), data_(context), discretizableInTime(context)
+TimeSteppingSchemeOde<DiscretizableInTime>::TimeSteppingSchemeOde(const DihuContext &context, const std::string name) : 
+  TimeSteppingScheme(context), data_(context), discretizableInTime_(context[name])
 {
 }
 
@@ -44,7 +44,7 @@ void TimeSteppingSchemeOde<DiscretizableInTime>::setInitialValues()
 template<typename DiscretizableInTime>
 SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTime>::solutionVectorMapping()
 {
-  return discretizableInTime.solutionVectorMapping();
+  return discretizableInTime_.solutionVectorMapping();
 }
 
 template<typename DiscretizableInTime>
@@ -58,19 +58,20 @@ void TimeSteppingSchemeOde<DiscretizableInTime>::
 initialize()
 {
   TimeSteppingScheme::initialize();
+  LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
   
   // initialize underlying DiscretizableInTime object
-  discretizableInTime.initialize();
-  data_.setNDegreesOfFreedomPerNode(discretizableInTime.numberDegreesOfFreedomPerNode());
-  data_.setMesh(discretizableInTime.mesh());
+  discretizableInTime_.initialize();
+  data_.setNDegreesOfFreedomPerNode(discretizableInTime_.numberDegreesOfFreedomPerNode());
+  data_.setMesh(discretizableInTime_.mesh());
   
-  timeStepOutputFrequency_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputFrequency", 100, PythonUtility::Positive);
+  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
   
   // set initial values from settings
   
   Vec &solution = data_.solution();
   
-  if (!discretizableInTime.setInitialValues(solution))
+  if (!discretizableInTime_.setInitialValues(solution))
   {
     this->setInitialValues();
   }
@@ -87,5 +88,13 @@ run()
   // do simulations
   this->advanceTimeSpan();
 }
+
+template<typename DiscretizableInTime>
+bool TimeSteppingSchemeOde<DiscretizableInTime>::
+knowsMeshType()
+{
+  return this->discretizableInTime_.knowsMeshType();
+}
+
 
 } // namespace

@@ -5,7 +5,7 @@
 
 Computation::Computation(DihuContext &dihuContext, Runnable &runnable)
 {
-  LOG(DEBUG)<<"start computation"<<std::endl;
+  LOG(TRACE)<<"Computation constructor: start computation by runnable.run()"<<std::endl;
   runnable.run();
 }
 

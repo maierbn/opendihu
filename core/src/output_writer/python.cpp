@@ -17,6 +17,7 @@
 #endif
 
 #include <control/python_utility.h>
+#include <control/petsc_utility.h>
 #include <mesh/regular_fixed.h>
 #include <mesh/rectilinear_fixed.h>
 #include <mesh/nonrectilinear_fixed.h>
@@ -29,6 +30,29 @@ namespace OutputWriter
 Python::Python(PyObject *settings) : Generic(settings)
 {
 
+}
+
+void Python::writeSolution(Data::Data& data, int timeStepNo, double currentTime)
+{
+  if (!data.mesh())
+  {
+    LOG(FATAL) << "mesh is not set!";
+  }
+  const int dimension = data.mesh()->dimension();
+  
+  // solution and rhs vectors in mesh shape
+  switch(dimension)
+  {
+  case 1:
+    writeSolutionDim<1>(data, timeStepNo, currentTime);
+    break;
+  case 2:
+    writeSolutionDim<2>(data, timeStepNo, currentTime);
+    break;
+  case 3:
+    writeSolutionDim<3>(data, timeStepNo, currentTime);
+    break;
+  };
 }
 
 void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, int dimension, std::vector<long> &nEntries)
@@ -150,34 +174,10 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
 
 }
 
-void Python::writeSolution(Data::Data& data)
-{
-  if (!data.mesh())
-  {
-    LOG(FATAL) << "mesh is not set!";
-  }
-  const int dimension = data.mesh()->dimension();
-  
-  LOG(DEBUG) << "dimension: "<<dimension;
-  
-  // solution and rhs vectors in mesh shape
-  switch(dimension)
-  {
-  case 1:
-    writeSolutionDim<1>(data);
-    break;
-  case 2:
-    writeSolutionDim<2>(data);
-    break;
-  case 3:
-    writeSolutionDim<3>(data);
-    break;
-  };
-}
 template <int dimension>
-void Python::writeSolutionDim(Data::Data &data)
+void Python::writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "writeSolution<"<<dimension<<">()";
+  LOG(TRACE) << "writeSolution<"<<dimension<<">()";
   
   // solution and rhs vectors in mesh shape
   // if mesh is regular fixed
@@ -194,18 +194,10 @@ void Python::writeSolutionDim(Data::Data &data)
     std::string filenameSolutionShaped = s[1].str();
     
     // get data of solution vector
-    int vectorSize = 0;
-    VecGetSize(data.solution(), &vectorSize);
-
-    std::vector<int> indices(vectorSize);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<double> vectorValues(vectorSize);
-
-    VecGetValues(data.solution(), vectorSize, indices.data(), vectorValues.data());
+    std::vector<double> vectorValues;
+    PetscUtility::getVectorEntries(data.solution(), vectorValues);
     
     // determine number of entries in each dimension
-    LOG(DEBUG) << "dimension=" << dimension;
-    
     std::vector<long int> nEntries(dimension);
     for (int i=0; i<dimension; i++)
     {
@@ -228,8 +220,6 @@ void Python::writeSolutionDim(Data::Data &data)
 template <int dimension>
 void Python::writeRhsMatrix(Data::FiniteElements &data)
 {
-  LOG(DEBUG) << "writeRhsMatrix<"<<dimension<<">()";
-  
   // solution and rhs vectors in mesh shape
   if (std::dynamic_pointer_cast<Mesh::RegularFixed<dimension>>(data.mesh()) != NULL)
   {
@@ -254,8 +244,6 @@ void Python::writeRhsMatrix(Data::FiniteElements &data)
     std::vector<double> vectorValues(vectorSize);
 
     // determine number of entries in each dimension
-    LOG(DEBUG) << "dimension=" << dimension;
-    
     std::vector<long int> nEntries(dimension);
     for (int i=0; i<dimension; i++)
     {

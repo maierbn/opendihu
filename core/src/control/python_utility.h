@@ -23,7 +23,7 @@ public:
   static bool containsKey(const PyObject *settings, std::string key);
   
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
-  static PyObject *extractDict(const PyObject *settings, std::string key);
+  static PyObject *getOptionPyObject(const PyObject *settings, std::string key);
   
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
   static double getOptionDouble(const PyObject *settings, std::string key, double defaultValue, ValidityCriterion validityCriterion = None);
@@ -42,12 +42,12 @@ public:
   
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
   template<class ValueType, unsigned long D>
-  static std::array<ValueType, D> getOptionList(PyObject* settings, std::string keyString, std::array<ValueType, D> defaultValue, 
+  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::array<ValueType, D> defaultValue, 
                                                 ValidityCriterion validityCriterion = None);
   
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
   template<class ValueType, unsigned long D>
-  static std::array<ValueType, D> getOptionList(PyObject* settings, std::string keyString, ValueType defaultValue, 
+  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, ValueType defaultValue, 
                                                 ValidityCriterion validityCriterion = None);
   
   //! Consider a Python dictionary in settings with key keyString. Set an internal iterator to the beginning and return the first key,value pair
@@ -85,6 +85,15 @@ public:
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   template<typename T>
   static T convertFromPython(PyObject *object);
+  
+  //! create a python list out of the double vector
+  static PyObject *convertToPythonList(std::vector<double> &data);
+  
+  //! create a python list out of the long vector
+  static PyObject *convertToPythonList(std::vector<long> &data);
+  
+  //! create a python list out of the long vector
+  static PyObject *convertToPythonList(unsigned int nEntries, double *data);
   
 private:
  

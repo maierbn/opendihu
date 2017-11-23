@@ -18,6 +18,13 @@ public:
  
 private:
  
+  //! write out solution to given filename
+  void writeSolution(Data::Data &data, int timeStepNo, double currentTime);
+ 
+  //! write out solution templated by dimension 
+  template <int dimension>
+  void writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime);
+  
   //! write serial vtkRectilinearGrid file (structured, suffix *.vts)
   template <class Mesh>
   void writeRectilinearGrid(Data::Data& data);
@@ -28,11 +35,6 @@ private:
   void writeVTKMasterFile();
  
   void writeVTKSlaveFile();
-  
-  void writeSolution(Data::Data &data);
-  
-  template <int dimension>
-  void writeSolutionDim(Data::Data &data);
   
   //! encode a Petsc vector in Base64
   std::string encodeBase64(Vec &vector);

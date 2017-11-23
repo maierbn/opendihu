@@ -22,6 +22,10 @@ public:
   
   //! return a solution vector
   Vec &solution();
+  
+  //! return wether the object has a specified mesh type or if it is independent of any mesh type
+  bool knowsMeshType();
+  
 private:
  
   void initialize();
@@ -34,8 +38,6 @@ private:
   
   bool outputData1_;               ///< if data output via writer is enabled for timeStepping1
   bool outputData2_;               ///< if data output via writer is enabled for timeStepping2
-  
-  PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
 };
 
 }  // namespace

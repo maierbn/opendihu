@@ -4,37 +4,34 @@
 #include <petscksp.h>
 
 #include <Python.h>
+#include "easylogging++.h"
 
 #include "control/types.h"
 #include "control/python_utility.h"
-#include "easylogging++.h"
 
 #include "mesh/regular_fixed.h"
 #include "basis_function/lagrange.h"
+#include "mesh/mesh_manager.h"
 
 namespace SpatialDiscretization
 {
 
-template<typename Mesh, typename BasisFunction>
-FiniteElementMethodBase<Mesh, BasisFunction>::
+template<typename MeshType, typename BasisFunctionType>
+FiniteElementMethodBase<MeshType, BasisFunctionType>::
 FiniteElementMethodBase(const DihuContext &context) :
   context_(context), data_(context)
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::extractDict(topLevelSettings, "FiniteElementMethod");
+  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "FiniteElementMethod");
   
-  data_.setMesh(std::make_shared<Mesh>(specificSettings_));
+  LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
+  PythonUtility::printDict(specificSettings_);
+  
+  data_.setMesh(context_.meshManager()->mesh<MeshType>(specificSettings_));
   if(data_.mesh())
-  {
-    LOG(DEBUG) << "mesh is set";
-  }
+    LOG(DEBUG) << "FiniteElementMethodBase: mesh is set";
   else
-  {
-    LOG(DEBUG) << "mesh is not set";
-  }
-  
-  //LOG(DEBUG) << "exit in finite_element_method.tpp:31";
-  //exit(0);
+    LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
 }
 
 
@@ -119,6 +116,8 @@ template<typename Mesh, typename BasisFunction>
 void FiniteElementMethodBase<Mesh, BasisFunction>::
 initialize()
 {
+  LOG(TRACE) << "FiniteElementMethodBase::initialize";
+  
   setStiffnessMatrix();
   setRightHandSide();
   data_.finalAssembly();

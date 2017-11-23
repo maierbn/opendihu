@@ -85,6 +85,12 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
 }
 
 template<>
+PyObject *PythonUtility::convertFromPython(PyObject *object, PyObject *defaultValue)
+{
+  return object;
+}
+
+template<>
 int PythonUtility::convertFromPython(PyObject *object)
 {
   return convertFromPython<int>(object, 0);
@@ -145,6 +151,12 @@ std::string PythonUtility::convertFromPython(PyObject *object)
   return convertFromPython<std::string>(object, "");
 }
 
+template<>
+PyObject *PythonUtility::convertFromPython(PyObject *object)
+{
+  return convertFromPython<PyObject *>(object, NULL);
+}
+
 bool PythonUtility::containsKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
@@ -160,7 +172,7 @@ bool PythonUtility::containsKey(const PyObject* settings, std::string keyString)
   return false;
 }
 
-PyObject *PythonUtility::extractDict(const PyObject *settings, std::string keyString)
+PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString)
 {
   if (settings)
   {
@@ -185,7 +197,10 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   double result = defaultValue;
   
   if (!settings)
+  {
+    LOG(DEBUG)<<"PyObject *settings is NULL.";
     return result;
+  }
   
   // check if input dictionary contains the key
   PyObject *key = PyString_FromString(keyString.c_str());
@@ -224,6 +239,8 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     {
       // convert to double or take default value
       result = convertFromPython<double>(value, defaultValue);
+      
+      LOG(DEBUG)<<"Value for key \""<<keyString<<"\" found: "<<result<<".";
     }
   }
   else
@@ -449,6 +466,11 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
 
 void PythonUtility::printDict(PyObject *dict, int indent)
 {
+  if (dict == NULL && indent == 0)
+  {
+    VLOG(1) << "dict is NULL!";
+  }
+  
   // iterate over top level key-value pairs
   PyObject *key, *value;
   Py_ssize_t pos = 0;
@@ -459,7 +481,7 @@ void PythonUtility::printDict(PyObject *dict, int indent)
     
     if (!PyString_Check(key))
     {
-      VLOG(1)<<"key is not a string"<<std::endl;
+      VLOG(1)<<"key is not a string";
     }
     else
     {
@@ -470,37 +492,37 @@ void PythonUtility::printDict(PyObject *dict, int indent)
     if (PyString_CheckExact(value))
     {
       std::string valueString = PyString_AsString(value);
-      VLOG(1)<<"\""<<valueString<<"\""<<std::endl;
+      VLOG(1)<<"\""<<valueString<<"\"";
     }
     else if (PyInt_CheckExact(value))
     {
       long valueLong = PyInt_AsLong(value);
-      VLOG(1)<<valueLong<<std::endl;
+      VLOG(1)<<valueLong;
     }
     else if (PyLong_CheckExact(value))
     {
       long valueLong = PyLong_AsLong(value);
-      VLOG(1)<<valueLong<<std::endl;
+      VLOG(1)<<valueLong;
     }
     else if (PyFloat_CheckExact(value))
     {
       double valueDouble = PyFloat_AsDouble(value);
-      VLOG(1)<<valueDouble<<std::endl;
+      VLOG(1)<<valueDouble;
     }
     else if (PyBool_Check(value))
     {
       bool valueBool = PyObject_IsTrue(value);
-      VLOG(1)<<std::boolalpha<<valueBool<<std::endl;
+      VLOG(1)<<std::boolalpha<<valueBool;
     }
     else if(PyDict_CheckExact(value))
     {
-      VLOG(1)<<"{"<<std::endl;
+      VLOG(1)<<"{";
       printDict(value, indent+2);
-      VLOG(1)<<std::string(indent, ' ')<<"}"<<std::endl;
+      VLOG(1)<<std::string(indent, ' ')<<"}";
     }
     else
     {
-      VLOG(1)<<"<unknown>"<<std::endl;
+      VLOG(1)<<"<unknown type>";
     }
   }
 }
@@ -582,4 +604,40 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
       LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
     }
   }
+}
+
+PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
+{
+  PyObject *result = PyList_New((Py_ssize_t)data.size());
+  Py_INCREF(result);
+  for (unsigned int i=0; i<data.size(); i++)
+  {
+    PyObject *item = PyFloat_FromDouble(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);
+  }
+  return result;
+}
+
+PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
+{
+  PyObject *result = PyList_New((Py_ssize_t)data.size());
+  Py_INCREF(result);
+  for (unsigned int i=0; i<data.size(); i++)
+  {
+    PyObject *item = PyInt_FromLong(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);
+  }
+  return result;
+}
+
+PyObject* PythonUtility::convertToPythonList(unsigned int nEntries, double* data)
+{
+  PyObject *result = PyList_New((Py_ssize_t)nEntries);
+  Py_INCREF(result);
+  for (unsigned int i=0; i<nEntries; i++)
+  {
+    PyObject *item = PyFloat_FromDouble(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);
+  }
+  return result;
 }

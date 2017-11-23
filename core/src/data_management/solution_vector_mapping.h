@@ -17,9 +17,14 @@
 class SolutionVectorMapping
 {
 public:
- SolutionVectorMapping(bool canProvideInternalContiguousSolutionPointer);
+  //! constructor
+  SolutionVectorMapping(bool canProvideInternalContiguousSolutionPointer);
  
+  //! set the index range of the solution vector to be considered for transfor
   void setOutputRange(int outputIndexBegin, int outputIndexEnd);
+  
+  //! set a scaling factor by which the result will be scaled when transferring
+  void setScalingFactor(double factor);
   
   //! transfer data from solution1 to solution2, where solution1 corresponds to "this" object, solution2 corresponds to solutionVectorMapping2
   void transfer(Vec &solution1, SolutionVectorMapping &solutionVectorMapping2, Vec &solution2);
@@ -31,6 +36,7 @@ private:
  int outputIndexBegin_;
  int outputIndexEnd_;
  int outputSize_;
+ double scalingFactor_;   ///< the prefactor with which the results is scaled when transferring from solution1 to solution2
  
  bool canProvideInternalContiguousSolutionPointer_;
 };

@@ -42,6 +42,7 @@ initialize()
   this->setStiffnessMatrix();
   this->createRhsDiscretizationMatrix();
   this->data_.finalAssembly();
+  relativeTolerance_ = PythonUtility::getOptionDouble(this->specificSettings_, "relativeTolerance", 1e-5, PythonUtility::Positive);
 }
 
 template<class MeshType, class BasisFunctionType>
@@ -51,8 +52,6 @@ recoverRightHandSide(Vec &result)
   // dmatrix * f_strong = rhs_weak
   Vec &rhs = this->data_.rightHandSide();   // rhs in weak formulation
   Mat &dmatrix = this->data_.discretizationMatrix();
-  
-  LOG(DEBUG) << "recoverRightHandSide";
   
   PetscErrorCode ierr;
   
@@ -70,11 +69,8 @@ recoverRightHandSide(Vec &result)
   // set preconditioner type
   ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
   
-  // set solution tolerances
-  double relativeTolerance = PythonUtility::getOptionDouble(this->specificSettings_, "relativeTolerance", 1e-5, PythonUtility::Positive);
-
   //                            relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (ksp, relativeTolerance, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
+  ierr = KSPSetTolerances (ksp, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
 
   // non zero initial values
   PetscScalar scalar = .5;
@@ -89,7 +85,7 @@ recoverRightHandSide(Vec &result)
   ierr = KSPGetIterationNumber(ksp, &numberOfIterations); CHKERRV(ierr);
   ierr = KSPGetResidualNorm(ksp, &residualNorm); CHKERRV(ierr);
   
-  LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+  //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
 }
 
 template<class MeshType, class BasisFunctionType>
@@ -107,4 +103,11 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   this->data_.print();  
 }
 
+template<class MeshType, class BasisFunctionType>
+bool FiniteElementMethodBaseTimeStepping<MeshType, BasisFunctionType>::
+knowsMeshType()
+{
+  return true;
+}
+  
 } // namespace SpatialDiscretization

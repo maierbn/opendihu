@@ -20,20 +20,20 @@ n = 5
 config = {
   "disablePrinting": False,
   "disableMatrixPrinting": False,
-  "FiniteElementMethod" : {
-    "nElements": n,
-    "physicalExtend": 4.0,
-    "relativeTolerance": 1e-15,
-  },
   "ExplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
     "endTime": 1.0,
+    "FiniteElementMethod" : {
+      "nElements": n,
+      "physicalExtend": 4.0,
+      "relativeTolerance": 1e-15,
+    },
+    "OutputWriter" : [
+      {"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      {"format": "Python", "filename": "p", "outputInterval": 1}
+    ]
   },
-  "OutputWriter" : [
-    {"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-    {"format": "Python", "filename": "p", "frequency": 1}
-  ]
 }
 )";
 

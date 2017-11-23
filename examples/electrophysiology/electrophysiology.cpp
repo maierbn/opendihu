@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
 
+#include <iostream>
+#include "easylogging++.h"
+
 #include "opendihu.h"
 
 int main(int argc, char *argv[])
@@ -10,16 +13,18 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
+  LOG(DEBUG)<<std::string(80, '=');
+  
   OperatorSplitting::Godunov<
+    TimeSteppingScheme::ExplicitEuler<
+      CellmlAdapter
+    >,
     TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::RegularFixed<1>,
         BasisFunction::Lagrange,
         Equation::Dynamic::Diffusion
       >
-    >,
-    TimeSteppingScheme::ExplicitEuler<
-      CellmlAdapter
     >
   >
   operatorSplitting(settings);

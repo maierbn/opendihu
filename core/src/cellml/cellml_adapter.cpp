@@ -8,6 +8,7 @@
 #include "control/petsc_utility.h"
 #include "mesh/regular_fixed.h"
 #include "data_management/solution_vector_mapping.h"
+#include "mesh/mesh_manager.h"
 
 //#include <libcellml>    // libcellml not used here
 
@@ -16,26 +17,23 @@
 
 CellmlAdapter::CellmlAdapter(const DihuContext& context) :
   DiscretizableInTime(SolutionVectorMapping(true)),
-  context_(context), setParameters_(NULL), handleResults_(NULL), pythonSetParametersFunction_(NULL)
+  context_(context), setParameters_(NULL), handleResult_(NULL), 
+  pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL)
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
-  specificSettings_ = PythonUtility::extractDict(topLevelSettings, "CellML");
+  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
 }
 
-void CellmlAdapter::registerHandleResults(void (*handleResults) (void *context, int nInstances, double states[], double intermediates[]))
+void CellmlAdapter::registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime, 
+                                                                 double *states, double *intermediates))
 {
-  handleResults_ = handleResults;
+  handleResult_ = handleResult;
 }
 
-void CellmlAdapter::registerSetParameters(void (*setParameters) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parmeters))
+void CellmlAdapter::registerSetParameters(void (*setParameters) (void *context, int nInstances, int timeStepNo, double currentTime, 
+                                                                 std::vector<double> &parmeters))
 {
   setParameters_ = setParameters;
-}
-
-void CellmlAdapter::initialize(std::shared_ptr< Mesh::Mesh > mesh)
-{
-  mesh_ = mesh;
-  initialize();
 }
 
 bool CellmlAdapter::createSimdSourceFile(std::string &simdSourceFilename)
@@ -209,6 +207,8 @@ bool CellmlAdapter::createSimdSourceFile(std::string &simdSourceFilename)
 
 bool CellmlAdapter::scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitialValues)
 {
+  LOG(TRACE) << "scanInitialValues";
+  
   // read in source from file
   std::ifstream sourceFile(sourceFilename.c_str());
   if (!sourceFile.is_open())
@@ -239,7 +239,7 @@ bool CellmlAdapter::scanInitialValues(std::string sourceFilename, std::vector<do
         std::string variableType = line.substr(posBegin, posEnd-posBegin);
         size_t pos = variableType.find("[");
         std::string variableName = variableType.substr(0, pos);
-        unsigned int index = atoi(variableName.substr(pos+1).c_str());
+        unsigned int index = atoi(variableType.substr(pos+1).c_str());
         
         pos = line.find("= ");
         double value = atof(line.substr(pos+2).c_str());
@@ -262,6 +262,11 @@ bool CellmlAdapter::scanInitialValues(std::string sourceFilename, std::vector<do
 
 void CellmlAdapter::initializeRhsRoutine()
 {
+  // 1) if simdSourceFilename is given, use that source to compile the library
+  // 2) if not 1) but sourceFilename is given, create simdSourceFilename from that and compile library
+  // 3) if not 2) but libraryFilename is given, load that library, if it contains simdRhs, use that, if it contains non-simd rhs use that
+  
+  // try to load or create simd source
   std::string simdSourceFilename;
   if (PythonUtility::containsKey(specificSettings_, "sourceFilename"))
   {
@@ -281,6 +286,8 @@ void CellmlAdapter::initializeRhsRoutine()
   // if simdSourceFilename is set, compile to create dynamic library
   if (simdSourceFilename != "")
   {
+    sourceFilename_ = simdSourceFilename;
+    
     // compile source file to a library 
     libraryFilename = "lib.so";
     if (PythonUtility::containsKey(specificSettings_, "libraryFilename"))
@@ -303,6 +310,7 @@ void CellmlAdapter::initializeRhsRoutine()
     }
 
     // repeat compilation with different GCC vectorizer outputs
+#if 0    
     compileCommand.str("");
     compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-missed=vectorizer_missed.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
     ret = system(compileCommand.str().c_str());
@@ -325,7 +333,7 @@ void CellmlAdapter::initializeRhsRoutine()
     {
       LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
     }
-
+#endif
   }
   
   // if library is still not available, look if it was provided
@@ -412,50 +420,69 @@ void CellmlAdapter::initializeRhsRoutine()
 
 void CellmlAdapter::initialize()
 {
+  LOG(TRACE) << "CellmlAdapter::initialize";
+  
   // parse number of variables
   nStates_ = PythonUtility::getOptionInt(specificSettings_, "numberStates", 0, PythonUtility::NonNegative);
-  int nIntermediates = PythonUtility::getOptionInt(specificSettings_, "numberIntermediates", 0, PythonUtility::NonNegative);
-  int nParameters = PythonUtility::getOptionInt(specificSettings_, "numberParameters", 0, PythonUtility::NonNegative);
+  nIntermediates_ = PythonUtility::getOptionInt(specificSettings_, "numberIntermediates", 0, PythonUtility::NonNegative);
+  nParameters_ = PythonUtility::getOptionInt(specificSettings_, "numberParameters", 0, PythonUtility::NonNegative);
+  
+  LOG(DEBUG) << "CellmlAdapter::initialize querying meshManager for mesh";
+  LOG(DEBUG) << "specificSettings_: ";
+  PythonUtility::printDict(specificSettings_);
   
   // create a mesh if there is not yet one assigned
-  if (!mesh_)
-  {
-    std::array<element_idx_t, 1> nElements {0};
-    std::array<double, 1> physicalExtent {1.0};
-    mesh_ = std::make_shared<Mesh::RegularFixed<1>>(nElements, physicalExtent);
-    
-    LOG(DEBUG) << " mesh has " << mesh_->nNodes() << " nodes";
-  }
+  mesh_ = context_.meshManager()->mesh<Mesh::Mesh>(specificSettings_);
+  LOG(DEBUG) << "Cellml mesh has " << mesh_->nNodes() << " nodes";
   
   //store number of instances
   nInstances_ = mesh_->nNodes();
   
   LOG(DEBUG) << "Initialize CellML with nStates="<<nStates_
-    <<", nIntermediates="<<nIntermediates<<", nParameters="<<nParameters<<", nInstances="<<nInstances_;
+    <<", nIntermediates="<<nIntermediates_<<", nParameters="<<nParameters_<<", nInstances="<<nInstances_;
   
   // load rhs routine
   initializeRhsRoutine();
   
+  LOG(DEBUG) << "rhs initialized";
+  
   // allocate data vectors
-  intermediates_.resize(nIntermediates);
-  parameters_.resize(nParameters);
+  intermediates_.resize(nIntermediates_*nInstances_);
+  parameters_.resize(nParameters_*nInstances_);
+  LOG(DEBUG) << "size of parameters: "<<parameters_.size();
   
   int outputStateIndex = PythonUtility::getOptionInt(specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
+  double prefactor = PythonUtility::getOptionDouble(specificSettings_, "prefactor", 1.0);
+  
   // The solutionVectorMapping_ object stores the information which range of values of the solution will be further used 
   // in methods that use the result of this method, e.g. in operator splittings. 
   // These are all values of a single STATE with number outputStateIndex from settings.
   // The data layout is for e.g. 3 instances like this: STATE[0] STATE[0] STATE[0] STATE[1] STATE[1] STATE[1] STATE[2]...
   solutionVectorMapping_.setOutputRange(nInstances_*outputStateIndex, nInstances_*(outputStateIndex+1));
+  solutionVectorMapping_.setScalingFactor(prefactor);
   
   if (PythonUtility::containsKey(specificSettings_, "setParametersFunction"))
   {
     pythonSetParametersFunction_ = PythonUtility::getOptionFunction(specificSettings_, "setParametersFunction");
-    callFrequency_ = PythonUtility::getOptionInt(specificSettings_, "callFrequency", 1, PythonUtility::Positive);
+    setParametersCallInterval_ = PythonUtility::getOptionInt(specificSettings_, "setParametersCallInterval", 1, PythonUtility::Positive);
     setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
     {
       CellmlAdapter *cellmlAdapter = (CellmlAdapter *)context;
       cellmlAdapter->callPythonSetParametersFunction(nInstances, timeStepNo, currentTime, parameters);
     };
+    LOG(DEBUG) << "registered setParameters function";
+  }
+  
+  if (PythonUtility::containsKey(specificSettings_, "handleResultFunction"))
+  {
+    pythonHandleResultFunction_ = PythonUtility::getOptionFunction(specificSettings_, "handleResultFunction");
+    handleResultCallInterval_ = PythonUtility::getOptionInt(specificSettings_, "handleResultCallInterval", 1, PythonUtility::Positive);
+    handleResult_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates)
+    {
+      CellmlAdapter *cellmlAdapter = (CellmlAdapter *)context;
+      cellmlAdapter->callPythonHandleResultFunction(nInstances, timeStepNo, currentTime, states, intermediates);
+    };
+    LOG(DEBUG) << "registered handleResult function";
   }
 }
 
@@ -465,14 +492,7 @@ void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStep
     return;
   
   // compose callback function
-  PyObject *parametersList = PyList_New((Py_ssize_t)parameters.size());
-  Py_INCREF(parametersList);
-  for (unsigned int i=0; i<parameters.size(); i++)
-  {
-    PyObject *item = PyFloat_FromDouble(parameters[i]);
-    PyList_SetItem(parametersList, (Py_ssize_t)i, item);
-  }
-  
+  PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
   PyObject *arglist = Py_BuildValue("(i,i,d,O)", nInstances, timeStepNo, currentTime, parametersList);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
   
@@ -493,24 +513,101 @@ void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStep
   Py_DECREF(arglist); 
 }
 
+void CellmlAdapter::callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, 
+                                                    double *states, double *intermediates)
+{
+  if (pythonHandleResultFunction_ == NULL)
+    return;
+  
+  // compose callback function
+  PyObject *statesList = PythonUtility::convertToPythonList(nStates_*nInstances_, states);
+  PyObject *intermediatesList = PythonUtility::convertToPythonList(nIntermediates_*nInstances_, intermediates);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList);
+  PyObject *returnValue = PyObject_CallObject(pythonHandleResultFunction_, arglist);
+  
+  // if there was an error while executing the function, print the error message
+  if (returnValue == NULL)
+    PyErr_Print();
+  
+  // decrement reference counters for python objects
+  Py_DECREF(statesList);
+  Py_DECREF(intermediatesList);
+  Py_DECREF(returnValue);
+  Py_DECREF(arglist);
+}
+
+
 bool CellmlAdapter::setInitialValues(Vec& initialValues)
 {
+  LOG(TRACE) << "CellmlAdapter::setInitialValues, sourceFilename_="<<sourceFilename_;
+  std::vector<double> states;
   if(PythonUtility::containsKey(specificSettings_, "statesInitialValues"))
   {
-    std::vector<double> states;
+    LOG(DEBUG) << "set initial values from config";
+
     PythonUtility::getOptionVector(specificSettings_, "statesInitialValues", nStates_, states);
-    PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", nStates_, parameters_);
-    
-    PetscUtility::setVector(states, initialValues);
-    return true;
   }
   else if(sourceFilename_ != "")
   {
-    std::vector<double> states(nStates_);
-    if (scanInitialValues(sourceFilename_, states))
-      PetscUtility::setVector(states, initialValues);
+    LOG(DEBUG) << "set initial values from source file";
+    
+    scanInitialValues(sourceFilename_, states);
+  }
+  else 
+  {
+    LOG(DEBUG) << "initialize to zero";
+    states.resize(nStates_*nInstances_, 0);
+  }
+  
+  if(PythonUtility::containsKey(specificSettings_, "parametersInitialValues"))
+  {
+    LOG(DEBUG) << "load parametersInitialValues also from config";
+    
+    std::vector<double> parametersInitial;
+    PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", nStates_, parametersInitial);
+    
+    if (parametersInitial.size() == parameters_.size())
+    {
+      std::copy(parametersInitial.begin(), parametersInitial.end(), parameters_.begin());
+      LOG(DEBUG) << "parameters size is matching for all instances";
+    }
+    else
+    {
+      LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
+      for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
+      {
+        for(int j=0; j<nParameters_; j++)
+        {
+          parameters_[j*nInstances_ + instanceNo] = parametersInitial[j];
+        }
+      }
+    }
+  }
+  else
+  {
+    LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
+  }
+  
+  if (!states.empty())
+  {
+    std::vector<double> statesAllInstances(nStates_*nInstances_);
+    for(int j=0; j<nStates_; j++)
+    {
+      for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
+      {
+        statesAllInstances[j*nInstances_ + instanceNo] = states[j];
+      }
+    }
+    
+    PetscUtility::setVector(statesAllInstances, initialValues);
+      
+    LOG(DEBUG) << "initial values were set as follows: ";
+    for(auto value : statesAllInstances)
+      LOG(DEBUG) << "  " << value;
     return true;
   }
+  
+  LOG(DEBUG) << "do not set initial values";
   
   return false;
 }
@@ -520,13 +617,9 @@ std::shared_ptr<Mesh::Mesh> CellmlAdapter::mesh()
   return mesh_;
 }
 
-int CellmlAdapter::numberStatesPerInstance()
-{
-  return nStates_;
-}
-
 int CellmlAdapter::numberDegreesOfFreedomPerNode()
 {
+  // this is the number of entries per mesh node that the input and output vectors of evaluateTimesteppingRightHandSide will have
   return nStates_;
 }
 
@@ -534,8 +627,8 @@ void CellmlAdapter::getNumbers(int& nStates, int& nInstances, int& nIntermediate
 {
   nStates = nStates_;
   nInstances = nInstances_;
-  nIntermediates = intermediates_.size();
-  nParameters = parameters_.size();
+  nIntermediates = nIntermediates_;
+  nParameters = nParameters_;
 }
 
 void CellmlAdapter::evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, double currentTime)
@@ -546,18 +639,24 @@ void CellmlAdapter::evaluateTimesteppingRightHandSide(Vec& input, Vec& output, i
   VecGetArray(output, &rates);
   
   // get new values for parameters
-  if (setParameters_ && timeStepNo % callFrequency_ == 0)
+  if (setParameters_ && timeStepNo % setParametersCallInterval_ == 0)
     setParameters_((void *)this, nInstances_, timeStepNo, currentTime, parameters_);
     
   //              this          STATES, RATES, WANTED,                KNOWN
   rhsRoutineSimd_((void *)this, states, rates, intermediates_.data(), parameters_.data());
   
   // handle intermediates
-  if (handleResults_)
-    handleResults_((void *)this, nInstances_, states, intermediates_.data());
+  if (handleResult_ && timeStepNo % handleResultCallInterval_ == 0)
+    handleResult_((void *)this, nInstances_, timeStepNo, currentTime, states, intermediates_.data());
   
   //PetscUtility::setVector(rates_, output);
   // give control of data back to Petsc
   VecRestoreArray(input, &states);
   VecRestoreArray(output, &rates);
 }
+
+bool CellmlAdapter::knowsMeshType()
+{
+  return false;
+}
+  

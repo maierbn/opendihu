@@ -2,6 +2,8 @@
 
 #include "control/dihu_context.h"
 
+#include "easylogging++.h"
+
 namespace TimeSteppingScheme
 {
 
@@ -25,6 +27,9 @@ public:
   ///! initialize time span from specificSettings_
   void initialize();
   
+  ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
+  virtual bool knowsMeshType() = 0;
+  
   ///! returns the Petsc solution vector
   virtual Vec &solution() = 0;
   
@@ -37,7 +42,10 @@ protected:
   
   double startTime_;        ///< start time of time interval to be simulated by call to advance
   double endTime_;          ///< end time of simulation
-  int numberTimeSteps_;     ///< number of time steps in simulation time
+  int numberTimeSteps_;     ///< number of time steps in simulation time, this one is always used to compute the real timeStepWidth
+  
+  bool isTimeStepWidthSignificant_;   ///< if time step width will be used to determine number of steps
+  double timeStepWidth_;        ///< a timeStepWidth value that is used to compute the number of time steps
   
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
 };

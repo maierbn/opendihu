@@ -9,6 +9,8 @@
 #include "control/python_utility.h"
 #include "output_writer/paraview.h"
 #include "output_writer/python.h"
+#include "output_writer/callback.h"
+#include "mesh/mesh_manager.h"
 
 #include "Python.h"
 #include "easylogging++.h"
@@ -16,9 +18,11 @@
 //INITIALIZE_EASYLOGGINGPP
 
 std::list<std::unique_ptr<OutputWriter::Generic>> DihuContext::outputWriter_;
+std::shared_ptr<MeshManager> DihuContext::meshManager_ = nullptr;
 bool DihuContext::initialized_ = false;
-
-DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
+ 
+DihuContext::DihuContext(int argc, char *argv[]) :
+  pythonConfig_(NULL)
 {
   LOG(TRACE) << "DihuContext constructor";
 
@@ -79,9 +83,13 @@ DihuContext::DihuContext(int argc, char *argv[]) : pythonConfig_(NULL)
     LOG(DEBUG) << "Python home: " << home;
     
     loadPythonScriptFromFile(filename);
+    initializeOutputWriter();
     
     initialized_ = true;
   }
+
+  if (!meshManager_)
+    meshManager_ = std::make_shared<MeshManager>(*this);
 }  
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv)
@@ -96,12 +104,29 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
-const DihuContext &DihuContext::operator[](std::string keyString) const
+std::shared_ptr<MeshManager> DihuContext::meshManager() const
+{
+  return meshManager_;
+}
+
+DihuContext DihuContext::operator[](std::string keyString) const
 {
   int argc = 0;
   char **argv = NULL;
   DihuContext dihuContext(argc, argv);
-  dihuContext.pythonConfig_ = PythonUtility::extractDict(pythonConfig_, keyString);
+  if (PythonUtility::containsKey(pythonConfig_, keyString))
+  {
+    dihuContext.pythonConfig_ = PythonUtility::getOptionPyObject(pythonConfig_, keyString);
+  }
+  else
+  {
+    dihuContext.pythonConfig_ = pythonConfig_;
+    LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\".";
+  }
+  LOG(TRACE) << "DihuContext::operator[](\""<<keyString<<"\")";
+  
+  dihuContext.initializeOutputWriter();
+  
   return dihuContext;
 }
 
@@ -170,10 +195,6 @@ void DihuContext::loadPythonScript(std::string text)
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
   {
     LOG(ERROR)<<"Python config file does not contain a dict named \"config\".";
-  }
-  else 
-  {
-    initializeOutputWriter();
   }
 }
 
@@ -256,15 +277,25 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
-  
-  
 }
-
 
 void DihuContext::initializeOutputWriter()
 {
-  PyObject *topLevelSettings = pythonConfig_;
-  PyObject *specificSettings = PythonUtility::extractDict(topLevelSettings, "OutputWriter");
+  if (PythonUtility::containsKey(pythonConfig_, "OutputWriter"))
+  {
+    // get the first value from the list
+    PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(pythonConfig_, "OutputWriter");
+  
+    // loop over other values
+    for (;
+        !PythonUtility::getOptionListEnd(pythonConfig_, "OutputWriter");
+        PythonUtility::getOptionListNext<PyObject *>(pythonConfig_, "OutputWriter", writerSettings))
+    {
+      createOutputWriterFromSettings(writerSettings);
+    }
+  }
+#if 0
+  PyObject *specificSettings = PythonUtility::getOptionPyObject(topLevelSettings, "OutputWriter");
   
   if (specificSettings)
   {
@@ -297,6 +328,7 @@ void DihuContext::initializeOutputWriter()
   {
     LOG(WARNING) << "config does not contain key \"OutputWriter\"!";
   }
+#endif
 }
 
 void DihuContext::createOutputWriterFromSettings(PyObject *dict)
@@ -316,6 +348,10 @@ void DihuContext::createOutputWriterFromSettings(PyObject *dict)
       {
         outputWriter_.push_back(std::make_unique<OutputWriter::Python>(dict));
       }
+      else if(typeString == "Callback")
+      {
+        outputWriter_.push_back(std::make_unique<OutputWriter::Callback>(dict));
+      }
       else
       {
         LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\".";
@@ -330,8 +366,6 @@ void DihuContext::createOutputWriterFromSettings(PyObject *dict)
 
 DihuContext::~DihuContext()
 {
-  LOG(TRACE) << "DihuContext destructor";
-  
   // do not finalize Python because otherwise tests keep crashing
   //if (pythonConfig_)
   //  Py_DECREF(pythonConfig_);
@@ -341,11 +375,6 @@ DihuContext::~DihuContext()
   //PetscErrorCode ierr;
   //ierr = PetscFinalize(); CHKERRV(ierr);
   //MPI_Finalize();
-}
-
-PetscErrorCode &DihuContext::ierr()
-{
-  return ierr_;
 }
 
 void DihuContext::writeOutput(Data::Data &problemData, int timeStepNo, double currentTime) const

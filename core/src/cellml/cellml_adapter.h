@@ -16,9 +16,6 @@ public:
   ///! load model
   void initialize();
   
-  ///! initialize and assign mesh, there are as many CellML instances as there are degrees of freedom in the mesh, more information is not needed from the mesh
-  void initialize(std::shared_ptr<Mesh::Mesh> mesh);
- 
   ///! evaluate rhs
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
@@ -28,8 +25,12 @@ public:
   ///! directly call the python callback if it exists
   void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);
   
-  ///! register a callbackfunction handleResults that gets called after each new values are available
-  void registerHandleResults(void (*handleResults) (void *context, int nInstances, double states[], double intermediates[]));
+  ///! directly call the python callback if it exists
+  void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
+  
+  ///! register a callbackfunction handleResult that gets called after each new values are available
+  void registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime, 
+                                                    double *states, double intermediates[]));
   
   ///! set initial values as given in python config
   bool setInitialValues(Vec& initialValues);
@@ -37,14 +38,14 @@ public:
   //! return a the mesh
   std::shared_ptr<Mesh::Mesh> mesh();
   
-  //! return the number of states for one instance
-  int numberStatesPerInstance();
-  
   //! return the number of states per instance
   int numberDegreesOfFreedomPerNode();
   
   //! get number of states, number of instances, number of intermediates and number of parameters
   void getNumbers(int &nStates, int &nInstances, int &nIntermediates, int &nParameters);
+  
+  //! return false because the object is independent of mesh type
+  bool knowsMeshType();
   
 private:
  
@@ -64,14 +65,18 @@ private:
   void (*rhsRoutine_)(double, double *, double *, double *, double *);   ///< function pointer to a rhs function that is passed as dynamic library, computes rates and intermediate values from states. The parameters are: VOI, STATES, RATES, WANTED, KNOWN, (VOI: unclear, what it means)
   void (*rhsRoutineSimd_)(void *context, double *, double *, double *, double *);  ///< same functionality as rhsRoutine, however, can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer
   void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parmeters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
-  void (*handleResults_) (void *context, int nInstances, double states[], double intermediates[]);   ///< callback function that will be called after new states and intermediates were computed 
+  void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   ///< callback function that will be called after new states and intermediates were computed 
   
   std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
   
   int nStates_;           ///< number of states in one instance of the CellML problem
   int nInstances_;        ///< number of instances of the CellML problem, equals number of mesh nodes
-  int callFrequency_;     ///< setParameters_ will be called every callFrequency_ time steps
+  int nParameters_;       ///< number of parameters (=CellML name "known") in one instance of the CellML problem
+  int nIntermediates_;    ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
+  int setParametersCallInterval_;      ///< setParameters_ will be called every callInterval_ time steps
+  int handleResultCallInterval_;      ///< handleResult will be called every callInterval_ time steps
   PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
+  PyObject *pythonHandleResultFunction_;   ///< Python function handle that is called to process results from CellML problem from the python config
   
   std::string sourceFilename_;        ///< the filename of the source file that actually is used for rhs
   

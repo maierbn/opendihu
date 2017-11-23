@@ -96,6 +96,9 @@ public:
   //! initialize for use with timestepping
   void initialize() override;
   
+  //! return true because the object has a specified mesh type
+  bool knowsMeshType();
+  
   friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
  
@@ -107,6 +110,8 @@ protected:
   
   //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
   void createRhsDiscretizationMatrix();
+  
+  double relativeTolerance_;      ///< relative tolerance for solver 
 };
 
 

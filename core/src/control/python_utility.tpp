@@ -150,16 +150,16 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
 
 
 template<class ValueType, unsigned long D>
-std::array<ValueType, D> PythonUtility::getOptionList(PyObject* settings, std::string keyString,
+std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       ValueType defaultValue, ValidityCriterion validityCriterion)
 { 
   std::array<ValueType, (unsigned long int)D> defaultValueArray = {};
   defaultValueArray.fill(defaultValue);
-  return getOptionList(settings, keyString, defaultValueArray, validityCriterion);
+  return getOptionArray(settings, keyString, defaultValueArray, validityCriterion);
 }
 
 template<class ValueType, unsigned long D>
-std::array<ValueType, D> PythonUtility::getOptionList(PyObject* settings, std::string keyString,
+std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
 { 
   std::array<ValueType, D> result = {};

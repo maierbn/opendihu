@@ -14,17 +14,18 @@ Generic::Generic(PyObject *specificSettings) : specificSettings_(specificSetting
 
 void Generic::write(Data::Data& data, int timeStepNo, double currentTime)
 {
-  int outputFrequency = PythonUtility::getOptionInt(specificSettings_, "frequency", 1);
+  int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
   
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
   
-  // if no output should be written, because of frequency, return
-  if (oldWriteCallCount % outputFrequency != 0)
+  // if no output should be written, because of interval, return
+  if (oldWriteCallCount % outputInterval != 0)
     return;
     
   // determine filename base
-  if (filenameBase_.empty())
+  if (filenameBase_.empty() 
+    && PythonUtility::getOptionString(specificSettings_, "format", "Callback") != "Callback")
   {
     filenameBase_ = PythonUtility::getOptionString(specificSettings_, "filename", "out");
   }
@@ -38,14 +39,7 @@ void Generic::write(Data::Data& data, int timeStepNo, double currentTime)
   }
   filename_ = s.str();
   
-  // if data.mesh() is of class Mesh::RegularFixed<D>
-  std::shared_ptr<Mesh::Mesh> mesh = data.mesh();
-  if (!mesh)
-  {
-    LOG(FATAL) << "mesh is not set";
-  }
-  
-  writeSolution(data);
+  writeSolution(data, timeStepNo, currentTime);
 }
   
 };

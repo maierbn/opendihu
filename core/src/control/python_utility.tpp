@@ -10,8 +10,6 @@
 template<typename Key, typename Value>
 std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString)
 {
-  //PyDict_Check(settings
-  
   std::pair<Key, Value> firstEntry;
  
   if (settings)
@@ -20,17 +18,22 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
     PyObject *key = PyString_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
+      PythonUtility::printDict((PyObject *)settings);
+      
       PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
+      Py_CLEAR(key);
+      Py_CLEAR(itemList);
       itemList = PyDict_Items(dict);
       itemListIndex = 0;
       
       if (itemListIndex < PyList_Size(itemList))
       {
         PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
-        PyObject *key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
-        PyObject *value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+        PyObject *tuple_key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
+        PyObject *tuple_value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
         
-        return std::pair<Key, Value>(convertFromPython<Key>(key), convertFromPython<Value>(value));
+        firstEntry = std::pair<Key, Value>(convertFromPython<Key>(tuple_key), convertFromPython<Value>(tuple_value));
+        return firstEntry;
       }
     }
     else
@@ -54,6 +57,7 @@ void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyS
     PyObject *value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
     
     nextPair = std::pair<Key, Value>(convertFromPython<Key>(key), convertFromPython<Value>(value));
+    
   }
 }
 
@@ -76,12 +80,14 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
         {
           PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
           
+          Py_CLEAR(key);
           return convertFromPython<Value>(item);
         }
       }
       else
       {
         LOG(WARNING)<<"Key \""<<keyString<<"\" is not a list!";
+        Py_CLEAR(key);
         return convertFromPython<Value>(list);
       }
     }
@@ -89,6 +95,8 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
     {
       LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
     }
+  
+    Py_CLEAR(key);
   }
   
   return Value();
@@ -177,8 +185,12 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     else
     {
       LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+  
+      Py_CLEAR(key);
       return defaultValue;
     }
+  
+    Py_CLEAR(key);
   }
   
   switch(validityCriterion)

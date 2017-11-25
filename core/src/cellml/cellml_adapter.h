@@ -13,6 +13,9 @@ public:
   ///! constructor
   CellmlAdapter(const DihuContext &context);
   
+  ///! destructor
+  ~CellmlAdapter();
+  
   ///! load model
   void initialize();
   

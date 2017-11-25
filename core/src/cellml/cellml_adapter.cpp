@@ -24,6 +24,13 @@ CellmlAdapter::CellmlAdapter(const DihuContext& context) :
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
 }
 
+CellmlAdapter::~CellmlAdapter()
+{
+  Py_CLEAR(pythonSetParametersFunction_);
+  Py_CLEAR(pythonHandleResultFunction_);
+}
+
+
 void CellmlAdapter::registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime, 
                                                                  double *states, double *intermediates))
 {
@@ -354,6 +361,10 @@ void CellmlAdapter::initializeRhsRoutine()
     // load rhs method
     rhsRoutine_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine");
     rhsRoutineSimd_ = (void (*)(void *,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine_simd");
+   
+    LOG(DEBUG) << "Library \""<<libraryFilename<<"\" loaded. " 
+      << "rhsRoutine: " << (rhsRoutine_==NULL? "NULL" : "yes") << ", rhsRoutineSimd: " << (rhsRoutineSimd_==NULL? "NULL" : "yes");
+    
     
     // fail if none of both could be loaded
     if (!rhsRoutine_ && !rhsRoutineSimd_)
@@ -416,6 +427,7 @@ void CellmlAdapter::initializeRhsRoutine()
   {
     LOG(FATAL) << "Could not load dynamic library \""<<libraryFilename<<"\".";
   }
+    
 }
 
 void CellmlAdapter::initialize()
@@ -461,6 +473,7 @@ void CellmlAdapter::initialize()
   solutionVectorMapping_.setOutputRange(nInstances_*outputStateIndex, nInstances_*(outputStateIndex+1));
   solutionVectorMapping_.setScalingFactor(prefactor);
   
+
   if (PythonUtility::containsKey(specificSettings_, "setParametersFunction"))
   {
     pythonSetParametersFunction_ = PythonUtility::getOptionFunction(specificSettings_, "setParametersFunction");
@@ -472,7 +485,7 @@ void CellmlAdapter::initialize()
     };
     LOG(DEBUG) << "registered setParameters function";
   }
-  
+
   if (PythonUtility::containsKey(specificSettings_, "handleResultFunction"))
   {
     pythonHandleResultFunction_ = PythonUtility::getOptionFunction(specificSettings_, "handleResultFunction");
@@ -484,6 +497,7 @@ void CellmlAdapter::initialize()
     };
     LOG(DEBUG) << "registered handleResult function";
   }
+
 }
 
 void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector< double >& parameters)
@@ -508,9 +522,9 @@ void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStep
   }
   
   // decrement reference counters for python objects
-  Py_DECREF(parametersList);
-  Py_DECREF(returnValue);
-  Py_DECREF(arglist); 
+  Py_CLEAR(parametersList);
+  Py_CLEAR(returnValue);
+  Py_CLEAR(arglist); 
 }
 
 void CellmlAdapter::callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, 
@@ -520,6 +534,7 @@ void CellmlAdapter::callPythonHandleResultFunction(int nInstances, int timeStepN
     return;
   
   // compose callback function
+  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << nInstances_<<", nStates: " << nStates_ << ", nIntermediates: " << nIntermediates_;
   PyObject *statesList = PythonUtility::convertToPythonList(nStates_*nInstances_, states);
   PyObject *intermediatesList = PythonUtility::convertToPythonList(nIntermediates_*nInstances_, intermediates);
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList);
@@ -530,12 +545,11 @@ void CellmlAdapter::callPythonHandleResultFunction(int nInstances, int timeStepN
     PyErr_Print();
   
   // decrement reference counters for python objects
-  Py_DECREF(statesList);
-  Py_DECREF(intermediatesList);
-  Py_DECREF(returnValue);
-  Py_DECREF(arglist);
+  Py_CLEAR(statesList);
+  Py_CLEAR(intermediatesList);
+  Py_CLEAR(returnValue);
+  Py_CLEAR(arglist);
 }
-
 
 bool CellmlAdapter::setInitialValues(Vec& initialValues)
 {
@@ -643,11 +657,17 @@ void CellmlAdapter::evaluateTimesteppingRightHandSide(Vec& input, Vec& output, i
     setParameters_((void *)this, nInstances_, timeStepNo, currentTime, parameters_);
     
   //              this          STATES, RATES, WANTED,                KNOWN
-  rhsRoutineSimd_((void *)this, states, rates, intermediates_.data(), parameters_.data());
+  if(rhsRoutineSimd_)
+    rhsRoutineSimd_((void *)this, states, rates, intermediates_.data(), parameters_.data());
   
   // handle intermediates
   if (handleResult_ && timeStepNo % handleResultCallInterval_ == 0)
+  {
+    int nStates;
+    VecGetSize(input, &nStates);
+    LOG(DEBUG) << "call handleResult with in total " << nStates << " states, " << intermediates_.size() << " intermediates";
     handleResult_((void *)this, nInstances_, timeStepNo, currentTime, states, intermediates_.data());
+  }
   
   //PetscUtility::setVector(rates_, output);
   // give control of data back to Petsc

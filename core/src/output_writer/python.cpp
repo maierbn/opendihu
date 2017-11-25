@@ -168,8 +168,8 @@ void Python::writeToNumpyFile(std::vector<double> &data, std::string filename, i
   PyObject *filenamePython = PyString_FromString(filename.c_str());
   PyArray_Dump(solutionVector, filenamePython, -1);
   
-  Py_XDECREF(solutionVector);
-  Py_XDECREF(filenamePython);
+  Py_CLEAR(solutionVector);
+  Py_CLEAR(filenamePython);
 #endif
 
 }

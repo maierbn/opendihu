@@ -89,7 +89,10 @@ DihuContext::DihuContext(int argc, char *argv[]) :
   }
 
   if (!meshManager_)
+  {
+    LOG(TRACE) << "create meshManager_";
     meshManager_ = std::make_shared<MeshManager>(*this);
+  }
 }  
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv)
@@ -117,10 +120,12 @@ DihuContext DihuContext::operator[](std::string keyString) const
   if (PythonUtility::containsKey(pythonConfig_, keyString))
   {
     dihuContext.pythonConfig_ = PythonUtility::getOptionPyObject(pythonConfig_, keyString);
+    Py_XINCREF(dihuContext.pythonConfig_);
   }
   else
   {
     dihuContext.pythonConfig_ = pythonConfig_;
+    Py_XINCREF(dihuContext.pythonConfig_);
     LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\".";
   }
   LOG(TRACE) << "DihuContext::operator[](\""<<keyString<<"\")";
@@ -189,7 +194,7 @@ void DihuContext::loadPythonScript(std::string text)
   
   // load main module
   PyObject *mainModule = PyImport_AddModule("__main__");
-  pythonConfig_ = PyObject_GetAttrString(mainModule,"config");
+  pythonConfig_ = PyObject_GetAttrString(mainModule, "config");
   
   // check if type is valid
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
@@ -362,13 +367,14 @@ void DihuContext::createOutputWriterFromSettings(PyObject *dict)
       LOG(WARNING) << "Output writer type is not a string";
     }
   }
+  
+  Py_CLEAR(key);
 }
 
 DihuContext::~DihuContext()
 {
   // do not finalize Python because otherwise tests keep crashing
-  //if (pythonConfig_)
-  //  Py_DECREF(pythonConfig_);
+  Py_CLEAR(pythonConfig_);
   //Py_Finalize();
 
   // do not finalize Petsc because otherwise there can't be multiple DihuContext objects for testing

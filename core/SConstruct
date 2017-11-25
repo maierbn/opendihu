@@ -21,7 +21,7 @@ sconsconfig.select(
     packages.Python(required=True),
     packages.Base64(required=True),
     packages.Cython(required=True),
-    packages.NumpyC(required=True),
+    #packages.NumpyC(required=True),
     packages.googletest(required=True),
     packages.libxml2(required=True),
     #packages.Sphinx(required=True),

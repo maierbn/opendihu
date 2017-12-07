@@ -5,6 +5,7 @@
 #include "control/runnable.h"
 #include "control/dihu_context.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
+#include "output_writer/manager.h"
 
 class CellmlAdapter : public DiscretizableInTime
 {
@@ -64,6 +65,8 @@ private:
   const DihuContext &context_;    ///< the context object containing everything to be stored
   
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+  
+  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   
   void (*rhsRoutine_)(double, double *, double *, double *, double *);   ///< function pointer to a rhs function that is passed as dynamic library, computes rates and intermediate values from states. The parameters are: VOI, STATES, RATES, WANTED, KNOWN, (VOI: unclear, what it means)
   void (*rhsRoutineSimd_)(void *context, double *, double *, double *, double *);  ///< same functionality as rhsRoutine, however, can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer

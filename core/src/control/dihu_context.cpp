@@ -17,7 +17,6 @@
 
 //INITIALIZE_EASYLOGGINGPP
 
-std::list<std::unique_ptr<OutputWriter::Generic>> DihuContext::outputWriter_;
 std::shared_ptr<MeshManager> DihuContext::meshManager_ = nullptr;
 bool DihuContext::initialized_ = false;
  
@@ -83,7 +82,6 @@ DihuContext::DihuContext(int argc, char *argv[]) :
     LOG(DEBUG) << "Python home: " << home;
     
     loadPythonScriptFromFile(filename);
-    initializeOutputWriter();
     
     initialized_ = true;
   }
@@ -129,8 +127,6 @@ DihuContext DihuContext::operator[](std::string keyString) const
     LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\".";
   }
   LOG(TRACE) << "DihuContext::operator[](\""<<keyString<<"\")";
-  
-  dihuContext.initializeOutputWriter();
   
   return dihuContext;
 }
@@ -284,93 +280,6 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Loggers::reconfigureAllLoggers(conf);
 }
 
-void DihuContext::initializeOutputWriter()
-{
-  if (PythonUtility::containsKey(pythonConfig_, "OutputWriter"))
-  {
-    // get the first value from the list
-    PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(pythonConfig_, "OutputWriter");
-  
-    // loop over other values
-    for (;
-        !PythonUtility::getOptionListEnd(pythonConfig_, "OutputWriter");
-        PythonUtility::getOptionListNext<PyObject *>(pythonConfig_, "OutputWriter", writerSettings))
-    {
-      createOutputWriterFromSettings(writerSettings);
-    }
-  }
-#if 0
-  PyObject *specificSettings = PythonUtility::getOptionPyObject(topLevelSettings, "OutputWriter");
-  
-  if (specificSettings)
-  {
-    if (PyList_Check(specificSettings))
-    {
-      // type is list
-      for(int i=0; i<PyList_Size(specificSettings); i++)
-      {
-        // extract entry
-        PyObject *listEntry = PyList_GetItem(specificSettings, (Py_ssize_t)i);
-        
-        if (!PyDict_Check(listEntry))
-        {
-          LOG(WARNING) << "Discard non-dict entry of list in OutputWriter";
-          continue;
-        }
-        createOutputWriterFromSettings(listEntry);
-      }
-    }
-    else if(PyDict_Check(specificSettings))
-    {
-      createOutputWriterFromSettings(specificSettings);
-    }
-    else
-    {
-      LOG(WARNING) << "Entry \"OutputWriter\" in config has to be a list of dicts or a dict.";
-    }
-  }
-  else
-  {
-    LOG(WARNING) << "config does not contain key \"OutputWriter\"!";
-  }
-#endif
-}
-
-void DihuContext::createOutputWriterFromSettings(PyObject *dict)
-{
-  PyObject *key = PyString_FromString("format");
-  if (PyDict_Contains(dict, key))
-  {
-    PyObject *type = PyDict_GetItem(dict, key);
-    if (PyString_Check(type))
-    {
-      std::string typeString = PyString_AsString(type);
-      if (typeString == "Paraview")
-      {
-        outputWriter_.push_back(std::make_unique<OutputWriter::Paraview>(dict));
-      }
-      else if(typeString == "Python")
-      {
-        outputWriter_.push_back(std::make_unique<OutputWriter::Python>(dict));
-      }
-      else if(typeString == "Callback")
-      {
-        outputWriter_.push_back(std::make_unique<OutputWriter::Callback>(dict));
-      }
-      else
-      {
-        LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\".";
-      }
-    }
-    else
-    {
-      LOG(WARNING) << "Output writer type is not a string";
-    }
-  }
-  
-  Py_CLEAR(key);
-}
-
 DihuContext::~DihuContext()
 {
   // do not finalize Python because otherwise tests keep crashing
@@ -381,12 +290,4 @@ DihuContext::~DihuContext()
   //PetscErrorCode ierr;
   //ierr = PetscFinalize(); CHKERRV(ierr);
   //MPI_Finalize();
-}
-
-void DihuContext::writeOutput(Data::Data &problemData, int timeStepNo, double currentTime) const
-{
-  for(auto &outputWriter : outputWriter_)
-  {
-    outputWriter->write(problemData, timeStepNo, currentTime);
-  }
 }

@@ -139,7 +139,7 @@ public:
     for(unsigned int i=0; i<rhsWeakDMatrix.size(); i++)
     {
       double difference = fabs(rhsWeakDMatrix[i]-rhsWeakStencil[i]);
-      EXPECT_LE(difference, 1e-15) 
+      EXPECT_LE(difference, 1e-14) 
         << "Rhs entry number " << i << " is different. Using dmatrix: " << rhsWeakDMatrix[i] 
         << ", using stencil: " << rhsWeakStencil[i] << ", Difference: " << difference;
     }

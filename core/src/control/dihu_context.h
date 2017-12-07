@@ -31,12 +31,9 @@ public:
   ///! return the mesh manager object that contains all meshes
   std::shared_ptr<MeshManager> meshManager() const;
   
-  ///! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
-  void writeOutput(Data::Data &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
-  
   ///! destructor
   ~DihuContext();
-  
+ 
 private:
   ///! read in file and execute python script and store global variables
   void loadPythonScriptFromFile(std::string filename);
@@ -47,15 +44,8 @@ private:
   ///! initiaize the easylogging++ framework
   void initializeLogging(int argc, char *argv[]);
   
-  ///! create output writer from settings
-  void initializeOutputWriter();
-  
-  ///! helper function that creates on outputWriter
-  void createOutputWriterFromSettings(PyObject *dict);
-  
   PyObject *pythonConfig_;    ///< the top level python config dictionary
   
   static std::shared_ptr<MeshManager> meshManager_;   ///< object that saves all meshes that are used
-  static std::list<std::unique_ptr<OutputWriter::Generic>> outputWriter_;    ///< list of active output writers
   static bool initialized_;
 };

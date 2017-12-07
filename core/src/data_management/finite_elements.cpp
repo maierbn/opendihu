@@ -69,8 +69,8 @@ void FiniteElements::createPetscObjects()
     o_nz = 9;
     break;
   case 3:
-    d_nz = 24;
-    o_nz = 24;
+    d_nz = 27;
+    o_nz = 27;
     break;
   };
   
@@ -195,8 +195,8 @@ void FiniteElements::initializeDiscretizationMatrix()
     o_nz = 9;
     break;
   case 3:
-    d_nz = 24;
-    o_nz = 24;
+    d_nz = 27;
+    o_nz = 27;
     break;
   };
   

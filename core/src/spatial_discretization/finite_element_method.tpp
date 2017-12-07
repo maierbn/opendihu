@@ -23,6 +23,7 @@ FiniteElementMethodBase(const DihuContext &context) :
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "FiniteElementMethod");
+  outputWriterManager_.initialize(specificSettings_);
   
   LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
   PythonUtility::printDict(specificSettings_);
@@ -133,7 +134,7 @@ run()
   solve();
   data_.print();
   
-  context_.writeOutput(data_);
+  outputWriterManager_.writeOutput(data_);
 }
 
 template<typename Mesh, typename BasisFunction>

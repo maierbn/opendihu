@@ -1,6 +1,7 @@
 #pragma once
 
 #include "control/dihu_context.h"
+#include "output_writer/manager.h"
 
 #include "easylogging++.h"
 
@@ -39,6 +40,7 @@ public:
 protected:
  
   const DihuContext &context_;    ///< the context object containing everything to be stored
+  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   
   double startTime_;        ///< start time of time interval to be simulated by call to advance
   double endTime_;          ///< end time of simulation

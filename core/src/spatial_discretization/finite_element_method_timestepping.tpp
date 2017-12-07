@@ -67,7 +67,10 @@ recoverRightHandSide(Vec &result)
   ierr = KSPGetPC (ksp, &pc); CHKERRV(ierr);
   
   // set preconditioner type
-  ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
+  //ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
+  
+  // set solver type
+  ierr = KSPSetType(ksp, KSPCG); CHKERRV(ierr);
   
   //                            relative tol,      absolute tol,  diverg tol.,   max_iterations
   ierr = KSPSetTolerances (ksp, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);

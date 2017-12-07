@@ -87,22 +87,22 @@ setStiffnessMatrix()
 {
   LOG(DEBUG)<<"setStiffnessMatrix 2D";
  
-  // get settings values
-  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->nElements(0);
-  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->nElements(1);
+  // get settings value
+  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<2>>(data_.mesh())->nElements(0);
+  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<2>>(data_.mesh())->nElements(1);
   int nNodes0 = nElements0 + 1;
   int nNodes1 = nElements1 + 1;
-  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<1>>(data_.mesh())->meshWidth(1);
+  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<2>>(data_.mesh())->meshWidth(0);
+  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<2>>(data_.mesh())->meshWidth(1);
   double integralFactor = elementLength0*elementLength1;
   double prefactor = PythonUtility::getOptionDouble(specificSettings_, "prefactor", 1.0);
   
-  double factor = prefactor*integralFactor;
+  integralFactor = prefactor*integralFactor;
   
   //int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
   
   LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<", elementLength="<<elementLength0<<"x"<<elementLength1;
-  LOG(DEBUG) << "factor="<<factor;
+  LOG(DEBUG) << "integralFactor="<<integralFactor;
   
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
@@ -119,171 +119,814 @@ setStiffnessMatrix()
     {1./3, 1./3, 1./3},
     {1./3, -8./3, 1./3},
     {1./3, 1./3, 1./3}};
- 
-  auto dofIndex = [&nElements0, &nElements1](int x, int y){return y*(nElements0+1) + x;};
-  double value = 0.0;
+    
+  const double stencilEdge[2][3] = {
+    {1./3, 1./3, 1./3},
+    {1./6, -4./3, 1./6}
+  };
   
+  const double stencilCorner[2][2] = {
+    {1./3, 1./6},
+    {1./6, -2./3}
+  };
+    
+  auto dofIndex = [&nNodes0](int x, int y){return y*nNodes0 + x;};
+  double value;
+  node_idx_t dofNo;
+ 
+  // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int y=1; y<nNodes1-1; y++)
   {
     for (int x=1; x<nNodes0-1; x++)
     {
-      node_idx_t dofNo = dofIndex(x,y);
-    
-      // diagonal entry
-      value = stencilCenter[center][center]*factor;
-      //                 matrix           row    column
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
-     
-      // left
-      if (x > 0)
+      dofNo = dofIndex(x, y);
+      for (int i=-1; i<=1; i++) // x
       {
-        value = stencilCenter[center][center-1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo+1, value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // right
-      if (x < nNodes0-1)
-      {
-        value = stencilCenter[center][center+1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo-1, value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // bottom
-      if (y > 0)
-      {
-        value = stencilCenter[center-1][center]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1), value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // top
-      if (y < nNodes1-1)
-      {
-        value = stencilCenter[center+1][center]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1), value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // bottom left
-      if (y > 0 && x > 0)
-      {
-        value = stencilCenter[center-1][center-1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // bottom right
-      if (y > 0 && x < nNodes0-1)
-      {
-        value = stencilCenter[center-1][center+1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // top left
-      if (y < nNodes1-1 && x > 0)
-      {
-        value = stencilCenter[center+1][center-1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), value, INSERT_VALUES); CHKERRV(ierr);
-      }
-      
-      // top right
-      if (y < nNodes1-1 && x < nNodes0-1)
-      {
-        value = stencilCenter[center+1][center+1]*factor;
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), value, INSERT_VALUES); CHKERRV(ierr);
+        for (int j=-1; j<=1; j++) // y
+        { 
+          value = stencilCenter[center+i][center+j]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+        }
       }
     }
   }
   
   // set entries for boundary nodes on edges
-  // left boundary
+  // left boundary (x=0)
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = 0;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom 
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom right
+    
+    for (int i=-1; i<=0; i++) // -x
+    {
+      for (int j=-1; j<=1; j++) // y
+      {
+        value = stencilEdge[center+i][center+j]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
   }
   
-  // right boundary
+  // right boundary (x=nNodes0-1)
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = nNodes0-1;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom 
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom left
+    for (int i=-1; i<=0; i++) // x
+    {
+      for (int j=-1; j<=1; j++) // y
+      {
+        value = stencilEdge[center+i][center+j]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
   }
   
-  // bottom boundary
+  // bottom boundary (y=0)
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = 0;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // top right
+    for (int i=-1; i<=1; i++) // x
+    {
+      for (int j=-1; j<=0; j++) // -y
+      {
+        value = stencilEdge[center+j][center+i]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
   }
   
-  // top boundary
+  // top boundary (y=nNodes1-1)
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = nNodes1-1;
     node_idx_t dofNo = dofIndex(x,y);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo,             -4.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),   1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr); // right
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),   1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom left
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1), 1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr); // bottom right
+    for (int i=-1; i<=1; i++) // x
+    {
+      for (int j=-1; j<=0; j++) // y
+      {
+        value = stencilEdge[center+j][center+i]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
   } 
-  
+ 
   // corner nodes
-  // bottom left
-  int x = 0;
-  int y = 0;
-  node_idx_t dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // right
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // top
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y+1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // top right
+  int x,y;
   
-  // bottom right
+  // bottom left (x=0, y=0)
+  x = 0;
+  y = 0;
+  dofNo = dofIndex(x,y);
+  
+  for (int i=-1; i<=0; i++) // -x
+  {
+    for (int j=-1; j<=0; j++) // -y
+    {
+      value = stencilCorner[center+i][center+j]*integralFactor;
+      //                 matrix           row    column
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // bottom right (x=nNodes0-1, y=0)
   x = nNodes0-1;
   y = 0;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // left
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y+1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // top
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y+1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // top left
   
-  // top left
+  for (int i=-1; i<=0; i++) // x
+  {
+    for (int j=-1; j<=0; j++) // -y
+    {
+      value = stencilCorner[center+i][center+j]*integralFactor;
+      //                 matrix           row    column
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // top left (x=0, y=nNodes1-1)
   x = 0;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // right
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+1,y-1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom right
   
-  // top right
+  for (int i=-1; i<=0; i++) // -x
+  {
+    for (int j=-1; j<=0; j++) // y
+    {
+      value = stencilCorner[center+i][center+j]*integralFactor;
+      //                 matrix           row    column
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // top right (x=nNodes0-1, y=nNodes1-1)
   x = nNodes0-1;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y),     -2.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // self
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // left
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x,y-1),    1.0/6.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom
-  ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-1,y-1),  1.0/3.*factor, INSERT_VALUES); CHKERRV(ierr);    // bottom left
+  
+  for (int i=-1; i<=0; i++) // x
+  {
+    for (int j=-1; j<=0; j++) // y
+    {
+      value = stencilCorner[center+i][center+j]*integralFactor;
+      //                 matrix           row    column
+      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
 }
   
+// 3D stiffness matrix
+template<>
+void FiniteElementMethodBase<Mesh::RegularFixed<3>, BasisFunction::Lagrange>::
+setStiffnessMatrix()
+{
+  LOG(DEBUG)<<"setStiffnessMatrix 3D";
+ 
+  // get settings values
+  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->nElements(0);
+  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->nElements(1);
+  int nElements2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->nElements(2);
+  int nNodes0 = nElements0 + 1;
+  int nNodes1 = nElements1 + 1;
+  int nNodes2 = nElements2 + 1;
+  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->meshWidth(0);
+  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->meshWidth(1);
+  double elementLength2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(data_.mesh())->meshWidth(2);
+  double integralFactor = elementLength0*elementLength1*elementLength2;
+  double prefactor = PythonUtility::getOptionDouble(specificSettings_, "prefactor", 1.0);
+  
+  integralFactor = prefactor*integralFactor;
+  
+  //int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
+  
+  LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<"x"<<nElements2<<
+    ", elementLength="<<elementLength0<<"x"<<elementLength1<<"x"<<elementLength2;
+  LOG(DEBUG) << "integralFactor="<<integralFactor;
+  
+  // fill stiffness matrix
+  // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
+
+  // stencil for -Δu in 3D: bottom: [1  2  1]   (element contribution:  center: [    0  1/12]
+  //                           1/12*[2 _0_ 2]                                   [_-4/12_   0]
+  //                                [1  2  1]
+  //                                                                     bottom:[ 1/12  1/12]
+  //                        center: [ 2    0  2]                                [    0  1/12] )
+  //                           1/12*[ 0 _-32_ 0] 
+  //                                [ 2    0  2]
+  // 
+  //                        top: like bottom
+  
+  // coordinate system
+  // x axis: left -> right
+  // y axis: front -> back
+  // z axis: bottom -> top
+  
+  
+  const int center = 1;
+  const double stencilCenter[3][3][3] = {
+    {{1./12, 2./12, 1./12},   //bottom
+    {2./12, 0./12, 2./12},
+    {1./12, 2./12, 1./12}},
+    {{2./12, 0./12, 2./12},   //center
+    {0./12, -32./12, 0./12},
+    {2./12, 0./12, 2./12}},
+    {{1./12, 2./12, 1./12},   //top
+    {2./12, 0./12, 2./12},
+    {1./12, 2./12, 1./12}},
+  };
+    
+  const double stencilBoundarySurface[2][3][3] = {
+    {{1./12, 2./12, 1./12},   //bottom
+    {2./12, 0./12, 2./12},
+    {1./12, 2./12, 1./12}},
+    {{1./12, 0./12, 1./12},   //center
+    {0./12, -16./12, 0./12},
+    {1./12, 0./12, 1./12}},
+  };
+  const double stencilBoundaryEdge[2][2][3] = {
+    {{1./12, 2./12, 1./12},   //bottom
+    {1./12, 0./12, 1./12}},
+    {{1./12, 0./12, 1./12},
+    {0./12, -8./12, 0./12}}    //center
+  };
+  
+  const double stencilCorner[2][2][2] = {
+    {{1./12, 1./12},
+    {1./12, 0./12}},    //bottom
+    {{1./12, 0./12},
+    {0./12, -4./12}},    //center
+  };
+    
+  PetscErrorCode ierr;
+  Mat &stiffnessMatrix = data_.stiffnessMatrix();
+    
+  auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
+    return z*nNodes0*nNodes1 + y*nNodes0 + x;
+  };
+  double value;
+  node_idx_t dofNo;
+ 
+  // loop over all dofs and set values with stencilCenter
+  // set entries for interior nodes
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        dofNo = dofIndex(x, y, z);
+        for (int i=-1; i<=1; i++) // x
+        {
+          for (int j=-1; j<=1; j++) // y
+          {
+            for (int k=-1; k<=1; k++) // z
+            {     
+              value = stencilCenter[center+i][center+j][center+k]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // set entries for boundary nodes on surface boundaries
+  // left boundary (x = 0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // right boundary (x = nNodes0-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = nNodes0-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // front boundary (y = 0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // back boundary (y = nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = nNodes1-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // bottom boundary (z = 0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {     
+            value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // top boundary (z = nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {     
+            value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+  }
+  
+  // set entries for boundary nodes on edge boundaries
+  // bottom left (x=0,z=0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = 0;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // bottom right (x=nNodes0-1,z=0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = nNodes0-1;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // top left (x=0,z=nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = 0;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // top right (x=nNodes0-1,z=nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = nNodes0-1;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // bottom front (y=0,z=0)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = 0;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // bottom back (y=nNodes1-1,z=0)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = nNodes1-1;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // top front (y=0,z=nNodes2-1)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = 0;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // top back (y=nNodes1-1,z=nNodes2-1)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = nNodes1-1;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // left front (x=0,y=0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = 0;
+    int y = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // left back (x=0,y=nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = 0;
+    int y = nNodes1-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // right front (x=nNodes0-1,y=0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = nNodes0-1;
+    int y = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // right back (x=nNodes0-1,y=nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = nNodes0-1;
+    int y = nNodes1-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {     
+          value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+  }
+  
+  // corner nodes
+  int x,y,z;
+  
+  // bottom front left (x=0,y=0,z=0)
+  x = 0;
+  y = 0;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // bottom front right (x=nNodes0-1,y=0,z=0)
+  x = nNodes0-1;
+  y = 0;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // bottom back left (x=0,y=nNodes1-1,z=0)
+  x = 0;
+  y = nNodes1-1;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // bottom back right (x=nNodes0-1,y=nNodes1-1,z=0)
+  x = nNodes0-1;
+  y = nNodes1-1;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // top front left (x=0,y=0,z=nNodes2-1)
+  x = 0;
+  y = 0;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // top front right (x=nNodes0-1,y=0,z=nNodes2-1)
+  x = nNodes0-1;
+  y = 0;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // top back left (x=0,y=nNodes1-1,z=nNodes2-1)
+  x = 0;
+  y = nNodes1-1;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // top back right (x=nNodes0-1,y=nNodes1-1,z=nNodes2-1)
+  x = nNodes0-1;
+  y = nNodes1-1;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {     
+        value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+        //                 matrix           row    column
+        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
 // 1D rhs
 template<>
 void FiniteElementMethodBaseRhs<Mesh::RegularFixed<1>, BasisFunction::Lagrange>::
@@ -354,18 +997,14 @@ transferRhsToWeakForm()
   LOG(DEBUG)<<"transferRhsToWeakForm (2D)";
  
   // get settings values
-  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->nElements(0);
-  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->nElements(1);
+  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<2>>(this->data_.mesh())->nElements(0);
+  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<2>>(this->data_.mesh())->nElements(1);
   int nNodes0 = nElements0 + 1;
   int nNodes1 = nElements1 + 1;
-  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<1>>(this->data_.mesh())->meshWidth(1);
+  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<2>>(this->data_.mesh())->meshWidth(0);
+  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<2>>(this->data_.mesh())->meshWidth(1);
   double integralFactor = elementLength0*elementLength1;
   
-  //int nDegreesOfFreedom = data_.mesh()->nDegreesOfFreedom();
-  
-  // multiply factor to rhs
-  // rhs *= stencil * elementLength
   PetscErrorCode ierr;
  
   Vec &rightHandSide = this->data_.rightHandSide();
@@ -383,16 +1022,16 @@ transferRhsToWeakForm()
     {1./36, 4./36,  1./36}};
     
   const double stencilEdge[2][3] = {
-    {2./36, 8./36, 2./36},
-    {1./36, 4./36, 1./36}
+    {1./36, 4./36, 1./36},
+    {2./36, 8./36, 2./36}
   };
   
   const double stencilCorner[2][2] = {
-    {4./36, 2./36},
-    {2./36, 1./36}
+    {1./36, 2./36},
+    {2./36, 4./36}
   };
     
-  auto dofIndex = [&nElements0, &nElements1](int x, int y){return y*(nElements0+1) + x;};
+  auto dofIndex = [&nNodes0](int x, int y){return y*nNodes0 + x;};
   double value;
  
   // get all values 
@@ -408,11 +1047,11 @@ transferRhsToWeakForm()
     for (int x=1; x<nNodes0-1; x++)
     {
       value = 0;
-      for (int i=-1; i<=1; i++)
+      for (int i=-1; i<=1; i++) // x
       {
-        for (int j=-1; j<=1; j++)
+        for (int j=-1; j<=1; j++) // y
         {
-          value += stencilCenter[center+i][center+j] * vectorValues[dofIndex(x+j, y+i)];
+          value += stencilCenter[center+i][center+j] * vectorValues[dofIndex(x+i, y+j)];
         }
       }
       value *= integralFactor;
@@ -422,68 +1061,76 @@ transferRhsToWeakForm()
   }
   
   // set entries for boundary nodes on edges
-  // left boundary
+  // left boundary (x=0)
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = 0;
     node_idx_t dofNo = dofIndex(x,y);
     
     value = 0;
-    for (int i=-1; i<=1; i++)
+    for (int i=-1; i<=0; i++) // -x
     {
-      value += stencilEdge[0][center+i] * vectorValues[dofIndex(x,y+i)]
-        + stencilEdge[1][center+i] * vectorValues[dofIndex(x+1,y+i)];
+      for (int j=-1; j<=1; j++) // y
+      {
+        value += stencilEdge[center+i][center+j] * vectorValues[dofIndex(x-i,y+j)];
+      }
     }
     value *= integralFactor;
     
     ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   }
   
-  // right boundary
+  // right boundary (x=nNodes0-1)
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = nNodes0-1;
     node_idx_t dofNo = dofIndex(x,y);
     
     value = 0;
-    for (int i=-1; i<=1; i++)
+    for (int i=-1; i<=0; i++) // x
     {
-      value += stencilEdge[0][center+i] * vectorValues[dofIndex(x,y+i)]
-        + stencilEdge[1][center+i] * vectorValues[dofIndex(x-1,y+i)];
+      for (int j=-1; j<=1; j++) // y
+      {
+        value += stencilEdge[center+i][center+j] * vectorValues[dofIndex(x+i,y+j)];
+      }
     }
     value *= integralFactor;
     
     ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   }
   
-  // bottom boundary
+  // bottom boundary (y=0)
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = 0;
     node_idx_t dofNo = dofIndex(x,y);
     
     value = 0;
-    for (int i=-1; i<=1; i++)
+    for (int i=-1; i<=1; i++) // x
     {
-      value += stencilEdge[0][center+i] * vectorValues[dofIndex(x+i,y)]
-        + stencilEdge[1][center+i] * vectorValues[dofIndex(x+i,y+1)];
+      for (int j=-1; j<=0; j++) // -y
+      {
+        value += stencilEdge[center+j][center+i] * vectorValues[dofIndex(x+i,y-j)];
+      }
     }
     value *= integralFactor;
     
     ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   }
   
-  // top boundary
+  // top boundary (y=nNodes1-1)
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = nNodes1-1;
     node_idx_t dofNo = dofIndex(x,y);
     
     value = 0;
-    for (int i=-1; i<=1; i++)
+    for (int i=-1; i<=1; i++) // x
     {
-      value += stencilEdge[0][center+i] * vectorValues[dofIndex(x+i,y)]
-        + stencilEdge[1][center+i] * vectorValues[dofIndex(x+i,y-1)];
+      for (int j=-1; j<=0; j++) // y
+      {
+        value += stencilEdge[center+j][center+i] * vectorValues[dofIndex(x+i,y+j)];
+      }
     }
     value *= integralFactor;
     
@@ -491,57 +1138,794 @@ transferRhsToWeakForm()
   } 
  
   // corner nodes
-  // bottom left
-  int x = 0;
-  int y = 0;
-  node_idx_t dofNo = dofIndex(x,y);
+  int x,y;
+  node_idx_t dofNo;
   
-  value = stencilCorner[0][0] * vectorValues[dofIndex(x,y)]
-    + stencilCorner[0][1] * vectorValues[dofIndex(x+1,y)]
-    + stencilCorner[1][0] * vectorValues[dofIndex(x,y+1)]
-    + stencilCorner[1][1] * vectorValues[dofIndex(x+1,y+1)];
+  // bottom left (x=0, y=0)
+  x = 0;
+  y = 0;
+  dofNo = dofIndex(x,y);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++) // -x
+  {
+    for (int j=-1; j<=0; j++) // -y
+    {
+      value += stencilCorner[center+i][center+j] * vectorValues[dofIndex(x-i,y-j)];
+    }
+  }
   value *= integralFactor;
   
   ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   
-  // bottom right
+  // bottom right (x=nNodes0-1, y=0)
   x = nNodes0-1;
   y = 0;
   dofNo = dofIndex(x,y);
   
-  value = stencilCorner[0][0] * vectorValues[dofIndex(x,y)]
-    + stencilCorner[0][1] * vectorValues[dofIndex(x-1,y)]
-    + stencilCorner[1][0] * vectorValues[dofIndex(x,y+1)]
-    + stencilCorner[1][1] * vectorValues[dofIndex(x-1,y+1)];
+  value = 0;
+  for (int i=-1; i<=0; i++) // x
+  {
+    for (int j=-1; j<=0; j++) // -y
+    {
+      value += stencilCorner[center+i][center+j] * vectorValues[dofIndex(x+i,y-j)];
+    }
+  }
   value *= integralFactor;
   
   ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   
-  // top left
+  // top left (x=0, y=nNodes1-1)
   x = 0;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
   
-  value = stencilCorner[0][0] * vectorValues[dofIndex(x,y)]
-    + stencilCorner[0][1] * vectorValues[dofIndex(x+1,y)]
-    + stencilCorner[1][0] * vectorValues[dofIndex(x,y-1)]
-    + stencilCorner[1][1] * vectorValues[dofIndex(x+1,y-1)];
+  value = 0;
+  for (int i=-1; i<=0; i++) // -x
+  {
+    for (int j=-1; j<=0; j++) // y
+    {
+      value += stencilCorner[center+i][center+j] * vectorValues[dofIndex(x-i,y+j)];
+    }
+  }
   value *= integralFactor;
   
   ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
   
-  // top right
+  // top right (x=nNodes0-1, y=nNodes1-1)
   x = nNodes0-1;
   y = nNodes1-1;
   dofNo = dofIndex(x,y);
   
-  value = stencilCorner[0][0] * vectorValues[dofIndex(x,y)]
-    + stencilCorner[0][1] * vectorValues[dofIndex(x-1,y)]
-    + stencilCorner[1][0] * vectorValues[dofIndex(x,y-1)]
-    + stencilCorner[1][1] * vectorValues[dofIndex(x-1,y-1)];
+  value = 0;
+  for (int i=-1; i<=0; i++) // x
+  {
+    for (int j=-1; j<=0; j++) // y
+    {
+      value += stencilCorner[center+i][center+j] * vectorValues[dofIndex(x+i,y+j)];
+    }
+  }
   value *= integralFactor;
   
   ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  VecAssemblyBegin(rightHandSide);
+  VecAssemblyEnd(rightHandSide);
+}
+
+// 3D rhs
+template<>
+void FiniteElementMethodBaseRhs<Mesh::RegularFixed<3>, BasisFunction::Lagrange>::
+transferRhsToWeakForm()
+{
+  LOG(DEBUG)<<"transferRhsToWeakForm (3D)";
+ 
+  // get settings values
+  int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(0);
+  int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(1);
+  int nElements2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(2);
+  int nNodes0 = nElements0 + 1;
+  int nNodes1 = nElements1 + 1;
+  int nNodes2 = nElements2 + 1;
+  double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(0);
+  double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(1);
+  double elementLength2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(2);
+  double integralFactor = elementLength0*elementLength1*elementLength2;
+  
+  PetscErrorCode ierr;
+ 
+  Vec &rightHandSide = this->data_.rightHandSide();
+    
+  // stencil values
+  
+  // stencil for rhs in 3D: bottom: [1  4   1]   (element contribution:  center:[ 4  2]
+  //                          1/216*[4 _16_ 4]                            1/216*[_8_ 4]
+  //                                [1  4   1]
+  //                                                                     bottom:[ 2  1]
+  //                        center: [ 4  16   4]                          1/216*[ 4  2] )
+  //                          1/216*[16 _64_ 16] 
+  //                                [ 4  16   4]
+  // 
+  //                        top: like bottom
+  
+  // coordinate system
+  // x axis: left -> right
+  // y axis: front -> back
+  // z axis: bottom -> top
+  
+  
+  const int center = 1;
+  const double stencilCenter[3][3][3] = {
+    {{1./216, 4./216,  1./216},   //bottom
+    {4./216, 16./216, 4./216},
+    {1./216, 4./216,  1./216}},
+    {{4./216, 16./216,  4./216},   //center
+    {16./216, 64./216, 16./216},
+    {4./216, 16./216,  4./216}},
+    {{1./216, 4./216,  1./216},   //top
+    {4./216, 16./216, 4./216},
+    {1./216, 4./216,  1./216}}
+  };
+    
+  const double stencilBoundarySurface[2][3][3] = {
+    {{1./216, 4./216,  1./216},   //bottom
+    {4./216, 16./216, 4./216},
+    {1./216, 4./216,  1./216}},
+    {{2./216, 8./216,  2./216},   //center
+    {8./216, 32./216, 8./216},
+    {2./216, 8./216,  2./216}}
+  };
+  const double stencilBoundaryEdge[2][2][3] = {
+    {{1./216, 4./216, 1./216},
+    {2./216, 8./216, 2./216}},    //bottom
+    {{2./216, 8./216, 2./216},
+    {4./216, 16./216, 4./216}}    //center
+  };
+  
+  const double stencilCorner[2][2][2] = {
+    {{1./216, 2./216},
+    {2./216, 4./216}},    //bottom
+    {{2./216, 4./216},
+    {4./216, 8./216}},    //center
+  };
+    
+  auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
+    return z*nNodes0*nNodes1 + y*nNodes0 + x;
+  };
+  double value;
+ 
+  // get all values 
+  int nEntries;
+  VecGetSize(rightHandSide, &nEntries);
+  std::vector<double> vectorValues;
+  PetscUtility::getVectorEntries(rightHandSide, vectorValues);
+  
+  // loop over all dofs and set values with stencilCenter
+  // set entries for interior nodes
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        value = 0;
+        for (int i=-1; i<=1; i++) // x
+        {
+          for (int j=-1; j<=1; j++) // y
+          {
+            for (int k=-1; k<=1; k++) // z
+            {
+              value += stencilCenter[center+i][center+j][center+k] * vectorValues[dofIndex(x+i, y+j, z+k)];
+            }
+          }
+        }
+        value *= integralFactor;
+          
+        ierr = VecSetValue(rightHandSide, dofIndex(x,y,z), value, INSERT_VALUES); CHKERRV(ierr);
+      }
+    }
+  }
+  
+  // set entries for boundary nodes on surface boundaries
+  // left boundary (x = 0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {
+            value += stencilBoundarySurface[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y+j,z+k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // right boundary (x = nNodes0-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = nNodes0-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {
+            value += stencilBoundarySurface[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y+j,z+k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // front boundary (y = 0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {
+            value += stencilBoundarySurface[center+j][center+i][center+k] * vectorValues[dofIndex(x+i,y-j,z+k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // back boundary (y = nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = nNodes1-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {
+            value += stencilBoundarySurface[center+j][center+i][center+k] * vectorValues[dofIndex(x+i,y+j,z+k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // bottom boundary (z = 0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {
+            value += stencilBoundarySurface[center+k][center+i][center+j] * vectorValues[dofIndex(x+i,y+j,z-k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // top boundary (z = nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {
+            value += stencilBoundarySurface[center+k][center+i][center+j] * vectorValues[dofIndex(x+i,y+j,z+k)];
+          }
+        }
+      }
+      value *= integralFactor;
+      
+      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    }
+  }
+  
+  // set entries for boundary nodes on edge boundaries
+  // bottom left (x=0,z=0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = 0;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {
+          value += stencilBoundaryEdge[center+i][center+k][center+j] * vectorValues[dofIndex(x-i,y+j,z-k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // bottom right (x=nNodes0-1,z=0)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = nNodes0-1;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {
+          value += stencilBoundaryEdge[center+i][center+k][center+j] * vectorValues[dofIndex(x+i,y+j,z-k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // top left (x=0,z=nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = 0;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+k][center+j] * vectorValues[dofIndex(x-i,y+j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // top right (x=nNodes0-1,z=nNodes2-1)
+  for (int y=1; y<nNodes1-1; y++)
+  {
+    int x = nNodes0-1;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=1; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+k][center+j] * vectorValues[dofIndex(x+i,y+j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // bottom front (y=0,z=0)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = 0;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {
+          value += stencilBoundaryEdge[center+j][center+k][center+i] * vectorValues[dofIndex(x+i,y-j,z-k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // bottom back (y=nNodes1-1,z=0)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = nNodes1-1;
+    int z = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {
+          value += stencilBoundaryEdge[center+j][center+k][center+i] * vectorValues[dofIndex(x+i,y+j,z-k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // top front (y=0,z=nNodes2-1)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = 0;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+j][center+k][center+i] * vectorValues[dofIndex(x+i,y-j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // top back (y=nNodes1-1,z=nNodes2-1)
+  for (int x=1; x<nNodes0-1; x++)
+  {
+    int y = nNodes1-1;
+    int z = nNodes2-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=1; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+j][center+k][center+i] * vectorValues[dofIndex(x+i,y+j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // left front (x=0,y=0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = 0;
+    int y = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y-j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // left back (x=0,y=nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = 0;
+    int y = nNodes1-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y+j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // right front (x=nNodes0-1,y=0)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = nNodes0-1;
+    int y = 0;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y-j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // right back (x=nNodes0-1,y=nNodes1-1)
+  for (int z=1; z<nNodes2-1; z++)
+  {
+    int x = nNodes0-1;
+    int y = nNodes1-1;
+    node_idx_t dofNo = dofIndex(x,y,z);
+    
+    value = 0;
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=1; k++)   // z
+        {
+          value += stencilBoundaryEdge[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y+j,z+k)];
+        }
+      }
+    }
+    value *= integralFactor;
+    
+    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  // corner nodes
+  int x,y,z;
+  node_idx_t dofNo;
+  
+  // bottom front left (x=0,y=0,z=0)
+  x = 0;
+  y = 0;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y-j,z-k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // bottom front right (x=nNodes0-1,y=0,z=0)
+  x = nNodes0-1;
+  y = 0;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y-j,z-k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // bottom back left (x=0,y=nNodes1-1,z=0)
+  x = 0;
+  y = nNodes1-1;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y+j,z-k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // bottom back right (x=nNodes0-1,y=nNodes1-1,z=0)
+  x = nNodes0-1;
+  y = nNodes1-1;
+  z = 0;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // -z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y+j,z-k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // top front left (x=0,y=0,z=nNodes2-1)
+  x = 0;
+  y = 0;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y-j,z+k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // top front right (x=nNodes0-1,y=0,z=nNodes2-1)
+  x = nNodes0-1;
+  y = 0;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // -y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y-j,z+k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // top back left (x=0,y=nNodes1-1,z=nNodes2-1)
+  x = 0;
+  y = nNodes1-1;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // -x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x-i,y+j,z+k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
+  // top back right (x=nNodes0-1,y=nNodes1-1,z=nNodes2-1)
+  x = nNodes0-1;
+  y = nNodes1-1;
+  z = nNodes2-1;
+  dofNo = dofIndex(x,y,z);
+  
+  value = 0;
+  for (int i=-1; i<=0; i++)    // x
+  {
+    for (int j=-1; j<=0; j++)   // y
+    {
+      for (int k=-1; k<=0; k++)   // z
+      {
+        value += stencilCorner[center+i][center+j][center+k] * vectorValues[dofIndex(x+i,y+j,z+k)];
+      }
+    }
+  }
+  value *= integralFactor;
+  
+  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  
   
   VecAssemblyBegin(rightHandSide);
   VecAssemblyEnd(rightHandSide);
@@ -800,6 +2184,656 @@ createRhsDiscretizationMatrix()
   }
 }
  
+template<>
+void FiniteElementMethodBaseTimeStepping<Mesh::RegularFixed<3>, BasisFunction::Lagrange>::
+createRhsDiscretizationMatrix()
+{
+  // check if matrix discretization matrix exists
+  if (!this->data_.discretizationMatrixInitialized())
+  {
+    this->data_.initializeDiscretizationMatrix();
+    
+    // set entries of matrix
+    LOG(DEBUG)<<"createRhsDiscretizationMatrix 3D";
+      
+    // get settings values
+    int nElements0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(0);
+    int nElements1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(1);
+    int nElements2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->nElements(2);
+    int nNodes0 = nElements0 + 1;
+    int nNodes1 = nElements1 + 1;
+    int nNodes2 = nElements2 + 1;
+    double elementLength0 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(0);
+    double elementLength1 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(1);
+    double elementLength2 = std::static_pointer_cast<Mesh::RegularFixed<3>>(this->data_.mesh())->meshWidth(2);
+    double integralFactor = elementLength0*elementLength1*elementLength2;
+  
+    // multiply factor to rhs
+    // rhs *= stencil * elementLength
+    PetscErrorCode ierr;
+   
+    Mat &dmatrix = this->data_.discretizationMatrix();
+      
+    // dmatrix * f_strong = rhs_weak
+    // row of dmatrix: contributions to a single entry in rhs_weak
+      
+    // stencil values
+    
+    // stencil for rhs in 3D: bottom: [1  4   1]   (element contribution:  center:[ 4  2]
+    //                          1/216*[4 _16_ 4]                            1/216*[_8_ 4]
+    //                                [1  4   1]
+    //                                                                     bottom:[ 2  1]
+    //                        center: [ 4  16   4]                          1/216*[ 4  2] )
+    //                          1/216*[16 _64_ 16] 
+    //                                [ 4  16   4]
+    // 
+    //                        top: like bottom
+    
+    // coordinate system
+    // x axis: left -> right
+    // y axis: front -> back
+    // z axis: bottom -> top
+    
+    
+    const int center = 1;
+    const double stencilCenter[3][3][3] = {
+      {{1./216, 4./216,  1./216},   //bottom
+      {4./216, 16./216, 4./216},
+      {1./216, 4./216,  1./216}},
+      {{4./216, 16./216,  4./216},   //center
+      {16./216, 64./216, 16./216},
+      {4./216, 16./216,  4./216}},
+      {{1./216, 4./216,  1./216},   //top
+      {4./216, 16./216, 4./216},
+      {1./216, 4./216,  1./216}}
+    };
+      
+    const double stencilBoundarySurface[2][3][3] = {
+      {{1./216, 4./216,  1./216},   //bottom
+      {4./216, 16./216, 4./216},
+      {1./216, 4./216,  1./216}},
+      {{2./216, 8./216,  2./216},   //center
+      {8./216, 32./216, 8./216},
+      {2./216, 8./216,  2./216}}
+    };
+    const double stencilBoundaryEdge[2][2][3] = {
+      {{1./216, 4./216, 1./216},
+      {2./216, 8./216, 2./216}},    //bottom
+      {{2./216, 8./216, 2./216},
+      {4./216, 16./216, 4./216}}    //center
+    };
+    
+    const double stencilCorner[2][2][2] = {
+      {{1./216, 2./216},
+      {2./216, 4./216}},    //bottom
+      {{2./216, 4./216},
+      {4./216, 8./216}},    //center
+    };
+      
+    auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
+      return z*nNodes0*nNodes1 + y*nNodes0 + x;
+    };
+      
+    double value;
+    node_idx_t dofNo;
+  
+    // loop over all dofs and set values with stencilCenter
+    // set entries for interior nodes
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      for (int y=1; y<nNodes1-1; y++)
+      {
+        for (int x=1; x<nNodes0-1; x++)
+        {
+          dofNo = dofIndex(x, y, z);
+          for (int i=-1; i<=1; i++) // x
+          {
+            for (int j=-1; j<=1; j++) // y
+            {
+              for (int k=-1; k<=1; k++) // z
+              {     
+                value = stencilCenter[center+i][center+j][center+k]*integralFactor;
+                //                 matrix           row    column
+                ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // set entries for boundary nodes on surface boundaries
+    // left boundary (x = 0)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      for (int y=1; y<nNodes1-1; y++)
+      {
+        int x = 0;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=0; i++)    // -x
+        {
+          for (int j=-1; j<=1; j++)   // y
+          {
+            for (int k=-1; k<=1; k++)   // z
+            {     
+              value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // right boundary (x = nNodes0-1)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      for (int y=1; y<nNodes1-1; y++)
+      {
+        int x = nNodes0-1;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=0; i++)    // x
+        {
+          for (int j=-1; j<=1; j++)   // y
+          {
+            for (int k=-1; k<=1; k++)   // z
+            {     
+              value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // front boundary (y = 0)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        int y = 0;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=1; i++)    // x
+        {
+          for (int j=-1; j<=0; j++)   // -y
+          {
+            for (int k=-1; k<=1; k++)   // z
+            {     
+              value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // back boundary (y = nNodes1-1)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        int y = nNodes1-1;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=1; i++)    // x
+        {
+          for (int j=-1; j<=0; j++)   // y
+          {
+            for (int k=-1; k<=1; k++)   // z
+            {     
+              value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // bottom boundary (z = 0)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        int z = 0;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=1; i++)    // x
+        {
+          for (int j=-1; j<=1; j++)   // y
+          {
+            for (int k=-1; k<=0; k++)   // -z
+            {     
+              value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // top boundary (z = nNodes2-1)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      for (int x=1; x<nNodes0-1; x++)
+      {
+        int z = nNodes2-1;
+        node_idx_t dofNo = dofIndex(x,y,z);
+        for (int i=-1; i<=1; i++)    // x
+        {
+          for (int j=-1; j<=1; j++)   // y
+          {
+            for (int k=-1; k<=0; k++)   // z
+            {     
+              value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
+              //                 matrix           row    column
+              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            }
+          }
+        }
+      }
+    }
+    
+    // set entries for boundary nodes on edge boundaries
+    // bottom left (x=0,z=0)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = 0;
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {     
+            value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // bottom right (x=nNodes0-1,z=0)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = nNodes0-1;
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {     
+            value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // top left (x=0,z=nNodes2-1)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = 0;
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // top right (x=nNodes0-1,z=nNodes2-1)
+    for (int y=1; y<nNodes1-1; y++)
+    {
+      int x = nNodes0-1;
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=1; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // bottom front (y=0,z=0)
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = 0;
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {     
+            value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // bottom back (y=nNodes1-1,z=0)
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = nNodes1-1;
+      int z = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // -z
+          {     
+            value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // top front (y=0,z=nNodes2-1)
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = 0;
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // top back (y=nNodes1-1,z=nNodes2-1)
+    for (int x=1; x<nNodes0-1; x++)
+    {
+      int y = nNodes1-1;
+      int z = nNodes2-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      
+      value = 0;
+      for (int i=-1; i<=1; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=0; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // left front (x=0,y=0)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      int x = 0;
+      int y = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // left back (x=0,y=nNodes1-1)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      int x = 0;
+      int y = nNodes1-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // -x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // right front (x=nNodes0-1,y=0)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      int x = nNodes0-1;
+      int y = 0;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // -y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // right back (x=nNodes0-1,y=nNodes1-1)
+    for (int z=1; z<nNodes2-1; z++)
+    {
+      int x = nNodes0-1;
+      int y = nNodes1-1;
+      node_idx_t dofNo = dofIndex(x,y,z);
+      for (int i=-1; i<=0; i++)    // x
+      {
+        for (int j=-1; j<=0; j++)   // y
+        {
+          for (int k=-1; k<=1; k++)   // z
+          {     
+            value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
+            //                 matrix           row    column
+            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          }
+        }
+      }
+    }
+    
+    // corner nodes
+    int x,y,z;
+    
+    // bottom front left (x=0,y=0,z=0)
+    x = 0;
+    y = 0;
+    z = 0;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // bottom front right (x=nNodes0-1,y=0,z=0)
+    x = nNodes0-1;
+    y = 0;
+    z = 0;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // bottom back left (x=0,y=nNodes1-1,z=0)
+    x = 0;
+    y = nNodes1-1;
+    z = 0;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // bottom back right (x=nNodes0-1,y=nNodes1-1,z=0)
+    x = nNodes0-1;
+    y = nNodes1-1;
+    z = 0;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // -z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // top front left (x=0,y=0,z=nNodes2-1)
+    x = 0;
+    y = 0;
+    z = nNodes2-1;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // top front right (x=nNodes0-1,y=0,z=nNodes2-1)
+    x = nNodes0-1;
+    y = 0;
+    z = nNodes2-1;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // -y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // top back left (x=0,y=nNodes1-1,z=nNodes2-1)
+    x = 0;
+    y = nNodes1-1;
+    z = nNodes2-1;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // -x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
+    
+    // top back right (x=nNodes0-1,y=nNodes1-1,z=nNodes2-1)
+    x = nNodes0-1;
+    y = nNodes1-1;
+    z = nNodes2-1;
+    dofNo = dofIndex(x,y,z);
+    for (int i=-1; i<=0; i++)    // x
+    {
+      for (int j=-1; j<=0; j++)   // y
+      {
+        for (int k=-1; k<=0; k++)   // z
+        {     
+          value = stencilCorner[center+i][center+j][center+k]*integralFactor;
+          //                 matrix           row    column
+          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        }
+      }
+    }
 
+    ierr = MatAssemblyBegin(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyEnd(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    
+  }
+}
+ 
 
 };    // namespace

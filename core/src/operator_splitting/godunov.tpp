@@ -13,9 +13,9 @@ Godunov(const DihuContext &context) :
   timeStepping1_(context_["GodunovSplitting"]["Term1"]),
   timeStepping2_(context_["GodunovSplitting"]["Term2"])
 {
-  
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "GodunovSplitting");
+  outputWriterManager_.initialize(specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -102,9 +102,15 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Godunov: write output"; 
     // write current output values
     if(outputData1_)
-      this->context_.writeOutput(timeStepping1_.data(), timeStepNo, currentTime);
+    {
+      LOG(DEBUG) << "write output 1";
+      this->outputWriterManager_.writeOutput(timeStepping1_.data(), timeStepNo, currentTime);
+    }
     if(outputData2_)
-      this->context_.writeOutput(timeStepping2_.data(), timeStepNo, currentTime);
+    {
+      LOG(DEBUG) << "write output 2";
+      this->outputWriterManager_.writeOutput(timeStepping2_.data(), timeStepNo, currentTime);
+    }
   }
 }
 

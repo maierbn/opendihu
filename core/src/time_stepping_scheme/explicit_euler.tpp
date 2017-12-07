@@ -14,6 +14,7 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(const DihuContext &context) :
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ExplicitEuler");
+  this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTime>
@@ -46,7 +47,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
     // write current output values
-    this->context_.writeOutput(this->data_, timeStepNo, currentTime);
+    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
     
     //this->data_.print();
   }

@@ -22,6 +22,7 @@ CellmlAdapter::CellmlAdapter(const DihuContext& context) :
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
+  outputWriterManager_.initialize(specificSettings_);
 }
 
 CellmlAdapter::~CellmlAdapter()
@@ -365,7 +366,6 @@ void CellmlAdapter::initializeRhsRoutine()
     LOG(DEBUG) << "Library \""<<libraryFilename<<"\" loaded. " 
       << "rhsRoutine: " << (rhsRoutine_==NULL? "NULL" : "yes") << ", rhsRoutineSimd: " << (rhsRoutineSimd_==NULL? "NULL" : "yes");
     
-    
     // fail if none of both could be loaded
     if (!rhsRoutine_ && !rhsRoutineSimd_)
     {
@@ -497,7 +497,6 @@ void CellmlAdapter::initialize()
     };
     LOG(DEBUG) << "registered handleResult function";
   }
-
 }
 
 void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector< double >& parameters)

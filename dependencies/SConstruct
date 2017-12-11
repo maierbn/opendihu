@@ -1,5 +1,3 @@
 # This is the top-level SConstruct file for dependencies
 
-# initialize environment object containing build system settings such as compilers and flags
-env = Environment(variables = vars)
-
+SConscript("../SConstruct")   # call main SConstruct

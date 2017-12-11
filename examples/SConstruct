@@ -3,10 +3,20 @@
 # define all existing examples to be build
 examples = [
   "build-test",
-  "laplace",
   "templates",
+  "laplace1d",
+  "laplace2d",
+  "poisson1d",
+  "poisson2d",
+  "diffusion1d",
+  "diffusion2d",
+  "cellml",
+  "electrophysiology",
 ]
+examples = ["electrophysiology"]
 
 # loop over examples and call SConstruct file
 for example in examples:
+  print ""
+  print "example",example
   SConscript(example+'/SConstruct')

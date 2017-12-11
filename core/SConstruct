@@ -9,6 +9,8 @@ sys.path.append("../dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")
 import sconsconfig
 from sconsconfig import packages, tools
 
+print "core"
+
 #
 # Select the packages we want to use in the configuration.
 #
@@ -16,6 +18,15 @@ sconsconfig.select(
     packages.MPI(required=True),
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
+    packages.Python(required=True),
+    packages.Base64(required=True),
+    packages.Cython(required=True),
+    packages.NumpyC(required=True),
+    packages.googletest(required=True),
+    packages.libxml2(required=True),
+    #packages.Sphinx(required=True),
+    packages.libcellml(required=True),          # relies on libxml2
+    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 
 
@@ -39,11 +50,18 @@ env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = 
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
 if unknown:
-  print "WARNING: Unknown variables from command line arguments or config file `config.py`:", unknown.keys()
+  print "WARNING: Unknown variables from command line arguments or config file `user-variables.scons.py`:", unknown.keys()
 
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
 
+# set console messages for compilation and linking
+if ARGUMENTS.get('VERBOSE') != '1':
+  env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
+  env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
+           
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
@@ -60,12 +78,14 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   
 else:
   # release build
   variant_dir = 'build/release'         # folder of build
-  env.MergeFlags('-O2 -std=c++11')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -std=c++1z -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
+
+env.MergeFlags('-isystem')   # disable respective warnings that come from easylogging++
 
 env.Append(CPPPATH = ['../../../core/src', '/usr/include/mpi', '../../../dependencies/petsc/install/include'])
 

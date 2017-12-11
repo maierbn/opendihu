@@ -1,6 +1,8 @@
-PWD /store/wiss/software/opendihu/doc/derivations
+PWD /store/software/opendihu/doc/derivations
+INPUT /etc/texmf/web2c/texmf.cnf
+INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
-INPUT /home/benni/.texlive2015/texmf-var/web2c/pdftex/pdflatex.fmt
+INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
 INPUT doc.tex
 OUTPUT doc.log
 INPUT header.tex
@@ -21,6 +23,7 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/base/fleqn.clo
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/fleqn.clo
 INPUT /usr/share/texlive/texmf-dist/tex/latex/koma-script/scrsize11pt.clo
 INPUT /usr/share/texlive/texmf-dist/tex/latex/koma-script/scrsize11pt.clo
+INPUT /usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
 INPUT /usr/share/texlive/texmf-dist/tex/latex/koma-script/typearea.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/koma-script/typearea.sty
@@ -227,8 +230,9 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3-code.tex
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3-code.tex
-INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3unicode-data.def
-INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3unicode-data.def
+INPUT /usr/share/texlive/texmf-dist/tex/generic/unicode-data/UnicodeData.txt
+INPUT /usr/share/texlive/texmf-dist/tex/generic/unicode-data/CaseFolding.txt
+INPUT /usr/share/texlive/texmf-dist/tex/generic/unicode-data/SpecialCasing.txt
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3pdfmode.def
 INPUT /usr/share/texlive/texmf-dist/tex/latex/l3kernel/l3pdfmode.def
 INPUT /usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty
@@ -245,12 +249,12 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/dirtytalk/dirtytalk.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/dirtytalk/dirtytalk.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/tipa.sty
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/tipa.sty
+INPUT /usr/share/texmf/tex/latex/tipa/tipa.sty
+INPUT /usr/share/texmf/tex/latex/tipa/tipa.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/t3enc.def
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/t3enc.def
+INPUT /usr/share/texmf/tex/latex/tipa/t3enc.def
+INPUT /usr/share/texmf/tex/latex/tipa/t3enc.def
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmsl10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
@@ -288,8 +292,8 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/setspace/setspace.sty
 INPUT doc.aux
 INPUT doc.aux
 OUTPUT doc.aux
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/t3cmr.fd
-INPUT /usr/share/texlive/texmf-dist/tex/latex/tipa/t3cmr.fd
+INPUT /usr/share/texmf/tex/latex/tipa/t3cmr.fd
+INPUT /usr/share/texmf/tex/latex/tipa/t3cmr.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/ucs/ucsencs.def
 INPUT /usr/share/texlive/texmf-dist/tex/latex/ucs/ucsencs.def
 INPUT /usr/share/texlive/texmf-dist/tex/context/base/supp-pdf.mkii
@@ -347,7 +351,7 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/ucs/data/uni-34.def
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx8.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx6.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmssbx10.tfm
-INPUT /usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map
+INPUT /home/maierbn/.texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT images/element1.pdf_tex
 INPUT images/element1.pdf_tex
 INPUT images/element1.pdf

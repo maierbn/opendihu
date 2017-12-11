@@ -4,5 +4,8 @@
 # build core
 SConscript('core/SConstruct')
 
+# build tests
+SConscript('testing/SConstruct')
+
 # build examples
 SConscript('examples/SConstruct')

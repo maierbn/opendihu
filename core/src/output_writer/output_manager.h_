@@ -1,0 +1,67 @@
+//! The class implements the output manager.
+/*!
+ * @author maierbn
+ * @date 2015
+ */
+#ifndef OUTPUT_MANAGER_H
+#define OUTPUT_MANAGER_H
+
+#include <iostream>
+#include <fstream>
+
+#include "typedefs.h"
+#include "communication.h"
+
+class OutputManager
+{
+public:
+
+    /**
+      * This writes the master file of the parallel output, should only be done
+      * by one processor in the current execution world! This method also uses
+      * the communicator to get the coordinates of the other processors.
+      */
+    void writeVTKMasterFile(int step, Communication *comm);
+
+    /**
+      * Writes a slave file for the parallel output, has to be done by all processors!
+      */
+    void writeVTKSlaveFile(GridFunction &u, GridFunction &v,
+		GridFunction &p, GridFunction &stream, GridFunction &rhs, const PointType &physical_length, int discretization, int step,
+		    Communication *comm);
+
+	/**
+	 * Writes a *.csv-file, with velocity of points (5,120), (64,64), (120,5)
+     *
+	 */
+	void writeCSVFile(GridFunction &u, GridFunction &v, const PointType &physical_length, RealType reynolds_number, double current_time,
+		Communication *comm);
+
+    //! Method interpolates the velocity for u in the staggered grid.
+    /*!
+     * A border of thickness 1 is assumed.
+	 * . . .   .
+	 * . . .  .
+	 * ._._._.
+	 * |_|_|_|...
+	 * |>|L|_|... <- position of (x,y) = (0,0) (bottom left corner of cell)
+	 * |x|? |_|... <- position of (i,j) = (0,0) (center of cell)
+     *
+     */
+    static RealType interpolate_u (RealType x, RealType y, GridFunction &u,
+                                   const PointType &mesh_width, int discretization);
+
+    //! Method interpolates the velocity for v in the staggered grid.
+    static RealType interpolate_v (RealType x, RealType y, GridFunction &v,
+                                   const PointType &mesh_width, int discretization);
+
+    //! Method interpolates the pressure p in the staggered grid.
+    static RealType interpolate_p (RealType x, RealType y, GridFunction &p,
+                                   const PointType &mesh_width, int discretization);
+    
+private:
+	string machine_id_;							///< identifier of machine on which the program runs
+
+};
+
+#endif  // OUTPUT_MANAGER_H

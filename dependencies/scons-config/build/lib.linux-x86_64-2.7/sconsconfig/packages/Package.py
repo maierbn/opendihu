@@ -55,24 +55,26 @@ class Package(object):
     self.name = self.__class__.__name__
     self.required = required
     self.found = False
-    self.headers = []
-    self.libs = []
-    self.extra_libs = []
+    self.headers = []         # header files of this package, that need to be included by the main program, have to be in directory "include"
+    self.libs = []            # libraries of this package, that need to be linked against by the main program, have to be in directory "lib" or "lib64"
+    self.extra_libs = []      # extra i.e. extern libraries that are required for the package
+    self.sources = []         # sources that need to be compiled with every program, have to be in subdirectory "src", note, these are not the sources needed to compile the library
     self.sub_dirs = self.DEFAULT_SUB_DIRS
-    self.check_text = ''
-    self.options = []
-    self.one_shot_options = []
+    self.check_text = ''      # a test program that checks if the package is included successfully
+    self.ext = '.c'           # extension of the check program, this determines if it is compiled with g++ or gcc
+    self.options = []         # scons options that should be available to the user via the config script (default includes *_DIR, *_DOWNLOAD etc.)
+    self.one_shot_options = []  
     self.test_names = ['Check' + self.name]
     self.custom_tests = {'Check' + self.name: self.check}
     self.auto_add_libs=True
     self.run=True
-    self.ext = '.c'
-    self.download_url = download_url
-    self.build_handlers = {}
-    self.number_output_lines = False
-    self.static = False
-
-    self.base_dir = None
+    self.download_url = download_url    # the url from where to download the package
+    self.build_handlers = {}            # the build handlers, use set_build_handler to set
+    self.build_flags = ''               # additional C flags to use for compiling the test program
+    self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
+    self.static = False                 # if the compiled test program is a static library
+    
+    self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
 
@@ -92,6 +94,7 @@ class Package(object):
   ## Run the configuration checks for this package.
   # @param[in,out] ctx The configuration context, retrieved from SCons.
   def check(self, ctx, **kwargs):
+    ctx.Log('\n====================================\n')
     ctx.Log('Beginning check for %s\n'%self.name)
     env = ctx.env
     name = self.name
@@ -105,7 +108,7 @@ class Package(object):
       ctx.Log('Found option %s = %s\n'%(upp + '_DIR', value))
       res = self.try_location(ctx, value, **kwargs)
       if not res[0]:
-        self._msg = '\n\nUnable to validate an %s installation at:\n %s\nInspect "config.log" to see what went wrong.'%(name, value)
+        self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.'%(name, value)
         # ctx.Log(msg)
         # print msg
         # env.Exit(1)
@@ -173,11 +176,12 @@ class Package(object):
 
     else:
       ctx.Log('No options found, trying empty location.\n')
+      self.base_dir = "."
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
       if not res[0]:
         ctx.Log('  Trying common locations.\n')
-        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
         res = (0, '')
         
         # loop over common directories
@@ -213,7 +217,7 @@ class Package(object):
       ctx.Log("    Directory %s\n"%d)
       
       # descend if subdirectory is "install" or "build" or contains name of package
-      if d.lower() == "install" or d.lower() == "build" or d.lower().find(name.lower()) != -1:
+      if (d.lower() == "install" or d.lower() == "build" or d.lower().find(name.lower()) != -1) and os.path.isdir(os.path.join(cd, d)):
         d = os.path.join(cd, d)
         ctx.Log('  Descend to %s\n'%d)
         
@@ -559,25 +563,54 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11");
+    ctx.env.MergeFlags("-ldl -lm -lX11")
+    ctx.env.PrependUnique(CCFLAGS = self.build_flags)
+    
+    # add sources directly to test program
+    for source in self.sources:
+      object_filename = os.path.join(self.base_dir, os.path.join("src", os.path.splitext(source)[0]+".o"))
+      ctx.env.AppendUnique(LINKFLAGS = object_filename)
+      #with open(filename) as file:
+      #  text += "\n"+file.read()
     
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
       
+    # compile with C++11 for cpp test files
+    if 'cpp' in self.ext:
+      ctx.env.PrependUnique(CCFLAGS = "-std=c++11")
+      
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
-    ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")
+    ccflags = ctx.env["CCFLAGS"]
+    for i in ccflags:
+      ctx.Log("  CCFLAGS "+str(i)+"\n")
+    #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
     
+    # compile / run test program
     if self.run:
       res = ctx.TryRun(text, self.ext)
     else:
       res = (ctx.TryLink(text, self.ext), '')
+        
+    # remove C++11 flag
+    if 'cpp' in self.ext:
+      ccflags = ctx.env["CCFLAGS"]
+      ccflags_new = []
+      for entry in ccflags:
+        if entry != "-std=c++11":
+          ccflags_new.append(entry)
+      ctx.Log("recovered ccflags:")
+      ctx.Log(str(ccflags_new))
+      ctx.env.Replace(CCFLAGS = ccflags_new)
+      
     if not res[0]:
       env_restore(ctx.env, bkp)
     else:
       ctx.Log("Program output:\n"+res[1])
+        
     return res
 
   def try_libs(self, ctx, libs, extra_libs=[], **kwargs):
@@ -585,13 +618,14 @@ class Package(object):
       libs = [[]]
     if not extra_libs:
       extra_libs = [[]]
+      
     for l in libs:
       l = conv.to_iter(l)
       l_bkp = self.env_setup_libs(ctx.env, l)
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e)
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)
@@ -614,20 +648,66 @@ class Package(object):
   def try_headers(self, ctx, inc_dirs, **kwargs):
     ctx.Log('Trying to find headers in %s\n'%repr(inc_dirs))
     found_headers = True
-    for hdr in self.headers:
+    new_inc_dirs = []
+    for (i,hdr) in enumerate(self.headers):
       found = False
       for path in inc_dirs:
         hdr_path = os.path.join(path, hdr)
         ctx.Log(' ' + hdr_path + ' ... ')
-        if os.path.exists(hdr_path):
+        if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
+          ctx.Log('(is directory) ')
+          
+        if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
           ctx.Log('yes.\n')
           found = True
           break
+          
+        # remove leading "../" and see if file is there
+        if hdr_path.find("../") == 0:
+          new_hdr_path = hdr_path[3:]
+          new_path = path[3:]
+          ctx.Log('no.\n')
+          ctx.Log(' ' + new_hdr_path + ' ... ')
+          if os.path.exists(new_hdr_path):
+            #new_inc_dirs.append(new_path)
+            ctx.Log('(yes, here it is, but this directory is not considered)\n')
+            #found = True
+            break
+          
         ctx.Log('no.\n')
+        
+        # look in subdirectories
+        for (subpath, subdirectories, files) in os.walk(path):
+            
+          new_path = os.path.join(path, subpath)
+          hdr_path = os.path.join(new_path, hdr)
+          ctx.Log(' ' + hdr_path + ' ... ')
+          
+          if os.path.exists(hdr_path) and not os.path.isfile(hdr_path):
+            ctx.Log('(is directory) ')
+            
+          if os.path.exists(hdr_path) and os.path.isfile(hdr_path):
+            ctx.Log('yes.\n')
+            new_inc_dirs.append(new_path)
+            found = True
+            break
+          ctx.Log('no.\n')
+        
+        if found:
+          break
+        
       if not found:
         ctx.Log('Failed to find ' + hdr + '\n')
         found_headers = False
         break
+        
+    if new_inc_dirs:
+      ctx.Log('add more inc_dirs: '+str(inc_dirs))
+    
+    inc_dirs += new_inc_dirs    # append path with new directories
+    
+    if new_inc_dirs:
+      ctx.Log(' -> '+str(inc_dirs)+'\n')
     return found_headers
 
   def try_location(self, ctx, base_dirs, **kwargs):
@@ -635,6 +715,8 @@ class Package(object):
       base_dirs = [base_dirs]
     for base in base_dirs:
       ctx.Log('Checking for %s in %s.\n'%(self.name, base))
+      ctx.Log('Searching for headers: '+str(self.headers)+", libs: "+str(self.libs)+'\n')
+      
       loc_callback = kwargs.get('loc_callback', None)
       libs = copy.deepcopy(conv.to_iter(self.libs))
       extra_libs = copy.deepcopy(conv.to_iter(self.extra_libs))
@@ -655,10 +737,10 @@ class Package(object):
           if not os.path.isabs(lib_sub_dirs[i]):
             lib_sub_dirs[i] = os.path.join(base, lib_sub_dirs[i])
 
-        # Remove any directories that can already be found in
+        # Remove any directories that can already be found
         # in their respective lists.
-        inc_sub_dirs = [d for d in inc_sub_dirs if d not in ctx.env.get('CPPPATH', [])]
-        lib_sub_dirs = [d for d in lib_sub_dirs if d not in ctx.env.get('LIBPATH', [])]
+        #inc_sub_dirs = [d for d in inc_sub_dirs if d not in ctx.env.get('CPPPATH', [])]
+        #lib_sub_dirs = [d for d in lib_sub_dirs if d not in ctx.env.get('LIBPATH', [])]
 
         if loc_callback:
           loc_callback(ctx, base, inc_sub_dirs, lib_sub_dirs, libs, extra_libs)
@@ -670,10 +752,17 @@ class Package(object):
         if not self.try_headers(ctx, inc_sub_dirs, **kwargs):
           continue
 
+        system_inc_dirs = []
+        for inc_dir in inc_sub_dirs:
+          system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
+            
         bkp = env_setup(ctx.env,
-                CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
+                #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
                 LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
-                RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs)
+                RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs,
+                CCFLAGS=ctx.env.get('CCFLAGS', []) + system_inc_dirs)
+        
+        self.base_dir = base  # set base directory (is needed by try_libs)
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)
         if res[0]:
           self.base_dir = base # set base directory

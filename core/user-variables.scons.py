@@ -26,3 +26,29 @@ LAPACK_REDOWNLOAD=False      # force download, even if the files are already pre
 PETSC_DOWNLOAD=False
 PETSC_REDOWNLOAD=False
 #PETSC_DIR="../dependencies/petsc"
+
+# EasyLoggingPP
+EASYLOGGINGPP_DOWNLOAD=True
+#EASYLOGGINGPP_REDOWNLOAD=True
+
+# Base64
+BASE64_DOWNLOAD=True
+
+# NumpyC
+CYTHON_DOWNLOAD=True
+NUMPYC_DOWNLOAD=True
+
+# Google Test
+GOOGLETEST_DOWNLOAD=True
+#GOOGLETEST_REDOWNLOAD=True
+
+# libxml2
+LIBXML2_DOWNLOAD=True
+#LIBXML2_REDOWNLOAD=True
+
+# Sphinx
+SPHINX_DOWNLOAD=True
+
+# libcellml
+LIBCELLML_DOWNLOAD=True
+#LIBCELLML_REDOWNLOAD=True

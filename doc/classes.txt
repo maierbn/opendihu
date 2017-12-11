@@ -14,10 +14,15 @@ Equation::Equation <- Equation::Static::Static
 Equation::Static::Static <- Equation::Static::Laplace (DiscretizableInSpace)
 
 SpatialDiscretization::SpatialDiscretization
-<- SpatialDiscretization::FiniteElementMethod<Mesh, BasisFunction, DiscretizationInSpace> (DiscretizableInTime, Runnable)
+<- SpatialDiscretization::FiniteElementMethod<Mesh, BasisFunction, Term> (DiscretizableInTime, Runnable)
 
 Mesh::Mesh <- Mesh::Regular<D>
 BasisFunction::BasisFunction <- BasisFunction::Lagrange<D>
 
 DiHuContext
 Computation(DihuContext, Runnable)
+
+
+
+All Runnable object have a state, i.e. have members. All non-runnable classes are fully static.
+E.g. FiniteElementMethod stores its Matrix objects itself, 

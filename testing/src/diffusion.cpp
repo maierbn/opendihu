@@ -43,6 +43,7 @@ config = {
     FiniteElementMethod<
       Mesh::RegularFixed<1>,
       BasisFunction::Lagrange,
+      Integrator::None,
       Equation::Dynamic::Diffusion
     >
   > equationDiscretized(settings);

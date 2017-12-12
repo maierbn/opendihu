@@ -7,6 +7,7 @@
 #include <control/petsc_utility.h>
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
+#include "node_positions_tester.h"
 
 namespace SpatialDiscretization
 {
@@ -39,6 +40,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -47,14 +49,14 @@ config = {
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
-    0, -1.6,  .8, 0, 0, 0,
-    0, 0.8, -1.6, 0.8, 0, 0,
-    0, 0, 0.8, -1.6, 0.8, 0, 
-    0, 0, 0,  .8, -1.6, 0,
+    0, -2.5, 1.25, 0, 0, 0,
+    0, 1.25, -2.5, 1.25, 0, 0,
+    0, 0, 1.25, -2.5, 1.25, 0, 
+    0, 0, 0, 1.25, -2.5, 0,
     0, 0, 0, 0, 0, 1
   };
   std::vector<double> referenceRhs = {
-    1, -0.8, 0, 0, 0, 0
+    1, -1.25, 0, 0, 0, 0
   };
   std::map<int, double> dirichletBC = {{0, 1.0}, {5,0.0}};
   
@@ -91,6 +93,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -99,19 +102,19 @@ config = {
 
   std::vector<double> referenceMatrix = {
     1,    0,    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, -0.1, 0.05, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,    0.05, -0.1, 0, 
+    0, -40, 20, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 20, -40, 20, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 20, -40, 20, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 20, -40, 20, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 20, -40, 20, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 20, -40, 20, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 20, -40, 20, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 20, -40, 20, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,    20, -40, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
   };
   std::vector<double> referenceRhs = {
-    1, -0.05, 0, 0, 0, 0, 0, 0, 0, -0.1, 2
+    1, -20, 0, 0, 0, 0, 0, 0, 0, -40, 2
   };
   std::map<int, double> dirichletBC = {{0, 1.0}, {10,2.0}};
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
@@ -142,6 +145,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -210,6 +214,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -220,18 +225,18 @@ config = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0,-12,3, 0,1.5,3, 0, 0, 0, 0,
-    0, 0, 0,3,-24,3,3,3, 3, 0, 0, 0,
-    0, 0, 0, 0,3,-12,0,3,1.5, 0, 0, 0,
-    0, 0, 0,1.5,3,0,-12,3, 0, 0, 0, 0,
-    0, 0, 0,3,3,3,3,-24, 3, 0, 0, 0,
-    0, 0, 0,0,3,1.5,0,3,-12, 0, 0, 0, 
+    0, 0, 0,-12/9.,3/9., 0,1.5/9.,3/9., 0, 0, 0, 0,
+    0, 0, 0,3/9.,-24/9.,3/9.,3/9.,3/9., 3/9., 0, 0, 0,
+    0, 0, 0, 0,3/9.,-12/9.,0,3/9.,1.5/9., 0, 0, 0,
+    0, 0, 0,1.5/9.,3/9.,0,-12/9.,3/9., 0, 0, 0, 0,
+    0, 0, 0,3/9.,3/9.,3/9.,3/9.,-24/9., 3/9., 0, 0, 0,
+    0, 0, 0,0,3/9.,1.5/9.,0,3/9.,-12/9., 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
   };
   std::vector<double> referenceRhs = {
-    0, 1./3, 2./3, -1, -3, -2, -1, -3, -2, 0, 1./3, 2./3
+    0, 1./3, 2./3, -1./9, -3./9, -2./9, -1./9, -3/9., -2./9, 0, 1./3, 2./3
   };
   std::map<int, double> dirichletBC = {{0, 0.0}, {1,1./3}, {2,2./3}, {9,0}, {10,1./3}, {11,2./3}};
   
@@ -260,6 +265,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -338,6 +344,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -462,6 +469,147 @@ config = {
   }
     
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+}
+
+TEST(LaplaceTest, ReadNodePositionsAreCorrect)
+{
+  // explicit mesh with node positions
+  std::string pythonConfig = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "Meshes" : {
+    "testMesh": {
+      "nElements": [2, 2],
+      "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
+    }
+  },
+  "FiniteElementMethod" : {
+    "relativeTolerance": 1e-15,
+    "meshName": "testMesh",
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<2>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  std::vector<double> referenceNodePositions = {
+    0, 0,  1, 0,  2, 0,
+    0, 1,  1, 1,  2, 1,
+    0, 2,  1, 2,  2, 2
+  };
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings, "testMesh", referenceNodePositions);
+  
+  // explicit mesh with automatically generated node positions
+  std::string pythonConfig2 = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "Meshes" : {
+    "testMesh": {
+      "nElements": [2, 2],
+      "physicalExtend": [2, 2],
+    }
+  },
+  "FiniteElementMethod" : {
+    "relativeTolerance": 1e-15,
+    "meshName": "testMesh",
+  },
+}
+)";
+
+  DihuContext settings2(argc, argv, pythonConfig2);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<2>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized2(settings2);
+  
+  Computation computation2(settings2, equationDiscretized2);
+  computation2.run();
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
+}
+
+TEST(LaplaceTest, ReadNodePositionsAreCorrectInlineMesh)
+{
+  // inline mesh with node positions
+  std::string pythonConfig = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [2, 2],
+    "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<2>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  std::vector<double> referenceNodePositions = {
+    0, 0,  1, 0,  2, 0,
+    0, 1,  1, 1,  2, 1,
+    0, 2,  1, 2,  2, 2
+  };
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings, "anonymous0", referenceNodePositions);
+  
+  // inline mesh with automatically generated node positions
+  std::string pythonConfig2 = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "physicalExtend": [2.0, 2.0],
+      "nElements": [2, 2],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings2(argc, argv, pythonConfig2);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<2>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized2(settings2);
+  
+  Computation computation2(settings2, equationDiscretized2);
+  computation2.run();
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings2, "anonymous0", referenceNodePositions);
+  
 }
 };
 

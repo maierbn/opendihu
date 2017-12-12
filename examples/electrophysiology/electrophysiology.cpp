@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
       SpatialDiscretization::FiniteElementMethod<
         Mesh::RegularFixed<1>,
         BasisFunction::Lagrange,
+        Integrator::Gauss<2>,
         Equation::Dynamic::Diffusion
       >
     >

@@ -96,6 +96,11 @@ DihuContext::DihuContext(int argc, char *argv[]) :
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv)
 {
   loadPythonScript(pythonSettings);
+  
+  LOG(DEBUG) << "recreate meshManager";
+  meshManager_ = nullptr;
+  meshManager_ = std::make_shared<MeshManager>(*this);
+  
 }
 
 PyObject* DihuContext::getPythonConfig() const

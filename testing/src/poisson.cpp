@@ -43,6 +43,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -51,14 +52,14 @@ config = {
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
-    0, -1.6,  .8, 0, 0, 0,
-    0, 0.8, -1.6, 0.8, 0, 0,
-    0, 0, 0.8, -1.6, 0.8, 0, 
-    0, 0, 0,  .8, -1.6, 0,
+    0, -2.5, 1.25, 0, 0, 0,
+    0, 1.25, -2.5, 1.25, 0, 0,
+    0, 0, 1.25, -2.5, 1.25, 0, 
+    0, 0, 0, 1.25, -2.5, 0,
     0, 0, 0, 0, 0, 1
   };
   std::vector<double> referenceRhs = {
-    1, -0.8, 0, 0, 0, 0
+    1, -1.25, 0, 0, 0, 0
   };
   std::map<int, double> dirichletBC = {{0, 1.0}, {5,0.0}};
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
@@ -94,6 +95,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -102,19 +104,19 @@ config = {
 
   std::vector<double> referenceMatrix = {
     1,    0,    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, -0.1, 0.05, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0.05, -0.1, 0.05, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,    0.05, -0.1, 0, 
+    0, -40, 20, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 20, -40, 20, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 20, -40, 20, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 20, -40, 20, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 20, -40, 20, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 20, -40, 20, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 20, -40, 20, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 20, -40, 20, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,    20, -40, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
   };
   std::vector<double> referenceRhs = {
-    1, -0.05, 0, 0, 0, 0, 0, 0, 0, -0.1, 2
+    1, -20, 0, 0, 0, 0, 0, 0, 0, -40, 2
   };
   std::map<int, double> dirichletBC = {{0, 1.0}, {10,2.0}};
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
@@ -145,6 +147,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -213,6 +216,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -223,18 +227,18 @@ config = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0,-12,3, 0,1.5,3, 0, 0, 0, 0,
-    0, 0, 0,3,-24,3,3,3, 3, 0, 0, 0,
-    0, 0, 0, 0,3,-12,0,3,1.5, 0, 0, 0,
-    0, 0, 0,1.5,3,0,-12,3, 0, 0, 0, 0,
-    0, 0, 0,3,3,3,3,-24, 3, 0, 0, 0,
-    0, 0, 0,0,3,1.5,0,3,-12, 0, 0, 0, 
+    0, 0, 0,-12/9.,3/9., 0,1.5/9.,3/9., 0, 0, 0, 0,
+    0, 0, 0,3/9.,-24/9.,3/9.,3/9.,3/9., 3/9., 0, 0, 0,
+    0, 0, 0, 0,3/9.,-12/9.,0,3/9.,1.5/9., 0, 0, 0,
+    0, 0, 0,1.5/9.,3/9.,0,-12/9.,3/9., 0, 0, 0, 0,
+    0, 0, 0,3/9.,3/9.,3/9.,3/9.,-24/9., 3/9., 0, 0, 0,
+    0, 0, 0,0,3/9.,1.5/9.,0,3/9.,-12/9., 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
   };
   std::vector<double> referenceRhs = {
-    0, 1./3, 2./3, -1, -3, -2, -1, -3, -2, 0, 1./3, 2./3
+    0, 1./3, 2./3, -1./9, -3./9, -2./9, -1./9, -3/9., -2./9, 0, 1./3, 2./3
   };
   std::map<int, double> dirichletBC = {{0, 0.0}, {1,1./3}, {2,2./3}, {9,0}, {10,1./3}, {11,2./3}};
   
@@ -263,6 +267,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -341,6 +346,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -503,6 +509,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized1(settings1);
   
@@ -514,6 +521,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings2);
   
@@ -545,6 +553,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -554,6 +563,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
   
@@ -590,6 +600,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -599,6 +610,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
   
@@ -635,6 +647,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -644,6 +657,7 @@ config = {
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange,
+    Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
   

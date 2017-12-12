@@ -7,31 +7,22 @@
 namespace Mesh
 {
 
-
 template<unsigned long D>
-element_idx_t RegularFixed<D>::nElements(int dimension)
-{
-  return nElements_[dimension];
-}
-
-template<unsigned long D>
-RegularFixed<D>::RegularFixed(PyObject *specificSettings) : MeshD<D>(specificSettings)
+RegularFixed<D>::RegularFixed(PyObject *specificSettings) : Regular<D>(specificSettings)
 {
   // get settings values nElements_ and physical Extend
   std::array<double, D> defaultValues;
   defaultValues.fill(1.0);
   
-  nElements_ = PythonUtility::getOptionArray<int, D>(specificSettings, "nElements", 10, PythonUtility::NonNegative);
-  
   std::array<double, D> physicalExtend;
   // only get physicalExtend if it is not a 1-node mesh with 0 elements
-  if (D > 1 || nElements_[0] != 0)
+  if (D > 1 || this->nElements_[0] != 0)
     physicalExtend = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtend", 1.0, PythonUtility::Positive);
   else
     physicalExtend[0] = 1.0;
  
   LOG(DEBUG) << "  RegularFixed constructor, D="<< D<<", nElements: ";
-  for(auto n : nElements_)
+  for(auto n : this->nElements_)
   {
      LOG(DEBUG) << "    "<<n;
   }
@@ -42,9 +33,9 @@ RegularFixed<D>::RegularFixed(PyObject *specificSettings) : MeshD<D>(specificSet
   }
   
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  if (D > 1 || nElements_[0] != 0)
+  if (D > 1 || this->nElements_[0] != 0)
   {
-    auto nElementsIter = nElements_.begin();
+    auto nElementsIter = this->nElements_.begin();
     auto physicalExtendIter = physicalExtend.begin();
     for (typename std::array<double, D>::iterator meshWidthIter = meshWidth_.begin(); meshWidthIter != meshWidth_.end(); 
         meshWidthIter++, nElementsIter++, physicalExtendIter++)
@@ -68,11 +59,12 @@ RegularFixed<D>::RegularFixed(PyObject *specificSettings) : MeshD<D>(specificSet
 
 template<unsigned long D>
 RegularFixed<D>::RegularFixed(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent) :
- MeshD<D>(NULL), nElements_(nElements), meshWidth_(physicalExtent)
+  Regular<D>(nElements), meshWidth_(physicalExtent)
 {
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  typename std::array<element_idx_t, D>::iterator nElementsIter = nElements_.begin();
-  for (typename std::array<double, D>::iterator meshWidthIter = meshWidth_.begin(); meshWidthIter != meshWidth_.end(); meshWidthIter++, nElementsIter++)
+  typename std::array<element_idx_t, D>::iterator nElementsIter = this->nElements_.begin();
+  for (typename std::array<double, D>::iterator meshWidthIter = meshWidth_.begin(); meshWidthIter != meshWidth_.end(); 
+       meshWidthIter++, nElementsIter++)
   {
     *meshWidthIter = *meshWidthIter / *nElementsIter;
   }

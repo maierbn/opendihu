@@ -10,9 +10,9 @@ namespace SpatialDiscretization
 class StiffnessMatrixTester
 {
 public:
-  template<class MeshType, class BasisFunctionType, class EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
   static void compareMatrix(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
     std::vector<double> &referenceMatrix
                            )
   {
@@ -23,13 +23,14 @@ public:
     ASSERT_EQ(matrix.size(), referenceMatrix.size()) << "Matrix has wrong number of entries";
     for(unsigned int i=0; i<matrix.size(); i++)
     {
-      EXPECT_EQ(matrix[i], referenceMatrix[i]) << "Matrix entry no. " << i << " differs";
+      double difference = fabs(matrix[i]-referenceMatrix[i]);
+      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
     }
   }
   
-  template<class MeshType, class BasisFunctionType, class EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
   static void compareRhs(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
     std::vector<double> &referenceRhs
                            )
   {
@@ -40,13 +41,14 @@ public:
     ASSERT_EQ(rhs.size(), referenceRhs.size()) << "Rhs has wrong number of entries";
     for(unsigned int i=0; i<rhs.size(); i++)
     {
-      EXPECT_EQ(rhs[i], referenceRhs[i]) << "Rhs entry no. " << i << " differs";
+      double difference = fabs(rhs[i] - referenceRhs[i]);
+      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference << ".";
     }
   }
   
-  template<class MeshType, class BasisFunctionType, class EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
   static void checkDirichletBCInSolution(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
     std::map<int, double> &dirichletBC)
   {
     Vec &solutionVector = finiteElementMethod.data_.solution();
@@ -62,10 +64,10 @@ public:
     }
   }
   
-  template<class MeshType, class BasisFunctionType, class EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
   static void checkEqual(
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod1,
-    FiniteElementMethod<MeshType, BasisFunctionType, EquationType> &finiteElementMethod2)
+    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod1,
+    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod2)
   {
     // rhsVector
     Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide();
@@ -78,7 +80,8 @@ public:
     ASSERT_EQ(rhs1.size(), rhs2.size()) << "Rhs has wrong number of entries";
     for(unsigned int i=0; i<rhs1.size(); i++)
     {
-      EXPECT_EQ(rhs1[i], rhs2[i]) << "Rhs entry no. " << i << " differs";
+      double difference = fabs(rhs1[i]-rhs2[i]);
+      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference << ".";
     }
     
     // stiffness matrix 
@@ -92,16 +95,17 @@ public:
     ASSERT_EQ(matrix1.size(), matrix2.size()) << "Matrix has wrong number of entries";
     for(unsigned int i=0; i<matrix1.size(); i++)
     {
-      EXPECT_EQ(matrix1[i], matrix2[i]) << "Matrix entry no. " << i << " differs";
+      double difference = fabs(matrix1[i]-matrix2[i]);
+      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
     }
     
     
   }
 
-  template<class MeshType, class BasisFunctionType>
+  template<typename MeshType, typename BasisFunctionType>
   static void testRhsDiscretizationMatrix(
-    FiniteElementMethod<MeshType, BasisFunctionType, Equation::Static::Poisson> &finiteElementMethod1,
-    FiniteElementMethod<MeshType, BasisFunctionType, Equation::Dynamic::Diffusion> &finiteElementMethod2,
+    FiniteElementMethod<MeshType, BasisFunctionType, Integrator::None, Equation::Static::Poisson> &finiteElementMethod1,
+    FiniteElementMethod<MeshType, BasisFunctionType, Integrator::None, Equation::Dynamic::Diffusion> &finiteElementMethod2,
     std::vector<double> &rhsValues
   )
   {

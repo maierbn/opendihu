@@ -19,6 +19,9 @@ public:
   ///! create a Vec Petsc object
   static void createVector(Vec &vector, int nEntries, std::string name="");
   
+  ///! return a string of the matrix that can be printed
+  static std::string getStringMatrix(Mat &matrix);
+  
   ///! return a string of the matrix and vector, that can be printed
   static std::string getStringMatrixVector(Mat &matrix, Vec &vector);
   

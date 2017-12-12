@@ -96,9 +96,9 @@ void FiniteElements::finalAssembly()
   PetscErrorCode ierr;
   // communicate portions to the right processors before using the matrix and vector in computations
   ierr = VecAssemblyBegin(rhs_); CHKERRV(ierr);
-  ierr = VecAssemblyEnd(rhs_); CHKERRV(ierr);
-  
   ierr = MatAssemblyBegin(stiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  
+  ierr = VecAssemblyEnd(rhs_); CHKERRV(ierr);
   ierr = MatAssemblyEnd(stiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   
   LOG(DEBUG) << "finalAssembly";

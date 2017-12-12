@@ -67,7 +67,7 @@ Plugging this into \eqref{eq:laplace_weak} yields
     -\s{i=1}{N} u_i \ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx = 0 \quad \text{for }j=1,\dots,N.
   \end{array}
 \end{equation}
-The minus sign is kept for similarity with other problems.
+The minus sign is kept for similarity with later mentioned problem equations that also have a right-hand side.
 
 A reasonable choice of ansatz functions are functions that have limited support. We discretize the domain $\Omega$ by Finite Elements $\Omega_e$,
 \begin{equation}
@@ -119,23 +119,247 @@ Note that again Lagrange functions of first order appear, but this is part of th
   \end{array}
 \end{equation}
 The node numbering and coordinate frames are defined by \cref{fig:element2}.
+The Jacobians of $\Phi$ for the 1D and 2D case are as follows:
+\begin{equation*}
+  \begin{array}{lll}
+    \text{1D:}\quad J_\Phi(\xi_1) = \Phi'(\xi_1) = \bfx^2-\bfx^1\\[4mm]
+    \text{2D:}\quad J_\Phi(\bfxi) = \mat{(1-\xi_2)\,(
+    \bfx^2-\bfx^1)+\xi_2\,(\bfx^4-\bfx^3) & (1-\xi_1)
+    \,(\bfx^3-\bfx^1) +\xi_1\,(\bfx^4-\bfx^2)}
+  \end{array}
+\end{equation*}
+
+
 
 Starting from \eqref{eq:laplace_discretized} we now plug in the Lagrange ansatz functions for $\phi$. Then the respective functions only have to be integrated over the elements where they are defined.
 We get
-\begin{equation}
+\begin{equation}\label{eq:laplace_discretized0}
   \begin{array}{ll}
      -\s{e=1}{M} \sum_{i\in N(e)} u_i \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 0 \quad \text{for }j=1,\dots,N,
   \end{array}
 \end{equation}
-where the sum over $i\in N(e)$ is over the nodes of element $e$.
+where the sum over $i\in N(e)$ is over the nodes of element $e$. The expression $∇\phi(\bfx)$ means, that the gradient is with respect to $\bfx$, despite the function $\phi$ being defined in parameter space, i.e. ${∇\phi(\bfx) = ∇_\bfx \phi(\Phi^{-1}(\bfx)) = ∇_\bfx\phi(\bfxi)}$.
+
+The integration domain, $\Omega_e$, is described by the mapping from parameter space, $\Omega_e = \Phi([0,1]^d)$.
+At every point $\bfp = \Phi(\bfxi)$ the gradients are with respect to orthogonal coordinates in the tangent space of the point.
+The tangent space coordinates for a particular point given by $\bfxi$ are introduced as $\bfzeta(\bfxi)=(\zeta_1(\bfxi), \dots, \zeta_d(\bfxi))$. The scaling is like in world space, i.e. the following holds:
+\begin{equation*}
+  \begin{array}{lll}
+    \left|\p{\zeta_i}{\xi_i}\right| = \left|\p{\Phi}{\xi_i}\right|.
+  \end{array}
+\end{equation*}
+The integral in \eqref{eq:laplace_discretized0} is then
+\begin{equation}
+  \begin{array}{ll}
+     \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 
+     \ds\int_{\Phi([0,1]^d)} ∇_{\bfzeta(\bfxi(\bfx))}\phi_i(\bfx)\cdot ∇_{\bfzeta(\bfxi(\bfx))}\phi_j(\bfx)\,\d\bfx.
+  \end{array}
+\end{equation}
+Depending on dimension this is resolved differently.
+
+\textbf{1D case.} With one dimension, we can choose $\zeta_1 = \xi_1 \cdot s$, where $s$ is the scaling factor between the different length scales in world space ($\zeta$) and parameter space ($\xi$). Then with $\d\phi/\d\zeta = \d\phi/\d\xi\cdot \d\xi/\d\zeta$ and $\d\xi/\d\zeta = s^{-1}$ we get
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 
+     \ds\int_{\Phi([0,1])} \d{\phi_i(\bfx)}{\xi} \d{\phi_j(\bfx)}{\xi}\Big(\ub{\d{\xi}{\zeta}}{=:s^{-1}}\Big)^2 \,\d\bfx.
+  \end{array}
+\end{equation*}
+The scaling factor can be computed by 
+\begin{equation*}
+  \begin{array}{lll}
+    \p{\Phi}{\xi} = \p{\zeta}{\xi} = s \quad \Rightarrow \quad s = \Phi'(\xi_1) = \Vert \bfx^2 - \bfx^1 \Vert_2.
+  \end{array}
+\end{equation*}
+After transformation of the integration domain to parameter space this yields the following formula for the stiffness matrix:
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = \ds\int_{[0,1]} \d{\phi_i(\xi)}{\xi} \d{\phi_j(\xi)}{\xi} s^{-2}\mathcal{J}_1(\xi)\,\d\xi
+  \end{array}
+\end{equation*}
+
+\textbf{3D case.}
+In 3D we use the world coordinate system as $\bfzeta$-frame, i.e. $\bfzeta_1 = \bfe_1, \bfzeta_2 = \bfe_2, \bfzeta_3 = \bfe_3$.
 %
 We transform the integration domain from global to local coordinate frame using  \eqref{eq:integration_transformation_dd} and get:
 \begin{equation}\label{eq:fe_integral}
   \begin{array}{ll}
-     -\s{e=1}{M} \sum_{i\in N(e)} u_i \ds\int_{[0,1]^d} ∇\phi_i(\bfxi)\cdot ∇\phi_j(\bfxi)\,J_d(\bfxi)\,\d\bfxi = 0 \quad \text{for }j=1,\dots,N.
+     -\s{e=1}{M} \sum_{i\in N(e)} u_i \ds\int_{[0,1]^d} ∇_{\bfzeta(\bfxi)}\phi_i(\bfxi)\cdot ∇_{\bfzeta(\bfxi)}\phi_j(\bfxi)\,\mathcal{J}_d(\bfxi)\,\d\bfxi = 0 \quad \text{for }j=1,\dots,N.
   \end{array}
 \end{equation}
-Note that the computational domain $\Omega\subset \R^3$ is always considered to be embedded in $\R^3$. The 1D and 2D cases where the mesh is fully contained within a 1D or 2D subspace are then a specialization of the general case. Think of the lower dimensional meshes as a curve ($d=1$) or a bended surface ($d=2$) embedded in $\R^3$.
+For a transformation of the gradients to parameter space we need the Jacobian $J_{\Phi}$ of the coordinate mapping, $\bfx =\Phi(\bfxi)$, which consists of the entries
+\begin{equation*}
+  \begin{array}{lll}
+    \big(J_{\Phi}\big)_{i,j} = \d{x_i}{\xi_j}.
+  \end{array}
+\end{equation*}
+Note that the Jacobian of $\Phi: \R^d \to \R^3$ might not be quadratic in general, but a $3 \times d$ matrix with $d \leq 3$. Only in the special 3D-case it is quadratic and can therefore be inverted.
+
+Assuming that $\Phi$ is invertible on $\Omega$ the inverse function theorem states
+\begin{equation*}
+  \begin{array}{lll}
+    J_{\Phi^{-1}} = J_\Phi^{-1}.
+  \end{array}
+\end{equation*}
+%
+Executing the chain rule on a derivative in world space, $\d \phi / \d x_k$, yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \d{\phi(\bfxi)}{x_k} = \s{\ell=1}{d}\d{\phi(\bfxi)}{\xi_\ell} \d{\xi_\ell(\bfxi)}{x_k}
+  \end{array}
+\end{equation*}
+and for the whole gradient vector:
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\phi(\bfxi) = J^{-\top}_\Phi(\bfxi) ∇_{\bfxi} \phi(\bfxi),
+  \end{array}
+\end{equation*}
+where $J^{-\top}_\Phi = (J^{-1}_\Phi)^\top$.
+
+Now the expression $∇_\bfx\phi_i\cdot ∇_\bfx\phi_j$ can be computed:
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\phi_i(\bfx)\cdot ∇_\bfx\phi_j(\bfx) 
+    &= \s{k=1}{d} \d{\phi_i(\bfxi)}{x_k}\d{\phi_j(\bfxi)}{x_k} 
+    = \s{k=1}{d} \Big(\s{\ell=1}{d}\d{\phi_i(\bfxi)}{\xi_\ell} \d{\xi_\ell(\bfxi)}{x_k} \s{\ell=1}{d}\d{\phi_j(\bfxi)}{\xi_\ell} \d{\xi_\ell(\bfxi)}{x_k} \Big)\\[8mm]
+    &= J^{-\top}_\Phi(\bfxi) ∇_{\bfxi} \phi_i(\bfxi) \cdot 
+    J^{-\top}_\Phi(\bfxi) ∇_{\bfxi} \phi_j(\bfxi)\\[4mm]
+    &= \big(J^{-\top}_\Phi(\bfxi) ∇_{\bfxi} \phi_i(\bfxi)\big)^\top 
+    J^{-\top}_\Phi(\bfxi) ∇_{\bfxi} \phi_j(\bfxi)\\[4mm]
+    &= ∇_{\bfxi} \phi_i(\bfxi)^\top \ub{J^{-1}_\Phi(\bfxi) 
+    J^{-\top}_\Phi(\bfxi)}{=:T_\Phi(\bfxi)} ∇_{\bfxi} \phi_j(\bfxi).
+  \end{array}
+\end{equation*}
+With the definition of the finite element Laplace operator  transformation matrix $T_\Phi(\bfxi) := J^{-1}_\Phi(\bfxi) 
+    J^{-\top}_\Phi(\bfxi)$ the transformation becomes:
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\phi_i(\bfx)\cdot ∇_\bfx\phi_j(\bfx) = ∇_{\bfxi} \phi_i(\bfxi) \cdot T_\Phi(\bfxi) ∇_{\bfxi} \phi_j(\bfxi).
+  \end{array}
+\end{equation*}
+
+\textbf{2D case.}
+In two dimensions we consider the 2D manifold embedded in $\R^3$ with the mapping $\Phi: [0,1]^2 \to \Omega \subset \R^3$. At a fixed point $\bfp \in \Omega$ with $\Phi(\bfxi_p) = \bfp$ we first determine the tangent vectors $\bfzeta_1(\bfxi_p), \bfzeta_2(\bfxi_z)$. The first tangent vector is defined to lie on the $\xi_1$ coordinate direction, the second vector is then constructed to be orthogonal to the first. To define the tangent vector $\bfzeta_1$ we use a curve in parameter space:
+\begin{equation*}
+  \begin{array}{lll}
+    \gamma(t) = \mat{\gamma_1(t) \\ \gamma_2(t)} = \mat{\xi_{p1}+t \\ \xi_{p2} }.
+  \end{array}
+\end{equation*}
+Then we define
+\begin{equation*}
+  \begin{array}{lll}
+    \bfzeta_1 &= (\Phi \circ \gamma_1)'(0) 
+    = \p{t}\Phi\big(\gamma(t)\big)|_{t=0} \\[4mm]
+    &= \p{\Phi(\gamma(0))}{\xi_1}\ub{\gamma_1'(t)}{=1} + \p{\Phi(\gamma(0))}{\xi_2}\ub{\gamma_2'(t)}{=0}\\[4mm]
+    &= \p{\Phi(\xi_p)}{\xi_1}.
+  \end{array}
+\end{equation*}
+Similar we define the helper tangent vector $\bfzeta_h$ along the $\xi_2$ coordinate, which is then
+\begin{equation*}
+  \begin{array}{lll}
+    \bfzeta_h = \p{\Phi(\xi_p)}{\xi_2}.
+  \end{array}
+\end{equation*}
+$\bfzeta_1$ and $\bfzeta_h$ are not orthogonal in general. Therefore a third tangent vector $\bfzeta_2 = \bfzeta_1\times \bfzeta_h \times \bfzeta_1$ will be defined.
+
+It is the tangent vector of a curve 
+\begin{equation*}
+  \begin{array}{lll}
+    \delta(t) = \mat{\delta_1(t) \\ \delta_2(t)} = \mat{\xi_{p1}+\cos(α)t \\ \xi_{p2}+\sin(α)t }.
+  \end{array}
+\end{equation*}
+The angle $\beta$ between $\bfzeta_1$ and $\bfzeta_h$ is given by
+\begin{equation*}
+  \begin{array}{lll}
+    \cos(\beta) |\bfzeta_1| |\bfzeta_h| = \bfzeta_1 \cdot \bfzeta_h
+    \quad \Rightarrow \quad \beta = \arccos\left(\dfrac{\bfzeta_1 \cdot \bfzeta_h}{|\bfzeta_1| |\bfzeta_h|}\right)
+  \end{array}
+\end{equation*}
+Then by relating angles we get
+\begin{equation*}
+  \begin{array}{lll}
+    \dfrac{\pi/2}{\beta} = \dfrac{α}{\pi/2} \quad \Rightarrow \quad \alpha = \dfrac{\pi^2}{4\,\beta}.
+  \end{array}
+\end{equation*}
+So the tangent vector becomes
+\begin{equation}\label{eq:tangent_vector}
+  \begin{array}{lll}
+    \bfzeta_2 = (\Phi \circ \delta)'(0) = \p{\Phi(\bfxi_p)}{\xi_1}\cos(α) + \p{\Phi(\bfxi_p)}{\xi_2}\sin(α) = \bfzeta_1\,\cos(α) + \bfzeta_h\,\sin(α).
+  \end{array}
+\end{equation}
+Another approach is to use the formula 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfzeta_2 = \bfzeta_1\times \bfzeta_h \times \bfzeta_1,
+  \end{array}
+\end{equation*}
+which leads to the expression
+\begin{equation*}
+  \begin{array}{lll}
+    \bfzeta_2 = \mat{
+    -\p{\Phi_2}{\xi_1}(\p{\Phi_1}{\xi_1}\p{\Phi_2}{\xi_2} - \p{\Phi_1}{\xi_2}\p{\Phi_2}{\xi_1}) - \p{\Phi_3}{\xi_1}(\p{\Phi_1}{\xi_1}\p{\Phi_3}{\xi_2} - \p{\Phi_1}{\xi_2}\p{\Phi_3}{\xi_1}) \\[4mm]
+ \p{\Phi_1}{\xi_1}(\p{\Phi_1}{\xi_1}\p{\Phi_2}{\xi_2} - \p{\Phi_1}{\xi_2}\p{\Phi_2}{\xi_1}) - \p{\Phi_3}{\xi_1}(\p{\Phi_2}{\xi_1}\p{\Phi_3}{\xi_2} - \p{\Phi_2}{\xi_2}\p{\Phi_3}{\xi_1})\\[4mm]
+ \p{\Phi_1}{\xi_1}(\p{\Phi_1}{\xi_1}\p{\Phi_3}{\xi_2} - \p{\Phi_1}{\xi_2}\p{\Phi_3}{\xi_1}) + \p{\Phi_2}{\xi_1}(\p{\Phi_2}{\xi_1}\p{\Phi_3}{\xi_2} - \p{\Phi_2}{\xi_2}\p{\Phi_3}{\xi_1})
+    }.
+  \end{array}
+\end{equation*}
+The mapping between parameter space and tangent space is given by $\Psi_\bfp$:
+\begin{equation*}
+  \begin{array}{lll}
+    \Psi_\bfp : [0,1]^2 \to T_\bfp\Omega,\\[4mm]
+    \Psi_\bfp(\bfxi) = \bfp + c_1(\bfxi)\,\hat{\bfzeta}_1 + c_2(\bfxi)\,\hat{\bfzeta}_2.\\[4mm]
+  \end{array}
+\end{equation*}
+The basis vectors $\hat{\bfzeta}_i$ are the normalized tangent vectors, $\hat{\bfzeta}_i = \bfzeta_i / |\bfzeta_i|$. And the coefficients are:
+\begin{equation*}
+  \begin{array}{lll}
+    c_1(\bfxi) = \big(\xi_1-\xi_{p1}-(\xi_2-\xi_{p2})\cos(α)/\sin(α)\big)\,l_1\\[4mm]
+    c_2(\bfxi) = (\xi_2-\xi_{p2})/\sin(α)\,l_2,
+  \end{array}
+\end{equation*}
+with the lengths $l_1 = |\bfzeta_1|, l_2 = |\bfzeta_2|$.
+
+The Jacobian of $\Psi$ and its inverse are as follows:
+\begin{equation*}
+  \begin{array}{lll}
+    J_\Psi = \mat{l_1 & -l_1\,\cos(α)/\sin(α) \\ 0 & l_2/\sin(α)},\qquad
+    J_\Psi^{-1} = J_{\Psi^-1} = \mat{1/l_1 & \cos(α)/l_2 \\ 0 & \sin(α)/l_2}.
+  \end{array}
+\end{equation*}
+The inverse contains the entries
+\begin{equation*}
+  \begin{array}{lll}
+    (J^{-1}_{\Psi})_{i,j} = \d{\xi_i}{\zeta_j}.
+  \end{array}
+\end{equation*}
+
+To compute the gradients of a function with respect to $\zeta$, we use the chain rule:
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \d{\phi(\bfxi)}{\zeta_k} = \s{\ell=1}{d}\d{\phi(\bfxi)}{\xi_\ell}\d{\xi_\ell(\bfxi)}{\zeta_k},
+  \end{array}
+\end{equation*}
+so the gradient becomes
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_{\bfzeta} \phi(\bfxi) = J_{\Psi}^{-\top}∇_{\bfxi}\phi(\bfxi),
+  \end{array}
+\end{equation*}
+where $J^{-\top}_{\Psi} = (J_\Psi^{-1})^\top$.
+
+Analogous to the 3D case we define 
+\begin{equation*}
+  \begin{array}{lll}
+    T_\Psi(\bfxi) := J_{\Psi}^{-1}(\bfxi)J_\Psi^{-\top}(\bfxi) = \mat{\cos(α)^2/l_2^2 + 1/l_1^2 & \sin(α)\,\cos(α)/l_2^2 \\ \sin(α)\,\cos(α)/l_2^2 & \sin(α)^2/l_2^2}
+  \end{array}
+\end{equation*}
+and get:
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_{\bfzeta}\phi_i(\bfx)\cdot ∇_{\bfzeta}\phi_j(\bfx) = ∇_{\bfxi} \phi_i(\bfxi) \cdot T_\Phi(\bfxi) ∇_{\bfxi} \phi_j(\bfxi).
+  \end{array}
+\end{equation*}
+%Note that the computational domain $\Omega\subset \R^3$ is always considered to be embedded in $\R^3$. The 1D and 2D cases where the mesh is fully contained within a 1D or 2D subspace are then a specialization of the general case. Think of the lower dimensional meshes as a curve ($d=1$) or a bended surface ($d=2$) embedded in $\R^3$.
 
 \subsection{Evaluation of the integral term}\label{chap:integral1}
 The integral in \eqref{eq:fe_integral} defines for $i$ and $j$ the entries $m_{ij}$ of the \emph{stiffness matrix} $M$.
@@ -149,35 +373,42 @@ The equation can be written in matrix form as
 where $M$ contains the entries
 \begin{equation*}
   \begin{array}{lll}
-    m_{ij} = -\ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx = -\s{e=1}{M} \sum_{i\in N(e)} \ds\int_{[0,1]^d} ∇\phi_i(\bfxi)\cdot ∇\phi_j(\bfxi)\,J_d(\bfxi)\,\d\bfxi
+    m_{ij} = -\ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx = -\s{e=1}{M} \sum_{i\in N(e)} \ds\int_{[0,1]^d} ∇\phi_i(\bfxi)\cdot T_\Phi(\bfxi)∇\phi_j(\bfxi)\,\mathcal{J}_d(\bfxi)\,\d\bfxi
   \end{array}
 \end{equation*}
 and $\bfu = (u_1, \dots, u_N)^\top$ is the solution vector. Given $M$ the solution $\bfu$ is computed by an appropriate linear system solver.
 
-The integral for $m_{i,j}$ depends via $J_d$ on the shape of the elements. In general, it has to be evaluated numerically. However, for special simple cases it can be computed analytically.
+The integral for $m_{i,j}$ depends via $\mathcal{J}_d$ on the shape of the elements. In general, it has to be evaluated numerically. However, for special simple cases it can be computed analytically.
 This includes scenarios in $d=1,2,3$ dimensions where the elements are on a rectilinear cartesian grid.
 
 If the grid is arbitrary, analytical computation for 1D is still simple. For $d=2,3$ it is still possible, but involves more lengthy derivations that are usually performed using a computer algebra system such as \verb|sympy|. In this section the 1D and 2D cases are derived, the python \verb|sympy| code for 2D and 3D is contained in the \verb|doc| directory for further reference.
 
-For all 1D meshes that are embedded in a 3D domain as well as rectangular cartesian 2D and 3D meshes the term $J_d(\bfxi)$ is constant within each element, i.e. it does not depend on $\bfxi$. In that case one can take it as a constant out of the integral.
+For all 1D meshes that are embedded in a 3D domain as well as rectangular cartesian 2D and 3D meshes the terms $T_\Phi(\bfxi)$ and $\mathcal{J}_d(\bfxi)$ are constant within each element, i.e. do not depend on $\bfxi$. In that case we can take $\mathcal{J}_d$ out of the integral.
 
 \textbf{1D case.}
-We now compute $m_{ij}$ for $d=1$. The transformation term $J_1(\xi)$
+We now compute $m_{ij}$ for $d=1$. The transformation term $\mathcal{J}_1(\xi)$
 is defined as
 %
 \begin{equation*}
   \begin{array}{lll}
-    J_1(\xi) = \Vert \Phi'(\xi)\Vert_2.
+    \mathcal{J}_1(\xi) = \Vert \Phi'(\xi)\Vert_2.
   \end{array}
 \end{equation*}
 Using the parametric representation of $\Phi$ given in \eqref{eq:fe_phi}, we derive
 %
 \begin{equation*}
   \begin{array}{lll}
-    J_1(\xi) = \Vert \Phi'(\xi)\Vert_2 = \Vert \bfx^2 - \bfx^1 \Vert_2,
+    \mathcal{J}_1(\xi) = \Vert \Phi'(\xi)\Vert_2 = \Vert \bfx^2 - \bfx^1 \Vert_2,
   \end{array}
 \end{equation*}
-which is the length of the element $e$ with nodes $\bfx^1$ and $\bfx^2$. We define it to be $l_e := \Vert\bfx^2-\bfx^1\Vert_2$, and thus have $J_1(\xi) = l_e$.
+which is the length of the element $e$ with nodes $\bfx^1$ and $\bfx^2$. We define it to be $l_e := \Vert\bfx^2-\bfx^1\Vert_2$, and thus have $\mathcal{J}_1(\xi) = l_e$. The scaling factor is then $s = l_e$ and the total prefactor of the integral becomes
+\begin{equation*}
+  \begin{array}{lll}
+    \mathcal{J}_1\,s^{-2} = 1/l_e.
+  \end{array}
+\end{equation*}
+
+
 
 %We use the derivatives of the Lagrange functions,
 %\begin{equation}
@@ -187,7 +418,7 @@ which is the length of the element $e$ with nodes $\bfx^1$ and $\bfx^2$. We defi
 %\end{equation}
 
 \textbf{2D case.}
-For 2D we assume a rectangular element that lies in a $z=$constant plane with side lengths $l_{1,e}$ and $l_{2,e}$ in $\xi_1$ and $\xi_2$ directions.
+For 2D we assume a rectangular element that lies in a $z=\text{constant}$ plane with side lengths $l_{1,e}$ and $l_{2,e}$ in $\xi_1$ and $\xi_2$ directions.
 The mapping from $\bfxi=(\xi_1,\xi_2)$ to $\bfx$ coordinate frame is given by
 \begin{equation}
   \begin{array}{ll}
@@ -197,28 +428,80 @@ The mapping from $\bfxi=(\xi_1,\xi_2)$ to $\bfx$ coordinate frame is given by
 Then we derive
 \begin{equation*}
   \begin{array}{lll}
-    D\Phi(\bfxi) = \mat{l_{1,e}  & 0 \\[2mm] 0 & l_{2,e}}
+    J_{\Phi}(\bfxi) = \mat{l_{1,e}  & 0 \\[2mm] 0 & l_{2,e}}
   \end{array}
 \end{equation*}
 and
 \begin{equation*}
   \begin{array}{lll}
-    J_2 = \sqrt{\det \big(D\Phi(\bfxi)^\top D\Phi(\bfxi)\big)} = |l_{1,e}\,l_{2,e}|.
+    \mathcal{J}_2 = \sqrt{\det \big(J_{\Phi}(\bfxi)^\top J_{\Phi}(\bfxi)\big)} = |l_{1,e}\,l_{2,e}|.
   \end{array}
 \end{equation*}
-%
+The tangent vectors $\bfzeta_1$ and $\bfzeta_h$ are computed to be
+\begin{equation*}
+  \begin{array}{lll}
+    \bfzeta_1 = \p{\Phi(\bfxi_p)}{\xi_1} = (l_{1,e},0)^\top,\quad
+    \bfzeta_h = \p{\Phi(\bfxi_p)}{\xi_2} = (0, l_{2,e})^\top,
+     \quad l_1 = |\bfzeta_1| = l_{1,e}.
+  \end{array}
+\end{equation*}
+The angle in between is
+\begin{equation*}
+  \begin{array}{lll}
+    \beta = \arccos\left(\dfrac{\bfzeta_1\cdot \bfzeta_h}{|\bfzeta_1||\bfzeta_h|}\right) = \dfrac{\pi}{2}.
+  \end{array}
+\end{equation*}
+The angle in parameter space is then also $\alpha = \pi^2 / (4\beta) = \pi/2$.
+Using \eqref{eq:tangent_vector} the orthogonal tangent vector $\bfzeta_2$ becomes $\bfzeta_2 = \bfzeta_h$. Then $l_2 = |\bfzeta_h| = l_{2,e}$.
+
+This leads to a transformation matrix
+\begin{equation*}
+  \begin{array}{lll}
+    T_\Psi(\bfxi) = \mat{\cos(α)^2/l_2^2 + 1/l_1^2 & \sin(α)\,\cos(α)/l_2^2 \\[2mm] \sin(α)\,\cos(α)/l_2^2 & \sin(α)^2/l_2^2} = \mat{1/l_{1,e}^2 & 0 \\[2mm] 0 & 1/l_{2,e}^2}.
+  \end{array}
+\end{equation*}
+When the mesh resolution is uniform, i.e. $l_{1,e} = l_{2,e} = l_e$, the transformation matrix becomes a scaled identity matrix, $T_{\Psi}(\bfxi) = l_e^{-2}\,\bfI$ and the transformation can be moved out of the integral. The prefactor is then
+\begin{equation*}
+  \begin{array}{lll}
+    \mathcal{J}_2\,l_e^{-2} = 1.
+  \end{array}
+\end{equation*}
+
+
 \textbf{3D case.}
 Similar to the 2D case when a rectangular 3D grid with grid widths $l_{1,e}, l_{2,e},l_{3,e}$ is assumed, the transformation factor becomes
 \begin{equation*}
   \begin{array}{lll}
-    J_3 = |l_{1,e}\,l_{2,e}\,l_{3,e}|.
+    \mathcal{J}_3 = |l_{1,e}\,l_{2,e}\,l_{3,e}|.
+  \end{array}
+\end{equation*}
+With the world mapping $\Phi(\bfxi)$ and its Jacobian $J_{\Phi}(\bfxi)$ given by
+\begin{equation*}
+  \begin{array}{lll}
+    \Phi(\bfxi) = \bfx^1 + \mat{\xi_1\,l_{1,e}\\[2mm]
+    \xi_2\,l_{2,e}\\[2mm]
+    \xi_3\,l_{3,e}}
+  \end{array}, \quad 
+  J_{\Phi}(\bfxi) = \mat{l_{1,e}&0&0 \\[2mm] 0 & l_{2,e} & 0 \\[2mm] 0 & 0 & l_{3,e}},
+\end{equation*}
+the transformation matrix becomes
+\begin{equation*}
+  \begin{array}{lll}
+    T_\Phi(\bfxi) := J^{-1}_\Phi(\bfxi) 
+    J^{-\top}_\Phi(\bfxi) = \mat{l_{1,e}^{-2}&0&0 \\[2mm] 0 & l_{2,e}^{-2} & 0 \\[2mm] 0 & 0 & l_{3,e}^{-2}}.
+  \end{array}
+\end{equation*}
+With uniform grid lengths, $l_{1,e}=l_{2,e}=l_{3,e}=l_e$, we get $T_\Phi(\bfxi) = l_e^{-2}\,\bfI$. The prefactor of the integral yields
+\begin{equation*}
+  \begin{array}{lll}
+    \mathcal{J}_3\,l_e^{-2} = l_e.
   \end{array}
 \end{equation*}
 
-In the presented special cases $J_d$ did not depend on the integration domain, which allows to compute the factor separately:
+In the presented special cases with uniform grid resolution $\mathcal{J}_d$ did not depend on the integration domain, which allows to compute the factor separately:
 \begin{equation*}
   \begin{array}{lll}
-    \ds\int_{\Omega} ∇\phi_i \cdot ∇\phi_j\,J_d\,\d\bfxi = J_d\,\ds\int_{\Omega} ∇\phi_i \cdot ∇\phi_j\,\d\bfxi.
+    \ds\int_{\Omega} ∇\phi_i \cdot T ∇\phi_j\,\mathcal{J}_d\,\d\bfxi = \mathcal{J}_d\,l_e^{-2}\ds\int_{\Omega} ∇\phi_i \cdot ∇\phi_j\,\d\bfxi.
   \end{array}
 \end{equation*}
 
@@ -226,6 +509,8 @@ Now the term $-\int ∇\phi_i\cdot ∇\phi_j \,\d\xi$, remains to be computed. W
 
 We first compute element-wise stencils that state the contribution of a single element. If all elements have the same length properties, the element contributions can be summed up to get the total value at the nodes which is shown in the nodal stencils. From these stencils we can easily set up the stiffness matrix for a non-varying, equidistant mesh.
 
+\begin{table}[h]
+\centering
 \begin{tabular}{l|l|l|l}
     dim & element contribution & node stencil\\
     \hline
@@ -315,6 +600,8 @@ We first compute element-wise stencils that state the contribution of a single e
   \end{equation*}
 \end{minipage}
 \end{tabular}
+\caption{Stencils of the Finite Element stiffness matrix of $-Δu$ for an equidistant mesh with uniform resolution}
+\end{table}
 
 \subsection{Boundary Conditions}
 \label{sec:bc}
@@ -449,10 +736,12 @@ The domain $\Omega$ is again decomposed into disjoint elements $\Omega_e, e=1,\d
 
 The first integral term, $\int_{\Omega} ∇\phi_i\cdot ∇\phi_j\,\d\bfx$, has to be computed as described in Section \ref{chap:integral1}. How to compute the second integral term, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfx$ is shown in the following.
 
-Similar as before, the integration domain is transferred from element space to parameter space. For this a transformation factor $J_d$ has to be considered, which is constant for some special cases as discussed in \cref{chap:integral1}.
+Similar as before, the integration domain is transferred from element space to parameter space. For this a transformation factor $\mathcal{J}_d$ has to be considered, which is constant for some special cases as discussed in \cref{chap:integral1}.
 
 For the remaining integral, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfxi$ node stencils are provided in the following table.
 
+\begin{table}[h]
+\centering
 \begin{tabular}{l|l|l|l}
     dim & element contribution & node stencil\\
     \hline
@@ -540,8 +829,124 @@ For the remaining integral, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfxi$ node ste
   \end{equation*}
 \end{minipage}
 \end{tabular}
+\caption{Stencils of the Finite Element right hand side for an equidistant mesh with uniform resolution}
+\end{table}
+
 
 \section{Generalized Laplace operator}
+%
+The Laplace equation $Δu=0$ describes steady-state matter-/heat-/current flow where the computed quantity $u$ designates the potential that induces the flow $\bfF$, which can be modelled as being directed against the potential gradient, $\bfF = -∇u$. In terms of heat transfer this is \emph{Fick's law}. By considering the conservation law of the flowing quantity we assume $∇\cdot \bfF = 0$ which leads directly to the Laplace equation. 
+
+If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -AΔu$ and the resulting equation is called generalized Laplace equation, reading
+\begin{equation*}
+  \begin{array}{lll}
+    ∇\cdot (A ∇u) = 0.
+  \end{array}
+\end{equation*}
+The parantheses can also be neglected. $∇\cdot A∇$ is referred to as generalized Laplace operator.
+
+The derivation of the Finite Element formulation proceeds analoguos to \cref{chap:laplace}.
+Multiplication with a testfunction $\phi$ yields:
+\begin{equation}
+  \begin{array}{ll}
+    \ds\int_{\Omega}∇\cdot A ∇u\,\phi\,\d \bfx = 0 \quad \forall \phi\in H^1_0(\Omega)
+  \end{array}
+\end{equation}
+Applying divergence theorem \eqref{eq:gauss1} with $f=\phi$ and $\bfF=A ∇u$ yields
+\begin{equation}
+  \begin{array}{ll}
+    -\ds\int_{\Omega}A ∇u \cdot ∇\phi \,\d \bfx + \ds\int_{\p \Omega} (\phi\,A∇u)\cdot\bfn\,\d \bfx  = 0 \quad \forall \phi\in H^1_0(\Omega).
+  \end{array}
+\end{equation}
+Because $\phi$ is zero on the boundary, the boundary integral vanishes:
+\begin{equation}\label{eq:laplace_weak}
+  \begin{array}{ll}
+    -\ds\int_{\Omega}A ∇u \cdot ∇\phi \,\d \bfx = 0 \quad \forall \phi\in H^1_0(\Omega).
+  \end{array}
+\end{equation}
+The discretization remains the same and leads to an integral term of
+%
+\begin{equation*}
+  \begin{array}{lll}
+    m_{ij} = -\ds\int_{Ω}A∇\phi_i\cdot ∇\phi_j\,\d\bfx.
+  \end{array}
+\end{equation*}
+for the stiffness matrix $M$. For these term the stencil notation cannot be applied in general. The stiffness matrix has to be computed using e.g. numerical quadrature.
+
+%------------------------------------------------------------------------------------------------
+\section{Quadrature}
+
+The aim is to compute a good approximation for the integral
+%
+\begin{equation*}
+  \begin{array}{lll}
+    I := \i{0}{1}f(\xi)\,\d \xi
+  \end{array}
+\end{equation*}
+with a low number of function evaluations $f(\xi)$. 
+\subsection{Gaussian quadrature}
+The Gaussian quadrature rule approximates the integral by
+%
+\begin{equation*}
+  \begin{array}{lll}
+    I \approx \s{i=1}{n}f(\xi_i)\,w_i
+  \end{array}
+\end{equation*}
+with appropriate \emph{Gauss points} $\xi_i$ and weights $w_i, i=1,\dots,n$. The sampling points and weights are chosen such that the rule approximates polynomials of degree $p_\text{exact}=2\,n-1$ exactly. Some values are listed below.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{c|c|c|c}
+    $n$& $\xi_i$& $w_i$ & $p_\text{exact}$\\[4mm]
+    \hline&&\\[-4mm]
+    $1$& $\dfrac12$ & $1$ & $1$\\[4mm]
+    \hline
+    $2$& $\pm \dfrac{1+\sqrt{3}}{2\sqrt{3}}$ & $\dfrac12$ & $3$\\[4mm]
+    \hline
+    $3$& $\dfrac12$ & $\dfrac49$ & $5$ \\[4mm]
+     & $\pm \dfrac{\sqrt{3}+\sqrt{5}}{2\sqrt{5}}$ & $\dfrac{5}{18}$ &
+\end{tabular}
+\caption{Gauss points and weights}
+\end{table}
+
+Note: Literature on Gauss quadrature often describes the case of an integral $\int_{-1}^{1} f(x) \,\d x$. The transformation reads:
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \i{0}{1} f(\xi) \,\d \xi = \dfrac12 \i{-1}{1} f\big(1/2+x/2\big) \,\d x.
+  \end{array}
+\end{equation*}
+
+\subsection{Clenshaw-Curtis quadrature}
+Clenshaw-Curtis quadrature approximates the function by a number of Chebyshev polynomials for which the exact integral is known.
+The function $f$ is evaluated at the $n+1$ roots of the Chebyshev polynomial $T_{n+1}$, which are:
+\begin{equation*}
+  \begin{array}{lll}
+    \xi_i = \cos(i\pi/n), \quad i = 0,\dots,n, \,n \text{ even}.
+  \end{array}
+\end{equation*}
+The function can be written as Chebyshev series
+%    
+\begin{equation*}
+  \begin{array}{lll}
+    f(\xi) = \dfrac{a_0}{2} T_0(\xi) + \s{i=1}{∞} a_i\,T_i(x)
+  \end{array}
+\end{equation*}
+where the coefficients result from discrete cosine transform. The approximated integral is computed by
+\begin{equation*}
+  \begin{array}{lll}
+    I \approx a_0 + \s{i=1}{n/2-1} \dfrac{2\,a_{2\,i}}{1-(2\,i)^2} + \dfrac{a_n}{1-n^2}.
+  \end{array}
+\end{equation*}
+The coefficients are
+%
+\begin{equation*}
+  \begin{array}{lll}
+    a_{2\,i} = \dfrac{2}{n}\Bigg(\dfrac{f(1)+f(-1)}{2} + f(0)\,(-1)^i + \s{i=1}{n/2-1}\big(f(\xi_i) + f(-\xi_i)\big)\cos(k/2\,\xi_i)\Bigg)
+  \end{array}
+\end{equation*}
+
+This quadrature rule approximates polynomials with degree $p_\text{exact} = m-1$ exactly when using $m$ sampling points. However for some non-polynomial functions its accuracy may be better than the respective Gauss quadrature.
 
 %------------------------------------------------------------------------------------------------
 \section{Propositions}
@@ -604,7 +1009,7 @@ Let $U \subset \R^2$ be an open set (parameter space), $\Phi:U \to \Phi(U)=:\Ome
   \begin{array}{ll}
     \ds\int_{\Phi(U)} g(\bfx) \,\d\bfx  
     &  = \ds\int_{U} g\big(\Phi(\bfxi)\big) 
-    \sqrt{\det \big(D\Phi(\bfxi)^\top D\Phi(\bfxi)\big)}\,\d\bfxi\\[4mm]
+    \sqrt{\det \big(J_{\Phi}(\bfxi)^\top J_{\Phi}(\bfxi)\big)}\,\d\bfxi\\[4mm]
     
     & = \ds\int_{U} g\big(\Phi(\bfxi)\big) 
     \sqrt{\det\mat{\d{\Phi}{\xi_1} \cdot \d{\Phi}{\xi_1} & \d{\Phi}{\xi_1} \cdot \d{\Phi}{\xi_2}  \\[4mm]
@@ -621,13 +1026,13 @@ Let $U \subset \R^2$ be an open set (parameter space), $\Phi:U \to \Phi(U)=:\Ome
 \emph{Integration by substitution}, \textit{German \say{Transformationssatz}}, also \emph{change of variables rule}.
 Let $U \subset \R^d$ be an open set, $\Phi:U \to \Phi(U) \subset\R^d$ a diffeomorphism ($\Phi$ bijective and continuously differentiable, inverse map $\Phi^{-1}$ also continuously differentiable).
 
-Then $g:\Phi(U) \to \R$ is integrable on $\Phi(U)$ if and only if the function $\bfxi \mapsto g(\Phi(\bfxi))\,|\det(D\Phi(\bfxi))|$ is integrable on $U$. It holds:
+Then $g:\Phi(U) \to \R$ is integrable on $\Phi(U)$ if and only if the function $\bfxi \mapsto g(\Phi(\bfxi))\,|\det(J_{\Phi}(\bfxi))|$ is integrable on $U$. It holds:
 \begin{equation}\label{eq:integration_transformation_3d}
   \begin{array}{ll}
-    \ds\int_{\Phi(U)} g(\bfx)\,\d \bfx = \ds\int_U g(\Phi(\bfxi))\,|\det(D\Phi(\bfxi))|\,\d \bfxi,
+    \ds\int_{\Phi(U)} g(\bfx)\,\d \bfx = \ds\int_U g(\Phi(\bfxi))\,|\det(J_{\Phi}(\bfxi))|\,\d \bfxi,
   \end{array}
 \end{equation}
-where $D\Phi$ is the Jacobian of $\Phi$.
+where $J_{\Phi}$ is the Jacobian of $\Phi$.
 
 \subsubsection{Summary}
 The transformation rules \cref{eq:integration_transformation_1d,eq:integration_transformation_2d,eq:integration_transformation_3d} can be summarized in a unified form as follows.
@@ -636,16 +1041,16 @@ Let $U \subset \R^d, d\in\{1,2,3\}$ be an open set (parameter space), $\Phi:U \t
 %
 \begin{equation}\label{eq:integration_transformation_dd}
   \begin{array}{lll}
-    \ds\int_{\Phi(U)} f\big(\Phi^{-1}(\bfx)\big)\,\d \bfx = \ds\int_U f(\bfxi)\,J_d(\bfxi)\,\d \bfxi,
+    \ds\int_{\Phi(U)} f\big(\Phi^{-1}(\bfx)\big)\,\d \bfx = \ds\int_U f(\bfxi)\,\mathcal{J}_d(\bfxi)\,\d \bfxi,
   \end{array}
 \end{equation}
-where the definition of $J_d(\bfxi)$  depends on the dimension $d$ as follows:
+where the definition of $\mathcal{J}_d(\bfxi)$  depends on the dimension $d$ as follows:
 %
 \begin{equation*}
   \begin{array}{rll}
-    J_1(\xi) &= \Vert \Phi'(\xi) \Vert_2 &\quad \text{for }d=1, \bfxi=\xi \in U \subset \R\\[4mm]
-    J_2(\bfxi) &= \sqrt{\det \big(D\Phi(\bfxi)^\top D\Phi(\bfxi)\big)} &\quad \text{for }d=2, \bfxi\in U \subset \R^2, \phi^{-1}(\bfx) =: \big(x(\bfx), y(\bfx)\big)\\[4mm]
-    J_3(\bfxi) &= |\det (D\Phi\big(\bfxi)\big)| &\quad \text{for }d=3, \bfxi\in U \subset \R^3
+    \mathcal{J}_1(\xi) &= \Vert \Phi'(\xi) \Vert_2 &\quad \text{for }d=1, \bfxi=\xi \in U \subset \R,\\[4mm]
+    \mathcal{J}_2(\bfxi) &= \sqrt{\det \big(J_{\Phi}(\bfxi)^\top J_{\Phi}(\bfxi)\big)} &\quad \text{for }d=2, \bfxi\in U \subset \R^2, \phi^{-1}(\bfx) =: \big(x(\bfx), y(\bfx)\big),\\[4mm]
+    \mathcal{J}_3(\bfxi) &= |\det (J_{\Phi}\big(\bfxi)\big)| &\quad \text{for }d=3, \bfxi\in U \subset \R^3.
   \end{array}
 \end{equation*}
 

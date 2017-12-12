@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include "easylogging++.h"
+
 void PetscUtility::getMatrixEntries(Mat &matrix, std::vector<double> &matrixValues)
 {
   int nRows, nColumns;
@@ -32,12 +34,17 @@ void PetscUtility::getVectorEntries(Vec &vector, std::vector<double> &vectorValu
 
 void PetscUtility::setVector(std::vector< double >& vectorValues, Vec& vector)
 {
+  LOG(DEBUG) << "PetscUtility::setVector, size: " << vectorValues.size();
   std::vector<int> indices(vectorValues.size());
   std::iota(indices.begin(), indices.end(), 0);
   VecSetValues(vector, vectorValues.size(), indices.data(), vectorValues.data(), INSERT_VALUES);
   
   VecAssemblyBegin(vector);
   VecAssemblyEnd(vector);
+  
+  int size;
+  VecGetSize(vector, &size);
+  LOG(DEBUG) << "size=" << size;
 }
 
 void PetscUtility::createVector(Vec& vector, int nEntries, std::string name)
@@ -91,6 +98,40 @@ std::string PetscUtility::getStringMatrixVector(Mat& matrix, Vec& vector)
         s<<std::setw(4)<<std::setfill(' ')<<matrixValues[i*nRows + j]<<" ";
     }
     s<<std::string(5, ' ')<<"| "<<vectorValues[i];
+    s<<std::endl;
+  }
+  s<<std::endl;
+  
+  return s.str();
+}
+
+std::string PetscUtility::getStringMatrix(Mat& matrix)
+{
+  int nRows, nColumns;
+  MatGetSize(matrix, &nRows, &nColumns);
+  
+  std::vector<double> matrixValues, vectorValues;
+  PetscUtility::getMatrixEntries(matrix, matrixValues);
+  
+  std::stringstream s;
+  s<<std::endl<<"    ";
+  for (int j=0; j<nColumns; j++)
+  {
+    s<<std::setw(5)<<std::setfill('_')<<j;
+  }
+  s<<std::string(5,'_');
+  s<<std::endl;
+  for (int i=0; i<nRows; i++)
+  {
+    s<<std::setw(3)<<std::setfill(' ')<<i<<"| ";
+    for (int j=0; j<nColumns; j++)
+    {
+      if(matrixValues[i*nRows + j] == 0.0)
+        s<<std::string(5, ' ');
+      else
+        s<<std::setw(4)<<std::setfill(' ')<<matrixValues[i*nRows + j]<<" ";
+    }
+    s<<std::string(5, ' ');
     s<<std::endl;
   }
   s<<std::endl;

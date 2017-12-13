@@ -8,8 +8,8 @@
 #include "easylogging++.h"
 #include "base64.h"
 
-#include <control/python_utility.h>
-#include <control/petsc_utility.h>
+#include <utility/python_utility.h>
+#include <utility/petsc_utility.h>
 #include <mesh/regular_fixed.h>
 #include <mesh/rectilinear_fixed.h>
 #include <mesh/nonrectilinear_fixed.h>

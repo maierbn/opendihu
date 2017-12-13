@@ -4,8 +4,8 @@
 
 #include <Python.h>
 
-#include "control/python_utility.h"
-#include "control/petsc_utility.h"
+#include "utility/python_utility.h"
+#include "utility/petsc_utility.h"
 #include "mesh/regular_fixed.h"
 #include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"

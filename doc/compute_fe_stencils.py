@@ -1,4 +1,4 @@
-#!/usr/bin/pxi2thon
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from sympy import *
@@ -109,7 +109,7 @@ print "00", factor(integrate(-integrand,(xi1,0,1),(xi2,0,1)))
 
 
 
-### 3D element contributions for linear Lagrange ansatxi3 function (phi)
+### 3D element contributions for linear Lagrange ansatz function (phi)
 
 def phi0(xi1,xi2,xi3):
   return (1-xi1)*(1-xi2)*(1-xi3)
@@ -138,6 +138,20 @@ def phi7(xi1,xi2,xi3):
 print ""
 print "3D stencil"
 print "=========="
+
+print diff(phi0(xi1,xi2,xi3),xi1).subs(xi1,0.5).subs(xi2,0.5).subs(xi3,0.5)
+print diff(phi0(xi1,xi2,xi3),xi2).subs(xi1,0.5).subs(xi2,0.5).subs(xi3,0.5)
+print diff(phi0(xi1,xi2,xi3),xi3).subs(xi1,0.5).subs(xi2,0.5).subs(xi3,0.5)
+
+a1 = diff(phi0(xi1,xi2,xi3),xi1)
+a2 = diff(phi0(xi1,xi2,xi3),xi2)
+a3 = diff(phi0(xi1,xi2,xi3),xi3)
+
+integrand = a1*a1 + a2*a2 + a3*a3
+print "integrand: ",integrand
+print "integrand: ",integrand.subs(xi1,0.5).subs(xi2,0.5).subs(xi3,0.5)
+print "symbolic ", integrate(integrand,(xi1,0,1),(xi2,0,1),(xi3,0,1))
+
 
 # bottom lower left node
 integrand = diff(phi0(xi1,xi2,xi3),xi1)*diff(phi0(xi1,xi2,xi3),xi1) + diff(phi0(xi1,xi2,xi3),xi2)*diff(phi0(xi1,xi2,xi3),xi2) + diff(phi0(xi1,xi2,xi3),xi3)*diff(phi0(xi1,xi2,xi3),xi3)

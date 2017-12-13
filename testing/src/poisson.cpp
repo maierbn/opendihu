@@ -4,7 +4,7 @@
 
 #include "gtest/gtest.h"
 #include "opendihu.h"
-#include <control/petsc_utility.h>
+#include "utility/petsc_utility.h"
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 
@@ -578,6 +578,53 @@ config = {
 
 }
 
+TEST(PoissonTest, DeformableRhsDiscretizationMatrix1DIsCorrect)
+{
+  
+  std::string pythonConfig = R"(
+# Laplace 1D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [10],
+    "physicalExtend": [4.0],
+    "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<1>,
+    BasisFunction::Lagrange,
+    Integrator::Gauss<2>,
+    Equation::Static::Poisson
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  FiniteElementMethod<
+    Mesh::RegularFixed<1>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Dynamic::Diffusion
+  > equationDiscretized2(settings);
+  
+  Computation computation2(settings, equationDiscretized2);
+  computation2.run();
+
+  std::vector<double> initialRhs = {
+    1,8,3,4,5,6,7,8,9,10,11,12
+  };
+  
+  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+
+}
+
 TEST(PoissonTest, RhsDiscretizationMatrix2DIsCorrect)
 {
   
@@ -625,6 +672,53 @@ config = {
 
 }
 
+TEST(PoissonTest, DeformableRhsDiscretizationMatrix2DIsCorrect)
+{
+  
+  std::string pythonConfig = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [3, 2],
+    "physicalExtend": [4.0, 3.0],
+    "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::RegularFixed<2>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Poisson
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  FiniteElementMethod<
+    Mesh::Deformable<2>,
+    BasisFunction::Lagrange,
+    Integrator::Gauss<2>,
+    Equation::Dynamic::Diffusion
+  > equationDiscretized2(settings);
+  
+  Computation computation2(settings, equationDiscretized2);
+  computation2.run();
+
+  std::vector<double> initialRhs = {
+    1,2,3,4,5,6,7,8,9,10,11,12
+  };
+  
+  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+
+}
+
 TEST(PoissonTest, RhsDiscretizationMatrix3DIsCorrect)
 {
   
@@ -651,6 +745,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
+  std::cout<<"Note: This should print an error message about mesh being non-uniform.";
   Computation computation(settings, equationDiscretized);
   computation.run();
   
@@ -658,6 +753,54 @@ config = {
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange,
     Integrator::None,
+    Equation::Dynamic::Diffusion
+  > equationDiscretized2(settings);
+  
+  Computation computation2(settings, equationDiscretized2);
+  computation2.run();
+
+  std::vector<double> initialRhs = {
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+  };
+  
+  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+
+}
+
+TEST(PoissonTest, DeformableRhsDiscretizationMatrix3DIsCorrect)
+{
+  
+  std::string pythonConfig = R"(
+# Laplace 3D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [3, 2, 2],
+    "physicalExtend": [4.0, 3.0, 2.0],
+    "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::RegularFixed<3>,
+    BasisFunction::Lagrange,
+    Integrator::None,
+    Equation::Static::Poisson
+  > equationDiscretized(settings);
+  
+  std::cout<<"Note: This should print an error message about mesh being non-uniform.";
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  FiniteElementMethod<
+    Mesh::Deformable<3>,
+    BasisFunction::Lagrange,
+    Integrator::Gauss<2>,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
   

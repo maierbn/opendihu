@@ -4,7 +4,6 @@
 
 #include "gtest/gtest.h"
 #include "opendihu.h"
-#include <control/petsc_utility.h>
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 #include "node_positions_tester.h"
@@ -471,7 +470,83 @@ config = {
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
 
-TEST(LaplaceTest, ReadNodePositionsAreCorrect)
+TEST(LaplaceTest, ReadNodePositionsAreCorrect1D)
+{
+  // explicit mesh with node positions
+  std::string pythonConfig = R"(
+# Laplace 1D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "Meshes" : {
+    "testMesh": {
+      "nElements": [6],
+      "nodeDimension": 1,
+      "nodePositions": [0,1,2,3,4,5,6],
+    }
+  },
+  "FiniteElementMethod" : {
+    "relativeTolerance": 1e-15,
+    "meshName": "testMesh",
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<1>,
+    BasisFunction::Lagrange,
+    Integrator::Gauss<1>,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+  
+  std::vector<double> referenceNodePositions = {
+    0,0,0,  1,0,0,  2,0,0,
+    3,0,0,  4,0,0,  5,0,0,
+    6,0,0,
+  };
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings, "testMesh", referenceNodePositions);
+  
+  // explicit mesh with automatically generated node positions
+  std::string pythonConfig2 = R"(
+# Laplace 1D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "Meshes" : {
+    "testMesh": {
+      "nElements": 6,
+      "physicalExtend": 6,
+    }
+  },
+  "FiniteElementMethod" : {
+    "relativeTolerance": 1e-15,
+    "meshName": "testMesh",
+  },
+}
+)";
+
+  DihuContext settings2(argc, argv, pythonConfig2);
+  
+  FiniteElementMethod<
+    Mesh::Deformable<1>,
+    BasisFunction::Lagrange,
+    Integrator::Gauss<1>,
+    Equation::Static::Laplace
+  > equationDiscretized2(settings2);
+  
+  Computation computation2(settings2, equationDiscretized2);
+  computation2.run();
+  
+  Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
+}
+
+TEST(LaplaceTest, ReadNodePositionsAreCorrect2D)
 {
   // explicit mesh with node positions
   std::string pythonConfig = R"(
@@ -482,6 +557,7 @@ config = {
   "Meshes" : {
     "testMesh": {
       "nElements": [2, 2],
+      "nodeDimension": 2,
       "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
     }
   },
@@ -497,7 +573,7 @@ config = {
   FiniteElementMethod<
     Mesh::Deformable<2>,
     BasisFunction::Lagrange,
-    Integrator::None,
+    Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -505,9 +581,9 @@ config = {
   computation.run();
   
   std::vector<double> referenceNodePositions = {
-    0, 0,  1, 0,  2, 0,
-    0, 1,  1, 1,  2, 1,
-    0, 2,  1, 2,  2, 2
+    0,0,0,  1,0,0,  2,0,0,
+    0,1,0,  1,1,0,  2,1,0,
+    0,2,0,  1,2,0,  2,2,0,
   };
   
   Mesh::NodePositionsTester::compareNodePositions(settings, "testMesh", referenceNodePositions);
@@ -536,7 +612,7 @@ config = {
   FiniteElementMethod<
     Mesh::Deformable<2>,
     BasisFunction::Lagrange,
-    Integrator::None,
+    Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
@@ -556,6 +632,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [2, 2],
+      "nodeDimension": 2,
     "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
     "relativeTolerance": 1e-15,
   },
@@ -567,7 +644,7 @@ config = {
   FiniteElementMethod<
     Mesh::Deformable<2>,
     BasisFunction::Lagrange,
-    Integrator::None,
+    Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -575,9 +652,9 @@ config = {
   computation.run();
   
   std::vector<double> referenceNodePositions = {
-    0, 0,  1, 0,  2, 0,
-    0, 1,  1, 1,  2, 1,
-    0, 2,  1, 2,  2, 2
+    0,0,0,  1,0,0,  2,0,0,
+    0,1,0,  1,1,0,  2,1,0,
+    0,2,0,  1,2,0,  2,2,0,
   };
   
   Mesh::NodePositionsTester::compareNodePositions(settings, "anonymous0", referenceNodePositions);
@@ -601,7 +678,7 @@ config = {
   FiniteElementMethod<
     Mesh::Deformable<2>,
     BasisFunction::Lagrange,
-    Integrator::None,
+    Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   

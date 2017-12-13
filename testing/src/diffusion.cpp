@@ -4,7 +4,6 @@
 
 #include "gtest/gtest.h"
 #include "opendihu.h"
-#include "control/petsc_utility.h"
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 #include "equation/diffusion.h"

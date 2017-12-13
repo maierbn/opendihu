@@ -1,6 +1,6 @@
 #include "operator_splitting/godunov.h"
 
-#include "control/python_utility.h"
+#include "utility/python_utility.h"
 #include "data_management/time_stepping.h"
 
 namespace OperatorSplitting

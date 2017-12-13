@@ -78,7 +78,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -DELPP_FEATURE_CRASH_LOG -Werror')   # gcc flags, will be sorted automatically into linker and compiler flags
   
 else:
   # release build

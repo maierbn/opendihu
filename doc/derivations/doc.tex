@@ -113,19 +113,41 @@ Note that again Lagrange functions of first order appear, but this is part of th
 \begin{equation}\label{eq:fe_phi}
   \begin{array}{ll}
     \text{1D:}\quad
-    \Phi(\xi_1) = (1-\xi_1)\,\bfx^1 + \xi_1\,\bfx^2\\[4mm]
+    \Phi(\xi_1) =& (1-\xi_1)\,\bfx^1 + \xi_1\,\bfx^2\\[4mm]
     \text{2D:}\quad
-    \Phi(\bfxi) = (1-\xi_1)\,(1-\xi_2)\,\bfx^1 + \xi_1\,(1-\xi_2)\,\bfx^2 + (1-\xi_1)\,\xi_2\,\bfx^3 + \xi_1\,\xi_2\,\bfx^4.
+    \Phi(\bfxi) =& (1-\xi_1)\,(1-\xi_2)\,\bfx^1 + \xi_1\,(1-\xi_2)\,\bfx^2 + (1-\xi_1)\,\xi_2\,\bfx^3 + \xi_1\,\xi_2\,\bfx^4.\\[4mm]
+    \text{3D:}\quad
+    \Phi(\bfxi) =& 
+      (1-\xi_1)\,(1-\xi_2)\,(1-\xi_3)\,\bfx^1 + \xi_1\,(1-\xi_2)\,(1-\xi_3)\,\bfx^2 + (1-\xi_1)\,\xi_2\,(1-\xi_3)\,\bfx^3 + \xi_1\,\xi_2\,(1-\xi_3)\,\bfx^4\\[4mm]
+      &+ (1-\xi_1)\,(1-\xi_2)\,\xi_3\,\bfx^5 + \xi_1\,(1-\xi_2)\,\xi_3\,\bfx^6 + (1-\xi_1)\,\xi_2\,\xi_3\,\bfx^7 + \xi_1\,\xi_2\,\xi_3\,\bfx^8
+    
   \end{array}
 \end{equation}
 The node numbering and coordinate frames are defined by \cref{fig:element2}.
 The Jacobians of $\Phi$ for the 1D and 2D case are as follows:
 \begin{equation*}
   \begin{array}{lll}
-    \text{1D:}\quad J_\Phi(\xi_1) = \Phi'(\xi_1) = \bfx^2-\bfx^1\\[4mm]
-    \text{2D:}\quad J_\Phi(\bfxi) = \mat{(1-\xi_2)\,(
+    \text{1D:}\quad &J_\Phi(\xi_1) = \Phi'(\xi_1) = \bfx^2-\bfx^1\\[4mm]
+    \text{2D:}\quad &J_\Phi(\bfxi) = \mat{(1-\xi_2)\,(
     \bfx^2-\bfx^1)+\xi_2\,(\bfx^4-\bfx^3) & (1-\xi_1)
-    \,(\bfx^3-\bfx^1) +\xi_1\,(\bfx^4-\bfx^2)}
+    \,(\bfx^3-\bfx^1) +\xi_1\,(\bfx^4-\bfx^2)}\\[4mm]
+    \text{3D:}\quad &J_\Phi(\bfxi) = \mat{J_{\Phi,1}(\bfxi) & J_{\Phi,2}(\bfxi) & J_{\Phi,3}(\bfxi)}\\[4mm]
+    & J_{\Phi,1}(\bfxi) =
+     (1-\xi_2)\,(1-\xi_3)\,(\bfx^2-\bfx^1)
+     +\xi_2\,(1-\xi_3)\,(\bfx^4-\bfx^3)
+     +(1-\xi_2)\,\xi_3\,(\bfx^6-\bfx^5)
+     +\xi_2\,\xi_3\,(\bfx^8-\bfx^7) \\[4mm]
+    & J_{\Phi,2}(\bfxi) =
+     (1-\xi_1)\,(1-\xi_3)\,(\bfx^3 -\bfx^1)
+     + \xi_1\,(1-\xi_3)\,(\bfx^4-\bfx^2)
+     + (1-\xi_1)\,\xi_3\,(\bfx^7-\bfx^5)
+     + \xi_1\,\xi_3\,(\bfx^8-\bfx^6) \\[4mm]
+    & J_{\Phi,3}(\bfxi) =
+     (1-\xi_1)\,(1-\xi_2)\,(\bfx^5 -\bfx^1)
+     + \xi_1\,(1-\xi_2)\,(\bfx^6-\bfx^2)
+     + (1-\xi_1)\,\xi_2\,(\bfx^7-\bfx^3)
+     + \xi_1\,\xi_2\,(\bfx^8-\bfx^4)
+    
   \end{array}
 \end{equation*}
 

@@ -2,8 +2,8 @@
 
 #include <Python.h>
 
-#include "control/python_utility.h"
-#include "control/petsc_utility.h"
+#include "utility/python_utility.h"
+#include "utility/petsc_utility.h"
 
 namespace TimeSteppingScheme
 {

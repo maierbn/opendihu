@@ -23,10 +23,13 @@ public:
   //! fill a vector with node positions 
   void getNodePositions(std::vector<double> &nodePositions);
   
+  //! return the node position of a specific dof
+  Vec3 getNodePosition(node_idx_t dofNo);
+  
   friend class NodePositionsTester;
 private:
  
-  Vec nodePositions_;                         ///< contains the positions of the nodes in physical space, for 2D consecutive (x,y) pairs, for 3D consecutive (x,y,z) triples
+  Vec nodePositions_;  ///< contains the positions of the nodes in physical space, always as consecutive (x,y,z) triple. For 1D/2D only problems, y,z resp. z are set to 0.
 };  
 
 }  // namespace

@@ -2,7 +2,7 @@
   
 #include <vector>
 #include <map>
-#include "control/petsc_utility.h"
+#include "utility/petsc_utility.h"
 
 namespace SpatialDiscretization
 {
@@ -64,10 +64,11 @@ public:
     }
   }
   
-  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
+  template<typename MeshType1, typename BasisFunctionType1, typename IntegratorType1, typename EquationType1,
+           typename MeshType2, typename BasisFunctionType2, typename IntegratorType2, typename EquationType2>
   static void checkEqual(
-    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod1,
-    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod2)
+    FiniteElementMethod<MeshType1, BasisFunctionType1, IntegratorType1, EquationType1> &finiteElementMethod1,
+    FiniteElementMethod<MeshType2, BasisFunctionType2, IntegratorType2, EquationType2> &finiteElementMethod2)
   {
     // rhsVector
     Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide();
@@ -102,10 +103,10 @@ public:
     
   }
 
-  template<typename MeshType, typename BasisFunctionType>
+  template<typename T1, typename T2>
   static void testRhsDiscretizationMatrix(
-    FiniteElementMethod<MeshType, BasisFunctionType, Integrator::None, Equation::Static::Poisson> &finiteElementMethod1,
-    FiniteElementMethod<MeshType, BasisFunctionType, Integrator::None, Equation::Dynamic::Diffusion> &finiteElementMethod2,
+    T1 &finiteElementMethod1,
+    T2 &finiteElementMethod2,
     std::vector<double> &rhsValues
   )
   {

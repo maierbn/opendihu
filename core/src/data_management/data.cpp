@@ -8,7 +8,7 @@
 
 #include "easylogging++.h"
 
-#include "control/python_utility.h"
+#include "utility/python_utility.h"
 #include "control/dihu_context.h"
 
 namespace Data

@@ -38,7 +38,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -91,7 +91,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -143,7 +143,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -212,7 +212,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -263,7 +263,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -342,7 +342,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -496,7 +496,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -535,7 +535,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -572,7 +572,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -611,7 +611,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -643,7 +643,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -677,7 +677,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);

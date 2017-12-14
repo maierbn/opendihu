@@ -42,7 +42,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -94,7 +94,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -146,7 +146,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -215,7 +215,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -266,7 +266,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -345,7 +345,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -508,7 +508,7 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig1);
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized1(settings1);
@@ -520,7 +520,7 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings2);
@@ -552,7 +552,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -562,7 +562,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -599,7 +599,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -609,7 +609,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -646,7 +646,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -656,7 +656,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -693,7 +693,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -703,7 +703,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -740,7 +740,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -751,7 +751,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -788,7 +788,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -799,7 +799,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::Deformable<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);

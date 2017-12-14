@@ -41,7 +41,7 @@ config = {
   TimeSteppingScheme::ExplicitEuler<
     FiniteElementMethod<
       Mesh::RegularFixed<1>,
-      BasisFunction::Lagrange,
+      BasisFunction::Lagrange<>,
       Integrator::None,
       Equation::Dynamic::Diffusion
     >

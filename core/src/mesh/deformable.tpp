@@ -120,12 +120,13 @@ Deformable<D>::Deformable(PyObject *specificSettings) : Regular<D>(specificSetti
 }
 
 template<unsigned long D>
-void Deformable<D>::getNodePositions(std::vector<double> &nodePositions){
+void Deformable<D>::getGeometry(std::vector<double> &nodePositions)
+{
   PetscUtility::getVectorEntries(nodePositions_, nodePositions);
 }
 
 template<unsigned long D>
-Vec3 Deformable<D>::getNodePosition(node_idx_t dofNo)
+Vec3 Deformable<D>::getGeometry(node_idx_t dofNo)
 {
   Vec3 result;
   std::array<int,3> indices{dofNo*3+0, dofNo*3+1, dofNo*3+2};

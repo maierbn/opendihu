@@ -53,6 +53,26 @@ Vec3 operator*(double lambda, Vec3 node)
   return result;
 }
 
+Vec3 &operator+=(Vec3 &node1, Vec3 node2)
+{
+  node1[0] += node2[0];
+  node1[1] += node2[1];
+  node1[2] += node2[2];
+  return node1;
+}
+
+std::ostream &operator<<(std::ostream &stream, Vec2 node)
+{
+  stream << "(" << node[0] << "," << node[1] << ")";
+  return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, Vec3 node)
+{
+  stream << "(" << node[0] << "," << node[1] << "," << node[2] << ")";
+  return stream;
+}
+
 std::array<double,9> MathUtility::computeTransformationMatrixAndDeterminant(Vec3& jacobianColumn0, Vec3& jacobianColumn1, 
                                                                             Vec3& jacobianColumn2, double &determinant)
 {

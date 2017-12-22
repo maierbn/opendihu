@@ -18,26 +18,12 @@ nDofsPerBasis()
   return 2;
 }
 
-template<>
-constexpr int Lagrange<1>::
-averageNDofsPerElement()
-{
-  return 1;
-}
-
 // quadratic Lagrange basis
 template<>
 constexpr int Lagrange<2>::
 nDofsPerBasis()
 {
   return 3;
-}
-
-template<>
-constexpr int Lagrange<2>::
-averageNDofsPerElement()
-{
-  return 2;
 }
 
 };  // namespace

@@ -20,11 +20,11 @@ public:
   //! construct mesh from python settings
   Deformable(PyObject *specificSettings);
     
-  //! fill a vector with node positions 
-  void getNodePositions(std::vector<double> &nodePositions);
+  //! fill a vector with geometry field entries (node position for Lagrange elements) 
+  void getGeometry(std::vector<double> &geometry);
   
-  //! return the node position of a specific dof
-  Vec3 getNodePosition(node_idx_t dofNo);
+  //! return the geometry field entry (node position for Lagrange elements) of a specific dof
+  Vec3 getGeometry(node_idx_t dofNo);
   
   friend class NodePositionsTester;
 private:

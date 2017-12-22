@@ -13,11 +13,6 @@ constexpr int Hermite::nDofsPerBasis()
   return 4;
 }
 
-constexpr int Hermite::averageNDofsPerElement()
-{
-  return 2;
-}
-
 double Hermite::dphi_dxi(int i, double xi)
 {
   if (i==0)

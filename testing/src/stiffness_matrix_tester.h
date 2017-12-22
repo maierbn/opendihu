@@ -97,7 +97,7 @@ public:
     for(unsigned int i=0; i<matrix1.size(); i++)
     {
       double difference = fabs(matrix1[i]-matrix2[i]);
-      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 2e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
     }
     
     

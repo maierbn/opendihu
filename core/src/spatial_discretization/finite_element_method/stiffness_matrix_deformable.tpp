@@ -84,16 +84,17 @@ setStiffnessMatrix()
     
     auto dof = Basis1D::getElementDofs(elementNo, nElementsArray);
     
-    std::array<Vec3,Basis1D::nDofsPerElement()> node;
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis1D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
       // get the global dof no. from element-local dofIndex
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);
     }
     //Vec3 node0 = mesh->getNodePosition(dof0);
     //Vec3 node1 = mesh->getNodePosition(dof1);
     
-    double elementLength = MathUtility::distance(node[0], node[nDofsPerElement-1]);
+    double elementLength = MathUtility::distance(geometry[0], geometry[nDofsPerElement-1]);
     double integralFactor = 1. / elementLength;
     
     // compute integral
@@ -102,6 +103,9 @@ setStiffnessMatrix()
     {
       // evaluate function to integrate at samplingPoints[i*D], write value to evaluations[i]
       double xi = samplingPoints[samplingPointIndex];
+      
+      // compute the 3x1 jacobian of the parameter space to world space mapping
+      //auto jacobian = Basis1D::computeJacobian(geometry, std::array<double,1>({xi}));
       
       // loop over pairs of dofs of the current element
       for (int i=0; i<nDofsPerElement; i++)
@@ -211,12 +215,14 @@ setStiffnessMatrix()
     // get indices of element-local dofs
     auto dof = Basis2D::getElementDofs(elementNo, nElementsArray);
     
-    // get node positions for dofs
-    std::array<Vec3,Basis2D::nDofsPerElement()> node;
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis2D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
+      VLOG(2) << "element " << elementNo << ", geometry " << dofIndex << ": " << geometry[dofIndex];
     }
+    
     
     // compute integral
     for (unsigned int samplingPointIndex=0; samplingPointIndex<samplingPoints.size()/2; samplingPointIndex++)
@@ -228,13 +234,16 @@ setStiffnessMatrix()
       // compute the 3x2 jacobian of the parameter space to world space mapping
       //Vec3 jacobianColumn0 = (1-xi2) * (node[1]-node[0]) + xi2 * (node[3]-node[2]);
       //Vec3 jacobianColumn1 = (1-xi2) * (node[2]-node[0]) + xi2 * (node[3]-node[1]);
-      auto jacobian = Basis2D::computeJacobian(node, std::array<double,2>({xi1,xi2}));
+      auto jacobian = Basis2D::computeJacobian(geometry, std::array<double,2>({xi1,xi2}));
       Vec3 jacobianColumn0 = jacobian[0];
       Vec3 jacobianColumn1 = jacobian[1];
+      
+      VLOG(2) << "   xi: (" << xi1 << "," << xi2 << "), jacobian: " << jacobianColumn0 << "," << jacobianColumn1;
       
       Vec3 &zeta1 = jacobianColumn0;
       Vec3 &zetah = jacobianColumn1;
       
+      //TODO make single template for 1D,2D,3D integration
       double integrationFactor = MathUtility::compute2DIntegrationFactor(zeta1, zetah);
       
       double l1 = MathUtility::length(zeta1);
@@ -408,14 +417,14 @@ setStiffnessMatrix()
   // loop over elements 
   for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
   {
-    // get global dof index of element
+    // get global dof indices of element-local dofs
     auto dof = Basis3D::getElementDofs(elementNo, nElementsArray);
     
-    // get node position of dofs
-    std::array<Vec3,Basis3D::nDofsPerElement()> node;
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis3D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
     }
     
     // compute integral
@@ -427,7 +436,7 @@ setStiffnessMatrix()
       double xi3 = samplingPoints[samplingPointIndex*3+2];
       
       // compute the 3x3 jacobian of the parameter space to world space mapping
-      auto jacobian = Basis3D::computeJacobian(node, std::array<double,3>({xi1,xi2,xi3}));
+      auto jacobian = Basis3D::computeJacobian(geometry, std::array<double,3>({xi1,xi2,xi3}));
       Vec3 jacobianColumn0 = jacobian[0];
       Vec3 jacobianColumn1 = jacobian[1];
       Vec3 jacobianColumn2 = jacobian[2];
@@ -530,14 +539,14 @@ transferRhsToWeakForm()
     // get nodes and element length
     auto dof = Basis1D::getElementDofs(elementNo, nElementsArray);
     
-    std::array<Vec3,Basis1D::nDofsPerElement()> node;
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis1D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      // get the global dof no. from element-local dofIndex
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
     }
     
-    double elementLength = MathUtility::distance(node[0], node[nDofsPerElement-1]);
+    double elementLength = MathUtility::distance(geometry[0], geometry[nDofsPerElement-1]);
     double integralFactor = elementLength;
     
     // compute integral
@@ -617,11 +626,11 @@ transferRhsToWeakForm()
   {
     auto dof = Basis2D::getElementDofs(elementNo, nElementsArray);
     
-    Vec3 node[nDofsPerElement];
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis2D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      // get the global dof no. from element-local dofIndex
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
     }
     
     // compute integral
@@ -634,7 +643,7 @@ transferRhsToWeakForm()
       // compute the 3x2 jacobian of the parameter space to world space mapping
       //Vec3 jacobianColumn0 = (1-xi2) * (node[1]-node[0]) + xi2 * (node[3]-node[2]);
       //Vec3 jacobianColumn1 = (1-xi2) * (node[2]-node[0]) + xi2 * (node[3]-node[1]);
-      auto jacobian = Basis2D::computeJacobian(node, std::array<double,2>({xi1,xi2}));
+      auto jacobian = Basis2D::computeJacobian(geometry, std::array<double,2>({xi1,xi2}));
       Vec3 jacobianColumn0 = jacobian[0];
       Vec3 jacobianColumn1 = jacobian[1];
       
@@ -723,11 +732,11 @@ transferRhsToWeakForm()
   {
     auto dof = Basis3D::getElementDofs(elementNo, nElementsArray);
     
-    Vec3 node[nDofsPerElement];
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,Basis3D::nDofsPerElement()> geometry;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      // get the global dof no. from element-local dofIndex
-      node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+      geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
     }
     
     // compute integral
@@ -739,7 +748,7 @@ transferRhsToWeakForm()
       double xi3 = samplingPoints[samplingPointIndex*3+2];
       
       // compute the 3x3 jacobian of the parameter space to world space mapping
-      auto jacobian = Basis3D::computeJacobian(node, std::array<double,3>({xi1,xi2,xi3}));
+      auto jacobian = Basis3D::computeJacobian(geometry, std::array<double,3>({xi1,xi2,xi3}));
       Vec3 jacobianColumn0 = jacobian[0];
       Vec3 jacobianColumn1 = jacobian[1];
       Vec3 jacobianColumn2 = jacobian[2];
@@ -830,15 +839,15 @@ createRhsDiscretizationMatrix()
     for (element_idx_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
       auto dof = Basis1D::getElementDofs(elementNo, nElementsArray);
-      
-      Vec3 node[nDofsPerElement];
+        
+      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+      std::array<Vec3,Basis1D::nDofsPerElement()> geometry;
       for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
       {
-        // get the global dof no. from element-local dofIndex
-        node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+        geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
       }
       
-      double elementLength = MathUtility::distance(node[0], node[nDofsPerElement-1]);
+      double elementLength = MathUtility::distance(geometry[0], geometry[nDofsPerElement-1]);
       double integralFactor = elementLength;
       
       // compute integral
@@ -933,12 +942,12 @@ createRhsDiscretizationMatrix()
     {
       // get indices of element-local dofs
       auto dof = Basis2D::getElementDofs(elementNo, nElementsArray);
-      
-      // get node positions for dofs
-      std::array<Vec3,Basis2D::nDofsPerElement()> node;
+        
+      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+      std::array<Vec3,Basis2D::nDofsPerElement()> geometry;
       for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
       {
-        node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+        geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
       }
       
       // compute integral
@@ -951,7 +960,7 @@ createRhsDiscretizationMatrix()
         // compute the 3x2 jacobian of the parameter space to world space mapping
         //Vec3 jacobianColumn0 = (1-xi2) * (node[1]-node[0]) + xi2 * (node[3]-node[2]);
         //Vec3 jacobianColumn1 = (1-xi2) * (node[2]-node[0]) + xi2 * (node[3]-node[1]);
-        auto jacobian = Basis2D::computeJacobian(node, std::array<double,2>({xi1,xi2}));
+        auto jacobian = Basis2D::computeJacobian(geometry, std::array<double,2>({xi1,xi2}));
         Vec3 jacobianColumn0 = jacobian[0];
         Vec3 jacobianColumn1 = jacobian[1];
         
@@ -1055,12 +1064,12 @@ createRhsDiscretizationMatrix()
     {
       // get global dof index of element
       auto dof = Basis3D::getElementDofs(elementNo, nElementsArray);
-      
-      // get node position of dofs
-      std::array<Vec3,Basis3D::nDofsPerElement()> node;
+        
+      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+      std::array<Vec3,Basis3D::nDofsPerElement()> geometry;
       for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
       {
-        node[dofIndex] = mesh->getNodePosition(dof[dofIndex]);
+        geometry[dofIndex] = mesh->getGeometry(dof[dofIndex]);   // for Lagrange basis, geometry[dof] equals nodePosition[dof]
       }
       
       // compute integral
@@ -1072,7 +1081,7 @@ createRhsDiscretizationMatrix()
         double xi3 = samplingPoints[samplingPointIndex*3+2];
         
         // compute the 3x3 jacobian of the parameter space to world space mapping
-        auto jacobian = Basis3D::computeJacobian(node, std::array<double,3>({xi1,xi2,xi3}));
+        auto jacobian = Basis3D::computeJacobian(geometry, std::array<double,3>({xi1,xi2,xi3}));
         Vec3 jacobianColumn0 = jacobian[0];
         Vec3 jacobianColumn1 = jacobian[1];
         Vec3 jacobianColumn2 = jacobian[2];

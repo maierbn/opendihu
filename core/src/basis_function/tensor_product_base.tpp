@@ -1,5 +1,8 @@
 #include "basis_function/tensor_product_base.h"
 
+#include "utility/math_utility.h"
+#include "easylogging++.h"
+
 #include <cmath>
 #include <array>
 
@@ -15,29 +18,38 @@ nDofsPerElement()
 
 template<int D,typename BasisFunctionType>
 constexpr int TensorProductBase<D,BasisFunctionType>::
-averageNDofsPerElement()
-{
-  return pow(BasisFunctionType::averageNDofsPerElement()/BasisFunctionType::nDofsPerNode(),D);
-}
-
-template<int D,typename BasisFunctionType>
-constexpr int TensorProductBase<D,BasisFunctionType>::
 nNodesPerElement()
 {
   return pow(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode(),D);
 }
 
+template<int D,typename BasisFunctionType>
+constexpr int TensorProductBase<D,BasisFunctionType>::
+averageNNodesPerElement()
+{
+  return pow(BasisFunctionType::nDofsPerBasis()/BasisFunctionType::nDofsPerNode()-1,D);
+}
+
+template<int D,typename BasisFunctionType>
+constexpr int TensorProductBase<D,BasisFunctionType>::
+averageNDofsPerElement()
+{
+ // nNodesPerBasis = nDofsPerBasis / nDofsPerNode
+ // averageNNodesPerBasis = nNodesPerBasis - 1
+ // averageNDofsPerElement = averageNNodesPerBasis * nDofsPerNode
+  return TensorProductBase<D,BasisFunctionType>::averageNNodesPerElement() * BasisFunctionType::nDofsPerNode();
+}
 
 template<int D,typename BasisFunctionType>
 int TensorProductBase<D,BasisFunctionType>::
-getBasisFunctionIndex(int dofIndex, int dimNo)
+getBasisFunctionIndex1D(int dofIndex, int dimNo)
 {
   switch(dimNo)
   {
   case 0:
     return dofIndex % BasisFunctionType::nDofsPerBasis();
   case 1:
-    return int((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis()))/ BasisFunctionType::nDofsPerBasis());
+    return int((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis())) / BasisFunctionType::nDofsPerBasis());
   case 2:
     return int(dofIndex / MathUtility::sqr(BasisFunctionType::nDofsPerBasis()));
   default:
@@ -52,8 +64,24 @@ phi(int dofIndex, std::array<double,D> xi)
   double result = 1.0;
   for(int dimNo = 0; dimNo < D; dimNo++)
   {
-    int basisFunctionIndex = TensorProductBase<D,BasisFunctionType>::getBasisFunctionIndex(dofIndex, dimNo);
-    result *= BasisFunctionType::phi(basisFunctionIndex,xi[dimNo]);
+    int basisFunctionIndex1D = TensorProductBase<D,BasisFunctionType>::getBasisFunctionIndex1D(dofIndex, dimNo);
+    result *= BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
+  }
+  return result;
+}
+
+template<int D,typename BasisFunctionType>
+double TensorProductBase<D,BasisFunctionType>::
+dPhidxi(int dofIndex, int derivativeIdx, std::array<double,D> xi)
+{
+  double result = 1.0;
+  for(int dimNo = 0; dimNo < D; dimNo++)
+  {
+    int basisFunctionIndex1D = TensorProductBase<D,BasisFunctionType>::getBasisFunctionIndex1D(dofIndex, dimNo);
+    if (dimNo == derivativeIdx)
+      result *= BasisFunctionType::dphi_dxi(basisFunctionIndex1D, xi[dimNo]);
+    else
+      result *= BasisFunctionType::phi(basisFunctionIndex1D, xi[dimNo]);
   }
   return result;
 }
@@ -65,17 +93,10 @@ gradPhi(int dofIndex, std::array<double,D> xi)
   std::array<double,D> gradient;
   for(int gradientEntryNo = 0; gradientEntryNo < D; gradientEntryNo++)
   {
-    gradient[gradientEntryNo] = 1.0;
-    for(int dimNo = 0; dimNo < D; dimNo++)
-    {
-      int basisFunctionIndex = TensorProductBase<D,BasisFunctionType>::getBasisFunctionIndex(dofIndex, dimNo);
-      if (dimNo == gradientEntryNo)
-        gradient[gradientEntryNo] *= BasisFunctionType::dphi_dxi(basisFunctionIndex, xi[dimNo]);
-      else
-        gradient[gradientEntryNo] *= BasisFunctionType::phi(basisFunctionIndex, xi[dimNo]);
-    }
+    gradient[gradientEntryNo] = TensorProductBase<D,BasisFunctionType>::dPhidxi(dofIndex, gradientEntryNo, xi);
   }
   return gradient;
 }
+
 
 };  // namespace

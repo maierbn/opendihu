@@ -39,6 +39,18 @@ getElementDofs(element_idx_t elementNo, std::array<int,D> nElements)
 }
 
 template<int D,typename BasisFunctionType>
+std::array<int,TensorProductBase<D,BasisFunctionType>::nNodesPerElement()> TensorProduct<D,BasisFunctionType>::
+getElementNodes(element_idx_t elementNo, std::array<int,D> nElements)
+{
+  std::array<int,TensorProductBase<D,BasisFunctionType>::nNodesPerElement()> nodes;
+  for (int nodeIndex = 0; nodeIndex < TensorProductBase<D,BasisFunctionType>::nNodesPerElement(); nodeIndex++)
+  {
+    nodes[nodeIndex] = TensorProductDim<D,BasisFunctionType>::getNodeNo(elementNo, nodeIndex, nElements);
+  }
+  return nodes;
+}
+
+template<int D,typename BasisFunctionType>
 std::array<std::array<double,D>,TensorProductBase<D,BasisFunctionType>::nDofsPerElement()> TensorProduct<D,BasisFunctionType>::
 getGradPhi(std::array<double,D> xi)
 {

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <streambuf>
 
 #include <petscmat.h>
 #include "control/types.h"
+
 
 class MathUtility
 {
@@ -43,4 +45,7 @@ public:
 
 Vec3 operator-(Vec3 node1, Vec3 node2);
 Vec3 operator+(Vec3 node1, Vec3 node2);
+Vec3 &operator+=(Vec3 &node1, Vec3 node2);
 Vec3 operator*(double lambda, Vec3 node);
+std::ostream &operator<<(std::ostream &stream, Vec2 node);
+std::ostream &operator<<(std::ostream &stream, Vec3 node);

@@ -12,7 +12,7 @@ namespace Mesh{class NodePositionsTester;};
  * Each mesh can be defined in the python config under "meshes" with a name and other properties.
  * Various components of the program can later
  * request their mesh by a call to mesh(name).
- * If a mesh was not defined ealier, it is created on the fly when it is requested.
+ * If a mesh was not defined earlier, it is created on the fly when it is requested.
  */
 class MeshManager
 {

@@ -495,7 +495,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::Deformable<1>,
+    Mesh::StructuredDeformable<1>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
@@ -534,7 +534,7 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::Deformable<1>,
+    Mesh::StructuredDeformable<1>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
@@ -571,7 +571,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
@@ -610,7 +610,7 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
@@ -642,7 +642,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
@@ -676,7 +676,7 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace

@@ -18,11 +18,14 @@ public:
   //! construct mesh from python settings
   Mesh(PyObject *specificSettings);
   virtual ~Mesh() {}
-  virtual int dimension() = 0;
-  virtual element_idx_t nNodes() = 0;
+  virtual int dimension() const = 0;
+  virtual element_idx_t nNodes() const = 0;
 private:
 };
 
+/**
+ * base class for a mesh with a dimension.
+ */
 template<unsigned long D>
 class MeshD : public Mesh
 {
@@ -30,8 +33,15 @@ public:
   //! construct mesh from python settings
   MeshD(PyObject *specificSettings);
   virtual ~MeshD() {}
-  virtual int dimension();
-  virtual element_idx_t nNodes() = 0;
+  
+  //! return the dimension/template argument D as method. This is also accessible from the base class.
+  int dimension() const; 
+  
+  //! return the template argument D (the dimension) as constexpr
+  static constexpr int dim();
+  
+  //! get the number of nodes of this mesh
+  virtual element_idx_t nNodes() const = 0;
 private:
 };
 

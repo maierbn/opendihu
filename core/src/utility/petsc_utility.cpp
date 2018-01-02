@@ -6,7 +6,7 @@
 
 #include "easylogging++.h"
 
-void PetscUtility::getMatrixEntries(Mat &matrix, std::vector<double> &matrixValues)
+void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
@@ -20,7 +20,7 @@ void PetscUtility::getMatrixEntries(Mat &matrix, std::vector<double> &matrixValu
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
 
-void PetscUtility::getVectorEntries(Vec &vector, std::vector<double> &vectorValues)
+void PetscUtility::getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 {
   int nEntries;
   VecGetSize(vector, &nEntries);
@@ -32,7 +32,7 @@ void PetscUtility::getVectorEntries(Vec &vector, std::vector<double> &vectorValu
   VecGetValues(vector, nEntries, indices.data(), vectorValues.data());
 }
 
-void PetscUtility::setVector(std::vector< double >& vectorValues, Vec& vector)
+void PetscUtility::setVector(const std::vector<double> &vectorValues, Vec& vector)
 {
   std::vector<int> indices(vectorValues.size());
   std::iota(indices.begin(), indices.end(), 0);
@@ -63,7 +63,7 @@ void PetscUtility::createVector(Vec& vector, int nEntries, std::string name)
   ierr = VecSetFromOptions(vector);  CHKERRV(ierr);
 }
 
-std::string PetscUtility::getStringMatrixVector(Mat& matrix, Vec& vector)
+std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
   std::string name;
   char *cName;
@@ -103,7 +103,7 @@ std::string PetscUtility::getStringMatrixVector(Mat& matrix, Vec& vector)
   return s.str();
 }
 
-std::string PetscUtility::getStringMatrix(Mat& matrix)
+std::string PetscUtility::getStringMatrix(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
@@ -137,7 +137,7 @@ std::string PetscUtility::getStringMatrix(Mat& matrix)
   return s.str();
 }
 
-std::string PetscUtility::getStringVector(Vec& vector)
+std::string PetscUtility::getStringVector(const Vec& vector)
 {
   std::vector<double> vectorValues;
   PetscUtility::getVectorEntries(vector, vectorValues);
@@ -154,7 +154,7 @@ std::string PetscUtility::getStringVector(Vec& vector)
   return s.str();
 }
 
-std::string PetscUtility::getStringSparsityPattern(Mat& matrix)
+std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);

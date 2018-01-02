@@ -111,12 +111,12 @@ public:
   )
   {
     // create the discretization matrix if it does not already exist
-    finiteElementMethod2.createRhsDiscretizationMatrix();
+    finiteElementMethod2.setRhsDiscretizationMatrix();
     Mat &dmatrix = finiteElementMethod2.data_.discretizationMatrix();
     
     int n, m;
     MatGetSize(dmatrix, &n, &m);
-    std::cout << "matrix size: " << n << "x" << m << std::endl;
+    LOG(DEBUG) << "matrix size: " << n << "x" << m << std::endl;
     Vec rhsStrong, rhsWeak;
       
     PetscUtility::createVector(rhsStrong, n, "rhs strong");

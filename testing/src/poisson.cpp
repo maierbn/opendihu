@@ -578,7 +578,7 @@ config = {
 
 }
 
-TEST(PoissonTest, DeformableRhsDiscretizationMatrix1DIsCorrect)
+TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix1DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -598,7 +598,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::Deformable<1>,
+    Mesh::StructuredDeformable<1>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Poisson
@@ -611,7 +611,7 @@ config = {
     Mesh::RegularFixed<1>,
     BasisFunction::Lagrange<>,
     Integrator::None,
-    Equation::Dynamic::Diffusion
+    Equation::Static::Poisson
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);
@@ -658,7 +658,7 @@ config = {
     Mesh::RegularFixed<2>,
     BasisFunction::Lagrange<>,
     Integrator::None,
-    Equation::Dynamic::Diffusion
+    Equation::Static::Poisson
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);
@@ -672,7 +672,7 @@ config = {
 
 }
 
-TEST(PoissonTest, DeformableRhsDiscretizationMatrix2DIsCorrect)
+TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix2DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -702,10 +702,10 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
-    Equation::Dynamic::Diffusion
+    Equation::Static::Poisson
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);
@@ -753,7 +753,7 @@ config = {
     Mesh::RegularFixed<3>,
     BasisFunction::Lagrange<>,
     Integrator::None,
-    Equation::Dynamic::Diffusion
+    Equation::Static::Poisson
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);
@@ -767,7 +767,7 @@ config = {
 
 }
 
-TEST(PoissonTest, DeformableRhsDiscretizationMatrix3DIsCorrect)
+TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix3DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -798,10 +798,10 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
-    Equation::Dynamic::Diffusion
+    Equation::Static::Poisson
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);

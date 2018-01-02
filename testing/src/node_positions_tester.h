@@ -4,7 +4,7 @@
 #include <map>
 #include "utility/petsc_utility.h"
 #include "mesh/mesh_manager.h"
-#include "mesh/deformable.h"
+#include "mesh/structured_deformable.h"
 
 namespace Mesh
 {
@@ -25,17 +25,17 @@ public:
     
     if(mesh->dimension() == 1)
     {
-      std::shared_ptr<Deformable<1>> deformableMesh = std::static_pointer_cast<Deformable<1>>(mesh);
+      std::shared_ptr<StructuredDeformable<1>> deformableMesh = std::static_pointer_cast<StructuredDeformable<1>>(mesh);
       nodePositions = deformableMesh->nodePositions_;
     }
     else if(mesh->dimension() == 2)
     {
-      std::shared_ptr<Deformable<2>> deformableMesh = std::static_pointer_cast<Deformable<2>>(mesh);
+      std::shared_ptr<StructuredDeformable<2>> deformableMesh = std::static_pointer_cast<StructuredDeformable<2>>(mesh);
       nodePositions = deformableMesh->nodePositions_;
     }
     else if(mesh->dimension() == 3)
     {
-      std::shared_ptr<Deformable<3>> deformableMesh = std::static_pointer_cast<Deformable<3>>(mesh);
+      std::shared_ptr<StructuredDeformable<3>> deformableMesh = std::static_pointer_cast<StructuredDeformable<3>>(mesh);
       nodePositions = deformableMesh->nodePositions_;
     }
     std::vector<double> nodePositionsVector;

@@ -37,7 +37,7 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig1);
   
   FiniteElementMethod<
-    Mesh::Deformable<1>,
+    Mesh::StructuredDeformable<1>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<3>,
     Equation::Static::Laplace
@@ -105,7 +105,7 @@ config = {
   
   // integration order: lagrange basis order 1 => ∇phi_i*∇phi_j order 2 => 2 gauss points => p_exact=3
   FiniteElementMethod<
-    Mesh::Deformable<2>,
+    Mesh::StructuredDeformable<2>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
@@ -158,7 +158,7 @@ config = {
   
   // integration order: lagrange basis order 1 => ∇phi_i*∇phi_j order 2 => 2 gauss points => p_exact=3
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
@@ -210,7 +210,7 @@ config = {
   
   // Gauss integration order 3
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<3>,
     Equation::Static::Laplace
@@ -223,7 +223,7 @@ config = {
   
   // Gauss integration order 4
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<4>,
     Equation::Static::Laplace
@@ -236,7 +236,7 @@ config = {
   
   // Gauss integration order 5
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<5>,
     Equation::Static::Laplace
@@ -249,7 +249,7 @@ config = {
   
   // Gauss integration order 6
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<6>,
     Equation::Static::Laplace
@@ -262,7 +262,7 @@ config = {
   
   // Gauss integration order 7
   FiniteElementMethod<
-    Mesh::Deformable<3>,
+    Mesh::StructuredDeformable<3>,
     BasisFunction::Lagrange<>,
     Integrator::Gauss<7>,
     Equation::Static::Laplace

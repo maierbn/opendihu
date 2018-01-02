@@ -8,7 +8,7 @@ namespace Mesh
 {
 
 template<unsigned long D>
-RegularFixed<D>::RegularFixed(PyObject *specificSettings) : Regular<D>(specificSettings)
+RegularFixed<D>::RegularFixed(PyObject *specificSettings) : Structured<D>(specificSettings)
 {
   // get settings values nElements_ and physical Extend
   std::array<double, D> defaultValues;
@@ -59,7 +59,7 @@ RegularFixed<D>::RegularFixed(PyObject *specificSettings) : Regular<D>(specificS
 
 template<unsigned long D>
 RegularFixed<D>::RegularFixed(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent) :
-  Regular<D>(nElements), meshWidth_(physicalExtent)
+  Structured<D>(nElements), meshWidth_(physicalExtent)
 {
   // compute mesh widths from physical extent and number of elements in the coordinate directions
   typename std::array<element_idx_t, D>::iterator nElementsIter = this->nElements_.begin();
@@ -71,7 +71,7 @@ RegularFixed<D>::RegularFixed(std::array<element_idx_t, D> nElements, std::array
 }
 
 template<unsigned long D>
-double RegularFixed<D>::meshWidth(int dimension)
+double RegularFixed<D>::meshWidth(int dimension) const
 {
   return meshWidth_[dimension];
 }

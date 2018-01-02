@@ -11,9 +11,8 @@
 #include <utility/python_utility.h>
 #include <utility/petsc_utility.h>
 #include <mesh/regular_fixed.h>
-#include <mesh/rectilinear_fixed.h>
-#include <mesh/nonrectilinear_fixed.h>
-#include <mesh/deformable.h>
+#include <mesh/structured_deformable.h>
+#include <mesh/unstructured_deformable.h>
 #include <mesh/mesh.h>
 
 namespace OutputWriter
@@ -55,15 +54,11 @@ void Paraview::writeSolutionDim(Data::Data &data, int timeStepNo, double current
   {
     writeRectilinearGrid<Mesh::RegularFixed<dimension>>(data);
   }
-  else if (std::dynamic_pointer_cast<Mesh::RectilinearFixed<dimension>>(data.mesh()) != NULL)
-  {
-    writeRectilinearGrid<Mesh::RectilinearFixed<dimension>>(data);
-  }
-  else if (std::dynamic_pointer_cast<Mesh::NonrectilinearFixed<dimension>>(data.mesh()) != NULL)
+  else if (std::dynamic_pointer_cast<Mesh::StructuredDeformable<dimension>>(data.mesh()) != NULL)
   {
     LOG(ERROR) << "not implemented";
   }
-  else if (std::dynamic_pointer_cast<Mesh::Deformable<dimension>>(data.mesh()) != NULL)
+  else if (std::dynamic_pointer_cast<Mesh::UnstructuredDeformable<dimension>>(data.mesh()) != NULL)
   {
     LOG(ERROR) << "not implemented";
   }

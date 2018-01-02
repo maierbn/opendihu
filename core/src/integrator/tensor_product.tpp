@@ -9,27 +9,26 @@ numberEvaluations()
   return pow(Integrator::numberEvaluations(),D);
 }
 
-template <unsigned int D, typename Integrator> 
-constexpr int TensorProductBase<D,Integrator>::
-samplingArraySize()
-{
-  return numberEvaluations()*D;
-}
-
 // 1D sampling points
 template <typename Integrator>
-std::array<double, TensorProductBase<1,Integrator>::samplingArraySize()> TensorProduct<1,Integrator>::
+std::array<std::array<double,1>,TensorProductBase<1,Integrator>::numberEvaluations()> TensorProduct<1,Integrator>::
 samplingPoints()
 {
-  return Integrator::samplingPoints();
+  std::array<std::array<double,1>,TensorProductBase<1,Integrator>::numberEvaluations()> samplingPoints;
+  std::array<double, Integrator::numberEvaluations()> samplingPoints1D = Integrator::samplingPoints();
+  for(int x=0; x<Integrator::numberEvaluations(); x++)
+  {
+    samplingPoints[x][0] = samplingPoints1D[x];
+  }
+  return samplingPoints;
 }
 
 // 2D sampling points
 template <typename Integrator>
-std::array<double, TensorProductBase<2,Integrator>::samplingArraySize()> TensorProduct<2,Integrator>::
+std::array<std::array<double,2>,TensorProductBase<2,Integrator>::numberEvaluations()> TensorProduct<2,Integrator>::
 samplingPoints()
 {
-  std::array<double, TensorProductBase<2,Integrator>::samplingArraySize()> samplingPoints;
+  std::array<std::array<double,2>,TensorProductBase<2,Integrator>::numberEvaluations()> samplingPoints;
   std::array<double, Integrator::numberEvaluations()> samplingPoints1D = Integrator::samplingPoints();
   
   int samplingPointNo = 0;
@@ -37,8 +36,7 @@ samplingPoints()
   {
     for(int x=0; x<Integrator::numberEvaluations(); x++, samplingPointNo++)
     {
-      samplingPoints[samplingPointNo*2 + 0] = samplingPoints1D[x];
-      samplingPoints[samplingPointNo*2 + 1] = samplingPoints1D[y];
+      samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y]};
     }
   }
   return samplingPoints;
@@ -46,10 +44,10 @@ samplingPoints()
 
 // 3D sampling points
 template <typename Integrator>
-std::array<double, TensorProductBase<3,Integrator>::samplingArraySize()> TensorProduct<3,Integrator>::
+std::array<std::array<double,3>,TensorProductBase<3,Integrator>::numberEvaluations()> TensorProduct<3,Integrator>::
 samplingPoints()
 {
-  std::array<double, TensorProductBase<3,Integrator>::samplingArraySize()> samplingPoints;
+  std::array<std::array<double,3>,TensorProductBase<3,Integrator>::numberEvaluations()> samplingPoints;
   std::array<double, Integrator::numberEvaluations()> samplingPoints1D = Integrator::samplingPoints();
     
   int samplingPointNo = 0;
@@ -59,9 +57,7 @@ samplingPoints()
     {
       for(int x=0; x<Integrator::numberEvaluations(); x++, samplingPointNo++)
       {
-        samplingPoints[samplingPointNo*3 + 0] = samplingPoints1D[x];
-        samplingPoints[samplingPointNo*3 + 1] = samplingPoints1D[y];
-        samplingPoints[samplingPointNo*3 + 2] = samplingPoints1D[z];
+        samplingPoints[samplingPointNo] = {samplingPoints1D[x], samplingPoints1D[y], samplingPoints1D[z]};
       }
     }
   }

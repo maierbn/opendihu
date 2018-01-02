@@ -88,7 +88,7 @@ DihuContext::DihuContext(int argc, char *argv[]) :
 
   if (!meshManager_)
   {
-    LOG(TRACE) << "create meshManager_";
+    VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<MeshManager>(*this);
   }
 }  
@@ -97,7 +97,7 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : D
 {
   loadPythonScript(pythonSettings);
   
-  LOG(DEBUG) << "recreate meshManager";
+  VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;
   meshManager_ = std::make_shared<MeshManager>(*this);
   
@@ -264,6 +264,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
   conf.set(el::Level::Trace, el::ConfigurationType::Format, "TRACE: %msg");
+  conf.set(el::Level::Verbose, el::ConfigurationType::Format, "VERB%vlevel: %msg");
   conf.set(el::Level::Warning, el::ConfigurationType::Format, 
            "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
   

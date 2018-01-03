@@ -4,6 +4,7 @@
 #include <Python.h>
 
 #include "control/dihu_context.h"
+#include "basis_function/04_basis_on_mesh.h"
 
 namespace Mesh{class NodePositionsTester;};
 
@@ -21,8 +22,8 @@ public:
   MeshManager(const DihuContext &context);
   
   //! return previously created mesh or create on the fly
-  template<class Mesh>
-  std::shared_ptr<Mesh> mesh(PyObject *settings);
+  template<typename MeshType=Mesh::None,typename BasisFunctionType=BasisFunction::Lagrange<>>
+  std::shared_ptr<Mesh::Mesh> mesh(PyObject *settings);
   
   //! check if a mesh with the given name is stored
   bool hasMesh(std::string meshName);

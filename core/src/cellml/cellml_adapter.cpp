@@ -444,7 +444,7 @@ void CellmlAdapter::initialize()
   PythonUtility::printDict(specificSettings_);
   
   // create a mesh if there is not yet one assigned
-  mesh_ = context_.meshManager()->mesh<Mesh::Mesh>(specificSettings_);
+  mesh_ = context_.meshManager()->mesh<>(specificSettings_);
   LOG(DEBUG) << "Cellml mesh has " << mesh_->nNodes() << " nodes";
   
   //store number of instances

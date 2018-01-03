@@ -25,9 +25,16 @@ private:
   template <int dimension>
   void writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime);
   
-  //! write serial vtkRectilinearGrid file (structured, suffix *.vts)
+  //! write serial vtkRectilinearGrid file (structured, suffix *.vtr)
   template <class Mesh>
   void writeRectilinearGrid(Data::Data& data);
+ 
+  //! write serial vtkStructuredGrid file (structured, suffix *.vts)
+  template <class Mesh>
+  void writeStructuredGrid(Data::Data& data);
+  
+  //! open file given by filename, create directory if necessary
+  std::ofstream openFile(std::string filename);
  
   //! create *.pvt VTK master file that is a header file for multiple
   /** This writes the master file of the parallel output, should only be done

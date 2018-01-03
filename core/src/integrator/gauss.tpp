@@ -16,12 +16,13 @@ double Gauss<NumberGaussPoints>::integrate(std::array<double, numberEvaluations(
 {
   return Gauss<NumberGaussPoints>::integrate(evaluations.data());
 }
-
+/*
 template<unsigned int NumberGaussPoints>
 double Gauss<NumberGaussPoints>::integrate(double *evaluations)
 {
-  double result = 0.0;
+  double result = -1.0;
   return result;
 }
-
+*/
+  
 };

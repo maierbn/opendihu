@@ -20,7 +20,19 @@ public:
   virtual ~Mesh() {}
   virtual int dimension() const = 0;
   virtual element_idx_t nNodes() const = 0;
-private:
+protected:
+  
+};
+
+/** dummy mesh to signal that no mesh was specified (meshManager will instead create a mesh with a single element)
+ */
+class None : public Mesh 
+{
+public:
+  using Mesh::Mesh;
+  int dimension() const {return 0;}
+  int nNodes() const {return 0;}
+  static constexpr int dim() {return 0;}
 };
 
 /**

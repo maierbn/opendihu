@@ -56,7 +56,7 @@ void Paraview::writeSolutionDim(Data::Data &data, int timeStepNo, double current
   }
   else if (std::dynamic_pointer_cast<Mesh::StructuredDeformable<dimension>>(data.mesh()) != NULL)
   {
-    LOG(ERROR) << "not implemented";
+    writeStructuredGrid<Mesh::StructuredDeformable<dimension>>(data);
   }
   else if (std::dynamic_pointer_cast<Mesh::UnstructuredDeformable<dimension>>(data.mesh()) != NULL)
   {
@@ -129,16 +129,10 @@ std::string Paraview::convertToAscii(std::vector<double> &vector, bool fixedForm
   return result.str();
 }
 
-template <class Mesh>
-void Paraview::writeRectilinearGrid(Data::Data& data)
+std::ofstream Paraview::openFile(std::string filename)
 {
-  // determine file name
-  std::stringstream s;
-  s<<filename_<<".vtr";
-  std::string filename = s.str();
-
   // open file
-  std::ofstream file(filename.c_str(), std::ios::out);
+  std::ofstream file(filename.c_str(), std::ios::out | std::ios::binary);
   
   if (!file.is_open())
   {
@@ -155,7 +149,7 @@ void Paraview::writeRectilinearGrid(Data::Data& data)
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
       
       file.clear();
-      file.open(filename.c_str(), std::ios::out);
+      file.open(filename.c_str(), std::ios::out | std::ios::binary);
     }
   }
   
@@ -163,6 +157,20 @@ void Paraview::writeRectilinearGrid(Data::Data& data)
   {
     LOG(WARNING) << "Could not open file \""<<filename<<"\" for writing!";
   }
+  
+  return file;
+}
+
+template <class Mesh>
+void Paraview::writeRectilinearGrid(Data::Data& data)
+{
+  // determine file name
+  std::stringstream s;
+  s<<filename_<<".vtr";
+  std::string filename = s.str();
+
+  // open file
+  std::ofstream file = openFile(filename);
   
   LOG(DEBUG) << "Write RectilinearGrid, file \""<<filename<<"\".";
   
@@ -288,6 +296,95 @@ void Paraview::writeRectilinearGrid(Data::Data& data)
     << std::string(1, '\t') << "</RectilinearGrid>" << std::endl
     << "</VTKFile>"<<std::endl;
 }
+
+template <class Mesh>
+void Paraview::writeStructuredGrid(Data::Data& data)
+{
+  // determine file name
+  std::stringstream s;
+  s<<filename_<<".vts";
+  std::string filename = s.str();
+
+  // open file
+  std::ofstream file = openFile(filename);
+  
+  LOG(DEBUG) << "Write StructuredGrid, file \""<<filename<<"\".";
+  
+  std::shared_ptr<Mesh> mesh = std::static_pointer_cast<Mesh>(data.mesh());
+  
+  // extent
+  std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
+  for (int i=0; i<mesh->dimension(); i++)
+    extent[i] = mesh->nElements(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+  
+  // points
+  std::vector<double> points;
+  mesh->getGeometry(points);
+  
+  // name of value field
+  std::string scalarsName = "Solution";
+  
+  bool binaryOutput = PythonUtility::getOptionBool(specificSettings_, "binaryOutput", true);
+  bool fixedFormat = PythonUtility::getOptionBool(specificSettings_, "fixedFormat", true);
+  
+  // write file
+  file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
+    << std::string(1, '\t') << "<StructuredGrid " 
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+    << std::string(2, '\t') << "<Piece " 
+      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl
+    << std::string(3, '\t') << "<PointData Scalars=\"" << scalarsName << "\">" << std::endl;
+  if (binaryOutput)
+  {
+    file << std::string(4, '\t') << "<DataArray " 
+        << "Name=\"" << scalarsName << "\" " 
+        << "type=\"Float32\" " 
+        << "NumberOfComponents=\"1\" "
+        << "format=\"binary\" >" << std::endl
+      << std::string(5, '\t') << encodeBase64(data.solution()) << std::endl
+      << std::string(4, '\t') << "</DataArray>" << std::endl;
+  }
+  else
+  {
+    file << std::string(4, '\t') << "<DataArray " 
+        << "Name=\"" << scalarsName << "\" " 
+        << "type=\"Float32\" " 
+        << "NumberOfComponents=\"1\" "
+        << "format=\"ascii\" >" << std::endl
+      << std::string(5, '\t') << convertToAscii(data.solution(), fixedFormat) << std::endl
+      << std::string(4, '\t') << "</DataArray>" << std::endl;
+  }
+  
+  file << std::string(3, '\t') << "</PointData>" << std::endl
+    << std::string(3, '\t') << "<CellData>" << std::endl
+    << std::string(3, '\t') << "</CellData>" << std::endl
+    << std::string(3, '\t') << "<Points>" << std::endl;
+    
+  if (binaryOutput)
+  {
+    file << std::string(4, '\t') << "<DataArray " 
+        << "type=\"Float32\" " 
+        << "NumberOfComponents=\"3\" "
+        << "format=\"binary\" >" << std::endl
+      << std::string(5, '\t') << encodeBase64(points) << std::endl
+      << std::string(4, '\t') << "</DataArray>" << std::endl;
+  }
+  else
+  {
+    file << std::string(4, '\t') << "<DataArray " 
+        << "type=\"Float32\" " 
+        << "NumberOfComponents=\"3\" "
+        << "format=\"ascii\" >" << std::endl
+      << std::string(5, '\t') << convertToAscii(points, fixedFormat) << std::endl
+      << std::string(4, '\t') << "</DataArray>" << std::endl;
+  }
+  file << std::string(3, '\t') << "</Points>" << std::endl
+    << std::string(2, '\t') << "</Piece>" << std::endl
+    << std::string(1, '\t') << "</StructuredGrid>" << std::endl
+    << "</VTKFile>"<<std::endl;
+}
+
 
 
 void Paraview::writeVTKMasterFile()

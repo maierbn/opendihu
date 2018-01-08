@@ -15,7 +15,8 @@ class Manager
 {
 public:
   ///! call all output writers to write output, timeStepNo of -1 means no time step number in output filename
-  void writeOutput(Data::Data &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
+  template<typename DataType>
+  void writeOutput(DataType &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
  
   ///! parse settings and create output writers from specification in "OutputWriter" list
   void initialize(PyObject *settings);
@@ -29,3 +30,5 @@ protected:
 };
 
 };    // namespace OutputWriter
+
+#include "output_writer/manager.tpp"

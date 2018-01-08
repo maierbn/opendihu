@@ -74,12 +74,5 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
   Py_CLEAR(key);
 }
 
-void Manager::writeOutput(Data::Data &problemData, int timeStepNo, double currentTime) const
-{
-  for(auto &outputWriter : outputWriter_)
-  {
-    outputWriter->write(problemData, timeStepNo, currentTime);
-  }
-}
 
 };

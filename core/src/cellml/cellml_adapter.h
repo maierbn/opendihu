@@ -6,6 +6,8 @@
 #include "control/dihu_context.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
 #include "output_writer/manager.h"
+#include "basis_function/05_basis_on_mesh.h"
+#include "basis_function/lagrange.h"
 
 class CellmlAdapter : public DiscretizableInTime
 {
@@ -50,6 +52,8 @@ public:
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
+  
+  typedef BasisFunction::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> BasisOnMesh;   ///< BasisOnMesh type
   
 private:
  

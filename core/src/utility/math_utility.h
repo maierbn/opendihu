@@ -44,6 +44,9 @@ public:
   static double computeIntegrationFactor(const std::array<Vec3,D> &jacobian);
   
   static constexpr auto PI = 3.14159265358979323846;
+  
+  //! check if vector b is a subsequence of a, i.e. is contained in a
+  static bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, int &subsequenceAStartPos);
 };
 
 Vec3 operator-(Vec3 node1, Vec3 node2);
@@ -52,5 +55,7 @@ Vec3 &operator+=(Vec3 &node1, Vec3 node2);
 Vec3 operator*(double lambda, Vec3 node);
 template<unsigned long N>
 std::ostream &operator<<(std::ostream &stream, const std::array<double,N> node);
+template<typename T>
+bool operator==(const std::vector<T> &vec1, const std::vector<T> &vec2);
 
 #include "utility/math_utility.tpp"

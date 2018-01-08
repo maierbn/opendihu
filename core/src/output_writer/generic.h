@@ -14,11 +14,9 @@ public:
   Generic(PyObject *specificSettings);
   
   //! write output file, if timeStepNo is not -1, this value will be part of the filename
-  void write(Data::Data &data, int timeStepNo = -1, double currentTime = 0.0);
+  template<typename DataType>
+  void write(DataType &data, int timeStepNo = -1, double currentTime = 0.0);
 protected:
- 
-  //! write out solution to given filename
-  virtual void writeSolution(Data::Data &data, int timeStepNo, double currentTime) = 0;
  
   std::string filenameBase_;    ///< beginning of the file name for output file
   std::string filename_;        ///< file name with time step number
@@ -27,4 +25,6 @@ protected:
   PyObject *specificSettings_;    ///< the python dict containing settings relevant to this objecto
 };
 
-};
+};  // namespace 
+
+#include "output_writer/generic.tpp"

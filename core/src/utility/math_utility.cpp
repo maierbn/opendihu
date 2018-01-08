@@ -72,6 +72,17 @@ std::ostream &operator<<(std::ostream &stream, std::array<double,1> node)
   return stream;
 }
 
+template<typename T>
+bool operator==(const std::vector<T> &vec1, const std::vector<T> &vec2)
+{
+  if (vec1.size() != vec2.size())
+    return false;
+  for (int i=0; i<vec1.size(); i++)
+    if (vec1[i] != vec2[i])
+      return false;
+  return true;
+}
+
 std::array<double,9> MathUtility::computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant)
 {
   // rename input values
@@ -210,4 +221,37 @@ double MathUtility::computeDeterminant(const std::array<Vec3,3> &jacobian)
   const double m33 = jacobian[2][2];
   
   return m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
+}
+
+bool MathUtility::isSubsequenceOf(std::vector<int> a, std::vector<int> b, int &subsequenceAStartPos)
+{
+  if (b.empty())
+    return true;
+  
+  // find the matching entry in vector a
+  bool matchFound = false;
+  int aIndex=0;
+  for (; aIndex<a.size(); aIndex++)
+  {
+    if (a[aIndex] == b[0])
+    {
+      subsequenceStartPos = aIndex;
+      matchFound = true;
+      break;
+    }
+  }
+
+  if (!matchFound)
+    return false;
+  
+  for (int bIndex=1; bIndex<b.size(); bIndex++)
+  {
+    aIndex++;
+    if (aIndex >= a.size())
+      return false;
+    
+    if (a[aIndex] != b[bIndex])
+      return false;
+  }
+  return true;
 }

@@ -41,7 +41,7 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
-  Data::TimeStepping data_;     ///< data object that holds all PETSc vectors and matrices
+  Data::TimeStepping<DiscretizableInTime::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
   
   int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTime discretizableInTime_;    ///< the object to be discretized

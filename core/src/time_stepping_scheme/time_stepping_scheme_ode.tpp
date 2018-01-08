@@ -62,7 +62,7 @@ initialize()
   
   // initialize underlying DiscretizableInTime object
   discretizableInTime_.initialize();
-  data_.setNDegreesOfFreedomPerNode(discretizableInTime_.numberDegreesOfFreedomPerNode());
+  data_.setNComponentsPerNode(discretizableInTime_.nComponentsNode());
   data_.setMesh(discretizableInTime_.mesh());
   
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);

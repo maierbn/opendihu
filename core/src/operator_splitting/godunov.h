@@ -23,7 +23,7 @@ public:
   //! return a solution vector
   Vec &solution();
   
-  //! return wether the object has a specified mesh type or if it is independent of any mesh type
+  //! return whether the object has a specified mesh type or if it is independent of any mesh type
   bool knowsMeshType();
   
 private:

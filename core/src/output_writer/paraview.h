@@ -19,19 +19,24 @@ public:
 private:
  
   //! write out solution to given filename
-  void writeSolution(Data::Data &data, int timeStepNo, double currentTime);
+  template<typename DataType>
+  void writeSolution(DataType &data, int timeStepNo, double currentTime);
  
   //! write out solution templated by dimension 
   template <int dimension>
   void writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime);
   
   //! write serial vtkRectilinearGrid file (structured, suffix *.vtr)
-  template <class Mesh>
+  template <typename Mesh>
   void writeRectilinearGrid(Data::Data& data);
  
   //! write serial vtkStructuredGrid file (structured, suffix *.vts)
-  template <class Mesh>
+  template <int dimension>
   void writeStructuredGrid(Data::Data& data);
+  
+  //! write serial vtkUnstructuredGrid file (unstructured, suffix *.vtu)
+  template <int dimension>
+  void writeUnstructuredGrid(Data::Data& data);
   
   //! open file given by filename, create directory if necessary
   std::ofstream openFile(std::string filename);
@@ -54,4 +59,6 @@ private:
   std::string convertToAscii(std::vector<double> &vector, bool humanReadable);
 };
 
-};
+};  // namespace
+
+#include "output_writer/paraview.tpp"

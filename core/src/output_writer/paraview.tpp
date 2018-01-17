@@ -8,42 +8,45 @@
 #include "easylogging++.h"
 #include "base64.h"
 
-#include <utility/python_utility.h>
-#include <utility/petsc_utility.h>
-#include <mesh/regular_fixed.h>
-#include <mesh/structured_deformable.h>
-#include <mesh/unstructured_deformable.h>
-#include <mesh/mesh.h>
+#include "utility/python_utility.h"
+#include "utility/petsc_utility.h"
+#include "mesh/regular_fixed.h"
+#include "mesh/structured_deformable.h"
+#include "mesh/unstructured_deformable.h"
+#include "mesh/mesh.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
 
 namespace OutputWriter
 {
 
 template<typename DataType>
-void Paraview::writeSolution(DataType& data, int timeStepNo, double currentTime)
+void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 {
-  if (!data.mesh())
+  // check if output should be written in this timestep and prepare filename
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
-    LOG(FATAL) << "mesh is not set!";
+    return;
   }
+ 
   const int dimension = data.mesh()->dimension();
   
   // solution and rhs vectors in mesh shape
   switch(dimension)
   {
   case 1:
-    writeSolutionDim<1>(data, timeStepNo, currentTime);
+    writeSolutionDim<1>(data);
     break;
   case 2:
-    writeSolutionDim<2>(data, timeStepNo, currentTime);
+    writeSolutionDim<2>(data);
     break;
   case 3:
-    writeSolutionDim<3>(data, timeStepNo, currentTime);
+    writeSolutionDim<3>(data);
     break;
   };
 }
 
 template <int dimension, typename DataType>
-void Paraview::writeSolutionDim(DataType &data, int timeStepNo, double currentTime)
+void Paraview::writeSolutionDim(DataType &data)
 {
   LOG(TRACE) << "writeMesh<"<<dimension<<">()";
   
@@ -52,7 +55,7 @@ void Paraview::writeSolutionDim(DataType &data, int timeStepNo, double currentTi
     writeRectilinearGrid<Mesh::RegularFixed<dimension>>(data);
   }
   else if (std::dynamic_pointer_cast<
-             BasisFunction::BasisOnMesh<Mesh::StructuredDeformable<dimension>,BasisFunction::Lagrange<1>>
+             BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<dimension>,BasisFunction::Lagrange<1>>
            >(data.mesh()) != NULL)
   {
     // structured grid only for elements that contain only nodes at the corners (i.e. linear lagrange elements)
@@ -64,8 +67,8 @@ void Paraview::writeSolutionDim(DataType &data, int timeStepNo, double currentTi
   }
 }
 
-template <class Mesh>
-void Paraview::writeRectilinearGrid(Data::Data& data)
+template <typename Mesh, typename DataType>
+void Paraview::writeRectilinearGrid(DataType& data)
 {
   // determine file name
   std::stringstream s;
@@ -200,8 +203,8 @@ void Paraview::writeRectilinearGrid(Data::Data& data)
     << "</VTKFile>"<<std::endl;
 }
 
-template <int D>
-void Paraview::writeStructuredGrid(Data::Data& data)
+template <int D, typename DataType>
+void Paraview::writeStructuredGrid(DataType& data)
 {
   // determine file name
   std::stringstream s;
@@ -213,7 +216,8 @@ void Paraview::writeStructuredGrid(Data::Data& data)
   
   LOG(DEBUG) << "Write StructuredGrid, file \""<<filename<<"\".";
   
-  std::shared_ptr<Mesh::StructuredDeformable<D>> mesh = std::static_pointer_cast<Mesh::StructuredDeformable<D>>(data.mesh());
+  typedef typename DataType::BasisOnMesh MeshType;
+  std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
   
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
@@ -288,8 +292,8 @@ void Paraview::writeStructuredGrid(Data::Data& data)
     << "</VTKFile>"<<std::endl;
 }
 
-template <int D>
-void Paraview::writeUnstructuredGrid(Data::Data& data)
+template <int D, typename DataType>
+void Paraview::writeUnstructuredGrid(DataType& data)
 {
   // determine file name
   std::stringstream s;
@@ -301,7 +305,8 @@ void Paraview::writeUnstructuredGrid(Data::Data& data)
   
   LOG(DEBUG) << "Write UnstructuredGrid, file \""<<filename<<"\".";
   
-  std::shared_ptr<Mesh::Deformable<D>> mesh = std::static_pointer_cast<Mesh::Deformable<D>>(data.mesh());
+  typedef typename DataType::BasisOnMesh MeshType;
+  std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
   
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction

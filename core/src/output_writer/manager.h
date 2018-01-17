@@ -26,7 +26,7 @@ protected:
   ///! helper function that creates an outputWriter
   void createOutputWriterFromSettings(PyObject *settings);
   
-  std::list<std::unique_ptr<Generic>> outputWriter_;    ///< list of active output writers
+  std::list<std::shared_ptr<Generic>> outputWriter_;    ///< list of active output writers
 };
 
 };    // namespace OutputWriter

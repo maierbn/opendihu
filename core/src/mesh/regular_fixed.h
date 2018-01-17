@@ -14,7 +14,7 @@ namespace Mesh
  * have a all the same length/quadratic/cubic size (=mesh width) per coordinate direction.
  * This mesh cannot deform, i.e. it cannot be used for structural mechanics with deformations.
  */
-template<unsigned long D>
+template<int D>
 class RegularFixed : public Structured<D>
 {
 public:

@@ -16,27 +16,27 @@ public:
   //! constructor
   Paraview(PyObject *specificSettings);
  
+  //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
+  template<typename DataType>
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  
 private:
  
-  //! write out solution to given filename
-  template<typename DataType>
-  void writeSolution(DataType &data, int timeStepNo, double currentTime);
- 
   //! write out solution templated by dimension 
-  template <int dimension>
-  void writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime);
+  template <int dimension, typename DataType>
+  void writeSolutionDim(DataType &data);
   
   //! write serial vtkRectilinearGrid file (structured, suffix *.vtr)
-  template <typename Mesh>
-  void writeRectilinearGrid(Data::Data& data);
+  template <typename Mesh, typename DataType>
+  void writeRectilinearGrid(DataType& data);
  
   //! write serial vtkStructuredGrid file (structured, suffix *.vts)
-  template <int dimension>
-  void writeStructuredGrid(Data::Data& data);
+  template <int dimension, typename DataType>
+  void writeStructuredGrid(DataType& data);
   
   //! write serial vtkUnstructuredGrid file (unstructured, suffix *.vtu)
-  template <int dimension>
-  void writeUnstructuredGrid(Data::Data& data);
+  template <int dimension, typename DataType>
+  void writeUnstructuredGrid(DataType& data);
   
   //! open file given by filename, create directory if necessary
   std::ofstream openFile(std::string filename);

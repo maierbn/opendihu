@@ -630,7 +630,7 @@ std::shared_ptr<Mesh::Mesh> CellmlAdapter::mesh()
   return mesh_;
 }
 
-int CellmlAdapter::numberDegreesOfFreedomPerNode()
+int CellmlAdapter::nComponentsNode()
 {
   // this is the number of entries per mesh node that the input and output vectors of evaluateTimesteppingRightHandSide will have
   return nStates_;

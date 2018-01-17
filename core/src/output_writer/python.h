@@ -17,15 +17,15 @@ public:
   //! constructor
   Python(PyObject *specificSettings);
  
-private:
- 
-  //! write out solution to given filename
+  //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
-  void writeSolution(DataType &data, int timeStepNo, double currentTime);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+ 
+private:
  
   //! write out solution templated by dimension 
   template <int dimension, typename DataType>
-  void writeSolutionDim(DataType &data, int timeStepNo, double currentTime);
+  void writeSolutionDim(DataType &data);
  
   //! write rhs matrix of FiniteElements solution
   template <int dimension, typename DataType> 

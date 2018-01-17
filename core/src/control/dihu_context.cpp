@@ -243,12 +243,15 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf("logging.conf");
 */
 
+// color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_LIGHT_GRAY    "\x1b[90m"
+#define ANSI_COLOR_LIGHT_WHITE    "\x1b[97m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
   std::string separator(80, '_');
@@ -264,7 +267,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
   conf.set(el::Level::Trace, el::ConfigurationType::Format, "TRACE: %msg");
-  conf.set(el::Level::Verbose, el::ConfigurationType::Format, "VERB%vlevel: %msg");
+  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_GRAY "VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format, 
            "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
   

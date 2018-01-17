@@ -38,7 +38,7 @@ public:
 /**
  * base class for a mesh with a dimension.
  */
-template<unsigned long D>
+template<int D>
 class MeshD : public Mesh
 {
 public:
@@ -53,7 +53,7 @@ public:
   static constexpr int dim();
   
   //! get the number of nodes of this mesh
-  virtual element_idx_t nNodes() const = 0;
+  virtual node_idx_t nNodes() const = 0;
 private:
 };
 

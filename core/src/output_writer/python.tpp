@@ -17,31 +17,33 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Python::writeSolution(DataType& data, int timeStepNo, double currentTime)
+void Python::write(DataType& data, int timeStepNo, double currentTime)
 {
-  if (!data.mesh())
+  // check if output should be written in this timestep and prepare filename
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
-    LOG(FATAL) << "mesh is not set!";
+    return;
   }
+  
   const int dimension = data.mesh()->dimension();
   
   // solution and rhs vectors in mesh shape
   switch(dimension)
   {
   case 1:
-    writeSolutionDim<1>(data, timeStepNo, currentTime);
+    writeSolutionDim<1>(data);
     break;
   case 2:
-    writeSolutionDim<2>(data, timeStepNo, currentTime);
+    writeSolutionDim<2>(data);
     break;
   case 3:
-    writeSolutionDim<3>(data, timeStepNo, currentTime);
+    writeSolutionDim<3>(data);
     break;
   };
 }
 
 template <int dimension, typename DataType>
-void Python::writeSolutionDim(DataType &data, int timeStepNo, double currentTime)
+void Python::writeSolutionDim(DataType &data)
 {
   LOG(TRACE) << "writeSolution<"<<dimension<<">()";
   
@@ -76,9 +78,9 @@ void Python::writeSolutionDim(DataType &data, int timeStepNo, double currentTime
     writeToNumpyFile(vectorValues, filenameSolutionShaped, dimension, nEntries);
     
     // if data is of class Data::FiniteElements
-    if (dynamic_cast<Data::FiniteElements *>(&data) != NULL)
+    if (dynamic_cast<Data::FiniteElements<typename DataType::BasisOnMesh> *>(&data) != NULL)
     {
-      writeRhsMatrix<dimension>(*dynamic_cast<Data::FiniteElements *>(&data));
+      writeRhsMatrix<dimension>(*dynamic_cast<Data::FiniteElements<typename DataType::BasisOnMesh> *>(&data));
     }
   }
 }

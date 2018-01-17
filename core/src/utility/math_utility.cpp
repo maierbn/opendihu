@@ -223,19 +223,19 @@ double MathUtility::computeDeterminant(const std::array<Vec3,3> &jacobian)
   return m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
 }
 
-bool MathUtility::isSubsequenceOf(std::vector<int> a, std::vector<int> b, int &subsequenceAStartPos)
+bool MathUtility::isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos)
 {
   if (b.empty())
     return true;
   
   // find the matching entry in vector a
   bool matchFound = false;
-  int aIndex=0;
+  size_t aIndex=0;
   for (; aIndex<a.size(); aIndex++)
   {
     if (a[aIndex] == b[0])
     {
-      subsequenceStartPos = aIndex;
+      subsequenceAStartPos = aIndex;
       matchFound = true;
       break;
     }
@@ -244,7 +244,7 @@ bool MathUtility::isSubsequenceOf(std::vector<int> a, std::vector<int> b, int &s
   if (!matchFound)
     return false;
   
-  for (int bIndex=1; bIndex<b.size(); bIndex++)
+  for (size_t bIndex=1; bIndex<b.size(); bIndex++)
   {
     aIndex++;
     if (aIndex >= a.size())

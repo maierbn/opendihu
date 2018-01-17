@@ -1,5 +1,9 @@
 #include "mesh/mesh_manager.h"
 
+#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "mesh/regular_fixed.h"
+#include "mesh/unstructured_deformable.h"
+
 MeshManager::MeshManager(const DihuContext& context) :
   context_(context), numberAnonymousMeshes_(0)
 {
@@ -67,8 +71,10 @@ mesh<Mesh::None,BasisFunction::Lagrange<>>(PyObject *settings)
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
         << " Type is not clear, so go for RegularFixed<1>.";
-      typedef BasisFunction::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
-      meshes_[meshName] = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
+      typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
+      mesh->initialize();
+      meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";
       return std::static_pointer_cast<Mesh::Mesh>(meshes_[meshName]);
     }
@@ -90,10 +96,11 @@ mesh<Mesh::None,BasisFunction::Lagrange<>>(PyObject *settings)
     anonymousName << "anonymous" << numberAnonymousMeshes_++;
     
     // set type to be 1D regular fixed mesh with linear lagrange basis
-    typedef BasisFunction::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+    typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
     
-    std::shared_ptr<Mesh::Mesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
+    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
+    mesh->initialize();
     
     meshes_[anonymousName.str()] = mesh;
     return mesh;
@@ -103,9 +110,10 @@ mesh<Mesh::None,BasisFunction::Lagrange<>>(PyObject *settings)
   std::array<element_idx_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
   
-  typedef BasisFunction::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
   
-  std::shared_ptr<Mesh::Mesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
+  std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
+  mesh->initialize();
   return mesh;
 }

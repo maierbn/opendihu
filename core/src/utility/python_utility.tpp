@@ -115,14 +115,14 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
   }
 }
 
-template<class ValueType, unsigned long D>
+template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue)
 {
   std::array<ValueType, D> result;
   if (PyList_Check(object))
   {
-    unsigned long i = 0;
-    unsigned long iEnd = std::min((unsigned long)PyList_Size(object), D);
+    int i = 0;
+    int iEnd = std::min((int)PyList_Size(object), D);
     
     for(;i < iEnd; i++)
     {
@@ -148,7 +148,7 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
   return defaultValue;
 }
 
-template<class ValueType, unsigned long D>
+template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
 {
   std::array<ValueType, D> defaultValue;
@@ -157,20 +157,20 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
 }
 
 
-template<class ValueType, unsigned long D>
+template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       ValueType defaultValue, ValidityCriterion validityCriterion)
 { 
-  std::array<ValueType, (unsigned long int)D> defaultValueArray = {};
+  std::array<ValueType,(int)D> defaultValueArray = {};
   defaultValueArray.fill(defaultValue);
-  return getOptionArray(settings, keyString, defaultValueArray, validityCriterion);
+  return getOptionArray<ValueType,D>(settings, keyString, defaultValueArray, validityCriterion);
 }
 
-template<class ValueType, unsigned long D>
+template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
 { 
-  std::array<ValueType, D> result = {};
+  std::array<ValueType, D> result = defaultValue;
  
   if (settings)
   { 
@@ -196,7 +196,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   switch(validityCriterion)
   {
     case PythonUtility::Positive:
-      for (unsigned long i=0; i<D; i++)
+      for (int i=0; i<D; i++)
       {
        if (result[i] <= 0.0)
        {
@@ -206,7 +206,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
        } 
       }
     case PythonUtility::NonNegative:
-      for (unsigned long i=0; i<D; i++)
+      for (int i=0; i<D; i++)
       {
        if (result[i] < 0.0)
        {
@@ -218,7 +218,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       
     break;
     case PythonUtility::Between1And3:
-      for (unsigned long i=0; i<D; i++)
+      for (int i=0; i<D; i++)
       {
        if (result[i] < 1.0 || result[i] > 3.0)
        {

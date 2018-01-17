@@ -8,17 +8,23 @@
 namespace OutputWriter
 {
 
+ 
 template<typename DataType>
-void Generic::write(DataType& data, int timeStepNo, double currentTime)
+bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
+  if (!data.mesh())
+  {
+    LOG(FATAL) << "Mesh is not set!";
+  }
+  
   int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
   
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
   
-  // if no output should be written, because of interval, return
+  // if no output should be written, because of interval, return false
   if (oldWriteCallCount % outputInterval != 0)
-    return;
+    return false;
     
   // determine filename base
   if (filenameBase_.empty() 
@@ -35,8 +41,7 @@ void Generic::write(DataType& data, int timeStepNo, double currentTime)
     s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
   }
   filename_ = s.str();
-  
-  writeSolution(data, timeStepNo, currentTime);
+  return true;
 }
 
 }; // namespace

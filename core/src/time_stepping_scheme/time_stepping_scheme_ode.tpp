@@ -14,7 +14,7 @@ TimeSteppingSchemeOde<DiscretizableInTime>::TimeSteppingSchemeOde(const DihuCont
 }
 
 template<typename DiscretizableInTime>
-Data::Data &TimeSteppingSchemeOde<DiscretizableInTime>::data()
+Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh> &TimeSteppingSchemeOde<DiscretizableInTime>::data()
 {
   return data_;
 }
@@ -23,7 +23,7 @@ template<typename DiscretizableInTime>
 void TimeSteppingSchemeOde<DiscretizableInTime>::setInitialValues()
 {
   int nDegreesOfFreedom = data_.nDegreesOfFreedom();
-  Vec &solution = data_.solution();
+  Vec &solution = data_.solution().values();
  
   // initialize with 0
   PetscErrorCode ierr;
@@ -50,7 +50,7 @@ SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTime>::solutionVecto
 template<typename DiscretizableInTime>
 Vec &TimeSteppingSchemeOde<DiscretizableInTime>::solution()
 {
-  return data_.solution();
+  return data_.solution().values();
 }
 
 template<typename DiscretizableInTime>
@@ -63,13 +63,14 @@ initialize()
   // initialize underlying DiscretizableInTime object
   discretizableInTime_.initialize();
   data_.setNComponentsPerNode(discretizableInTime_.nComponentsNode());
-  data_.setMesh(discretizableInTime_.mesh());
+  std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
+  data_.setMesh(std::static_pointer_cast<typename DiscretizableInTime::BasisOnMesh>(mesh));
   
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
   
   // set initial values from settings
   
-  Vec &solution = data_.solution();
+  Vec &solution = data_.solution().values();
   
   if (!discretizableInTime_.setInitialValues(solution))
   {

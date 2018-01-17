@@ -21,25 +21,23 @@ public:
     ASSERT_TRUE(dihuContext.meshManager()->meshes_.find(meshKey) != dihuContext.meshManager()->meshes_.end()) 
      << "Mesh with key \"" << meshKey << "\" was not found.";
     std::shared_ptr<Mesh> mesh = dihuContext.meshManager()->meshes_[meshKey];
-    Vec nodePositions;
     
+    std::vector<double> nodePositionsVector;
     if(mesh->dimension() == 1)
     {
       std::shared_ptr<StructuredDeformable<1>> deformableMesh = std::static_pointer_cast<StructuredDeformable<1>>(mesh);
-      nodePositions = deformableMesh->nodePositions_;
+      deformableMesh->getNodePositions(nodePositionsVector);
     }
     else if(mesh->dimension() == 2)
     {
       std::shared_ptr<StructuredDeformable<2>> deformableMesh = std::static_pointer_cast<StructuredDeformable<2>>(mesh);
-      nodePositions = deformableMesh->nodePositions_;
+      deformableMesh->getNodePositions(nodePositionsVector);
     }
     else if(mesh->dimension() == 3)
     {
       std::shared_ptr<StructuredDeformable<3>> deformableMesh = std::static_pointer_cast<StructuredDeformable<3>>(mesh);
-      nodePositions = deformableMesh->nodePositions_;
+      deformableMesh->getNodePositions(nodePositionsVector);
     }
-    std::vector<double> nodePositionsVector;
-    PetscUtility::getVectorEntries(nodePositions, nodePositionsVector);
     
     ASSERT_EQ(nodePositionsVector.size(), referencePositions.size()) << "Wrong size of node positions vector.";
     

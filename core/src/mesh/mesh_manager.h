@@ -4,7 +4,7 @@
 #include <Python.h>
 
 #include "control/dihu_context.h"
-#include "basis_function/04_basis_on_mesh.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
 
 namespace Mesh{class NodePositionsTester;};
 

@@ -40,8 +40,8 @@ private:
   
   bool disablePrinting_ = false;    ///< if printing vectors is disabled
   
-  FieldVariable::FieldVariable<BasisOnMeshType> solution_;            ///< the vector of the variable of interest
-  FieldVariable::FieldVariable<BasisOnMeshType> increment_;        ///< the vector for delta u
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> solution_;            ///< the vector of the variable of interest
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> increment_;        ///< the vector for delta u
 };
 
 } // namespace Data

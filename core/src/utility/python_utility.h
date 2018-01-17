@@ -42,12 +42,12 @@ public:
   static PyObject *getOptionFunction(const PyObject *settings, std::string key);
   
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, unsigned long D>
+  template<class ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::array<ValueType, D> defaultValue, 
                                                 ValidityCriterion validityCriterion = None);
   
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, unsigned long D>
+  template<class ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, ValueType defaultValue, 
                                                 ValidityCriterion validityCriterion = None);
   
@@ -99,11 +99,11 @@ public:
 private:
  
   //! convert a python list to a std::array
-  template<class ValueType, unsigned long D>
+  template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue);
   
   //! convert a python list to a std::array
-  template<class ValueType, unsigned long D>
+  template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object);
   
   

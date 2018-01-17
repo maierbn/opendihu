@@ -11,6 +11,8 @@ namespace TimeSteppingScheme
 class TimeSteppingScheme
 {
 public:
+  
+  //! constructor
   TimeSteppingScheme(const DihuContext &context); 
  
   ///! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps

@@ -1,5 +1,9 @@
 #include "output_writer/manager.h"
 
+#include "output_writer/callback.h"
+#include "output_writer/paraview.h"
+#include "output_writer/python.h"
+
 namespace OutputWriter
 {
   
@@ -8,7 +12,11 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
 {
   for(auto &outputWriter : this->outputWriter_)
   {
-    outputWriter->write<DataType>(problemData, timeStepNo, currentTime);
+    if (std::dynamic_pointer_cast<Callback>(outputWriter) != nullptr)
+    {
+      std::shared_ptr<Callback> writer = std::static_pointer_cast<Callback>(outputWriter);
+      writer->write<DataType>(problemData, timeStepNo, currentTime);
+    }
   }
 }
   

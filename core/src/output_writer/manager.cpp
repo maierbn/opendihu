@@ -6,6 +6,7 @@
 #include "output_writer/callback.h"
 #include "output_writer/paraview.h"
 #include "output_writer/python.h"
+#include "output_writer/exfile.h"
 
 namespace OutputWriter
 {
@@ -16,7 +17,6 @@ void Manager::initialize(PyObject *settings)
   outputWriter_.clear();
   
   LOG(DEBUG) << "initializeOutputWriter";
-  PythonUtility::printDict(settings);
   
   if (PythonUtility::containsKey(settings, "OutputWriter"))
   {
@@ -50,15 +50,19 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
       std::string typeString = PyString_AsString(type);
       if (typeString == "Paraview")
       {
-        outputWriter_.push_back(std::make_unique<Paraview>(settings));
+        outputWriter_.push_back(std::make_shared<Paraview>(settings));
       }
       else if(typeString == "Python")
       {
-        outputWriter_.push_back(std::make_unique<Python>(settings));
+        outputWriter_.push_back(std::make_shared<Python>(settings));
       }
       else if(typeString == "Callback")
       {
-        outputWriter_.push_back(std::make_unique<Callback>(settings));
+        outputWriter_.push_back(std::make_shared<Callback>(settings));
+      }
+      else if(typeString == "Exfile")
+      {
+        outputWriter_.push_back(std::make_shared<Exfile>(settings));
       }
       else
       {

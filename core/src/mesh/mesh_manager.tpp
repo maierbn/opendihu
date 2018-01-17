@@ -9,7 +9,7 @@
 template<typename MeshType,typename BasisFunctionType>
 std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
 {
-  typedef BasisFunction::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
       
   // if mesh was already created earlier
   if (PythonUtility::containsKey(settings, "meshName"))
@@ -25,7 +25,9 @@ std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
         << "Type is "<< typeid(BasisOnMeshType).name()<<".";
-      meshes_[meshName] = std::make_shared<BasisOnMeshType>(meshConfiguration_[meshName]);
+      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(meshConfiguration_[meshName]);
+      mesh->initialize();
+      meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";
       return std::static_pointer_cast<BasisOnMeshType>(meshes_[meshName]);
     }
@@ -44,6 +46,10 @@ std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<anonymousName.str()<<"\".";
   std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(settings);
+  mesh->initialize();
   meshes_[anonymousName.str()] = mesh;
+  
+  VLOG(1) << "mesh nNodes: " << mesh->nNodes();
+  
   return mesh;
 }

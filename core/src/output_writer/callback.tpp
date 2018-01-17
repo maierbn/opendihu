@@ -15,31 +15,33 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Callback::writeSolution(DataType& data, int timeStepNo, double currentTime)
+void Callback::write(DataType& data, int timeStepNo, double currentTime)
 {
-  if (!data.mesh())
+  // check if output should be written in this timestep and prepare filename
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
-    LOG(FATAL) << "Mesh is not set!";
+    return;
   }
+  
   const int dimension = data.mesh()->dimension();
   
   // solution and rhs vectors in mesh shape
   switch(dimension)
   {
   case 1:
-    writeSolutionDim<1>(data, timeStepNo, currentTime);
+    writeSolutionDim<1,DataType>(data);
     break;
   case 2:
-    writeSolutionDim<2>(data, timeStepNo, currentTime);
+    writeSolutionDim<2,DataType>(data);
     break;
   case 3:
-    writeSolutionDim<3>(data, timeStepNo, currentTime);
+    writeSolutionDim<3,DataType>(data);
     break;
   };
 }
 
 template <int dimension, typename DataType>
-void Callback::writeSolutionDim(DataType &data, int timeStepNo, double currentTime)
+void Callback::writeSolutionDim(DataType &data)
 {
   // solution and rhs vectors in mesh shape
   // if mesh is regular fixed
@@ -50,16 +52,16 @@ void Callback::writeSolutionDim(DataType &data, int timeStepNo, double currentTi
       
     // get data of solution vector
     std::vector<double> vectorValues;
-    PetscUtility::getVectorEntries(data.solution(), vectorValues);
+    PetscUtility::getVectorEntries(data.solution().values(), vectorValues);
     
     // determine number of entries in each dimension
     std::vector<long int> nEntries(dimension);
     for (int i=0; i<dimension; i++)
     {
-      nEntries[i] = (mesh->nElements(i) + 1) * data.nDegreesOfFreedomPerNode();
+      nEntries[i] = (mesh->nElements(i) + 1) * data.nComponentsPerNode();
     }
 
-    callCallback(vectorValues, nEntries, timeStepNo, currentTime);
+    callCallback(vectorValues, nEntries);
   }
 }
 

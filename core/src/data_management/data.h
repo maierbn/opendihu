@@ -5,17 +5,19 @@
 
 #include "control/types.h"
 #include "mesh/mesh.h"
+#include "field_variable/field_variable.h"
 
 class DihuContext;
 
 namespace Data
 {
 
- // TODO: template, nDegreesOfFreedom->n components, Vec -> FieldVariable
 template<typename BasisOnMeshType>
 class Data
 {
 public:
+ 
+  typedef BasisOnMeshType BasisOnMesh;
  
   //! constructor
   Data(const DihuContext &context);
@@ -39,7 +41,7 @@ public:
   int nComponentsPerNode();
   
   //! return the solution vector that can be written by an output writer
-  virtual Vec &solution() = 0;
+  virtual FieldVariable::FieldVariable<BasisOnMeshType> &solution() = 0;
   
 protected:
  

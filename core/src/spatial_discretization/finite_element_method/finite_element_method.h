@@ -6,7 +6,7 @@
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 #include "spatial_discretization/finite_element_method/05_timestepping.h"
-#include "basis_function/04_basis_on_mesh.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
 
 namespace SpatialDiscretization
 {
@@ -15,7 +15,7 @@ namespace SpatialDiscretization
  */
 template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term, typename = Term>
 class FiniteElementMethod :
-  public FiniteElementMethodStiffnessMatrix<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
 {
 };
 
@@ -24,11 +24,11 @@ class FiniteElementMethod :
  */
 template<typename MeshType, typename BasisFunctionType, typename IntegratorType>
 class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Equation::Static::Laplace> :
-  public FiniteElementMethodStiffnessMatrix<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
     ::FiniteElementMethodStiffnessMatrix;
  
 private:
@@ -41,11 +41,11 @@ private:
  */
 template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Term, Equation::hasLaplaceOperatorWithRhs<Term>> :
-  public FiniteElementMethodRhs<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+  public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodRhs;
+  using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodRhs;
   
 };
 
@@ -54,11 +54,11 @@ public:
  */
 template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>> :
-  public FiniteElementMethodTimeStepping<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodTimeStepping<BasisFunction::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodTimeStepping;
+  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodTimeStepping;
   
 };
 

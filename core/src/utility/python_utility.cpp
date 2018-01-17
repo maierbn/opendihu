@@ -530,14 +530,19 @@ void PythonUtility::printDict(PyObject *dict, int indent)
     std::stringstream line;
     line << std::string(indent, ' ');
     
-    if (!PyString_Check(key))
-    {
-      line << "key is not a string";
-    }
-    else
+    if (PyString_Check(key))
     {
       std::string keyString = PyString_AsString(key);
       line << keyString<<": ";
+    }
+    else if (PyInt_Check(key))
+    {
+      std::string keyString = std::to_string(PyInt_AsLong(key));
+      line << keyString<<": ";
+    }
+    else  
+    {
+      line << "(key is of unknown type): ";
     }
                 
     if (PyString_CheckExact(value))

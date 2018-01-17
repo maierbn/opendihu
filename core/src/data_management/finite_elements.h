@@ -54,8 +54,8 @@ private:
   void createPetscObjects();
  
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
-  FieldVariable::FieldVariable<BasisOnMeshType> rhs_;                 ///< the rhs vector in weak formulation
-  FieldVariable::FieldVariable<BasisOnMeshType> solution_;            ///< the vector of the quantity of interest, e.g. displacement
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   Mat discretizationMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
   bool disablePrinting_ = false;    ///< if printing of matrix and vectors is disabled

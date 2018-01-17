@@ -19,7 +19,7 @@ Callback::Callback(PyObject *settings) : Generic(settings)
   callback_ = PythonUtility::getOptionPyObject(settings, "callback");
 }
 
-void Callback::callCallback(std::vector<double> &data, std::vector<long> &nEntries, int timeStepNo, double currentTime)
+void Callback::callCallback(std::vector<double> &data, std::vector<long> &nEntries)
 {
   if (callback_ == NULL)
     return;
@@ -29,7 +29,7 @@ void Callback::callCallback(std::vector<double> &data, std::vector<long> &nEntri
   PyObject *nEntriesList = PythonUtility::convertToPythonList(nEntries);
   
   // signature: def callback(data, shape, nEntries, dimension, timeStepNo, currentTime)
-  PyObject *arglist = Py_BuildValue("(O,O,i,i,i,d)", dataList, nEntriesList, data.size(), nEntries.size(), timeStepNo, currentTime);
+  PyObject *arglist = Py_BuildValue("(O,O,i,i,i,d)", dataList, nEntriesList, data.size(), nEntries.size(), timeStepNo_, currentTime_);
   PyObject *returnValue = PyObject_CallObject(callback_, arglist);
   
   // if there was an error while executing the function, print the error message

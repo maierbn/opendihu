@@ -40,15 +40,15 @@ public:
   std::vector<std::string> componentNames() const;
   
   //! get the number of elements
-  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
-  void getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get values from their global dof no.s for all components
   template<int N, int nComponents>
-  void getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
   {
     std::array<int,N*nComponents> indices;
     std::array<double,N*nComponents> result;
@@ -76,11 +76,11 @@ public:
   }
   //! for a specific component, get the values corresponding to all element-local dofs
   template<int N>
-  void getElementValues(std::string component, element_idx_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
   
   //! get the values corresponding to all element-local dofs for all components
   template<int nComponents>
-  void getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
   {
     const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
     std::array<int,nDofsPerElement*nComponents> indices;
@@ -108,26 +108,26 @@ public:
     }
   }
   //! for a specific component, get a single value from global dof no.
-  double getValue(std::string component, node_idx_t dofGlobalNo);
+  double getValue(std::string component, node_no_t dofGlobalNo);
 
   //! get a single value from global dof no. for all components
   template<int nComponents>
-  std::array<double,nComponents> getValue(node_idx_t dofGlobalNo);
+  std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
   //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo=-1);
+  void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 
   //! write a exelem file header to a stream, for a particular node
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
+  void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
-  bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2);
+  bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
   //! get the internal PETSc vector values
   Vec &values();
   
   //! set all the data fields as well as the internal values PETSc vector
-  void set(std::string name, std::vector<std::string> &componentNames, std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements,
+  void set(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
            std::size_t nEntries, bool isGeometryField, Vec &values);
   
 protected:
@@ -136,9 +136,9 @@ protected:
   std::size_t nEntries() const;
   
   //! get the number of dofs, i.e. the number of entries per component
-  dof_idx_t nDofs() const;
+  dof_no_t nDofs() const;
   
-  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components

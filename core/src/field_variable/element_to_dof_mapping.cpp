@@ -10,7 +10,7 @@
 namespace FieldVariable
 {
   
-void ElementToDofMapping::setNumberElements(element_idx_t nElements)
+void ElementToDofMapping::setNumberElements(element_no_t nElements)
 {
   dofs_.resize(nElements);
 }
@@ -20,11 +20,11 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
                                                              const int nDofsPerNode
                                                              )
 {
-  node_idx_t dofGlobalNo = 0;
+  node_no_t dofGlobalNo = 0;
   
   // for setup to work we need the number of elements already set (by a previous call to setNumberElements)
   assert(dofs_.size() != 0);
-  element_idx_t nElements = dofs_.size();
+  element_no_t nElements = dofs_.size();
   
   // create node to dof mapping 
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping = std::make_shared<NodeToDofMapping>();
@@ -32,7 +32,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   VLOG(1) << "setup element to dof mapping and node to dof mapping from element to node mapping";
   
   // loop over elements 
-  for (element_idx_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < nElements; elementGlobalNo++)
   {
     // get available information about element
     ElementToNodeMapping::Element &element = elementToNodeMapping->getElement(elementGlobalNo);
@@ -53,7 +53,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
     // loop over nodes of element
     for (unsigned int nodeIndex = 0; nodeIndex < nNodesInElement; nodeIndex++)
     {
-      node_idx_t nodeGlobalNo = element.nodeGlobalNo[nodeIndex];
+      node_no_t nodeGlobalNo = element.nodeGlobalNo[nodeIndex];
       
       VLOG(1) << "   node global " << nodeGlobalNo;
       
@@ -84,7 +84,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
             
             struct ElementLocalNode 
             {
-              element_idx_t elementGlobalNo;    ///< element global no
+              element_no_t elementGlobalNo;    ///< element global no
               unsigned int nodeIdx;       ///< node index local to the element
             };
             std::vector<std::vector<ElementLocalNode>> elementsOfVersion;  ///< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
@@ -187,17 +187,17 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   return nodeToDofMapping;
 }
 
-dof_idx_t ElementToDofMapping::nDofs() const
+dof_no_t ElementToDofMapping::nDofs() const
 {
   return nDofs_;
 }
 
-element_idx_t ElementToDofMapping::nElements() const
+element_no_t ElementToDofMapping::nElements() const
 {
   return dofs_.size();
 }
 
-std::vector<int> &ElementToDofMapping::getElementDofs(element_idx_t elementGlobalNo)
+std::vector<int> &ElementToDofMapping::getElementDofs(element_no_t elementGlobalNo)
 {
   return dofs_[elementGlobalNo]; 
 }

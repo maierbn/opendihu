@@ -46,7 +46,7 @@ applyBoundaryConditions()
  
   LOG(TRACE)<<"applyBoundaryConditions";
  
-  dof_idx_t nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
+  dof_no_t nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
   Vec &rightHandSide = data_.rightHandSide().values();
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
@@ -55,14 +55,14 @@ applyBoundaryConditions()
   // add Dirichlet boundary conditions
   
   // get the first dirichlet boundary condition from the list
-  std::pair<node_idx_t, double> boundaryCondition 
-    = PythonUtility::getOptionDictBegin<node_idx_t, double>(specificSettings_, "DirichletBoundaryCondition");
+  std::pair<node_no_t, double> boundaryCondition 
+    = PythonUtility::getOptionDictBegin<node_no_t, double>(specificSettings_, "DirichletBoundaryCondition");
   
   // loop over Dirichlet boundary conditions
   for (; !PythonUtility::getOptionDictEnd(specificSettings_, "DirichletBoundaryCondition"); 
-       PythonUtility::getOptionDictNext<node_idx_t, double>(specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
+       PythonUtility::getOptionDictNext<node_no_t, double>(specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
   {
-    node_idx_t boundaryConditionNodeIndex = boundaryCondition.first;
+    node_no_t boundaryConditionNodeIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
     
     if (boundaryConditionNodeIndex < 0)
@@ -94,7 +94,7 @@ applyBoundaryConditions()
     ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &matrixIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
 
     // update rhs
-    for (node_idx_t rowNo = 0; rowNo < nDegreesOfFreedom; rowNo++)
+    for (node_no_t rowNo = 0; rowNo < nDegreesOfFreedom; rowNo++)
     {
       if (rowNo == boundaryConditionNodeIndex)
        continue;

@@ -29,34 +29,38 @@ public:
     
     struct ElementLocalNode 
     {
-      element_idx_t elementGlobalNo;    ///< element global no
+      element_no_t elementGlobalNo;    ///< element global no
       unsigned int nodeIdx;       ///< node index local to the element
     };
     std::vector<std::vector<ElementLocalNode>> elementsOfVersion;  ///< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
   };
   
   //! get the dof information of a node
-  NodeDofInformation &getNodeDofInformation(node_idx_t nodeGlobalNo);
+  NodeDofInformation &getNodeDofInformation(node_no_t nodeGlobalNo);
   
   //! get the dofs of a node
-  std::vector<int> &getNodeDofs(node_idx_t nodeGlobalNo);
+  std::vector<int> &getNodeDofs(node_no_t nodeGlobalNo);
   
   //! get the dofs of a node
-  std::vector<double> &getNodeScaleFactors(node_idx_t nodeGlobalNo);
+  std::vector<double> &getNodeScaleFactors(node_no_t nodeGlobalNo);
   
   //! return the number of nodes
-  node_idx_t nNodes() const;
+  node_no_t nNodes() const;
   
   //! check if a node is already contained in the internal node dof information map
-  bool containsNode(node_idx_t nodeGlobalNo) const;
+  bool containsNode(node_no_t nodeGlobalNo) const;
   
   //! return the number of versions of a particular node. A version is an OpenCMISS iron construct that allows multiple dofs of the same type on a single node, useful for modeling discontinuities
-  int nVersions(node_idx_t nodeGlobalNo);
+  int nVersions(node_no_t nodeGlobalNo);
+  
+  //! output string representation
+  void output(std::ostream &stream) const;
   
 private:
-  std::map<node_idx_t, NodeDofInformation> nodeDofInformation_;   ///< for global node number the associated dofs, node-to-dof mapping
+  std::map<node_no_t, NodeDofInformation> nodeDofInformation_;   ///< for global node number the associated dofs, node-to-dof mapping
 };
 
+std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping &rhs);
 std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::ElementLocalNode &rhs);
 
 };  // namespace

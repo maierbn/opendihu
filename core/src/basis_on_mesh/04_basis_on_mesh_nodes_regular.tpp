@@ -59,18 +59,18 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   std::vector<std::string> componentNames{"x","y","z"};
   bool isGeometryField = true;
   Vec values;
-  dof_idx_t nDofs = this->nDofs();
+  dof_no_t nDofs = this->nDofs();
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometry_->set("geometry", componentNames, this->nElements_, nEntries, isGeometryField, values);
 }
  
 template<int D,typename BasisFunctionType>
 BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
-BasisOnMeshNodes(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent) :
+BasisOnMeshNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
   BasisOnMeshDofs<Mesh::RegularFixed<D>,BasisFunctionType>::BasisOnMeshDofs(nullptr), meshWidth_(physicalExtent)
 {
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  typename std::array<element_idx_t, D>::iterator nElementsIter = this->nElements_.begin();
+  typename std::array<element_no_t, D>::iterator nElementsIter = this->nElements_.begin();
   for (typename std::array<double, D>::iterator meshWidthIter = this->meshWidth_.begin(); meshWidthIter != this->meshWidth_.end(); 
        meshWidthIter++, nElementsIter++)
   {
@@ -93,7 +93,7 @@ initialize()
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
+node_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nNodes() const
 {
   int result = 1;
@@ -103,14 +103,14 @@ nNodes() const
 }
 
 template<int D,typename BasisFunctionType>
-dof_idx_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nDofs() const
 {
   return nNodes() * this->nDofsPerNode();
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
+node_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
   return this->nElements(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
@@ -125,7 +125,7 @@ meshWidth(int dimension) const
  
 template<int D,typename BasisFunctionType>
 Vec3 BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
-getGeometry(node_idx_t dofGlobalNo) const
+getGeometry(node_no_t dofGlobalNo) const
 {
   Vec3 result = geometry_.getValue<3>(dofGlobalNo);
   return result;
@@ -133,7 +133,7 @@ getGeometry(node_idx_t dofGlobalNo) const
   
 template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
-getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
+getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
   const int nDofsPerElement = BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement();
   geometry_.getElementValues<nDofsPerElement,3>(elementNo, values);
@@ -154,9 +154,9 @@ getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
  
-  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
-    dof_idx_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
+    dof_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
     std::size_t index = nodeGlobalNo*3;
     Vec3 position = this->geometry_->template getValue<3>(firstNodeDofGlobalNo);

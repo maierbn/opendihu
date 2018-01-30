@@ -19,7 +19,7 @@ public:
   Mesh(PyObject *specificSettings);
   virtual ~Mesh() {}
   virtual int dimension() const = 0;
-  virtual node_idx_t nNodes() const = 0;
+  virtual node_no_t nNodes() const = 0;
 protected:
   
 };
@@ -31,7 +31,7 @@ class None : public Mesh
 public:
   using Mesh::Mesh;
   int dimension() const {return 0;}
-  node_idx_t nNodes() const {return 0;}
+  node_no_t nNodes() const {return 0;}
   static constexpr int dim() {return 0;}
 };
 
@@ -53,7 +53,7 @@ public:
   static constexpr int dim();
   
   //! get the number of nodes of this mesh
-  virtual node_idx_t nNodes() const = 0;
+  virtual node_no_t nNodes() const = 0;
 private:
 };
 

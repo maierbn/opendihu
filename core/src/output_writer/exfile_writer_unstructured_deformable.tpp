@@ -14,11 +14,11 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
   
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement();   
-  const element_idx_t nElements = fieldVariables.front()->mesh()->nElements();
+  const element_no_t nElements = fieldVariables.front()->mesh()->nElements();
  
   bool outputHeader = true;
    
-  for(element_idx_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements; currentElementGlobalNo++)
+  for(element_no_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements; currentElementGlobalNo++)
   {
     // check if a new header is necessary
     if (currentElementGlobalNo > 0)
@@ -26,6 +26,9 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
       outputHeader = false;
       for (auto &fieldVariable : fieldVariables)
       {
+        VLOG(2) << "check if field variable " << fieldVariable->name() << " has the same exfileRepr for elements " 
+          << currentElementGlobalNo-1 << " and " << currentElementGlobalNo;
+          
         if (!fieldVariable->haveSameExfileRepresentation(currentElementGlobalNo-1, currentElementGlobalNo))
         {
           outputHeader = true;
@@ -49,7 +52,7 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
       stream << " #Nodes=" << nNodesPerElement << std::endl
         << " #Fields=" << fieldVariables.size() << std::endl;
       
-      int fieldVariableNo = 0;
+      int fieldVariableNo = 0;     // a number that runs over the field variables
       for (auto &fieldVariable : fieldVariables)
       {
         fieldVariable->outputHeaderExelem(stream, currentElementGlobalNo, fieldVariableNo++);
@@ -70,10 +73,10 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
 
   bool outputHeader = true;
    
-  const node_idx_t nNodes = fieldVariables.front()->mesh()->nNodes();
+  const node_no_t nNodes = fieldVariables.front()->mesh()->nNodes();
   
   // loop over all nodes
-  for(node_idx_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)
+  for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)
   {
     // check if a new header is necessary
     if (currentNodeGlobalNo > 0)
@@ -96,10 +99,11 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     if (outputHeader)
     {
       stream << " #Fields=" << fieldVariables.size() << std::endl;
+      int fieldVariableNo = 0;     // a number that runs over the field variables
       int valueIndex = 0;  // an index that runs over values of components of field variables and corresponds to the index in the values block for a node
       for (auto &fieldVariable : fieldVariables)
       {
-        fieldVariable->outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex);
+        fieldVariable->outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex, fieldVariableNo++);
       }
     }
     
@@ -122,7 +126,7 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
         //stream << std::endl << "fieldVariable " << fieldVariable->name() << "." << component<<", dofsAtNode: " << dofsAtNode << std::endl;
       
         // loop over dofs 
-        for (dof_idx_t dofGlobalNo : dofsAtNode)
+        for (dof_no_t dofGlobalNo : dofsAtNode)
         {
           double value = fieldVariable->getValue(component, dofGlobalNo);
           //stream << std::endl << "dof " << dofGlobalNo << ", value: " << value << std::endl;

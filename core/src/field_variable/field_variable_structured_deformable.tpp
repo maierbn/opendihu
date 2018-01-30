@@ -11,7 +11,7 @@ namespace FieldVariable
 //! for a specific component, get a single value from global dof no.
 template<int D, typename BasisFunctionType>
 int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-getValue(std::string component, node_idx_t dofGlobalNo)
+getValue(std::string component, node_no_t dofGlobalNo)
 {
   return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
 }
@@ -20,7 +20,7 @@ getValue(std::string component, node_idx_t dofGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo)
+outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
 {
   // use the implementation of FieldVariableStructured
   FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
@@ -30,7 +30,7 @@ outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex)
+outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex)
 {
   // use the implementation of FieldVariableStructured
   FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
@@ -40,7 +40,7 @@ outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valu
 //! tell if 2 elements have the same exfile representation, i.e. same number of versions
 template<int D, typename BasisFunctionType>
 bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
+haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   // use the implementation of FieldVariableStructured
   return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
@@ -67,7 +67,7 @@ nComponents() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-std::array<element_idx_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
 nElementsPerDimension() const
 {
   // use the implementation of FieldVariableStructured
@@ -76,7 +76,7 @@ nElementsPerDimension() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-element_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
 nElements() const
 {
   // use the implementation of FieldVariableStructured
@@ -87,7 +87,7 @@ nElements() const
 template<int D, typename BasisFunctionType>
 template<int nComponents>
 std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-getValue(node_idx_t dofGlobalNo)
+getValue(node_no_t dofGlobalNo)
 {
   // use the implementation of FieldVariableStructured
   return FieldVariableStructured<BasisOnMeshType>::template getValue<nComponents>(dofGlobalNo);

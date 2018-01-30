@@ -40,7 +40,7 @@ void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &nodePositions)
 {
   // compute number of nodes
-  node_idx_t nNodes = this->nNodes();
+  node_no_t nNodes = this->nNodes();
   
   const int vectorSize = nNodes*3;
   
@@ -86,7 +86,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
       
-    for (node_idx_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
+    for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       switch(D)
       {
@@ -115,7 +115,7 @@ setGeometryField(std::vector<double> &nodePositions)
 {
   
   // compute number of dofs
-  dof_idx_t nDofs = this->nDofs();
+  dof_no_t nDofs = this->nDofs();
   
   LOG(DEBUG) << "setGeometryField, nodePositions: " << nodePositions;
   
@@ -138,7 +138,7 @@ setGeometryField(std::vector<double> &nodePositions)
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;
   // loop over nodes
-  for (node_idx_t nodeNo = 0; nodeNo < this->nNodes(); nodeNo++)
+  for (node_no_t nodeNo = 0; nodeNo < this->nNodes(); nodeNo++)
   {
     // assign node position as first dof of the node
     geometryValues[geometryValuesIndex+0] = nodePositions[nodePositionsIndex+0];
@@ -175,7 +175,7 @@ setGeometryField(std::vector<double> &nodePositions)
 
 template<int D,typename BasisFunctionType>
 Vec3 BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
-getGeometry(node_idx_t dofGlobalNo) const
+getGeometry(node_no_t dofGlobalNo) const
 {
   Vec3 result = geometry_->template getValue<3>(dofGlobalNo);
   return result;
@@ -184,13 +184,13 @@ getGeometry(node_idx_t dofGlobalNo) const
 //! return an array containing all geometry entries for an element
 template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
-getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
+getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
   geometry_->template getElementValues<3>(elementNo, values);
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
+node_no_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nNodes() const
 {
   int result = 1;
@@ -200,14 +200,14 @@ nNodes() const
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
+node_no_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
   return this->nElements(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>
-dof_idx_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nDofs() const
 {
   return nNodes() * this->nDofsPerNode();
@@ -229,10 +229,10 @@ getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
  
-  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
    
-    node_idx_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
+    node_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
     int index = nodeGlobalNo*3;
     Vec3 position = this->geometry_->template getValue<3>(firstNodeDofGlobalNo);

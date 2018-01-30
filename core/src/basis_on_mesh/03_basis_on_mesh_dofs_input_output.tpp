@@ -35,7 +35,7 @@ parseExelemFile(std::string exelemFilename)
     
     if (line.find("Element:") != std::string::npos)
     {
-      element_idx_t elementGlobalNo = getNumberAfterString(line, "Element:");
+      element_no_t elementGlobalNo = getNumberAfterString(line, "Element:");
       this->nElements_ = std::max(this->nElements_, elementGlobalNo);
     }
   }
@@ -293,7 +293,7 @@ outputExelemFile(std::ostream &file)
    
   bool outputHeader = true;
    
-  for(element_idx_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements(); currentElementGlobalNo++)
+  for(element_no_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements(); currentElementGlobalNo++)
   {
     int nScaleFactors = fieldVariable_.begin()->second->getNumberScaleFactors(currentElementGlobalNo);
     
@@ -343,7 +343,7 @@ outputExnodeFile(std::ostream &file)
   const int nNodesPerElement = BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement();   
   bool outputHeader = true;
    
-  for(node_idx_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nElements(); currentNodeGlobalNo++)
+  for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nElements(); currentNodeGlobalNo++)
   {
     // check if a new header is necessary
     if (currentNodeGlobalNo > 0)
@@ -387,7 +387,7 @@ outputExnodeFile(std::ostream &file)
       for (std::string component : fieldVariable->second.componentNames())
       {
         // loop over dofs 
-        for (dof_idx_t dofGlobalNo : dofsAtNode)
+        for (dof_no_t dofGlobalNo : dofsAtNode)
         {
           double value = fieldVariable->second->getValue(component, dofGlobalNo);
           valuesAtNode.push_back(value);

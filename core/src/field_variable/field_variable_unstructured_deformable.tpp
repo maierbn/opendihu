@@ -132,13 +132,13 @@ parseElementFromExelemFile(std::string content)
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-setNumberElements(element_idx_t nElements)
+setNumberElements(element_no_t nElements)
 {
   this->nElements_ = nElements;
 }
 
 template<int D, typename BasisFunctionType>
-element_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nElements() const
 {
   return this->nElements_;
@@ -438,7 +438,7 @@ parseFromExnodeFile(std::string content)
 
 template<int D, typename BasisFunctionType>
 int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getDofNo(element_idx_t elementNo, int dofIndex) const
+getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return this->component_.begin()->second.getDofNo(elementNo, dofIndex);
 }
@@ -496,7 +496,7 @@ values()
 template<int D, typename BasisFunctionType>
 template<int N>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   this->component_[component].getValues(dofGlobalNo, values);
 }
@@ -504,7 +504,7 @@ getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array
 template<int D, typename BasisFunctionType>
 template<int N, int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<double,nComponents> resultVector;
   
@@ -528,7 +528,7 @@ getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nCom
 //! for a specific component, get the values corresponding to all element-local dofs
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getElementValues(std::string component, element_idx_t elementNo, std::array<double,BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nDofsPerElement()> &values)
+getElementValues(std::string component, element_no_t elementNo, std::array<double,BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
   this->component_[component].getElementValues(elementNo, values);
 }
@@ -538,7 +538,7 @@ getElementValues(std::string component, element_idx_t elementNo, std::array<doub
 template<int D, typename BasisFunctionType>
 template<int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
@@ -564,7 +564,7 @@ getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponen
 //! for a specific component, get a single value from global dof no.
 template<int D, typename BasisFunctionType>
 double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValue(std::string component, node_idx_t dofGlobalNo)
+getValue(std::string component, node_no_t dofGlobalNo)
 {
   assert(this->component_.find(component) != this->component_.end());
   return this->component_[component].getValue(dofGlobalNo); 
@@ -574,7 +574,7 @@ getValue(std::string component, node_idx_t dofGlobalNo)
 template<int D, typename BasisFunctionType>
 template<int nComponents>
 std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValue(node_idx_t dofGlobalNo)
+getValue(node_no_t dofGlobalNo)
 {
   std::array<double,nComponents> resultVector;
   
@@ -655,14 +655,14 @@ nEntries() const
 }
 
 template<int D, typename BasisFunctionType>
-dof_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+dof_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nDofs() const
 {
   return this->nEntries_ / this->nComponents(); 
 }
   
 template<int D, typename BasisFunctionType>
-node_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+node_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nNodes() const
 {
   return nodeToDofMapping_->nNodes();
@@ -726,6 +726,10 @@ initializeFromMappings(std::string name, bool isGeometryField,
   this->nEntries_ = 0;
   this->isGeometryField_ = isGeometryField;
   this->nElements_ = elementToDofMapping->nElements();
+  
+  // remove duplicate exfile representations
+  exfileRepresentation->unifyExfileElementRepresentations();
+  
   this->exfileRepresentation_ = exfileRepresentation;
   this->elementToDofMapping_ = elementToDofMapping;
   this->elementToNodeMapping_ = elementToNodeMapping;
@@ -737,12 +741,13 @@ initializeFromMappings(std::string name, bool isGeometryField,
   
   initializeComponents(componentNames, exfileBasisRepresentation);
   
+  
   LOG(DEBUG) << "FieldVariable nDofs: " << this->nDofs();
 }
   
 template<int D, typename BasisFunctionType>
 int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getNumberScaleFactors(element_idx_t globalElementNo) const
+getNumberScaleFactors(element_no_t globalElementNo) const
 {
   
   //! return the node numbers and scale factors of the element
@@ -753,7 +758,7 @@ getNumberScaleFactors(element_idx_t globalElementNo) const
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExelem(std::ostream &stream, element_idx_t currentElementGlobalNo, int fieldVariableNo)
+outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // set no of field variable in ex file if it was specified
   if (fieldVariableNo != -1)
@@ -772,7 +777,7 @@ outputHeaderExelem(std::ostream &stream, element_idx_t currentElementGlobalNo, i
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExnode(std::ostream &stream, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
+outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
   // set no of field variable in ex file if it was specified
   if (fieldVariableNo != -1)
@@ -791,13 +796,14 @@ outputHeaderExnode(std::ostream &stream, node_idx_t currentNodeGlobalNo, int &va
 
 template<int D, typename BasisFunctionType>
 bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
+haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   // loop over components
   for (auto &component : component_)
   {
     if(!component.second.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
     {
+      LOG(DEBUG) << "  component " << component.first << " has different exfileRepr for elements " << element1 << " and " << element2;
       return false;
     }
   }
@@ -809,7 +815,7 @@ void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,Basi
 eliminateScaleFactors()
 {
   // loop over elements 
-  for (element_idx_t elementGlobalNo = 0; elementGlobalNo < nElements_; elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < nElements_; elementGlobalNo++)
   {
     // loop over components
     for (auto &component : component_)
@@ -818,7 +824,7 @@ eliminateScaleFactors()
       // loop over element dofs
       for (unsigned int nodeIdx = 0; nodeIdx < element.nodeGlobalNo.size(); nodeIdx++)
       {
-        node_idx_t nodeGlobalNo = element.nodeGlobalNo[nodeIdx];
+        node_no_t nodeGlobalNo = element.nodeGlobalNo[nodeIdx];
         double scaleFactor = element.scaleFactors[nodeIdx];
         
         std::vector<int> &nodeDofs = nodeToDofMapping_->getNodeDofs(nodeGlobalNo);

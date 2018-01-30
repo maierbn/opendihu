@@ -41,7 +41,7 @@ setStiffnessMatrix()
   // initialize values to zero
   int cntr = 1;
   // loop over elements 
-  for (element_idx_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
   {
     auto dof = mesh->getElementDofNos(elementNo);
     

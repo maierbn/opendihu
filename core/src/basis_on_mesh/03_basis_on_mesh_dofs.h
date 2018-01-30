@@ -34,13 +34,13 @@ public:
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  int getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
-  int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=1
@@ -54,16 +54,16 @@ public:
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex);
+  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
   
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  int getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=2
@@ -77,16 +77,16 @@ public:
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
  
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex);
+  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
   
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  int getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=3
@@ -100,16 +100,16 @@ public:
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
  
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex);
+  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
   
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  int getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for unstructured mesh
@@ -130,13 +130,13 @@ public:
   void initialize();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  int getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
-  int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
   
   //! write exelem file to stream
   void outputExelemFile(std::ostream &file);
@@ -145,10 +145,10 @@ public:
   void outputExnodeFile(std::ostream &file);
   
   //! return the number of elements
-  element_idx_t nElements() const;
+  element_no_t nElements() const;
   
   //! return the number of dofs
-  dof_idx_t nDofs() const;
+  dof_no_t nDofs() const;
  
   //! add all field variables except the geometry field to the vector. This is used to retrive additional field variables that were parsed from an exfile.
   void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables);
@@ -171,8 +171,8 @@ protected:
   
   std::map<std::string, std::shared_ptr<FieldVariableType>> fieldVariable_;   ///< all field variables that were present in exelem/exnode files, should contain "geometry" field variable
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
-  element_idx_t nElements_ = 0;    ///< number of elements in exelem file 
-  dof_idx_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
+  element_no_t nElements_ = 0;    ///< number of elements in exelem file 
+  dof_no_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
  
 }; 
 }  // namespace

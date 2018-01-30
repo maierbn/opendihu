@@ -107,7 +107,7 @@ mesh<Mesh::None,BasisFunction::Lagrange<>>(PyObject *settings)
   }
   
   // nElements was not specified, create and return anonymous standard regular mesh with 1 node, don't store it 
-  std::array<element_idx_t, 1> nElements {0};
+  std::array<element_no_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
   
   typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;

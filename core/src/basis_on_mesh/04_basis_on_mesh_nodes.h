@@ -36,7 +36,7 @@ public:
   BasisOnMeshNodes(PyObject *specificSettings);
     
   //! construct from element numbers and physical extent
-  BasisOnMeshNodes(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent);
+  BasisOnMeshNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
   
   //! this assigns the geometry_ field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
   void initialize();
@@ -48,19 +48,19 @@ public:
   double meshWidth(int dimension) const;
   
   //! return number of nodes
-  node_idx_t nNodes() const;
+  node_no_t nNodes() const;
   
   //! return number of nodes in specified coordinate direction
-  node_idx_t nNodes(int dimension) const;
+  node_no_t nNodes(int dimension) const;
   
   //! return number of dofs
-  node_idx_t nDofs() const;
+  node_no_t nDofs() const;
   
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
-  Vec3 getGeometry(node_idx_t dofGlobalNo) const;
+  Vec3 getGeometry(node_no_t dofGlobalNo) const;
   
   //! get all geometry entries for an element
-  void getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
+  void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
   
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
    
@@ -95,19 +95,19 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
   
   //! return number of nodes
-  node_idx_t nNodes() const;
+  node_no_t nNodes() const;
   
   //! return number of nodes in specified coordinate direction
-  node_idx_t nNodes(int dimension) const;
+  node_no_t nNodes(int dimension) const;
   
   //! return number of dofs
-  node_idx_t nDofs() const;
+  node_no_t nDofs() const;
   
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
-  Vec3 getGeometry(node_idx_t dofGlobalNo) const;
+  Vec3 getGeometry(node_no_t dofGlobalNo) const;
   
   //! get all geometry entries for an element
-  void getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
+  void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
  
@@ -142,13 +142,13 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
   
   //! return number of nodes
-  node_idx_t nNodes() const;
+  node_no_t nNodes() const;
   
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
-  Vec3 getGeometry(node_idx_t dofGlobalNo) const;
+  Vec3 getGeometry(node_no_t dofGlobalNo) const;
   
   //! get all geometry entries for an element
-  void getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
+  void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;  ///< the type of a field variable on this mesh
  

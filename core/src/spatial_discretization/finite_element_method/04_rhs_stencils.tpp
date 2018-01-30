@@ -26,7 +26,7 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  element_idx_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   
   int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
@@ -53,7 +53,7 @@ transferRhsToWeakForm()
   PetscUtility::getVectorEntries(rightHandSide, vectorValues);
    
   // loop over all dofs and set values with stencilCenter
-  for (node_idx_t dofNo = 1; dofNo < nDegreesOfFreedom-1; dofNo++)
+  for (node_no_t dofNo = 1; dofNo < nDegreesOfFreedom-1; dofNo++)
   {
     double value = 
       (stencilCenter[center-1]*vectorValues[dofNo-1] 
@@ -64,7 +64,7 @@ transferRhsToWeakForm()
   }
   
   // set values for boundaries with stencilSide
-  node_idx_t dofNo = 0;
+  node_no_t dofNo = 0;
   double value = 
     (stencilSide[0]*vectorValues[dofNo] 
     + stencilSide[1]*vectorValues[dofNo+1]) * elementLength;
@@ -90,10 +90,10 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  node_idx_t nNodes0 = nElements0 + 1;
-  node_idx_t nNodes1 = nElements1 + 1;
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  node_no_t nNodes0 = nElements0 + 1;
+  node_no_t nNodes1 = nElements1 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   double integralFactor = elementLength0*elementLength1;
@@ -158,7 +158,7 @@ transferRhsToWeakForm()
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = 0;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     value = 0;
     for (int i=-1; i<=0; i++) // -x
@@ -177,7 +177,7 @@ transferRhsToWeakForm()
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = nNodes0-1;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     value = 0;
     for (int i=-1; i<=0; i++) // x
@@ -196,7 +196,7 @@ transferRhsToWeakForm()
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     value = 0;
     for (int i=-1; i<=1; i++) // x
@@ -215,7 +215,7 @@ transferRhsToWeakForm()
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     value = 0;
     for (int i=-1; i<=1; i++) // x
@@ -232,7 +232,7 @@ transferRhsToWeakForm()
  
   // corner nodes
   int x,y;
-  node_idx_t dofNo;
+  node_no_t dofNo;
   
   // bottom left (x=0, y=0)
   x = 0;
@@ -316,12 +316,12 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  element_idx_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
-  node_idx_t nNodes0 = nElements0 + 1;
-  node_idx_t nNodes1 = nElements1 + 1;
-  node_idx_t nNodes2 = nElements2 + 1;
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
+  node_no_t nNodes0 = nElements0 + 1;
+  node_no_t nNodes1 = nElements1 + 1;
+  node_no_t nNodes2 = nElements2 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
@@ -428,7 +428,7 @@ transferRhsToWeakForm()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=0; i++)    // -x
@@ -453,7 +453,7 @@ transferRhsToWeakForm()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = nNodes0-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=0; i++)    // x
@@ -478,7 +478,7 @@ transferRhsToWeakForm()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -503,7 +503,7 @@ transferRhsToWeakForm()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = nNodes1-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -528,7 +528,7 @@ transferRhsToWeakForm()
     for (int x=1; x<nNodes0-1; x++)
     {
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -553,7 +553,7 @@ transferRhsToWeakForm()
     for (int x=1; x<nNodes0-1; x++)
     {
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -578,7 +578,7 @@ transferRhsToWeakForm()
   {
     int x = 0;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // -x
@@ -601,7 +601,7 @@ transferRhsToWeakForm()
   {
     int x = nNodes0-1;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // x
@@ -624,7 +624,7 @@ transferRhsToWeakForm()
   {
     int x = 0;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // -x
@@ -647,7 +647,7 @@ transferRhsToWeakForm()
   {
     int x = nNodes0-1;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // x
@@ -670,7 +670,7 @@ transferRhsToWeakForm()
   {
     int y = 0;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -693,7 +693,7 @@ transferRhsToWeakForm()
   {
     int y = nNodes1-1;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -716,7 +716,7 @@ transferRhsToWeakForm()
   {
     int y = 0;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -739,7 +739,7 @@ transferRhsToWeakForm()
   {
     int y = nNodes1-1;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -762,7 +762,7 @@ transferRhsToWeakForm()
   {
     int x = 0;
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // -x
@@ -785,7 +785,7 @@ transferRhsToWeakForm()
   {
     int x = 0;
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // -x
@@ -808,7 +808,7 @@ transferRhsToWeakForm()
   {
     int x = nNodes0-1;
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // x
@@ -831,7 +831,7 @@ transferRhsToWeakForm()
   {
     int x = nNodes0-1;
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=0; i++)    // x
@@ -851,7 +851,7 @@ transferRhsToWeakForm()
   
   // corner nodes
   int x,y,z;
-  node_idx_t dofNo;
+  node_no_t dofNo;
   
   // bottom front left (x=0,y=0,z=0)
   x = 0;
@@ -1042,7 +1042,7 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 1D";
  
     // get settings values
-    element_idx_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
     double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     
     int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
@@ -1065,7 +1065,7 @@ setRhsDiscretizationMatrix()
     const double stencilSide[2] = {1./6.*2, 1./6.*1};
     
     // loop over all dofs and set values in dmatrix with stencilCenter
-    for (node_idx_t dofNo = 1; dofNo < nDegreesOfFreedom-1; dofNo++)
+    for (node_no_t dofNo = 1; dofNo < nDegreesOfFreedom-1; dofNo++)
     { 
       ierr = MatSetValue(dmatrix, dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
       ierr = MatSetValue(dmatrix, dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES); CHKERRV(ierr);
@@ -1073,7 +1073,7 @@ setRhsDiscretizationMatrix()
     }
     
     // set values for boundaries with stencilSide
-    node_idx_t dofNo = 0;    
+    node_no_t dofNo = 0;    
     ierr = MatSetValue(dmatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     ierr = MatSetValue(dmatrix, dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     
@@ -1103,10 +1103,10 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 2D";
       
     // get settings values
-    element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-    element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-    node_idx_t nNodes0 = nElements0 + 1;
-    node_idx_t nNodes1 = nElements1 + 1;
+    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+    node_no_t nNodes0 = nElements0 + 1;
+    node_no_t nNodes1 = nElements1 + 1;
     double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
     double integralFactor = elementLength0*elementLength1;
@@ -1150,12 +1150,12 @@ setRhsDiscretizationMatrix()
     {
       for (int x=1; x<nNodes0-1; x++)
       {
-        node_idx_t dofNo = dofIndex(x,y);
+        node_no_t dofNo = dofIndex(x,y);
         for (int i=-1; i<=1; i++)
         {
           for (int j=-1; j<=1; j++)
           {
-            node_idx_t secondDofNo = dofIndex(x+j, y+i);
+            node_no_t secondDofNo = dofIndex(x+j, y+i);
             double factor = stencilCenter[center+i][center+j] * integralFactor;
             ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
           }
@@ -1168,11 +1168,11 @@ setRhsDiscretizationMatrix()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = 0;
-      node_idx_t dofNo = dofIndex(x,y);
+      node_no_t dofNo = dofIndex(x,y);
       
       for (int i=-1; i<=1; i++)
       { 
-        node_idx_t secondDofNo = dofIndex(x, y+i);
+        node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
         ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
@@ -1186,11 +1186,11 @@ setRhsDiscretizationMatrix()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = nNodes0-1;
-      node_idx_t dofNo = dofIndex(x,y);
+      node_no_t dofNo = dofIndex(x,y);
       
       for (int i=-1; i<=1; i++)
       {
-        node_idx_t secondDofNo = dofIndex(x, y+i);
+        node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
         ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
@@ -1204,11 +1204,11 @@ setRhsDiscretizationMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = 0;
-      node_idx_t dofNo = dofIndex(x,y);
+      node_no_t dofNo = dofIndex(x,y);
       
       for (int i=-1; i<=1; i++)
       {
-        node_idx_t secondDofNo = dofIndex(x+i, y);
+        node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
         ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
@@ -1222,11 +1222,11 @@ setRhsDiscretizationMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = nNodes1-1;
-      node_idx_t dofNo = dofIndex(x,y);
+      node_no_t dofNo = dofIndex(x,y);
       
       for (int i=-1; i<=1; i++)
       {
-        node_idx_t secondDofNo = dofIndex(x+i, y);
+        node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
         ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
@@ -1240,7 +1240,7 @@ setRhsDiscretizationMatrix()
     // bottom left
     int x = 0;
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
     ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
@@ -1300,12 +1300,12 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 3D";
       
     // get settings values
-    element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-    element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-    element_idx_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
-    node_idx_t nNodes0 = nElements0 + 1;
-    node_idx_t nNodes1 = nElements1 + 1;
-    node_idx_t nNodes2 = nElements2 + 1;
+    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+    element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
+    node_no_t nNodes0 = nElements0 + 1;
+    node_no_t nNodes1 = nElements1 + 1;
+    node_no_t nNodes2 = nElements2 + 1;
     double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
     double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
@@ -1378,7 +1378,7 @@ setRhsDiscretizationMatrix()
     };
       
     double value;
-    node_idx_t dofNo;
+    node_no_t dofNo;
   
     // loop over all dofs and set values with stencilCenter
     // set entries for interior nodes
@@ -1412,7 +1412,7 @@ setRhsDiscretizationMatrix()
       for (int y=1; y<nNodes1-1; y++)
       {
         int x = 0;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=0; i++)    // -x
         {
           for (int j=-1; j<=1; j++)   // y
@@ -1434,7 +1434,7 @@ setRhsDiscretizationMatrix()
       for (int y=1; y<nNodes1-1; y++)
       {
         int x = nNodes0-1;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=0; i++)    // x
         {
           for (int j=-1; j<=1; j++)   // y
@@ -1456,7 +1456,7 @@ setRhsDiscretizationMatrix()
       for (int x=1; x<nNodes0-1; x++)
       {
         int y = 0;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=1; i++)    // x
         {
           for (int j=-1; j<=0; j++)   // -y
@@ -1478,7 +1478,7 @@ setRhsDiscretizationMatrix()
       for (int x=1; x<nNodes0-1; x++)
       {
         int y = nNodes1-1;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=1; i++)    // x
         {
           for (int j=-1; j<=0; j++)   // y
@@ -1500,7 +1500,7 @@ setRhsDiscretizationMatrix()
       for (int x=1; x<nNodes0-1; x++)
       {
         int z = 0;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=1; i++)    // x
         {
           for (int j=-1; j<=1; j++)   // y
@@ -1522,7 +1522,7 @@ setRhsDiscretizationMatrix()
       for (int x=1; x<nNodes0-1; x++)
       {
         int z = nNodes2-1;
-        node_idx_t dofNo = dofIndex(x,y,z);
+        node_no_t dofNo = dofIndex(x,y,z);
         for (int i=-1; i<=1; i++)    // x
         {
           for (int j=-1; j<=1; j++)   // y
@@ -1544,7 +1544,7 @@ setRhsDiscretizationMatrix()
     {
       int x = 0;
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // -x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -1564,7 +1564,7 @@ setRhsDiscretizationMatrix()
     {
       int x = nNodes0-1;
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -1584,7 +1584,7 @@ setRhsDiscretizationMatrix()
     {
       int x = 0;
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // -x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -1604,7 +1604,7 @@ setRhsDiscretizationMatrix()
     {
       int x = nNodes0-1;
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -1624,7 +1624,7 @@ setRhsDiscretizationMatrix()
     {
       int y = 0;
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -1646,7 +1646,7 @@ setRhsDiscretizationMatrix()
     {
       int y = nNodes1-1;
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=1; i++)    // x
       {
         for (int j=-1; j<=0; j++)   // y
@@ -1666,7 +1666,7 @@ setRhsDiscretizationMatrix()
     {
       int y = 0;
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -1688,7 +1688,7 @@ setRhsDiscretizationMatrix()
     {
       int y = nNodes1-1;
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       
       value = 0;
       for (int i=-1; i<=1; i++)    // x
@@ -1710,7 +1710,7 @@ setRhsDiscretizationMatrix()
     {
       int x = 0;
       int y = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // -x
       {
         for (int j=-1; j<=0; j++)   // -y
@@ -1730,7 +1730,7 @@ setRhsDiscretizationMatrix()
     {
       int x = 0;
       int y = nNodes1-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // -x
       {
         for (int j=-1; j<=0; j++)   // y
@@ -1750,7 +1750,7 @@ setRhsDiscretizationMatrix()
     {
       int x = nNodes0-1;
       int y = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // x
       {
         for (int j=-1; j<=0; j++)   // -y
@@ -1770,7 +1770,7 @@ setRhsDiscretizationMatrix()
     {
       int x = nNodes0-1;
       int y = nNodes1-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // x
       {
         for (int j=-1; j<=0; j++)   // y

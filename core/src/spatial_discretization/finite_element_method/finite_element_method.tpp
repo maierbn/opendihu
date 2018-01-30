@@ -29,7 +29,7 @@ setRightHandSide()
   
   Vec &rightHandSide = this->data_.rightHandSide().values();
   
-  for (node_idx_t nodeNo = 0; nodeNo < nDegreesOfFreedom; nodeNo++)
+  for (node_no_t nodeNo = 0; nodeNo < nDegreesOfFreedom; nodeNo++)
   {
    
     //                 vector         row     value

@@ -77,7 +77,7 @@ componentNames() const
 }
   
 template<typename BasisOnMeshType>
-std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
+std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
 nElementsPerDimension() const
 {
   return this->nElements_;
@@ -91,7 +91,7 @@ nEntries() const
 }
 
 template<typename BasisOnMeshType>
-dof_idx_t FieldVariableStructured<BasisOnMeshType>::
+dof_no_t FieldVariableStructured<BasisOnMeshType>::
 nDofs() const
 {
   assert(this->nComponents_ != 0);
@@ -107,7 +107,7 @@ values()
 
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-set(std::string name, std::vector<std::string> &componentNames, std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements,
+set(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
     std::size_t nEntries, bool isGeometryField, Vec &values)
 {
   this->name_ = name;
@@ -129,7 +129,7 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<eleme
 template<typename BasisOnMeshType>
 template<int N>
 void FieldVariableStructured<BasisOnMeshType>::
-getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   int componentIndex = this->componentIndex_[component];
  
@@ -147,7 +147,7 @@ getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array
 template<typename BasisOnMeshType>
 template<int N, int nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
-getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<int,N*nComponents> indices;
   std::array<double,N*nComponents> result;
@@ -179,7 +179,7 @@ getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nCom
 template<typename BasisOnMeshType>
 template<int N>
 void FieldVariableStructured<BasisOnMeshType>::
-getElementValues(std::string component, element_idx_t elementNo, 
+getElementValues(std::string component, element_no_t elementNo, 
                  std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
   int componentIndex = this->componentIndex_[component];
@@ -200,7 +200,7 @@ getElementValues(std::string component, element_idx_t elementNo,
 template<typename BasisOnMeshType>
 template<int nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
-getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   std::array<int,nDofsPerElement*nComponents> indices;
@@ -232,7 +232,7 @@ getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponen
 //! for a specific component, get a single value from global dof no.
 template<typename BasisOnMeshType>
 double FieldVariableStructured<BasisOnMeshType>::
-getValue(std::string component, node_idx_t dofGlobalNo)
+getValue(std::string component, node_no_t dofGlobalNo)
 {
   int componentIndex = this->componentIndex_[component];
   int index = dofGlobalNo*this->nComponents_ + componentIndex;
@@ -246,7 +246,7 @@ getValue(std::string component, node_idx_t dofGlobalNo)
 template<typename BasisOnMeshType>
 template<int nComponents>
 std::array<double,nComponents> FieldVariableStructured<BasisOnMeshType>::
-getValue(node_idx_t dofGlobalNo)
+getValue(node_no_t dofGlobalNo)
 {
   std::array<int,nComponents> indices;
   std::array<double,nComponents> result;
@@ -265,7 +265,7 @@ getValue(node_idx_t dofGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo)
+outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   assert(0); // not implemented
 }
@@ -273,7 +273,7 @@ outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int
 //! write a exelem file header to a stream, for a particular element
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
+outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
   assert(0); // not implemented
 }
@@ -281,7 +281,7 @@ outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valu
 //! tell if 2 elements have the same exfile representation, i.e. same number of versions
 template<typename BasisOnMeshType>
 bool FieldVariableStructured<BasisOnMeshType>::
-haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
+haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   return true;   // structured meshes do not have exfile representations 
 }

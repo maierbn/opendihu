@@ -23,7 +23,7 @@ class ElementToDofMapping
 public:
  
   //! resize internal representation variable to number of elements
-  void setNumberElements(element_idx_t nElements);
+  void setNumberElements(element_no_t nElements);
  
   //! setup the element to dof mapping and create a node to dof mapping on the fly
   std::shared_ptr<NodeToDofMapping> setup(std::shared_ptr<ExfileRepresentation> exfileRepresentation,
@@ -31,20 +31,20 @@ public:
                                           const int nDofsPerNode);
   
   //! get all dofs of an element
-  std::vector<int> &getElementDofs(element_idx_t elementGlobalNo);
+  std::vector<int> &getElementDofs(element_no_t elementGlobalNo);
   
   //! return the number of dofs
-  dof_idx_t nDofs() const;
+  dof_no_t nDofs() const;
  
   //! return the number of elements
-  element_idx_t nElements() const;
+  element_no_t nElements() const;
   
   //! comparison operator
   bool operator==(const ElementToDofMapping &rhs);
   
 private:
   std::vector<std::vector<int>> dofs_;  ///< for every element the list of dofs
-  dof_idx_t nDofs_ = 0;            ///< total number of dofs
+  dof_no_t nDofs_ = 0;            ///< total number of dofs
 };
 
 };  // namespace

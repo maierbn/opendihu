@@ -18,16 +18,16 @@ class Structured : public MeshD<D>
 {
 public:
   //! constructor
-  Structured(std::array<element_idx_t, D> &nElements);
+  Structured(std::array<element_no_t, D> &nElements);
   Structured(PyObject *specificSettings);
   
   //! get number of elements
-  element_idx_t nElements(int dimension) const;
-  element_idx_t nElements() const;
+  element_no_t nElements(int dimension) const;
+  element_no_t nElements() const;
 
 protected:
  
-  std::array<element_idx_t, D> nElements_;    ///< the number of elements in each coordinate direction
+  std::array<element_no_t, D> nElements_;    ///< the number of elements in each coordinate direction
 };
 
 };    // namespace

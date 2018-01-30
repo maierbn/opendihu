@@ -54,7 +54,7 @@ void ExfileRepresentation::parseElementFromExelemFile(std::string content)
   
   // parse element no
   int elementNo = getNumberAfterString(content, "Element:")-1;
-  if ((element_idx_t)representation_.size() < elementNo)
+  if ((element_no_t)representation_.size() < elementNo)
     representation_.resize(elementNo);
   
   VLOG(1) << " assign current representation for element " << elementNo;
@@ -62,7 +62,7 @@ void ExfileRepresentation::parseElementFromExelemFile(std::string content)
   representation_[elementNo] = currentElementRepresentation_;
 }
 
-void ExfileRepresentation::setNumberElements(element_idx_t nElements)
+void ExfileRepresentation::setNumberElements(element_no_t nElements)
 {
   representation_.resize(nElements);
 }
@@ -92,16 +92,35 @@ bool ExfileRepresentation::operator==(const ExfileRepresentation& rhs)
   return true;
 }
 
-std::shared_ptr<ExfileElementRepresentation> &ExfileRepresentation::getExfileElementRepresentation(element_idx_t elementNo)
+std::shared_ptr<ExfileElementRepresentation> &ExfileRepresentation::getExfileElementRepresentation(element_no_t elementNo)
 {
-  assert(elementNo < (element_idx_t)representation_.size());
+  assert(elementNo < (element_no_t)representation_.size());
   return representation_[elementNo];
 }
 
-bool ExfileRepresentation::haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
+void ExfileRepresentation::unifyExfileElementRepresentations()
 {
-  assert(element1 < (element_idx_t)representation_.size());
-  assert(element2 < (element_idx_t)representation_.size());
+  if (representation_.size() < 2)
+    return;
+  
+  for(element_no_t elementGlobalNo1 = 0; elementGlobalNo1 < representation_.size()-1; elementGlobalNo1++)
+  {
+    for(element_no_t elementGlobalNo2 = elementGlobalNo1+1; elementGlobalNo2 < representation_.size(); elementGlobalNo2++)
+    {
+      if (*representation_[elementGlobalNo1] == *representation_[elementGlobalNo2])
+      {
+        representation_[elementGlobalNo2] = representation_[elementGlobalNo1];
+      }
+    }
+  }
+}
+
+bool ExfileRepresentation::haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
+{
+  assert(element1 < (element_no_t)representation_.size());
+  assert(element2 < (element_no_t)representation_.size());
+  
+  VLOG(2) << "exfileRpers: " << representation_[element1] << "," << representation_[element2];
   return representation_[element1] == representation_[element2];
 }
 

@@ -31,23 +31,23 @@ public:
   using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::FieldVariableStructured;
   
   //! for a specific component, get a single value from global dof no.
-  double getValue(std::string component, node_idx_t dofGlobalNo)
+  double getValue(std::string component, node_no_t dofGlobalNo)
   {
     return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
   }
   
   //! get a single value from global dof no. for all components
   template<int nComponents>
-  std::array<double,nComponents> getValue(node_idx_t dofGlobalNo);
+  std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
   
   //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
+  void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo);
 
   //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
+  void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
-  bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2);
+  bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
   Vec &values();
@@ -59,10 +59,10 @@ public:
   std::vector<std::string> componentNames() const;
   
   //! get the number of elements in the coordinate directions
-  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! get the total number of elements
-  element_idx_t nElements() const;
+  element_no_t nElements() const;
 };
 
 };  // namespace

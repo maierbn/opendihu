@@ -10,7 +10,7 @@ namespace FieldVariable
   
 using namespace StringUtility;
   
-void ElementToNodeMapping::setNumberElements(element_idx_t nElements)
+void ElementToNodeMapping::setNumberElements(element_no_t nElements)
 {
   elements_.resize(nElements);
 }
@@ -66,7 +66,7 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
       
       while(!line.empty())
       {
-        node_idx_t nodeGlobalNo = atoi(line.c_str())-1;
+        node_no_t nodeGlobalNo = atoi(line.c_str())-1;
         //VLOG(2) << "       node: " << nodeGlobalNo;
         elements_[elementNo].nodeGlobalNo.push_back(nodeGlobalNo);
         
@@ -101,13 +101,13 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
   }
 }
 
-ElementToNodeMapping::Element& ElementToNodeMapping::getElement(element_idx_t elementGlobalNo)
+ElementToNodeMapping::Element& ElementToNodeMapping::getElement(element_no_t elementGlobalNo)
 {
   assert(elementGlobalNo < (int)elements_.size());
   return elements_[elementGlobalNo];
 }
 
-void ElementToNodeMapping::outputElementExelemFile(std::ostream &file, element_idx_t elementGlobalNo)
+void ElementToNodeMapping::outputElementExelemFile(std::ostream &file, element_no_t elementGlobalNo)
 {
   assert(elementGlobalNo < (int)elements_.size());
   

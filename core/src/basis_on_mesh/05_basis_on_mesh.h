@@ -24,11 +24,11 @@ public:
   
   //! return an array of all dof nos. of the element  
   std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 
-  getElementDofNos(element_idx_t elementNo) const;
+  getElementDofNos(element_no_t elementNo) const;
 
   //! return an array of all node nos. of the element  
   std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> 
-  getElementNodeNos(element_idx_t elementNo) const;
+  getElementNodeNos(element_no_t elementNo) const;
   
   //! return an array of the gradients of all nodal basis functions, evaluated at xi  
   std::array<std::array<double,MeshType::dim()>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 

@@ -20,7 +20,7 @@ public:
   virtual void getNodePositions(std::vector<double> &nodePositions) const = 0;
   
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
-  virtual Vec3 getGeometry(node_idx_t dofNo) const = 0;
+  virtual Vec3 getGeometry(node_no_t dofNo) const = 0;
 };
 
 };    // namespace

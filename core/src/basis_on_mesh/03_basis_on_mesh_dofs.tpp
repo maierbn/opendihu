@@ -20,14 +20,14 @@ using namespace StringUtility;
 // element-local dofIndex to global dofNo for 1D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(element_idx_t elementNo, int dofIndex) const
+getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
 }
 
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex)
+getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0,1 2,3
@@ -39,7 +39,7 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
 //! get all dofs of a specific node for 1D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode(); i++)
   {
@@ -50,7 +50,7 @@ getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 // element-local dofIndex to global dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getDofNo(element_idx_t elementNo, int dofIndex) const
+getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
 }
@@ -58,7 +58,7 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
 // element-local dofIndex to global dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex)
+getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
 {
   // L linear  quadratic  H cubic
   //           6 7 8
@@ -85,7 +85,7 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
 //! get all dofs of a specific node for 2D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode(); i++)
   {
@@ -96,7 +96,7 @@ getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 // element-local dofIndex to global dofNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getDofNo(element_idx_t elementNo, int dofIndex) const
+getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
 }
@@ -104,7 +104,7 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
 // element-local dofIndex to global dofNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex)
+getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
 {
   // L linear  quadratic  H cubic
   //           6 7 8
@@ -134,7 +134,7 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
 //! get all dofs of a specific node for 3D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode(); i++)
   {
@@ -145,7 +145,7 @@ getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 // element-local nodeIndex to global nodeNo for 1D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeNo(element_idx_t elementNo, int nodeIndex) const
+getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0 1
@@ -163,7 +163,7 @@ getNodeNo(element_idx_t elementNo, int nodeIndex) const
 // element-local nodeIndex to global nodeNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeNo(element_idx_t elementNo, int nodeIndex) const
+getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // L linear  quadratic  H cubic
   //           6 7 8
@@ -173,7 +173,7 @@ getNodeNo(element_idx_t elementNo, int nodeIndex) const
   // 4         9          4
   
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  const std::array<element_idx_t,2> nElements{this->nElements(0), this->nElements(1)};
+  const std::array<element_no_t,2> nElements{this->nElements(0), this->nElements(1)};
   
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
@@ -190,10 +190,10 @@ getNodeNo(element_idx_t elementNo, int nodeIndex) const
 // element-local nodeIndex to global nodeNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeNo(element_idx_t elementNo, int nodeIndex) const
+getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  const std::array<element_idx_t,3> nElements{this->nElements(0), this->nElements(1), this->nElements(2)};
+  const std::array<element_no_t,3> nElements{this->nElements(0), this->nElements(1), this->nElements(2)};
   
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
@@ -214,7 +214,7 @@ getNodeNo(element_idx_t elementNo, int nodeIndex) const
 
 
 template<int D,typename BasisFunctionType>
-element_idx_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+element_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
 nElements() const
 {
   return this->nElements_;
@@ -289,7 +289,7 @@ parseFromSettings(PyObject *settings)
   {
     struct ElementNode
     {
-      node_idx_t nodeGlobalNo;
+      node_no_t nodeGlobalNo;
       unsigned int versionNo;
     };
     std::vector<ElementNode> nodes;
@@ -336,7 +336,7 @@ parseFromSettings(PyObject *settings)
   this->elementToNodeMapping_->setNumberElements(elements.size());
   
   // loop over elements
-  for (element_idx_t elementGlobalNo = 0; elementGlobalNo < elements.size(); elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < elements.size(); elementGlobalNo++)
   {
     // allocate vector in elementToNodeMapping for nodes of that element
     this->elementToNodeMapping_->getElement(elementGlobalNo).nodeGlobalNo.resize(this->nNodesPerElement());
@@ -362,7 +362,7 @@ parseFromSettings(PyObject *settings)
   exfileRepresentation->setNumberElements(elements.size());
   
   // loop over elements
-  for (element_idx_t elementGlobalNo = 0; elementGlobalNo < elements.size(); elementGlobalNo++)
+  for (element_no_t elementGlobalNo = 0; elementGlobalNo < elements.size(); elementGlobalNo++)
   {
     std::shared_ptr<FieldVariable::ExfileElementRepresentation> &exfileElementRepresentation 
      = exfileRepresentation->getExfileElementRepresentation(elementGlobalNo);
@@ -396,6 +396,8 @@ parseFromSettings(PyObject *settings)
   std::shared_ptr<FieldVariable::NodeToDofMapping> nodeToDofMapping 
     = elementToDofMapping->setup(exfileRepresentation, this->elementToNodeMapping_, this->nDofsPerNode());
   
+  LOG(DEBUG) << "nodeToDofMapping: " << *nodeToDofMapping;
+    
   this->nDofs_ = elementToDofMapping->nDofs();
     
   // setup geometric field variable
@@ -413,10 +415,12 @@ parseFromSettings(PyObject *settings)
   // set values from nodePositions
   
   // loop over nodes
-  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < nodePositions.size(); nodeGlobalNo++)
+  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < nodePositions.size(); nodeGlobalNo++)
   { 
     int nVersions = nodeToDofMapping->nVersions(nodeGlobalNo);
    
+    LOG(DEBUG) << "node " << nodeGlobalNo << ", nVersions: " << nVersions;
+    
     // loop over components
     int componentNo = 0;
     auto &component = this->fieldVariable_["geometry"]->component();
@@ -431,8 +435,11 @@ parseFromSettings(PyObject *settings)
       // set first dof of every version for the particular component (this leaves derivative dofs of Hermite at 0)
       for (int versionNo = 0; versionNo < nVersions; versionNo++)
       {
+        LOG(DEBUG) << "    set version " << versionNo << " at " << this->nDofsPerNode()*versionNo << " to " << positionValue;
         nodeValues[this->nDofsPerNode()*versionNo] = positionValue;
       }
+
+      LOG(DEBUG) << "   component " << iter->first << ", positionValue: " << positionValue << " nodeValues: " <<nodeValues;
       
       // set nodal dof values at node
       iter->second.setNodeValues(nodeGlobalNo, nodeValues.begin());
@@ -521,7 +528,7 @@ remapFieldVariables(PyObject *settings)
 
 template<int D,typename BasisFunctionType>
 int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-getDofNo(element_idx_t elementNo, int dofIndex) const
+getDofNo(element_no_t elementNo, int dofIndex) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
@@ -531,7 +538,7 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
 
 template<int D,typename BasisFunctionType>
 int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-getNodeNo(element_idx_t elementNo, int nodeIndex) const
+getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
 }
@@ -539,7 +546,7 @@ getNodeNo(element_idx_t elementNo, int nodeIndex) const
 //! get all dofs of a specific node, unstructured mesh
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
@@ -566,7 +573,7 @@ eliminateScaleFactors()
 }
 
 template<int D,typename BasisFunctionType>
-dof_idx_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
 nDofs() const
 {
   return nDofs_;

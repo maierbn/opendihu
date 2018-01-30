@@ -26,7 +26,7 @@ public:
   //RegularFixed(PyObject *specificSettings);
   
   //! construct mesh directly from values
-  //RegularFixed(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent);
+  //RegularFixed(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
  
   //! get mesh width of the given coordinate direction
   virtual double meshWidth(int dimension) const = 0;  // defined in field_variable_regular_fixed.tpp

@@ -26,16 +26,16 @@ public:
   };
  
   //! resize internal representation variable to number of elements
-  void setNumberElements(element_idx_t nElements);
+  void setNumberElements(element_no_t nElements);
  
   //! parse a part of the exelem file that describes a single element
   void parseElementFromExelemFile(std::string content);
 
   //! return the node numbers and scale factors of the element
-  Element &getElement(element_idx_t elementNo);
+  Element &getElement(element_no_t elementNo);
   
   //! output a single element to exelem file stream
-  void outputElementExelemFile(std::ostream &file, element_idx_t elementGlobalNo);
+  void outputElementExelemFile(std::ostream &file, element_no_t elementGlobalNo);
   
 private:
  

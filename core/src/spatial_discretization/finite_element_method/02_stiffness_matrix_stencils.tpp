@@ -38,13 +38,13 @@ setStiffnessMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  element_idx_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
   
   double factor = prefactor*1./elementLength;
   
-  dof_idx_t nDegreesOfFreedom = this->data_.mesh()->nNodes();
+  dof_no_t nDegreesOfFreedom = this->data_.mesh()->nNodes();
   
   LOG(DEBUG) << "  Use settings nElements="<<nElements<<", elementLength="<<elementLength;
  
@@ -60,7 +60,7 @@ setStiffnessMatrix()
   const double stencilCenter[3] = {1.0, -2.0, 1.0};
   const double stencilSide[2] = {-1.0, 1.0};
   
-  for (node_idx_t dofNo = 0; dofNo < nDegreesOfFreedom; dofNo++)
+  for (node_no_t dofNo = 0; dofNo < nDegreesOfFreedom; dofNo++)
   {
     // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
    
@@ -93,10 +93,10 @@ setStiffnessMatrix()
   typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings value
-  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  node_idx_t nNodes0 = nElements0 + 1;
-  node_idx_t nNodes1 = nElements1 + 1;
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  node_no_t nNodes0 = nElements0 + 1;
+  node_no_t nNodes1 = nElements1 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   if (fabs(elementLength0-elementLength1) > 1e-15)
@@ -145,7 +145,7 @@ setStiffnessMatrix()
     
   auto dofIndex = [&nNodes0](int x, int y){return y*nNodes0 + x;};
   double value;
-  node_idx_t dofNo;
+  node_no_t dofNo;
  
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
@@ -171,7 +171,7 @@ setStiffnessMatrix()
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = 0;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     
     for (int i=-1; i<=0; i++) // -x
     {
@@ -188,7 +188,7 @@ setStiffnessMatrix()
   for (int y=1; y<nNodes1-1; y++)
   {
     int x = nNodes0-1;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     for (int i=-1; i<=0; i++) // x
     {
       for (int j=-1; j<=1; j++) // y
@@ -204,7 +204,7 @@ setStiffnessMatrix()
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     for (int i=-1; i<=1; i++) // x
     {
       for (int j=-1; j<=0; j++) // -y
@@ -220,7 +220,7 @@ setStiffnessMatrix()
   for (int x=1; x<nNodes0-1; x++)
   {
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y);
+    node_no_t dofNo = dofIndex(x,y);
     for (int i=-1; i<=1; i++) // x
     {
       for (int j=-1; j<=0; j++) // y
@@ -306,12 +306,12 @@ setStiffnessMatrix()
   LOG(TRACE)<<"setStiffnessMatrix 3D for Mesh::RegularFixed";
  
   // get settings values
-  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  element_idx_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
-  node_idx_t nNodes0 = nElements0 + 1;
-  node_idx_t nNodes1 = nElements1 + 1;
-  node_idx_t nNodes2 = nElements2 + 1;
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
+  node_no_t nNodes0 = nElements0 + 1;
+  node_no_t nNodes1 = nElements1 + 1;
+  node_no_t nNodes2 = nElements2 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
@@ -396,7 +396,7 @@ setStiffnessMatrix()
     return z*nNodes0*nNodes1 + y*nNodes0 + x;
   };
   double value;
-  node_idx_t dofNo;
+  node_no_t dofNo;
  
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
@@ -430,7 +430,7 @@ setStiffnessMatrix()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // -x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -452,7 +452,7 @@ setStiffnessMatrix()
     for (int y=1; y<nNodes1-1; y++)
     {
       int x = nNodes0-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=0; i++)    // x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -474,7 +474,7 @@ setStiffnessMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=1; i++)    // x
       {
         for (int j=-1; j<=0; j++)   // -y
@@ -496,7 +496,7 @@ setStiffnessMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int y = nNodes1-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=1; i++)    // x
       {
         for (int j=-1; j<=0; j++)   // y
@@ -518,7 +518,7 @@ setStiffnessMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int z = 0;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=1; i++)    // x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -540,7 +540,7 @@ setStiffnessMatrix()
     for (int x=1; x<nNodes0-1; x++)
     {
       int z = nNodes2-1;
-      node_idx_t dofNo = dofIndex(x,y,z);
+      node_no_t dofNo = dofIndex(x,y,z);
       for (int i=-1; i<=1; i++)    // x
       {
         for (int j=-1; j<=1; j++)   // y
@@ -562,7 +562,7 @@ setStiffnessMatrix()
   {
     int x = 0;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // -x
     {
       for (int j=-1; j<=1; j++)   // y
@@ -582,7 +582,7 @@ setStiffnessMatrix()
   {
     int x = nNodes0-1;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // x
     {
       for (int j=-1; j<=1; j++)   // y
@@ -602,7 +602,7 @@ setStiffnessMatrix()
   {
     int x = 0;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // -x
     {
       for (int j=-1; j<=1; j++)   // y
@@ -622,7 +622,7 @@ setStiffnessMatrix()
   {
     int x = nNodes0-1;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // x
     {
       for (int j=-1; j<=1; j++)   // y
@@ -642,7 +642,7 @@ setStiffnessMatrix()
   {
     int y = 0;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -664,7 +664,7 @@ setStiffnessMatrix()
   {
     int y = nNodes1-1;
     int z = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=1; i++)    // x
     {
       for (int j=-1; j<=0; j++)   // y
@@ -684,7 +684,7 @@ setStiffnessMatrix()
   {
     int y = 0;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -706,7 +706,7 @@ setStiffnessMatrix()
   {
     int y = nNodes1-1;
     int z = nNodes2-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     
     value = 0;
     for (int i=-1; i<=1; i++)    // x
@@ -728,7 +728,7 @@ setStiffnessMatrix()
   {
     int x = 0;
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // -x
     {
       for (int j=-1; j<=0; j++)   // -y
@@ -748,7 +748,7 @@ setStiffnessMatrix()
   {
     int x = 0;
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // -x
     {
       for (int j=-1; j<=0; j++)   // y
@@ -768,7 +768,7 @@ setStiffnessMatrix()
   {
     int x = nNodes0-1;
     int y = 0;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // x
     {
       for (int j=-1; j<=0; j++)   // -y
@@ -788,7 +788,7 @@ setStiffnessMatrix()
   {
     int x = nNodes0-1;
     int y = nNodes1-1;
-    node_idx_t dofNo = dofIndex(x,y,z);
+    node_no_t dofNo = dofIndex(x,y,z);
     for (int i=-1; i<=0; i++)    // x
     {
       for (int j=-1; j<=0; j++)   // y

@@ -11,7 +11,7 @@ namespace BasisOnMesh
 
 template<typename MeshType, typename BasisFunctionType>
 std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
-getElementDofNos(element_idx_t elementNo) const
+getElementDofNos(element_no_t elementNo) const
 {
   std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> dof;
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
@@ -23,7 +23,7 @@ getElementDofNos(element_idx_t elementNo) const
 
 template<typename MeshType, typename BasisFunctionType>
 std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
-getElementNodeNos(element_idx_t elementNo) const
+getElementNodeNos(element_no_t elementNo) const
 {
   std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> nodes;
   for (int nodeIndex = 0; nodeIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement(); nodeIndex++)

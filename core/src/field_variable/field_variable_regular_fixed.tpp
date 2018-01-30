@@ -27,7 +27,7 @@ meshWidth(int dimension) const
 template<int D,typename BasisFunctionType>
 template<int N>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -38,8 +38,8 @@ getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array
   // for geometry field compute information
   const int componentIndex = this->componentIndex_[component];
   
-  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
-  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
  
@@ -76,7 +76,7 @@ getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array
 template<int D,typename BasisFunctionType>
 template<int N, int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -84,8 +84,8 @@ getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nCom
     return;
   }
 
-  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
-  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   // loop over entries in values to be filled
@@ -119,7 +119,7 @@ getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nCom
 template<int D,typename BasisFunctionType>
 template<int N>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getElementValues(std::string component, element_idx_t elementNo, 
+getElementValues(std::string component, element_no_t elementNo, 
                  std::array<double,BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
   if (!this->isGeometryField_)
@@ -145,7 +145,7 @@ getElementValues(std::string component, element_idx_t elementNo,
 template<int D,typename BasisFunctionType>
 template<int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -168,7 +168,7 @@ getElementValues(element_idx_t elementNo, std::array<std::array<double,nComponen
 //! for a specific component, get a single value from global dof no.
 template<int D,typename BasisFunctionType>
 double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValue(std::string component, node_idx_t dofGlobalNo)
+getValue(std::string component, node_no_t dofGlobalNo)
 {
   if (!this->isGeometryField_)
   {
@@ -178,8 +178,8 @@ getValue(std::string component, node_idx_t dofGlobalNo)
   // for geometry field compute information
   const int componentIndex = this->componentIndex_[component];
   
-  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
-  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   double value = 0;
@@ -208,15 +208,15 @@ getValue(std::string component, node_idx_t dofGlobalNo)
 template<int D,typename BasisFunctionType>
 template<int nComponents>
 std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValue(node_idx_t dofGlobalNo)
+getValue(node_no_t dofGlobalNo)
 {
   if (!this->isGeometryField_)
   {
     return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::template getValue<nComponents>(dofGlobalNo);
   }
   
-  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
-  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   int nodeNo = int(dofGlobalNo / nDofsPerNode);
@@ -246,7 +246,7 @@ getValue(node_idx_t dofGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo)
+outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // use the implementation of FieldVariableStructured
   FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
@@ -256,7 +256,7 @@ outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
+outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
   // use the implementation of FieldVariableStructured
   FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
@@ -266,7 +266,7 @@ outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valu
 //! tell if 2 elements have the same exfile representation, i.e. same number of versions
 template<int D, typename BasisFunctionType>
 bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
+haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   // use the implementation of FieldVariableStructured
   return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
@@ -293,7 +293,7 @@ nComponents() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-std::array<element_idx_t, BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 nElementsPerDimension() const
 {
   // use the implementation of FieldVariableStructured
@@ -302,7 +302,7 @@ nElementsPerDimension() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-element_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 nElements() const
 {
   return this->nElements();

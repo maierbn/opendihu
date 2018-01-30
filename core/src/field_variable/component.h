@@ -31,10 +31,10 @@ public:
   void parseElementFromExelemFile(std::string content);
   
   //! assign values of all dofs for a node, valuesBegin is an iterator that can iterate over the needed number of values, the order is given by dofs numbering
-  void setNodeValues(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
+  void setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
   
   //! assign values of all dofs for a node, the values are given by valuesBegin iterator as they appear in the exnode block, valuesBegin points to the beginning of the subblock for the particular component
-  void setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
+  void setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
   
   //! assign the name of the component
   void setName(std::string name, std::string exfileBasisFunctionSpecification="");
@@ -55,35 +55,35 @@ public:
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  dof_idx_t getDofNo(element_idx_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the total number of dofs for this component
-  dof_idx_t nDofs() const;
+  dof_no_t nDofs() const;
   
   //! return the number of elements
-  element_idx_t nElements() const;
+  element_no_t nElements() const;
   
   //! return the exfileBasisFunctionSpecification
   std::string exfileBasisFunctionSpecification() const;
   
   //! get values from their global dof no.s
   template<int N>
-  void getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get the values corresponding to all element-local dofs
-  void getElementValues(element_idx_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
   
   //! get a single value from global dof no.
-  double getValue(node_idx_t dofGlobalNo);
+  double getValue(node_no_t dofGlobalNo);
   
   //! get the number of scale factors for a given node
-  int getNumberScaleFactors(node_idx_t nodeGlobalNo) const;
+  int getNumberScaleFactors(node_no_t nodeGlobalNo) const;
   
   //! write an exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
+  void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo);
   
   //! write an exnode file header to a stream, for a particular node
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
+  void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex);
   
   //! output string representation
   void output(std::ostream &stream) const;
@@ -95,7 +95,7 @@ private:
  
   std::string name_;    ///< identifier of the component, e.g. 'x'
   std::string exfileBasisFunctionSpecification_;   ///< the basis function specification in the exelem file, e.g. c.Hermite*c.Hermite*c.Hermite
-  element_idx_t nElements_;      ///< number of elements
+  element_no_t nElements_;      ///< number of elements
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;   ///< mapping from element-local dof-indices to dof numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;   ///< mapping from nodes to dof numbers
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_; ///< indexing for exelem file

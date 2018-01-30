@@ -74,7 +74,7 @@ config = {
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
     "nodePositions": [[0,0,0], [1,0], [2,0,0], [0,1], [1,1], [2,1], [0,2], [1,2], [2,2]],  # 3x3 nodes, 4 elements
-    "elements": [[[0,0], 1, [3,0], 4], [[1,0], [2,0], [4,0], [5,0]], [[3,0], [4,0], [6,0], [7,0]], [[4,0], [5,0], [7,0], [8,0]]],   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
+    "elements": [[[0,0], 1, [3,0], 4], [[1,0], [2,0], [4,0], [5,0]], [[3,0], [4,1], [6,0], [7,0]], [[4,0], [5,0], [7,0], [8,0]]],   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
     "OutputWriter" : [
       {"format": "Exfile", "interval": 1, "filename": "init_from_config"},
     ]

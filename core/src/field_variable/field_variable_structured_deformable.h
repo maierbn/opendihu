@@ -59,7 +59,7 @@ public:
   std::vector<std::string> componentNames() const;
   
   //! get the number of elements in the coordinate directions
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! get the total number of elements
   element_idx_t nElements() const;

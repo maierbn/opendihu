@@ -60,7 +60,7 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   bool isGeometryField = true;
   Vec values;
   dof_idx_t nDofs = this->nDofs();
-  int nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
+  std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometry_->set("geometry", componentNames, this->nElements_, nEntries, isGeometryField, values);
 }
  

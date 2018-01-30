@@ -48,6 +48,40 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
 }
 
 template<>
+std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defaultValue)
+{
+  if(object == NULL)
+    return defaultValue;
+  
+  if (PyInt_Check(object))
+  {
+    long valueLong = PyInt_AsLong(object);
+    return std::size_t(valueLong);
+  }
+  else if (PyFloat_Check(object))
+  {
+    double valueDouble = PyFloat_AsDouble(object);
+      
+    if (double(std::size_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0 
+    {
+      LOG(WARNING) << "convertFromPython: object is no std::size_t.";
+    }
+    
+    return std::size_t(valueDouble);
+  }
+  else if (PyString_Check(object))
+  {
+    std::string valueString = PyString_AsString(object);
+    return atoi(valueString.c_str());
+  }
+  else
+  {
+    LOG(WARNING) << "convertFromPython: object is no std::size_t.";
+  }
+  return defaultValue;
+}
+
+template<>
 double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
 {
   if(object == NULL)
@@ -104,6 +138,12 @@ template<>
 int PythonUtility::convertFromPython(PyObject *object)
 {
   return convertFromPython<int>(object, 0);
+}
+
+template<>
+std::size_t PythonUtility::convertFromPython(PyObject *object)
+{
+  return convertFromPython<std::size_t>(object, 0);
 }
 
 template<>

@@ -67,7 +67,7 @@ nComponents() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-std::array<int, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+std::array<element_idx_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
 nElementsPerDimension() const
 {
   // use the implementation of FieldVariableStructured

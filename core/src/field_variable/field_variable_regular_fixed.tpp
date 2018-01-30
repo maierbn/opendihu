@@ -27,7 +27,7 @@ meshWidth(int dimension) const
 template<int D,typename BasisFunctionType>
 template<int N>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -76,7 +76,7 @@ getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<doubl
 template<int D,typename BasisFunctionType>
 template<int N, int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
-getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -293,7 +293,7 @@ nComponents() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-std::array<int, BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+std::array<element_idx_t, BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 nElementsPerDimension() const
 {
   // use the implementation of FieldVariableStructured

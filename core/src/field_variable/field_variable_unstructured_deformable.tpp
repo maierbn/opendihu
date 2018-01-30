@@ -496,7 +496,7 @@ values()
 template<int D, typename BasisFunctionType>
 template<int N>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   this->component_[component].getValues(dofGlobalNo, values);
 }
@@ -504,7 +504,7 @@ getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<doubl
 template<int D, typename BasisFunctionType>
 template<int N, int nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<double,nComponents> resultVector;
   

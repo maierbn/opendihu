@@ -77,7 +77,7 @@ componentNames() const
 }
   
 template<typename BasisOnMeshType>
-std::array<int, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
+std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
 nElementsPerDimension() const
 {
   return this->nElements_;
@@ -107,8 +107,8 @@ values()
 
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-set(std::string name, std::vector<std::string> &componentNames, std::array<int, BasisOnMeshType::Mesh::dim()> nElements,
-    int nEntries, bool isGeometryField, Vec &values)
+set(std::string name, std::vector<std::string> &componentNames, std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements,
+    std::size_t nEntries, bool isGeometryField, Vec &values)
 {
   this->name_ = name;
   nElements_ = nElements;
@@ -129,7 +129,7 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<int, 
 template<typename BasisOnMeshType>
 template<int N>
 void FieldVariableStructured<BasisOnMeshType>::
-getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   int componentIndex = this->componentIndex_[component];
  
@@ -147,7 +147,7 @@ getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<doubl
 template<typename BasisOnMeshType>
 template<int N, int nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
-getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<int,N*nComponents> indices;
   std::array<double,N*nComponents> result;

@@ -78,7 +78,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   directory = "build_debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -Wunused-variable -DELPP_FEATURE_CRASH_LOG -Werror')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   

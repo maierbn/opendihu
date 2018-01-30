@@ -46,7 +46,7 @@ applyBoundaryConditions()
  
   LOG(TRACE)<<"applyBoundaryConditions";
  
-  int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
+  dof_idx_t nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
   Vec &rightHandSide = data_.rightHandSide().values();
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
@@ -81,16 +81,17 @@ applyBoundaryConditions()
     LOG(DEBUG) << "  BC node " << boundaryConditionNodeIndex << " value " << boundaryConditionValue;
     
     // get the column number boundaryConditionNodeIndex of the stiffness matrix. It is needed for updating the rhs.
-    std::vector<int> rowIndices(nDegreesOfFreedom);
+    std::vector<int> rowIndices((int)nDegreesOfFreedom);
     std::iota (rowIndices.begin(), rowIndices.end(), 0);    // fill with increasing numbers: 0,1,2,...
-    std::vector<int> columnIndices = {boundaryConditionNodeIndex};
+    std::vector<int> columnIndices = {(int)boundaryConditionNodeIndex};
     
     std::vector<double> coefficients(nDegreesOfFreedom);
     
     ierr = MatGetValues(stiffnessMatrix, nDegreesOfFreedom, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
         
     // set values of row and column of the DOF to zero and diagonal entry to 1
-    ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &boundaryConditionNodeIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
+    int matrixIndex = (int)boundaryConditionNodeIndex;
+    ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &matrixIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
 
     // update rhs
     for (node_idx_t rowNo = 0; rowNo < nDegreesOfFreedom; rowNo++)

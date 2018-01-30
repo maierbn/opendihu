@@ -54,7 +54,7 @@ void ExfileRepresentation::parseElementFromExelemFile(std::string content)
   
   // parse element no
   int elementNo = getNumberAfterString(content, "Element:")-1;
-  if ((int)representation_.size() < elementNo)
+  if ((element_idx_t)representation_.size() < elementNo)
     representation_.resize(elementNo);
   
   VLOG(1) << " assign current representation for element " << elementNo;
@@ -62,7 +62,7 @@ void ExfileRepresentation::parseElementFromExelemFile(std::string content)
   representation_[elementNo] = currentElementRepresentation_;
 }
 
-void ExfileRepresentation::setNumberElements(int nElements)
+void ExfileRepresentation::setNumberElements(element_idx_t nElements)
 {
   representation_.resize(nElements);
 }
@@ -92,16 +92,16 @@ bool ExfileRepresentation::operator==(const ExfileRepresentation& rhs)
   return true;
 }
 
-std::shared_ptr<ExfileElementRepresentation> &ExfileRepresentation::getExfileElementRepresentation(int elementNo)
+std::shared_ptr<ExfileElementRepresentation> &ExfileRepresentation::getExfileElementRepresentation(element_idx_t elementNo)
 {
-  assert(elementNo < (int)representation_.size());
+  assert(elementNo < (element_idx_t)representation_.size());
   return representation_[elementNo];
 }
 
 bool ExfileRepresentation::haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
 {
-  assert(element1 < (int)representation_.size());
-  assert(element2 < (int)representation_.size());
+  assert(element1 < (element_idx_t)representation_.size());
+  assert(element2 < (element_idx_t)representation_.size());
   return representation_[element1] == representation_[element2];
 }
 

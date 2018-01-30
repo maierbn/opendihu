@@ -17,7 +17,7 @@ template<int D>
 Structured<D>::Structured(PyObject *specificSettings) : MeshD<D>(specificSettings)
 {
   // get settings values nElements_
-  this->nElements_ = PythonUtility::getOptionArray<int, D>(specificSettings, "nElements", 10, PythonUtility::NonNegative);
+  this->nElements_ = PythonUtility::getOptionArray<element_idx_t, D>(specificSettings, "nElements", 10, PythonUtility::NonNegative);
 } 
   
 template<int D>

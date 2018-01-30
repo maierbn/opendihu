@@ -39,11 +39,11 @@ public:
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
-  void getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get values from their global dof no.s for all components
   template<int N, int nComponents>
-  void getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values);
+  void getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values);
     
   //! for a specific component, get the values corresponding to all element-local dofs
   template<int N>
@@ -76,7 +76,7 @@ public:
   int nComponents() const;
   
   //! get the number of elements in the coordinate directions
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! get the total number of elements
   element_idx_t nElements() const;

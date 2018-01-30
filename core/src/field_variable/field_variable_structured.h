@@ -40,15 +40,15 @@ public:
   std::vector<std::string> componentNames() const;
   
   //! get the number of elements
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
-  void getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::string component, std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get values from their global dof no.s for all components
   template<int N, int nComponents>
-  void getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+  void getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
   {
     std::array<int,N*nComponents> indices;
     std::array<double,N*nComponents> result;
@@ -127,8 +127,8 @@ public:
   Vec &values();
   
   //! set all the data fields as well as the internal values PETSc vector
-  void set(std::string name, std::vector<std::string> &componentNames, std::array<int, BasisOnMeshType::Mesh::dim()> nElements,
-           int nEntries, bool isGeometryField, Vec &values);
+  void set(std::string name, std::vector<std::string> &componentNames, std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements,
+           std::size_t nEntries, bool isGeometryField, Vec &values);
   
 protected:
  
@@ -138,7 +138,7 @@ protected:
   //! get the number of dofs, i.e. the number of entries per component
   dof_idx_t nDofs() const;
   
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
+  std::array<element_idx_t, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components

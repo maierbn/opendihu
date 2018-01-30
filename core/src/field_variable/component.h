@@ -68,7 +68,7 @@ public:
   
   //! get values from their global dof no.s
   template<int N>
-  void getValues(std::array<int,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::array<dof_idx_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get the values corresponding to all element-local dofs
   void getElementValues(element_idx_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);

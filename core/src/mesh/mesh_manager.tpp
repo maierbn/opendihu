@@ -46,7 +46,9 @@ std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<anonymousName.str()<<"\".";
   std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(settings);
+  LOG(DEBUG) << "1";
   mesh->initialize();
+  LOG(DEBUG) << "2";
   meshes_[anonymousName.str()] = mesh;
   
   VLOG(1) << "mesh nNodes: " << mesh->nNodes();

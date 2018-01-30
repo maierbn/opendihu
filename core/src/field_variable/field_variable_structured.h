@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <array>
 #include <map>
@@ -35,8 +36,11 @@ public:
   //! get the number of components
   int nComponents() const;
   
+  //! get the names of the components
+  std::vector<std::string> componentNames() const;
+  
   //! get the number of elements
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElements() const;
+  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
@@ -110,11 +114,11 @@ public:
   template<int nComponents>
   std::array<double,nComponents> getValue(node_idx_t dofGlobalNo);
 
-  //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
+  //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header
+  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo=-1);
 
-  //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
+  //! write a exelem file header to a stream, for a particular node
+  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2);
@@ -134,7 +138,6 @@ protected:
   //! get the number of dofs, i.e. the number of entries per component
   int nDofs() const;
   
-  std::string name_;     ///< name of the field variable
   std::array<int, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)

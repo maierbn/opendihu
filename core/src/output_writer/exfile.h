@@ -1,10 +1,12 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <vector>
 
 #include "control/types.h"
 #include "output_writer/generic.h"
+#include "output_writer/exfile_writer.h"
 
 namespace OutputWriter
 {   

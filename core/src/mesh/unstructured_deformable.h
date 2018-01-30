@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>
 #include <vector>
 #include <petscmat.h>
 

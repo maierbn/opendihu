@@ -1,8 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <array>
-
-#include <Python.h>
 
 #include "control/types.h"
 #include "mesh/mesh.h"

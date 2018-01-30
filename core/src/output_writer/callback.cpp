@@ -1,9 +1,9 @@
 #include "output_writer/callback.h"
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 
 #include "easylogging++.h"
-#include <Python.h>
 
 #include <utility/python_utility.h>
 #include <utility/petsc_utility.h>

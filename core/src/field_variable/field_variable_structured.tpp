@@ -23,7 +23,7 @@ void FieldVariableStructured<BasisOnMeshType>::
 initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   this->name_ = name;
-  this->nElements_ = fieldVariable.nElements();
+  this->nElements_ = fieldVariable.nElementsPerDimension();
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
   
@@ -64,8 +64,21 @@ nComponents() const
 }
 
 template<typename BasisOnMeshType>
+std::vector<std::string> FieldVariableStructured<BasisOnMeshType>::
+componentNames() const
+{
+  std::vector<std::string> result;
+  result.reserve(this->nComponents_);
+  for (auto componentIndex : this->componentIndex_)
+  {   
+    result.push_back(componentIndex.first);
+  }
+  return result;
+}
+  
+template<typename BasisOnMeshType>
 std::array<int, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
-nElements() const
+nElementsPerDimension() const
 {
   return this->nElements_;
 }
@@ -97,7 +110,7 @@ void FieldVariableStructured<BasisOnMeshType>::
 set(std::string name, std::vector<std::string> &componentNames, std::array<int, BasisOnMeshType::Mesh::dim()> nElements,
     int nEntries, bool isGeometryField, Vec &values)
 {
-  name_ = name;
+  this->name_ = name;
   nElements_ = nElements;
   isGeometryField_ = isGeometryField;
   
@@ -252,7 +265,7 @@ getValue(node_idx_t dofGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo)
+outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo)
 {
   assert(0); // not implemented
 }
@@ -260,7 +273,7 @@ outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo)
 //! write a exelem file header to a stream, for a particular element
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex)
+outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
   assert(0); // not implemented
 }

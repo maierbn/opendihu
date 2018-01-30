@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include "control/types.h"
 
 namespace BasisOnMesh

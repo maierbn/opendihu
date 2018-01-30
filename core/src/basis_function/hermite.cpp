@@ -3,16 +3,6 @@
 namespace BasisFunction
 {
 
-constexpr int Hermite::nDofsPerNode()
-{
-  return 2;
-}
-
-constexpr int Hermite::nDofsPerBasis()
-{
-  return 4;
-}
-
 double Hermite::dphi_dxi(int i, double xi)
 {
   if (i==0)

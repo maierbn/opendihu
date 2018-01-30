@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <map>
-#include <Python.h>
 
 #include "control/dihu_context.h"
 #include "basis_on_mesh/05_basis_on_mesh.h"

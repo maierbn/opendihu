@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 #include <control/types.h>
 
 namespace Mesh

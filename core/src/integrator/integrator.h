@@ -15,6 +15,8 @@ public:
  */
 class None
 {
+public:
+  static constexpr int numberEvaluations(){return 0;}
 };
 
 };

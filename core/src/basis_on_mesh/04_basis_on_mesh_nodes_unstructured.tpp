@@ -16,14 +16,7 @@ nNodes() const
   // assert that geometry field variable is set
   assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
   
-  return this->fieldVariable_["geometry"]->nNodes();
-}
-
-template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-nDofs() const
-{
-  return nNodes() * this->nDofsPerNode();
+  return this->fieldVariable_.at("geometry")->nNodes();
 }
 
 template<int D,typename BasisFunctionType>
@@ -33,7 +26,7 @@ getGeometry(node_idx_t dofGlobalNo) const
   // assert that geometry field variable is set
   assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
   
-  Vec3 result = this->fieldVariable_["geometry"]->getValue<3>(dofGlobalNo);
+  Vec3 result = this->fieldVariable_.at("geometry")->template getValue<3>(dofGlobalNo);
   return result;
 }  
   
@@ -46,7 +39,7 @@ getElementGeometry(element_idx_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<
   assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
   
   const int nDofsPerElement = BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement();
-  this->fieldVariable_["geometry"]->getElementValues<nDofsPerElement,3>(elementNo, values);
+  this->fieldVariable_.at("geometry")->template getElementValues<nDofsPerElement,3>(elementNo, values);
 }
 
 //! create a non-geometry field field variable with no values being set, with given component names
@@ -57,7 +50,7 @@ geometryField()
   // assert that geometry field variable is set
   assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
   
-  return this->fieldVariable_["geometry"];
+  return *this->fieldVariable_["geometry"];
 }
 
 template<int D,typename BasisFunctionType>
@@ -71,8 +64,8 @@ getNodePositions(std::vector<double> &nodes) const
  
   for (int nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
-    int nodeFirstDofGlobalNo = this->fieldVariable_["geometry"].elementToDofMapping().getNodeDofs(nodeGlobalNo)[0];
-    Vec3 position = this->fieldVariable_["geometry"].getValue(nodeFirstDofGlobalNo);
+    int nodeFirstDofGlobalNo = this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];
+    Vec3 position = this->fieldVariable_.at("geometry")->template getValue<3>(nodeFirstDofGlobalNo);
     int index = nodeGlobalNo*3;
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];

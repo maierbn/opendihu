@@ -63,13 +63,13 @@ void Python::writeSolutionDim(DataType &data)
     
     // get data of solution vector
     std::vector<double> vectorValues;
-    PetscUtility::getVectorEntries(data.solution(), vectorValues);
+    PetscUtility::getVectorEntries(data.solution().values(), vectorValues);
     
     // determine number of entries in each dimension
     std::vector<long int> nEntries(dimension);
     for (int i=0; i<dimension; i++)
     {
-      nEntries[i] = (mesh->nElements(i) + 1) * data.nDegreesOfFreedomPerNode();
+      nEntries[i] = (mesh->nElements(i) + 1) * data.nComponentsPerNode();
     }
     std::vector<long int> singleEntry({(long)vectorValues.size()});
     
@@ -105,7 +105,7 @@ void Python::writeRhsMatrix(DataType &data)
     
     // get data of rhs vector
     int vectorSize = 0;
-    VecGetSize(data.rightHandSide(), &vectorSize);
+    VecGetSize(data.rightHandSide().values(), &vectorSize);
 
     std::vector<int> indices(vectorSize);
     std::iota(indices.begin(), indices.end(), 0);
@@ -119,7 +119,7 @@ void Python::writeRhsMatrix(DataType &data)
     }
     std::vector<long int> singleEntry({(long)vectorValues.size()});
     
-    VecGetValues(data.rightHandSide(), vectorSize, indices.data(), vectorValues.data());
+    VecGetValues(data.rightHandSide().values(), vectorSize, indices.data(), vectorValues.data());
     
     // write as numpy file
     writeToNumpyFile(vectorValues, filenameRhs, 1, singleEntry);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <petscmat.h>
 #include <memory>
 
@@ -48,11 +49,17 @@ public:
   //! return a reference to the discretization matrix
   Mat &discretizationMatrix();
   
+  //! get pointers to all field variables that can be written by output writers
+  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables();
+  
 private:
  
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
  
+  //! get maximum number of expected non-zeros in stiffness matrix
+  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
+
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement

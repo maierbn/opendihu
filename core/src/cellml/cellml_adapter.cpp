@@ -1,8 +1,8 @@
 #include "cellml/cellml_adapter.h"
 
-#include <list>
+#include <Python.h>  // has to be the first included header
 
-#include <Python.h>
+#include <list>
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"

@@ -32,14 +32,13 @@ preset_variables = {'LAPACK_DIR': os.path.join(Dir('.').srcnode().abspath, '../d
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
 variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
 variables.update(preset_variables)  # merge in preset_variables dictionary
-vars = Variables('user-variables.scons.py', variables)
+vars = Variables(['../user-variables.scons.py','user-variables.scons.py'], variables)
 
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
                       '(Shortcuts: ''d'',''r'')', 'release', allowed_values=('debug', 'release'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release'}))
-
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -47,6 +46,7 @@ sconsconfig.add_options(vars)
 # initialize environment object containing build system settings such as compilers and flags
 # command line options are considered
 env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = vars, ENV = os.environ)
+
 
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()

@@ -67,7 +67,11 @@ DihuContext::DihuContext(int argc, char *argv[]) :
       s << f.rdbuf();
       std::remove("tmp");
       
-      const char *pythonSearchPath = s.str().c_str();
+      std::string pythonHome = s.str();
+      if (pythonHome.empty())
+        pythonHome = "/usr";
+      
+      const char *pythonSearchPath = pythonHome.c_str();
       LOG(DEBUG) << "Set python search path to \""<<pythonSearchPath<<"\".";
       
       Py_SetPythonHome((char *)pythonSearchPath);
@@ -267,7 +271,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
   conf.set(el::Level::Trace, el::ConfigurationType::Format, "TRACE: %msg");
-  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_GRAY "VERB%vlevel: %msg" ANSI_COLOR_RESET);
+  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format, 
            "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
   

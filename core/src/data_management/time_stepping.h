@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <petscmat.h>
 #include <memory>
 
@@ -32,6 +33,9 @@ public:
  
   //! print all stored data to stdout
   void print();
+  
+  //! get pointers to all field variables that can be written by output writers
+  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables();
   
 private:
  

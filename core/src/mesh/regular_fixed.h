@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <array>
 
 #include "mesh/mesh.h"
@@ -28,7 +29,7 @@ public:
   //RegularFixed(std::array<element_idx_t, D> nElements, std::array<double, D> physicalExtent);
  
   //! get mesh width of the given coordinate direction
-  //double meshWidth(int dimension) const;
+  virtual double meshWidth(int dimension) const = 0;  // defined in field_variable_regular_fixed.tpp
   
 private:
  

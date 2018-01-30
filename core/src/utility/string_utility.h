@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <string>
 #include <vector>
 
@@ -17,5 +18,12 @@ void trim(std::string &str);
 
 //! output the values separated by spaces, after nValuesPerRow there will be a line break
 void outputValuesBlock(std::ostream &stream, const std::vector<double> &values, int nValuesPerRow);
+
+//! replace from by to
+std::string replace(std::string str, const std::string& from, const std::string& to);
+
+//! for N=1 output <str>, for N=2 output <str>*<str>, for N=3 output <str>*<str>*<str>
+template<int N>
+std::string multiply(std::string str);
 
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <array>
 #include <map>
@@ -45,17 +46,26 @@ public:
   //! get the number of nodes
   int nNodes() const;
   
+  //! get the names of the components
+  std::vector<std::string> componentNames() const;
+  
   //! get the exfile representation object
   std::shared_ptr<ExfileRepresentation> exfileRepresentation() const;
   
   //! get the element to dof mapping object
-  std::shared_ptr<ElementToDofMapping> elementToDofMapping() const;  
+  std::shared_ptr<ElementToDofMapping> elementToDofMapping() const;
+  
+  //! get the element to dof mapping object
+  std::shared_ptr<ElementToNodeMapping> elementToNodeMapping() const;  
+  
+  //! get the node to dof mapping object
+  std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const;
   
   //! get the internal values vector
   Vec &values();
   
   //! get the number of scale factors
-  int getNumberScaleFactors() const;
+  int getNumberScaleFactors(element_idx_t globalElementNo) const;
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
@@ -123,17 +133,16 @@ public:
   std::array<double,nComponents> getValue(node_idx_t dofGlobalNo);
 
   //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
+  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo=-1);
   
-  //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
+  //! write a exelem file header to a stream, for a particular node
+  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
   
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2);
   
   friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>;
   
-protected:
   //! resize internal representation variable to number of elements
   void setNumberElements(element_idx_t nElements);
   
@@ -146,17 +155,8 @@ protected:
   //! read in values frorm exnode file
   void parseFromExnodeFile(std::string content);
   
-  //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
-  
-  //! return the component
-  Component<BasisOnMeshType> &component(std::string key) const; 
-  
-  //! return the map of components
-  std::map<std::string, Component<BasisOnMeshType>> &component() const;
-  
   //! reduce memory consumption by removing duplicates in ExfileRepresentations
-  void unifyMappings(::FieldVariable::ElementToNodeMapping &elementToNodeMapping, const int nDofsPerNode);
+  void unifyMappings(std::shared_ptr<::FieldVariable::ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode);
   
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
   void unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &fieldVariable);
@@ -164,28 +164,50 @@ protected:
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   void initializeValuesVector();
   
+  //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
+  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  
+  //! return the component
+  Component<BasisOnMeshType> &component(std::string key); 
+  
+  //! return the map of components
+  std::map<std::string, Component<BasisOnMeshType>> &component();
+  
   //! get the number of entries of the internal values_ Vector
   int nEntries() const;
   
   //! get the number of dofs, i.e. the number of entries per component
   int nDofs() const;
   
-private:
+  //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
+  void eliminateScaleFactors();
+  
+  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
+  bool isGeometryField();
+  
+  //! output string representation to stream for debugging
+  void output(std::ostream &stream) const;
+  
+protected:
  
   //! create the element to dof mapping at each component
-  void createElementToDofMapping(::FieldVariable::ElementToNodeMapping &elementToNodeMapping, const int nDofsPerNode);
+  void createElementToDofMapping(std::shared_ptr<::FieldVariable::ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode);
   
   int exfileNo_;    ///< number of the fieldvariable in exelem file (index starts at 1)
-  std::string name_;     ///< name of the field variable
   int nEntries_;       ///< number of entries
   int nElements_;    ///< number of elements
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, Component<BasisOnMeshType>> component_;    ///< one or multiple components of which this field variable consists of, with their name as key (e.g. 'x','y','z')
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components
+  std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      ///< mapping from element-local node indices to global node numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       ///< the node to dof mapping of all components, this is the same for all components
   std::shared_ptr<Vec> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
+
+// output operator
+template<int D, typename BasisFunctionType>
+std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &rhs);
 
 };  // namespace
 

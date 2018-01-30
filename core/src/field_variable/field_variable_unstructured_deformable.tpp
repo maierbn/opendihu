@@ -4,6 +4,7 @@
 #include "utility/string_utility.h"
 #include <map>
 #include <fstream>
+#include <iomanip>
 
 namespace FieldVariable
 {
@@ -24,6 +25,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 parseHeaderFromExelemFile(std::string content)
 {
+  VLOG(2) << "parseHeaderFromExelemFile(" << content << ")";
   bool newComponentStarts = false;
   int nComponents = 0;
   int componentNo = 0;
@@ -33,12 +35,12 @@ parseHeaderFromExelemFile(std::string content)
   std::string componentContent = "";
   
   // loop over content line-wise
-  int pos = 0;
+  unsigned int pos = 0;
   while(pos < content.size())
   {
     // extract next line
-    int posNewline = content.find("\n",pos);
-    std::string line = content.substr(pos, posNewline);
+    unsigned int posNewline = content.find("\n",pos);
+    std::string line = content.substr(pos, posNewline-pos);
     if (posNewline == std::string::npos)
       pos = content.size();
     else
@@ -52,11 +54,14 @@ parseHeaderFromExelemFile(std::string content)
       trim(no);
       exfileNo_ = atoi(no.c_str());
       
-      name_ = extractUntil(line, ",");
+      this->name_ = extractUntil(line, ",");
+      trim(this->name_);
       std::string type = extractUntil(line, ",");
       isGeometryField_ = type.find("coordinate") != std::string::npos;
-      nComponents = getNumberAfterString(line, "#Component<BasisOnMeshType>s=");
+      nComponents = getNumberAfterString(line, "#Components=");
       newComponentStarts = true;
+      VLOG(2) << "nComponents: " << nComponents;
+      
       componentNo = 0;
       continue;
     }
@@ -67,8 +72,11 @@ parseHeaderFromExelemFile(std::string content)
       // finish previous component
       if (componentNo != 0)
       {
-        component_[componentName].initialize(values_, nComponents, componentNo, nElements_);
-        component_[componentName].parseFromExelemFile(componentContent);
+       
+        VLOG(2) << "finish previous component, parse header";
+       
+        component_[componentName].initialize(nullptr, nComponents, componentNo-1, nElements_);
+        component_[componentName].parseHeaderFromExelemFile(componentContent);
         componentContent = "";
       }
       componentNo++;
@@ -84,6 +92,7 @@ parseHeaderFromExelemFile(std::string content)
     {
       componentContent += line+"\n";
       int nNodes = getNumberAfterString(line, "#Nodes=");
+      VLOG(2) << "nNodes: " << nNodes;
       nLinesOfNodesFollow = nNodes*3;
       continue;
     }
@@ -99,6 +108,15 @@ parseHeaderFromExelemFile(std::string content)
       }
     }
   }
+  
+  // finish previous component
+  if (componentNo != 0)
+  {
+    VLOG(2) << "finish previous component, parse header";
+   
+    component_[componentName].initialize(nullptr, nComponents, componentNo-1, nElements_);
+    component_[componentName].parseHeaderFromExelemFile(componentContent);
+  }
 }
 
 template<int D, typename BasisFunctionType>
@@ -107,7 +125,7 @@ parseElementFromExelemFile(std::string content)
 {
   for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
   {
-    Component<BasisOnMeshType> &component = (*iter)->second;
+    Component<BasisOnMeshType> &component = iter->second;
     component.parseElementFromExelemFile(content);
   }
 }
@@ -128,31 +146,42 @@ nElements() const
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-unifyMappings(ElementToNodeMapping &elementToNodeMapping, const int nDofsPerNode)
+unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode)
 {
+ 
+  VLOG(1) << "unifyMappings 1 with " << component_.size() << " components";
+ 
   // unify exfileRepresentation object
   // check if exfileRepresentation is equal for all components
   typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin();
   if (iter != component_.end())
   { 
-    Component<BasisOnMeshType> &firstComponent = (*iter)->second;
-    std::string firstComponentKey = (*iter)->first;
+    VLOG(1) << " component " << iter->first;
+   
+    Component<BasisOnMeshType> &firstComponent = iter->second;
+    std::string firstComponentKey = iter->first;
     
+    // extract exfile representation from first component
     this->exfileRepresentation_ = firstComponent.exfileRepresentation();
+    assert(this->exfileRepresentation_);
     
     // loop over further component after the first component
     iter++;
     for (; iter != component_.end(); iter++)
     {
-      Component<BasisOnMeshType> &component = (*iter)->second;
+      VLOG(1) << " component " << iter->first;
+      Component<BasisOnMeshType> &component = iter->second;
+    
+      assert(component.exfileRepresentation());
       
       if (*this->exfileRepresentation_ == *component.exfileRepresentation())
       {
+        VLOG(1) << " set new exfile representation";
         component.setExfileRepresentation(this->exfileRepresentation_);
       }
       else 
       {
-        LOG(ERROR) << "The components \"" << firstComponentKey << "\" and \"" << (*iter)->first 
+        LOG(ERROR) << "The components \"" << firstComponentKey << "\" and \"" << iter->first 
           << "\" of field variable \"" << this->name_ << "\" have different exfile representations.";
       }
     }
@@ -165,24 +194,38 @@ template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &fieldVariable)
 {
+  VLOG(1) << "unifyMappings 2";
   // loop over own components
   for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
   {
-    Component<BasisOnMeshType> &component = (*iter)->second;
+    Component<BasisOnMeshType> &component = iter->second;
+    VLOG(1) << "first: " << iter->first;
     
     // loop over components of the other fieldVariable
     for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
     {
-      Component<BasisOnMeshType> &component2 = (*iter2)->second;
+      Component<BasisOnMeshType> &component2 = iter2->second;
+      VLOG(1) << "second: " << iter2->first;
       
-      if (component.exfileRepresentation() == component2.exfileRepresentation())
+      // assert that pointers are not null
+      assert (component.exfileRepresentation());
+      assert (component2.exfileRepresentation());
+      assert (component.elementToDofMapping());
+      assert (component2.elementToDofMapping());
+      
+      if (*component.exfileRepresentation() == *component2.exfileRepresentation())
       {
+        VLOG(1) << "set exfile rep for " << iter2->first << " to be the same as for " << iter->first;
         component2.setExfileRepresentation(component.exfileRepresentation());
       }
-      if (component.elementToDofMapping() == component2.elementToDofMapping())
+      else VLOG(1) << "exfileRepresentation is different";
+      
+      if (*component.elementToDofMapping() == *component2.elementToDofMapping())
       {
-        component2.setElementToDofMapping(component.elementToDofMapping());
+        VLOG(1) << "set elementToDof and nodeToDofMapping for " << iter2->first << " to be the same as for " << iter->first;
+        component2.setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
       }
+      else VLOG(1) << "elementToDofMapping is different";
     }
   }
   
@@ -190,8 +233,13 @@ unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformabl
   
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-createElementToDofMapping(ElementToNodeMapping &elementToNodeMapping, const int nDofsPerNode)
+createElementToDofMapping(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode)
 {
+  if (!this->elementToDofMapping_)
+    this->elementToDofMapping_ = std::make_shared<ElementToDofMapping>();
+ 
+  // set number of elements in element to dof mapping
+  this->elementToDofMapping_->setNumberElements(this->nElements_);
   
   // create the element to dof mapping from exfileRepresentation and element to node mapping
   this->nodeToDofMapping_ = this->elementToDofMapping_->setup(this->exfileRepresentation_, elementToNodeMapping, nDofsPerNode);
@@ -199,21 +247,23 @@ createElementToDofMapping(ElementToNodeMapping &elementToNodeMapping, const int 
   // set the element to dof and node to dof mapping at each component
   for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
   {
-    Component<BasisOnMeshType> &component = (*iter)->second;
+    Component<BasisOnMeshType> &component = iter->second;
     component.setDofMappings(this->elementToDofMapping_, this->nodeToDofMapping_);
   }
+  elementToNodeMapping_ = elementToNodeMapping;
 }
   
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 parseFromExnodeFile(std::string content)
 {
-  int nFields = 0;
+  //int nFields;
   int fieldNo = 0;
   std::stringstream nextFieldNo;
   std::map<std::string, int> componentDataBlockStartIndex;
-  std::vector<double> values;
+  std::vector<double> blockValues;
   int nodeNo = 0;
+  int previousNodeNo = 0;
   
   enum {
     nothing,
@@ -223,16 +273,18 @@ parseFromExnodeFile(std::string content)
   } lineType = nothing;
   
   // loop over file content line-wise
-  int pos = 0;
+  unsigned int pos = 0;
   while(pos < content.size())
   {
     // extract next line
-    int posNewline = content.find("\n",pos);
-    std::string line = content.substr(pos, posNewline);
+    unsigned int posNewline = content.find("\n",pos);
+    std::string line = content.substr(pos, posNewline-pos);
     if (posNewline == std::string::npos)
       pos = content.size();
     else
       pos = posNewline+1;
+    
+    VLOG(2) << "[" << StringUtility::replace(line, "\r", "") << "]";
     
     bool finishPreviousNodeDataBlock = false;
     
@@ -243,38 +295,69 @@ parseFromExnodeFile(std::string content)
       if (lineType == valuesFollow)
       {
         // finish previous node
+        previousNodeNo = nodeNo;
         finishPreviousNodeDataBlock = true;
       }
       
-      // parse number of fields in current field description block
-      nFields = getNumberAfterString(line, "#Fields=");
+      // parse number of fields in current field description block, not used
+      //nFields = getNumberAfterString(line, "#Fields=");
       
       // prepare string to look for for next field description
       fieldNo = 0;
       nextFieldNo.str("");
-      nextFieldNo << fieldNo+1 << ")";
+      nextFieldNo << fieldNo+1 << ") ";
+      
+      VLOG(2) << "search for [" << nextFieldNo.str() << "]";
       lineType = fieldsFollow;
     }
     
     // line with field, e.g. "1) coordinates, coordinate, rectangular cartesian, #Component<BasisOnMeshType>s=3"
-    if (line.find(nextFieldNo.str()) != std::string::npos)
+    else if ((lineType == fieldsFollow || lineType == componentsFollow)
+      && line.find(nextFieldNo.str()) != std::string::npos)
     {
       // extract name of field
       extractUntil(line, ")");
       std::string name = extractUntil(line, ",");
       trim(name);
       
+      VLOG(2) << "field \"" << name << "\".";
+      
       // consider it if it matches the own name
-      if (name == name_)
+      if (name == this->name_)
       {
         lineType = componentsFollow;
+        VLOG(2) << "matches own name, parse components";
+      }
+      else 
+      {
+        lineType = fieldsFollow;
       }
       
       // prepare string to search for for the next field
       fieldNo++;
       nextFieldNo.str("");
-      nextFieldNo << fieldNo+1 << ")";
+      nextFieldNo << fieldNo+1 << ") ";
+      VLOG(2) << "search for [" << nextFieldNo.str() << "]";
       continue;
+    }
+    
+    // line with beginning of node, e.g. "Node: 73"
+    if (line.find("Node:") != std::string::npos)
+    {
+      previousNodeNo = nodeNo;
+      nodeNo = getNumberAfterString(line, "Node:")-1;
+      VLOG(2) << "  node " << nodeNo;
+      
+      if (lineType == valuesFollow)
+      {
+        // finish previous node
+        finishPreviousNodeDataBlock = true;
+      }
+      else 
+      {
+        lineType = valuesFollow;
+        continue;
+      }
     }
     
     // line with component, e.g. "x.  Value index=1, #Derivatives=7 (d/ds1,d/ds2,d2/ds1ds2,d/ds3,d2/ds1ds3,d2/ds2ds3,d3/ds1ds2ds3), #Versions=2"
@@ -285,54 +368,53 @@ parseFromExnodeFile(std::string content)
       
       if (component_.find(componentName) == component_.end())
       {
-        LOG(WARNING) << "Component \"" << componentName << "\" of field variable \"" << name_ << "\" in exnode file is not present in exelem file.";
+        LOG(WARNING) << "Component \"" << componentName << "\" of field variable \"" << this->name_ << "\" in exnode file is not present in exelem file.";
       }
       else
       {
-        componentDataBlockStartIndex[componentName] = getNumberAfterString(line, "index=");
+        componentDataBlockStartIndex[componentName] = getNumberAfterString(line, "index=") - 1;
+        VLOG(2) << "component name " << componentName << " index=" << componentDataBlockStartIndex[componentName];
       }
-    }
-    
-    // line with beginning of node, e.g. "Node: 73"
-    if (line.find("Node:") != std::string::npos)
-    {
-      nodeNo = getNumberAfterString(line, "Node:");
-      if (lineType == valuesFollow)
-      {
-        // finish previous node
-        finishPreviousNodeDataBlock = true;
-      }
-      
-      lineType = valuesFollow;
     }
       
     // if a node values block ended prior to the current line, store the collected values for the component
     if (finishPreviousNodeDataBlock)
     {
+      VLOG(2) << "finishPreviousNodeDataBlock";
       // loop over components of current field variable
       for (auto &pair : componentDataBlockStartIndex)
       {
-        // get data block index of component
         std::string componentName = pair.first;
-        int index = pair.second;
+        int subBlockStartIndex = pair.second;
+        
+        VLOG(2) << "  componentName=[" << componentName<<"], subBlockStartIndex=" << subBlockStartIndex 
+          << " n values: " << blockValues.size() << " previousNodeNo=" << previousNodeNo;
         
         // store data at component
-        component_[componentName].setValues(nodeNo, values.begin()+index);
+        component_[componentName].setNodeValuesFromBlock(previousNodeNo, blockValues.begin()+subBlockStartIndex);
       }
       // clear temporary data vector
-      values.clear();
+      blockValues.clear();
+      continue;
     }
     
     // values 
     if (lineType == valuesFollow)
     {
+      VLOG(2) << "valuesFollow";
       trim(line);
       while(!line.empty())
       {
-        values.push_back(atof(line.c_str()));
-        extractUntil(line, " ");
-        trim(line);
+        blockValues.push_back(atof(line.c_str()));
+        // proceed to next number
+        if (line.find(" ") != std::string::npos)
+        {
+          extractUntil(line, " ");
+          trim(line);
+        }
+        else break;
       }
+      VLOG(2) << "extract values block " << blockValues;
     }
   }   // while
   
@@ -344,13 +426,13 @@ parseFromExnodeFile(std::string content)
     {
       // get data block index of component
       std::string componentName = pair.first;
-      int index = pair.second;
+      int subBlockStartIndex = pair.second;
       
       // store data at component
-      component_[componentName].setValues(nodeNo, values.begin()+index);
+      component_[componentName].setNodeValuesFromBlock(nodeNo, blockValues.begin()+subBlockStartIndex);
     }
     // clear temporary data vector
-    values.clear();
+    blockValues.clear();
   }
 }
 
@@ -363,14 +445,14 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
 
 template<int D, typename BasisFunctionType>
 Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-component(std::string key) const
+component(std::string key)
 {
   return this->component_[key]; 
 }
   
 template<int D, typename BasisFunctionType>
 std::map<std::string, Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>> &FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-component() const
+component()
 {
   return this->component_; 
 }
@@ -387,6 +469,20 @@ std::shared_ptr<ElementToDofMapping> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh
 elementToDofMapping() const
 {
   return this->elementToDofMapping_; 
+}
+
+template<int D, typename BasisFunctionType>
+std::shared_ptr<ElementToNodeMapping> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+elementToNodeMapping() const
+{
+  return this->elementToNodeMapping_; 
+}
+
+template<int D, typename BasisFunctionType>
+std::shared_ptr<NodeToDofMapping> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+nodeToDofMapping() const
+{
+  return this->nodeToDofMapping_;
 }
 
 template<int D, typename BasisFunctionType>
@@ -470,6 +566,7 @@ template<int D, typename BasisFunctionType>
 double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 getValue(std::string component, node_idx_t dofGlobalNo)
 {
+  assert(this->component_.find(component) != this->component_.end());
   return this->component_[component].getValue(dofGlobalNo); 
 }
 
@@ -504,8 +601,10 @@ initializeValuesVector()
   // loop over components
   for (auto &component : this->component_)
   {
-    this->nEntries_ += component.second->nDofs();
+    this->nEntries_ += component.second.nDofs();
+    VLOG(1) << "  component " << component.first << " has " << component.second.nDofs() << " dofs";
   }
+  VLOG(1) << "total entries: " << this->nEntries_;
   
   // create vector
   this->values_ = std::make_shared<Vec>();
@@ -513,7 +612,7 @@ initializeValuesVector()
   PetscErrorCode ierr;
   // initialize PETSc vector object
   ierr = VecCreate(PETSC_COMM_WORLD, &*this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) *this->values_, this->name_); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) *this->values_, this->name_.c_str()); CHKERRV(ierr);
   
   // initialize size of vector
   ierr = VecSetSizes(*this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
@@ -521,6 +620,11 @@ initializeValuesVector()
   // set sparsity type and other options
   ierr = VecSetFromOptions(*this->values_);  CHKERRV(ierr);
       
+  // set vector for all components
+  for (auto &component : this->component_)
+  {
+    component.second.setValuesVector(this->values_);
+  }
 }
 
 template<int D, typename BasisFunctionType>
@@ -528,6 +632,19 @@ int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,Basis
 nComponents() const
 {
   return this->component_.size(); 
+}
+
+template<int D, typename BasisFunctionType>
+std::vector<std::string> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+componentNames() const
+{
+  std::vector<std::string> result;
+  result.reserve(this->nComponents());
+  for (auto componentIndex : this->component_)
+  {   
+    result.push_back(componentIndex.first);
+  }
+  return result;
 }
   
 template<int D, typename BasisFunctionType>
@@ -563,23 +680,23 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->nElements_ = fieldVariable.nElements();
   this->exfileRepresentation_ = fieldVariable.exfileRepresentation();
   this->elementToDofMapping_ = fieldVariable.elementToDofMapping();
+  this->elementToNodeMapping_ = fieldVariable.elementToNodeMapping();
+  this->nodeToDofMapping_ = fieldVariable.nodeToDofMapping();
   this->mesh_ = fieldVariable.mesh();
   
   // insert components
   int nComponents = componentNames.size();
   int componentIndex = 0;
   
-  std::string exfileBasisRepresentation = fieldVariable->components().begin()->exfileBasisRepresentation();
+  std::string exfileBasisRepresentation = fieldVariable.component().begin()->second.exfileBasisFunctionSpecification();
   
   // create a new values vector for the new field variable
-  PetscErrorCode ierr;
-  
   for(auto &componentName : componentNames)
   {
     Component<BasisOnMeshType> component;
     component.initialize(this->values_, nComponents, componentIndex++, this->nElements_);
     component.setName(componentName, exfileBasisRepresentation);
-    component.setElementToDofMapping(fieldVariable.elementToDofMapping());
+    component.setDofMappings(fieldVariable.elementToDofMapping(), fieldVariable.nodeToDofMapping());
     component.setExfileRepresentation(fieldVariable.exfileRepresentation());
     this->component_.insert(std::pair<std::string, Component<BasisOnMeshType>>(componentName, component));
   }
@@ -590,18 +707,28 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   
 template<int D, typename BasisFunctionType>
 int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-getNumberScaleFactors() const
+getNumberScaleFactors(element_idx_t globalElementNo) const
 {
-  return component_.begin()->second.getNumberScaleFactors();
+  
+  //! return the node numbers and scale factors of the element
+  return elementToNodeMapping_->getElement(globalElementNo).scaleFactors.size();
+  
+  //return component_.begin()->second.getNumberScaleFactors(globalNodeNo);
 }
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExelem(std::ostream &stream, element_idx_t currentElementGlobalNo)
+outputHeaderExelem(std::ostream &stream, element_idx_t currentElementGlobalNo, int fieldVariableNo)
 {
-  stream << " " << exfileNo_ << ") " << name_ << ", " << (isGeometryField_? "coordinate" : "field") 
+  // set no of field variable in ex file if it was specified
+  if (fieldVariableNo != -1)
+    exfileNo_ = fieldVariableNo+1;
+  
+  // output first line of header
+  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
     << ", rectangular cartesian, #Components=" << component_.size() << std::endl;
     
+  // output headers of components
   for (auto &component : component_)
   {
     component.second.outputHeaderExelem(stream, currentElementGlobalNo);
@@ -610,11 +737,17 @@ outputHeaderExelem(std::ostream &stream, element_idx_t currentElementGlobalNo)
 
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-outputHeaderExnode(std::ostream &stream, node_idx_t currentNodeGlobalNo, int &valueIndex)
+outputHeaderExnode(std::ostream &stream, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
-  stream << " " << exfileNo_ << ") " << name_ << ", " << (isGeometryField_? "coordinate" : "field") 
+  // set no of field variable in ex file if it was specified
+  if (fieldVariableNo != -1)
+    exfileNo_ = fieldVariableNo+1;
+  
+  // output first line of header
+  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
     << ", rectangular cartesian, #Components=" << component_.size() << std::endl;
     
+  // output headers of components
   for (auto &component : component_)
   {
     component.second.outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex);
@@ -628,7 +761,7 @@ haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
   // loop over components
   for (auto &component : component_)
   {
-    if(!component.second.exfileRepresentation().haveSameExfileRepresentation(element1, element2))
+    if(!component.second.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
     {
       return false;
     }
@@ -636,4 +769,88 @@ haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2)
   return true;
 }
 
+template<int D, typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+eliminateScaleFactors()
+{
+  // loop over elements 
+  for (int elementGlobalNo = 0; elementGlobalNo < nElements_; elementGlobalNo++)
+  {
+    // loop over components
+    for (auto &component : component_)
+    {
+      ElementToNodeMapping::Element &element = elementToNodeMapping_->getElement(elementGlobalNo);
+      // loop over element dofs
+      for (unsigned int nodeIdx = 0; nodeIdx < element.nodeGlobalNo.size(); nodeIdx++)
+      {
+        int nodeGlobalNo = element.nodeGlobalNo[nodeIdx];
+        double scaleFactor = element.scaleFactors[nodeIdx];
+        
+        std::vector<int> &nodeDofs = nodeToDofMapping_->getNodeDofs(nodeGlobalNo);
+        std::vector<double> &scaleFactors = nodeToDofMapping_->getNodeScaleFactors(nodeGlobalNo);
+        std::vector<double> nodeValues(nodeDofs.size());
+        
+        // loop over node dofs
+        for (unsigned int dofIdx = 0; dofIdx < nodeDofs.size(); dofIdx++)
+        {
+          // get dof value
+          double value = component.second.getValue(nodeDofs[dofIdx]);
+          
+          double scaleFactor2 = scaleFactors[dofIdx];
+          assert(scaleFactor - scaleFactor2 < 1e-16);
+          
+          LOG(DEBUG) << "scaleFactor: " << scaleFactor << "," << scaleFactor2;
+          
+          // multiply value with scale factor
+          value *= scaleFactor;
+          
+          nodeValues[dofIdx] = value;
+        }
+        
+        // set updated values
+        component.second.setValuesForNode(nodeGlobalNo, nodeValues.begin());
+      }
+    }
+  }
+}
+
+template<int D, typename BasisFunctionType>
+bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+isGeometryField()
+{
+  return isGeometryField_; 
+}
+
+template<int D, typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+output(std::ostream &stream) const
+{
+  stream << "\"" << this->name_ << "\", nEntries: " << nEntries_ << ", nElements: " << nElements_ 
+    << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
+    << "  components:" << std::endl;
+  for (auto &component : component_)
+  {
+    stream << component.second;
+  }
+  stream << "  exfileRepresentation: " << std::endl;
+  if (exfileRepresentation_ == nullptr)
+    stream << "null" << std::endl;
+  else 
+    stream << *exfileRepresentation_ << std::endl;
+  /*  
+    << "  elementToDofMapping: " << std::endl 
+    << *elementToDofMapping_ << std::endl 
+    << "  elementToNodeMapping: " << std::endl 
+    << *elementToNodeMapping_ << std::endl 
+    << "  nodeToDofMapping: " << std::endl 
+    << *nodeToDofMapping_ << std::endl;
+  */
+}
+
+template<int D, typename BasisFunctionType>
+std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &rhs)
+{
+  rhs.output(stream);
+  return stream;
+}
 };  // namespace

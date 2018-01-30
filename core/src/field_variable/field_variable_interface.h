@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <vector>
 #include <fstream>
 
@@ -18,23 +19,17 @@ struct Interface
   //template<typename FieldVariableType>
   //void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
   
-  //! write a exelem file header to a stream, for a particular element
-  virtual void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo) = 0;
-  
-  //! write a exelem file header to a stream, for a particular element
-  virtual void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex) = 0;
-  
-  //! tell if 2 elements have the same exfile representation, i.e. same number of versions
-  virtual bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2) = 0;
-  
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
   virtual Vec &values() = 0;
   
   //! get the number of components
   virtual int nComponents() const = 0;
   
+  //! get the names of the components
+  virtual std::vector<std::string> componentNames() const = 0;
+  
   //! get the number of elements
-  virtual std::array<int, BasisOnMeshType::Mesh::dim()> nElements() const = 0;
+  virtual int nElements() const = 0;
   
   //! for a specific component, get values from their global dof no.s
   //template<int N>
@@ -58,6 +53,16 @@ struct Interface
   //! get a single value from global dof no. for all components
   //template<int nComponents>
   //std::array<double,nComponents> getValue(node_idx_t dofGlobalNo)
+  
+  //! write a exelem file header to a stream, for a particular element
+  virtual void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo=-1) = 0;
+  
+  //! write a exelem file header to a stream, for a particular node
+  virtual void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1) = 0;
+  
+  //! tell if 2 elements have the same exfile representation, i.e. same number of versions
+  virtual bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2) = 0;
+  
 };
 
 };  // namespace FieldVariable

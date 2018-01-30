@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <vector>
 
@@ -37,16 +38,6 @@ private:
   //! write serial vtkUnstructuredGrid file (unstructured, suffix *.vtu)
   template <int dimension, typename DataType>
   void writeUnstructuredGrid(DataType& data);
-  
-  //! open file given by filename, create directory if necessary
-  std::ofstream openFile(std::string filename);
- 
-  //! create *.pvt VTK master file that is a header file for multiple
-  /** This writes the master file of the parallel output, should only be done
-    * by one processor. */
-  void writeVTKMasterFile();
- 
-  void writeVTKSlaveFile();
   
   //! encode a Petsc vector in Base64
   std::string encodeBase64(Vec &vector);

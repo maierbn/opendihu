@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include <petscmat.h>
 #include <iostream>
 #include <memory>
@@ -25,7 +27,7 @@ public:
  
   //! setup the element to dof mapping and create a node to dof mapping on the fly
   std::shared_ptr<NodeToDofMapping> setup(std::shared_ptr<ExfileRepresentation> exfileRepresentation,
-                                          ElementToNodeMapping &elementToNodeMapping,
+                                          std::shared_ptr<ElementToNodeMapping> elementToNodeMapping,
                                           const int nDofsPerNode);
   
   //! get all dofs of an element
@@ -33,6 +35,9 @@ public:
   
   //! return the number of dofs
   int nDofs() const;
+  
+  //! comparison operator
+  bool operator==(const ElementToDofMapping &rhs);
   
 private:
   std::vector<std::vector<int>> dofs_;  ///< for every element the list of dofs

@@ -1,3 +1,5 @@
+#include <Python.h>  // this has to be the first included header
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -468,6 +470,34 @@ config = {
   }
     
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+}
+
+TEST(LaplaceTest, StructuredDeformableMatrixIsCorrect3DStencils)
+{
+  std::string pythonConfig = R"(
+# Laplace 3D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [4, 4, 4],
+    "physicalExtend": [4.0, 4.0, 4.0],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::StructuredDeformable<3>,
+    BasisFunction::Lagrange<>,
+    Integrator::Gauss<2>,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
 }
 
 };

@@ -24,14 +24,20 @@ sconsconfig.select(
     #packages.NumpyC(required=True),
     packages.googletest(required=True),
     packages.libxml2(required=True),
-    #packages.Sphinx(required=True),
+    packages.Sphinx(required=True),
     packages.libcellml(required=True),          # relies on libxml2
     packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 
+# By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
+# Note that an absolute path has to be given, otherwise there are problems finding the libraries
+preset_variables = {'LAPACK_DIR': os.path.join(Dir('.').srcnode().abspath, '../dependencies/lapack/install'),
+                    'PETSC_DIR':  os.path.join(Dir('.').srcnode().abspath, '../dependencies/petsc/install')}
 
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
-vars = Variables('user-variables.scons.py', ARGUMENTS)
+variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
+variables.update(preset_variables)  # merge in preset_variables dictionary
+vars = Variables(['../user-variables.scons.py','user-variables.scons.py'], variables)
 
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))

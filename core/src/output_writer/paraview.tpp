@@ -28,21 +28,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
  
-  const int dimension = data.mesh()->dimension();
-  
-  // solution and rhs vectors in mesh shape
-  switch(dimension)
-  {
-  case 1:
-    writeSolutionDim<1>(data);
-    break;
-  case 2:
-    writeSolutionDim<2>(data);
-    break;
-  case 3:
-    writeSolutionDim<3>(data);
-    break;
-  };
+  writeSolutionDim<DataType::BasisOnMesh::dim()>(data);
 }
 
 template <int dimension, typename DataType>
@@ -81,7 +67,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
   LOG(DEBUG) << "Write RectilinearGrid, file \""<<filename<<"\".";
   
   // determine values
-  std::shared_ptr<Mesh> mesh = std::static_pointer_cast<Mesh>(data.mesh());
+  std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh>(data.mesh());
   
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
@@ -136,7 +122,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << encodeBase64(data.solution()) << std::endl
+      << std::string(5, '\t') << encodeBase64(data.solution().values()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   else
@@ -146,7 +132,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"ascii\" >" << std::endl
-      << std::string(5, '\t') << convertToAscii(data.solution(), fixedFormat) << std::endl
+      << std::string(5, '\t') << convertToAscii(data.solution().values(), fixedFormat) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   
@@ -205,7 +191,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
 
 template <int D, typename DataType>
 void Paraview::writeStructuredGrid(DataType& data)
-{
+{/*
   // determine file name
   std::stringstream s;
   s<<filename_<<".vts";
@@ -249,7 +235,7 @@ void Paraview::writeStructuredGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << encodeBase64(data.solution()) << std::endl
+      << std::string(5, '\t') << encodeBase64(data.solution().values()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   else
@@ -259,7 +245,7 @@ void Paraview::writeStructuredGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"ascii\" >" << std::endl
-      << std::string(5, '\t') << convertToAscii(data.solution(), fixedFormat) << std::endl
+      << std::string(5, '\t') << convertToAscii(data.solution().values(), fixedFormat) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   
@@ -289,12 +275,12 @@ void Paraview::writeStructuredGrid(DataType& data)
   file << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</StructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>"<<std::endl;*/
 }
 
 template <int D, typename DataType>
 void Paraview::writeUnstructuredGrid(DataType& data)
-{
+{/*
   // determine file name
   std::stringstream s;
   s<<filename_<<".vtu";
@@ -338,7 +324,7 @@ void Paraview::writeUnstructuredGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << encodeBase64(data.solution()) << std::endl
+      << std::string(5, '\t') << encodeBase64(data.solution().values()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   else
@@ -348,7 +334,7 @@ void Paraview::writeUnstructuredGrid(DataType& data)
         << "type=\"Float32\" " 
         << "NumberOfComponents=\"1\" "
         << "format=\"ascii\" >" << std::endl
-      << std::string(5, '\t') << convertToAscii(data.solution(), fixedFormat) << std::endl
+      << std::string(5, '\t') << convertToAscii(data.solution().values(), fixedFormat) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   
@@ -378,7 +364,7 @@ void Paraview::writeUnstructuredGrid(DataType& data)
   file << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</StructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>"<<std::endl;*/
 }
 
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <array>
 #include <map>
@@ -60,10 +61,10 @@ public:
   std::array<double,nComponents> getValue(node_idx_t dofGlobalNo);
 
   //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
+  void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo, int fieldVariableNo=-1);
 
   //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
+  void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_idx_t element1, element_idx_t element2);
@@ -74,9 +75,14 @@ public:
   //! get the number of components
   int nComponents() const;
   
-  //! get the number of elements
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElements() const;
+  //! get the number of elements in the coordinate directions
+  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
+  //! get the total number of elements
+  int nElements() const;
+  
+  //! get the names of the components that are part of this field variable
+  std::vector<std::string> componentNames() const;
 private:
  std::array<double, D> meshWidth_;   ///< the mesh width in each coordinate direction (has to be equal to work with FiniteElements)
 };

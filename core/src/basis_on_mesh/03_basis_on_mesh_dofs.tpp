@@ -3,9 +3,13 @@
 #include <cmath>
 #include <array>
 #include <string>
+#include <cassert>
 
 #include "easylogging++.h"
 #include "utility/string_utility.h"
+#include "field_variable/field_variable_regular_fixed.h"
+#include "field_variable/field_variable_structured_deformable.h"
+#include "field_variable/field_variable_unstructured_deformable.h"
 
 namespace BasisOnMesh
 {
@@ -20,7 +24,6 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
   return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
 }
 
-
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t elementNo, int dofIndex)
@@ -31,8 +34,17 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
   // 1         2            2
   return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNDofsPerElement() * elementNo + dofIndex;
 }
-  
- 
+
+//! get all dofs of a specific node for 1D
+template<typename MeshType,typename BasisFunctionType>
+void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
+getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+{
+  for (int i=0; i<BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode(); i++)
+  {
+    dofGlobalNos.push_back(BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
+  }
+}
 
 // element-local dofIndex to global dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
@@ -69,6 +81,17 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
     + averageNDofsPerElement1D * elementX + localX;
 }
 
+//! get all dofs of a specific node for 2D
+template<typename MeshType,typename BasisFunctionType>
+void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
+getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+{
+  for (int i=0; i<BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode(); i++)
+  {
+    dofGlobalNos.push_back(BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
+  }
+}
+  
 // element-local dofIndex to global dofNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
@@ -105,6 +128,17 @@ getDofNo(std::array<element_idx_t, MeshType::dim()> nElements, element_idx_t ele
   return dofsPerPlane * (elementZ * averageNDofsPerElement1D + localZ)
     + dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
     + averageNDofsPerElement1D * elementX + localX;
+}
+
+//! get all dofs of a specific node for 3D
+template<typename MeshType,typename BasisFunctionType>
+void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
+getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+{
+  for (int i=0; i<BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode(); i++)
+  {
+    dofGlobalNos.push_back(BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
+  }
 }
 
 // element-local nodeIndex to global nodeNo for 1D
@@ -193,6 +227,8 @@ BasisOnMeshDofs(PyObject *settings) :
   std::string filenameExelem = PythonUtility::getOptionString(settings, "exelem", "input.exelem");
   std::string filenameExnode = PythonUtility::getOptionString(settings, "exnode", "input.exnode");
   
+  LOG(TRACE) << "BasisOnMeshDofs constructor";
+  
   // ------------------------------------------------------------------------
   // read in exelem file
   this->parseExelemFile(filenameExelem);
@@ -203,6 +239,10 @@ BasisOnMeshDofs(PyObject *settings) :
   
   // remap names of field variables if specified in config
   this->remapFieldVariables(settings);
+  
+  
+  // eliminate scale factors
+  //this->eliminateScaleFactors();
 }
 
 
@@ -219,7 +259,9 @@ initialize()
   std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>(ptr);
   
   assert(self != nullptr);
-  this->geometry_->setMesh(self);
+  assert(fieldVariable_.find("geometry") != fieldVariable_.end());
+  
+  this->fieldVariable_.at("geometry")->setMesh(self);
 }
 
 template<int D,typename BasisFunctionType>
@@ -251,215 +293,37 @@ remapFieldVariables(PyObject *settings)
       }
     }
   }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-parseExelemFile(std::string exelemFilename)
-{
-  std::ifstream file_exelem(exelemFilename.c_str(), std::ios::in | std::ios::binary);
-  if (!file_exelem.is_open())
-  {
-    LOG(WARNING) << "Could not open exelem file \"" << exelemFilename << "\" for reading.";
-  }
-   
-  // find out number of elements in file
-  this->nElements_ = 0;
-  std::string line;
-  while(!file_exelem.eof())
-  {
-    getline(file_exelem, line);
-    if(file_exelem.eof())
-      break;
-    
-    if (line.find("Element:") != std::string::npos)
+  
+  // if there is no field with name "geometry"
+  if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
+  { 
+    bool geometryFieldFound = false;
+    // search for a geometry field 
+    for(auto &fieldVariableEntry : this->fieldVariable_)
     {
-      int elementGlobalNo = getNumberAfterString(line, "Element:");
-      this->nElements_ = std::max(this->nElements_, elementGlobalNo);
-    }
-  }
-  this->elementToNodeMapping_.setNumberElements(this->nElements_);
-  
-  // read in dofs for each element
-  int nFields = 0;
-  int fieldNo = 0;
-  int nComponents = 0;
-  int nNodes = 0;
-  int nodeNo = 0;
-  int nValues = 0;
-  
-  enum 
-  {
-    nothing,
-    elementsFollow,     // after "Shape. Dimension=3" was found
-    fieldsFollow,       // after "#Fields" 
-  }
-  lineType = nothing;
-  
-  std::stringstream nextFieldNo;
-  std::string fieldName;
-  std::string fieldContent;
-  std::string elementContent;
-  
-  std::vector<int> valueIndices, scaleFactorIndices;
-  
-  while(!file_exelem.eof())
-  {
-    getline(file_exelem, line);
-    if(file_exelem.eof())
-      break;
-    
-    // check if line contains "Shape."
-    if (line.find("Shape.") != std::string::npos && line.find("Dimension=") != std::string::npos)
-    {
-      int dimension = getNumberAfterString(line, "Dimension=");
-      if (dimension == 3)
+      if (fieldVariableEntry.second->isGeometryField())
       {
-        lineType = elementsFollow;
-      }
-      continue;
-    }
-    
-    // check if line contains "#Fields="
-    if(lineType == elementsFollow && line.find("#Fields=") != std::string::npos) 
-    {
-      // parse number of following fields
-      nFields = getNumberAfterString(line, "#Fields=");
+        LOG(WARNING) << "Remap geometry field variable from \"" << fieldVariableEntry.first << "\" to \"geometry\".";
       
-      // prepare string that starts the next field description block
-      fieldNo = 0;
-      nextFieldNo.str("");
-      nextFieldNo << fieldNo+1 << ")";
-      lineType = fieldsFollow;
-      continue;
-    }
-    
-    // if in field description block
-    if (lineType == fieldsFollow)
-    {
-      // if the next field description block begins or a block with elements begins (i.e. the current field description block is finished)
-      if(line.find(nextFieldNo.str()) != std::string::npos || line.find("Element:") != std::string::npos)
-      {
-        // finish previous fieldVariable component
-        if (fieldNo != 0)
-        {
-          if (this->fieldVariable_.find(fieldName) == this->fieldVariable_.end())
-          {
-            this->fieldVariable_.insert(std::pair<std::string, 
-                                        std::shared_ptr<FieldVariableType>>(fieldName, 
-              std::make_shared<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>()));
-          }
-          this->fieldVariable_[fieldName]->setNumberElements(this->nElements_);
-          
-          // parse whole field description block inside component object
-          this->fieldVariable_[fieldName]->parseFromExelemFile(fieldContent);
-          fieldContent = "";
-        }
+        std::shared_ptr<FieldVariableType> fieldVariable = fieldVariableEntry.second;
+        this->fieldVariable_.erase(fieldVariableEntry.first);
+        this->fieldVariable_["geometry"] = fieldVariable;
         
-        // get name of current fieldVariable, if there is one starting here
-        if (line.find(nextFieldNo.str()) != std::string::npos)
-        {
-          std::string name = line;
-          extractUntil(name, nextFieldNo.str());
-          fieldName = extractUntil(name, ",");
-          trim(fieldName);
-        }
-        
-        // increase number of next field variable and prepare string to search for for next field variable description block
-        fieldNo++;
-        nextFieldNo.str("");
-        nextFieldNo << fieldNo+1 << ")";        
-      }
-      
-      // if a block with elements begins at current line
-      if (line.find("Element:") != std::string::npos)
-      {
-        lineType = elementsFollow;
-        elementContent = "";
-      }
-      else
-      {
-        // collect lines of current field description block
-        fieldContent += line+"\n";
+        geometryFieldFound = true;
+        break;
       }
     }
     
-    // if the current line is part of an elements block
-    if (lineType == elementsFollow)
+    // output field variables
+    for(auto &fieldVariableEntry : this->fieldVariable_)
     {
-      // if a new element begins, i.e. the previous element is finished
-      if (line.find("Element:") != std::string::npos)
-      {
-        // if there were lines collected for the previous element block
-        if (!elementContent.empty())
-        {
-          // parse whole element block into elmeentToNode mapping
-          this->elementToNodeMapping_.parseElementFromExelemFile(elementContent);
-          for(auto &fieldVariable : this->fieldVariable_)
-          {
-            fieldVariable.second->parseElementFromExelemFile(elementContent);
-          }
-          elementContent = "";
-        }
-      }
-      
-      // collect lines for current element block
-      elementContent += line+"\n";
+      VLOG(1) << *fieldVariableEntry.second;
     }
-  }
-  
-  // if there were lines collected for the previous element block
-  if (!elementContent.empty())
-  {
-    // parse whole element block into elmeentToNode mapping
-    this->elementToNodeMapping_.parseElementFromExelemFile(elementContent);
-    for(auto &fieldVariable : this->fieldVariable_)
+    
+    if (!geometryFieldFound)
     {
-      fieldVariable.second->parseElementFromExelemFile(elementContent);
+      LOG(FATAL) << "The specified Exfiles contain no geometry field. The field must be named \"geometry\" or have the type \"coordinates\".";
     }
-  }
-  
-  // unify exfile representation variables in field variables such that there is only one shared for all components of a field variable
-  for(auto &fieldVariable : this->fieldVariable_)
-  {
-    fieldVariable.second->unifyMappings(this->elementToNodeMapping_, this->nDofsPerNode());
-  }
-  
-  // remove duplicate exfile representation and element to dof mapping entries that are shared among different field variables
-  for(auto &fieldVariable : this->fieldVariable_)
-  {
-    for(auto &fieldVariable2 : this->fieldVariable_)
-    {
-      if (fieldVariable.first != fieldVariable2.first)
-      {
-        fieldVariable.second->unifyMappings(fieldVariable2.second);
-      }
-    }
-  }
-  
-  // allocate common values vector for each field variable
-  for(auto &fieldVariable : this->fieldVariable_)
-  {
-    fieldVariable.second->initializeValuesVector();
-  }
-}
-  
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-parseExnodeFile(std::string exnodeFilename)
-{
-  std::ifstream file_exnode(exnodeFilename.c_str(), std::ios::in | std::ios::binary);
-  if (!file_exnode.is_open())
-  {
-    LOG(WARNING) << "Could not open exnode file \"" << exnodeFilename << "\" for reading.";
-  }
-   
-  std::string content( (std::istreambuf_iterator<char>(file_exnode) ),
-                       (std::istreambuf_iterator<char>()    ) );
-  
-  for(auto &fieldVariable : this->fieldVariable_)
-  {
-    fieldVariable.second->parseFromExnodeFile(content);
   }
 }
 
@@ -470,14 +334,62 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
   
-  return this->fieldVariable_["geometry"]->getDofNo(elementNo, dofIndex);
+  return this->fieldVariable_.at("geometry")->getDofNo(elementNo, dofIndex);
 }
 
 template<int D,typename BasisFunctionType>
 int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
 getNodeNo(element_idx_t elementNo, int nodeIndex) const
 {
-  return this->elementToNodeMapping_->getElement(elementNo).globalNodeNo[nodeIndex];
+  return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
 }
 
+//! get all dofs of a specific node, unstructured mesh
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+{
+  if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
+    LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
+  
+  std::vector<int> &nodeDofs = dofGlobalNos.insert(dofGlobalNos.end(), 
+    this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo));
+  dofGlobalNos.reserve(dofGlobalNos.size() + nodeDofs.size());
+  
+  for(int dof : nodeDofs)
+  {
+    dofGlobalNos.push_back(dof);
+  }
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+eliminateScaleFactors()
+{
+  // loop over field variables
+  for (auto fieldVariable : this->fieldVariable_)
+  {
+    fieldVariable.second->eliminateScaleFactors();
+  }
+}
+
+template<int D,typename BasisFunctionType>
+int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+nDofs() const
+{
+  return nDofs_;
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables)
+{
+  // loop over field variables
+  for (auto fieldVariable : this->fieldVariable_)
+  {
+    if (!fieldVariable.second->isGeometryField())
+      fieldVariables.push_back(fieldVariable.second);
+  }
+}
+  
 };  // namespace

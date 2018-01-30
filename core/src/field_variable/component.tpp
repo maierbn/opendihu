@@ -10,7 +10,7 @@ using namespace StringUtility;
   
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-initialize(std::shared_ptr<Vec> &values, int nComponents, int componentIndex, int nElements)
+initialize(std::shared_ptr<Vec> values, int nComponents, int componentIndex, int nElements)
 {
   values_ = values;
   nComponents_ = nComponents;
@@ -20,18 +20,27 @@ initialize(std::shared_ptr<Vec> &values, int nComponents, int componentIndex, in
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
+setValuesVector(std::shared_ptr<Vec> values)
+{
+  assert(values);
+  values_ = values;
+}
+
+template<typename BasisOnMeshType>
+void Component<BasisOnMeshType>::
 parseHeaderFromExelemFile(std::string content)
 {
+  VLOG(1) << "parseHeaderFromExelemFile";
   int firstLine = true;
   std::string exfileRepresentationContent;
   
   // loop over file content line-wise
-  int pos = 0;
+  unsigned int pos = 0;
   while(pos < content.size())
   {
     // extract next line
-    int posNewline = content.find("\n",pos);
-    std::string line = content.substr(pos, posNewline);
+    unsigned int posNewline = content.find("\n",pos);
+    std::string line = content.substr(pos, posNewline-pos);
     if (posNewline == std::string::npos)
       pos = content.size();
     else
@@ -41,6 +50,7 @@ parseHeaderFromExelemFile(std::string content)
     {
       name_ = extractUntil(line, ".");
       trim(name_);
+      VLOG(1) << "component " << name_;
       exfileBasisFunctionSpecification_ = extractUntil(line, ",");
       trim(exfileBasisFunctionSpecification_);
       firstLine = false;
@@ -50,8 +60,12 @@ parseHeaderFromExelemFile(std::string content)
       exfileRepresentationContent += line+"\n";
     }
   }
-  exfileRepresentation_ = std::make_shared<ExfileRepresentation>();
-  exfileRepresentation_->setNumberElements(nElements_);
+  
+  if (!exfileRepresentation_)
+  {
+    exfileRepresentation_ = std::make_shared<ExfileRepresentation>();
+    exfileRepresentation_->setNumberElements(nElements_);
+  }
   exfileRepresentation_->parseHeaderFromExelemFile(exfileRepresentationContent);
 }
 
@@ -59,7 +73,9 @@ template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
 parseElementFromExelemFile(std::string content)
 {
+  VLOG(1) << "component " << name_ << ", parseElementFromExelemFile";
   exfileRepresentation_->parseElementFromExelemFile(content);
+  //VLOG(1) << "   after parseElementFromExelemFile: " << *exfileRepresentation_;
 }
 
 template<typename BasisOnMeshType>
@@ -73,12 +89,19 @@ template<typename BasisOnMeshType>
 std::shared_ptr<ElementToDofMapping> Component<BasisOnMeshType>::
 elementToDofMapping()
 {
-  return elementToDofMapping;
+  return elementToDofMapping_;
+}
+
+template<typename BasisOnMeshType>
+std::shared_ptr<NodeToDofMapping> Component<BasisOnMeshType>::
+nodeToDofMapping()
+{
+  return nodeToDofMapping_;
 }
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-setExfileRepresentation(std::shared_ptr< ExfileRepresentation > exfileRepresentation)
+setExfileRepresentation(std::shared_ptr<ExfileRepresentation> exfileRepresentation)
 {
   exfileRepresentation_ = exfileRepresentation;
 }
@@ -108,21 +131,74 @@ setDofMappings(std::shared_ptr<ElementToDofMapping> elementToDofMapping, std::sh
   
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-setValuesForNode(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
+setNodeValues(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
 {
-  ElementToDofMapping::nodeDofInformation &nodeDofInformation = elementToDofMapping_->getNodeDofInformation(nodeGlobalNo);
+  NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
   
-  for(int i = 0; i < nodeDofInformation.exfileValueIndices; i++)
+  // loop over dofs
+  for(unsigned int dofGlobalNo = 0; dofGlobalNo < nodeDofInformation.dofs.size(); dofGlobalNo++, valuesBegin++)
   {
-    int valueBlockIndex = nodeDofInformation.exfileValueIndices[i];
-    int dofNo = nodeDofInformation.dofs[i];
-    
-    double value = *(valuesBegin+valueBlockIndex);
-    
-    int vectorIndex = dofNo*nComponents_ + componentIndex_;
+    double value = *valuesBegin;
+    int vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
     
     VecSetValue(*values_, vectorIndex, value, INSERT_VALUES);
   }
+}
+
+template<typename BasisOnMeshType>
+void Component<BasisOnMeshType>::
+setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
+{
+  NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
+  
+  std::vector<int> indices;
+  std::vector<double> values;
+  
+  const unsigned int nVersions = nodeDofInformation.elementsOfVersion.size();
+  indices.reserve(BasisOnMeshType::nDofsPerNode()*nVersions);
+  values.reserve(BasisOnMeshType::nDofsPerNode()*nVersions);
+  
+  VLOG(1) << "setNodeValuesFromBlock(" << nodeGlobalNo << "), block: ";
+  for (std::vector<double>::iterator iter = valuesBegin; iter < valuesBegin + BasisOnMeshType::nDofsPerNode()*nVersions; iter++)
+    VLOG(1) << "  " << *iter;
+  
+  VLOG(1) << " reserve " << BasisOnMeshType::nDofsPerNode() << "*" << nVersions << " entries";
+  // loop over versions 
+  for (unsigned int versionIdx = 0; versionIdx < nVersions; versionIdx++)
+  {
+    VLOG(1) << "version " << versionIdx;
+   
+    // loop over elements of that version 
+    for (auto element : nodeDofInformation.elementsOfVersion[versionIdx])
+    {
+      int elementGlobalNo = element.elementGlobalNo;
+      int nodeIdx = element.nodeIdx;
+      std::shared_ptr<ExfileElementRepresentation> exfileElement = exfileRepresentation_->getExfileElementRepresentation(elementGlobalNo);
+     
+      VLOG(1) << " element " << elementGlobalNo << " nodeIdx " << nodeIdx;
+      
+      for (unsigned int i = 0; i < exfileElement->getNode(nodeIdx).valueIndices.size(); i++)
+      {
+        int blockIndex = exfileElement->getNode(nodeIdx).valueIndices[i];
+        VLOG(1) << "  block index " << blockIndex;
+        
+        double value = *(valuesBegin + blockIndex);
+        
+        VLOG(1) << "  value " << value;
+        values.push_back(value);
+        
+        int dofGlobalNo = nodeDofInformation.dofs[blockIndex];
+        int vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
+        VLOG(1) << "  dofGlobalNo = " << dofGlobalNo << ", vectorIndex = " << vectorIndex;
+        
+        indices.push_back(vectorIndex);
+      }
+    }
+  }
+  
+  assert (values_);
+  VLOG(1) << " set " << indices.size() << " values at indices " << indices;
+  VecSetValues(*values_, indices.size(), indices.data(), values.data(), INSERT_VALUES);
 }
 
 template<typename BasisOnMeshType>
@@ -144,7 +220,8 @@ getDofNo(element_idx_t elementNo, int dofIndex) const
   return elementToDofMapping_->getElementDofs(elementNo)[dofIndex];
 }
 
-template<typename BasisOnMeshType,int N>
+template<typename BasisOnMeshType>
+template<int N>
 void Component<BasisOnMeshType>::
 getValues(std::array<int,N> dofGlobalNo, std::array<double,N> &values)
 {
@@ -154,7 +231,8 @@ getValues(std::array<int,N> dofGlobalNo, std::array<double,N> &values)
     index = index*nComponents_ + componentIndex_;
   }
  
-  VecGetValues(values_, N, dofGlobalNo.data(), values.data());
+  assert (values_);
+  VecGetValues(*values_, N, dofGlobalNo.data(), values.data());
 }
   
 template<typename BasisOnMeshType>
@@ -163,7 +241,14 @@ getValue(node_idx_t dofGlobalNo)
 {
   double value;
   std::array<int,1> indices{dofGlobalNo*nComponents_ + componentIndex_};
-  VecGetValues(values_, 1, indices.data(), &value);
+  
+  assert (values_);
+  VecGetValues(*values_, 1, indices.data(), &value);
+  
+  VLOG(2) << "component " << this->name_<<", getValue for dof " << dofGlobalNo 
+    << " componentIndex: " << componentIndex_ << ", nComponents: " << nComponents_ << ", vectorIndex: " << indices[0] 
+    << ", value: " << value;
+  return value;
 }
 
 template<typename BasisOnMeshType>
@@ -178,28 +263,29 @@ getElementValues(element_idx_t elementNo, std::array<double,BasisOnMeshType::nDo
     index = index*nComponents_ + componentIndex_;
   }
   
-  VecGetValues(values_, BasisOnMeshType::nDofsPerElement(), dofs.data(), values.data());
+  assert (values_);
+  VecGetValues(*values_, BasisOnMeshType::nDofsPerElement(), dofs.data(), values.data());
 }
 
 template<typename BasisOnMeshType>
 int Component<BasisOnMeshType>::
-getNumberScaleFactors(node_idx_t nodeGlobalNo)
+getNumberScaleFactors(node_idx_t nodeGlobalNo) const
 {
-  return elementToDofMapping_->getNodeScaleFactors(nodeGlobalNo).size();
+  return nodeToDofMapping_->getNodeScaleFactors(nodeGlobalNo).size();
 }
   
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-outputHeaderExelem(std::ofstream file, element_idx_t currentElementGlobalNo)
+outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo)
 {
   file << " " << name_ << ". " << exfileBasisFunctionSpecification_ << ", no modify, standard node based." << std::endl
-    << " #Nodes=" << BasisOnMeshType::nNodesPerElement() << std::endl;
-  file << exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo).outputHeaderExelemFile(file);
+    << "   #Nodes=" << BasisOnMeshType::nNodesPerElement() << std::endl;
+  exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo)->outputHeaderExelemFile(file);
 }
   
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-outputHeaderExnode(std::ostream file, node_idx_t currentNodeGlobalNo, int &valueIndex)
+outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex)
 {
   int nDerivativesPerNode = BasisOnMeshType::nDofsPerNode() - 1;
   std::string derivativeSpecifiers = "";
@@ -210,12 +296,29 @@ outputHeaderExnode(std::ostream file, node_idx_t currentNodeGlobalNo, int &value
   else if (nDerivativesPerNode == 7)
     derivativeSpecifiers = " (d/ds1,d/ds2,d2/ds1ds2,d/ds3,d2/ds1ds3,d2/ds2ds3,d3/ds1ds2ds3)";
 
-  int nVersions = nodeToDofMapping_->getNumberVersions(currentNodeGlobalNo, BasisOnMeshType::nNodesPerElement());
+  int nVersions = nodeToDofMapping_->nVersions(currentNodeGlobalNo);
   
-  file << " " << name_ << ".  Value index=" << valueIndex << ", #Derivatives=" << nDerivativesPerNode << derivativeSpecifiers 
+  file << "  " << name_ << ".  Value index=" << valueIndex+1 << ", #Derivatives=" << nDerivativesPerNode << derivativeSpecifiers 
     << ", #Versions=" << nVersions << std::endl;
   
   valueIndex += BasisOnMeshType::nDofsPerNode() * nVersions;
+}
+
+template<typename BasisOnMeshType>
+void Component<BasisOnMeshType>::
+output(std::ostream &stream) const
+{
+  stream << "\"" << name_ << "\", componentIndex_: " << componentIndex_ << "/" << nComponents_ << ", nElements: " << nElements_ 
+    << ", exfileBasisFunctionSpecification_: " << exfileBasisFunctionSpecification_ << std::endl
+    << ", exfileRepresentation_=" << exfileRepresentation_ << ", nodeToDofMapping_=" << nodeToDofMapping_ 
+    << ", elementToDofMapping_=" << elementToDofMapping_ << std::endl << "exfileRepresentation: " << *exfileRepresentation_;
+}
+
+template<typename BasisOnMeshType>
+std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType> &rhs)
+{
+  rhs.output(stream);
+  return stream; 
 }
 
 };

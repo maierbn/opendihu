@@ -86,10 +86,10 @@ std::string Paraview::convertToAscii(std::vector<double> &vector, bool fixedForm
   }
   return result.str();
 }
-
+/*
 void Paraview::writeVTKMasterFile()
 {
-  /*
+  
   file<<"<?xml version=\"1.0\"?>"<<endl
     <<"<VTKFile type=\"PRectilinearGrid\">"<<endl
     <<"<PRectilinearGrid WholeExtent=\"0 "<<comm->get_global_dimension()[0]<<" 0 "
@@ -150,13 +150,13 @@ void Paraview::writeVTKMasterFile()
 
     os<<"</PUnstructuredGrid> "<<endl;
     
-  os<<"</VTKFile>"<<endl;*/
+  os<<"</VTKFile>"<<endl;
 }
 
 void Paraview::writeVTKSlaveFile()
 {
 
 }
-
+*/
 
 };

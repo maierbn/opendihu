@@ -11,12 +11,12 @@ namespace FieldVariable
 
 bool NodeToDofMapping::containsNode(node_idx_t nodeGlobalNo) const
 {
-  return nodeDofInformation_.find(nodeGlobalNo) == nodeDofInformation_.end();
+  return nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end();
 }
 
 NodeToDofMapping::NodeDofInformation& NodeToDofMapping::getNodeDofInformation(node_idx_t nodeGlobalNo)
 {
-  assert (nodeGlobalNo < (int)nodeDofInformation_.size());
+  //assert (nodeGlobalNo < (int)nodeDofInformation_.size());
   return nodeDofInformation_[nodeGlobalNo];
 }
 
@@ -37,10 +37,16 @@ int NodeToDofMapping::nNodes() const
   return nodeDofInformation_.size();
 }
 
-int NodeToDofMapping::getNumberVersions(node_idx_t nodeGlobalNo, const int nNodesPerElement)
+int NodeToDofMapping::nVersions(node_idx_t nodeGlobalNo)
 {
   assert (nodeGlobalNo < (int)nodeDofInformation_.size());
-  return int((nodeDofInformation_[nodeGlobalNo].exfileValueIndices[0]-1) / nNodesPerElement) + 1;
+  return nodeDofInformation_[nodeGlobalNo].elementsOfVersion.size();
+}
+
+std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::ElementLocalNode &rhs)
+{
+  stream << rhs.elementGlobalNo << "." << rhs.nodeIdx;
+  return stream;
 }
 
 };

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include <array>
 #include "control/types.h"
 
@@ -36,6 +38,9 @@ public:
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
   int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  
+  //! get all dofs of a specific node
+  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=1
@@ -56,6 +61,9 @@ public:
   
   //! return the global node number of element-local node nodeIndex of element elementNo
   int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  
+  //! get all dofs of a specific node
+  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=2
@@ -76,6 +84,9 @@ public:
   
   //! return the global node number of element-local node nodeIndex of element elementNo
   int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  
+  //! get all dofs of a specific node
+  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=3
@@ -96,6 +107,9 @@ public:
   
   //! return the global node number of element-local node nodeIndex of element elementNo
   int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
+  
+  //! get all dofs of a specific node
+  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
 };
 
 /** partial specialization for unstructured mesh
@@ -107,6 +121,8 @@ class BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType> :
 {
 public:
 
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;
+ 
   //! constructor
   BasisOnMeshDofs(PyObject *settings);
   
@@ -119,16 +135,25 @@ public:
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
   int getNodeNo(element_idx_t elementNo, int nodeIndex) const;
   
+  //! get all dofs of a specific node
+  void getNodeDofs(node_idx_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  
   //! write exelem file to stream
   void outputExelemFile(std::ostream &file);
   
   //! write exnode file to stream
   void outputExnodeFile(std::ostream &file);
   
-protected:
   //! return the number of elements
   element_idx_t nElements() const;
+  
+  //! return the number of dofs
+  int nDofs() const;
  
+  //! add all field variables except the geometry field to the vector. This is used to retrive additional field variables that were parsed from an exfile.
+  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables);
+  
+protected:
   //! parse a given *.exelem file and prepare fieldVariable_
   void parseExelemFile(std::string exelemFilename);
   
@@ -138,13 +163,16 @@ protected:
   //! rename field variables if "remap" is specified in config
   void remapFieldVariables(PyObject *settings);
   
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;
- 
+  //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
+  void eliminateScaleFactors();
+  
   std::map<std::string, std::shared_ptr<FieldVariableType>> fieldVariable_;   ///< all field variables that were present in exelem/exnode files, should contain "geometry" field variable
-  FieldVariable::ElementToNodeMapping elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
+  std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
   int nElements_;    ///< number of elements in exelem file 
+  int nDofs_;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
  
 }; 
 }  // namespace
 
 #include "basis_on_mesh/03_basis_on_mesh_dofs.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_dofs_input_output.tpp"

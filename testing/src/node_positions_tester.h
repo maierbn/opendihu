@@ -1,5 +1,6 @@
 #pragma once
   
+#include <Python.h>  // this has to be the first included header
 #include <vector>
 #include <map>
 #include "utility/petsc_utility.h"

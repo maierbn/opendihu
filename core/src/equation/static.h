@@ -1,5 +1,4 @@
 #pragma once
-
 #include "equation/equation.h"
 
 namespace Equation

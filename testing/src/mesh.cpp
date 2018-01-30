@@ -1,3 +1,5 @@
+#include <Python.h>  // this has to be the first included header
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>

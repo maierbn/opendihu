@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <array>
 #include <map>
@@ -54,8 +55,14 @@ public:
   //! get the number of components
   int nComponents() const;
   
-  //! get the number of elements
-  std::array<int, BasisOnMeshType::Mesh::dim()> nElements() const;
+  //! get the names of the components
+  std::vector<std::string> componentNames() const;
+  
+  //! get the number of elements in the coordinate directions
+  std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  
+  //! get the total number of elements
+  int nElements() const;
 };
 
 };  // namespace

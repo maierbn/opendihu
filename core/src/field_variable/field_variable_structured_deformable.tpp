@@ -68,10 +68,19 @@ nComponents() const
 //! get the number of elements
 template<int D, typename BasisFunctionType>
 std::array<int, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+nElementsPerDimension() const
+{
+  // use the implementation of FieldVariableStructured
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::nElementsPerDimension();
+}
+
+//! get the number of elements
+template<int D, typename BasisFunctionType>
+int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
 nElements() const
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::nElements();
+  return this->nElements();
 }
 
 //! get a single value from global dof no. for all components
@@ -84,4 +93,13 @@ getValue(node_idx_t dofGlobalNo)
   return FieldVariableStructured<BasisOnMeshType>::template getValue<nComponents>(dofGlobalNo);
 }
 
+
+//! get the names of the components that are part of this field variable
+template<int D, typename BasisFunctionType>
+std::vector<std::string> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+componentNames() const
+{
+  // use the implementation of FieldVariableStructured
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::componentNames();
+}
 };

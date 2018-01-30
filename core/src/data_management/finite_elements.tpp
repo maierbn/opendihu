@@ -4,12 +4,16 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <memory>
 
 #include "easylogging++.h"
 
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
-#include <utility/petsc_utility.h>
+#include "utility/petsc_utility.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "mesh/unstructured_deformable.h"
+#include "basis_function/hermite.h"
 
 namespace Data
 {
@@ -42,12 +46,65 @@ FiniteElements<BasisOnMeshType>::
     ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
   }
 }
+/*
+template<typename BasisOnMeshType>
+void FiniteElements<BasisOnMeshType>::
+getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
+{
+  const int nOverlaps = 3;
+  switch (this->mesh_->dimension())
+  {
+  case 1:
+    diagonalNonZeros = nOverlaps;
+    offdiagonalNonZeros = nOverlaps;
+    break;
+  case 2:
+    diagonalNonZeros = pow(nOverlaps, 2);
+    offdiagonalNonZeros = diagonalNonZeros;
+    break;
+  case 3:
+    diagonalNonZeros = pow(nOverlaps, 3);
+    offdiagonalNonZeros = diagonalNonZeros;
+    break;
+  };
+}*/
+
+// for UnstructuredDeformable and Hermite
+//template<int D>
+//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>, BasisFunction::Hermite>>::
+
+
+//template<int D, typename BasisFunctionType>
+//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+
+template<typename BasisOnMeshType>
+void FiniteElements<BasisOnMeshType>::
+getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
+{
+  const int D = this->mesh_->dimension();
+  const int nOverlaps = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode()*3;
+  switch (D)
+  {
+  case 1:
+    diagonalNonZeros = nOverlaps;
+    offdiagonalNonZeros = nOverlaps;
+    break;
+  case 2:
+    diagonalNonZeros = pow(nOverlaps, 2);
+    offdiagonalNonZeros = diagonalNonZeros;
+    break;
+  case 3:
+    diagonalNonZeros = pow(nOverlaps, 3);
+    offdiagonalNonZeros = diagonalNonZeros;
+    break;
+  };
+}
 
 template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
 createPetscObjects()
 {
-  element_idx_t n = this->mesh_->nNodes();
+  element_idx_t n = this->mesh_->nDofs();
   
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType>::createPetscObjects("<<n<<")";
   
@@ -58,33 +115,25 @@ createPetscObjects()
   // create PETSc matrix object
   
   // PETSc MatCreateAIJ parameters
-  int d_nz = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int o_nz = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
   
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    d_nz = 3;
-    o_nz = 3;
-    break;
-  case 2:
-    d_nz = 9;
-    o_nz = 9;
-    break;
-  case 3:
-    d_nz = 27;
-    o_nz = 27;
-    break;
-  };
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
   
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
-    <<", number of diagonal non-zeros: "<<d_nz<<", number of off-diagonal non-zeros: "<<o_nz;
+    <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
   
-  ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n, 
-                      d_nz, NULL, o_nz, NULL, &this->stiffnessMatrix_); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(this->stiffnessMatrix_, d_nz, NULL, o_nz, NULL); CHKERRV(ierr);
+  // sparse matrix
+  if (true)
+  {
+    ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n, 
+                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->stiffnessMatrix_); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(this->stiffnessMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+  }
+  // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
+  //MatSetOption(this->stiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
   
-  // dense matrix:
+  // dense matrix
   if (false)
   {
     ierr = MatCreate(PETSC_COMM_WORLD, &this->stiffnessMatrix_);  CHKERRV(ierr);
@@ -200,31 +249,31 @@ initializeDiscretizationMatrix()
   // create PETSc matrix object
   
   // PETSc MatCreateAIJ parameters
-  int d_nz = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int o_nz = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
   
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    d_nz = 3;
-    o_nz = 3;
-    break;
-  case 2:
-    d_nz = 9;
-    o_nz = 9;
-    break;
-  case 3:
-    d_nz = 27;
-    o_nz = 27;
-    break;
-  };
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
   
   PetscErrorCode ierr;
   ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, nEntries, nEntries, 
-                      d_nz, NULL, o_nz, NULL, &this->discretizationMatrix_); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(this->discretizationMatrix_, d_nz, NULL, o_nz, NULL); CHKERRV(ierr);
+                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->discretizationMatrix_); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(this->discretizationMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
   
   this->discretizationMatrixInitialized_ = true;
 }
+
+template<typename BasisOnMeshType>
+std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> FiniteElements<BasisOnMeshType>::
+fieldVariables()
+{
+  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
+  result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
+  //result.push_back(solution_);
+  //result.push_back(rhs_);
+  this->mesh_->addNonGeometryFieldVariables(result);
+  
+  return result;
+}
+  
 
 } // namespace Data

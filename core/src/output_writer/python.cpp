@@ -1,12 +1,6 @@
 #include "output_writer/python.h"
 
-#include <fstream>
-#include <iostream>
-#include <thread>
-#include <chrono>
-
-#include "easylogging++.h"
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 
 // numpy api
 #if 0
@@ -15,6 +9,13 @@
 #include <numpy/npy_math.h>
 #include <numpy/ndarrayobject.h>
 #endif
+
+#include <fstream>
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+#include "easylogging++.h"
 
 #include <utility/python_utility.h>
 #include <utility/petsc_utility.h>

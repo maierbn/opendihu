@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include <array>
 #include "control/types.h"
 
@@ -64,6 +66,10 @@ public:
    
   //! return the internal geometry field variable
   FieldVariableType &geometryField();
+  
+  //! has no effect for structured meshes
+  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
+
 protected:
   
   std::array<double,D> meshWidth_;   ///< mesh width in all coordinate directions
@@ -108,6 +114,9 @@ public:
   //! return the geometry field of this mesh
   FieldVariableType &geometryField();
   
+  //! has no effect for structured meshes
+  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
+  
 protected:
  
   //! parse the node from python config into a vector
@@ -134,9 +143,6 @@ public:
   
   //! return number of nodes
   node_idx_t nNodes() const;
-  
-  //! return number of dofs
-  node_idx_t nDofs() const;
   
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_idx_t dofGlobalNo) const;

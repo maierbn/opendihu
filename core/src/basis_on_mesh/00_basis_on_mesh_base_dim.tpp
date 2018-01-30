@@ -2,6 +2,8 @@
 
 #include "utility/math_utility.h"
 #include "easylogging++.h"
+#include "basis_function/hermite.h"
+#include "basis_function/lagrange.h"
 
 #include <cmath>
 #include <array>

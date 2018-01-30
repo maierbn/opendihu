@@ -39,6 +39,7 @@ setStiffnessMatrix()
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
   
   // initialize values to zero
+  int cntr = 1;
   // loop over elements 
   for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
   {
@@ -48,6 +49,7 @@ setStiffnessMatrix()
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
+        VLOG(3) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
         ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
       }
     }

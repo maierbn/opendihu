@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <numeric>
+#include <memory>
 
 #include "easylogging++.h"
 
@@ -82,6 +83,18 @@ print()
   VLOG(1)<<"======================";
 }
 
+template<typename BasisOnMeshType>
+std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> TimeStepping<BasisOnMeshType>::
+fieldVariables()
+{
+  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
+  result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
+  result.push_back(solution_);
+  result.push_back(increment_);
+  
+  return result;
+}
+  
 
 
 } // namespace

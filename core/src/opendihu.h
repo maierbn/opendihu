@@ -4,6 +4,7 @@
 #include "control/computation.h"
 
 #include "basis_function/lagrange.h"
+#include "basis_function/hermite.h"
 
 #include "equation/laplace.h"
 #include "equation/diffusion.h"

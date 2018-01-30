@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
 #include <petscmat.h>
 #include <iostream>
 #include <memory>
@@ -17,16 +19,22 @@ class Component
 public:
  
   //! initialize values
-  void initialize(std::shared_ptr<Vec> &values, int nComponents, int componentIndex, int nElements);
+  void initialize(std::shared_ptr<Vec> values, int nComponents, int componentIndex, int nElements);
  
+  //! set the internal values PETSc vector
+  void setValuesVector(std::shared_ptr<Vec> values);
+  
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
   
   //! parse a part of the exelem file that describes a single element
   void parseElementFromExelemFile(std::string content);
   
-  //! assign values for a node
-  void setValuesForNode(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
+  //! assign values of all dofs for a node, valuesBegin is an iterator that can iterate over the needed number of values, the order is given by dofs numbering
+  void setNodeValues(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
+  
+  //! assign values of all dofs for a node, the values are given by valuesBegin iterator as they appear in the exnode block, valuesBegin points to the beginning of the subblock for the particular component
+  void setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin);
   
   //! assign the name of the component
   void setName(std::string name, std::string exfileBasisFunctionSpecification="");
@@ -42,6 +50,9 @@ public:
   
   //! get the elementToDofMapping object
   std::shared_ptr<ElementToDofMapping> elementToDofMapping();
+  
+  //! get the nodeToDofMapping object
+  std::shared_ptr<NodeToDofMapping> nodeToDofMapping();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
   int getDofNo(element_idx_t elementNo, int dofIndex) const;
@@ -60,14 +71,13 @@ public:
   void getValues(std::array<int,N> dofGlobalNo, std::array<double,N> &values);
   
   //! get the values corresponding to all element-local dofs
-  template<int N>
   void getElementValues(element_idx_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
   
   //! get a single value from global dof no.
   double getValue(node_idx_t dofGlobalNo);
   
   //! get the number of scale factors for a given node
-  int getNumberScaleFactors(node_idx_t nodeGlobalNo);
+  int getNumberScaleFactors(node_idx_t nodeGlobalNo) const;
   
   //! write an exelem file header to a stream, for a particular element
   void outputHeaderExelem(std::ostream &file, element_idx_t currentElementGlobalNo);
@@ -75,8 +85,11 @@ public:
   //! write an exnode file header to a stream, for a particular node
   void outputHeaderExnode(std::ostream &file, node_idx_t currentNodeGlobalNo, int &valueIndex);
   
+  //! output string representation
+  void output(std::ostream &stream) const;
+  
 private:
-  std::shared_ptr<Vec> &values_;    ///< vector of all values, for every components the first value, then the 2nd for all components, etc.
+  std::shared_ptr<Vec> values_;    ///< vector of all values, for every components the first value, then the 2nd for all components, etc.
   int nComponents_;    ///< number of components for this field variable, important for interpreting values_
   int componentIndex_; ///< index of the current component for this field variable, starts with 0, important for interpreting values_
  
@@ -88,4 +101,9 @@ private:
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_; ///< indexing for exelem file
 };
 
+// output operator
+template<typename BasisOnMeshType>
+std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType> &rhs);
+
 };  // namespace
+#include "field_variable/component.tpp"

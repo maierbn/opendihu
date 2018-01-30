@@ -22,7 +22,8 @@ public:
   //! evaluate the first derivative of the 1D basis function corresponding to element-local dof i at xi, interval for xi is [0,1]
   static double dphi_dxi(int i, double xi);
   
-private:
 };
 
 }  // namespace
+
+#include "basis_function/hermite.tpp"

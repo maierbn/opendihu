@@ -34,14 +34,17 @@ public:
   std::vector<int> &getElementDofs(element_idx_t elementGlobalNo);
   
   //! return the number of dofs
-  int nDofs() const;
+  dof_idx_t nDofs() const;
+ 
+  //! return the number of elements
+  element_idx_t nElements() const;
   
   //! comparison operator
   bool operator==(const ElementToDofMapping &rhs);
   
 private:
   std::vector<std::vector<int>> dofs_;  ///< for every element the list of dofs
-  int nDofs_ = 0;            ///< total number of dofs
+  dof_idx_t nDofs_ = 0;            ///< total number of dofs
 };
 
 };  // namespace

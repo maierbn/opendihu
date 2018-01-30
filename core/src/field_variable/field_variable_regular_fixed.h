@@ -79,7 +79,7 @@ public:
   std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! get the total number of elements
-  int nElements() const;
+  element_idx_t nElements() const;
   
   //! get the names of the components that are part of this field variable
   std::vector<std::string> componentNames() const;

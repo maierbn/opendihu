@@ -149,13 +149,20 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
 }
 
 template<class ValueType, int D>
+std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, ValueType defaultValue)
+{
+  std::array<ValueType, D> defaultValues;
+  defaultValues.fill(defaultValue);
+  return convertFromPython<ValueType, D>(object, defaultValues);
+}
+
+template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
 {
   std::array<ValueType, D> defaultValue;
   defaultValue.fill(0.0);
   return convertFromPython<ValueType, D>(object, defaultValue);
 }
-
 
 template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,

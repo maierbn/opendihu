@@ -66,7 +66,7 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
       
       while(!line.empty())
       {
-        int nodeGlobalNo = atoi(line.c_str())-1;
+        node_idx_t nodeGlobalNo = atoi(line.c_str())-1;
         //VLOG(2) << "       node: " << nodeGlobalNo;
         elements_[elementNo].nodeGlobalNo.push_back(nodeGlobalNo);
         

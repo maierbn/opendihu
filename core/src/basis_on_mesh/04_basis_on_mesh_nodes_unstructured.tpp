@@ -62,7 +62,7 @@ getNodePositions(std::vector<double> &nodes) const
   
   nodes.resize(this->nNodes()*3);
  
-  for (int nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
     int nodeFirstDofGlobalNo = this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];
     Vec3 position = this->fieldVariable_.at("geometry")->template getValue<3>(nodeFirstDofGlobalNo);

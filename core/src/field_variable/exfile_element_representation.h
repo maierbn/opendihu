@@ -22,6 +22,9 @@ public:
   
   //! parse current component's exfile representation from file contents
   void parseFromExelemFile(std::string content);
+ 
+  //! resize the internal node_ vector to number of nodes
+  void setNumberNodes(int nNodes);
   
   //! comparison operator
   bool operator==(const ExfileElementRepresentation &rhs) const;

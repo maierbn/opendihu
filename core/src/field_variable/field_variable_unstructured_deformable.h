@@ -36,15 +36,23 @@ public:
   //! set all data but the values from a second field variable
   template<typename FieldVariableType>
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
+    
+  //! set all data but the components from precomputed mappings
+  void initializeFromMappings(std::string name, bool isGeometryField, 
+                              std::shared_ptr<ExfileRepresentation> exfileRepresentation,
+                              std::shared_ptr<ElementToDofMapping> elementToDofMapping,
+                              std::shared_ptr<ElementToNodeMapping> elementToNodeMapping,
+                              std::shared_ptr<NodeToDofMapping> nodeToDofMapping,
+                              std::vector<std::string> componentNames);
   
   //! get the number of components
   int nComponents() const;
   
   //! get the number of elements
-  int nElements() const;
+  element_idx_t nElements() const;
   
   //! get the number of nodes
-  int nNodes() const;
+  node_idx_t nNodes() const;
   
   //! get the names of the components
   std::vector<std::string> componentNames() const;
@@ -174,10 +182,10 @@ public:
   std::map<std::string, Component<BasisOnMeshType>> &component();
   
   //! get the number of entries of the internal values_ Vector
-  int nEntries() const;
+  std::size_t nEntries() const;
   
   //! get the number of dofs, i.e. the number of entries per component
-  int nDofs() const;
+  dof_idx_t nDofs() const;
   
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
@@ -193,9 +201,12 @@ protected:
   //! create the element to dof mapping at each component
   void createElementToDofMapping(std::shared_ptr<::FieldVariable::ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode);
   
+  //! initialize components
+  void initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation);
+  
   int exfileNo_;    ///< number of the fieldvariable in exelem file (index starts at 1)
-  int nEntries_;       ///< number of entries
-  int nElements_;    ///< number of elements
+  std::size_t nEntries_;       ///< number of entries
+  element_idx_t nElements_;    ///< number of elements
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, Component<BasisOnMeshType>> component_;    ///< one or multiple components of which this field variable consists of, with their name as key (e.g. 'x','y','z')
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components

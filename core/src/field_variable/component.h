@@ -55,13 +55,13 @@ public:
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_idx_t elementNo, int dofIndex) const;
+  dof_idx_t getDofNo(element_idx_t elementNo, int dofIndex) const;
   
   //! return the total number of dofs for this component
-  int nDofs() const;
+  dof_idx_t nDofs() const;
   
   //! return the number of elements
-  int nElements() const;
+  element_idx_t nElements() const;
   
   //! return the exfileBasisFunctionSpecification
   std::string exfileBasisFunctionSpecification() const;
@@ -95,7 +95,7 @@ private:
  
   std::string name_;    ///< identifier of the component, e.g. 'x'
   std::string exfileBasisFunctionSpecification_;   ///< the basis function specification in the exelem file, e.g. c.Hermite*c.Hermite*c.Hermite
-  int nElements_;      ///< number of elements
+  element_idx_t nElements_;      ///< number of elements
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;   ///< mapping from element-local dof-indices to dof numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;   ///< mapping from nodes to dof numbers
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_; ///< indexing for exelem file

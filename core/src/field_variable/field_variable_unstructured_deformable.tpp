@@ -138,7 +138,7 @@ setNumberElements(element_idx_t nElements)
 }
 
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+element_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nElements() const
 {
   return this->nElements_;
@@ -648,26 +648,49 @@ componentNames() const
 }
   
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+std::size_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nEntries() const
 {
   return this->nEntries_; 
 }
 
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+dof_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nDofs() const
 {
   return this->nEntries_ / this->nComponents(); 
 }
   
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+node_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 nNodes() const
 {
   return nodeToDofMapping_->nNodes();
 }
   
+template<int D, typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation)
+{
+  // insert components
+  int nComponents = componentNames.size();
+  int componentIndex = 0;
+  
+  // create a new values vector for the new field variable
+  for(auto &componentName : componentNames)
+  {
+    Component<BasisOnMeshType> component;
+    component.initialize(this->values_, nComponents, componentIndex++, this->nElements_);   // note: this->values_ may be nullptr but is updated by initializeValuesVector
+    component.setName(componentName, exfileBasisRepresentation);
+    component.setDofMappings(this->elementToDofMapping_, this->nodeToDofMapping_);
+    component.setExfileRepresentation(this->exfileRepresentation_);
+    this->component_.insert(std::pair<std::string, Component<BasisOnMeshType>>(componentName, component));
+  }
+  
+  // set values_ and nEntries_
+  initializeValuesVector();
+}
+
 template<int D, typename BasisFunctionType>
 template<typename FieldVariableType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
@@ -684,25 +707,37 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->nodeToDofMapping_ = fieldVariable.nodeToDofMapping();
   this->mesh_ = fieldVariable.mesh();
   
-  // insert components
-  int nComponents = componentNames.size();
-  int componentIndex = 0;
-  
   std::string exfileBasisRepresentation = fieldVariable.component().begin()->second.exfileBasisFunctionSpecification();
   
-  // create a new values vector for the new field variable
-  for(auto &componentName : componentNames)
-  {
-    Component<BasisOnMeshType> component;
-    component.initialize(this->values_, nComponents, componentIndex++, this->nElements_);
-    component.setName(componentName, exfileBasisRepresentation);
-    component.setDofMappings(fieldVariable.elementToDofMapping(), fieldVariable.nodeToDofMapping());
-    component.setExfileRepresentation(fieldVariable.exfileRepresentation());
-    this->component_.insert(std::pair<std::string, Component<BasisOnMeshType>>(componentName, component));
-  }
+  initializeComponents(componentNames, exfileBasisRepresentation);
+}
+
+template<int D, typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+initializeFromMappings(std::string name, bool isGeometryField, 
+                       std::shared_ptr<ExfileRepresentation> exfileRepresentation,
+                       std::shared_ptr<ElementToDofMapping> elementToDofMapping,
+                       std::shared_ptr<ElementToNodeMapping> elementToNodeMapping,
+                       std::shared_ptr<NodeToDofMapping> nodeToDofMapping,
+                       std::vector<std::string> componentNames)
+{
+  this->name_ = name;
+  this->exfileNo_ = 0;
+  this->nEntries_ = 0;
+  this->isGeometryField_ = isGeometryField;
+  this->nElements_ = elementToDofMapping->nElements();
+  this->exfileRepresentation_ = exfileRepresentation;
+  this->elementToDofMapping_ = elementToDofMapping;
+  this->elementToNodeMapping_ = elementToNodeMapping;
+  this->nodeToDofMapping_ = nodeToDofMapping;
   
-  // set values_ and nEntries_
-  initializeValuesVector();
+  // this->mesh still needs to be set by setMesh
+  
+  std::string exfileBasisRepresentation = BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();
+  
+  initializeComponents(componentNames, exfileBasisRepresentation);
+  
+  LOG(DEBUG) << "FieldVariable nDofs: " << this->nDofs();
 }
   
 template<int D, typename BasisFunctionType>
@@ -774,7 +809,7 @@ void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,Basi
 eliminateScaleFactors()
 {
   // loop over elements 
-  for (int elementGlobalNo = 0; elementGlobalNo < nElements_; elementGlobalNo++)
+  for (element_idx_t elementGlobalNo = 0; elementGlobalNo < nElements_; elementGlobalNo++)
   {
     // loop over components
     for (auto &component : component_)
@@ -783,7 +818,7 @@ eliminateScaleFactors()
       // loop over element dofs
       for (unsigned int nodeIdx = 0; nodeIdx < element.nodeGlobalNo.size(); nodeIdx++)
       {
-        int nodeGlobalNo = element.nodeGlobalNo[nodeIdx];
+        node_idx_t nodeGlobalNo = element.nodeGlobalNo[nodeIdx];
         double scaleFactor = element.scaleFactors[nodeIdx];
         
         std::vector<int> &nodeDofs = nodeToDofMapping_->getNodeDofs(nodeGlobalNo);

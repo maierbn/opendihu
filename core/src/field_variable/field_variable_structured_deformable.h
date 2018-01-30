@@ -62,7 +62,7 @@ public:
   std::array<int, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
   
   //! get the total number of elements
-  int nElements() const;
+  element_idx_t nElements() const;
 };
 
 };  // namespace

@@ -3,8 +3,7 @@
 #include "easylogging++.h"
 #include "utility/string_utility.h"
 
-#include "basis_function/lagrange.h"
-#include "basis_function/hermite.h"
+#include "basis_function/basis_function.h"
 
 #include <iostream>
 #include <fstream>
@@ -36,7 +35,7 @@ parseExelemFile(std::string exelemFilename)
     
     if (line.find("Element:") != std::string::npos)
     {
-      int elementGlobalNo = getNumberAfterString(line, "Element:");
+      element_idx_t elementGlobalNo = getNumberAfterString(line, "Element:");
       this->nElements_ = std::max(this->nElements_, elementGlobalNo);
     }
   }
@@ -294,22 +293,14 @@ outputExelemFile(std::ostream &file)
    
   bool outputHeader = true;
    
-  for(node_idx_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements(); currentElementGlobalNo++)
+  for(element_idx_t currentElementGlobalNo = 0; currentElementGlobalNo < nElements(); currentElementGlobalNo++)
   {
     int nScaleFactors = fieldVariable_.begin()->second->getNumberScaleFactors(currentElementGlobalNo);
     
     if (nScaleFactors != 0)
     {
       file << " #Scale factor sets=1" << std::endl;
-      if (typeid(BasisFunctionType) == typeid(BasisFunctionType::Hermite))
-        file << " " << StringUtility::multiply<D>("c.Hermite");
-      else if (typeid(BasisFunctionType) == typeid(BasisFunctionType::Lagrange))
-        file << " " << StringUtility::multiply<D>("l.Lagrange");
-      else if (typeid(BasisFunctionType) == typeid(BasisFunctionType::Lagrange))
-        file << " " << StringUtility::multiply<D>("q.Lagrange");
-      else 
-        LOG(FATAL) << "Exfile output not implemented for basis function type";
-      
+      file << " " << BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();
       file << ", #Scale factors=" << nScaleFactors << std::endl;
     }
     
@@ -396,7 +387,7 @@ outputExnodeFile(std::ostream &file)
       for (std::string component : fieldVariable->second.componentNames())
       {
         // loop over dofs 
-        for (int dofGlobalNo : dofsAtNode)
+        for (dof_idx_t dofGlobalNo : dofsAtNode)
         {
           double value = fieldVariable->second->getValue(component, dofGlobalNo);
           valuesAtNode.push_back(value);

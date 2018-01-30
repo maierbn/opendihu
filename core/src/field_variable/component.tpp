@@ -136,10 +136,10 @@ setNodeValues(node_idx_t nodeGlobalNo, std::vector<double>::iterator valuesBegin
   NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
   
   // loop over dofs
-  for(unsigned int dofGlobalNo = 0; dofGlobalNo < nodeDofInformation.dofs.size(); dofGlobalNo++, valuesBegin++)
+  for(dof_idx_t dofGlobalNo = 0; dofGlobalNo < nodeDofInformation.dofs.size(); dofGlobalNo++, valuesBegin++)
   {
     double value = *valuesBegin;
-    int vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
+    std::size_t vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
     
     VecSetValue(*values_, vectorIndex, value, INSERT_VALUES);
   }
@@ -171,8 +171,8 @@ setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator va
     // loop over elements of that version 
     for (auto element : nodeDofInformation.elementsOfVersion[versionIdx])
     {
-      int elementGlobalNo = element.elementGlobalNo;
-      int nodeIdx = element.nodeIdx;
+      element_idx_t elementGlobalNo = element.elementGlobalNo;
+      node_idx_t nodeIdx = element.nodeIdx;
       std::shared_ptr<ExfileElementRepresentation> exfileElement = exfileRepresentation_->getExfileElementRepresentation(elementGlobalNo);
      
       VLOG(1) << " element " << elementGlobalNo << " nodeIdx " << nodeIdx;
@@ -187,8 +187,8 @@ setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator va
         VLOG(1) << "  value " << value;
         values.push_back(value);
         
-        int dofGlobalNo = nodeDofInformation.dofs[blockIndex];
-        int vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
+        dof_idx_t dofGlobalNo = nodeDofInformation.dofs[blockIndex];
+        std::size_t vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
         VLOG(1) << "  dofGlobalNo = " << dofGlobalNo << ", vectorIndex = " << vectorIndex;
         
         indices.push_back(vectorIndex);
@@ -202,19 +202,19 @@ setNodeValuesFromBlock(node_idx_t nodeGlobalNo, std::vector<double>::iterator va
 }
 
 template<typename BasisOnMeshType>
-int Component<BasisOnMeshType>::nDofs() const
+dof_idx_t Component<BasisOnMeshType>::nDofs() const
 {
   return this->elementToDofMapping_->nDofs();
 }
 
 template<typename BasisOnMeshType>
-int Component<BasisOnMeshType>::nElements() const
+element_idx_t Component<BasisOnMeshType>::nElements() const
 {
   return this->nElements_;
 }
 
 template<typename BasisOnMeshType>
-int Component<BasisOnMeshType>::
+dof_idx_t Component<BasisOnMeshType>::
 getDofNo(element_idx_t elementNo, int dofIndex) const
 {
   return elementToDofMapping_->getElementDofs(elementNo)[dofIndex];

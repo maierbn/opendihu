@@ -26,7 +26,7 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  int nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+  element_idx_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   
   int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
@@ -90,10 +90,10 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  int nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  int nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  int nNodes0 = nElements0 + 1;
-  int nNodes1 = nElements1 + 1;
+  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  node_idx_t nNodes0 = nElements0 + 1;
+  node_idx_t nNodes1 = nElements1 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   double integralFactor = elementLength0*elementLength1;
@@ -316,12 +316,12 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // get settings values
-  int nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-  int nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-  int nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
-  int nNodes0 = nElements0 + 1;
-  int nNodes1 = nElements1 + 1;
-  int nNodes2 = nElements2 + 1;
+  element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+  element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+  element_idx_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
+  node_idx_t nNodes0 = nElements0 + 1;
+  node_idx_t nNodes1 = nElements1 + 1;
+  node_idx_t nNodes2 = nElements2 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
   double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
@@ -1042,7 +1042,7 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 1D";
  
     // get settings values
-    int nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+    element_idx_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
     double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     
     int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
@@ -1103,10 +1103,10 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 2D";
       
     // get settings values
-    int nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-    int nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-    int nNodes0 = nElements0 + 1;
-    int nNodes1 = nElements1 + 1;
+    element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+    element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+    node_idx_t nNodes0 = nElements0 + 1;
+    node_idx_t nNodes1 = nElements1 + 1;
     double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
     double integralFactor = elementLength0*elementLength1;
@@ -1300,12 +1300,12 @@ setRhsDiscretizationMatrix()
     LOG(DEBUG)<<"createRhsDiscretizationMatrix 3D";
       
     // get settings values
-    int nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
-    int nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
-    int nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
-    int nNodes0 = nElements0 + 1;
-    int nNodes1 = nElements1 + 1;
-    int nNodes2 = nElements2 + 1;
+    element_idx_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(0);
+    element_idx_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(1);
+    element_idx_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements(2);
+    node_idx_t nNodes0 = nElements0 + 1;
+    node_idx_t nNodes1 = nElements1 + 1;
+    node_idx_t nNodes2 = nElements2 + 1;
     double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
     double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
     double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);

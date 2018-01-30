@@ -85,6 +85,11 @@ void ExfileElementRepresentation::parseFromExelemFile(std::string content)
   }
 }
 
+void ExfileElementRepresentation::setNumberNodes(int nNodes)
+{
+  node_.resize(nNodes);
+}
+
 bool ExfileElementRepresentation::operator==(const ExfileElementRepresentation& rhs) const
 {
   //VLOG(1) << "    exfileElementRepresentation sizes: " << node_.size() << ", " << rhs.node_.size();
@@ -133,9 +138,15 @@ void ExfileElementRepresentation::outputHeaderExelemFile(std::ostream &file)
     file << std::endl
       << "     Scale factor indices:";
     
-    for (unsigned int i=0; i<iter->valueIndices.size(); i++)
+    unsigned int i=0;
+    for (; i<iter->scaleFactorIndices.size(); i++)
     {
       file << " " << iter->scaleFactorIndices[i]+1;
+    }
+    // fill the rest of the scale factors with 0s (means scale factor of 1.0)
+    for (; i<iter->valueIndices.size(); i++)
+    {
+      file << " 0";
     }
     file << std::endl;
   }

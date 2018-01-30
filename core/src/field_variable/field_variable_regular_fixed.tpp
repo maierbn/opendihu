@@ -38,8 +38,8 @@ getValues(std::string component, std::array<int,N> dofGlobalNo, std::array<doubl
   // for geometry field compute information
   const int componentIndex = this->componentIndex_[component];
   
-  const int nNodesInXDirection = this->mesh_->nNodes(0);
-  const int nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
  
@@ -84,8 +84,8 @@ getValues(std::array<int,N> dofGlobalNo, std::array<std::array<double,nComponent
     return;
   }
 
-  const int nNodesInXDirection = this->mesh_->nNodes(0);
-  const int nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   // loop over entries in values to be filled
@@ -178,8 +178,8 @@ getValue(std::string component, node_idx_t dofGlobalNo)
   // for geometry field compute information
   const int componentIndex = this->componentIndex_[component];
   
-  const int nNodesInXDirection = this->mesh_->nNodes(0);
-  const int nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   double value = 0;
@@ -215,8 +215,8 @@ getValue(node_idx_t dofGlobalNo)
     return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::template getValue<nComponents>(dofGlobalNo);
   }
   
-  const int nNodesInXDirection = this->mesh_->nNodes(0);
-  const int nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_idx_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_idx_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
   
   int nodeNo = int(dofGlobalNo / nDofsPerNode);
@@ -302,7 +302,7 @@ nElementsPerDimension() const
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+element_idx_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 nElements() const
 {
   return this->nElements();

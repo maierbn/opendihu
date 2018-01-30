@@ -56,7 +56,7 @@ transferRhsToWeakForm()
   
   // set entries in rhs vector
   // loop over elements 
-  for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_idx_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
   {
     // get indices of element-local dofs
     auto dof = mesh->getElementDofNos(elementNo);
@@ -132,7 +132,7 @@ setRhsDiscretizationMatrix()
       
     // initialize values to zero
     // loop over elements 
-    for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+    for (element_idx_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
       auto dof = mesh->getElementDofNos(elementNo);
       
@@ -159,7 +159,7 @@ setRhsDiscretizationMatrix()
     
     // set entries in discretizationMatrix
     // loop over elements 
-    for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+    for (element_idx_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
       // get indices of element-local dofs
       auto dof = mesh->getElementDofNos(elementNo);

@@ -29,7 +29,7 @@ struct Interface
   virtual std::vector<std::string> componentNames() const = 0;
   
   //! get the number of elements
-  virtual int nElements() const = 0;
+  virtual element_idx_t nElements() const = 0;
   
   //! for a specific component, get values from their global dof no.s
   //template<int N>

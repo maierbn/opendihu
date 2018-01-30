@@ -95,10 +95,12 @@ public:
   
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
-  
-private:
  
-  //! convert a python list to a std::array
+  //! convert a python list to a std::array, use default value when python list is shorter than the resulting array
+  template<class ValueType, int D>
+  static std::array<ValueType, D> convertFromPython(PyObject *object, ValueType defaultValue);
+  
+  //! convert a python list to a std::array with specified default values if the python list is shorter than the array
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue);
   
@@ -106,6 +108,7 @@ private:
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object);
   
+private:
   
   static PyObject *itemList;    ///< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
   static int itemListIndex;     ///< current index of itemList

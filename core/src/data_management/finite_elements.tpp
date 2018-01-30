@@ -104,7 +104,7 @@ template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
 createPetscObjects()
 {
-  element_idx_t n = this->mesh_->nDofs();
+  dof_idx_t n = this->mesh_->nDofs();
   
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType>::createPetscObjects("<<n<<")";
   

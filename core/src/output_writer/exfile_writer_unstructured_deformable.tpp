@@ -14,7 +14,7 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
   
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement();   
-  const int nElements = fieldVariables.front()->mesh()->nElements();
+  const element_idx_t nElements = fieldVariables.front()->mesh()->nElements();
  
   bool outputHeader = true;
    
@@ -42,15 +42,7 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
       if (nScaleFactors != 0)
       {
         stream << " #Scale factor sets=1" << std::endl;
-        if (typeid(BasisFunctionType) == typeid(typename BasisFunction::Hermite))
-          stream << " " << StringUtility::multiply<D>("c.Hermite");
-        else if (typeid(BasisFunctionType) == typeid(typename BasisFunction::Lagrange<1>))
-          stream << " " << StringUtility::multiply<D>("l.Lagrange");
-        else if (typeid(BasisFunctionType) == typeid(typename BasisFunction::Lagrange<2>))
-          stream << " " << StringUtility::multiply<D>("q.Lagrange");
-        else 
-          LOG(FATAL) << "Exfile output not implemented for basis function type";
-        
+        stream << " " << BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();
         stream << ", #Scale factors=" << nScaleFactors << std::endl;
       }
       
@@ -78,7 +70,7 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
 
   bool outputHeader = true;
    
-  const int nNodes = fieldVariables.front()->mesh()->nNodes();
+  const node_idx_t nNodes = fieldVariables.front()->mesh()->nNodes();
   
   // loop over all nodes
   for(node_idx_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)

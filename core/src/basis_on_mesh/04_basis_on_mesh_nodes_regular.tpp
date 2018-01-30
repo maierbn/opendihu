@@ -59,7 +59,7 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   std::vector<std::string> componentNames{"x","y","z"};
   bool isGeometryField = true;
   Vec values;
-  node_idx_t nDofs = this->nDofs();
+  dof_idx_t nDofs = this->nDofs();
   int nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometry_->set("geometry", componentNames, this->nElements_, nEntries, isGeometryField, values);
 }
@@ -82,12 +82,10 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 initialize()
 {
-  LOG(DEBUG) << "   retrieve this pointer ";
   std::shared_ptr<BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>> ptr = this->shared_from_this();
   
   assert(ptr != nullptr);
   
-  LOG(DEBUG) << "   cast this pointer ";
   std::shared_ptr<BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>(ptr);
   
   assert(self != nullptr);
@@ -105,7 +103,7 @@ nNodes() const
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
+dof_idx_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nDofs() const
 {
   return nNodes() * this->nDofsPerNode();
@@ -156,11 +154,11 @@ getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
  
-  for (int nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
-    int firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
+    dof_idx_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
-    int index = nodeGlobalNo*3;
+    std::size_t index = nodeGlobalNo*3;
     Vec3 position = this->geometry_->template getValue<3>(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];

@@ -84,14 +84,14 @@ nElementsPerDimension() const
 }
 
 template<typename BasisOnMeshType>
-int FieldVariableStructured<BasisOnMeshType>::
+std::size_t FieldVariableStructured<BasisOnMeshType>::
 nEntries() const
 {
   return this->nEntries_;
 }
 
 template<typename BasisOnMeshType>
-int FieldVariableStructured<BasisOnMeshType>::
+dof_idx_t FieldVariableStructured<BasisOnMeshType>::
 nDofs() const
 {
   assert(this->nComponents_ != 0);

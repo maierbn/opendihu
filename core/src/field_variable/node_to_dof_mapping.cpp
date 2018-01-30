@@ -32,7 +32,7 @@ std::vector<double> &NodeToDofMapping::getNodeScaleFactors(node_idx_t nodeGlobal
   return nodeDofInformation_[nodeGlobalNo].scaleFactors;
 }
 
-int NodeToDofMapping::nNodes() const
+node_idx_t NodeToDofMapping::nNodes() const
 {
   return nodeDofInformation_.size();
 }

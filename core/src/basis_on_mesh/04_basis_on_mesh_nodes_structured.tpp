@@ -24,12 +24,10 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 initialize()
 {
-  LOG(DEBUG) << "   retrieve this pointer ";
   std::shared_ptr<BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>> ptr = this->shared_from_this();
   
   assert(ptr != nullptr);
   
-  LOG(DEBUG) << "   cast this pointer ";
   std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>(ptr);
   
   assert(self != nullptr);
@@ -117,7 +115,7 @@ setGeometryField(std::vector<double> &nodePositions)
 {
   
   // compute number of dofs
-  node_idx_t nDofs = this->nDofs();
+  dof_idx_t nDofs = this->nDofs();
   
   LOG(DEBUG) << "setGeometryField, nodePositions: " << nodePositions;
   
@@ -209,7 +207,7 @@ nNodes(int dimension) const
 }
 
 template<int D,typename BasisFunctionType>
-node_idx_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
+dof_idx_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nDofs() const
 {
   return nNodes() * this->nDofsPerNode();
@@ -231,7 +229,7 @@ getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
  
-  for (int nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_idx_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
    
     node_idx_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();

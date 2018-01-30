@@ -24,7 +24,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   
   // for setup to work we need the number of elements already set (by a previous call to setNumberElements)
   assert(dofs_.size() != 0);
-  int nElements = dofs_.size();
+  element_idx_t nElements = dofs_.size();
   
   // create node to dof mapping 
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping = std::make_shared<NodeToDofMapping>();
@@ -53,7 +53,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
     // loop over nodes of element
     for (unsigned int nodeIndex = 0; nodeIndex < nNodesInElement; nodeIndex++)
     {
-      int nodeGlobalNo = element.nodeGlobalNo[nodeIndex];
+      node_idx_t nodeGlobalNo = element.nodeGlobalNo[nodeIndex];
       
       VLOG(1) << "   node global " << nodeGlobalNo;
       
@@ -187,9 +187,14 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   return nodeToDofMapping;
 }
 
-int ElementToDofMapping::nDofs() const
+dof_idx_t ElementToDofMapping::nDofs() const
 {
   return nDofs_;
+}
+
+element_idx_t ElementToDofMapping::nElements() const
+{
+  return dofs_.size();
 }
 
 std::vector<int> &ElementToDofMapping::getElementDofs(element_idx_t elementGlobalNo)

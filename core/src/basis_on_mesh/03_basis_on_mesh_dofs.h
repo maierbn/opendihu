@@ -148,7 +148,7 @@ public:
   element_idx_t nElements() const;
   
   //! return the number of dofs
-  int nDofs() const;
+  dof_idx_t nDofs() const;
  
   //! add all field variables except the geometry field to the vector. This is used to retrive additional field variables that were parsed from an exfile.
   void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables);
@@ -166,10 +166,13 @@ protected:
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
   
+  //! parse the element and node positions from python settings
+  void parseFromSettings(PyObject *settings);
+  
   std::map<std::string, std::shared_ptr<FieldVariableType>> fieldVariable_;   ///< all field variables that were present in exelem/exnode files, should contain "geometry" field variable
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
-  int nElements_;    ///< number of elements in exelem file 
-  int nDofs_;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
+  element_idx_t nElements_ = 0;    ///< number of elements in exelem file 
+  dof_idx_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
  
 }; 
 }  // namespace

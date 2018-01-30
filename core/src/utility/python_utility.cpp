@@ -170,6 +170,32 @@ PyObject *PythonUtility::convertFromPython(PyObject *object)
   return convertFromPython<PyObject *>(object, NULL);
 }
 
+template<>
+std::array<double,2> PythonUtility::convertFromPython(PyObject *object, std::array<double,2> defaultValue)
+{
+  return PythonUtility::convertFromPython<double,2>(object, defaultValue);
+}
+
+template<>
+std::array<double,2> PythonUtility::convertFromPython(PyObject *object)
+{
+  return convertFromPython<double,2>(object);
+}
+
+template<>
+std::array<double,3> PythonUtility::convertFromPython(PyObject *object, std::array<double,3> defaultValue)
+{
+  return PythonUtility::convertFromPython<double,3>(object, defaultValue);
+}
+
+template<>
+std::array<double,3> PythonUtility::convertFromPython(PyObject *object)
+{
+  return convertFromPython<double,3>(object);
+}
+
+
+
 bool PythonUtility::containsKey(const PyObject* settings, std::string keyString)
 {
   if (settings)

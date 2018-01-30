@@ -133,16 +133,16 @@ public:
 protected:
  
   //! get the number of entries of the internal values_ Vector
-  int nEntries() const;
+  std::size_t nEntries() const;
   
   //! get the number of dofs, i.e. the number of entries per component
-  int nDofs() const;
+  dof_idx_t nDofs() const;
   
   std::array<int, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components
-  int nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
+  std::size_t nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
   
   Vec values_ = PETSC_NULL;          ///< Petsc vector containing the values, the values for the components are stored contiguous, e.g. (comp1val1, comp2val1, comp3val1, comp1val2, comp2val2, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };

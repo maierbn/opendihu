@@ -45,7 +45,7 @@ public:
   std::vector<double> &getNodeScaleFactors(node_idx_t nodeGlobalNo);
   
   //! return the number of nodes
-  int nNodes() const;
+  node_idx_t nNodes() const;
   
   //! check if a node is already contained in the internal node dof information map
   bool containsNode(node_idx_t nodeGlobalNo) const;

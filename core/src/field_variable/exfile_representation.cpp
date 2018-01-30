@@ -92,10 +92,9 @@ bool ExfileRepresentation::operator==(const ExfileRepresentation& rhs)
   return true;
 }
 
-std::shared_ptr<ExfileElementRepresentation> ExfileRepresentation::getExfileElementRepresentation(int elementNo)
+std::shared_ptr<ExfileElementRepresentation> &ExfileRepresentation::getExfileElementRepresentation(int elementNo)
 {
-  if (elementNo >= (int)representation_.size())
-    return nullptr;
+  assert(elementNo < (int)representation_.size());
   return representation_[elementNo];
 }
 

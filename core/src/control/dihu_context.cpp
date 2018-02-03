@@ -67,7 +67,11 @@ DihuContext::DihuContext(int argc, char *argv[]) :
       s << f.rdbuf();
       std::remove("tmp");
       
-      const char *pythonSearchPath = s.str().c_str();
+      std::string pythonHome = s.str();
+      if (pythonHome.empty())
+        pythonHome = "/usr";
+      
+      const char *pythonSearchPath = pythonHome.c_str();
       LOG(DEBUG) << "Set python search path to \""<<pythonSearchPath<<"\".";
       
       Py_SetPythonHome((char *)pythonSearchPath);
@@ -88,7 +92,7 @@ DihuContext::DihuContext(int argc, char *argv[]) :
 
   if (!meshManager_)
   {
-    LOG(TRACE) << "create meshManager_";
+    VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<MeshManager>(*this);
   }
 }  
@@ -97,7 +101,7 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : D
 {
   loadPythonScript(pythonSettings);
   
-  LOG(DEBUG) << "recreate meshManager";
+  VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;
   meshManager_ = std::make_shared<MeshManager>(*this);
   
@@ -243,12 +247,15 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf("logging.conf");
 */
 
+// color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_LIGHT_GRAY    "\x1b[90m"
+#define ANSI_COLOR_LIGHT_WHITE    "\x1b[97m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
   std::string separator(80, '_');
@@ -264,6 +271,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
   conf.set(el::Level::Trace, el::ConfigurationType::Format, "TRACE: %msg");
+  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format, 
            "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
   

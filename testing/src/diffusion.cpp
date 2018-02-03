@@ -1,3 +1,5 @@
+#include <Python.h>  // this has to be the first included header
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -41,7 +43,7 @@ config = {
   TimeSteppingScheme::ExplicitEuler<
     FiniteElementMethod<
       Mesh::RegularFixed<1>,
-      BasisFunction::Lagrange,
+      BasisFunction::Lagrange<>,
       Integrator::None,
       Equation::Dynamic::Diffusion
     >

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 #include <control/types.h>
 
 namespace Mesh
@@ -18,20 +18,42 @@ public:
   //! construct mesh from python settings
   Mesh(PyObject *specificSettings);
   virtual ~Mesh() {}
-  virtual int dimension() = 0;
-  virtual element_idx_t nNodes() = 0;
-private:
+  virtual int dimension() const = 0;
+  virtual node_no_t nNodes() const = 0;
+protected:
+  
 };
 
-template<unsigned long D>
+/** dummy mesh to signal that no mesh was specified (meshManager will instead create a mesh with a single element)
+ */
+class None : public Mesh 
+{
+public:
+  using Mesh::Mesh;
+  int dimension() const {return 0;}
+  node_no_t nNodes() const {return 0;}
+  static constexpr int dim() {return 0;}
+};
+
+/**
+ * base class for a mesh with a dimension.
+ */
+template<int D>
 class MeshD : public Mesh
 {
 public:
   //! construct mesh from python settings
   MeshD(PyObject *specificSettings);
   virtual ~MeshD() {}
-  virtual int dimension();
-  virtual element_idx_t nNodes() = 0;
+  
+  //! return the dimension/template argument D as method. This is also accessible from the base class.
+  int dimension() const; 
+  
+  //! return the template argument D (the dimension) as constexpr
+  static constexpr int dim();
+  
+  //! get the number of nodes of this mesh
+  virtual node_no_t nNodes() const = 0;
 private:
 };
 

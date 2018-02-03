@@ -5,7 +5,7 @@ DiscretizableInTime::DiscretizableInTime(SolutionVectorMapping solutionVectorMap
 {
 }
 
-int DiscretizableInTime::numberDegreesOfFreedomPerNode()
+int DiscretizableInTime::nComponentsNode()
 {
   return 1;
 }

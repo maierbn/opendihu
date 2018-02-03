@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <petscsys.h>
 #include <petscksp.h>
 
@@ -18,7 +19,7 @@ public:
   virtual void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime) = 0;
  
   //! get the number of degrees of freedom per node which is 1 by default
-  virtual int numberDegreesOfFreedomPerNode();
+  virtual int nComponentsNode();
   
   //! set initial values and return true or don't do anything and return false
   virtual bool setInitialValues(Vec &initialValues);

@@ -1,37 +1,26 @@
 #pragma once
 
-#include <array>
+#include <Python.h>  // has to be the first included header
+#include <vector>
 
-#include "mesh/mesh.h"
 #include "control/types.h"
-
-#include <petscmat.h>
-
-#include "mesh/regular.h"
+#include "mesh/mesh.h"
 
 namespace Mesh
 {
-
-template<unsigned long D>
-class Deformable : public Regular<D>
+  
+/**
+ * A deformable mesh (interface), i.e. it can change its geometry while computation. This is only an interface.
+ */
+class Deformable
 {
 public:
  
-  //! construct mesh from python settings
-  Deformable(PyObject *specificSettings);
-    
-  //! fill a vector with node positions 
-  void getNodePositions(std::vector<double> &nodePositions);
+  //! fill a vector with positions of the nodes, consecutive (x,y,z) values
+  virtual void getNodePositions(std::vector<double> &nodePositions) const = 0;
   
-  //! return the node position of a specific dof
-  Vec3 getNodePosition(node_idx_t dofNo);
-  
-  friend class NodePositionsTester;
-private:
- 
-  Vec nodePositions_;  ///< contains the positions of the nodes in physical space, always as consecutive (x,y,z) triple. For 1D/2D only problems, y,z resp. z are set to 0.
-};  
+  //! return the geometry field entry (node position for Lagrange elements) of a specific dof
+  virtual Vec3 getGeometry(node_no_t dofNo) const = 0;
+};
 
-}  // namespace
-
-#include "mesh/deformable.tpp"
+};    // namespace

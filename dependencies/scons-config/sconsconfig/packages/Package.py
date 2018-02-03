@@ -103,7 +103,24 @@ class Package(object):
     sub_dirs = self.sub_dirs
 
     upp = name.upper()
-    if self.have_option(env, upp + '_DIR'):
+    
+    # Check if the user requested to download this package.
+    if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL') and self.download_url:
+
+      # Perform the auto-management of this package.
+      res = self.auto(ctx)
+
+      # For now we assume a package location is set entirely with <NAME>_DIR.
+      if res[0]:
+        value = self.get_option(env, upp + '_DIR')
+        res = self.try_location(ctx, value, **kwargs)
+        if not res[0]:
+          self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.\n'%(name, value)
+          # ctx.Log(msg)
+          # print msg
+          # env.Exit(1)
+
+    elif self.have_option(env, upp + '_DIR'):
       value = self.get_option(env, upp + '_DIR')
       ctx.Log('Found option %s = %s\n'%(upp + '_DIR', value))
       res = self.try_location(ctx, value, **kwargs)
@@ -157,22 +174,6 @@ class Package(object):
         # ctx.Log(msg)
         # print msg
         # env.Exit(1)
-
-    # Check if the user requested to download this package.
-    elif self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL') and self.download_url:
-
-      # Perform the auto-management of this package.
-      res = self.auto(ctx)
-
-      # For now we assume a package location is set entirely with <NAME>_DIR.
-      if res[0]:
-        value = self.get_option(env, upp + '_DIR')
-        res = self.try_location(ctx, value, **kwargs)
-        if not res[0]:
-          self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.\n'%(name, value)
-          # ctx.Log(msg)
-          # print msg
-          # env.Exit(1)
 
     else:
       ctx.Log('No options found, trying empty location.\n')
@@ -811,11 +812,11 @@ class Package(object):
       print '%s_LIB_DIR.\n'%name
       env.Exit(1)
 
-    # Either download or location.
-    elif self.have_option(env, name + '_DOWNLOAD') and self.have_any_options(env, name + '_DIR', name + '_INC_DIR', name + '_LIB_DIR'):
-      print '\n'
-      print 'Cannot specify to download %s and also give a system location.'%self.name
-      env.Exit(1)
+    # Either download or location. (both is allowed, download overrides given directory)
+    #elif self.have_option(env, name + '_DOWNLOAD') and self.have_any_options(env, name + '_DIR', name + '_INC_DIR', name + '_LIB_DIR'):
+    #  print '\n'
+    #  print 'Cannot specify to download %s and also give a system location.'%self.name
+    #  env.Exit(1)
 
   def need_cmake(self, env):
     if not self.have_cmake():

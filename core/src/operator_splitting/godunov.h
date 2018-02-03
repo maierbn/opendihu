@@ -23,7 +23,7 @@ public:
   //! return a solution vector
   Vec &solution();
   
-  //! return wether the object has a specified mesh type or if it is independent of any mesh type
+  //! return whether the object has a specified mesh type or if it is independent of any mesh type
   bool knowsMeshType();
   
 private:
@@ -31,7 +31,7 @@ private:
   void initialize();
  
   //DihuContext &context_;    ///< the context object containing everything to be stored
-  Data::TimeStepping data_;     ///< data object that holds all PETSc vectors and matrices
+  Data::TimeStepping<typename TimeStepping1::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
   
   TimeStepping1 timeStepping1_;    ///< the object to be discretized
   TimeStepping2 timeStepping2_;    ///< the object to be discretized

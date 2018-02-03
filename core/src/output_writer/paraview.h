@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <iostream>
 #include <vector>
 
@@ -16,25 +17,27 @@ public:
   //! constructor
   Paraview(PyObject *specificSettings);
  
+  //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
+  template<typename DataType>
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  
 private:
  
-  //! write out solution to given filename
-  void writeSolution(Data::Data &data, int timeStepNo, double currentTime);
- 
   //! write out solution templated by dimension 
-  template <int dimension>
-  void writeSolutionDim(Data::Data &data, int timeStepNo, double currentTime);
+  template <int dimension, typename DataType>
+  void writeSolutionDim(DataType &data);
   
-  //! write serial vtkRectilinearGrid file (structured, suffix *.vts)
-  template <class Mesh>
-  void writeRectilinearGrid(Data::Data& data);
+  //! write serial vtkRectilinearGrid file (structured, suffix *.vtr)
+  template <typename Mesh, typename DataType>
+  void writeRectilinearGrid(DataType& data);
  
-  //! create *.pvt VTK master file that is a header file for multiple
-  /** This writes the master file of the parallel output, should only be done
-    * by one processor. */
-  void writeVTKMasterFile();
- 
-  void writeVTKSlaveFile();
+  //! write serial vtkStructuredGrid file (structured, suffix *.vts)
+  template <int dimension, typename DataType>
+  void writeStructuredGrid(DataType& data);
+  
+  //! write serial vtkUnstructuredGrid file (unstructured, suffix *.vtu)
+  template <int dimension, typename DataType>
+  void writeUnstructuredGrid(DataType& data);
   
   //! encode a Petsc vector in Base64
   std::string encodeBase64(Vec &vector);
@@ -47,4 +50,6 @@ private:
   std::string convertToAscii(std::vector<double> &vector, bool humanReadable);
 };
 
-};
+};  // namespace
+
+#include "output_writer/paraview.tpp"

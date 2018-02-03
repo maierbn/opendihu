@@ -9,5 +9,7 @@ release:
 	python dependencies/scons/scons.py -Q BUILD_TYPE=RELEASE
 
 clean:
+	rm -rf .sconf_temp
+	rm .sconsign.dblite	
 	python dependencies/scons/scons.py -Q -c BUILD_TYPE=DEBUG
 	python dependencies/scons/scons.py -Q -c BUILD_TYPE=RELEASE

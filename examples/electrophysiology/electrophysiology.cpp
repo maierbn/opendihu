@@ -1,3 +1,4 @@
+#include <Python.h>
 #include <iostream>
 #include <cstdlib>
 
@@ -22,7 +23,7 @@ int main(int argc, char *argv[])
     TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::RegularFixed<1>,
-        BasisFunction::Lagrange,
+        BasisFunction::Lagrange<>,
         Integrator::Gauss<2>,
         Equation::Dynamic::Diffusion
       >

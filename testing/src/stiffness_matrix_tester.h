@@ -1,5 +1,6 @@
 #pragma once
   
+#include <Python.h>  // this has to be the first included header
 #include <vector>
 #include <map>
 #include "utility/petsc_utility.h"
@@ -34,7 +35,7 @@ public:
     std::vector<double> &referenceRhs
                            )
   {
-    Vec &rhsVector = finiteElementMethod.data_.rightHandSide();
+    Vec &rhsVector = finiteElementMethod.data_.rightHandSide().values();
     std::vector<double> rhs;
     PetscUtility::getVectorEntries(rhsVector, rhs);
     
@@ -51,7 +52,7 @@ public:
     FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
     std::map<int, double> &dirichletBC)
   {
-    Vec &solutionVector = finiteElementMethod.data_.solution();
+    Vec &solutionVector = finiteElementMethod.data_.solution().values();
     std::vector<double> solution;
     PetscUtility::getVectorEntries(solutionVector, solution);
     
@@ -71,10 +72,10 @@ public:
     FiniteElementMethod<MeshType2, BasisFunctionType2, IntegratorType2, EquationType2> &finiteElementMethod2)
   {
     // rhsVector
-    Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide();
+    Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide().values();
     std::vector<double> rhs1;
     PetscUtility::getVectorEntries(rhsVector1, rhs1);
-    Vec &rhsVector2 = finiteElementMethod2.data_.rightHandSide();
+    Vec &rhsVector2 = finiteElementMethod2.data_.rightHandSide().values();
     std::vector<double> rhs2;
     PetscUtility::getVectorEntries(rhsVector2, rhs2);
     
@@ -97,7 +98,7 @@ public:
     for(unsigned int i=0; i<matrix1.size(); i++)
     {
       double difference = fabs(matrix1[i]-matrix2[i]);
-      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 2e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
     }
     
     
@@ -111,12 +112,12 @@ public:
   )
   {
     // create the discretization matrix if it does not already exist
-    finiteElementMethod2.createRhsDiscretizationMatrix();
+    finiteElementMethod2.setRhsDiscretizationMatrix();
     Mat &dmatrix = finiteElementMethod2.data_.discretizationMatrix();
     
     int n, m;
     MatGetSize(dmatrix, &n, &m);
-    std::cout << "matrix size: " << n << "x" << m << std::endl;
+    LOG(DEBUG) << "matrix size: " << n << "x" << m << std::endl;
     Vec rhsStrong, rhsWeak;
       
     PetscUtility::createVector(rhsStrong, n, "rhs strong");
@@ -130,7 +131,7 @@ public:
     LOG(DEBUG) << "dmatrix * rhsStrong = rhsWeak: " << PetscUtility::getStringVector(rhsWeak);
     
     // dmatrix * f_strong = rhs_weak
-    Vec &rhs = finiteElementMethod1.data_.rightHandSide();   // rhs in weak formulation
+    Vec &rhs = finiteElementMethod1.data_.rightHandSide().values();   // rhs in weak formulation
    
     LOG(DEBUG) << "using stencil: "<<PetscUtility::getStringVector(rhs);
     

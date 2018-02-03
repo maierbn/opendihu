@@ -1,11 +1,16 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
+
+#include <Python.h>
 #include <vector>
 
 #include "control/runnable.h"
 #include "control/dihu_context.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
 #include "output_writer/manager.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_function/lagrange.h"
 
 class CellmlAdapter : public DiscretizableInTime
 {
@@ -43,13 +48,15 @@ public:
   std::shared_ptr<Mesh::Mesh> mesh();
   
   //! return the number of states per instance
-  int numberDegreesOfFreedomPerNode();
+  int nComponentsNode();
   
   //! get number of states, number of instances, number of intermediates and number of parameters
   void getNumbers(int &nStates, int &nInstances, int &nIntermediates, int &nParameters);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
+  
+  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> BasisOnMesh;   ///< BasisOnMesh type
   
 private:
  

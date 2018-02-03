@@ -1,3 +1,5 @@
+#include <Python.h>  // this has to be the first included header
+
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -38,7 +40,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -91,7 +93,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -143,8 +145,65 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+
+  std::vector<double> referenceMatrix(121, 0.0);
+  std::array<double, 2> stencil = {-1.0, 1.0};
+    // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
+  
+  // fill with stencil values
+  auto matrixIndex = [](int x, int y){return y*11 + x;};
+  
+  // loop over elements
+  for (int i=0; i<10; i++)
+  {
+    // nodes:
+    // 0--1
+    int node0 = i;
+    int node1 = i+1;
+    
+    // add contribution from node 0 to all nodes
+    referenceMatrix[matrixIndex(node0, node0)] += stencil[0];
+    referenceMatrix[matrixIndex(node0, node1)] += stencil[1];
+    
+    // add contribution from node 1 to all nodes
+    referenceMatrix[matrixIndex(node1, node0)] += stencil[1];
+    referenceMatrix[matrixIndex(node1, node1)] += stencil[0];
+  }
+  
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+}
+
+TEST(LaplaceTest, StructuredDeformableMatrixIsCorrect1DStencils)
+{
+  std::string pythonConfig = R"(
+# Laplace 1D
+n = 10
+    
+# no boundary conditions
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": False,
+  "FiniteElementMethod" : {
+    "nElements": n,
+    "physicalExtend": n,
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::StructuredDeformable<1>,
+    BasisFunction::Lagrange<>,
+    Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -212,7 +271,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -263,8 +322,87 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+
+  std::vector<double> referenceMatrix(625, 0.0);
+  
+  // stencil for -Δu in 2D:     [1  1   1] (element contribution: [  1/6  1/3])
+  //                        1/3*[1 _-8_ 1]                        [_-2/3_ 1/6]
+  //                            [1  1   1]
+  double stencil[2][2] = {{-2./3, 1./6}, {1./6, 1./3}};
+  
+  // fill with stencil values
+  auto matrixIndex = [](int x, int y){return y*25 + x;};
+  
+  // loop over elements
+  for (int x=0; x<4; x++)
+  {
+    for (int y=0; y<4; y++)
+    {
+      // nodes:
+      // 2--3
+      // 0--1
+      int node0 = y*5 + x;
+      int node1 = y*5 + x+1;
+      int node2 = (y+1)*5 + x;
+      int node3 = (y+1)*5 + x+1;
+      
+      // add contribution from node 0 to all nodes
+      referenceMatrix[matrixIndex(node0, node0)] += stencil[0][0];
+      referenceMatrix[matrixIndex(node0, node1)] += stencil[0][1];
+      referenceMatrix[matrixIndex(node0, node2)] += stencil[1][0];
+      referenceMatrix[matrixIndex(node0, node3)] += stencil[1][1];
+      
+      // add contribution from node 1 to all nodes
+      referenceMatrix[matrixIndex(node1, node0)] += stencil[0][1];
+      referenceMatrix[matrixIndex(node1, node1)] += stencil[0][0];
+      referenceMatrix[matrixIndex(node1, node2)] += stencil[1][1];
+      referenceMatrix[matrixIndex(node1, node3)] += stencil[1][0];
+      
+      // add contribution from node 2 to all nodes
+      referenceMatrix[matrixIndex(node2, node0)] += stencil[1][0];
+      referenceMatrix[matrixIndex(node2, node1)] += stencil[1][1];
+      referenceMatrix[matrixIndex(node2, node2)] += stencil[0][0];
+      referenceMatrix[matrixIndex(node2, node3)] += stencil[0][1];
+      
+      // add contribution from node 3 to all nodes
+      referenceMatrix[matrixIndex(node3, node0)] += stencil[1][1];
+      referenceMatrix[matrixIndex(node3, node1)] += stencil[1][0];
+      referenceMatrix[matrixIndex(node3, node2)] += stencil[0][1];
+      referenceMatrix[matrixIndex(node3, node3)] += stencil[0][0];
+    }
+  }
+    
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+}
+
+TEST(LaplaceTest, StructuredDeformableMatrixIsCorrect2DStencils)
+{
+  std::string pythonConfig = R"(
+# Laplace 2D
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": True,
+  "FiniteElementMethod" : {
+    "nElements": [4, 4],
+    "physicalExtend": [4.0, 4.0],
+    "relativeTolerance": 1e-15,
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::StructuredDeformable<2>,
+    BasisFunction::Lagrange<>,
+    Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -342,7 +480,7 @@ config = {
   
   FiniteElementMethod<
     Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -470,170 +608,16 @@ config = {
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
 
-TEST(LaplaceTest, ReadNodePositionsAreCorrect1D)
+TEST(LaplaceTest, StructuredDeformableMatrixIsCorrect3DStencils)
 {
-  // explicit mesh with node positions
   std::string pythonConfig = R"(
-# Laplace 1D
-config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": True,
-  "Meshes" : {
-    "testMesh": {
-      "nElements": [6],
-      "nodeDimension": 1,
-      "nodePositions": [0,1,2,3,4,5,6],
-    }
-  },
-  "FiniteElementMethod" : {
-    "relativeTolerance": 1e-15,
-    "meshName": "testMesh",
-  },
-}
-)";
-
-  DihuContext settings(argc, argv, pythonConfig);
-  
-  FiniteElementMethod<
-    Mesh::Deformable<1>,
-    BasisFunction::Lagrange,
-    Integrator::Gauss<1>,
-    Equation::Static::Laplace
-  > equationDiscretized(settings);
-  
-  Computation computation(settings, equationDiscretized);
-  computation.run();
-  
-  std::vector<double> referenceNodePositions = {
-    0,0,0,  1,0,0,  2,0,0,
-    3,0,0,  4,0,0,  5,0,0,
-    6,0,0,
-  };
-  
-  Mesh::NodePositionsTester::compareNodePositions(settings, "testMesh", referenceNodePositions);
-  
-  // explicit mesh with automatically generated node positions
-  std::string pythonConfig2 = R"(
-# Laplace 1D
-config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": True,
-  "Meshes" : {
-    "testMesh": {
-      "nElements": 6,
-      "physicalExtend": 6,
-    }
-  },
-  "FiniteElementMethod" : {
-    "relativeTolerance": 1e-15,
-    "meshName": "testMesh",
-  },
-}
-)";
-
-  DihuContext settings2(argc, argv, pythonConfig2);
-  
-  FiniteElementMethod<
-    Mesh::Deformable<1>,
-    BasisFunction::Lagrange,
-    Integrator::Gauss<1>,
-    Equation::Static::Laplace
-  > equationDiscretized2(settings2);
-  
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
-  
-  Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
-}
-
-TEST(LaplaceTest, ReadNodePositionsAreCorrect2D)
-{
-  // explicit mesh with node positions
-  std::string pythonConfig = R"(
-# Laplace 2D
-config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": True,
-  "Meshes" : {
-    "testMesh": {
-      "nElements": [2, 2],
-      "nodeDimension": 2,
-      "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
-    }
-  },
-  "FiniteElementMethod" : {
-    "relativeTolerance": 1e-15,
-    "meshName": "testMesh",
-  },
-}
-)";
-
-  DihuContext settings(argc, argv, pythonConfig);
-  
-  FiniteElementMethod<
-    Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
-    Integrator::Gauss<1>,
-    Equation::Static::Laplace
-  > equationDiscretized(settings);
-  
-  Computation computation(settings, equationDiscretized);
-  computation.run();
-  
-  std::vector<double> referenceNodePositions = {
-    0,0,0,  1,0,0,  2,0,0,
-    0,1,0,  1,1,0,  2,1,0,
-    0,2,0,  1,2,0,  2,2,0,
-  };
-  
-  Mesh::NodePositionsTester::compareNodePositions(settings, "testMesh", referenceNodePositions);
-  
-  // explicit mesh with automatically generated node positions
-  std::string pythonConfig2 = R"(
-# Laplace 2D
-config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": True,
-  "Meshes" : {
-    "testMesh": {
-      "nElements": [2, 2],
-      "physicalExtend": [2, 2],
-    }
-  },
-  "FiniteElementMethod" : {
-    "relativeTolerance": 1e-15,
-    "meshName": "testMesh",
-  },
-}
-)";
-
-  DihuContext settings2(argc, argv, pythonConfig2);
-  
-  FiniteElementMethod<
-    Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
-    Integrator::Gauss<1>,
-    Equation::Static::Laplace
-  > equationDiscretized2(settings2);
-  
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
-  
-  Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
-}
-
-TEST(LaplaceTest, ReadNodePositionsAreCorrectInlineMesh)
-{
-  // inline mesh with node positions
-  std::string pythonConfig = R"(
-# Laplace 2D
+# Laplace 3D
 config = {
   "disablePrinting": False,
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
-    "nElements": [2, 2],
-      "nodeDimension": 2,
-    "nodePositions": [0,0, 1,0, 2,0, 0,1, 1,1, 2,1, 0,2, 1,2, 2,2],
+    "nElements": [4, 4, 4],
+    "physicalExtend": [4.0, 4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -642,8 +626,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
+    Mesh::StructuredDeformable<3>,
+    BasisFunction::Lagrange<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -651,42 +635,125 @@ config = {
   Computation computation(settings, equationDiscretized);
   computation.run();
   
-  std::vector<double> referenceNodePositions = {
-    0,0,0,  1,0,0,  2,0,0,
-    0,1,0,  1,1,0,  2,1,0,
-    0,2,0,  1,2,0,  2,2,0,
+  std::vector<double> referenceMatrix(15625, 0.0);
+  
+  const double stencil[2][2][2] = {
+    {{-4./12, 0./12},
+    {0./12, 1./12}},    //center
+    {{0./12, 1./12},
+    {1./12, 1./12}},    //bottom
   };
   
-  Mesh::NodePositionsTester::compareNodePositions(settings, "anonymous0", referenceNodePositions);
+  // fill with stencil values
+  auto matrixIndex = [](int i, int j){return j*125+i;};
   
-  // inline mesh with automatically generated node positions
-  std::string pythonConfig2 = R"(
-# Laplace 2D
-config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": True,
-  "FiniteElementMethod" : {
-    "physicalExtend": [2.0, 2.0],
-      "nElements": [2, 2],
-    "relativeTolerance": 1e-15,
-  },
+  // loop over elements
+  for (int x=0; x<4; x++)
+  {
+    for (int y=0; y<4; y++)
+    {
+      for (int z=0; z<4; z++)
+      {
+        // nodes:
+        // 6--7
+        // 4--5
+        //
+        // 2--3
+        // 0--1
+        int node0 = z*25 + y*5 + x;
+        int node1 = z*25 + y*5 + x+1;
+        int node2 = z*25 + (y+1)*5 + x;
+        int node3 = z*25 + (y+1)*5 + x+1;
+        int node4 = (z+1)*25 + y*5 + x;
+        int node5 = (z+1)*25 + y*5 + x+1;
+        int node6 = (z+1)*25 + (y+1)*5 + x;
+        int node7 = (z+1)*25 + (y+1)*5 + x+1;
+        
+        // add contribution from node 0 to all nodes          x  y  z
+        referenceMatrix[matrixIndex(node0, node0)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node0, node1)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node0, node2)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node0, node3)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node0, node4)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node0, node5)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node0, node6)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node0, node7)] += stencil[1][1][1];
+        
+        // add contribution from node 1 to all nodes
+        referenceMatrix[matrixIndex(node1, node0)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node1, node1)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node1, node2)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node1, node3)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node1, node4)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node1, node5)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node1, node6)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node1, node7)] += stencil[1][0][1];
+        
+        // add contribution from node 2 to all nodes
+        referenceMatrix[matrixIndex(node2, node0)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node2, node1)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node2, node2)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node2, node3)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node2, node4)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node2, node5)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node2, node6)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node2, node7)] += stencil[0][1][1];
+        
+        // add contribution from node 3 to all nodes
+        referenceMatrix[matrixIndex(node3, node0)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node3, node1)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node3, node2)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node3, node3)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node3, node4)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node3, node5)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node3, node6)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node3, node7)] += stencil[0][0][1];
+        
+        // add contribution from node 4 to all nodes          x  y  z
+        referenceMatrix[matrixIndex(node4, node0)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node4, node1)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node4, node2)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node4, node3)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node4, node4)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node4, node5)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node4, node6)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node4, node7)] += stencil[1][1][0];
+        
+        // add contribution from node 5 to all nodes
+        referenceMatrix[matrixIndex(node5, node0)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node5, node1)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node5, node2)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node5, node3)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node5, node4)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node5, node5)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node5, node6)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node5, node7)] += stencil[1][0][0];
+        
+        // add contribution from node 6 to all nodes
+        referenceMatrix[matrixIndex(node6, node0)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node6, node1)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node6, node2)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node6, node3)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node6, node4)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node6, node5)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node6, node6)] += stencil[0][0][0];
+        referenceMatrix[matrixIndex(node6, node7)] += stencil[0][1][0];
+        
+        // add contribution from node 7 to all nodes
+        referenceMatrix[matrixIndex(node7, node0)] += stencil[1][1][1];
+        referenceMatrix[matrixIndex(node7, node1)] += stencil[1][0][1];
+        referenceMatrix[matrixIndex(node7, node2)] += stencil[0][1][1];
+        referenceMatrix[matrixIndex(node7, node3)] += stencil[0][0][1];
+        referenceMatrix[matrixIndex(node7, node4)] += stencil[1][1][0];
+        referenceMatrix[matrixIndex(node7, node5)] += stencil[1][0][0];
+        referenceMatrix[matrixIndex(node7, node6)] += stencil[0][1][0];
+        referenceMatrix[matrixIndex(node7, node7)] += stencil[0][0][0];
+      }
+    }
+  }
+    
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
-)";
 
-  DihuContext settings2(argc, argv, pythonConfig2);
-  
-  FiniteElementMethod<
-    Mesh::Deformable<2>,
-    BasisFunction::Lagrange,
-    Integrator::Gauss<2>,
-    Equation::Static::Laplace
-  > equationDiscretized2(settings2);
-  
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
-  
-  Mesh::NodePositionsTester::compareNodePositions(settings2, "anonymous0", referenceNodePositions);
-  
-}
 };
 

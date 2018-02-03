@@ -4,15 +4,15 @@
 #include "control/computation.h"
 
 #include "basis_function/lagrange.h"
+#include "basis_function/hermite.h"
 
 #include "equation/laplace.h"
 #include "equation/diffusion.h"
 #include "equation/reaction_diffusion.h"
 
-#include "mesh/deformable.h"
-#include "mesh/nonrectilinear_fixed.h"
-#include "mesh/rectilinear_fixed.h"
 #include "mesh/regular_fixed.h"
+#include "mesh/structured_deformable.h"
+#include "mesh/unstructured_deformable.h"
 
 #include "operator_splitting/godunov.h"
 

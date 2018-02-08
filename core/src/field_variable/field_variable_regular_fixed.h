@@ -37,6 +37,9 @@ public:
   //! get the mesh width of a specific coordinate direction
   double meshWidth(int dimension) const;
   
+  //! for a specific component, get all values
+  void getValues(std::string component, std::vector<double> &values);
+  
   //! for a specific component, get values from their global dof no.s
   template<int N>
   void getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
@@ -60,6 +63,32 @@ public:
   template<int nComponents>
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
+  //! copy the values from another field variable of the same type
+  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &rhs);
+  
+  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  template<int nComponents>
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+  {
+    if (!this->isGeometryField_)
+    {
+      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+    }
+  }
+
+  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  template<int nComponents>
+  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+  {
+    if (!this->isGeometryField_)
+    {
+      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
+    }
+  }
+  
+  //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
+  void flushSetValues();
+  
   //! write a exelem file header to a stream, for a particular element
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 

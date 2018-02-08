@@ -1,9 +1,9 @@
 #include "output_writer/manager.h"
 
-#include "output_writer/callback.h"
-#include "output_writer/paraview.h"
-#include "output_writer/python.h"
-#include "output_writer/exfile.h"
+#include "output_writer/python_callback/python_callback.h"
+#include "output_writer/python_file/python_file.h"
+#include "output_writer/paraview/paraview.h"
+#include "output_writer/exfile/exfile.h"
 
 namespace OutputWriter
 {
@@ -14,12 +14,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   for(auto &outputWriter : this->outputWriter_)
   {
     LOG(DEBUG) << "select outputWriter";
-    if (std::dynamic_pointer_cast<Callback>(outputWriter) != nullptr)
-    {
-      std::shared_ptr<Callback> writer = std::static_pointer_cast<Callback>(outputWriter);
-      writer->write<DataType>(problemData, timeStepNo, currentTime);
-    }
-    else if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
+    if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
@@ -29,9 +24,14 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
       std::shared_ptr<Paraview> writer = std::static_pointer_cast<Paraview>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
-    else if (std::dynamic_pointer_cast<Python>(outputWriter) != nullptr)
+    else if (std::dynamic_pointer_cast<PythonCallback>(outputWriter) != nullptr)
     {
-      std::shared_ptr<Python> writer = std::static_pointer_cast<Python>(outputWriter);
+      std::shared_ptr<PythonCallback> writer = std::static_pointer_cast<PythonCallback>(outputWriter);
+      writer->write<DataType>(problemData, timeStepNo, currentTime);
+    }
+    else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
+    {
+      std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
   }

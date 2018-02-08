@@ -226,6 +226,24 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 }
 
 template<typename BasisOnMeshType>
+void Component<BasisOnMeshType>::
+getValues(std::vector<double> &values)
+{
+  const dof_no_t nDofs = this->nDofs();
+  values.resize(nDofs);
+ 
+  // create vector indices for all dofs
+  std::vector<int> indices(nDofs,0);
+  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo++)
+  {
+    indices[dofGlobalNo] = dofGlobalNo*this->nComponents_ + componentIndex_;
+  }
+  
+  assert (values_);
+  VecGetValues(*values_, nDofs, indices.data(), values.data());
+}
+
+template<typename BasisOnMeshType>
 template<int N>
 void Component<BasisOnMeshType>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)

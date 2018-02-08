@@ -204,4 +204,13 @@ setRhsDiscretizationMatrix()
   }
 }
 
+/*
+template<typename MixedBasisOnMeshType, typename MixedIntegratorType>
+AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::
+AssembleRightHandSide(const DihuContext &context) :
+  FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix(context)
+{
+  
+}*/
+
 };

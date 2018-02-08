@@ -19,7 +19,7 @@ public:
   void run();
   
   //! initialize for use as laplace or poisson equation, not for timestepping
-  void initialize();
+  virtual void initialize();
     
   //! get the stored mesh
   std::shared_ptr<Mesh::Mesh> mesh();

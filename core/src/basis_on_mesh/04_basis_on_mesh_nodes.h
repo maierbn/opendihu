@@ -85,8 +85,8 @@ class BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType> :
   public std::enable_shared_from_this<BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>>
 {
 public:
-  //! constructor
-  BasisOnMeshNodes(PyObject *specificSettings);
+  //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
+  BasisOnMeshNodes(PyObject *specificSettings, bool noGeometryField=false);
   
   //! this assigns the geometry_ field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
   void initialize();
@@ -126,6 +126,7 @@ protected:
   void setGeometryField(std::vector<double> &nodePositions);
   
   std::unique_ptr<FieldVariableType> geometry_;     ///< the geometry field variable
+  bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 };
 
 /** Partial specialization for UnstructuredDeformable mesh

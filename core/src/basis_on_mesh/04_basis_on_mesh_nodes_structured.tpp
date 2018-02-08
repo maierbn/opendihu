@@ -12,12 +12,16 @@ namespace BasisOnMesh
 // constructor
 template<int D,typename BasisFunctionType>
 BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
-BasisOnMeshNodes(PyObject *specificSettings) :
-  BasisOnMeshDofs<Mesh::StructuredDeformable<D>,BasisFunctionType>(specificSettings)
+BasisOnMeshNodes(PyObject *specificSettings, bool noGeometryField) :
+  BasisOnMeshDofs<Mesh::StructuredDeformable<D>,BasisFunctionType>(specificSettings), 
+  noGeometryField_(noGeometryField)
 {
   std::vector<double> nodePositions;
-  this->parseNodePositionsFromSettings(specificSettings, nodePositions);
-  this->setGeometryField(nodePositions);
+  if (!noGeometryField_)
+  {
+    this->parseNodePositionsFromSettings(specificSettings, nodePositions);
+    this->setGeometryField(nodePositions);
+  }
 }
 
 template<int D,typename BasisFunctionType>
@@ -52,7 +56,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     int inputVectorSize = nNodes * nodeDimension;
     PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, nodePositions);
     
-    LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << inputVectorSize << " entries.";
+    LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
 
     // transform vector from (x,y) or (x) entries to (x,y,z) 
     if (nodeDimension < 3)
@@ -78,7 +82,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtend[dimNo] / this->nElements(dimNo);
+      meshWidth[dimNo] = physicalExtend[dimNo] / (this->nElementsPerDimension(dimNo) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1);
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
     
@@ -86,6 +90,8 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
       
+    LOG(DEBUG) << "nNodes: " << nNodes << ", vectorSize: " << vectorSize;
+    
     for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       switch(D)
@@ -106,6 +112,9 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
         nodePositions[nodeNo*3 + i] = position[i];
     }
   }
+  
+  // set number of elements 
+  
 }
 
 // create geometry field from config nodes
@@ -116,8 +125,6 @@ setGeometryField(std::vector<double> &nodePositions)
   
   // compute number of dofs
   dof_no_t nDofs = this->nDofs();
-  
-  LOG(DEBUG) << "setGeometryField, nodePositions: " << nodePositions;
   
   // create petsc vector that contains the node positions
   Vec values;
@@ -170,7 +177,7 @@ setGeometryField(std::vector<double> &nodePositions)
   geometry_ = std::make_unique<FieldVariableType>();
   std::vector<std::string> componentNames{"x", "y", "z"};
   int nEntries = nDofs * 3;   // 3 components (x,y,z) per dof
-  geometry_->set("geometry", componentNames, this->nElements_, nEntries, isGeometryField, values);
+  geometry_->set("geometry", componentNames, this->nElementsPerDimension_, nEntries, isGeometryField, values);
 }
 
 template<int D,typename BasisFunctionType>
@@ -203,7 +210,7 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
-  return this->nElements(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  return this->nElementsPerDimension(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>

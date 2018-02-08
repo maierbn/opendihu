@@ -12,11 +12,16 @@ namespace OutputWriter
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
+  LOG(DEBUG) << "Generic::prepareWrite timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
+ 
   if (!data.mesh())
   {
     LOG(FATAL) << "Mesh is not set!";
   }
   
+  
+  timeStepNo_ = timeStepNo;
+  currentTime_ = currentTime;
   int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
   
   int oldWriteCallCount = writeCallCount_;

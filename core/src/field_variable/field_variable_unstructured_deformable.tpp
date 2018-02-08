@@ -5,11 +5,33 @@
 #include <map>
 #include <fstream>
 #include <iomanip>
+#include <cassert>
 
 namespace FieldVariable
 {
   
 using namespace StringUtility;
+
+// contructor as data copy with a different name (component names are the same)
+template<int D, typename BasisFunctionType>
+FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name)
+{
+  // initialize everything from other field variable
+  initializeFromFieldVariable(rhs, name, rhs.componentNames());
+  
+  // copy entries in values vector
+  VecCopy(rhs.values(), this->values_);
+}
+
+// constructor with mesh, name and components
+template<int D, typename BasisFunctionType>
+FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+FieldVariable(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent)
+{
+  assert(false); // not implemented
+  // this is needed for mixed formulation, to implement this and set as the lower order field variable I need the higher order field variable as parameter
+}
   
 template<int D, typename BasisFunctionType>
 FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
@@ -492,6 +514,14 @@ values()
   return *this->values_; 
 }
 
+//! for a specific component, get all values
+template<int D, typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+getValues(std::string component, std::vector<double> &values)
+{
+  this->component_[component].getValues(values);
+}
+
 //! for a specific component, get values from their global dof no.s
 template<int D, typename BasisFunctionType>
 template<int N>
@@ -589,6 +619,70 @@ getValue(node_no_t dofGlobalNo)
   // get values and assign them to result values vector
   VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
   return resultVector;
+}
+
+//! copy the values from another field variable of the same type
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &rhs)
+{
+  VecCopy(rhs.values_, this->values_);
+}
+
+/*
+//! set values for dofs
+template<int D,typename BasisFunctionType>
+template<int nComponents>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+{
+  std::array<int,nComponents> indices;
+  
+  // loop over dof numbers
+  int i=0;
+  for (std::vector<dof_no_t>::iterator iter = dofGlobalNos.begin(); iter != dofGlobalNos.end(); iter++, i++)
+  {  
+    dof_no_t dofGlobalNo = *iter;
+    
+    // prepare lookup indices for PETSc vector values_
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
+    }
+    
+    VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), INSERT_VALUES);
+  }
+  
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+}*/
+
+/*
+//! set a single value
+template<int D,typename BasisFunctionType>
+template<int nComponents>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+{
+  std::array<int,nComponents> indices;
+  
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
+  }
+  
+  VecSetValues(this->values_, nComponents, indices.data(), value.data(), INSERT_VALUES);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+}*/
+
+
+//! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+flushSetValues()
+{
+  VecAssemblyBegin(this->values_); 
+  VecAssemblyEnd(this->values_);
 }
 
 template<int D, typename BasisFunctionType>

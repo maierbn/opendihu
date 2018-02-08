@@ -15,9 +15,27 @@ namespace FieldVariable
 template<typename BasisOnMeshType>
 struct Interface 
 {
+ 
+  //! contructor as data copy with a different name (component names are the same)
+  //FieldVariable(const FieldVariable &rhs, std::string name);
+  
+  //! constructor with mesh, name and components
+  //FieldVariable(std::shared_ptr<MeshType> mesh, std::string name, std::vector<std::string> componentNames);
+ 
   //! set all data but the values from a second field variable
   //template<typename FieldVariableType>
   //void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
+  
+  //! copy the values from another field variable of the same type
+  //void setValues(FieldVariable &rhs);
+ 
+  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //template<int nComponents>
+  //void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values);
+
+  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //template<int nComponents>
+  //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value);
   
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
   virtual Vec &values() = 0;
@@ -31,9 +49,13 @@ struct Interface
   //! get the number of elements
   virtual element_no_t nElements() const = 0;
   
+  //! for a specific component, get all values
+  //template<int N>
+  //void getValues(std::string component, std::array<double,N> &values)
+  
   //! for a specific component, get values from their global dof no.s
   //template<int N>
-  //void getValuesComponent(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
+  //void getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
   
   //! get values from their global dof no.s for all components
   //template<int N, int nComponents>

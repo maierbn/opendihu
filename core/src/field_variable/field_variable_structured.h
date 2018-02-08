@@ -24,14 +24,57 @@ class FieldVariableStructured : public FieldVariableBase<BasisOnMeshType>
 {
 public:
   //! inherited constructor 
-  using FieldVariableBase<BasisOnMeshType>::FieldVariableBase;
+  //using FieldVariableBase<BasisOnMeshType>::FieldVariableBase;
+ 
+  //! empty contructor
+  FieldVariableStructured();
+  
+  //! contructor as data copy with a different name (component names are the same)
+  FieldVariableStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name);
+  
+  //! constructor with mesh, name and components
+  FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
  
   //! destructor
   virtual ~FieldVariableStructured();
  
   //! set all data but the values from a second field variable
   template<typename FieldVariableType>
-  void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
+  void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
+  {
+    this->name_ = name;
+    this->nElementsPerDimension_ = fieldVariable.nElementsPerDimension();
+    this->isGeometryField_ = false;
+    this->mesh_ = fieldVariable.mesh();
+    
+    int index = 0;
+    for (auto &componentName : componentNames)
+    {
+      this->componentIndex_.insert(std::pair<std::string,int>(componentName,index++));
+    }
+    this->nComponents_ = componentNames.size();
+    this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
+    
+    
+    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerDimension_
+     << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
+    
+    assert(this->nEntries_ != 0);
+     
+    // create a new values vector for the new field variable
+    
+    // create vector
+    PetscErrorCode ierr;
+    // initialize PETSc vector object
+    ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
+    ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
+    
+    // initialize size of vector
+    ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
+    
+    // set sparsity type and other options
+    ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
+  }
   
   //! get the number of components
   int nComponents() const;
@@ -41,6 +84,9 @@ public:
   
   //! get the number of elements
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  
+  //! for a specific component, get all values
+  void getValues(std::string component, std::vector<double> &values);
   
   //! for a specific component, get values from their global dof no.s
   template<int N>
@@ -92,7 +138,7 @@ public:
     {
       for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
       {
-        indices[j] = BasisOnMeshType::getDofNo(this->nElements_,elementNo,dofIndex)*nComponents + componentIndex;
+        indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerDimension_,elementNo,dofIndex)*nComponents + componentIndex;
       }
     }
     
@@ -114,6 +160,50 @@ public:
   template<int nComponents>
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
+  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  template<int nComponents>
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+  {
+    std::array<int,nComponents> indices;
+    
+    // loop over dof numbers
+    int i=0;
+    for (std::vector<dof_no_t>::iterator iter = dofGlobalNos.begin(); iter != dofGlobalNos.end(); iter++, i++)
+    {  
+      dof_no_t dofGlobalNo = *iter;
+      
+      // prepare lookup indices for PETSc vector values_
+      for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+      {
+        indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
+      }
+      
+      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), INSERT_VALUES);
+    }
+    
+    // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+  }
+
+  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  template<int nComponents>
+  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+  {
+    std::array<int,nComponents> indices;
+    
+    // prepare lookup indices for PETSc vector values_
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
+    }
+    
+    VecSetValues(this->values_, nComponents, indices.data(), value.data(), INSERT_VALUES);
+    // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+  }
+
+    
+  //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
+  void flushSetValues();
+  
   //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 
@@ -138,7 +228,7 @@ protected:
   //! get the number of dofs, i.e. the number of entries per component
   dof_no_t nDofs() const;
   
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements_;    ///< number of elements in each coordinate direction
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components

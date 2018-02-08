@@ -7,15 +7,16 @@
 \BOOKMARK [2][-]{subsection.0.1.6}{Function spaces}{section.0.1}% 7
 \BOOKMARK [1][-]{section.0.2}{Poisson Equation}{}% 8
 \BOOKMARK [1][-]{section.0.3}{Generalized Laplace operator}{}% 9
-\BOOKMARK [1][-]{section.0.4}{Quadrature}{}% 10
-\BOOKMARK [2][-]{subsection.0.4.1}{Gaussian quadrature}{section.0.4}% 11
-\BOOKMARK [2][-]{subsection.0.4.2}{Clenshaw-Curtis quadrature}{section.0.4}% 12
-\BOOKMARK [1][-]{section.0.5}{Propositions}{}% 13
-\BOOKMARK [2][-]{subsection.0.5.1}{Divergence theorem}{section.0.5}% 14
-\BOOKMARK [3][-]{subsubsection.0.5.1.1}{Corollary}{subsection.0.5.1}% 15
-\BOOKMARK [2][-]{subsection.0.5.2}{Classical Stoke's theorem}{section.0.5}% 16
-\BOOKMARK [2][-]{subsection.0.5.3}{Integration on manifolds}{section.0.5}% 17
-\BOOKMARK [3][-]{subsubsection.0.5.3.1}{1D curve integrals}{subsection.0.5.3}% 18
-\BOOKMARK [3][-]{subsubsection.0.5.3.2}{2D surface integrals}{subsection.0.5.3}% 19
-\BOOKMARK [3][-]{subsubsection.0.5.3.3}{Substitution on domains with same dimensionality}{subsection.0.5.3}% 20
-\BOOKMARK [3][-]{subsubsection.0.5.3.4}{Summary}{subsection.0.5.3}% 21
+\BOOKMARK [1][-]{section.0.4}{Solid mechanics}{}% 10
+\BOOKMARK [1][-]{section.0.5}{Quadrature}{}% 11
+\BOOKMARK [2][-]{subsection.0.5.1}{Gaussian quadrature}{section.0.5}% 12
+\BOOKMARK [2][-]{subsection.0.5.2}{Clenshaw-Curtis quadrature}{section.0.5}% 13
+\BOOKMARK [1][-]{section.0.6}{Propositions}{}% 14
+\BOOKMARK [2][-]{subsection.0.6.1}{Divergence theorem}{section.0.6}% 15
+\BOOKMARK [3][-]{subsubsection.0.6.1.1}{Corollary}{subsection.0.6.1}% 16
+\BOOKMARK [2][-]{subsection.0.6.2}{Classical Stoke's theorem}{section.0.6}% 17
+\BOOKMARK [2][-]{subsection.0.6.3}{Integration on manifolds}{section.0.6}% 18
+\BOOKMARK [3][-]{subsubsection.0.6.3.1}{1D curve integrals}{subsection.0.6.3}% 19
+\BOOKMARK [3][-]{subsubsection.0.6.3.2}{2D surface integrals}{subsection.0.6.3}% 20
+\BOOKMARK [3][-]{subsubsection.0.6.3.3}{Substitution on domains with same dimensionality}{subsection.0.6.3}% 21
+\BOOKMARK [3][-]{subsubsection.0.6.3.4}{Summary}{subsection.0.6.3}% 22

@@ -6,11 +6,9 @@
 #include "mesh/regular_fixed.h"
 
 //! return previously created mesh or create on the fly
-template<typename MeshType,typename BasisFunctionType>
+template<typename BasisOnMeshType>
 std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
-{
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
-      
+{     
   // if mesh was already created earlier
   if (PythonUtility::containsKey(settings, "meshName"))
   {

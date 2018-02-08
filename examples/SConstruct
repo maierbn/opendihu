@@ -14,6 +14,7 @@ examples = [
   "electrophysiology",
 ]
 examples = ["electrophysiology"]
+examples = []
 
 # loop over examples and call SConstruct file
 for example in examples:

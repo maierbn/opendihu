@@ -3,10 +3,10 @@
 #include "easylogging++.h"
 
 #include "utility/python_utility.h"
-#include "output_writer/callback.h"
-#include "output_writer/paraview.h"
-#include "output_writer/python.h"
-#include "output_writer/exfile.h"
+#include "output_writer/python_callback/python_callback.h"
+#include "output_writer/python_file/python_file.h"
+#include "output_writer/paraview/paraview.h"
+#include "output_writer/exfile/exfile.h"
 
 namespace OutputWriter
 {
@@ -52,13 +52,13 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
       {
         outputWriter_.push_back(std::make_shared<Paraview>(settings));
       }
-      else if(typeString == "Python")
+      else if(typeString == "PythonCallback")
       {
-        outputWriter_.push_back(std::make_shared<Python>(settings));
+        outputWriter_.push_back(std::make_shared<PythonCallback>(settings));
       }
-      else if(typeString == "Callback")
+      else if(typeString == "PythonFile")
       {
-        outputWriter_.push_back(std::make_shared<Callback>(settings));
+        outputWriter_.push_back(std::make_shared<PythonFile>(settings));
       }
       else if(typeString == "Exfile")
       {
@@ -66,7 +66,8 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
       }
       else
       {
-        LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\".";
+        LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". " 
+          << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
       }
     }
     else

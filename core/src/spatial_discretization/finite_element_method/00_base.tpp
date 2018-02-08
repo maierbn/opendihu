@@ -29,7 +29,7 @@ FiniteElementMethodBase(const DihuContext &context) :
   LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
   PythonUtility::printDict(specificSettings_);
   
-  std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<typename BasisOnMeshType::Mesh,typename BasisOnMeshType::BasisFunction>(specificSettings_);
+  std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<BasisOnMeshType>(specificSettings_);
   data_.setMesh(std::static_pointer_cast<BasisOnMeshType>(mesh));
   if(data_.mesh())
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is set";

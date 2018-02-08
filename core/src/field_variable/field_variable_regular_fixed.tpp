@@ -6,8 +6,7 @@
 
 namespace FieldVariable
 {
- 
- 
+
 template<int D, typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 setMeshWidth(std::array<double, D> &meshWidth)
@@ -21,6 +20,56 @@ double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctio
 meshWidth(int dimension) const
 {
   return this->meshWidth_[dimension];
+}
+
+//! for a specific component, get all values
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+getValues(std::string component, std::vector<double> &values)
+{
+  if (!this->isGeometryField_)
+  {
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::getValues(component, values);
+    return;
+  }
+  
+  // for geometry field compute information
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const node_no_t nNodesInZDirection = this->mesh_->nNodes(2);
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
+ 
+  values.resize(this->mesh_->nDofs());
+  std::size_t vectorIndex = 0;
+  
+  // loop over all nodes
+  for (int nodeZ = 0; nodeZ < nNodesInZDirection; nodeZ++)
+  {
+    for (int nodeY = 0; nodeY < nNodesInYDirection; nodeY++)
+    {
+      for (int nodeX = 0; nodeX < nNodesInXDirection; nodeX++)
+      {
+        if (component == "x")
+        {
+          values[vectorIndex++] = nodeX * this->meshWidth_[0];
+        }
+        else if (component == "y")
+        {
+          values[vectorIndex++] = nodeY * this->meshWidth_[1];
+        }
+        else
+        {
+          values[vectorIndex++] = nodeZ * this->meshWidth_[2];
+        }
+       
+        // set derivative of Hermite to 0 for geometry field
+        for (int dofIndex = 1; dofIndex < nDofsPerNode; dofIndex++)
+        {
+          values[vectorIndex++] = 0;
+        }
+      }
+    }
+  }
 }
 
 //! for a specific component, get values from their global dof no.s
@@ -241,6 +290,52 @@ getValue(node_no_t dofGlobalNo)
     value[2] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_[2];
   }
   return value;
+}
+
+//! copy the values from another field variable of the same type
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &rhs)
+{
+  VecCopy(rhs.values_, this->values_);
+}
+
+/*
+//! set values for dofs
+template<int D,typename BasisFunctionType>
+template<int nComponents>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+{
+  if (!this->isGeometryField_)
+  {
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+  }
+}*/
+
+/*
+//! set a single value
+template<int D,typename BasisFunctionType>
+template<int nComponents>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+{
+  if (!this->isGeometryField_)
+  {
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
+  }
+}
+*/
+
+//! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+flushSetValues()
+{
+  if (!this->isGeometryField_)
+  {
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::flushSetValues();
+  }
 }
 
 //! write a exelem file header to a stream, for a particular element

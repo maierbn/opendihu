@@ -54,7 +54,7 @@ bool MeshManager::hasMesh(std::string meshName)
 
 template<>
 std::shared_ptr<Mesh::Mesh> MeshManager::
-mesh<Mesh::None,BasisFunction::Lagrange<>>(PyObject *settings)
+mesh<Mesh::None>(PyObject *settings)
 {
   std::string meshName;
   if (PythonUtility::containsKey(settings, "meshName"))

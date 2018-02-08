@@ -87,7 +87,7 @@ setStiffnessMatrix()
       // compute the 3xD jacobian of the parameter space to world space mapping
       auto jacobian = BasisOnMeshType::computeJacobian(geometry, xi);
       
-      VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi;
+      VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi<<", geometry: "<<geometry<<", jac: " <<jacobian;
       
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex] 

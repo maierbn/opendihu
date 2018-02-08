@@ -896,6 +896,63 @@ The discretization remains the same and leads to an integral term of
 for the stiffness matrix $M$. For these term the stencil notation cannot be applied in general. The stiffness matrix has to be computed using e.g. numerical quadrature.
 
 %------------------------------------------------------------------------------------------------
+\section{Solid mechanics}
+
+In this section the Einstein sum convention is used.
+Quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
+
+The position of a material point $i$ at time $t$ is given by
+\begin{equation*}
+  \begin{array}{lll}
+    {}^tx_i = {}^ox_i + {}^tu_i,
+  \end{array}
+\end{equation*}
+where ${}^ox_i$ is the position in reference configuration and ${}^tu_i$ is the displacement. The deformation gradient $\bfF$ is defined by the entries
+\begin{equation*}
+  \begin{array}{lll}
+    F_{ij} = {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j}.
+  \end{array}
+\end{equation*}
+The subscript comma means differentiation. We have ${}^t_ox_{i,j} = \delta_{ij} + u_{i,j}$. 
+The discretization of $^{t}u$ reads
+\begin{equation*}
+  \begin{array}{lll}
+    {}^tu_i(x) = \phi_L(x)\,{}^tu_i^L,
+  \end{array}
+\end{equation*}
+where ${}^tu_i^L$ are the coefficients, i.e. the nodal displacements. Differentiation yields
+\begin{equation*}
+  \begin{array}{lll}
+    {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j} = \delta_{ij} + \p{{}^tu_i}{{}^ox_j} = \delta_{ij} + \phi_{L,j}(x)\,{}^tu_i^L = \delta_{ij} + u_{i,j}.
+  \end{array}
+\end{equation*}
+The Green-Lagrange strain tensor ${}^t_o\bfeps$ is defined as 
+\begin{equation*}
+  \begin{array}{lll}
+    {}^t_o \bfeps_{kl} = \dfrac12\big({}^t_ox_{b,k}\,{}^t_ox_{b,l} - \delta_{kl}\big).
+  \end{array}
+\end{equation*}
+Next the derivative with respect to a nodal displacement $u_i^L$ is considered. Therefore we need
+\begin{equation*}
+  \begin{array}{lll}
+    \p{{}^t_ox_{i,j}}{u^L_k} = \p{\phi_L\,{}^tu_i^L}{u^L_k} = \phi_{L,j}\,\delta_{ik}.
+  \end{array}
+\end{equation*}
+We then proceed to compute
+\begin{equation*}
+  \begin{array}{lll}
+    \p{{}^t_o\bfeps_{kl}}{u^L_i} = \dfrac12\Big(\p{{}^t_ox_{b,k}}{u^L_i}\,{}^t_ox_{b,l} + {}^t_ox_{b,k}\,\p{{}^t_ox_{b,l}}{u^L_i}\Big) = \dfrac12\Big( \phi_{L,k}\,\delta_{bi} \,{}^t_ox_{b,l} + {}^t_ox_{b,k}\, \phi_{L,l}\,\delta_{bi}\Big) = \dfrac12\Big( {}^t_ox_{i,l}\,\phi_{L,k} + {}^t_ox_{i,k}\, \phi_{L,l}\Big).
+  \end{array}
+\end{equation*}
+We compute the second derivative (results from paper)
+\begin{equation*}
+  \begin{array}{lll}
+   \dfrac{\p ^t_o\bfeps_{kl}}{\p u^L_i\,\p u^M_j} = \dots = \frac12\big(\phi_{L,k}\,\phi_{M,l} + \phi_{L,l}\,\phi_{M,k}\big)\,\delta_{ij}.
+  \end{array}
+\end{equation*}
+
+
+%------------------------------------------------------------------------------------------------
 \section{Quadrature}
 
 The aim is to compute a good approximation for the integral

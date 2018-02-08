@@ -16,6 +16,7 @@ template<typename MeshType,typename BasisFunctionType>
 class BasisOnMesh : public BasisOnMeshNodes<MeshType,BasisFunctionType>
 {
 public:
+   
   //! inherit constructor
   using BasisOnMeshNodes<MeshType,BasisFunctionType>::BasisOnMeshNodes;
   

@@ -7,9 +7,10 @@
 #include <list>
 
 #include "utility/python_utility.h"
-#include "output_writer/paraview.h"
-#include "output_writer/python.h"
-#include "output_writer/callback.h"
+#include "output_writer/paraview/paraview.h"
+#include "output_writer/python_callback/python_callback.h"
+#include "output_writer/python_file/python_file.h"
+#include "output_writer/exfile/exfile.h"
 #include "mesh/mesh_manager.h"
 
 #include "Python.h"

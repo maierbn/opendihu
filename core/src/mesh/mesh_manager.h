@@ -22,7 +22,7 @@ public:
   MeshManager(const DihuContext &context);
   
   //! return previously created mesh or create on the fly
-  template<typename MeshType=Mesh::None,typename BasisFunctionType=BasisFunction::Lagrange<>>
+  template<typename BasisOnMeshType=Mesh::None>
   std::shared_ptr<Mesh::Mesh> mesh(PyObject *settings);
   
   //! check if a mesh with the given name is stored

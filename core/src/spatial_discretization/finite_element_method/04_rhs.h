@@ -78,6 +78,7 @@ class FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term, Mesh::is
 public:
   //! use constructor of base class
   using AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term>::AssembleRightHandSide;
+  
 };
 
 /** base class implementing right hand side, that can be set by user for poisson equation

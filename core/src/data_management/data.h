@@ -28,7 +28,7 @@ public:
   virtual ~Data();
  
   //! initialize the mesh with e.g. number of dimensions
-  void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
+  virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
   
   //! initialize the number of degrees of freedom per mesh node, i.e. the number of components of the field variables
   void setNComponentsPerNode(int n);

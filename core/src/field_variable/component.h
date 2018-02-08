@@ -66,6 +66,9 @@ public:
   //! return the exfileBasisFunctionSpecification
   std::string exfileBasisFunctionSpecification() const;
   
+  //! get all values
+  void getValues(std::vector<double> &values);
+  
   //! get values from their global dof no.s
   template<int N>
   void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);

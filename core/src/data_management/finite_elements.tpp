@@ -268,9 +268,9 @@ fieldVariables()
 {
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
   result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
-  //result.push_back(solution_);
-  //result.push_back(rhs_);
-  this->mesh_->addNonGeometryFieldVariables(result);
+  result.push_back(solution_);
+  result.push_back(rhs_);
+  this->mesh_->addNonGeometryFieldVariables(result);   // add all further field variables that were e.g. present in an input file
   
   return result;
 }

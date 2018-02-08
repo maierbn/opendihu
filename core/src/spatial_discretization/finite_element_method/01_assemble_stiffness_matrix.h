@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spatial_discretization/finite_element_method/00_base.h"
+#include "basis_on_mesh/mixed_basis_on_mesh.h"
 
 namespace SpatialDiscretization
 {
@@ -21,6 +22,7 @@ protected:
  void setStiffnessMatrix();
   
 };
+
  
 };  // namespace
 

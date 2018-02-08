@@ -96,7 +96,7 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   
   recoverRightHandSide(output);
   
-  this->data_.print();  
+  this->data_.print();
 }
 
 template<typename BasisOnMeshType, typename IntegratorType, typename Term>

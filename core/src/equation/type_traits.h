@@ -4,6 +4,7 @@
 #include "equation/poisson.h"
 #include "equation/laplace.h"
 #include "equation/static.h"
+#include "equation/solid_mechanics.h"
 
 namespace Equation
 {
@@ -39,6 +40,13 @@ using hasRhs = std::enable_if_t<
   std::is_same<Term, Static::Poisson>::value
   || std::is_same<Term, Static::GeneralizedPoisson>::value
   || std::is_same<Term, Dynamic::Diffusion>::value,
+  Term
+>;
+
+// Equations of solid mechanics
+template<class Term>
+using isSolidMechanics = std::enable_if_t<
+  std::is_same<Term, Static::SolidMechanics>::value,
   Term
 >;
 

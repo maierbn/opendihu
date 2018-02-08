@@ -123,8 +123,8 @@ public:
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;
  
-  //! constructor
-  BasisOnMeshDofs(PyObject *settings);
+  //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
+  BasisOnMeshDofs(PyObject *settings, bool noGeometryField=false);
   
   //! this assigns the geometry field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
   void initialize();
@@ -173,6 +173,7 @@ protected:
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
   element_no_t nElements_ = 0;    ///< number of elements in exelem file 
   dof_no_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
+  bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
  
 }; 
 }  // namespace

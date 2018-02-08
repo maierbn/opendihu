@@ -5,10 +5,12 @@
 
 #include "basis_function/lagrange.h"
 #include "basis_function/hermite.h"
+#include "basis_function/mixed.h"
 
 #include "equation/laplace.h"
 #include "equation/diffusion.h"
 #include "equation/reaction_diffusion.h"
+#include "equation/solid_mechanics.h"
 
 #include "mesh/regular_fixed.h"
 #include "mesh/structured_deformable.h"
@@ -24,3 +26,4 @@
 #include "cellml/cellml_adapter.h"
 
 #include "integrator/gauss.h"
+#include "integrator/mixed.h"

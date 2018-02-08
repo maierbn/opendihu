@@ -22,12 +22,12 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
 }
 
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
+getDofNo(std::array<element_no_t, MeshType::dim()> nElementsPerDimension, element_no_t elementNo, int dofIndex)
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0,1 2,3
@@ -52,7 +52,7 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
 }
 
 // element-local dofIndex to global dofNo for 2D
@@ -98,7 +98,7 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElements_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
 }
  
 // element-local dofIndex to global dofNo for 3D
@@ -222,14 +222,14 @@ nElements() const
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
-BasisOnMeshDofs(PyObject *settings) :
-  BasisOnMeshJacobian<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::BasisOnMeshJacobian(settings)
+BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
+  BasisOnMeshJacobian<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::BasisOnMeshJacobian(settings),
+  noGeometryField_(noGeometryField)
 {
   LOG(TRACE) << "BasisOnMeshDofs constructor";
  
   if (PythonUtility::containsKey(settings, "exelem"))
   {
-   
     std::string filenameExelem = PythonUtility::getOptionString(settings, "exelem", "input.exelem");
     std::string filenameExnode = PythonUtility::getOptionString(settings, "exnode", "input.exnode");
     
@@ -451,6 +451,9 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
 initialize()
 {
+  if (this->noGeometryField_)
+    return;
+  
   std::shared_ptr<BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> ptr = this->shared_from_this();
   
   assert(ptr != nullptr);

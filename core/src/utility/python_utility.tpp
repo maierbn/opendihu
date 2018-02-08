@@ -242,3 +242,15 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   
   return result;
 }
+
+template<int D>
+PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)
+{
+  PyObject *result = PyList_New((Py_ssize_t)D);
+  for (unsigned int i=0; i<D; i++)
+  {
+    PyObject *item = PyInt_FromLong(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
+  }
+  return result;    // return value: new reference
+}

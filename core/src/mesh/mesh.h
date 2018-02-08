@@ -33,6 +33,7 @@ public:
   int dimension() const {return 0;}
   node_no_t nNodes() const {return 0;}
   static constexpr int dim() {return 0;}
+  void initialize(){}
 };
 
 /**

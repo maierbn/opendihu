@@ -17,17 +17,24 @@ template<int D>
 class Structured : public MeshD<D>
 {
 public:
-  //! constructor
+  //! constructor from number of elements in coordinate directions
   Structured(std::array<element_no_t, D> &nElements);
+  
+  //! constructor from python settings
   Structured(PyObject *specificSettings);
   
-  //! get number of elements
-  element_no_t nElements(int dimension) const;
+  //! get number of elements in a given coordinate direction
+  element_no_t nElementsPerDimension(int dimension) const;
+  
+  //! get the array with all numbers of elements per coordinate direction
+  std::array<element_no_t, D> nElementsPerDimension() const;
+  
+  //! get the total number of elements
   element_no_t nElements() const;
 
 protected:
  
-  std::array<element_no_t, D> nElements_;    ///< the number of elements in each coordinate direction
+  std::array<element_no_t, D> nElementsPerDimension_;    ///< the number of elements in each coordinate direction
 };
 
 };    // namespace

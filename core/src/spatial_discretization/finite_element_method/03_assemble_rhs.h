@@ -25,6 +25,25 @@ protected:
   void setRhsDiscretizationMatrix();
 };
  
+/**
+ * Partial specialization for solid mechanics
+ */
+template<typename MixedBasisOnMeshType, typename MixedIntegratorType>
+class AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics> :
+  public FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>
+{
+public:
+  // use constructor of base class
+  using FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix;
+
+protected:
+  //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
+  void transferRhsToWeakForm(){}
+  
+  //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
+  void setRhsDiscretizationMatrix(){}
+};
+
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/03_assemble_rhs.tpp"

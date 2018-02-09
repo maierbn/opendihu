@@ -56,7 +56,8 @@ FieldVariableStructured() : FieldVariableBase<BasisOnMeshType>::FieldVariableBas
 //! contructor as data copy with a different name (component names are the same)
 template<typename BasisOnMeshType>
 FieldVariableStructured<BasisOnMeshType>::
-FieldVariableStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name)
+FieldVariableStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name) : 
+  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
 {
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
@@ -68,7 +69,8 @@ FieldVariableStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name)
 //! constructor with mesh, name and components
 template<typename BasisOnMeshType>
 FieldVariableStructured<BasisOnMeshType>::
-FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames)
+FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) : 
+  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
 {
   this->name_ = name;
   this->isGeometryField_ = false;

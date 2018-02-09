@@ -36,6 +36,9 @@ public:
   //! constructor with mesh, name and components
   FieldVariable(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent);
  
+  //! empty constructor
+  FieldVariable();
+  
   //! destructor
   virtual ~FieldVariable();
   

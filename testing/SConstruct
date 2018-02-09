@@ -97,7 +97,7 @@ env.Append(CPPPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/src')])
   
 # define the source files
 src_files = Glob('src/*.cpp')
-src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
+#src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
 print "WARNING: only compiling ",src_files
 
 program = env.Program('run_tests', source=src_files)

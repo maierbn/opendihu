@@ -15,7 +15,8 @@ using namespace StringUtility;
 // contructor as data copy with a different name (component names are the same)
 template<int D, typename BasisFunctionType>
 FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name)
+FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name) :
+  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
 {
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
@@ -27,12 +28,20 @@ FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name)
 // constructor with mesh, name and components
 template<int D, typename BasisFunctionType>
 FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
-FieldVariable(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent)
+FieldVariable(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent) :
+  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
 {
   assert(false); // not implemented
   // this is needed for mixed formulation, to implement this and set as the lower order field variable I need the higher order field variable as parameter
 }
-  
+
+template<int D, typename BasisFunctionType>
+FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+FieldVariable() :
+  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
+{
+}
+
 template<int D, typename BasisFunctionType>
 FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
 ~FieldVariable()

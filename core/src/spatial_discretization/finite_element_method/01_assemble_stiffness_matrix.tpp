@@ -74,6 +74,8 @@ setStiffnessMatrix()
     // get indices of element-local dofs
     auto dof = mesh->getElementDofNos(elementNo);
     
+    VLOG(2) << "element " << elementNo;
+    
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
     mesh->getElementGeometry(elementNo, geometry);

@@ -47,7 +47,11 @@ template<typename BasisOnMeshType>
 void Data<BasisOnMeshType>::setMesh(std::shared_ptr<BasisOnMeshType> mesh)
 {
   this->mesh_ = mesh;
-  
+}
+
+template<typename BasisOnMeshType>
+void Data<BasisOnMeshType>::initialize()
+{
   if (!this->initialized_)
   {
     this->createPetscObjects();
@@ -55,7 +59,7 @@ void Data<BasisOnMeshType>::setMesh(std::shared_ptr<BasisOnMeshType> mesh)
   }
   else
   {
-    LOG(WARNING) << "Mesh is already assigned";
+    LOG(WARNING) << "Initialize, mesh is already assigned";
   }
 }
 

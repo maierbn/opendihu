@@ -1,5 +1,6 @@
 #include "basis_on_mesh/04_basis_on_mesh_nodes.h"
 
+#include <Python.h>  // has to be the first included header
 #include <cmath>
 #include <array>
 
@@ -16,6 +17,8 @@ BasisOnMeshNodes(PyObject *specificSettings, bool noGeometryField) :
   BasisOnMeshDofs<Mesh::StructuredDeformable<D>,BasisFunctionType>(specificSettings), 
   noGeometryField_(noGeometryField)
 {
+  LOG(DEBUG) << "constructor BasisOnMeshNodes StructuredDeformable, noGeometryField_="<<noGeometryField_;
+ 
   std::vector<double> nodePositions;
   if (!noGeometryField_)
   {
@@ -28,16 +31,25 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 initialize()
 {
-  std::shared_ptr<BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>> ptr = this->shared_from_this();
-  
-  assert(ptr != nullptr);
-  
-  std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>(ptr);
-  
-  assert(self != nullptr);
-  this->geometry_->setMesh(self);
+  if (this->geometry_)
+  {
+    std::shared_ptr<BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>> ptr = this->shared_from_this();
+    assert(ptr != nullptr);
+    
+    std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>(ptr);
+    assert(self != nullptr);
+    
+    this->geometry_->setMesh(self);
+  }
 }
 
+template<int D,typename BasisFunctionType>
+bool BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
+hasGeometryField()
+{
+  return this->geometry_ != nullptr; 
+}
+  
 // read in config nodes
 template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
@@ -82,7 +94,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtend[dimNo] / (this->nElementsPerDimension(dimNo) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1);
+      meshWidth[dimNo] = physicalExtend[dimNo] / this->nElementsPerDimension(dimNo);
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
     
@@ -122,7 +134,8 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 setGeometryField(std::vector<double> &nodePositions)
 {
-  
+  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField";
+ 
   // compute number of dofs
   dof_no_t nDofs = this->nDofs();
   

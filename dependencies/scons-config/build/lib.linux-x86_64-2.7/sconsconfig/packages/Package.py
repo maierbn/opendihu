@@ -73,6 +73,7 @@ class Package(object):
     self.build_flags = ''               # additional C flags to use for compiling the test program
     self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
     self.static = False                 # if the compiled test program is a static library
+    self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
@@ -155,10 +156,17 @@ class Package(object):
       if inc_dirs:
         if not self.try_headers(ctx, inc_dirs):
           res = (False, 0)
-      bkp = env_setup(ctx.env,
-              CPPPATH=ctx.env.get('CPPPATH', []) + inc_dirs,
-              LIBPATH=ctx.env.get('LIBPATH', []) + lib_dirs,
-              RPATH=ctx.env.get('RPATH', []) + lib_dirs)
+      
+      if self.set_rpath:
+        bkp = env_setup(ctx.env,
+                CPPPATH=ctx.env.get('CPPPATH', []) + inc_dirs,
+                LIBPATH=ctx.env.get('LIBPATH', []) + lib_dirs,
+                RPATH=ctx.env.get('RPATH', []) + lib_dirs)
+      else:
+        bkp = env_setup(ctx.env,
+                CPPPATH=ctx.env.get('CPPPATH', []) + inc_dirs,
+                LIBPATH=ctx.env.get('LIBPATH', []) + lib_dirs)
+        
       if res[0]:
         res = self.try_libs(ctx, libs, **kwargs)
       if not res[0]:
@@ -757,11 +765,18 @@ class Package(object):
         for inc_dir in inc_sub_dirs:
           system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
             
-        bkp = env_setup(ctx.env,
-                #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
-                LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
-                RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs,
-                CCFLAGS=ctx.env.get('CCFLAGS', []) + system_inc_dirs)
+        if self.set_rpath:
+          bkp = env_setup(ctx.env,
+                  #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
+                  LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
+                  RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs,
+                  CCFLAGS=ctx.env.get('CCFLAGS', []) + system_inc_dirs)
+        else:
+          bkp = env_setup(ctx.env,
+                  #CPPPATH=ctx.env.get('CPPPATH', []) + inc_sub_dirs,
+                  LIBPATH=ctx.env.get('LIBPATH', []) + lib_sub_dirs,
+                  #RPATH=ctx.env.get('RPATH', []) + lib_sub_dirs,
+                  CCFLAGS=ctx.env.get('CCFLAGS', []) + system_inc_dirs)
         
         self.base_dir = base  # set base directory (is needed by try_libs)
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)

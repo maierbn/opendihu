@@ -61,6 +61,8 @@ transferRhsToWeakForm()
     // get indices of element-local dofs
     auto dof = mesh->getElementDofNos(elementNo);
     
+    VLOG(2) << "element " << elementNo;
+    
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
     mesh->getElementGeometry(elementNo, geometry);
@@ -89,7 +91,10 @@ transferRhsToWeakForm()
         for (int k=0; k<IntegratorDD::numberEvaluations(); k++)
           evaluations[k] = evaluationsArray[k][i][j];
         
+        
         double value = IntegratorDD::integrate(evaluations) * rhsValues[dof[j]];
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<IntegratorDD::integrate(evaluations)<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
+        
         ierr = VecSetValue(rightHandSide, dof[i], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
     }  // i

@@ -20,6 +20,7 @@ class LAPACK(Package):
         #self.headers = ['mysql.h']
         #self.libs = ['mysqlclient']
         #self.extra_libs = ['lapack', 'blas']
+        #self.set_rpath = False    # do not use dynamic linkage
         self.check_text = r'''
 #include <stdlib.h>
 #include <stdio.h>
@@ -55,15 +56,16 @@ int main(int argc, char* argv[]) {
               'ln -s ${SOURCE_DIR}/libtmglib.a ${PREFIX}/lib/',
           ])
           self.number_output_lines = 4768
-          
-        # cmake based, dynamic libraries
-        self.set_build_handler([
-          'mkdir -p ${PREFIX}',
-          'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
-          'cd ${PREFIX} && make',
-          'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
-        ])
-        self.number_output_lines = 4626
+        else:
+            
+          # cmake based, dynamic libraries
+          self.set_build_handler([
+            'mkdir -p ${PREFIX}',
+            'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
+            'cd ${PREFIX} && make',
+            'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
+          ])
+          self.number_output_lines = 4626
         
         self.libs = ["lapack", "blas"]
         self.headers = ["lapacke.h"]

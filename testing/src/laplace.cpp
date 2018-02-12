@@ -755,5 +755,63 @@ config = {
   StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
 }
 
+TEST(LaplaceTest, SolverManagerWorks)
+{
+  std::string pythonConfig = R"(
+# Laplace 1D
+n = 5
+    
+# boundary conditions
+bc = {}
+bc[0] = 1.0
+bc[n] = 0.0
+
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": False,
+  "Solvers" : {
+    "linearSolver": {
+      "relativeTolerance": 1e-15
+    },
+  },
+  "FiniteElementMethod" : {
+    "nElements": n,
+    "physicalExtend": 4.0,
+    "DirichletBoundaryCondition": bc,
+    "solverName": "linearSolver"
+  }
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::RegularFixed<1>,
+    BasisFunction::Lagrange<>,
+    Integrator::None,
+    Equation::Static::Laplace
+  > equationDiscretized(settings);
+  
+  Computation computation(settings, equationDiscretized);
+  computation.run();
+
+  std::vector<double> referenceMatrix = {
+    1, 0, 0, 0, 0, 0,
+    0, -2.5, 1.25, 0, 0, 0,
+    0, 1.25, -2.5, 1.25, 0, 0,
+    0, 0, 1.25, -2.5, 1.25, 0, 
+    0, 0, 0, 1.25, -2.5, 0,
+    0, 0, 0, 0, 0, 1
+  };
+  std::vector<double> referenceRhs = {
+    1, -1.25, 0, 0, 0, 0
+  };
+  std::map<int, double> dirichletBC = {{0, 1.0}, {5,0.0}};
+  
+  StiffnessMatrixTester::compareMatrix(equationDiscretized, referenceMatrix);
+  StiffnessMatrixTester::compareRhs(equationDiscretized, referenceRhs);
+  StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized, dirichletBC);
+}
+
 };
 

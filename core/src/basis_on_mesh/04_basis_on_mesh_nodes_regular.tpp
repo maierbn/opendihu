@@ -1,5 +1,6 @@
 #include "basis_on_mesh/04_basis_on_mesh_nodes.h"
 
+#include <Python.h>  // has to be the first included header
 #include "easylogging++.h"
 #include <array>
 
@@ -63,7 +64,7 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometry_->set("geometry", componentNames, this->nElementsPerDimension_, nEntries, isGeometryField, values);
 }
- 
+
 template<int D,typename BasisFunctionType>
 BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 BasisOnMeshNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
@@ -93,6 +94,13 @@ initialize()
 }
 
 template<int D,typename BasisFunctionType>
+bool BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
+hasGeometryField()
+{
+  return this->geometry_ != nullptr; 
+}
+
+template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nNodes() const
 {
@@ -113,6 +121,7 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
+  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerDimension(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
   return this->nElementsPerDimension(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 

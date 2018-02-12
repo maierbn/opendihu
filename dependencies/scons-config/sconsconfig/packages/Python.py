@@ -16,11 +16,17 @@ class Python(Package):
         # remove "-Wstrict-prototypes" because it is only valid for c and not c++
         flags_to_remove = ["-Wstrict-prototypes ", '-DNDEBUG ', '-g ', '-O2 ', '-fno-strict-aliasing ', '-Wp,-D_FORTIFY_SOURCE=2 ']
         
+        pythonVersion = "2.7"   # set to 2.7 or 3
+        
         # remove specified flags 
         try:
           #cflags = subprocess.check_output("python-config --cflags", shell=True)+' '
-          cflags = subprocess.check_output("python-config --includes", shell=True)
-          ldflags = subprocess.check_output("python-config --ldflags", shell=True)
+          if pythonVersion == "3":
+            cflags = subprocess.check_output("python3-config --includes", shell=True)
+            ldflags = subprocess.check_output("python3-config --ldflags", shell=True)
+          else:
+            cflags = subprocess.check_output("python2.7-config --includes", shell=True)
+            ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
           
           for flag_to_remove in flags_to_remove:            
             while flag_to_remove in cflags:
@@ -45,6 +51,6 @@ class Python(Package):
         
         env.MergeFlags(cflags)
         env.MergeFlags(ldflags)
-
+          
         ctx.Result(True)
         return True

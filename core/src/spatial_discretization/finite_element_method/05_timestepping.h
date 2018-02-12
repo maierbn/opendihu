@@ -37,8 +37,6 @@ protected:
   
   //! Extract from the rhs in weak formulation the rhs vector in strong formulation
   void recoverRightHandSide(Vec &result);
-  
-  double relativeTolerance_;      ///< relative tolerance for solver 
 };
 
 };  // namespace

@@ -61,6 +61,7 @@ class PETSc(Package):
         self.extra_libs = ['blas']        # the system tries to include one of them after other, if linking else fails
         self.check_text = petsc_text
         self.static = False
+        #self.set_rpath = False
         
         # Setup the build handler.
         self.set_build_handler([

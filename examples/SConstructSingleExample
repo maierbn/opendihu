@@ -21,7 +21,7 @@ sconsconfig.select(
     packages.PETSc(required=True),
     packages.Python(required=True),
     packages.Base64(required=True),
-    packages.Cython(required=True),
+    #packages.Cython(required=True),
     #packages.NumpyC(required=True),
     packages.googletest(required=True),
     packages.libxml2(required=True),
@@ -84,7 +84,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(example,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -O0 -std=c++1z -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++1z -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   

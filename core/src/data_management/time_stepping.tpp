@@ -44,6 +44,7 @@ void TimeStepping<BasisOnMeshType>::
 createPetscObjects()
 {
   LOG(DEBUG)<<"TimeStepping<BasisOnMeshType>::createPetscObjects("<<this->nComponentsPerNode_<<")"<<std::endl;
+  assert(this->mesh_);
   this->solution_ = this->mesh_->createFieldVariable("solution", this->nComponentsPerNode_);
   this->increment_ = this->mesh_->createFieldVariable("increment", this->nComponentsPerNode_);
 }

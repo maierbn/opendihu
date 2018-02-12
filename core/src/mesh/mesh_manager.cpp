@@ -4,7 +4,10 @@
 #include "mesh/regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
-MeshManager::MeshManager(const DihuContext& context) :
+namespace Mesh 
+{
+
+Manager::Manager(const DihuContext& context) :
   context_(context), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
@@ -12,7 +15,7 @@ MeshManager::MeshManager(const DihuContext& context) :
   storePreconfiguredMeshes();
 }
 
-void MeshManager::storePreconfiguredMeshes()
+void Manager::storePreconfiguredMeshes()
 {
   LOG(TRACE) << "MeshManager::storePreconfiguredMeshes";
   if (specificSettings_)
@@ -44,7 +47,7 @@ void MeshManager::storePreconfiguredMeshes()
   }
 }
 
-bool MeshManager::hasMesh(std::string meshName)
+bool Manager::hasMesh(std::string meshName)
 {
   LOG(DEBUG) << "hasMesh("<<meshName<<")";
   LOG(DEBUG) << "meshes size: " << meshes_.size();
@@ -53,8 +56,8 @@ bool MeshManager::hasMesh(std::string meshName)
 }
 
 template<>
-std::shared_ptr<Mesh::Mesh> MeshManager::
-mesh<Mesh::None>(PyObject *settings)
+std::shared_ptr<Mesh> Manager::
+mesh<None>(PyObject *settings)
 {
   std::string meshName;
   if (PythonUtility::containsKey(settings, "meshName"))
@@ -71,12 +74,12 @@ mesh<Mesh::None>(PyObject *settings)
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
         << " Type is not clear, so go for RegularFixed<1>.";
-      typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+      typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
       std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
       mesh->initialize();
       meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";
-      return std::static_pointer_cast<Mesh::Mesh>(meshes_[meshName]);
+      return std::static_pointer_cast<Mesh>(meshes_[meshName]);
     }
     else
     {
@@ -96,7 +99,7 @@ mesh<Mesh::None>(PyObject *settings)
     anonymousName << "anonymous" << numberAnonymousMeshes_++;
     
     // set type to be 1D regular fixed mesh with linear lagrange basis
-    typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+    typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
     
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
@@ -110,10 +113,12 @@ mesh<Mesh::None>(PyObject *settings)
   std::array<element_no_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
   
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+  typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
   
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
   mesh->initialize();
   return mesh;
 }
+
+};  // namespace

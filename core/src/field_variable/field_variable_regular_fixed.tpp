@@ -34,11 +34,21 @@ getValues(std::string component, std::vector<double> &values)
   }
   
   // for geometry field compute information
-  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
-  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
-  const node_no_t nNodesInZDirection = this->mesh_->nNodes(2);
+  node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
+  node_no_t nNodesInZDirection = this->mesh_->nNodes(2);
+  
+  if (D < 2)
+    nNodesInYDirection = 1;
+  if (D < 3)
+    nNodesInZDirection = 1;
+  
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerNode();
  
+  LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nDofs() 
+    << ", nNodes: " << nNodesInXDirection<<","<<nNodesInYDirection<<","<<nNodesInZDirection
+    << ", nDofsPerNode: " << nDofsPerNode;
+  
   values.resize(this->mesh_->nDofs());
   std::size_t vectorIndex = 0;
   
@@ -51,14 +61,17 @@ getValues(std::string component, std::vector<double> &values)
       {
         if (component == "x")
         {
+          assert(vectorIndex < values.size());
           values[vectorIndex++] = nodeX * this->meshWidth_[0];
         }
         else if (component == "y")
         {
+          assert(vectorIndex < values.size());
           values[vectorIndex++] = nodeY * this->meshWidth_[1];
         }
         else
         {
+          assert(vectorIndex < values.size());
           values[vectorIndex++] = nodeZ * this->meshWidth_[2];
         }
        

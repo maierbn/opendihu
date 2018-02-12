@@ -18,3 +18,6 @@ else:
 
 # build the library  
 env.Library(target = target, source = src_files)
+
+# simple test program
+#env.Program(target = "python-test", source = "src/main.cpp")

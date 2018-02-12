@@ -8,7 +8,13 @@
 #include <output_writer/generic.h>
 #include <data_management/data.h>
 
-class MeshManager;
+// forward declaration
+namespace Mesh { class Manager; }
+namespace Solver { class Manager; }
+
+/** This class contains global variables (mesh manager and solver manager) and a python config dictionary
+ *  which can be a sub-dict of the global config
+ */
 class DihuContext
 {
 public:
@@ -29,7 +35,10 @@ public:
   PyObject *getPythonConfig() const;
   
   ///! return the mesh manager object that contains all meshes
-  std::shared_ptr<MeshManager> meshManager() const;
+  std::shared_ptr<Mesh::Manager> meshManager() const;
+  
+  ///! return the solver manager object that contains all solvers
+  std::shared_ptr<Solver::Manager> solverManager() const;
   
   ///! destructor
   ~DihuContext();
@@ -46,6 +55,7 @@ private:
   
   PyObject *pythonConfig_;    ///< the top level python config dictionary
   
-  static std::shared_ptr<MeshManager> meshManager_;   ///< object that saves all meshes that are used
+  static std::shared_ptr<Mesh::Manager> meshManager_;   ///< object that saves all meshes that are used
+  static std::shared_ptr<Solver::Manager> solverManager_; ///< object that saves all solver configurations that are used
   static bool initialized_;
 };

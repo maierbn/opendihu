@@ -87,6 +87,9 @@ public:
   //! destructor
   ~FiniteElements();
  
+  //! initialize data fields, has to be called after constructor, typically at the begin of a run() method
+  void initialize();
+  
   //! return reference to a stiffness matrix
   Mat &stiffnessMatrix();
   

@@ -21,19 +21,34 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
       PythonUtility::printDict((PyObject *)settings);
       
       PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
-      Py_CLEAR(key);
-      Py_CLEAR(itemList);
-      itemList = PyDict_Items(dict);
-      itemListIndex = 0;
-      
-      if (itemListIndex < PyList_Size(itemList))
+      if (PyDict_Check(dict))
       {
-        PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
-        PyObject *tuple_key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
-        PyObject *tuple_value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+        Py_CLEAR(key);
+        Py_CLEAR(itemList);
+        itemList = PyDict_Items(dict);
+        itemListIndex = 0;
         
-        firstEntry = std::pair<Key, Value>(convertFromPython<Key>(tuple_key), convertFromPython<Value>(tuple_value));
-        return firstEntry;
+        if (PyList_Check(itemList))
+        {
+          
+          if (itemListIndex < PyList_Size(itemList))
+          {
+            PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
+            PyObject *tuple_key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
+            PyObject *tuple_value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+            
+            firstEntry = std::pair<Key, Value>(convertFromPython<Key>(tuple_key), convertFromPython<Value>(tuple_value));
+            return firstEntry;
+          }
+        }
+        else
+        {
+          LOG(WARNING)<<"Warning: key \""<<keyString<<"\" is not a dict";
+        }
+      }
+      else
+      {
+        LOG(WARNING)<<"Warning: Entry \""<<keyString<<"\" is not a dict.";
       }
     }
     else

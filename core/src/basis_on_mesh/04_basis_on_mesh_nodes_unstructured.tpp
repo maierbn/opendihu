@@ -1,5 +1,6 @@
 #include "basis_on_mesh/04_basis_on_mesh_nodes.h"
 
+#include <Python.h>  // has to be the first included header
 #include "easylogging++.h"
 
 #include <cmath>
@@ -40,6 +41,14 @@ getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D
   
   const int nDofsPerElement = BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement();
   this->fieldVariable_.at("geometry")->template getElementValues<nDofsPerElement,3>(elementNo, values);
+}
+
+
+template<int D,typename BasisFunctionType>
+bool BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+hasGeometryField()
+{
+  return this->fieldVariable_.find("geometry") != this->fieldVariable_.end();
 }
 
 //! create a non-geometry field field variable with no values being set, with given component names

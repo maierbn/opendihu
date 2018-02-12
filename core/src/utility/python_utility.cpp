@@ -623,9 +623,9 @@ void PythonUtility::printDict(PyObject *dict, int indent)
       line << valueLong;
       VLOG(1) << line.str();
     }
-    else if (PyLong_CheckExact(value))
+    else if (PyInt_CheckExact(value))
     {
-      long valueLong = PyLong_AsLong(value);
+      long valueLong = PyInt_AsLong(value);
       line << valueLong;
       VLOG(1) << line.str();
     }

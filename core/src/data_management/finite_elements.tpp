@@ -46,6 +46,7 @@ FiniteElements<BasisOnMeshType>::
     ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
   }
 }
+
 /*
 template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::

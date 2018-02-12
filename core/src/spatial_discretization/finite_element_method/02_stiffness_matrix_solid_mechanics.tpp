@@ -1,6 +1,6 @@
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 #include <memory>
 #include <petscksp.h>
 #include <petscsys.h>
@@ -83,6 +83,7 @@ setStiffnessMatrix()
       auto deformationGradient = computeDeformationGradient(geometryReference, displacement, jacobian, xi);
       
       VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi;
+      VLOG(2) << "geometryCurrent="<<geometryCurrent<<", geometryReference="<<geometryReference;
       
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       //evaluationsArray[samplingPointIndex] = 

@@ -31,7 +31,6 @@ CellmlAdapter::~CellmlAdapter()
   Py_CLEAR(pythonHandleResultFunction_);
 }
 
-
 void CellmlAdapter::registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime, 
                                                                  double *states, double *intermediates))
 {
@@ -500,7 +499,7 @@ void CellmlAdapter::initialize()
 }
 
 void CellmlAdapter::callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector< double >& parameters)
-{
+{  
   if (pythonSetParametersFunction_ == NULL)
     return;
   

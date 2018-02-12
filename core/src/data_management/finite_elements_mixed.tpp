@@ -297,15 +297,24 @@ setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasi
   
   // store high order mesh as mesh_
   this->mesh_ = mixedMesh_->highOrderBasisOnMesh();
+} 
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+initialize()
+{
+  Data<HighOrderBasisOnMeshType>::initialize();
+ 
+  LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
   initializeFieldVariables();
 }
-
   
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 initializeFieldVariables()
 {
   // generate geometryReference variable as copy of geometry field
+  assert(this->mesh_->hasGeometryField());
   geometryReference_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_->geometryField(), "geometryReference");
   //geometryReference_->initializeFromFieldVariable(this->mesh_->geometryField(), "geometryReference", {"x","y","z"});
   //geometryReference_->setValues(this->mesh_->geometryField());
@@ -317,8 +326,6 @@ initializeFieldVariables()
   pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>();
   
 }
-
-
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::

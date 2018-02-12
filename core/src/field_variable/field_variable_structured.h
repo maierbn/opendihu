@@ -132,6 +132,8 @@ public:
     std::array<int,nDofsPerElement*nComponents> indices;
     std::array<double,nDofsPerElement*nComponents> result;
     
+    VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents << ", " << this->nComponents_;
+    
     // prepare lookup indices for PETSc vector values_
     int j=0;
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
@@ -150,6 +152,7 @@ public:
       for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
       {
         values[dofIndex][componentIndex] = result[dofIndex*nComponents+componentIndex];
+        VLOG(2) << "getElementValues element " << elementNo << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
       }
     }
   }

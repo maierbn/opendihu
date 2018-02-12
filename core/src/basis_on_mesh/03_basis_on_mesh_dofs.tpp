@@ -309,7 +309,7 @@ parseFromSettings(PyObject *settings)
   {
     // get the python list that makes up the element, e.g. [[0,0], [1,0], [2,1], [3,0]]
     typedef std::array<PyObject *,this->nNodesPerElement()> PyElementNodes;
-    PyElementNodes pyElementNodes = PythonUtility::convertFromPython<PyObject *,this->nNodesPerElement()>(pyElement,PyInt_FromLong(this->nNodesPerElement()));
+    PyElementNodes pyElementNodes = PythonUtility::convertFromPython<PyObject *,this->nNodesPerElement()>(pyElement,PyLong_FromLong(this->nNodesPerElement()));
    
     Element currentElement;
     currentElement.nodes.resize(this->nNodesPerElement());

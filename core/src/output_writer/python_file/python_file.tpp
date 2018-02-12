@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <iostream>
+#include <cstdio>
 
 #include "easylogging++.h"
 #include "output_writer/python/python.h"
@@ -35,16 +36,24 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   s<<this->filename_<<".py";
   std::string filename = s.str();
   
-  char filenameC[filename.size()+1];
-  std::strcpy(filenameC, filename.c_str());
-  
-  char mode[2];
-  std::strcpy(mode, "wb");
-
   LOG(DEBUG) << "filename is [" << filename << "]";
   
   // open file
+#if PY_MAJOR_VERSION >= 3  
+  FILE *fileC = fopen(filename.c_str(), "w");
+  int fileDescriptorC = fileno(fileC);
+  PyObject *file = PyFile_FromFd(fileDescriptorC, NULL, "w", -1, NULL, NULL, NULL, true);
+#else 
+  // python 2.7
+  char filenameC[filename.size()+1];
+  std::strcpy(filenameC, filename.c_str());
+  
+  char mode[3];
+  std::strcpy(mode, "wb");
+
   PyObject *file = PyFile_FromString(filenameC, mode);
+#endif
+ 
   if (!file) 
   {
     LOG(ERROR) << "Could not open file \""<<filename<<"\" for output of python object.";

@@ -37,7 +37,6 @@ FiniteElementMethodBase(const DihuContext &context) :
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
 }
 
-
 template<typename BasisOnMeshType, typename IntegratorType>
 void FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
 applyBoundaryConditions()
@@ -122,6 +121,7 @@ initialize()
 {
   LOG(TRACE) << "FiniteElementMethodBase::initialize";
   
+  data_.initialize();
   setStiffnessMatrix();
   setRightHandSide();
   data_.finalAssembly();

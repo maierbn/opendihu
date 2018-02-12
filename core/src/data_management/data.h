@@ -30,6 +30,9 @@ public:
   //! initialize the mesh with e.g. number of dimensions
   virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
   
+  //! initialize, generate petsc objects, this has to be called after setMesh
+  virtual void initialize();
+  
   //! initialize the number of degrees of freedom per mesh node, i.e. the number of components of the field variables
   void setNComponentsPerNode(int n);
   

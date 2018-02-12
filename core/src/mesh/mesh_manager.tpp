@@ -5,9 +5,12 @@
 #include "easylogging++.h"
 #include "mesh/regular_fixed.h"
 
+namespace Mesh 
+{
+
 //! return previously created mesh or create on the fly
 template<typename BasisOnMeshType>
-std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
+std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 {     
   // if mesh was already created earlier
   if (PythonUtility::containsKey(settings, "meshName"))
@@ -53,3 +56,5 @@ std::shared_ptr<Mesh::Mesh> MeshManager::mesh(PyObject *settings)
   
   return mesh;
 }
+
+}   // namespace

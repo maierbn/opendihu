@@ -70,6 +70,9 @@ public:
   //! has no effect for structured meshes
   void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
 
+  //! if the geometry field is set
+  bool hasGeometryField();
+  
 protected:
   
   std::array<double,D> meshWidth_;   ///< mesh width in all coordinate directions
@@ -117,6 +120,9 @@ public:
   //! has no effect for structured meshes
   void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
   
+  //! if the geometry field is set
+  bool hasGeometryField();
+  
 protected:
  
   //! parse the node from python config into a vector
@@ -156,6 +162,8 @@ public:
   //! return a reference to this mesh' geometry field
   FieldVariableType &geometryField();
  
+  //! if the geometry field is set
+  bool hasGeometryField();
 protected:
   // contains map<string, shared_ptr<FieldVariableType>> fieldVariable_
 }; 

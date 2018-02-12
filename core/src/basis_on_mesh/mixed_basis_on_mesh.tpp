@@ -9,7 +9,7 @@ template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
 Mixed(PyObject *specificSettings) : Mesh::Mesh(specificSettings), 
   lowOrderBasisOnMesh_(std::make_shared<LowOrderBasisOnMeshType>(specificSettings, true)), 
-  highOrderBasisOnMesh_(std::make_shared<HighOrderBasisOnMeshType>(specificSettings, true))
+  highOrderBasisOnMesh_(std::make_shared<HighOrderBasisOnMeshType>(specificSettings, false))
 {
 }
   

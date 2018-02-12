@@ -6,6 +6,15 @@
 #include <array>
 #include <vector>
 
+// With python3+ PyString_* was renamed to PyBytes_*
+//(This ugly check should be removed when decided if python2.7 or python3 will be used. Do that now and remove it now!)
+#if PY_MAJOR_VERSION >= 3
+#define PyString_Check PyBytes_Check
+#define PyString_CheckExact PyBytes_CheckExact
+#define PyString_FromString PyBytes_FromString
+#define PyString_AsString PyBytes_AsString
+#endif
+
 class PythonUtility
 {
 public:

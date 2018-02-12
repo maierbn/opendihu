@@ -1,16 +1,18 @@
 #include "spatial_discretization/finite_element_method/05_timestepping.h"
 
+#include <Python.h>
 #include <iostream>
 #include <petscksp.h>
 #include <vector>
 #include <numeric>
 
-#include <Python.h>
 #include "easylogging++.h"
 
 #include "control/types.h"
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "solver/solver_manager.h"
+#include "solver/linear.h"
 
 
 namespace SpatialDiscretization
@@ -32,10 +34,10 @@ template<typename BasisOnMeshType, typename IntegratorType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
 initialize()
 {
+  this->data_.initialize();
   this->setStiffnessMatrix();
   this->setRhsDiscretizationMatrix();
   this->data_.finalAssembly();
-  relativeTolerance_ = PythonUtility::getOptionDouble(this->specificSettings_, "relativeTolerance", 1e-5, PythonUtility::Positive);
 }
 
 template<typename BasisOnMeshType, typename IntegratorType, typename Term>
@@ -49,37 +51,24 @@ recoverRightHandSide(Vec &result)
   PetscErrorCode ierr;
   
   // create linear solver context
-  KSP ksp; 
-  ierr = KSPCreate (PETSC_COMM_WORLD, &ksp); CHKERRV(ierr);  
+  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
+  std::shared_ptr<KSP> ksp = linearSolver->ksp();
   
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (ksp, discretizationMatrix, discretizationMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp, discretizationMatrix, discretizationMatrix); CHKERRV(ierr);
   
-  // extract preconditioner context
-  PC pc;
-  ierr = KSPGetPC (ksp, &pc); CHKERRV(ierr);
-  
-  // set preconditioner type
-  //ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
-  
-  // set solver type
-  ierr = KSPSetType(ksp, KSPCG); CHKERRV(ierr);
-  
-  //                            relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (ksp, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
-
   // non zero initial values
   PetscScalar scalar = .5;
   ierr = VecSet(result, scalar); CHKERRV(ierr);
-  ierr = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE); CHKERRV(ierr);
+  ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
   
   // solve the system
-  ierr = KSPSolve(ksp, rhs, result); CHKERRV(ierr);
+  ierr = KSPSolve(*ksp, rhs, result); CHKERRV(ierr);
   
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(ksp, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(ksp, &residualNorm); CHKERRV(ierr);
+  ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
+  ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
   
   //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
 }

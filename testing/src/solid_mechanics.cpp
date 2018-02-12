@@ -46,8 +46,8 @@ config = {
     Equation::Static::SolidMechanics
   > equationDiscretized(settings);
   
-  //Computation computation(settings, equationDiscretized);
-  //computation.run();
+  Computation computation(settings, equationDiscretized);
+  computation.run();
 }
 
 

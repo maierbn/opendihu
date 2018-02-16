@@ -15,6 +15,8 @@
 #define PyString_AsString PyBytes_AsString
 #endif
 
+/** Utility class that handles parsing of python config data to c type objects
+ */
 class PythonUtility
 {
 public:

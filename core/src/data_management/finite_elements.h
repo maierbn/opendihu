@@ -105,6 +105,9 @@ public:
   //! return reference to displacement field
   FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &displacement();
   
+  //! return reference to pressure field
+  FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &pressure();
+  
   //! perform the final assembly of petsc
   void finalAssembly();
   
@@ -119,6 +122,15 @@ public:
   
   //! return a reference to the discretization matrix
   Mat &discretizationMatrix();
+  
+  //! return the element stiffness matrix kuu
+  Mat &kuu();
+  
+  //! return the element stiffness matrix kup
+  Mat &kup();
+  
+  //! return the element stiffness matrix kpp
+  Mat &kpp();
   
   //! get pointers to all field variables that can be written by output writers
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> fieldVariables();
@@ -140,9 +152,19 @@ private:
   //! initialize the geometryReference field variable from the geometry field 
   void initializeFieldVariables();
   
+  //! initialize the element stiffness matrices kuu, kup, kpp
+  void initializeMatrices();
+  
+  // global matrices
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
   Mat discretizationMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
+  // element-local matrices
+  Mat kuu_;   ///< element stiffness matrix d2/(du*du)int Psi
+  Mat kup_;   ///< element stiffness matrix d2/(du*dp)int Psi
+  Mat kpp_;   ///< element stiffness matrix d2/(dp*dp)int Psi
+  
+  // field variables
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   

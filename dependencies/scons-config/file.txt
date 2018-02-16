@@ -10,6 +10,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/scons-1.3.0.diff
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/__init__.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/boost.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/semt.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/cfitsio.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/libcellml.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/GSL.py
@@ -32,8 +33,10 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/re2.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MySQL.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/METIS.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SEMT.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/EasyLoggingPP.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/MySQL.py
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/semt.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/PETSc.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/PTScotch.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/pugixml.pyc
@@ -54,6 +57,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/CUDA.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/PostgreSQL.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Eigen.pyc
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SEMT.pyc
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/Python.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/SOCI.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages/cfitsio.py

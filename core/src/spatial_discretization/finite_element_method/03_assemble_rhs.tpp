@@ -13,8 +13,8 @@ namespace SpatialDiscretization
 {
   
 // 1D,2D,3D rhs vector of Deformable mesh
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy>
+void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
 transferRhsToWeakForm()
 {
   const int D = BasisOnMeshType::dim();
@@ -105,8 +105,8 @@ transferRhsToWeakForm()
 }
 
 // 1D,2D,3D rhs discretization matrix, i.e. matrix that transforms rhs values to discretized form, of Deformable mesh
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy>
+void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
 setRhsDiscretizationMatrix()
 {
   // check if matrix discretization matrix exists

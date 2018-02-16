@@ -37,3 +37,4 @@ from googletest import googletest
 from libcellml import libcellml
 from libxml2 import libxml2
 from Sphinx import Sphinx
+from SEMT import SEMT

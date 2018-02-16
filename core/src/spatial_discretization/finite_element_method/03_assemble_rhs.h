@@ -9,7 +9,7 @@ namespace SpatialDiscretization
  * Class that sets the right hand side vector by integrating the integrand over the elements.
  * What to integrate is given by the class template Term.
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
+template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy= Term>
 class AssembleRightHandSide :
   public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, IntegratorType, Term>
 {
@@ -28,8 +28,8 @@ protected:
 /**
  * Partial specialization for solid mechanics
  */
-template<typename MixedBasisOnMeshType, typename MixedIntegratorType>
-class AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics> :
+template<typename MixedBasisOnMeshType, typename MixedIntegratorType, typename Term>
+class AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Term, Equation::isSolidMechanics<Term>> :
   public FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>
 {
 public:

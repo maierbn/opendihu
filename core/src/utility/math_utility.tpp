@@ -10,6 +10,8 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &node)
   return stream;
 }
 
+/*
+// operator already defined by SEMT
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
 {
@@ -25,3 +27,4 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   stream << ")";
   return stream;
 }
+*/

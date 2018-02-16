@@ -898,6 +898,8 @@ for the stiffness matrix $M$. For these term the stencil notation cannot be appl
 %------------------------------------------------------------------------------------------------
 \section{Solid mechanics}
 
+\subsection{Green-Lagrange strain tensor}
+
 In this section the Einstein sum convention is used.
 Quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
 
@@ -951,6 +953,118 @@ We compute the second derivative (results from paper)
   \end{array}
 \end{equation*}
 
+\subsection{Quantities}
+\begin{itemize}
+\item[$\bullet$] Polar decomposition of deformation gradient $\bfF$:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfF = \bfR\,\bfU, \quad \bfR^\top\bfR = \bfI, \quad \bfU = \bfU^\top \,\text{positive definite}
+  \end{array}
+\end{equation*}
+$\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J > 0$.
+%
+\item[$\bullet$] Right Cauchy-Green tensor $\bfC = \bfF^\top \bfF$, symmetric, positive definite, $\det \bfC = J^2 > 0$.
+\item[$\bullet$] Green-Lagrange strain tensor $\bfE =\dfrac12(\bfC - \bfI)$, symmetric.
+\item[$\bullet$] 2nd Piola-Kirchhoff stress tensor $\bfS = \p{\Psi(\bfE)}{\bfE} = 2\p{\psi(\bfC)}{\bfC}$, not symmetric.
+\end{itemize}
+
+
+\subsection{Principal invariants}
+The principal scalar invariants of the right Cauchy Green Tensor $\bfC = \bfF^\top\bfF$ are defined as
+\def\tr{\mathrm{tr}}
+\begin{equation*}
+  \begin{array}{lll}
+    I_1(\bfC) = \tr(\bfC) = \bfC : \bfI = C_{ii} = λ_1 + λ_2 + λ_3\\[4mm]
+    I_2(\bfC) = \dfrac12\Big(\big(\tr(\bfC)^2 - \tr(\bfC^2)\big)\Big) = \dfrac12(C_{ii}\,C_{jj} - C_{ji}\,C_{ij}) = λ_1\,λ_2 + λ_1\,λ_2 + λ_2\,λ_3\\[4mm]
+    I_3(\bfC) = \det(\bfC) = ε_{ijk}\,C_{1i}\,C_{2j}\,C_{3k} = λ_1\,λ_2\,λ_3
+  \end{array}
+\end{equation*}
+The principal stretches $\lambda_a, a=1,2,3$ are the eigenvalues of the right Cauchy-Green tensor $\bfC$. $ε_{ijk}$ is the Levi-Civita symbol
+\begin{equation*}
+  \begin{array}{lll}
+    ε_{ijk} = \begin{cases}
+      1\quad & \text{for }(i,j,k) \in \{(1,2,3), (2,3,1), (3,1,2)\}\\[2mm]
+      -1 \quad  & \text{for } (i,j,k) \in \{(3,2,1), (1,3,2), (2,1,3)\}\\[2mm]
+      0 \quad & \text{else}
+    \end{cases}
+  \end{array}
+\end{equation*}
+
+\subsection{Strain energy density function}
+Strain energy density function $\Psi(\bfC) = \Psi(I_1, I_2, I_3)$ for isotropic hyperelastic materials. To compute $\bfS = 2\,\p{\Psi(\bfC)}{\bfC}$ derivatives w.r.t. to the invariants are required. (p. 216 Holzapfel Nonlinear Solid Mechanics)
+\begin{equation*}
+  \begin{array}{lll}
+    \p{I_1}{\bfC} = \p{\tr\bfC}{\bfC} = \p{\bfI:\bfC}{\bfC} = \bfI, \quad &\p{I_1}{C_{AB}} = \delta_{AB}\\[4mm]
+    \p{I_2}{\bfC} = \tr C\,\bfI - \bfC, \quad &\p{I_2}{C_{AB}} = I_1\,\delta_{AB} - C_{AB}\\[4mm]
+    \p{I_3}{\bfC} = I_3\,\bfC^{-1}, \quad &\p{I_3}{C_{AB}} = I_3\,C^{-1}_{AB}
+  \end{array}
+\end{equation*}
+In total we get
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &=  \p{\Psi(\bfE)}{\bfE} = 2\,\p{\Psi(\bfC)}{\bfC} = \ds\s{a=1}{3}\p{\Psi}{I_a}\p{I_a}{\bfC}\\[4mm]
+     &= 2\left(\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\,\bfI - \p{\Psi}{I_2}\bfC + I_3\,\p{\Psi}{I_3} \,\bfC^{-1}\right)
+  \end{array}
+\end{equation*}
+Useful:
+\begin{equation*}
+  \begin{array}{lll}
+    \left( \p{\bfA^{-1}}{\bfA} \right)_{ijkl} = -\dfrac12(A^{-1}_{ik}\,A^{-1}_{lj} + A^{-1}_{il}\,A^{-1}_{kj})
+  \end{array}
+\end{equation*}
+\subsection{Elasticity tensor}
+For the solution of the nonlinear problem the elasticity tensor $\bbC$ has to be computed (Holzapfel p.261):
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC &= \p{\bfS}{\bfE} = 2\p{\bfS}{\bfC} = 4\dfrac{\partial^2\Psi(I_1,I_2,I_3)}{\p\bfC\p\bfC}\\[4mm]
+     &= \delta_1\,\bfI \otimes \bfI + \delta_2\,(\bfI \otimes \bfC + \bfC \otimes \bfI) + \delta_3 ( \bfI \otimes \bfC^{-1} + \bfC^{-1} \otimes \bfI)\\[4mm]
+     &\quad +  \delta_4 \bfC \otimes \bfC + \delta_5(\bfC \otimes \bfC^{-1} + \bfC^{-1}\otimes \bfC) \\[4mm]
+     & \quad + \delta_6 \bfC^{-1} \otimes \bfC^{-1} + \delta_7 \bfC^{-1} \odot \bfC^{-1} + \delta_8\,\bbI
+  \end{array}
+\end{equation*}
+The coefficients $\delta_1, \dots \delta_8$ are defined by
+\begin{equation*}
+  \begin{array}{lll}
+    \delta_1 = 4\left(\dfrac{\partial^2\Psi}{\p I_1 \p I_1} + 2\,I_1\,\dfrac{\partial^2\Psi}{\p I_1 \p I_2} + \p{\Psi}{I_2} + I_1^2\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2} \right),\\[4mm]
+    \delta_2 = -4\left(\dfrac{\partial^2\Psi}{\p I_1 \p I_2} + I_1\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2}\right),\\[4mm]
+    \delta_3 = 4\left(I_3\,\dfrac{\partial^2\Psi}{\p I_1 \p I_3} + I_1\,I_3\,\dfrac{\partial^2\Psi}{\p I_2 \p I_3}\right), \qquad \delta_4 = 4\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2},\\[4mm]
+    \delta_5 = -4\,I_3\,\dfrac{\partial^2\Psi}{\p I_2 \p I_3}, \qquad \delta_6 = 4\left(I_3\p{\Psi}{I_3} + I_3^2\dfrac{\partial^2\Psi}{\p I_3 \p I_3}\right),\\[4mm]
+    \delta_7 = -4\,I_3\,\p{\Psi}{I_3}, \qquad \delta_8 = -4\,\p{\Psi}{I_2}.
+  \end{array}
+\end{equation*}
+The elasticity tensor $\bbC$ has the following symmetries:
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{ijrs} = \bbC_{rsij}\quad \bbC{ijrs} = \bbC{jirs} = \bbC{ijsr} = \bbC{jisr}
+  \end{array}
+\end{equation*}
+The 21 unique entries are:
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{ijrs} \text{ with } (i,j,r,s) =\\[4mm]
+    (1,1,1,1),
+    (1,2,1,1),
+    (1,3,1,1),
+    (2,2,1,1),
+    (2,3,1,1),
+    (3,3,1,1),\\[4mm]
+    (1,2,1,2),
+    (1,3,1,2),
+    (2,2,1,2),
+    (2,3,1,2),
+    (3,3,1,2),\\[4mm]
+    (1,3,1,3),
+    (2,2,1,3),
+    (2,3,1,3),
+    (3,3,1,3),\\[4mm]
+    (2,2,2,2),
+    (2,3,2,2),
+    (3,3,2,2),\\[4mm]
+    (2,3,2,3),
+    (3,3,2,3),\\[4mm]
+    (3,3,3,3)\\[4mm]
+  \end{array}
+\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \section{Quadrature}

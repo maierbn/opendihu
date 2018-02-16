@@ -193,11 +193,43 @@ displacement()
   return *this->displacement_;
 }
 
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+pressure()
+{
+  return *this->pressure_;
+}
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 discretizationMatrix()
 {
   return this->discretizationMatrix_;
+}
+
+//! return the element stiffness matrix kuu
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+kuu()
+{
+  return kuu_;
+} 
+
+//! return the element stiffness matrix kup
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+kup()
+{
+  return kup_;
+}
+
+//! return the element stiffness matrix kpp
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+kpp()
+{
+  return kpp_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -307,6 +339,7 @@ initialize()
  
   LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
   initializeFieldVariables();
+  initializeMatrices();
 }
   
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -325,6 +358,27 @@ initializeFieldVariables()
   
   pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>();
   
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+initializeMatrices()
+{
+  PetscErrorCode ierr;
+  
+  // create PETSc matrix object
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kuu_);  CHKERRV(ierr);
+  
+  const int nu = HighOrderBasisOnMeshType::nDofsPerElement();
+  const int np = LowOrderBasisOnMeshType::nDofsPerElement();
+  ierr = MatSetSizes(this->kuu_, nu, nu, nu, nu);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kuu_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kup_, nu, np, nu, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kup_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kpp_, np, np, np, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kpp_); CHKERRV(ierr);
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>

@@ -26,6 +26,7 @@ sconsconfig.select(
     packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     packages.libcellml(required=True),          # relies on libxml2
+    packages.SEMT(required=True),
     packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )
 

@@ -8,15 +8,20 @@
 \BOOKMARK [1][-]{section.0.2}{Poisson Equation}{}% 8
 \BOOKMARK [1][-]{section.0.3}{Generalized Laplace operator}{}% 9
 \BOOKMARK [1][-]{section.0.4}{Solid mechanics}{}% 10
-\BOOKMARK [1][-]{section.0.5}{Quadrature}{}% 11
-\BOOKMARK [2][-]{subsection.0.5.1}{Gaussian quadrature}{section.0.5}% 12
-\BOOKMARK [2][-]{subsection.0.5.2}{Clenshaw-Curtis quadrature}{section.0.5}% 13
-\BOOKMARK [1][-]{section.0.6}{Propositions}{}% 14
-\BOOKMARK [2][-]{subsection.0.6.1}{Divergence theorem}{section.0.6}% 15
-\BOOKMARK [3][-]{subsubsection.0.6.1.1}{Corollary}{subsection.0.6.1}% 16
-\BOOKMARK [2][-]{subsection.0.6.2}{Classical Stoke's theorem}{section.0.6}% 17
-\BOOKMARK [2][-]{subsection.0.6.3}{Integration on manifolds}{section.0.6}% 18
-\BOOKMARK [3][-]{subsubsection.0.6.3.1}{1D curve integrals}{subsection.0.6.3}% 19
-\BOOKMARK [3][-]{subsubsection.0.6.3.2}{2D surface integrals}{subsection.0.6.3}% 20
-\BOOKMARK [3][-]{subsubsection.0.6.3.3}{Substitution on domains with same dimensionality}{subsection.0.6.3}% 21
-\BOOKMARK [3][-]{subsubsection.0.6.3.4}{Summary}{subsection.0.6.3}% 22
+\BOOKMARK [2][-]{subsection.0.4.1}{Green-Lagrange strain tensor}{section.0.4}% 11
+\BOOKMARK [2][-]{subsection.0.4.2}{Quantities}{section.0.4}% 12
+\BOOKMARK [2][-]{subsection.0.4.3}{Principal invariants}{section.0.4}% 13
+\BOOKMARK [2][-]{subsection.0.4.4}{Strain energy density function}{section.0.4}% 14
+\BOOKMARK [2][-]{subsection.0.4.5}{Elasticity tensor}{section.0.4}% 15
+\BOOKMARK [1][-]{section.0.5}{Quadrature}{}% 16
+\BOOKMARK [2][-]{subsection.0.5.1}{Gaussian quadrature}{section.0.5}% 17
+\BOOKMARK [2][-]{subsection.0.5.2}{Clenshaw-Curtis quadrature}{section.0.5}% 18
+\BOOKMARK [1][-]{section.0.6}{Propositions}{}% 19
+\BOOKMARK [2][-]{subsection.0.6.1}{Divergence theorem}{section.0.6}% 20
+\BOOKMARK [3][-]{subsubsection.0.6.1.1}{Corollary}{subsection.0.6.1}% 21
+\BOOKMARK [2][-]{subsection.0.6.2}{Classical Stoke's theorem}{section.0.6}% 22
+\BOOKMARK [2][-]{subsection.0.6.3}{Integration on manifolds}{section.0.6}% 23
+\BOOKMARK [3][-]{subsubsection.0.6.3.1}{1D curve integrals}{subsection.0.6.3}% 24
+\BOOKMARK [3][-]{subsubsection.0.6.3.2}{2D surface integrals}{subsection.0.6.3}% 25
+\BOOKMARK [3][-]{subsubsection.0.6.3.3}{Substitution on domains with same dimensionality}{subsection.0.6.3}% 26
+\BOOKMARK [3][-]{subsubsection.0.6.3.4}{Summary}{subsection.0.6.3}% 27

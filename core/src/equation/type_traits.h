@@ -5,6 +5,7 @@
 #include "equation/laplace.h"
 #include "equation/static.h"
 #include "equation/solid_mechanics.h"
+#include "equation/compressible_mooney_rivlin.h"
 
 namespace Equation
 {
@@ -46,7 +47,8 @@ using hasRhs = std::enable_if_t<
 // Equations of solid mechanics
 template<class Term>
 using isSolidMechanics = std::enable_if_t<
-  std::is_same<Term, Static::SolidMechanics>::value,
+  std::is_same<Term, Static::SolidMechanics>::value
+  || std::is_same<Term, Static::CompressibleMooneyRivlin>::value,
   Term
 >;
 

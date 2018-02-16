@@ -6,6 +6,7 @@
 
 #include <petscmat.h>
 #include "control/types.h"
+#include "semt/Semt.h"    // include semt for operator<<(std::vector<double>)
 
 
 class MathUtility
@@ -34,6 +35,9 @@ public:
   //! computes the determinant of the matrix 
   static double computeDeterminant(const std::array<Vec3,3> &jacobian);
   
+  //! computes the inverse of the symmetric matrix and the determinant
+  static std::array<Vec3,3> computeSymmetricInverse(const std::array<Vec3,3> &matrix, double &determinant);
+  
   //! computes v1^T * T * v2 where T is the symmetric transformation matrix (3D)
   static double applyTransformation(const std::array<double,9> &transformationMatrix, const Vec3 &vector1, const Vec3 &vector2);
   
@@ -43,6 +47,9 @@ public:
   //! computes the factor J_D that is needed when transforming an integral from world coordinates to parameter space
   template<int D>
   static double computeIntegrationFactor(const std::array<Vec3,D> &jacobian);
+  
+  //! return a values of the Levi-Civita permutation symbol
+  static int permutation(int i, int j, int k);
   
   static constexpr auto PI = 3.14159265358979323846;
   
@@ -54,10 +61,12 @@ Vec3 operator-(Vec3 node1, Vec3 node2);
 Vec3 operator+(Vec3 node1, Vec3 node2);
 Vec3 &operator+=(Vec3 &node1, Vec3 node2);
 Vec3 operator*(double lambda, Vec3 node);
+Vec3 operator*(Vec3 node, double lambda);
+Vec3 operator*(Vec3 vector1, Vec3 vector2); // component-wise multiplication
 template<typename T, unsigned long N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &node);
-template<typename T>
-std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values);
+//template<typename T>
+//std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values);
 template<typename T>
 bool operator==(const std::vector<T> &vec1, const std::vector<T> &vec2);
 

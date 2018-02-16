@@ -98,8 +98,8 @@ setStiffnessMatrix()
     this->data_.displacement().template getElementValues<D>(elementNo, displacement);
     
     // get separately interpolated pressure field
-    std::array<Vec3,LowOrderBasisOnMesh::nDofsPerElement()> separatePressure;
-    this->data_.pressure().template getElementValues<D>(elementNo, separatePressure);
+    std::array<double,LowOrderBasisOnMesh::nDofsPerElement()> separatePressureField;
+    this->data_.pressure().template getElementValues<1>(elementNo, separatePressure);
     
     // loop over integration points (e.g. gauss points) for displacement field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsU.size(); samplingPointIndex++)
@@ -129,6 +129,7 @@ setStiffnessMatrix()
       // elasticity tensor C_{ijkl}
       Tensor4 elasticity = computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants);
       
+      double separatePressure = separatePressureField[];
       double pressureFromDisplacements = -kappa_*(J3 - 1);
       double pp = kappa_;
       double wh = 1./2 * kappa_ * MathUtility::sqr(J3 - 1);
@@ -178,7 +179,8 @@ setStiffnessMatrix()
                   
                   double cuu = 0;
                   cuu += getElasticityEntry(elasticity,k,l,r,s);
-                  cuu += cpp * dp_deps_kl*dp_deps_rs
+                    + cpp * dp_deps_kl*dp_deps_rs;
+                    + cpp * (pressureFromDisplacements - 
                 }
               }
             }

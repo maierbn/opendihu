@@ -105,7 +105,7 @@ public:
   int nComponents() const;
   
   //! get the number of elements in the coordinate directions
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
   
   //! get the total number of elements
   element_no_t nElements() const;

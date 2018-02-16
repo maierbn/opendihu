@@ -34,11 +34,11 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
   
   // prepare number of elements in the dimensions
-  std::array<element_no_t, BasisOnMeshType::dim()> nElementsPerDimension = fieldVariables.front()->nElementsPerDimension();
-  std::array<long, BasisOnMeshType::dim()> nElementsPerDimensionArray;
+  std::array<element_no_t, BasisOnMeshType::dim()> nElementsPerCoordinateDirection = fieldVariables.front()->nElementsPerCoordinateDirection();
+  std::array<long, BasisOnMeshType::dim()> nElementsPerCoordinateDirectionArray;
   
-  std::copy(nElementsPerDimension.begin(), nElementsPerDimension.end(), nElementsPerDimensionArray.begin());
-  PyObject *pyNElements = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(nElementsPerDimensionArray);
+  std::copy(nElementsPerCoordinateDirection.begin(), nElementsPerCoordinateDirection.end(), nElementsPerCoordinateDirectionArray.begin());
+  PyObject *pyNElements = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(nElementsPerCoordinateDirectionArray);
   
   LOG(DEBUG) << "PythonStructuredDeformable";
   

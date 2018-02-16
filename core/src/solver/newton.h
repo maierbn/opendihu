@@ -19,7 +19,7 @@ public:
   Newton(PyObject *specificSettings);
   
   //! return the SNES object that is used for solving
-  std::shared_ptr<SNES> ksp();
+  std::shared_ptr<SNES> snes();
   
 protected:
   std::shared_ptr<SNES> snes_;   ///< the PETSc SNES (scalable nonlinear equations solvers) object

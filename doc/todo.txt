@@ -1,0 +1,7 @@
+- RegularFixd -> StructuredRegularFixed
+- online wizard
+- BasisFunction::LagrangeOfOrder, Mesh..ofDimension
+- dimension -> direction 
+- 1 meshWidth in fixed grid
+- readme files in folders
+- fix examples

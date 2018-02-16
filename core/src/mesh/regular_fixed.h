@@ -16,7 +16,7 @@ namespace Mesh
  * This mesh cannot deform, i.e. it cannot be used for structural mechanics with deformations.
  */
 template<int D>
-class RegularFixed : public Structured<D>
+class RegularFixed : public Structured<D>  // StructuredRegularFixed structured_regular_fixed.h
 {
 public:
   //! constructor from base class

@@ -35,6 +35,11 @@ public:
   std::array<std::array<double,MeshType::dim()>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 
   getGradPhi(std::array<double,MeshType::dim()> xi) const;
   
+  //! interpolate the nComponents values within an element at the given xi position using the basis functions
+  template <int nComponents>
+  double interpolateValue(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &nodalValues,
+                          std::array<double,MeshType::dim()> xi) const; 
+  
   //! create a non-geometry field field variable with no values being set, with given component names
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
   

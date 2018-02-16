@@ -11,3 +11,6 @@ build_release
 *.pyc
 *.aux
 *.log
+*.o.part
+*.kate-swp
+*python-test

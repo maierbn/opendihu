@@ -30,7 +30,7 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFi
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerDimension(i) + 1) * data.nComponentsPerNode();
+    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1) * data.nComponentsPerNode();
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   
@@ -67,7 +67,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerDimension(i) + 1);
+    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1);
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   

@@ -6,6 +6,9 @@
 namespace BasisFunction
 {
 
+/**  Defines Lagrange ansatz functions on the interval xi in [0,1] of given order.
+ *   Transformation to the actual physical space is done using a jacobian, see finite element method.
+  */
 template<int order=1>
 class Lagrange : public BasisFunction
 {

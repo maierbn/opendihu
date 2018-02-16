@@ -73,4 +73,18 @@ createFieldVariable(std::string name, int nComponents)
   return fieldVariable;
 }
 
+/*
+template<typename MeshType, typename BasisFunctionType>
+template <int nComponents>
+std::array<double,nComponents> BasisOnMesh<MeshType,BasisFunctionType>::
+interpolateValue(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &nodalValues,
+                 std::array<double,MeshType::dim()> xi) const
+{
+  for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
+  {
+    
+  }
+}
+ */
+ 
 };  // namespace

@@ -8,8 +8,8 @@ namespace Mesh
 {
 
 template<int D>
-Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerDimension) :
-  MeshD<D>(NULL), nElementsPerDimension_(nElementsPerDimension)
+Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerCoordinateDirection) :
+  MeshD<D>(NULL), nElementsPerCoordinateDirection_(nElementsPerCoordinateDirection)
 {
 }
   
@@ -17,23 +17,23 @@ template<int D>
 Structured<D>::Structured(PyObject *specificSettings) : MeshD<D>(specificSettings)
 {
   // get settings values nElements_
-  this->nElementsPerDimension_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
-  LOG(DEBUG) << "set number of elements from settings: " << this->nElementsPerDimension_;
+  this->nElementsPerCoordinateDirection_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
+  LOG(DEBUG) << "set number of elements from settings: " << this->nElementsPerCoordinateDirection_;
 } 
   
 template<int D>
-element_no_t Structured<D>::nElementsPerDimension(int dimension) const
+element_no_t Structured<D>::nElementsPerCoordinateDirection(int dimension) const
 {
   if (dimension >= D)
     return 1;
-  return nElementsPerDimension_[dimension];
+  return nElementsPerCoordinateDirection_[dimension];
 }
 
 template<int D>
 std::array<element_no_t, D> Structured<D>::
-nElementsPerDimension() const
+nElementsPerCoordinateDirection() const
 {
-  return nElementsPerDimension_;
+  return nElementsPerCoordinateDirection_;
 }
 
 };    // namespace

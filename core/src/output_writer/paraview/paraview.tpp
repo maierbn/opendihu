@@ -72,7 +72,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
-    extent[i] = mesh->nElementsPerDimension(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
   
   // coordinates of grid 
   std::vector<double> coordinates[3];
@@ -80,7 +80,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
   for (; dimensionNo<mesh->dimension(); dimensionNo++)
   {
     double meshWidth = mesh->meshWidth(dimensionNo);
-    double nElements = mesh->nElementsPerDimension(dimensionNo);
+    double nElements = mesh->nElementsPerCoordinateDirection(dimensionNo);
     
     LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;
     
@@ -208,7 +208,7 @@ void Paraview::writeStructuredGrid(DataType& data)
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
-    extent[i] = mesh->nElementsPerDimension(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
   
   // points
   std::vector<double> points;
@@ -297,7 +297,7 @@ void Paraview::writeUnstructuredGrid(DataType& data)
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
-    extent[i] = mesh->nElementsPerDimension(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
   
   // points
   std::vector<double> points;

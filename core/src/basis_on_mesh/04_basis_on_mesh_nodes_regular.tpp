@@ -25,16 +25,16 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   
   std::array<double, D> physicalExtend;
   // only get physicalExtend if it is not a 1-node mesh with 0 elements
-  if (D > 1 || this->nElementsPerDimension_[0] != 0)
+  if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
     physicalExtend = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtend", 1.0, PythonUtility::Positive);
   else
     physicalExtend[0] = 1.0;
  
   
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  if (D > 1 || this->nElementsPerDimension_[0] != 0)
+  if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
   {
-    auto nElementsIter = this->nElementsPerDimension_.begin();
+    auto nElementsIter = this->nElementsPerCoordinateDirection_.begin();
     auto physicalExtendIter = physicalExtend.begin();
     for (typename std::array<double,D>::iterator meshWidthIter = meshWidths.begin(); meshWidthIter != meshWidths.end(); 
         meshWidthIter++, nElementsIter++, physicalExtendIter++)
@@ -48,7 +48,7 @@ BasisOnMeshNodes(PyObject *specificSettings) :
     meshWidths[0] = 1.0;
   }
   
-  LOG(DEBUG) << "  BasisOnMeshNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerDimension_;
+  LOG(DEBUG) << "  BasisOnMeshNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerCoordinateDirection_;
   LOG(DEBUG) << "  physicalExtend: " << physicalExtend;
   LOG(DEBUG) << "  meshWidth: " << meshWidths;
   
@@ -62,7 +62,7 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   Vec values;
   dof_no_t nDofs = this->nDofs();
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
-  this->geometry_->set("geometry", componentNames, this->nElementsPerDimension_, nEntries, isGeometryField, values);
+  this->geometry_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
 }
 
 template<int D,typename BasisFunctionType>
@@ -71,7 +71,7 @@ BasisOnMeshNodes(std::array<element_no_t, D> nElements, std::array<double, D> ph
   BasisOnMeshDofs<Mesh::RegularFixed<D>,BasisFunctionType>::BasisOnMeshDofs(nullptr), meshWidth_(physicalExtent)
 {
   // compute mesh widths from physical extent and number of elements in the coordinate directions
-  typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerDimension_.begin();
+  typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerCoordinateDirection_.begin();
   for (typename std::array<double, D>::iterator meshWidthIter = this->meshWidth_.begin(); meshWidthIter != this->meshWidth_.end(); 
        meshWidthIter++, nElementsIter++)
   {
@@ -121,8 +121,8 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
-  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerDimension(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
-  return this->nElementsPerDimension(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerCoordinateDirection(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
+  return this->nElementsPerCoordinateDirection(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>

@@ -94,7 +94,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtend[dimNo] / this->nElementsPerDimension(dimNo);
+      meshWidth[dimNo] = physicalExtend[dimNo] / this->nElementsPerCoordinateDirection(dimNo);
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
     
@@ -190,7 +190,7 @@ setGeometryField(std::vector<double> &nodePositions)
   geometry_ = std::make_unique<FieldVariableType>();
   std::vector<std::string> componentNames{"x", "y", "z"};
   int nEntries = nDofs * 3;   // 3 components (x,y,z) per dof
-  geometry_->set("geometry", componentNames, this->nElementsPerDimension_, nEntries, isGeometryField, values);
+  geometry_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
 }
 
 template<int D,typename BasisFunctionType>
@@ -223,7 +223,7 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
-  return this->nElementsPerDimension(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  return this->nElementsPerCoordinateDirection(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>

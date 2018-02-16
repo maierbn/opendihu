@@ -43,7 +43,7 @@ public:
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
   {
     this->name_ = name;
-    this->nElementsPerDimension_ = fieldVariable.nElementsPerDimension();
+    this->nElementsPerCoordinateDirection_ = fieldVariable.nElementsPerCoordinateDirection();
     this->isGeometryField_ = false;
     this->mesh_ = fieldVariable.mesh();
     
@@ -56,7 +56,7 @@ public:
     this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
     
     
-    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerDimension_
+    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
      << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
     
     assert(this->nEntries_ != 0);
@@ -83,7 +83,7 @@ public:
   std::vector<std::string> componentNames() const;
   
   //! get the number of elements
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension() const;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
   
   //! for a specific component, get all values
   void getValues(std::string component, std::vector<double> &values);
@@ -140,7 +140,7 @@ public:
     {
       for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
       {
-        indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerDimension_,elementNo,dofIndex)*nComponents + componentIndex;
+        indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*nComponents + componentIndex;
       }
     }
     
@@ -231,7 +231,7 @@ protected:
   //! get the number of dofs, i.e. the number of entries per component
   dof_no_t nDofs() const;
   
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension_;    ///< number of elements in each coordinate direction
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components

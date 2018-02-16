@@ -14,7 +14,7 @@ void FieldVariableStructured<BasisOnMeshType>::
 initializeFromFieldVariable(const FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   this->name_ = name;
-  this->nElementsPerDimension_ = fieldVariable.nElementsPerDimension();
+  this->nElementsPerCoordinateDirection_ = fieldVariable.nElementsPerCoordinateDirection();
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
   
@@ -27,7 +27,7 @@ initializeFromFieldVariable(const FieldVariableType &fieldVariable, std::string 
   this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
   
   
-  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerDimension_
+  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
    << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
   
   assert(this->nEntries_ != 0);
@@ -77,7 +77,7 @@ FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name,
   this->mesh_ = mesh;
   
   std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
-  this->nElementsPerDimension_ = meshStructured->nElementsPerDimension();
+  this->nElementsPerCoordinateDirection_ = meshStructured->nElementsPerCoordinateDirection();
   
   int index = 0;
   for (auto &componentName : componentNames)
@@ -88,7 +88,7 @@ FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name,
   this->nEntries_ = mesh->nDofs() * this->nComponents_;
   
   
-  LOG(DEBUG) << "FieldVariableStructured constructor, name=" << this->name_ << ", nElements: " << this->nElementsPerDimension_
+  LOG(DEBUG) << "FieldVariableStructured constructor, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
    << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
   
   assert(this->nEntries_ != 0);
@@ -140,9 +140,9 @@ componentNames() const
   
 template<typename BasisOnMeshType>
 std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
-nElementsPerDimension() const
+nElementsPerCoordinateDirection() const
 {
-  return this->nElementsPerDimension_;
+  return this->nElementsPerCoordinateDirection_;
 }
 
 template<typename BasisOnMeshType>
@@ -173,7 +173,7 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<eleme
     std::size_t nEntries, bool isGeometryField, Vec &values)
 {
   this->name_ = name;
-  this->nElementsPerDimension_ = nElements;
+  this->nElementsPerCoordinateDirection_ = nElements;
   this->isGeometryField_ = isGeometryField;
   
   // create numbering for components
@@ -270,7 +270,7 @@ getElementValues(std::string component, element_no_t elementNo,
   
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    indices[dofIndex] = BasisOnMeshType::getDofNo(this->nElementsPerDimension_,elementNo,dofIndex)*this->nComponents_ + componentIndex;
+    indices[dofIndex] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*this->nComponents_ + componentIndex;
   }
   
   VecGetValues(this->values_, N, indices.data(), values.data());
@@ -293,7 +293,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   {
     for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
     {
-      indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerDimension_,elementNo,dofIndex)*nComponents + componentIndex;
+      indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*nComponents + componentIndex;
     }
   }
   

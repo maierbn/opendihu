@@ -151,25 +151,12 @@ solve()
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
   
   // create linear solver context
-  KSP ksp; 
-  ierr = KSPCreate (PETSC_COMM_WORLD, &ksp); CHKERRV(ierr);  
+  KSP ksp = context_.solverManager()->template solver<Solver::Linear>(specificSettings_);
+  //ierr = KSPCreate (PETSC_COMM_WORLD, &ksp); CHKERRV(ierr);  
   
   // set matrix used for linear system and preconditioner to ksp context
   ierr = KSPSetOperators (ksp, stiffnessMatrix, stiffnessMatrix); CHKERRV(ierr);
   
-  // extract preconditioner context
-  PC pc;
-  ierr = KSPGetPC (ksp, &pc); CHKERRV(ierr);
-  
-  // set preconditioner type
-  ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
-  
-  // set solution tolerances
-  double relativeTolerance = PythonUtility::getOptionDouble(specificSettings_, "relativeTolerance", 1e-5, PythonUtility::Positive);
-
-  //                            relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (ksp, relativeTolerance, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
-
   // non zero initial values
   PetscScalar scalar = .5;
   ierr = VecSet(data_.solution().values(), scalar); CHKERRV(ierr);
@@ -238,7 +225,7 @@ solve()
   }
   
   // clean up ksp solver context
-  KSPDestroy(&ksp);
+  //KSPDestroy(&ksp);
 }
   
 };

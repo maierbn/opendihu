@@ -125,8 +125,10 @@ template<typename TimeStepping1, typename TimeStepping2>
 void Godunov<TimeStepping1, TimeStepping2>::
 run()
 {
+  // initialize data structurures
   initialize();
   
+  // run simulation
   advanceTimeSpan();
 }
 

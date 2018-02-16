@@ -35,11 +35,11 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
   
   // prepare number of elements in the dimensions
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerDimension = fieldVariables.front()->nElementsPerDimension();
-  std::array<long, BasisOnMeshType::Mesh::dim()> nElementsPerDimensionArray;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = fieldVariables.front()->nElementsPerCoordinateDirection();
+  std::array<long, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionArray;
   
-  std::copy(nElementsPerDimension.begin(), nElementsPerDimension.end(), nElementsPerDimensionArray.begin());
-  PyObject *pyNElements = PythonUtility::convertToPythonList<BasisOnMeshType::Mesh::dim()>(nElementsPerDimensionArray);
+  std::copy(nElementsPerCoordinateDirection.begin(), nElementsPerCoordinateDirection.end(), nElementsPerCoordinateDirectionArray.begin());
+  PyObject *pyNElements = PythonUtility::convertToPythonList<BasisOnMeshType::Mesh::dim()>(nElementsPerCoordinateDirectionArray);
   
   LOG(DEBUG) << "PythonRegularFixed";
   

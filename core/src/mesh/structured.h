@@ -24,17 +24,16 @@ public:
   Structured(PyObject *specificSettings);
   
   //! get number of elements in a given coordinate direction
-  element_no_t nElementsPerDimension(int dimension) const;
+  element_no_t nElementsPerCoordinateDirection(int dimension) const;
   
   //! get the array with all numbers of elements per coordinate direction
-  std::array<element_no_t, D> nElementsPerDimension() const;
+  std::array<element_no_t, D> nElementsPerCoordinateDirection() const;
   
   //! get the total number of elements
   element_no_t nElements() const;
 
 protected:
- 
-  std::array<element_no_t, D> nElementsPerDimension_;    ///< the number of elements in each coordinate direction
+  std::array<element_no_t, D> nElementsPerCoordinateDirection_;    ///< the number of elements in each coordinate direction
 };
 
 };    // namespace

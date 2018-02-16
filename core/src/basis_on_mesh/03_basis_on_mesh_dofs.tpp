@@ -22,12 +22,12 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
 }
 
 template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(std::array<element_no_t, MeshType::dim()> nElementsPerDimension, element_no_t elementNo, int dofIndex)
+getDofNo(std::array<element_no_t, MeshType::dim()> nElementsPerCoordinateDirection, element_no_t elementNo, int dofIndex)
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0,1 2,3
@@ -52,7 +52,7 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
 }
 
 // element-local dofIndex to global dofNo for 2D
@@ -98,7 +98,7 @@ template<typename MeshType,typename BasisFunctionType>
 int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElementsPerDimension_, elementNo, dofIndex);
+  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
 }
  
 // element-local dofIndex to global dofNo for 3D

@@ -12,12 +12,15 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<1>,
+    Integrator::Gauss<2>,
     Equation::Static::Laplace
-  > equationDiscretized(settings);
+  > problem(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  problem.run();
+  
+  /*Computation computation(settings, equationDiscretized);
+  computation.run();*/
   
   return EXIT_SUCCESS;
 }

@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange,
+    BasisFunction::Lagrange<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   

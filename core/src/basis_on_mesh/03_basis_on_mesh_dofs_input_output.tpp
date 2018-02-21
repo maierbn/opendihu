@@ -13,7 +13,7 @@ namespace BasisOnMesh
  
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseExelemFile(std::string exelemFilename)
 {
   std::ifstream file_exelem(exelemFilename.c_str(), std::ios::in | std::ios::binary);
@@ -265,7 +265,7 @@ parseExelemFile(std::string exelemFilename)
 }
   
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseExnodeFile(std::string exnodeFilename)
 {
   std::ifstream file_exnode(exnodeFilename.c_str(), std::ios::in | std::ios::binary);
@@ -285,7 +285,7 @@ parseExnodeFile(std::string exnodeFilename)
 }
  
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 outputExelemFile(std::ostream &file)
 { 
   file << " Group name: main_group" << std::endl
@@ -304,7 +304,7 @@ outputExelemFile(std::ostream &file)
       file << ", #Scale factors=" << nScaleFactors << std::endl;
     }
     
-    file << " #Nodes=" << BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement() << std::endl
+    file << " #Nodes=" << BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement() << std::endl
       << " #Fields=" << fieldVariable_.size() << std::endl;
       
     // check if a new header is necessary
@@ -335,12 +335,12 @@ outputExelemFile(std::ostream &file)
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 outputExnodeFile(std::ostream &file)
 { 
   file << " Group name: main_group" << std::endl;
 
-  const int nNodesPerElement = BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement();   
+  const int nNodesPerElement = BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();   
   bool outputHeader = true;
    
   for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nElements(); currentNodeGlobalNo++)

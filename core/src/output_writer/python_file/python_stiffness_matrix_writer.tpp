@@ -8,8 +8,8 @@ namespace OutputWriter
 {
  
 template<int D, typename BasisFunctionType>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>>::
-writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>>::
+writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &data, std::string filename)
 {
   LOG(TRACE) << "writeNumpySolution RegularFixed, D="<<D;
   
@@ -42,8 +42,8 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFi
 }
 
 template<int D, typename BasisFunctionType>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>>::
-writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>>::
+writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &data, std::string filename)
 {
   // solution and rhs vectors in mesh shape
   // determine file names

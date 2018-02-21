@@ -17,11 +17,11 @@ namespace Mesh
  * There is no restriction that the total domain must be quadratic or cubic.
  */
 template<int D>
-class UnstructuredDeformable : public MeshD<D>, public Deformable
+class UnstructuredDeformableOfDimension : public MeshOfDimension<D>, public Deformable
 {
 public:
   //! constructor of base class
-  using MeshD<D>::MeshD;
+  using MeshOfDimension<D>::MeshOfDimension;
   
  
 private:

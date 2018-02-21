@@ -35,7 +35,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 4.0,
+    "physicalExtent": 4.0,
     "DirichletBoundaryCondition": {0:1.0},
     "relativeTolerance": 1e-15,
     "nodePositions": [[0,0,0], [1,0], [2,0,0], [0,1], [1,1], [2,1], [0,2], [1,2], [2,2]],  # 3x3 nodes, 4 elements
@@ -51,8 +51,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::UnstructuredDeformable<2>,
-    BasisFunction::Lagrange<1>,
+    Mesh::UnstructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<1>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -105,8 +105,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<1>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<1>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -146,7 +146,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": [4, 4],
-    "physicalExtend": [4.0, 4.0],
+    "physicalExtent": [4.0, 4.0],
     "DirichletBoundaryCondition": {0:1.0},
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
@@ -160,8 +160,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);

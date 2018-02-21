@@ -11,7 +11,7 @@ namespace BasisOnMesh
 {
 
 template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+node_no_t BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nNodes() const
 {
   // assert that geometry field variable is set
@@ -21,7 +21,7 @@ nNodes() const
 }
 
 template<int D,typename BasisFunctionType>
-Vec3 BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+Vec3 BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getGeometry(node_no_t dofGlobalNo) const
 {
   // assert that geometry field variable is set
@@ -33,7 +33,7 @@ getGeometry(node_no_t dofGlobalNo) const
   
 //! return an array containing all geometry entries for an element
 template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
   // assert that geometry field variable is set
@@ -45,7 +45,7 @@ getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D
 
 
 template<int D,typename BasisFunctionType>
-bool BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+bool BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 hasGeometryField()
 {
   return this->fieldVariable_.find("geometry") != this->fieldVariable_.end();
@@ -53,7 +53,7 @@ hasGeometryField()
 
 //! create a non-geometry field field variable with no values being set, with given component names
 template<int D,typename BasisFunctionType>
-typename BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::FieldVariableType &BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+typename BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableType &BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 geometryField()
 {
   // assert that geometry field variable is set
@@ -63,7 +63,7 @@ geometryField()
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodePositions(std::vector<double> &nodes) const
 {
   // assert that geometry field variable is set

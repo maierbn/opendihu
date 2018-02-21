@@ -73,8 +73,8 @@ mesh<None>(PyObject *settings)
     {
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
-        << " Type is not clear, so go for RegularFixed<1>.";
-      typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+        << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
+      typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
       std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
       mesh->initialize();
       meshes_[meshName] = mesh;
@@ -99,7 +99,7 @@ mesh<None>(PyObject *settings)
     anonymousName << "anonymous" << numberAnonymousMeshes_++;
     
     // set type to be 1D regular fixed mesh with linear lagrange basis
-    typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+    typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
     
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
@@ -113,7 +113,7 @@ mesh<None>(PyObject *settings)
   std::array<element_no_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
   
-  typedef BasisOnMesh::BasisOnMesh<RegularFixed<1>, BasisFunction::Lagrange<>> NewBasisOnMesh;
+  typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
   
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);

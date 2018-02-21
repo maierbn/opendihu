@@ -39,11 +39,11 @@ class Python
  * 
  */
 template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> :
+  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
   static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
@@ -51,11 +51,11 @@ public:
 
 // specialization for StructuredDeformable
 template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> :
+  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
   static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
@@ -63,11 +63,11 @@ public:
 
 // specialization for UnstructuredDeformable
 template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> :
+  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
   static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  

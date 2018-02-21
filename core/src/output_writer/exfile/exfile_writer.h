@@ -19,10 +19,10 @@ class ExfileWriter
 
 // specialization for RegularFixed
 template<int D, typename BasisFunctionType>
-class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>
+class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables);
@@ -34,10 +34,10 @@ public:
 
 // specialization for StructuredDeformable 
 template<int D, typename BasisFunctionType>
-class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>
+class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
   
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables);
@@ -49,10 +49,10 @@ public:
 
 // specialization for UnstructuredDeformable
 template<int D, typename BasisFunctionType>
-class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>
+class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
   
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables);

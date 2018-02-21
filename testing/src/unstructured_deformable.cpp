@@ -99,7 +99,7 @@ cale factors:\n  1.000000e+00  3.118876e+00  2.430154e+01  7.579348e+01  2.37098
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::UnstructuredDeformable<3>,
+    Mesh::UnstructuredDeformableOfDimension<3>,
     BasisFunction::Hermite,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
@@ -188,7 +188,7 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::UnstructuredDeformable<2>,
+    Mesh::UnstructuredDeformableOfDimension<2>,
     BasisFunction::Hermite,    // 4 nodes per element
     Integrator::Gauss<2>,
     Equation::Static::Laplace

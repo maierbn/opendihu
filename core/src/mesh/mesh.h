@@ -40,12 +40,12 @@ public:
  * base class for a mesh with a dimension.
  */
 template<int D>
-class MeshD : public Mesh
+class MeshOfDimension : public Mesh
 {
 public:
   //! construct mesh from python settings
-  MeshD(PyObject *specificSettings);
-  virtual ~MeshD() {}
+  MeshOfDimension(PyObject *specificSettings);
+  virtual ~MeshOfDimension() {}
   
   //! return the dimension/template argument D as method. This is also accessible from the base class.
   int dimension() const; 

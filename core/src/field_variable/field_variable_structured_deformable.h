@@ -20,20 +20,20 @@ namespace FieldVariable
 /** FieldVariable class for StructuredDeformable mesh
  */
 template<int D, typename BasisFunctionType>
-class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> :
-  public FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>
-  //public Interface<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>
+class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> :
+  public FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
+  //public Interface<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! inherited constructor 
-  using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::FieldVariableStructured;
+  using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::FieldVariableStructured;
   
   //! for a specific component, get a single value from global dof no.
   double getValue(std::string component, node_no_t dofGlobalNo)
   {
-    return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
+    return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
   }
   
   //! get a single value from global dof no. for all components
@@ -41,7 +41,7 @@ public:
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
   
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> &rhs);
+  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs);
   
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
@@ -49,7 +49,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
     }
   }  
 
@@ -57,7 +57,7 @@ public:
   template<std::size_t nComponents>
   void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::template setValue<nComponents>(dofGlobalNo, value);
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::template setValue<nComponents>(dofGlobalNo, value);
   }
   
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes

@@ -6,7 +6,7 @@ namespace OutputWriter
 
 //! write exnode file to given stream
 template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
 {
   
@@ -14,7 +14,7 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
 
 //! write exnode file to given stream
 template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
 {
   

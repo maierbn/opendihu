@@ -45,45 +45,45 @@ public:
 
 // partial specialization for linear Lagrange, D=1
 template<typename MeshType>
-class BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<1,MeshType>> :
-  public BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>
+class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<1,MeshType>> :
+  public BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::BasisOnMeshFunction;
+  using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
   
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
-  static std::array<Vec3,1> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &geometryField,
+  static std::array<Vec3,1> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,1> xi);
   
 };
 
 // partial specialization for linear Lagrange, D=2
 template<typename MeshType>
-class BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<2,MeshType>> :
-  public BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>
+class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<2,MeshType>> :
+  public BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::BasisOnMeshFunction;
+  using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
   
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
-  static std::array<Vec3,2> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &geometryField,
+  static std::array<Vec3,2> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,2> xi);
   
 };
 
 // partial specialization for linear Lagrange, D=3
 template<typename MeshType>
-class BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<3,MeshType>> :
-  public BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>
+class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<3,MeshType>> :
+  public BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::BasisOnMeshFunction;
+  using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
   
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
-  static std::array<Vec3,3> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &geometryField,
+  static std::array<Vec3,3> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,3> xi);
   
 };

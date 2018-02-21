@@ -22,7 +22,7 @@ protected:
   void transferRhsToWeakForm();
   
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
-  void setRhsDiscretizationMatrix();
+  void setMassMatrix();
 };
  
 /**
@@ -41,7 +41,7 @@ protected:
   void transferRhsToWeakForm(){}
   
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
-  void setRhsDiscretizationMatrix(){}
+  void setMassMatrix(){}
 };
 
 };  // namespace

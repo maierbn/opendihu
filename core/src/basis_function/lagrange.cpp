@@ -5,7 +5,7 @@ namespace BasisFunction
 
 // linear
 template<>
-double Lagrange<1>::
+double LagrangeOfOrder<1>::
 dphi_dxi(int i, double xi)
 {
   if (i==0) 
@@ -14,7 +14,7 @@ dphi_dxi(int i, double xi)
 }
 
 template<>
-double Lagrange<1>::
+double LagrangeOfOrder<1>::
 phi(int i, double xi)
 {
   if (i==0)
@@ -24,7 +24,7 @@ phi(int i, double xi)
 
 // quadratic
 template<>
-double Lagrange<2>::
+double LagrangeOfOrder<2>::
 dphi_dxi(int i, double xi)
 {
   if (i==0)
@@ -35,7 +35,7 @@ dphi_dxi(int i, double xi)
 }
 
 template<>
-double Lagrange<2>::
+double LagrangeOfOrder<2>::
 phi(int i, double xi)
 {
   // phi(xi) = a*xi^2 + b*xi + c

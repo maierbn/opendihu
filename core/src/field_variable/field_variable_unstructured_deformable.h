@@ -20,15 +20,15 @@ namespace FieldVariable
 /** FieldVariable class for UnstructuredDeformable mesh
  */
 template<int D, typename BasisFunctionType>
-class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> :
-  public FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>,
-  public Interface<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>
+class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> :
+  public FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>,
+  public Interface<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 { 
 public:
   //! inherited constructor 
-  using FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::FieldVariableBase;
+  using FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::FieldVariableBase;
   
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
   
   //! contructor as data copy with a different name (component names are the same)
   FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name);
@@ -153,7 +153,7 @@ public:
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &rhs);
+  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs);
   
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
@@ -207,7 +207,7 @@ public:
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
   
-  friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>;
+  friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
   
   //! resize internal representation variable to number of elements
   void setNumberElements(element_no_t nElements);
@@ -225,7 +225,7 @@ public:
   void unifyMappings(std::shared_ptr<::FieldVariable::ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode);
   
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  void unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &fieldVariable);
+  void unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &fieldVariable);
   
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   void initializeValuesVector();
@@ -276,7 +276,7 @@ protected:
 
 // output operator
 template<int D, typename BasisFunctionType>
-std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> &rhs);
+std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs);
 
 };  // namespace
 

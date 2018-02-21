@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<int D, typename BasisFunctionType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
+PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime)
 {
   // build python dict containing all information
@@ -32,7 +32,7 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   
   // build python object for data
   
-  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
+  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
   
   // prepare number of elements in the dimensions
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = fieldVariables.front()->nElementsPerCoordinateDirection();

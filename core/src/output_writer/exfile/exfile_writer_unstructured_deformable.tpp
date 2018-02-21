@@ -7,13 +7,13 @@ namespace OutputWriter
 
 //! write exelem file to given stream
 template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
 {
   stream << " Group name: main_group" << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
   
-  const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::nNodesPerElement();   
+  const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();   
   const element_no_t nElements = fieldVariables.front()->mesh()->nElements();
  
   bool outputHeader = true;
@@ -66,7 +66,7 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
 
 //! write exnode file to given stream
 template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
 {
   stream << " Group name: main_group" << std::endl;

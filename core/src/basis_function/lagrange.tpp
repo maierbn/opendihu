@@ -4,7 +4,7 @@ namespace BasisFunction
 {
   
 template<int order>
-constexpr int Lagrange<order>::
+constexpr int LagrangeOfOrder<order>::
 nDofsPerNode()
 {
   return 1;
@@ -12,7 +12,7 @@ nDofsPerNode()
 
 // linear Lagrange basis
 template<>
-constexpr int Lagrange<1>::
+constexpr int LagrangeOfOrder<1>::
 nDofsPerBasis()
 {
   return 2;
@@ -20,7 +20,7 @@ nDofsPerBasis()
 
 // quadratic Lagrange basis
 template<>
-constexpr int Lagrange<2>::
+constexpr int LagrangeOfOrder<2>::
 nDofsPerBasis()
 {
   return 3;

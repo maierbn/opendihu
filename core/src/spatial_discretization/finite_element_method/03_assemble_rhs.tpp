@@ -107,15 +107,15 @@ transferRhsToWeakForm()
 // 1D,2D,3D rhs discretization matrix, i.e. matrix that transforms rhs values to discretized form, of Deformable mesh
 template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy>
 void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
-setRhsDiscretizationMatrix()
+setMassMatrix()
 {
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrixInitialized())
   {
-    this->data_.initializeDiscretizationMatrix();
+    this->data_.initializeMassMatrix();
       
     const int D = BasisOnMeshType::dim();
-    LOG(TRACE)<<"createRhsDiscretizationMatrix " << D << "D";
+    LOG(TRACE)<<"createMassMatrix " << D << "D";
   
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak

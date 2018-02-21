@@ -27,7 +27,7 @@ config = {
     "endTime": 1.0,
     "FiniteElementMethod" : {
       "nElements": n,
-      "physicalExtend": 4.0,
+      "physicalExtent": 4.0,
       "relativeTolerance": 1e-15,
     },
     "OutputWriter" : [
@@ -42,8 +42,8 @@ config = {
   
   TimeSteppingScheme::ExplicitEuler<
     FiniteElementMethod<
-      Mesh::RegularFixed<1>,
-      BasisFunction::Lagrange<>,
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
       Integrator::None,
       Equation::Dynamic::Diffusion
     >

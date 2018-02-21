@@ -26,17 +26,17 @@ public:
     std::vector<double> nodePositionsVector;
     if(mesh->dimension() == 1)
     {
-      std::shared_ptr<StructuredDeformable<1>> deformableMesh = std::static_pointer_cast<StructuredDeformable<1>>(mesh);
+      std::shared_ptr<StructuredDeformableOfDimension<1>> deformableMesh = std::static_pointer_cast<StructuredDeformableOfDimension<1>>(mesh);
       deformableMesh->getNodePositions(nodePositionsVector);
     }
     else if(mesh->dimension() == 2)
     {
-      std::shared_ptr<StructuredDeformable<2>> deformableMesh = std::static_pointer_cast<StructuredDeformable<2>>(mesh);
+      std::shared_ptr<StructuredDeformableOfDimension<2>> deformableMesh = std::static_pointer_cast<StructuredDeformableOfDimension<2>>(mesh);
       deformableMesh->getNodePositions(nodePositionsVector);
     }
     else if(mesh->dimension() == 3)
     {
-      std::shared_ptr<StructuredDeformable<3>> deformableMesh = std::static_pointer_cast<StructuredDeformable<3>>(mesh);
+      std::shared_ptr<StructuredDeformableOfDimension<3>> deformableMesh = std::static_pointer_cast<StructuredDeformableOfDimension<3>>(mesh);
       deformableMesh->getNodePositions(nodePositionsVector);
     }
     

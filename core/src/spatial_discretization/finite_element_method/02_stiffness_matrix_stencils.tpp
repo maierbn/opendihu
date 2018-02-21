@@ -30,16 +30,16 @@ namespace SpatialDiscretization
   
 // 1D stiffness matrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>>, IntegratorType, Term>::
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix 1D for Mesh::RegularFixed";
 
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // get settings values
   element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
-  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
+  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
   
   double factor = prefactor*1./elementLength;
@@ -85,20 +85,20 @@ setStiffnessMatrix()
 
 // 2D stiffness matrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>>, IntegratorType, Term>::
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix 2D for Mesh::RegularFixed";
  
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // get settings value
   element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
   element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
+  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   if (fabs(elementLength0-elementLength1) > 1e-15)
   {
     LOG(ERROR) << "Mesh resolution of 2D regular fixed mesh is not uniform! " << std::endl
@@ -298,10 +298,10 @@ setStiffnessMatrix()
   
 // 3D stiffness matrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>>, IntegratorType, Term>::
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
 setStiffnessMatrix()
 {
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
  
   LOG(TRACE)<<"setStiffnessMatrix 3D for Mesh::RegularFixed";
  
@@ -312,9 +312,9 @@ setStiffnessMatrix()
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
   node_no_t nNodes2 = nElements2 + 1;
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
-  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
+  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   
   if (fabs(elementLength0-elementLength1) > 1e-15 || fabs(elementLength0-elementLength2) > 1e-15)
   {

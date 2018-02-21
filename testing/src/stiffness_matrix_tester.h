@@ -105,14 +105,14 @@ public:
   }
 
   template<typename T1, typename T2>
-  static void testRhsDiscretizationMatrix(
+  static void testMassMatrix(
     T1 &finiteElementMethod1,
     T2 &finiteElementMethod2,
     std::vector<double> &rhsValues
   )
   {
     // create the discretization matrix if it does not already exist
-    finiteElementMethod2.setRhsDiscretizationMatrix();
+    finiteElementMethod2.setMassMatrix();
     Mat &massMatrix = finiteElementMethod2.data_.massMatrix();
     
     int n, m;

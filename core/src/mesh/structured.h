@@ -14,7 +14,7 @@ namespace Mesh
  * This mesh type knows its number of elements.
  */
 template<int D>
-class Structured : public MeshD<D>
+class Structured : public MeshOfDimension<D>
 {
 public:
   //! constructor from number of elements in coordinate directions

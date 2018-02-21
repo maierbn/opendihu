@@ -34,11 +34,11 @@ public:
 /** specialization for finite elements, regular fixed mesh. For that write also stiffness matrix and rhs to numpy files
  */
 template<int D, typename BasisFunctionType>
-class PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>> :
+class PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>> :
   public NumpyFileWriter
 {
 public:
-  typedef Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> DataType;
+  typedef Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> DataType;
  
   //! write out solution to file filename as numpy array, as 1D data and in correct shape, also write rhs matrix
   static void writeNumpySolution(DataType &data, std::string filename);

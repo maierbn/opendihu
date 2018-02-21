@@ -215,16 +215,16 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 
 
 template<int D,typename BasisFunctionType>
-element_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+element_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nElements() const
 {
   return this->nElements_;
 }
 
 template<int D,typename BasisFunctionType>
-BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
-  BasisOnMeshJacobian<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::BasisOnMeshJacobian(settings),
+  BasisOnMeshJacobian<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshJacobian(settings),
   noGeometryField_(noGeometryField)
 {
   LOG(TRACE) << "BasisOnMeshDofs constructor";
@@ -261,7 +261,7 @@ BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseFromSettings(PyObject *settings)
 {
   LOG(TRACE) << "parseFromSettings";
@@ -449,17 +449,17 @@ parseFromSettings(PyObject *settings)
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 initialize()
 {
   if (this->noGeometryField_)
     return;
   
-  std::shared_ptr<BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> ptr = this->shared_from_this();
+  std::shared_ptr<BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> ptr = this->shared_from_this();
   
   assert(ptr != nullptr);
   
-  std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>(ptr);
+  std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(ptr);
   
   assert(self != nullptr);
   assert(fieldVariable_.find("geometry") != fieldVariable_.end());
@@ -468,7 +468,7 @@ initialize()
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 remapFieldVariables(PyObject *settings)
 {
   // remap name of field variables to different names if specified
@@ -531,7 +531,7 @@ remapFieldVariables(PyObject *settings)
 }
 
 template<int D,typename BasisFunctionType>
-int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+int BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
@@ -541,7 +541,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 }
 
 template<int D,typename BasisFunctionType>
-int BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+int BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
@@ -549,7 +549,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 
 //! get all dofs of a specific node, unstructured mesh
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
@@ -566,7 +566,7 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 eliminateScaleFactors()
 {
   // loop over field variables
@@ -577,14 +577,14 @@ eliminateScaleFactors()
 }
 
 template<int D,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nDofs() const
 {
   return nDofs_;
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::
+void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables)
 {
   // loop over field variables

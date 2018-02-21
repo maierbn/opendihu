@@ -18,16 +18,16 @@ namespace SpatialDiscretization
  
 // 1D rhs
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<1>>::
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (1D)";
  
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // get settings values
   element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
-  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
+  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   
   int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
   
@@ -82,20 +82,20 @@ transferRhsToWeakForm()
 
 // 2D rhs
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<2>>::
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (2D)";
  
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // get settings values
   element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
   element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
+  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double integralFactor = elementLength0*elementLength1;
   
   PetscErrorCode ierr;
@@ -308,12 +308,12 @@ transferRhsToWeakForm()
 
 // 3D rhs
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<3>>::
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (3D)";
  
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // get settings values
   element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
@@ -322,9 +322,9 @@ transferRhsToWeakForm()
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
   node_no_t nNodes2 = nElements2 + 1;
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
-  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
+  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
   
   PetscErrorCode ierr;
@@ -1028,22 +1028,22 @@ transferRhsToWeakForm()
 
 // 1D massMatrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<1>>::
-setRhsDiscretizationMatrix()
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
+setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
  
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrixInitialized())
   {
-    this->data_.initializeDiscretizationMatrix();
+    this->data_.initializeMassMatrix();
     
     // set entries of matrix
-    LOG(DEBUG)<<"createRhsDiscretizationMatrix 1D";
+    LOG(DEBUG)<<"createMassMatrix 1D";
  
     // get settings values
     element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
-    double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
+    double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
     
     int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
     
@@ -1089,28 +1089,30 @@ setRhsDiscretizationMatrix()
 
 // 2D massMatrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<2>>::
-setRhsDiscretizationMatrix()
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
+setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrixInitialized())
   {
-    this->data_.initializeDiscretizationMatrix();
+    this->data_.initializeMassMatrix();
     
     // set entries of matrix
-    LOG(DEBUG)<<"createRhsDiscretizationMatrix 2D";
+    LOG(DEBUG)<<"createMassMatrix 2D";
       
     // get settings values
     element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
     element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
     node_no_t nNodes0 = nElements0 + 1;
     node_no_t nNodes1 = nElements1 + 1;
-    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
+    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
     double integralFactor = elementLength0*elementLength1;
       
+    LOG(DEBUG) << "elementLength0: " << elementLength0;
+    
     // multiply factor to rhs
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
@@ -1286,18 +1288,18 @@ setRhsDiscretizationMatrix()
  
 // 3D massMatrix
 template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<3>>::
-setRhsDiscretizationMatrix()
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
+setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
+  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
   
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrixInitialized())
   {
-    this->data_.initializeDiscretizationMatrix();
+    this->data_.initializeMassMatrix();
     
     // set entries of matrix
-    LOG(DEBUG)<<"createRhsDiscretizationMatrix 3D";
+    LOG(DEBUG)<<"createMassMatrix 3D";
       
     // get settings values
     element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
@@ -1306,9 +1308,9 @@ setRhsDiscretizationMatrix()
     node_no_t nNodes0 = nElements0 + 1;
     node_no_t nNodes1 = nElements1 + 1;
     node_no_t nNodes2 = nElements2 + 1;
-    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(0);
-    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(1);
-    double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth(2);
+    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
     double integralFactor = elementLength0*elementLength1*elementLength2;
   
     // multiply factor to rhs

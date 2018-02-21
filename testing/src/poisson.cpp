@@ -29,7 +29,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 4.0,
+    "physicalExtent": 4.0,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   },
@@ -43,8 +43,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -85,7 +85,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 0.5,
+    "physicalExtent": 0.5,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   },
@@ -95,8 +95,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -138,7 +138,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": n,
+    "physicalExtent": n,
     "relativeTolerance": 1e-15,
   },
 }
@@ -147,8 +147,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -206,7 +206,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": [n, m],
-    "physicalExtend": [6.0, 9.0],
+    "physicalExtent": [6.0, 9.0],
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   },
@@ -216,8 +216,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -258,7 +258,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4],
-    "physicalExtend": [4.0, 4.0],
+    "physicalExtent": [4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -267,8 +267,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -337,7 +337,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4, 4],
-    "physicalExtend": [4.0, 4.0, 4.0],
+    "physicalExtent": [4.0, 4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -346,8 +346,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -484,7 +484,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 5],
-    "physicalExtend": [1.0, 2.0, 3.0],
+    "physicalExtent": [1.0, 2.0, 3.0],
     "rightHandSide": [1, 4.0, 5, 9.0, 0.0, 0, 5, 7, 3],
     "DirichletBoundaryCondition": {0:0},
     "relativeTolerance": 1e-15,
@@ -499,7 +499,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 5],
-    "physicalExtend": [1.0, 2.0],
+    "physicalExtent": [1.0, 2.0],
     "rightHandSide": {2:5, 7:7.0, 3:9, "8":3, 0:1, 1:4, 6.0:5, "10":0},
     "DirichletBoundaryCondition": {0:0},
     "relativeTolerance": 1e-15,
@@ -509,8 +509,8 @@ config = {
 
   DihuContext settings1(argc, argv, pythonConfig1);
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized1(settings1);
@@ -521,8 +521,8 @@ config = {
   
   DihuContext settings2(argc, argv, pythonConfig2);
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings2);
@@ -533,7 +533,7 @@ config = {
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
 }
 
-TEST(PoissonTest, RhsDiscretizationMatrix1DIsCorrect)
+TEST(PoissonTest, MassMatrix1DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -543,7 +543,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [10],
-    "physicalExtend": [4.0],
+    "physicalExtent": [4.0],
     "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],
     "relativeTolerance": 1e-15,
   },
@@ -553,8 +553,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -563,8 +563,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
@@ -576,11 +576,11 @@ config = {
     1,8,3,4,5,6,7,8,9,10,11,12
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 
-TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix1DIsCorrect)
+TEST(PoissonTest, StructuredDeformableMassMatrix1DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -590,7 +590,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [10],
-    "physicalExtend": [4.0],
+    "physicalExtent": [4.0],
     "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],
     "relativeTolerance": 1e-15,
   },
@@ -600,8 +600,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -610,8 +610,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
@@ -623,11 +623,11 @@ config = {
     1,8,3,4,5,6,7,8,9,10,11,12
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 
-TEST(PoissonTest, RhsDiscretizationMatrix2DIsCorrect)
+TEST(PoissonTest, MassMatrix2DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -637,7 +637,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2],
-    "physicalExtend": [4.0, 3.0],
+    "physicalExtent": 4.0,
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12],
     "relativeTolerance": 1e-15,
   },
@@ -647,8 +647,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -657,8 +657,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
@@ -670,11 +670,11 @@ config = {
     1,2,3,4,5,6,7,8,9,10,11,12
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 
-TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix2DIsCorrect)
+TEST(PoissonTest, StructuredDeformableMassMatrix2DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -684,7 +684,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2],
-    "physicalExtend": [4.0, 3.0],
+    "physicalExtent": [4.0, 8./3],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12],
     "relativeTolerance": 1e-15,
   },
@@ -694,8 +694,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -704,8 +704,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
@@ -717,11 +717,11 @@ config = {
     1,2,3,4,5,6,7,8,9,10,11,12
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 
-TEST(PoissonTest, RhsDiscretizationMatrix3DIsCorrect)
+TEST(PoissonTest, MassMatrix3DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -731,7 +731,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2, 2],
-    "physicalExtend": [4.0, 3.0, 2.0],
+    "physicalExtent": [4.0, 3.0, 2.0],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
     "relativeTolerance": 1e-15,
   },
@@ -741,8 +741,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -752,8 +752,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
@@ -765,11 +765,11 @@ config = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 
-TEST(PoissonTest, StructuredDeformableRhsDiscretizationMatrix3DIsCorrect)
+TEST(PoissonTest, StructuredDeformableMassMatrix3DIsCorrect)
 {
   
   std::string pythonConfig = R"(
@@ -779,7 +779,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [3, 2, 2],
-    "physicalExtend": [4.0, 3.0, 2.0],
+    "physicalExtent": [4.0, 8./3.0, 8./3.0],
     "rightHandSide": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
     "relativeTolerance": 1e-15,
   },
@@ -789,8 +789,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
@@ -800,8 +800,8 @@ config = {
   computation.run();
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
@@ -813,7 +813,7 @@ config = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
   };
   
-  StiffnessMatrixTester::testRhsDiscretizationMatrix(equationDiscretized, equationDiscretized2, initialRhs);
+  StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
 
 }
 

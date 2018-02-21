@@ -38,8 +38,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -64,7 +64,7 @@ config = {
   "Meshes" : {
     "testMesh": {
       "nElements": 6,
-      "physicalExtend": 6,
+      "physicalExtent": 6,
     }
   },
   "FiniteElementMethod" : {
@@ -77,8 +77,8 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -114,8 +114,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -140,7 +140,7 @@ config = {
   "Meshes" : {
     "testMesh": {
       "nElements": [2, 2],
-      "physicalExtend": [2, 2],
+      "physicalExtent": [2, 2],
     }
   },
   "FiniteElementMethod" : {
@@ -153,8 +153,8 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -185,8 +185,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -209,7 +209,7 @@ config = {
   "disablePrinting": False,
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
-    "physicalExtend": [2.0, 2.0],
+    "physicalExtent": [2.0, 2.0],
       "nElements": [2, 2],
     "relativeTolerance": 1e-15,
   },
@@ -219,8 +219,8 @@ config = {
   DihuContext settings2(argc, argv, pythonConfig2);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);

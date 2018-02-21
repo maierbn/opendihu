@@ -17,12 +17,12 @@ class FiniteElementMethodBaseRhs :
 /** specialization for linear Lagrange, 1D regular mesh (uses stencils)
  */
 template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<1ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
     ::FiniteElementMethodStiffnessMatrix;
     
 protected:
@@ -30,43 +30,43 @@ protected:
   void transferRhsToWeakForm();
   
   //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  void setRhsDiscretizationMatrix();
+  void setMassMatrix();
 };
 
 /** specialization for linear Lagrange, 2D regular mesh (uses stencils)
  */
 template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<2ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
     ::FiniteElementMethodStiffnessMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
   
   //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  void setRhsDiscretizationMatrix();
+  void setMassMatrix();
 };
 
 /** specialization for linear Lagrange, 3D regular mesh (uses stencils)
  */
 template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<3ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
     ::FiniteElementMethodStiffnessMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
   
   //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  void setRhsDiscretizationMatrix();
+  void setMassMatrix();
 };
 
 /** specialisation for Deformable mesh of any dimension D (do proper integration of rhs)

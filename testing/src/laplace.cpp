@@ -29,7 +29,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 4.0,
+    "physicalExtent": 4.0,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   }
@@ -39,8 +39,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -82,7 +82,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 0.5,
+    "physicalExtent": 0.5,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   },
@@ -92,8 +92,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -135,7 +135,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": n,
+    "physicalExtent": n,
     "relativeTolerance": 1e-15,
   },
 }
@@ -144,8 +144,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -192,7 +192,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": n,
+    "physicalExtent": n,
     "relativeTolerance": 1e-15,
   },
 }
@@ -201,8 +201,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -260,7 +260,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": [n, m],
-    "physicalExtend": [6.0, 9.0],
+    "physicalExtent": [6.0, 9.0],
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   },
@@ -270,8 +270,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -312,7 +312,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4],
-    "physicalExtend": [4.0, 4.0],
+    "physicalExtent": [4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -321,8 +321,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -391,7 +391,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4],
-    "physicalExtend": [4.0, 4.0],
+    "physicalExtent": [4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -400,8 +400,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -470,7 +470,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4, 4],
-    "physicalExtend": [4.0, 4.0, 4.0],
+    "physicalExtent": [4.0, 4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -479,8 +479,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -617,7 +617,7 @@ config = {
   "disableMatrixPrinting": True,
   "FiniteElementMethod" : {
     "nElements": [4, 4, 4],
-    "physicalExtend": [4.0, 4.0, 4.0],
+    "physicalExtent": [4.0, 4.0, 4.0],
     "relativeTolerance": 1e-15,
   },
 }
@@ -626,8 +626,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
@@ -776,7 +776,7 @@ config = {
   },
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 4.0,
+    "physicalExtent": 4.0,
     "DirichletBoundaryCondition": bc,
     "solverName": "linearSolver"
   }
@@ -786,8 +786,8 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);

@@ -10,73 +10,73 @@ namespace FieldVariable
 /*
 //! for a specific component, get a single value from global dof no.
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 getValue(std::string component, node_no_t dofGlobalNo)
 {
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
 }
 */
  
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
 {
   // use the implementation of FieldVariableStructured
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
     outputHeaderExelem(file, currentElementGlobalNo);
 }
 
 //! write a exelem file header to a stream, for a particular element
 template<int D, typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex)
 {
   // use the implementation of FieldVariableStructured
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
     outputHeaderExnode(file, currentNodeGlobalNo, valueIndex);
 }
 
 //! tell if 2 elements have the same exfile representation, i.e. same number of versions
 template<int D, typename BasisFunctionType>
-bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
     haveSameExfileRepresentation(element1, element2);
 }
 
 //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
 template<int D, typename BasisFunctionType>
-Vec &FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+Vec &FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 values()
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::values();
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::values();
 }
 
 //! get the number of components
 template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 nComponents() const
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::nComponents();
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::nComponents();
 }
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::Mesh::dim()>  FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 nElementsPerCoordinateDirection() const
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::nElementsPerCoordinateDirection();
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::nElementsPerCoordinateDirection();
 }
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>
-element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 nElements() const
 {
   // use the implementation of FieldVariableStructured
@@ -86,7 +86,7 @@ nElements() const
 //! get a single value from global dof no. for all components
 template<int D, typename BasisFunctionType>
 template<std::size_t nComponents>
-std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 getValue(node_no_t dofGlobalNo)
 {
   // use the implementation of FieldVariableStructured
@@ -95,8 +95,8 @@ getValue(node_no_t dofGlobalNo)
 
 //! copy the values from another field variable of the same type
 template<int D,typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
-setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> &rhs)
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
+setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs)
 {
   VecCopy(rhs.values_, this->values_);
 }
@@ -105,12 +105,12 @@ setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,B
 //! set values for dofs
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
   }
 }*/
 
@@ -118,27 +118,27 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
 //! set a single value
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 {
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::template setValue<nComponents>(dofGlobalNo, value);
+  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::template setValue<nComponents>(dofGlobalNo, value);
 }
 */
 
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
 template<int D,typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 flushSetValues()
 {
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::flushSetValues();
+  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::flushSetValues();
 }
 
 //! get the names of the components that are part of this field variable
 template<int D, typename BasisFunctionType>
-std::vector<std::string> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::
+std::vector<std::string> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
 componentNames() const
 {
   // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>>::componentNames();
+  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::componentNames();
 }
 };

@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   SpatialDiscretization::FiniteElementMethod<
-    Mesh::RegularFixed<2>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::Lagrange,
     Equation::Static::Poisson
   > equationDiscretized(settings);

@@ -16,7 +16,7 @@ namespace Mesh
  * This mesh cannot deform, i.e. it cannot be used for structural mechanics with deformations.
  */
 template<int D>
-class RegularFixed : public Structured<D>  // StructuredRegularFixed structured_regular_fixed.h
+class StructuredRegularFixedOfDimension : public Structured<D>  // StructuredRegularFixed structured_regular_fixed.h
 {
 public:
   //! constructor from base class
@@ -29,7 +29,7 @@ public:
   //RegularFixed(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
  
   //! get mesh width of the given coordinate direction
-  virtual double meshWidth(int dimension) const = 0;  // defined in field_variable_regular_fixed.tpp
+  virtual double meshWidth() const = 0;  // defined in field_variable_regular_fixed.tpp
   
 private:
  

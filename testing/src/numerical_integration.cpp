@@ -29,7 +29,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
-    "physicalExtend": 4.0,
+    "physicalExtent": 4.0,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   }
@@ -39,8 +39,8 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig1);
   
   FiniteElementMethod<
-    Mesh::StructuredDeformable<1>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<3>,
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
@@ -84,7 +84,7 @@ config = {
   "FiniteElementMethod" : {
     "prefactor": 6,
     "nElements": [n,n],
-    "physicalExtend": [4.0,4.0],
+    "physicalExtent": [4.0,4.0],
     #"DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   }
@@ -94,8 +94,8 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
@@ -107,8 +107,8 @@ config = {
   
   // integration order: lagrange basis order 1 => ∇phi_i*∇phi_j order 2 => 2 gauss points => p_exact=3
   FiniteElementMethod<
-    Mesh::StructuredDeformable<2>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -137,7 +137,7 @@ config = {
   "FiniteElementMethod" : {
     "prefactor": 12,
     "nElements": [n,n,n],
-    "physicalExtend": [3.0,3.0,3.0],
+    "physicalExtent": [3.0,3.0,3.0],
     #"DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   }
@@ -147,8 +147,8 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
@@ -160,8 +160,8 @@ config = {
   
   // integration order: lagrange basis order 1 => ∇phi_i*∇phi_j order 2 => 2 gauss points => p_exact=3
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
@@ -189,7 +189,7 @@ config = {
   "FiniteElementMethod" : {
     "prefactor": 12,
     "nElements": [n,n,n],
-    "physicalExtend": [2.0,2.0,2.0],
+    "physicalExtent": [2.0,2.0,2.0],
     #"DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
   }
@@ -199,8 +199,8 @@ config = {
   DihuContext settings1(argc, argv, pythonConfig);
   
   FiniteElementMethod<
-    Mesh::RegularFixed<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::None,
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
@@ -212,8 +212,8 @@ config = {
   
   // Gauss integration order 3
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<3>,
     Equation::Static::Laplace
   > equationDiscretized3(settings2);
@@ -225,8 +225,8 @@ config = {
   
   // Gauss integration order 4
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<4>,
     Equation::Static::Laplace
   > equationDiscretized4(settings2);
@@ -238,8 +238,8 @@ config = {
   
   // Gauss integration order 5
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<5>,
     Equation::Static::Laplace
   > equationDiscretized5(settings2);
@@ -251,8 +251,8 @@ config = {
   
   // Gauss integration order 6
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<6>,
     Equation::Static::Laplace
   > equationDiscretized6(settings2);
@@ -264,8 +264,8 @@ config = {
   
   // Gauss integration order 7
   FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
-    BasisFunction::Lagrange<>,
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
     Integrator::Gauss<7>,
     Equation::Static::Laplace
   > equationDiscretized7(settings2);

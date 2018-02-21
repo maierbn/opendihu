@@ -36,7 +36,7 @@ initialize()
 {
   this->data_.initialize();
   this->setStiffnessMatrix();
-  this->setRhsDiscretizationMatrix();
+  this->setMassMatrix();
   this->data_.finalAssembly();
 }
 

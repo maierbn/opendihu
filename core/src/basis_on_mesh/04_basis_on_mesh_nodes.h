@@ -24,14 +24,14 @@ class BasisOnMeshNodes
 /** Partial specialization for RegularFixed mesh
  */
 template<int D,typename BasisFunctionType>
-class BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType> :
-  public BasisOnMeshDofs<Mesh::RegularFixed<D>,BasisFunctionType>,
-  public std::enable_shared_from_this<BasisOnMeshNodes<Mesh::RegularFixed<D>,BasisFunctionType>>
+class BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> :
+  public BasisOnMeshDofs<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
  
   //! inherit constructor
-  //using BasisOnMeshDofs<Mesh::RegularFixed<D>,BasisFunctionType>::BasisOnMeshDofs;
+  //using BasisOnMeshDofs<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshDofs;
   //! constructor
   BasisOnMeshNodes(PyObject *specificSettings);
     
@@ -45,7 +45,7 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
   
   //! get mesh width of the given coordinate direction
-  double meshWidth(int dimension) const;
+  double meshWidth() const;
   
   //! return number of nodes
   node_no_t nNodes() const;
@@ -62,7 +62,7 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
   
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
    
   //! return the internal geometry field variable
   FieldVariableType &geometryField();
@@ -75,7 +75,7 @@ public:
   
 protected:
   
-  std::array<double,D> meshWidth_;   ///< mesh width in all coordinate directions
+  double meshWidth_;   ///< uniform mesh width
  
   std::unique_ptr<FieldVariableType> geometry_;     ///< the geometry field variable
 }; 
@@ -83,9 +83,9 @@ protected:
 /** Partial specialization for StructuredDeformable mesh
  */
 template<int D,typename BasisFunctionType>
-class BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType> :
-  public BasisOnMeshDofs<Mesh::StructuredDeformable<D>,BasisFunctionType>,
-  public std::enable_shared_from_this<BasisOnMeshNodes<Mesh::StructuredDeformable<D>,BasisFunctionType>>
+class BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> :
+  public BasisOnMeshDofs<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
@@ -112,7 +112,7 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformable<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
  
   //! return the geometry field of this mesh
   FieldVariableType &geometryField();
@@ -138,12 +138,12 @@ protected:
 /** Partial specialization for UnstructuredDeformable mesh
  */
 template<int D,typename BasisFunctionType>
-class BasisOnMeshNodes<Mesh::UnstructuredDeformable<D>,BasisFunctionType> :
-  public BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>
+class BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> :
+  public BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>::BasisOnMeshDofs;
+  using BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshDofs;
   
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
@@ -157,7 +157,7 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;  ///< the type of a field variable on this mesh
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the type of a field variable on this mesh
  
   //! return a reference to this mesh' geometry field
   FieldVariableType &geometryField();

@@ -10,7 +10,7 @@ namespace OutputWriter
 {
 
 template<int D, typename BasisFunctionType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime)
 {
   // build python dict containing all information
@@ -33,11 +33,11 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   LOG(DEBUG) << "build pyData, " << fieldVariables.size();
  
   // build python object for data  
-  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
+  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
 
   LOG(DEBUG) << "get mesh";
   
-  std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> mesh = fieldVariables.front()->mesh();
+  std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh = fieldVariables.front()->mesh();
   
   LOG(DEBUG) << pyData << " build data";
   LOG(DEBUG) << "PythonUnStructuredDeformable";

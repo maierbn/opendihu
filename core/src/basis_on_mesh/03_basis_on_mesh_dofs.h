@@ -115,13 +115,13 @@ public:
 /** partial specialization for unstructured mesh
  */
 template<int D,typename BasisFunctionType>
-class BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType> :
-  public BasisOnMeshJacobian<Mesh::UnstructuredDeformable<D>,BasisFunctionType>,
-  public std::enable_shared_from_this<BasisOnMeshDofs<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>
+class BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> :
+  public BasisOnMeshJacobian<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
 
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>> FieldVariableType;
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;
  
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   BasisOnMeshDofs(PyObject *settings, bool noGeometryField=false);

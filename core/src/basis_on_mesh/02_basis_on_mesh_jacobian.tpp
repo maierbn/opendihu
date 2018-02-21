@@ -12,8 +12,8 @@ namespace BasisOnMesh
 
 // specialization: Jacobian for 1D linear Lagrange basis
 template<typename MeshType>
-std::array<Vec3,1> BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<1,MeshType>>::
-computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &node, const std::array<double,1> xi)
+std::array<Vec3,1> BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<1,MeshType>>::
+computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &node, const std::array<double,1> xi)
 {
   Vec3 jacobianColumn0 = (node[1]-node[0]);
   return std::array<Vec3,1>({jacobianColumn0});
@@ -21,8 +21,8 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
 
 // specialization: Jacobian for 2D linear Lagrange basis
 template<typename MeshType>
-std::array<Vec3,2> BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<2,MeshType>>::
-computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &node, const std::array<double,2> xi)
+std::array<Vec3,2> BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<2,MeshType>>::
+computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &node, const std::array<double,2> xi)
 {
   double xi1 = xi[0];
   double xi2 = xi[1];
@@ -34,8 +34,8 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
 
 // specialization: Jacobian for 3D linear Lagrange basis
 template<typename MeshType>
-std::array<Vec3,3> BasisOnMeshJacobian<MeshType,BasisFunction::Lagrange<1>,Mesh::isDim<3,MeshType>>::
-computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::Lagrange<1>>::nDofsPerElement()> &node, const std::array<double,3> xi)
+std::array<Vec3,3> BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<3,MeshType>>::
+computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &node, const std::array<double,3> xi)
 {
   double xi1 = xi[0];
   double xi2 = xi[1];

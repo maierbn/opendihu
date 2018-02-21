@@ -27,13 +27,13 @@ protected:
  */
 template<typename IntegratorType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>,IntegratorType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>,IntegratorType, Term
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>, IntegratorType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1ul>, BasisFunction::Lagrange<1>>, IntegratorType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix
@@ -44,13 +44,13 @@ protected:
  */
 template<typename IntegratorType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2ul>, BasisFunction::Lagrange<1>>, IntegratorType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix
@@ -61,13 +61,13 @@ protected:
  */
 template<typename IntegratorType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3ul>, BasisFunction::Lagrange<1>>, IntegratorType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix

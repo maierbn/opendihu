@@ -9,12 +9,12 @@ namespace Mesh
 
 template<int D>
 Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerCoordinateDirection) :
-  MeshD<D>(NULL), nElementsPerCoordinateDirection_(nElementsPerCoordinateDirection)
+  MeshOfDimension<D>(NULL), nElementsPerCoordinateDirection_(nElementsPerCoordinateDirection)
 {
 }
   
 template<int D>
-Structured<D>::Structured(PyObject *specificSettings) : MeshD<D>(specificSettings)
+Structured<D>::Structured(PyObject *specificSettings) : MeshOfDimension<D>(specificSettings)
 {
   // get settings values nElements_
   this->nElementsPerCoordinateDirection_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);

@@ -21,21 +21,21 @@ namespace FieldVariable
 /** FieldVariable class for RegularFixed mesh
  */
 template<int D, typename BasisFunctionType>
-class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> :
-  public FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>,
-  public Interface<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>
+class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> :
+  public FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>,
+  public Interface<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType> BasisOnMeshType;
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! inherited constructor 
-  using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::FieldVariableStructured;
+  using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::FieldVariableStructured;
  
-  //! set the meshWidths
-  void setMeshWidth(std::array<double, D> &meshWidth);
+  //! set the meshWidth
+  void setMeshWidth(double meshWidth);
   
-  //! get the mesh width of a specific coordinate direction
-  double meshWidth(int dimension) const;
+  //! get the mesh width
+  double meshWidth() const;
   
   //! for a specific component, get all values
   void getValues(std::string component, std::vector<double> &values);
@@ -64,7 +64,7 @@ public:
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &rhs);
+  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &rhs);
   
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
@@ -72,7 +72,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
     }
   }
 
@@ -82,7 +82,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
+      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
     }
   }
   
@@ -112,8 +112,9 @@ public:
   
   //! get the names of the components that are part of this field variable
   std::vector<std::string> componentNames() const;
+  
 private:
- std::array<double, D> meshWidth_;   ///< the mesh width in each coordinate direction (has to be equal to work with FiniteElements)
+  double meshWidth_;   ///< the uniform mesh width
 };
 
 };  // namespace

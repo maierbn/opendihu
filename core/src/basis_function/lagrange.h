@@ -10,7 +10,7 @@ namespace BasisFunction
  *   Transformation to the actual physical space is done using a jacobian, see finite element method.
   */
 template<int order=1>
-class Lagrange : public BasisFunction
+class LagrangeOfOrder : public BasisFunction
 {
 public:
   

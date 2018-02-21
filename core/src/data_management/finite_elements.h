@@ -46,7 +46,7 @@ public:
   bool massMatrixInitialized();
   
   //! create PETSc matrix
-  void initializeDiscretizationMatrix();
+  void initializeMassMatrix();
   
   //! return a reference to the discretization matrix
   Mat &massMatrix();
@@ -118,7 +118,7 @@ public:
   bool massMatrixInitialized();
   
   //! create PETSc matrix
-  void initializeDiscretizationMatrix();
+  void initializeMassMatrix();
   
   //! return a reference to the discretization matrix
   Mat &massMatrix();

@@ -36,18 +36,18 @@ void Paraview::writeSolutionDim(DataType &data)
 {
   LOG(TRACE) << "writeMesh<"<<dimension<<">()";
   
-  if (std::dynamic_pointer_cast<Mesh::RegularFixed<dimension>>(data.mesh()) != NULL)
+  if (std::dynamic_pointer_cast<Mesh::StructuredRegularFixedOfDimension<dimension>>(data.mesh()) != NULL)
   {
-    writeRectilinearGrid<Mesh::RegularFixed<dimension>>(data);
+    writeRectilinearGrid<Mesh::StructuredRegularFixedOfDimension<dimension>>(data);
   }
   else if (std::dynamic_pointer_cast<
-             BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformable<dimension>,BasisFunction::Lagrange<1>>
+             BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<dimension>,BasisFunction::LagrangeOfOrder<1>>
            >(data.mesh()) != NULL)
   {
     // structured grid only for elements that contain only nodes at the corners (i.e. linear lagrange elements)
     writeStructuredGrid<dimension>(data);
   }
-  else if (std::dynamic_pointer_cast<Mesh::UnstructuredDeformable<dimension>>(data.mesh()) != NULL)
+  else if (std::dynamic_pointer_cast<Mesh::UnstructuredDeformableOfDimension<dimension>>(data.mesh()) != NULL)
   {
     writeUnstructuredGrid<dimension>(data);
   }
@@ -79,7 +79,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
   int dimensionNo = 0;
   for (; dimensionNo<mesh->dimension(); dimensionNo++)
   {
-    double meshWidth = mesh->meshWidth(dimensionNo);
+    double meshWidth = mesh->meshWidth();
     double nElements = mesh->nElementsPerCoordinateDirection(dimensionNo);
     
     LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;

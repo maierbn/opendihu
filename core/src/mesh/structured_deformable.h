@@ -18,7 +18,7 @@ namespace Mesh
  * The node positions can be changed by computation, e.g. for computational mechanics.
  */
 template<int D>
-class StructuredDeformable : public Structured<D>, public Deformable
+class StructuredDeformableOfDimension : public Structured<D>, public Deformable
 {
 public: 
   //! constructor of base class

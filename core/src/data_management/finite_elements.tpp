@@ -61,11 +61,11 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 
 // for UnstructuredDeformable and Hermite
 //template<int D>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>, BasisFunction::Hermite>>::
+//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunction::Hermite>>::
 
 
 //template<int D, typename BasisFunctionType>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformable<D>,BasisFunctionType>>::
+//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 
 template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
@@ -230,7 +230,7 @@ massMatrixInitialized()
 
 template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
-initializeDiscretizationMatrix()
+initializeMassMatrix()
 {
   // determine problem size
   int nEntries;

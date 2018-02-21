@@ -9,38 +9,38 @@ namespace BasisFunction
 
 // linear Lagrange
 template <>
-std::string getBasisRepresentationString<1,Lagrange<1>>()
+std::string getBasisRepresentationString<1,LagrangeOfOrder<1>>()
 {
   return StringUtility::multiply<1>("l.Lagrange");
 }
 
 template <>
-std::string getBasisRepresentationString<2,Lagrange<1>>()
+std::string getBasisRepresentationString<2,LagrangeOfOrder<1>>()
 {
   return StringUtility::multiply<2>("l.Lagrange");
 }
 
 template <>
-std::string getBasisRepresentationString<3,Lagrange<1>>()
+std::string getBasisRepresentationString<3,LagrangeOfOrder<1>>()
 {
   return StringUtility::multiply<3>("l.Lagrange");
 }
 
 // quadratic Lagrange
 template <>
-std::string getBasisRepresentationString<1,Lagrange<2>>()
+std::string getBasisRepresentationString<1,LagrangeOfOrder<2>>()
 {
   return StringUtility::multiply<1>("q.Lagrange");
 }
 
 template <>
-std::string getBasisRepresentationString<2,Lagrange<2>>()
+std::string getBasisRepresentationString<2,LagrangeOfOrder<2>>()
 {
   return StringUtility::multiply<2>("q.Lagrange");
 }
 
 template <>
-std::string getBasisRepresentationString<3,Lagrange<2>>()
+std::string getBasisRepresentationString<3,LagrangeOfOrder<2>>()
 {
   return StringUtility::multiply<3>("q.Lagrange");
 }

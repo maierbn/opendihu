@@ -22,7 +22,7 @@ config = {
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": [2,2,2],   # 8 elements
-    "physicalExtend": [4.0,4.0,4.0],
+    "physicalExtent": [4.0,4.0,4.0],
     "DirichletBoundaryCondition": {0:1.0},
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
@@ -34,10 +34,10 @@ config = {
   DihuContext settings(argc, argv, pythonConfig);
   
   SpatialDiscretization::FiniteElementMethod<
-    Mesh::StructuredDeformable<3>,
+    Mesh::StructuredDeformableOfDimension<3>,
     BasisFunction::Mixed<
-      BasisFunction::Lagrange<1>,
-      BasisFunction::Lagrange<2>
+      BasisFunction::LagrangeOfOrder<1>,
+      BasisFunction::LagrangeOfOrder<2>
     >,
     Integrator::Mixed<
       Integrator::Gauss<2>,

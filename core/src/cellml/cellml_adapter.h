@@ -56,7 +56,7 @@ public:
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
   
-  typedef BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<>> BasisOnMesh;   ///< BasisOnMesh type
+  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> BasisOnMesh;   ///< BasisOnMesh type
   
 private:
  

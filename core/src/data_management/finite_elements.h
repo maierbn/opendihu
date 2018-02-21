@@ -43,13 +43,13 @@ public:
   void print();
   
   //! if the discretization matrix is already initialized
-  bool discretizationMatrixInitialized();
+  bool massMatrixInitialized();
   
   //! create PETSc matrix
   void initializeDiscretizationMatrix();
   
   //! return a reference to the discretization matrix
-  Mat &discretizationMatrix();
+  Mat &massMatrix();
   
   //! get pointers to all field variables that can be written by output writers
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables();
@@ -65,12 +65,12 @@ private:
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-  Mat discretizationMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
   bool disablePrinting_ = false;    ///< if printing of matrix and vectors is disabled
   bool disableMatrixPrinting_ = false; ///< if the matrix should not be printed
   
-  bool discretizationMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
+  bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
 };
 
 /** partial specialization for mixed formulation
@@ -115,13 +115,13 @@ public:
   void print();
   
   //! if the discretization matrix is already initialized
-  bool discretizationMatrixInitialized();
+  bool massMatrixInitialized();
   
   //! create PETSc matrix
   void initializeDiscretizationMatrix();
   
   //! return a reference to the discretization matrix
-  Mat &discretizationMatrix();
+  Mat &massMatrix();
   
   //! return the element stiffness matrix kuu
   Mat &kuu();
@@ -157,7 +157,7 @@ private:
   
   // global matrices
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
-  Mat discretizationMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
   // element-local matrices
   Mat kuu_;   ///< element stiffness matrix d2/(du*du)int Psi
@@ -172,11 +172,7 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> displacement_;   ///< displacement fields u
   std::shared_ptr<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>> pressure_;   ///< pressure field p  
   
-  
-  bool disablePrinting_ = false;    ///< if printing of matrix and vectors is disabled
-  bool disableMatrixPrinting_ = false; ///< if the matrix should not be printed
-  
-  bool discretizationMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
+  bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
   
   std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh_;   ///< the BasisOnMesh object of Type BasisOnMesh::Mixed
 };

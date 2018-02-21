@@ -22,17 +22,6 @@ template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 FiniteElements(const DihuContext &context) : Data<HighOrderBasisOnMeshType>(context)
 {
-  this->disablePrinting_ = true;
-  if (PythonUtility::containsKey(this->context_.getPythonConfig(), "disablePrinting"))
-  {
-    this->disablePrinting_ = PythonUtility::getOptionBool(this->context_.getPythonConfig(), "disablePrinting", false);
-  }
-  
-  this->disableMatrixPrinting_ = true;
-  if (PythonUtility::containsKey(this->context_.getPythonConfig(), "disableMatrixPrinting"))
-  {
-    this->disableMatrixPrinting_ = PythonUtility::getOptionBool(this->context_.getPythonConfig(), "disableMatrixPrinting", false);
-  }
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -203,9 +192,9 @@ pressure()
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-discretizationMatrix()
+massMatrix()
 {
-  return this->discretizationMatrix_;
+  return this->massMatrix_;
 }
 
 //! return the element stiffness matrix kuu
@@ -236,24 +225,21 @@ template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 print()
 {
-  if (this->disablePrinting_)
+  if (!VLOG_IS_ON(4))
     return;
   
-  VLOG(1)<<"======================";
+  VLOG(4)<<"======================";
   int nRows, nColumns;
   MatGetSize(this->stiffnessMatrix_, &nRows, &nColumns);
-  VLOG(1)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
+  VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
-  if (!this->disableMatrixPrinting_)
-  {
-    VLOG(1) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
-    VLOG(1) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
-  }
-  
+  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
+  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
+    
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_, MAT_LOCAL, &info);
   
-  VLOG(1)<<"Matrix info: "<<std::endl
+  VLOG(4)<<"Matrix info: "<<std::endl
     <<"block_size: "<<info.block_size<<std::endl
     <<"number of nonzeros: allocated: "<<info.nz_allocated<<", used: "<<info.nz_used<<", unneeded: "<<info.nz_unneeded<<std::endl
     <<"memory allocated: "<<info.memory<<std::endl
@@ -263,25 +249,25 @@ print()
     <<"number of mallocs during factorization: "<<info.factor_mallocs<<std::endl;
     
     
-  VLOG(1)<<"======================";
+  VLOG(4)<<"======================";
   
   int nEntries;
   VecGetSize(this->rhs_->values(), &nEntries);
-  VLOG(1)<<"rhs ("<<nEntries<<" entries):";
-  VLOG(1)<<PetscUtility::getStringVector(this->rhs_->values());
-  VLOG(1)<<"======================";
+  VLOG(4)<<"rhs ("<<nEntries<<" entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->rhs_->values());
+  VLOG(4)<<"======================";
   
   VecGetSize(this->solution_->values(), &nEntries);
-  VLOG(1)<<"solution ("<<nEntries<<" entries):";
-  VLOG(1)<<PetscUtility::getStringVector(this->solution_->values());
-  VLOG(1)<<"======================";
+  VLOG(4)<<"solution ("<<nEntries<<" entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
+  VLOG(4)<<"======================";
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 bool FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-discretizationMatrixInitialized()
+massMatrixInitialized()
 {
-  return this->discretizationMatrixInitialized_;
+  return this->massMatrixInitialized_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -302,10 +288,10 @@ initializeDiscretizationMatrix()
   
   PetscErrorCode ierr;
   ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, nEntries, nEntries, 
-                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->discretizationMatrix_); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(this->discretizationMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->massMatrix_); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(this->massMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
   
-  this->discretizationMatrixInitialized_ = true;
+  this->massMatrixInitialized_ = true;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -356,7 +342,8 @@ initializeFieldVariables()
   displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_, "displacement", components);
   //displacement_->initializeFromFieldVariable(this->mesh_->geometryField(), "displacement", {"x","y","z"});
   
-  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>();
+  std::vector<std::string> pressureComponent({"0"});
+  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", pressureComponent);
   
 }
 
@@ -368,6 +355,8 @@ initializeMatrices()
   
   // create PETSc matrix object
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kuu_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kup_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kpp_);  CHKERRV(ierr);
   
   const int nu = HighOrderBasisOnMeshType::nDofsPerElement();
   const int np = LowOrderBasisOnMeshType::nDofsPerElement();

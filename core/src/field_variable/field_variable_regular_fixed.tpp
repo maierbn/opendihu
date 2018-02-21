@@ -205,7 +205,7 @@ getElementValues(std::string component, element_no_t elementNo,
 /*
 //! get the values corresponding to all element-local dofs for all components
 template<int D,typename BasisFunctionType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
@@ -268,7 +268,7 @@ getValue(std::string component, node_no_t dofGlobalNo)
 
 //! get a single value from global dof no. for all components
 template<int D,typename BasisFunctionType>
-template<int nComponents>
+template<std::size_t nComponents>
 std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 getValue(node_no_t dofGlobalNo)
 {
@@ -316,7 +316,7 @@ setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunc
 /*
 //! set values for dofs
 template<int D,typename BasisFunctionType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
 {
@@ -329,7 +329,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
 /*
 //! set a single value
 template<int D,typename BasisFunctionType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 {

@@ -35,8 +35,8 @@ protected:
   //! do nothing, needed for initialize of base class that is overridden anyway
   void setRightHandSide(){};
   
-  //! Extract from the rhs in weak formulation the rhs vector in strong formulation
-  void recoverRightHandSide(Vec &result);
+  //! Compute from the rhs in weak formulation the rhs vector in strong formulation
+  void recoverRightHandSideStrongForm(Vec &result);
 };
 
 };  // namespace

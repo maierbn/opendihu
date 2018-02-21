@@ -22,10 +22,10 @@ Linear::Linear(PyObject *specificSettings) :
   ierr = KSPGetPC (*ksp_, &pc); CHKERRV(ierr);
   
   // set preconditioner type
-  //ierr = PCSetType (pc, PCJACOBI); CHKERRV(ierr);
+  ierr = PCSetType (pc, PCNONE); CHKERRV(ierr);
   
   // set solver type
-  ierr = KSPSetType(*ksp_, KSPCG); CHKERRV(ierr);
+  ierr = KSPSetType(*ksp_, KSPGMRES); CHKERRV(ierr);
   
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
   ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);

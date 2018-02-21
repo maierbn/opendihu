@@ -13,8 +13,8 @@ examples = [
   "cellml",
   "electrophysiology",
 ]
-#examples = ["electrophysiology"]
-examples = ["laplace1d"]
+examples = ["electrophysiology"]
+#examples = ["laplace1d"]
 
 # loop over examples and call SConstruct file
 for example in examples:

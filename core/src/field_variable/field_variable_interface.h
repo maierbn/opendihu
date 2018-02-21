@@ -30,11 +30,11 @@ struct Interface
   //void setValues(FieldVariable &rhs);
  
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  //template<int nComponents>
+  //template<std::size_t nComponents>
   //void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values);
 
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  //template<int nComponents>
+  //template<std::size_t nComponents>
   //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value);
   
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
@@ -66,14 +66,14 @@ struct Interface
   //void getElementValuesComponent(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
   
   //! get the values corresponding to all element-local dofs for all components
-  //template<int nComponents>
+  //template<std::size_t nComponents>
   //void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
   
   //! for a specific component, get a single value from global dof no.
   virtual double getValue(std::string component, node_no_t dofGlobalNo) = 0;
 
   //! get a single value from global dof no. for all components
-  //template<int nComponents>
+  //template<std::size_t nComponents>
   //std::array<double,nComponents> getValue(node_no_t dofGlobalNo)
   
   //! write a exelem file header to a stream, for a particular element

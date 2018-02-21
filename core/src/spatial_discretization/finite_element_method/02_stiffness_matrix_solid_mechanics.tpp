@@ -308,7 +308,7 @@ computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::a
   
   std::array<double,21> elasticity({0});
   // loop over distinct entries in elasticity tensor
-  for (int entryNo = 0; entryNo < 24; entryNo++)
+  for (int entryNo = 0; entryNo < 21; entryNo++)
   {
     // rename indices of current entry
     const int i = indices[entryNo][0];

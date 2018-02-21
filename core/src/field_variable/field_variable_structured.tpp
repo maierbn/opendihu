@@ -279,7 +279,7 @@ getElementValues(std::string component, element_no_t elementNo,
 
 //! get the values corresponding to all element-local dofs for all components
 template<typename BasisOnMeshType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
@@ -325,7 +325,7 @@ getValue(std::string component, node_no_t dofGlobalNo)
 
 //! get a single value from global dof no. for all components
 template<typename BasisOnMeshType>
-template<int nComponents>
+template<std::size_t nComponents>
 std::array<double,nComponents> FieldVariableStructured<BasisOnMeshType>::
 getValue(node_no_t dofGlobalNo)
 {
@@ -346,7 +346,7 @@ getValue(node_no_t dofGlobalNo)
 /*
 //! set values for dofs
 template<typename BasisOnMeshType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
 {
@@ -373,7 +373,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
 /*
 //! set a single value
 template<typename BasisOnMeshType>
-template<int nComponents>
+template<std::size_t nComponents>
 void FieldVariableStructured<BasisOnMeshType>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 {

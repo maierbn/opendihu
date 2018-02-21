@@ -23,9 +23,11 @@ int main(int argc, char *argv[])
     TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::RegularFixed<1>,
-        Mesh::StructuredRegularFixedOfDimension<1>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<2>,
+        //Mesh::StructuredRegularFixedOfDimension<1>,
+        BasisFunction::Lagrange<1>,
+        //BasisFunction::LagrangeOfOrder<1>,
+        Integrator::Gauss<2>,
+        //Quadrature::Gauss<2>,
         Equation::Dynamic::Diffusion
       >
     >

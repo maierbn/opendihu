@@ -52,6 +52,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
       // check if config is the  same
       if (solver.second->configEquals(settings))
       {
+        LOG(DEBUG) << "Solver \"" << solver.first << "\" matches settings.";
         return std::static_pointer_cast<SolverType>(solver.second);
       }
     }

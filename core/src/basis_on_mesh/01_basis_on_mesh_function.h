@@ -18,13 +18,13 @@ class BasisOnMeshFunction :
 public:
   using MeshType::MeshType;
  
-  //! evaluate the basis function corresponding to element-local dof dofIndex at xi, interval for xi is [0,1]
+  //! evaluate the basis function corresponding to element-local dof dofIndex at xi, xi lives in [0,1]^D
   static double phi(int dofIndex, std::array<double,MeshType::dim()> xi);
   
-  //! evaluate the derivative of Phi(xi) w.r.t xi_i, where i is given by derivativeIdx
+  //! evaluate the derivative of Phi(xi) w.r.t xi_i, where i is given by derivativeIdx, i.e. Phi_{dofIndex,derivativeIdx}(xi)
   static double dPhidxi(int dofIndex, int derivativeIdx, std::array<double,MeshType::dim()> xi);
 
-  //! evaluate the first derivative of the basis function corresponding to element-local dof dofIndex at xi, interval for xi is [0,1]
+  //! evaluate the first derivative of the basis function corresponding to element-local dof dofIndex at xi, interval for xi is [0,1]^D
   static std::array<double,MeshType::dim()> gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi);
 
 private:

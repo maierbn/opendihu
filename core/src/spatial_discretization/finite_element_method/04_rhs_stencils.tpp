@@ -1026,7 +1026,7 @@ transferRhsToWeakForm()
   VecAssemblyEnd(rightHandSide);
 }
 
-// 1D discretizationMatrix
+// 1D massMatrix
 template<typename IntegratorType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<1>>::
 setRhsDiscretizationMatrix()
@@ -1034,7 +1034,7 @@ setRhsDiscretizationMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<1>, BasisFunction::Lagrange<1>> BasisOnMeshType;
  
   // check if matrix discretization matrix exists
-  if (!this->data_.discretizationMatrixInitialized())
+  if (!this->data_.massMatrixInitialized())
   {
     this->data_.initializeDiscretizationMatrix();
     
@@ -1053,10 +1053,10 @@ setRhsDiscretizationMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
    
-    Mat &dmatrix = this->data_.discretizationMatrix();
+    Mat &massMatrix = this->data_.massMatrix();
       
-    // dmatrix * f_strong = rhs_weak
-    // row of dmatrix: contributions to a single entry in rhs_weak
+    // massMatrix * f_strong = rhs_weak
+    // row of massMatrix: contributions to a single entry in rhs_weak
     
     // stencil values
     // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
@@ -1064,30 +1064,30 @@ setRhsDiscretizationMatrix()
     const double stencilCenter[3] = {1./6.*1, 1./6.*4, 1./6.*1};
     const double stencilSide[2] = {1./6.*2, 1./6.*1};
     
-    // loop over all dofs and set values in dmatrix with stencilCenter
+    // loop over all dofs and set values in massMatrix with stencilCenter
     for (node_no_t dofNo = 1; dofNo < nDegreesOfFreedom-1; dofNo++)
     { 
-      ierr = MatSetValue(dmatrix, dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-      ierr = MatSetValue(dmatrix, dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES); CHKERRV(ierr);
-      ierr = MatSetValue(dmatrix, dofNo, dofNo+1, stencilCenter[center+1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+      ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+      ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES); CHKERRV(ierr);
+      ierr = MatSetValue(massMatrix, dofNo, dofNo+1, stencilCenter[center+1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     }
     
     // set values for boundaries with stencilSide
     node_no_t dofNo = 0;    
-    ierr = MatSetValue(dmatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     
     dofNo = nDegreesOfFreedom-1;
-    ierr = MatSetValue(dmatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofNo-1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     
-    ierr = MatAssemblyBegin(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   
   }
 }
 
-// 2D discretizationMatrix
+// 2D massMatrix
 template<typename IntegratorType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<2>>::
 setRhsDiscretizationMatrix()
@@ -1095,7 +1095,7 @@ setRhsDiscretizationMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<2>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // check if matrix discretization matrix exists
-  if (!this->data_.discretizationMatrixInitialized())
+  if (!this->data_.massMatrixInitialized())
   {
     this->data_.initializeDiscretizationMatrix();
     
@@ -1115,10 +1115,10 @@ setRhsDiscretizationMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
    
-    Mat &dmatrix = this->data_.discretizationMatrix();
+    Mat &massMatrix = this->data_.massMatrix();
       
-    // dmatrix * f_strong = rhs_weak
-    // row of dmatrix: contributions to a single entry in rhs_weak
+    // massMatrix * f_strong = rhs_weak
+    // row of massMatrix: contributions to a single entry in rhs_weak
     
     // stencil values
     
@@ -1157,7 +1157,7 @@ setRhsDiscretizationMatrix()
           {
             node_no_t secondDofNo = dofIndex(x+j, y+i);
             double factor = stencilCenter[center+i][center+j] * integralFactor;
-            ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1174,11 +1174,11 @@ setRhsDiscretizationMatrix()
       { 
         node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
         secondDofNo = dofIndex(x+1, y+i);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
       }
     }
     
@@ -1192,11 +1192,11 @@ setRhsDiscretizationMatrix()
       {
         node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
         secondDofNo = dofIndex(x-1, y+i);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
       }
     }
     
@@ -1210,11 +1210,11 @@ setRhsDiscretizationMatrix()
       {
         node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
         secondDofNo = dofIndex(x+i, y+1);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
       }
     }
     
@@ -1228,11 +1228,11 @@ setRhsDiscretizationMatrix()
       {
         node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
         
         secondDofNo = dofIndex(x+i, y-1);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(dmatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
       }
     } 
    
@@ -1242,49 +1242,49 @@ setRhsDiscretizationMatrix()
     int y = 0;
     node_no_t dofNo = dofIndex(x,y);
     
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
         
     // bottom right
     x = nNodes0-1;
     y = 0;
     dofNo = dofIndex(x,y);
     
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
         
     // top left
     x = 0;
     y = nNodes1-1;
     dofNo = dofIndex(x,y);
     
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
         
     // top right
     x = nNodes0-1;
     y = nNodes1-1;
     dofNo = dofIndex(x,y);
     
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
   
    
-    ierr = MatAssemblyBegin(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
     
   }
 }
  
-// 3D discretizationMatrix
+// 3D massMatrix
 template<typename IntegratorType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>>, IntegratorType, Term, Mesh::RegularFixed<3>>::
 setRhsDiscretizationMatrix()
@@ -1292,7 +1292,7 @@ setRhsDiscretizationMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<3>, BasisFunction::Lagrange<1>> BasisOnMeshType;
   
   // check if matrix discretization matrix exists
-  if (!this->data_.discretizationMatrixInitialized())
+  if (!this->data_.massMatrixInitialized())
   {
     this->data_.initializeDiscretizationMatrix();
     
@@ -1315,10 +1315,10 @@ setRhsDiscretizationMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
    
-    Mat &dmatrix = this->data_.discretizationMatrix();
+    Mat &massMatrix = this->data_.massMatrix();
       
-    // dmatrix * f_strong = rhs_weak
-    // row of dmatrix: contributions to a single entry in rhs_weak
+    // massMatrix * f_strong = rhs_weak
+    // row of massMatrix: contributions to a single entry in rhs_weak
       
     // stencil values
     
@@ -1397,7 +1397,7 @@ setRhsDiscretizationMatrix()
               {     
                 value = stencilCenter[center+i][center+j][center+k]*integralFactor;
                 //                 matrix           row    column
-                ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+                ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
               }
             }
           }
@@ -1421,7 +1421,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1443,7 +1443,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1465,7 +1465,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1487,7 +1487,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1509,7 +1509,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1531,7 +1531,7 @@ setRhsDiscretizationMatrix()
             {     
               value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
             }
           }
         }
@@ -1553,7 +1553,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1573,7 +1573,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1593,7 +1593,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1613,7 +1613,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1635,7 +1635,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1655,7 +1655,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1677,7 +1677,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1699,7 +1699,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1719,7 +1719,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1739,7 +1739,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1759,7 +1759,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1779,7 +1779,7 @@ setRhsDiscretizationMatrix()
           {     
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
           }
         }
       }
@@ -1801,7 +1801,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1819,7 +1819,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1837,7 +1837,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1855,7 +1855,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1873,7 +1873,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1891,7 +1891,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1909,7 +1909,7 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -1927,13 +1927,13 @@ setRhsDiscretizationMatrix()
         {     
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(dmatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
 
-    ierr = MatAssemblyBegin(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(dmatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
     
   }
 }

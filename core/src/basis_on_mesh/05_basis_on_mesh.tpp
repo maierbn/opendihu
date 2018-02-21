@@ -73,18 +73,19 @@ createFieldVariable(std::string name, int nComponents)
   return fieldVariable;
 }
 
-/*
+
 template<typename MeshType, typename BasisFunctionType>
 template <int nComponents>
 std::array<double,nComponents> BasisOnMesh<MeshType,BasisFunctionType>::
-interpolateValue(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &nodalValues,
+interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                  std::array<double,MeshType::dim()> xi) const
 {
+  std::array<double,nComponents> result;
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    
+    result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
   }
+  return result;
 }
- */
  
 };  // namespace

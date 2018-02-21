@@ -19,7 +19,7 @@ public:
   using FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::FiniteElementMethodBase;
   
 protected:
- void setStiffnessMatrix();
+  void setStiffnessMatrix();
   
 };
 

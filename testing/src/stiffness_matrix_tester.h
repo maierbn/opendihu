@@ -59,7 +59,7 @@ public:
     for(std::pair<int, double> entry : dirichletBC)
     {
       double difference = fabs(solution[entry.first]-entry.second);
-      EXPECT_LE(difference, 1e-15) 
+      EXPECT_LE(difference, 1e-14) 
         << "Dirichlet BC on node " << entry.first << ", value "<<entry.second << " is not met! "
         << "Actual value: "<<solution[entry.first] << ", Difference: " << difference;
     }
@@ -113,10 +113,10 @@ public:
   {
     // create the discretization matrix if it does not already exist
     finiteElementMethod2.setRhsDiscretizationMatrix();
-    Mat &dmatrix = finiteElementMethod2.data_.discretizationMatrix();
+    Mat &massMatrix = finiteElementMethod2.data_.massMatrix();
     
     int n, m;
-    MatGetSize(dmatrix, &n, &m);
+    MatGetSize(massMatrix, &n, &m);
     LOG(DEBUG) << "matrix size: " << n << "x" << m << std::endl;
     Vec rhsStrong, rhsWeak;
       
@@ -125,12 +125,12 @@ public:
     
     PetscUtility::setVector(rhsValues, rhsStrong);
 
-    LOG(DEBUG) << "discretizationMatrix: " << PetscUtility::getStringMatrixVector(dmatrix, rhsStrong);    
-    MatMult(dmatrix, rhsStrong, rhsWeak);
+    LOG(DEBUG) << "massMatrix: " << PetscUtility::getStringMatrixVector(massMatrix, rhsStrong);    
+    MatMult(massMatrix, rhsStrong, rhsWeak);
     
-    LOG(DEBUG) << "dmatrix * rhsStrong = rhsWeak: " << PetscUtility::getStringVector(rhsWeak);
+    LOG(DEBUG) << "massMatrix * rhsStrong = rhsWeak: " << PetscUtility::getStringVector(rhsWeak);
     
-    // dmatrix * f_strong = rhs_weak
+    // massMatrix * f_strong = rhs_weak
     Vec &rhs = finiteElementMethod1.data_.rightHandSide().values();   // rhs in weak formulation
    
     LOG(DEBUG) << "using stencil: "<<PetscUtility::getStringVector(rhs);
@@ -146,7 +146,7 @@ public:
     {
       double difference = fabs(rhsWeakDMatrix[i]-rhsWeakStencil[i]);
       EXPECT_LE(difference, 1e-14) 
-        << "Rhs entry number " << i << " is different. Using dmatrix: " << rhsWeakDMatrix[i] 
+        << "Rhs entry number " << i << " is different. Using massMatrix: " << rhsWeakDMatrix[i] 
         << ", using stencil: " << rhsWeakStencil[i] << ", Difference: " << difference;
     }
   }

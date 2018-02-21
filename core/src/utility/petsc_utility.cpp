@@ -5,6 +5,7 @@
 #include <iomanip>
 
 #include "easylogging++.h"
+#include "petscksp.h"
 
 void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 {
@@ -16,6 +17,7 @@ void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matr
   std::vector<int> columnIndices(nColumns);
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
   matrixValues.resize(nRows*nColumns);
+  LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " entries for the " << nRows << "x" << nColumns << " matrix";
   
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
@@ -187,6 +189,76 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
     s<<std::endl;
   }
   s<<std::endl;
+  return s.str();
+}
+
+std::string PetscUtility::getStringConvergedReason(KSPConvergedReason convergedReason)
+{
+  
+  // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPGetConvergedReason.html
+  switch(convergedReason)
+  {
+  case KSP_CONVERGED_RTOL:
+    return "KSP_CONVERGED_RTOL: residual 2-norm decreased by a factor of rtol, from 2-norm of right hand side";
+
+  case KSP_CONVERGED_ATOL:
+    return "KSP_CONVERGED_ATOL: residual 2-norm less than abstol";
+
+  case KSP_CONVERGED_ITS:
+    return "KSP_CONVERGED_ITS: used by the preonly preconditioner that always uses ONE iteration, or when the KSPConvergedSkip() convergence test routine is set.";
+
+  case KSP_CONVERGED_CG_NEG_CURVE:
+    return "KSP_CONVERGED_CG_NEG_CURVE";
+
+  case KSP_CONVERGED_CG_CONSTRAINED:
+    return "KSP_CONVERGED_CG_CONSTRAINED";
+
+  case KSP_CONVERGED_STEP_LENGTH:
+    return "KSP_CONVERGED_STEP_LENGTH";
+
+  case KSP_CONVERGED_ITERATING:
+    return "KSP_CONVERGED_ITERATING: returned if the solver is not yet finished";
+
+  case KSP_DIVERGED_ITS:
+    return "KSP_DIVERGED_ITS: required more than its to reach convergence";
+
+  case KSP_DIVERGED_DTOL:
+    return "KSP_DIVERGED_DTOL: residual norm increased by a factor of divtol";
+
+  case KSP_DIVERGED_NANORINF:
+    return "KSP_DIVERGED_NANORINF: residual norm became Not-a-number or Inf likely due to 0/0";
+
+  case KSP_DIVERGED_BREAKDOWN:
+    return "KSP_DIVERGED_BREAKDOWN: generic breakdown in method";
+
+  case KSP_DIVERGED_BREAKDOWN_BICG:
+    return "KSP_DIVERGED_BREAKDOWN_BICG: Initial residual is orthogonal to preconditioned initial residual. Try a different preconditioner, or a different initial Level.";
+      
+  case KSP_DIVERGED_NULL:
+    return "KSP_DIVERGED_NULL";
+      
+  case KSP_DIVERGED_NONSYMMETRIC:
+    return "KSP_DIVERGED_NONSYMMETRIC";
+      
+  case KSP_DIVERGED_INDEFINITE_PC:
+    return "KSP_DIVERGED_INDEFINITE_PC";
+      
+  case KSP_DIVERGED_INDEFINITE_MAT:
+    return "KSP_DIVERGED_INDEFINITE_MAT";
+      
+  case KSP_DIVERGED_PCSETUP_FAILED:
+    return "KSP_DIVERGED_PCSETUP_FAILED";
+    
+  default:
+    break;
+  }
+  
+  std::stringstream s;
+  if (convergedReason < 0)
+    s << "divergence, ";
+  else
+    s << "converged, ";
+  s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
 

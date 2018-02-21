@@ -922,7 +922,10 @@ The discretization of $^{t}u$ reads
     {}^tu_i(x) = \phi_L(x)\,{}^tu_i^L,
   \end{array}
 \end{equation*}
-where ${}^tu_i^L$ are the coefficients, i.e. the nodal displacements. Differentiation yields
+where ${}^tu_i^L$ are the coefficients, i.e. the nodal displacements. Lower case indices $i,j,k,\dots$ refer to component indices $\{1,2,3\}$, capital indices are for dofs $\{1,\dots,n\}$. 
+The symbol ${}^tu_i^L$ stands for the nodal degree of freedom $L$ of the displacement component $i\in \{1,2,3\}$.
+
+Differentiation yields
 \begin{equation*}
   \begin{array}{lll}
     {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j} = \delta_{ij} + \p{{}^tu_i}{{}^ox_j} = \delta_{ij} + \phi_{L,j}(x)\,{}^tu_i^L = \delta_{ij} + u_{i,j}.

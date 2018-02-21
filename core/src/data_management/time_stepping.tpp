@@ -20,11 +20,6 @@ template<typename BasisOnMeshType>
 TimeStepping<BasisOnMeshType>::
 TimeStepping(const DihuContext &context) : Data<BasisOnMeshType>(context)
 {
-  this->disablePrinting_ = true;
-  if (PythonUtility::containsKey(this->context_.getPythonConfig(), "disablePrinting"))
-  {
-    this->disablePrinting_ = PythonUtility::getOptionBool(this->context_.getPythonConfig(), "disablePrinting", false);
-  }
 }
 
 template<typename BasisOnMeshType>
@@ -67,21 +62,21 @@ template<typename BasisOnMeshType>
 void TimeStepping<BasisOnMeshType>::
 print()
 {
-  if (this->disablePrinting_)
+  if (!VLOG_IS_ON(4))
     return;
   
-  VLOG(1)<<"======================";
+  VLOG(4)<<"======================";
   
   int nEntries;
   VecGetSize(this->increment_->values(), &nEntries);
-  VLOG(1)<<"increment ("<<nEntries<<" entries):";
-  VLOG(1)<<PetscUtility::getStringVector(this->increment_->values());
-  VLOG(1)<<"======================";
+  VLOG(4)<<"increment ("<<nEntries<<" entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->increment_->values());
+  VLOG(4)<<"======================";
   
   VecGetSize(this->solution_->values(), &nEntries);
-  VLOG(1)<<"solution ("<<nEntries<<" entries):";
-  VLOG(1)<<PetscUtility::getStringVector(this->solution_->values());
-  VLOG(1)<<"======================";
+  VLOG(4)<<"solution ("<<nEntries<<" entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
+  VLOG(4)<<"======================";
 }
 
 template<typename BasisOnMeshType>

@@ -1,10 +1,11 @@
 #include "spatial_discretization/finite_element_method/00_base.h"
 
+#include <Python.h>  // this has to be the first included header 
 #include <iostream>
 #include <petscksp.h>
 #include <memory>
+#include <cassert>
 
-#include <Python.h>
 #include "easylogging++.h"
 
 #include "control/types.h"
@@ -13,6 +14,8 @@
 #include "mesh/regular_fixed.h"
 #include "basis_function/lagrange.h"
 #include "mesh/mesh_manager.h"
+#include "solver/solver_manager.h"
+#include "solver/linear.h"
 
 namespace SpatialDiscretization
 {
@@ -151,26 +154,32 @@ solve()
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
   
   // create linear solver context
-  KSP ksp = context_.solverManager()->template solver<Solver::Linear>(specificSettings_);
-  //ierr = KSPCreate (PETSC_COMM_WORLD, &ksp); CHKERRV(ierr);  
+  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
+  std::shared_ptr<KSP> ksp = linearSolver->ksp();
+  
+  assert(ksp != nullptr);
   
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (ksp, stiffnessMatrix, stiffnessMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp, stiffnessMatrix, stiffnessMatrix); CHKERRV(ierr);
   
   // non zero initial values
   PetscScalar scalar = .5;
   ierr = VecSet(data_.solution().values(), scalar); CHKERRV(ierr);
-  ierr = KSPSetInitialGuessNonzero(ksp, PETSC_TRUE); CHKERRV(ierr);
+  ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
   
   // solve the system
-  ierr = KSPSolve(ksp, data_.rightHandSide().values(), data_.solution().values()); CHKERRV(ierr);
+  ierr = KSPSolve(*ksp, data_.rightHandSide().values(), data_.solution().values()); CHKERRV(ierr);
   
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(ksp, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(ksp, &residualNorm); CHKERRV(ierr);
+  ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
+  ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
   
-  LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+  KSPConvergedReason convergedReason;
+  ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
+  
+  LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm 
+    << ": " << PetscUtility::getStringConvergedReason(convergedReason);
   
   // check if solution is correct
   if (false)
@@ -223,9 +232,6 @@ solve()
     
     LOG(DEBUG) << "res=" << res;
   }
-  
-  // clean up ksp solver context
-  //KSPDestroy(&ksp);
 }
   
 };

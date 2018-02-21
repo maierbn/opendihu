@@ -53,21 +53,21 @@ public:
   void getElementValues(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
   
   //! get the values corresponding to all element-local dofs for all components
-  template<int nComponents>
+  template<std::size_t nComponents>
   void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values);
   
   //! for a specific component, get a single value from global dof no.
   double getValue(std::string component, node_no_t dofGlobalNo);
 
   //! get a single value from global dof no. for all components
-  template<int nComponents>
+  template<std::size_t nComponents>
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::RegularFixed<D>,BasisFunctionType>> &rhs);
   
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<int nComponents>
+  template<std::size_t nComponents>
   void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
   {
     if (!this->isGeometryField_)
@@ -77,7 +77,7 @@ public:
   }
 
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<int nComponents>
+  template<std::size_t nComponents>
   void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
   {
     if (!this->isGeometryField_)

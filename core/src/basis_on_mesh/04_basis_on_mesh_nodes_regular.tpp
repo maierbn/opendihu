@@ -6,6 +6,7 @@
 
 #include "utility/python_utility.h"
 #include "control/types.h"
+#include "utility/vector_operators.h"
 #include "field_variable/field_variable.h"
 #include "field_variable/field_variable_regular_fixed.h"
 

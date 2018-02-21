@@ -110,15 +110,15 @@ void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
 setRhsDiscretizationMatrix()
 {
   // check if matrix discretization matrix exists
-  if (!this->data_.discretizationMatrixInitialized())
+  if (!this->data_.massMatrixInitialized())
   {
     this->data_.initializeDiscretizationMatrix();
       
     const int D = BasisOnMeshType::dim();
     LOG(TRACE)<<"createRhsDiscretizationMatrix " << D << "D";
   
-    // dmatrix * f_strong = rhs_weak
-    // row of dmatrix: contributions to a single entry in rhs_weak
+    // massMatrix * f_strong = rhs_weak
+    // row of massMatrix: contributions to a single entry in rhs_weak
       
     // define shortcuts for integrator and basis
     typedef Integrator::TensorProduct<D,IntegratorType> IntegratorDD;
@@ -131,7 +131,7 @@ setRhsDiscretizationMatrix()
     
     // initialize variables
     PetscErrorCode ierr;
-    Mat &discretizationMatrix = this->data_.discretizationMatrix();
+    Mat &massMatrix = this->data_.massMatrix();
       
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
       
@@ -145,7 +145,7 @@ setRhsDiscretizationMatrix()
       {
         for (int j=0; j<nDofsPerElement; j++)
         {
-          ierr = MatSetValue(discretizationMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
         }
       }
     }
@@ -162,7 +162,7 @@ setRhsDiscretizationMatrix()
       LOG(DEBUG) << "   " << value;
   #endif
     
-    // set entries in discretizationMatrix
+    // set entries in massMatrix
     // loop over elements 
     for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
@@ -199,13 +199,13 @@ setRhsDiscretizationMatrix()
           
           // integrate value and set entry in discretization matrix
           double value = IntegratorDD::integrate(evaluations);
-          ierr = MatSetValue(discretizationMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
+          ierr = MatSetValue(massMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
         }  // j
       }  // i
     }  // elementNo
     
-    ierr = MatAssemblyBegin(discretizationMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(discretizationMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   }
 }
 

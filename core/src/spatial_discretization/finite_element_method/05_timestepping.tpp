@@ -42,11 +42,11 @@ initialize()
 
 template<typename BasisOnMeshType, typename IntegratorType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
-recoverRightHandSide(Vec &result)
+recoverRightHandSideStrongForm(Vec &result)
 {
-  // discretizationMatrix * f_strong = rhs_weak
+  // massMatrix * f_strong = rhs_weak
   Vec &rhs = this->data_.rightHandSide().values();   // rhs in weak formulation
-  Mat &discretizationMatrix = this->data_.discretizationMatrix();
+  Mat &massMatrix = this->data_.massMatrix();
   
   PetscErrorCode ierr;
   
@@ -55,7 +55,7 @@ recoverRightHandSide(Vec &result)
   std::shared_ptr<KSP> ksp = linearSolver->ksp();
   
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (*ksp, discretizationMatrix, discretizationMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp, massMatrix, massMatrix); CHKERRV(ierr);
   
   // non zero initial values
   PetscScalar scalar = .5;
@@ -83,7 +83,7 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   // compute rhs = stiffnessMatrix*input
   MatMult(stiffnessMatrix, input, rhs);
   
-  recoverRightHandSide(output);
+  recoverRightHandSideStrongForm(output);
   
   this->data_.print();
 }

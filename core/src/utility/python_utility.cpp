@@ -323,7 +323,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
       // convert to double or take default value
       result = convertFromPython<double>(value, defaultValue);
       
-      LOG(DEBUG)<<"Value for key \""<<keyString<<"\" found: "<<result<<".";
+      LOG(DEBUG)<<"PythonUtility::getOptionDouble: Value for key \""<<keyString<<"\" found: "<<result<<".";
     }
   }
   else

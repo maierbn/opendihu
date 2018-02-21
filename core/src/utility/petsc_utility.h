@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <petscmat.h>
+#include <petscksp.h>
 
 class PetscUtility
 {
@@ -31,4 +32,7 @@ public:
   
   ///! return a string representing the sparsity pattern
   static std::string getStringSparsityPattern(const Mat &matrix);
+  
+  ///! return a string description of the reason why the solution has finished
+  static std::string getStringConvergedReason(KSPConvergedReason convergedReason);
 };    

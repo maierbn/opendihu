@@ -9,7 +9,7 @@
 #include "easylogging++.h"
 #include "utility/string_utility.h"
 #include "utility/math_utility.h"
-#include "field_variable/field_variable_regular_fixed.h"
+#include "field_variable/field_variable_structured_regular_fixed.h"
 #include "field_variable/field_variable_structured_deformable.h"
 #include "field_variable/field_variable_unstructured_deformable.h"
 

@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "easylogging++.h"
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 
 namespace Mesh 
 {

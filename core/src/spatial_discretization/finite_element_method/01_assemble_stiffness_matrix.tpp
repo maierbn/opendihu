@@ -5,7 +5,7 @@
 #include <vector>
 #include <petscsys.h>
 
-#include "integrator/tensor_product.h"
+#include "quadrature/tensor_product.h"
 #include "basis_on_mesh/05_basis_on_mesh.h"
 #include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix.h"
 
@@ -13,8 +13,8 @@ namespace SpatialDiscretization
 {
   
 // 1D,2D,3D stiffness matrix of Deformable mesh
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void AssembleStiffnessMatrix<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   const int D = BasisOnMeshType::dim();
@@ -24,12 +24,12 @@ setStiffnessMatrix()
   const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
   
   // define shortcuts for integrator and basis
-  typedef Integrator::TensorProduct<D,IntegratorType> IntegratorDD;
+  typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
-            IntegratorDD::numberEvaluations()
+            QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
   
   // initialize variables
@@ -56,11 +56,11 @@ setStiffnessMatrix()
   }
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, IntegratorDD::numberEvaluations()> samplingPoints = IntegratorDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray;
   
-  LOG(DEBUG) << "1D integration with " << IntegratorType::numberEvaluations() << " evaluations";
-  LOG(DEBUG) << D << "D integration with " << IntegratorDD::numberEvaluations() << " evaluations";
+  LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
+  LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
 #ifdef DEBUG
   LOG(DEBUG) << "SAMPLING POINTS: ";
   for  (auto value : samplingPoints)
@@ -104,14 +104,14 @@ setStiffnessMatrix()
       for (int j=0; j<nDofsPerElement; j++)
       {
         // extract evaluations for current (i,j) dof-pair
-        std::array<double,IntegratorDD::numberEvaluations()> evaluations;
-        for (int k=0; k<IntegratorDD::numberEvaluations(); k++)
+        std::array<double,QuadratureDD::numberEvaluations()> evaluations;
+        for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
           evaluations[k] = evaluationsArray[k][i][j];
         
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<IntegratorDD::integrate(evaluations);
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureDD::computeIntegral(evaluations);
         
         // integrate value and set entry in stiffness matrix
-        double value = -prefactor * IntegratorDD::integrate(evaluations);
+        double value = -prefactor * QuadratureDD::computeIntegral(evaluations);
         ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
     }  // i

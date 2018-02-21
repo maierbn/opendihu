@@ -53,7 +53,7 @@ config = {
   FiniteElementMethod<
     Mesh::UnstructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<1>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -107,7 +107,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<1>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -162,7 +162,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   

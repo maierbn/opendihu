@@ -16,8 +16,8 @@
 namespace SpatialDiscretization
 {
   
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void FiniteElementMethodRhs<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodRhs<BasisOnMeshType, QuadratureType, Term>::
 setRightHandSide()
 {
   LOG(TRACE)<<"setRightHandSide";

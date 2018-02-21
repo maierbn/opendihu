@@ -44,7 +44,7 @@ config = {
     FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<1>,
       BasisFunction::LagrangeOfOrder<>,
-      Integrator::None,
+      Quadrature::None,
       Equation::Dynamic::Diffusion
     >
   > equationDiscretized(settings);

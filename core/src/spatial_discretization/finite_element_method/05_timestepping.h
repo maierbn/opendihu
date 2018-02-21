@@ -10,9 +10,9 @@ namespace SpatialDiscretization
 
 /** class used for timestepping as for diffusion equation
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodTimeStepping :
-  public FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term>,
+  public FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>,
   public DiscretizableInTime
 {
 public:

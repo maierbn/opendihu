@@ -40,7 +40,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<1>,
+    Quadrature::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -79,7 +79,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<1>,
+    Quadrature::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
@@ -116,7 +116,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<1>,
+    Quadrature::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -155,7 +155,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<1>,
+    Quadrature::Gauss<1>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
@@ -187,7 +187,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -221,7 +221,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   

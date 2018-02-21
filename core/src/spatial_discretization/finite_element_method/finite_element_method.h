@@ -15,22 +15,22 @@ namespace SpatialDiscretization
  
 /** inherited class that has additional Term template parameter
  */
-template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term, typename = Term>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term>
 class FiniteElementMethod :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 };
 
 /** partial specialisation for Equation::Static::Laplace: has only stiffnessMatrix
  * use inheritage hierarchy until file 02_stiffness_matrix.h
  */
-template<typename MeshType, typename BasisFunctionType, typename IntegratorType>
-class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Equation::Static::Laplace> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::Laplace> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Equation::Static::Laplace>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Equation::Static::Laplace>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Equation::Static::Laplace>
     ::FiniteElementMethodStiffnessMatrix;
  
 private:
@@ -41,42 +41,42 @@ private:
 /** common class for not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static and has a rhs
  * use inheritage hierarchy until file 04_rhs.h
  */
-template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Term, Equation::hasLaplaceOperatorWithRhs<Term>> :
-  public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasLaplaceOperatorWithRhs<Term>> :
+  public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodRhs;
+  using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodRhs;
   
 };
 
 /* class for mixed formulation for structural mechanics
  */
-template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedIntegratorType>
-class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedIntegratorType, Equation::Static::SolidMechanics> :
+template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType>
+class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Equation::Static::SolidMechanics> :
   public FiniteElementMethodRhs<BasisOnMesh::Mixed<
     BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedIntegratorType, Equation::Static::SolidMechanics>
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Equation::Static::SolidMechanics>
 {
 public:
   //! use constructor of base class
   using FiniteElementMethodRhs<BasisOnMesh::Mixed<
     BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedIntegratorType, Equation::Static::SolidMechanics>::FiniteElementMethodRhs;
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodRhs;
     
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
  * use inheritage hierarchy until file 05_timestepping.h
  */
-template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>> :
-  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>> :
+  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, IntegratorType, Term>::FiniteElementMethodTimeStepping;
+  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
   
 };
 

@@ -45,7 +45,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -97,7 +97,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -149,7 +149,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -218,7 +218,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -269,7 +269,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -348,7 +348,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<3>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -511,7 +511,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized1(settings1);
   
@@ -523,7 +523,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings2);
   
@@ -555,7 +555,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -565,7 +565,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Dynamic::Diffusion
   > equationDiscretized2(settings);
   
@@ -602,7 +602,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -612,7 +612,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
@@ -649,7 +649,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -659,7 +659,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
@@ -696,7 +696,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -706,7 +706,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
@@ -743,7 +743,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<3>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -754,7 +754,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<3>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
@@ -791,7 +791,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<3>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::None,
+    Quadrature::None,
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
@@ -802,7 +802,7 @@ config = {
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<3>,
     BasisFunction::LagrangeOfOrder<>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   

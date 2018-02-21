@@ -5,7 +5,7 @@
 #include <vector>
 #include <petscsys.h>
 
-#include "integrator/tensor_product.h"
+#include "quadrature/tensor_product.h"
 #include "basis_on_mesh/05_basis_on_mesh.h"
 #include "spatial_discretization/finite_element_method/03_integrand_rhs.h"
 
@@ -13,20 +13,20 @@ namespace SpatialDiscretization
 {
   
 // 1D,2D,3D rhs vector of Deformable mesh
-template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy>
-void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy>
+void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
 transferRhsToWeakForm()
 {
   const int D = BasisOnMeshType::dim();
   LOG(TRACE)<<"transferRhsToWeakForm " << D << "D";
  
   // define shortcuts for integrator and basis
-  typedef Integrator::TensorProduct<D,IntegratorType> IntegratorDD;
+  typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
-            IntegratorDD::numberEvaluations()
+            QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;    // evaluations[nGP^D][nDofs][nDofs]
   
   // initialize variables
@@ -43,11 +43,11 @@ transferRhsToWeakForm()
   VecZeroEntries(rightHandSide);
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, IntegratorDD::numberEvaluations()> samplingPoints = IntegratorDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray;
   
-  LOG(DEBUG) << "1D integration with " << IntegratorType::numberEvaluations() << " evaluations";
-  LOG(DEBUG) << D << "D integration with " << IntegratorDD::numberEvaluations() << " evaluations";
+  LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
+  LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
 #ifdef DEBUG
   LOG(DEBUG) << "SAMPLING POINTS: ";
   for  (auto value : samplingPoints)
@@ -87,13 +87,13 @@ transferRhsToWeakForm()
       for (int j=0; j<nDofsPerElement; j++)
       {
         // extract evaluations for current (i,j) dof-pair
-        std::array<double,IntegratorDD::numberEvaluations()> evaluations;
-        for (int k=0; k<IntegratorDD::numberEvaluations(); k++)
+        std::array<double,QuadratureDD::numberEvaluations()> evaluations;
+        for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
           evaluations[k] = evaluationsArray[k][i][j];
         
         
-        double value = IntegratorDD::integrate(evaluations) * rhsValues[dof[j]];
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<IntegratorDD::integrate(evaluations)<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
+        double value = QuadratureDD::computeIntegral(evaluations) * rhsValues[dof[j]];
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureDD::computeIntegral(evaluations)<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
         
         ierr = VecSetValue(rightHandSide, dof[i], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
@@ -105,8 +105,8 @@ transferRhsToWeakForm()
 }
 
 // 1D,2D,3D rhs discretization matrix, i.e. matrix that transforms rhs values to discretized form, of Deformable mesh
-template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy>
-void AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term, Dummy>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy>
+void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
 setMassMatrix()
 {
   // check if matrix discretization matrix exists
@@ -121,12 +121,12 @@ setMassMatrix()
     // row of massMatrix: contributions to a single entry in rhs_weak
       
     // define shortcuts for integrator and basis
-    typedef Integrator::TensorProduct<D,IntegratorType> IntegratorDD;
+    typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
     const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
     typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
     typedef std::array<
               EvaluationsType,
-              IntegratorDD::numberEvaluations()
+              QuadratureDD::numberEvaluations()
             > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
     
     // initialize variables
@@ -151,11 +151,11 @@ setMassMatrix()
     }
     
     // setup arrays used for integration
-    std::array<std::array<double,D>, IntegratorDD::numberEvaluations()> samplingPoints = IntegratorDD::samplingPoints();
+    std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
     EvaluationsArrayType evaluationsArray;
     
-    LOG(DEBUG) << "1D integration with " << IntegratorType::numberEvaluations() << " evaluations";
-    LOG(DEBUG) << D << "D integration with " << IntegratorDD::numberEvaluations() << " evaluations";
+    LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
+    LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
   #ifdef DEBUG
     LOG(DEBUG) << "SAMPLING POINTS: ";
     for  (auto value : samplingPoints)
@@ -193,12 +193,12 @@ setMassMatrix()
         for (int j=0; j<nDofsPerElement; j++)
         {
           // extract evaluations for current (i,j) dof-pair
-          std::array<double,IntegratorDD::numberEvaluations()> evaluations;
-          for (int k=0; k<IntegratorDD::numberEvaluations(); k++)
+          std::array<double,QuadratureDD::numberEvaluations()> evaluations;
+          for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
             evaluations[k] = evaluationsArray[k][i][j];
           
           // integrate value and set entry in discretization matrix
-          double value = IntegratorDD::integrate(evaluations);
+          double value = QuadratureDD::computeIntegral(evaluations);
           ierr = MatSetValue(massMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
         }  // j
       }  // i
@@ -210,10 +210,10 @@ setMassMatrix()
 }
 
 /*
-template<typename MixedBasisOnMeshType, typename MixedIntegratorType>
-AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::
+template<typename MixedBasisOnMeshType, typename MixedQuadratureType>
+AssembleRightHandSide<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::
 AssembleRightHandSide(const DihuContext &context) :
-  FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix(context)
+  FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix(context)
 {
   
 }*/

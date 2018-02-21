@@ -12,8 +12,8 @@ namespace SpatialDiscretization
 {
   
 // general implementation for solid mechanics
-template<typename BasisOnMeshType, typename MixedIntegratorType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix for solid mechanics";
@@ -35,23 +35,23 @@ setStiffnessMatrix()
   const int nElements = basisOnMeshU->nElements();
   
   // define shortcuts for integrator and basis
-  typedef Integrator::TensorProduct<D,typename MixedIntegratorType::HighOrderIntegrator> IntegratorU;
-  typedef Integrator::TensorProduct<D,typename MixedIntegratorType::LowOrderIntegrator> IntegratorP;
+  typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::HighOrderQuadrature> QuadratureU;
+  typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::LowOrderQuadrature> QuadratureP;
   
   typedef std::array<std::array<double, nDofsUPerElement>, nDofsUPerElement> EvaluationsUType;
   typedef std::array<
             EvaluationsUType,
-            IntegratorU::numberEvaluations()
+            QuadratureU::numberEvaluations()
           > EvaluationsUArrayType;     // evaluations[nGP^D][nDofs][nDofs]
   typedef std::array<std::array<double, nDofsPPerElement>, nDofsPPerElement> EvaluationsPType;
   typedef std::array<
             EvaluationsPType,
-            IntegratorP::numberEvaluations()
+            QuadratureP::numberEvaluations()
           > EvaluationsPArrayType;     // evaluations[nGP^D][nDofs][nDofs]
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, IntegratorU::numberEvaluations()> samplingPointsU = IntegratorU::samplingPoints();
-  std::array<std::array<double,D>, IntegratorP::numberEvaluations()> samplingPointsP = IntegratorP::samplingPoints();
+  std::array<std::array<double,D>, QuadratureU::numberEvaluations()> samplingPointsU = QuadratureU::samplingPoints();
+  std::array<std::array<double,D>, QuadratureP::numberEvaluations()> samplingPointsP = QuadratureP::samplingPoints();
   EvaluationsUArrayType evaluationsUArray;
   EvaluationsPArrayType evaluationsPArray;
   
@@ -124,21 +124,21 @@ setStiffnessMatrix()
       for (int j=0; j<nDofsUPerElement; j++)
       {
         // extract evaluations for current (i,j) dof-pair
-        std::array<double,IntegratorU::numberEvaluations()> evaluations;
-        for (int k=0; k<IntegratorU::numberEvaluations(); k++)
+        std::array<double,QuadratureU::numberEvaluations()> evaluations;
+        for (int k=0; k<QuadratureU::numberEvaluations(); k++)
           evaluations[k] = evaluationsUArray[k][i][j];
         
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<IntegratorU::integrate(evaluations);
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureU::computeIntegral(evaluations);
         
         // integrate value and set entry in stiffness matrix
-        //double value = IntegratorU::integrate(evaluations);
+        //double value = QuadratureU::computeIntegral(evaluations);
       }  // j
     }  // i
   }  // elementNo
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<Vec3,BasisOnMeshType::dim()> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasisOnMesh::nDofsPerElement()> &geometryReference,
                            const std::array<Vec3,BasisOnMeshType::HighOrderBasisOnMesh::nDofsPerElement()> &displacement, 
                            const std::array<Vec3,BasisOnMeshType::dim()> &jacobian, 
@@ -169,8 +169,8 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasis
   }
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<Vec3,BasisOnMeshType::dim()> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -194,8 +194,8 @@ computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &def
   return rightCauchyGreenTensor;
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<double,3> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<double,3> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computeInvariants(const std::array<Vec3,BasisOnMeshType::dim()> &rightCauchyGreen, const double determinant)
 {
   std::array<double,3> invariants;
@@ -220,8 +220,8 @@ computeInvariants(const std::array<Vec3,BasisOnMeshType::dim()> &rightCauchyGree
   invariants[2] = determinant;
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<Vec3,3> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<Vec3,3> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants)
 {
   // compute the PK2 stress tensor as S=2*dPsi/dC
@@ -258,8 +258,8 @@ computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Ve
   return pK2Stress;
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<double,21> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<double,21> FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants)
 {
   // the 21 distinct indices (i,j,k,l) of different values of C_{ijkl}
@@ -347,8 +347,8 @@ computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::a
   return elasticity;
 }
 
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-double FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedIntegratorType, Term>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+double FiniteElementMethodSolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computePressureFromDisplacements(double deformationGradientDeterminant, const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &PK2Stress)
 {
   double pressure = 0;

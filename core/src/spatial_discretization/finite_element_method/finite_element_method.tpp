@@ -16,8 +16,8 @@ namespace SpatialDiscretization
 {
 
 // set right hand side for laplace equation (set to 0)
-template<typename MeshType, typename BasisFunctionType, typename IntegratorType>
-void FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, Equation::Static::Laplace>::
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
+void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::Laplace>::
 setRightHandSide()
 {
   LOG(TRACE)<<"setRightHandSide for Laplace equation";

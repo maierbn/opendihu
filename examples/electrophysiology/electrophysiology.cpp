@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         //Mesh::StructuredRegularFixedOfDimension<<1>,
         BasisFunction::LagrangeOfOrder<1>,
         //BasisFunction::LagrangeOfOrder<1>,
-        Integrator::Gauss<2>,
+        Quadrature::Gauss<2>,
         //Quadrature::Gauss<2>,
         Equation::Dynamic::Diffusion
       >

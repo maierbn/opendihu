@@ -39,9 +39,9 @@ config = {
       BasisFunction::LagrangeOfOrder<1>,
       BasisFunction::LagrangeOfOrder<2>
     >,
-    Integrator::Mixed<
-      Integrator::Gauss<2>,
-      Integrator::Gauss<3>
+    Quadrature::Mixed<
+      Quadrature::Gauss<2>,
+      Quadrature::Gauss<3>
     >,
     Equation::Static::SolidMechanics
   > equationDiscretized(settings);

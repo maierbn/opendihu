@@ -1,7 +1,7 @@
 #include "mesh/mesh_manager.h"
 
 #include "basis_on_mesh/05_basis_on_mesh.h"
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
 namespace Mesh 

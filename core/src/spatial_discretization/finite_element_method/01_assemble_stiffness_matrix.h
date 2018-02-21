@@ -10,13 +10,13 @@ namespace SpatialDiscretization
  * Class that creates the stiffness matrix by integrating its integrand over the elements.
  * What to integrate is given by the class template Term.
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class AssembleStiffnessMatrix :
-  public FiniteElementMethodBase<BasisOnMeshType, IntegratorType>
+  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::FiniteElementMethodBase;
   
 protected:
   void setStiffnessMatrix();

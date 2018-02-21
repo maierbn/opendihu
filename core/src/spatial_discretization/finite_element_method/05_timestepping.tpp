@@ -18,10 +18,10 @@
 namespace SpatialDiscretization
 {
   
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 FiniteElementMethodTimeStepping(const DihuContext &context)
-  : FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term>(context),
+  : FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>(context),
   DiscretizableInTime(SolutionVectorMapping(true))
 {
   // the solutionVectorMapping_ object stores the information which range of values of the solution will be further used 
@@ -30,8 +30,8 @@ FiniteElementMethodTimeStepping(const DihuContext &context)
   solutionVectorMapping_.setOutputRange(0, this->data_.mesh()->nNodes());
 }
 
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 initialize()
 {
   this->data_.initialize();
@@ -40,8 +40,8 @@ initialize()
   this->data_.finalAssembly();
 }
 
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 recoverRightHandSideStrongForm(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
@@ -73,8 +73,8 @@ recoverRightHandSideStrongForm(Vec &result)
   //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
 }
 
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
@@ -88,8 +88,8 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   this->data_.print();
 }
 
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-bool FiniteElementMethodTimeStepping<BasisOnMeshType, IntegratorType, Term>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+bool FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 knowsMeshType()
 {
   return true;

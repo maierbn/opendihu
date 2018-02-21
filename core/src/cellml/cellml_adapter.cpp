@@ -6,7 +6,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"
 

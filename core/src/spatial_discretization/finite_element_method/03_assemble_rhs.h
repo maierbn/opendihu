@@ -9,13 +9,13 @@ namespace SpatialDiscretization
  * Class that sets the right hand side vector by integrating the integrand over the elements.
  * What to integrate is given by the class template Term.
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename Dummy= Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy= Term>
 class AssembleRightHandSide :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, IntegratorType, Term>
+  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, IntegratorType, Term>::FiniteElementMethodStiffnessMatrix;
+  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -28,13 +28,13 @@ protected:
 /**
  * Partial specialization for solid mechanics
  */
-template<typename MixedBasisOnMeshType, typename MixedIntegratorType, typename Term>
-class AssembleRightHandSide<MixedBasisOnMeshType, MixedIntegratorType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>
+template<typename MixedBasisOnMeshType, typename MixedQuadratureType, typename Term>
+class AssembleRightHandSide<MixedBasisOnMeshType, MixedQuadratureType, Term, Equation::isSolidMechanics<Term>> :
+  public FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedIntegratorType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix;
+  using FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions

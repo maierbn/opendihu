@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "mesh/structured_deformable.h"
 #include "mesh/unstructured_deformable.h"
 

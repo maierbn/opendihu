@@ -12,7 +12,7 @@
 #include "equation/reaction_diffusion.h"
 #include "equation/solid_mechanics.h"
 
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "mesh/structured_deformable.h"
 #include "mesh/unstructured_deformable.h"
 
@@ -25,5 +25,5 @@
 
 #include "cellml/cellml_adapter.h"
 
-#include "integrator/gauss.h"
-#include "integrator/mixed.h"
+#include "quadrature/gauss.h"
+#include "quadrature/mixed.h"

@@ -5,7 +5,7 @@
 #include <petscksp.h>
 #include <petscsys.h>
 
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
 
 #include <Python.h>
@@ -29,8 +29,8 @@ namespace SpatialDiscretization
 {
   
 // 1D stiffness matrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix 1D for Mesh::RegularFixed";
@@ -84,8 +84,8 @@ setStiffnessMatrix()
 }
 
 // 2D stiffness matrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix 2D for Mesh::RegularFixed";
@@ -297,8 +297,8 @@ setStiffnessMatrix()
 }
   
 // 3D stiffness matrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;

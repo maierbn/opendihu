@@ -8,21 +8,21 @@ namespace SpatialDiscretization
  
 /** base class for baseRhs
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term, typename=typename BasisOnMeshType::Mesh>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh>
 class FiniteElementMethodBaseRhs :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, IntegratorType, Term>
+  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {
 };
 
 /** specialization for linear Lagrange, 1D regular mesh (uses stencils)
  */
-template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+template<typename QuadratureType, typename Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
     ::FiniteElementMethodStiffnessMatrix;
     
 protected:
@@ -35,13 +35,13 @@ protected:
 
 /** specialization for linear Lagrange, 2D regular mesh (uses stencils)
  */
-template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+template<typename QuadratureType, typename Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
     ::FiniteElementMethodStiffnessMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -53,13 +53,13 @@ protected:
 
 /** specialization for linear Lagrange, 3D regular mesh (uses stencils)
  */
-template<typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+template<typename QuadratureType, typename Term>
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
     ::FiniteElementMethodStiffnessMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -71,25 +71,25 @@ protected:
 
 /** specialisation for Deformable mesh of any dimension D (do proper integration of rhs)
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term, Mesh::isDeformable<typename BasisOnMeshType::Mesh>> :
-  public AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+class FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term, Mesh::isDeformable<typename BasisOnMeshType::Mesh>> :
+  public AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using AssembleRightHandSide<BasisOnMeshType, IntegratorType, Term>::AssembleRightHandSide;
+  using AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term>::AssembleRightHandSide;
   
 };
 
 /** base class implementing right hand side, that can be set by user for poisson equation
  */
-template<typename BasisOnMeshType, typename IntegratorType, typename Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodRhs :
-  public FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term>
+  public FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBaseRhs<BasisOnMeshType, IntegratorType, Term>
+  using FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>
     ::FiniteElementMethodBaseRhs;
  
   friend class StiffnessMatrixTester;    ///< a class used for testing 

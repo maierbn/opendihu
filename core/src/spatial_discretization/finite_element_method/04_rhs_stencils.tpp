@@ -17,8 +17,8 @@ namespace SpatialDiscretization
 {
  
 // 1D rhs
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (1D)";
@@ -81,8 +81,8 @@ transferRhsToWeakForm()
 }
 
 // 2D rhs
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (2D)";
@@ -307,8 +307,8 @@ transferRhsToWeakForm()
 }
 
 // 3D rhs
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
 transferRhsToWeakForm()
 {
   LOG(TRACE)<<"transferRhsToWeakForm (3D)";
@@ -1027,8 +1027,8 @@ transferRhsToWeakForm()
 }
 
 // 1D massMatrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>>::
 setMassMatrix()
 {
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
@@ -1088,8 +1088,8 @@ setMassMatrix()
 }
 
 // 2D massMatrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>>::
 setMassMatrix()
 {
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
@@ -1287,8 +1287,8 @@ setMassMatrix()
 }
  
 // 3D massMatrix
-template<typename IntegratorType, typename Term>
-void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, IntegratorType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
+template<typename QuadratureType, typename Term>
+void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>>::
 setMassMatrix()
 {
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;

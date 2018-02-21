@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
   SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<1>,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > problem(settings);
   

@@ -11,9 +11,9 @@ namespace SpatialDiscretization
 class StiffnessMatrixTester
 {
 public:
-  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void compareMatrix(
-    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
     std::vector<double> &referenceMatrix
                            )
   {
@@ -29,9 +29,9 @@ public:
     }
   }
   
-  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void compareRhs(
-    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
     std::vector<double> &referenceRhs
                            )
   {
@@ -47,9 +47,9 @@ public:
     }
   }
   
-  template<typename MeshType, typename BasisFunctionType, typename IntegratorType, typename EquationType>
+  template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void checkDirichletBCInSolution(
-    FiniteElementMethod<MeshType, BasisFunctionType, IntegratorType, EquationType> &finiteElementMethod,
+    FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
     std::map<int, double> &dirichletBC)
   {
     Vec &solutionVector = finiteElementMethod.data_.solution().values();
@@ -65,11 +65,11 @@ public:
     }
   }
   
-  template<typename MeshType1, typename BasisFunctionType1, typename IntegratorType1, typename EquationType1,
-           typename MeshType2, typename BasisFunctionType2, typename IntegratorType2, typename EquationType2>
+  template<typename MeshType1, typename BasisFunctionType1, typename QuadratureType1, typename EquationType1,
+           typename MeshType2, typename BasisFunctionType2, typename QuadratureType2, typename EquationType2>
   static void checkEqual(
-    FiniteElementMethod<MeshType1, BasisFunctionType1, IntegratorType1, EquationType1> &finiteElementMethod1,
-    FiniteElementMethod<MeshType2, BasisFunctionType2, IntegratorType2, EquationType2> &finiteElementMethod2)
+    FiniteElementMethod<MeshType1, BasisFunctionType1, QuadratureType1, EquationType1> &finiteElementMethod1,
+    FiniteElementMethod<MeshType2, BasisFunctionType2, QuadratureType2, EquationType2> &finiteElementMethod2)
   {
     // rhsVector
     Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide().values();

@@ -11,7 +11,7 @@
 #include "control/types.h"
 #include "utility/python_utility.h"
 
-#include "mesh/regular_fixed.h"
+#include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
@@ -20,8 +20,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType, typename IntegratorType>
-FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 FiniteElementMethodBase(const DihuContext &context) :
   context_(context), data_(context)
 {
@@ -40,8 +40,8 @@ FiniteElementMethodBase(const DihuContext &context) :
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
 }
 
-template<typename BasisOnMeshType, typename IntegratorType>
-void FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 applyBoundaryConditions()
 {
   // PETSc Mat object for stiffness matrix needs to be assembled for this
@@ -111,15 +111,15 @@ applyBoundaryConditions()
   }
 }
 
-template<typename BasisOnMeshType, typename IntegratorType>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 mesh()
 {
   return data_.mesh();
 }
   
-template<typename BasisOnMeshType, typename IntegratorType>
-void FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 initialize()
 {
   LOG(TRACE) << "FiniteElementMethodBase::initialize";
@@ -131,8 +131,8 @@ initialize()
   applyBoundaryConditions();
 }
   
-template<typename BasisOnMeshType, typename IntegratorType>
-void FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 run()
 {
   initialize();
@@ -143,8 +143,8 @@ run()
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename BasisOnMeshType, typename IntegratorType>
-void FiniteElementMethodBase<BasisOnMeshType, IntegratorType>::
+template<typename BasisOnMeshType, typename QuadratureType>
+void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve";

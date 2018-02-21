@@ -9,7 +9,7 @@
 
 #include <utility/python_utility.h>
 #include <utility/petsc_utility.h>
-#include <mesh/regular_fixed.h>
+#include <mesh/structured_regular_fixed.h>
 #include <mesh/structured_deformable.h>
 #include <mesh/unstructured_deformable.h>
 #include <mesh/mesh.h>

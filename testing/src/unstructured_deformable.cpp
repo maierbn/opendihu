@@ -101,7 +101,7 @@ cale factors:\n  1.000000e+00  3.118876e+00  2.430154e+01  7.579348e+01  2.37098
   FiniteElementMethod<
     Mesh::UnstructuredDeformableOfDimension<3>,
     BasisFunction::Hermite,
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
@@ -190,7 +190,7 @@ config = {
   FiniteElementMethod<
     Mesh::UnstructuredDeformableOfDimension<2>,
     BasisFunction::Hermite,    // 4 nodes per element
-    Integrator::Gauss<2>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   

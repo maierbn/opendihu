@@ -14,8 +14,8 @@ namespace SpatialDiscretization
 {
   
 // initialization for mooney rivlin
-template<typename BasisOnMeshType, typename MixedIntegratorType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
 initialize()
 {
   kappa_ = PythonUtility::getOptionDouble(this->specificSettings_, "kappa", 1000, PythonUtility::Positive);
@@ -23,12 +23,12 @@ initialize()
   
   c1_ = materialConstants[0];
   c2_ = materialConstants[1];
-  FiniteElementMethodBase<BasisOnMeshType,MixedIntegratorType>::initialize();
+  FiniteElementMethodBase<BasisOnMeshType,MixedQuadratureType>::initialize();
 }
 
 // compressible mooney rivlin
-template<typename BasisOnMeshType, typename MixedIntegratorType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
+template<typename BasisOnMeshType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
 setStiffnessMatrix()
 {
   LOG(TRACE)<<"setStiffnessMatrix for solid mechanics";
@@ -50,28 +50,28 @@ setStiffnessMatrix()
   const int nElements = basisOnMeshU->nElements();
   
   // define shortcuts for integrator and basis
-  typedef Integrator::TensorProduct<D,typename MixedIntegratorType::HighOrderIntegrator> IntegratorU;
-  typedef Integrator::TensorProduct<D,typename MixedIntegratorType::LowOrderIntegrator> IntegratorP;
+  typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::HighOrderQuadrature> QuadratureU;
+  typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::LowOrderQuadrature> QuadratureP;
   
   typedef MathUtility::Matrix<nDofsUPerElement,nDofsUPerElement> EvaluationsUType;
   typedef MathUtility::Matrix<nDofsUPerElement,nDofsPPerElement> EvaluationsUPType;
   typedef MathUtility::Matrix<nDofsPPerElement,nDofsPPerElement> EvaluationsPType;
   typedef std::array<
             EvaluationsUType,
-            IntegratorU::numberEvaluations()
+            QuadratureU::numberEvaluations()
           > EvaluationsUUMatrixType;     // evaluations[nGP^D][nDofsUPerElement][nDofsUPerElement]
   typedef std::array<
             EvaluationsUPType,
-            IntegratorU::numberEvaluations()
+            QuadratureU::numberEvaluations()
           > EvaluationsUPMatrixType;     // evaluations[nGP^D][nDofsPPerElement][nDofsPPerElement]
   typedef std::array<
             EvaluationsPType,
-            IntegratorP::numberEvaluations()
+            QuadratureP::numberEvaluations()
           > EvaluationsPPMatrixType;     // evaluations[nGP^D][nDofsUPerElement][nDofsUPerElement]
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, IntegratorU::numberEvaluations()> samplingPointsU = IntegratorU::samplingPoints();
-  std::array<std::array<double,D>, IntegratorP::numberEvaluations()> samplingPointsP = IntegratorP::samplingPoints();
+  std::array<std::array<double,D>, QuadratureU::numberEvaluations()> samplingPointsU = QuadratureU::samplingPoints();
+  std::array<std::array<double,D>, QuadratureP::numberEvaluations()> samplingPointsP = QuadratureP::samplingPoints();
   EvaluationsUUMatrixType evaluationsKUU({0});
   EvaluationsUPMatrixType evaluationsKUP({0});
   EvaluationsPPMatrixType evaluationsKPP({0});
@@ -304,9 +304,9 @@ setStiffnessMatrix()
     MatZeroEntries(kpp);
      
     // perform integration to element stiffness matrices kuu, kup, kpp
-    EvaluationsUUType kuuMatrix = IntegratorU::integrate(evaluationsKUU);
-    EvaluationsUPType kupMatrix = IntegratorU::integrate(evaluationsKUP);
-    EvaluationsPPType kppMatrix = IntegratorP::integrate(evaluationsKPP);
+    EvaluationsUUType kuuMatrix = QuadratureU::computeIntegral(evaluationsKUU);
+    EvaluationsUPType kupMatrix = QuadratureU::computeIntegral(evaluationsKUP);
+    EvaluationsPPType kppMatrix = QuadratureP::computeIntegral(evaluationsKPP);
     
     // assign to PETSc types
     kuuMatrix.setPetscMatrix(kuu);
@@ -322,18 +322,18 @@ setStiffnessMatrix()
     {
       for (int j=0; j<nDofsUPerElement; j++)
       {
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<IntegratorU::integrate(evaluations);
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureU::computeIntegral(evaluations);
         
         // integrate value and set entry in stiffness matrix
-        //double value = IntegratorU::integrate(evaluations);
+        //double value = QuadratureU::computeIntegral(evaluations);
       }  // j
     }  // i
   }  // elementNo
 }
 
 //! compute the reduced invariants J1 = I1*I3^-1/3, J2 = I2*I3^-2/3, J3=det F
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<double,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Term>::
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<double,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
 computeReducedInvariants(const std::array<double,3> &invariants, double deformationGradientDeterminant)
 { 
   const double I1 = invariants[0];
@@ -350,8 +350,8 @@ computeReducedInvariants(const std::array<double,3> &invariants, double deformat
 }
 
 //! compute the elasticity tensor C = 2*dS/dC. Due to hyperelasticity there are symmetries C_{ijrs} = C_{jirs} and C_{ijrs} = C_{rsij} that leave 21 independent values.
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<double,21> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Term>::
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<double,21> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
 computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants, 
                         const std::array<double,3> &reducedInvariants)
 {
@@ -445,8 +445,8 @@ computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::a
   return elasticity;
 }
 
-//! compute 2nd Piola-Kirchhoff stress tensor S = 2*sym(dPsi/dC)template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-std::array<Vec3,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Term>::
+//! compute 2nd Piola-Kirchhoff stress tensor S = 2*sym(dPsi/dC)template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+std::array<Vec3,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
 computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants, 
                  const std::array<double,3> &reducedInvariants)
 {
@@ -492,8 +492,8 @@ computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Ve
 }
 
 //! return the entry klrs of the elasticity tensor
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-int FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Term>::
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+int FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
 getElasticityEntryNo(int k, int l, int r, int s)
 {
   // this method was tested outside of this codebase and is correct
@@ -1069,8 +1069,8 @@ getElasticityEntryNo(int k, int l, int r, int s)
 
 
 //! return the entry klrs of the elasticity tensor
-template<typename BasisOnMeshType, typename MixedIntegratorType, typename Term>
-double FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedIntegratorType, Term>::
+template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+double FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
 getElasticityEntry(std::array<double, 21> &elasticity, int k, int l, int r, int s)
 {
   return elasticity[getElasticityEntryNo(k,l,r,s)];

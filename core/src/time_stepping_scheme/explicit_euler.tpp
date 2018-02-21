@@ -52,10 +52,10 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     //this->data_.print();
   }
 }
-/*
+
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
-}*/
+}
 } // namespace TimeSteppingScheme

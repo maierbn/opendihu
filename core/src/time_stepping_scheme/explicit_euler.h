@@ -22,7 +22,7 @@ public:
   void advanceTimeSpan();
   
   //! run the simulation
-  //void run();
+  void run();
 private: 
 };
 

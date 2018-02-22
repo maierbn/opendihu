@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <vector>
 #include <fstream>
+#include <petscvec.h>
 
 namespace FieldVariable
 {
@@ -31,11 +32,14 @@ struct Interface
  
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   //template<std::size_t nComponents>
-  //void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values);
+  //void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for dofs with one component, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   //template<std::size_t nComponents>
-  //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value);
+  //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
   
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
   virtual Vec &values() = 0;

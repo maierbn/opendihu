@@ -684,6 +684,17 @@ setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
 }*/
 
+template<int D,typename BasisFunctionType>
+void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(this->nComponents == 1);
+  const int nValues = values.size();
+
+  VecSetValues(this->values_, nValues, dofGlobalNos.data(), values.data(), petscInsertMode);
+  
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+}
 
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
 template<int D,typename BasisFunctionType>

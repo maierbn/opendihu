@@ -14,7 +14,6 @@ void FieldVariableStructured<BasisOnMeshType>::
 initializeFromFieldVariable(const FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   this->name_ = name;
-  this->nElementsPerCoordinateDirection_ = fieldVariable.nElementsPerCoordinateDirection();
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
   
@@ -27,7 +26,7 @@ initializeFromFieldVariable(const FieldVariableType &fieldVariable, std::string 
   this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
   
   
-  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
+  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
    << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
   
   assert(this->nEntries_ != 0);
@@ -77,7 +76,6 @@ FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name,
   this->mesh_ = mesh;
   
   std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
-  this->nElementsPerCoordinateDirection_ = meshStructured->nElementsPerCoordinateDirection();
   
   int index = 0;
   for (auto &componentName : componentNames)
@@ -88,7 +86,7 @@ FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name,
   this->nEntries_ = mesh->nDofs() * this->nComponents_;
   
   
-  LOG(DEBUG) << "FieldVariableStructured constructor, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
+  LOG(DEBUG) << "FieldVariableStructured constructor, name=" << this->name_
    << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
   
   assert(this->nEntries_ != 0);
@@ -142,7 +140,7 @@ template<typename BasisOnMeshType>
 std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
 nElementsPerCoordinateDirection() const
 {
-  return this->nElementsPerCoordinateDirection_;
+  return this->mesh_->nElementsPerCoordinateDirection();
 }
 
 template<typename BasisOnMeshType>
@@ -173,7 +171,6 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<eleme
     std::size_t nEntries, bool isGeometryField, Vec &values)
 {
   this->name_ = name;
-  this->nElementsPerCoordinateDirection_ = nElements;
   this->isGeometryField_ = isGeometryField;
   
   // create numbering for components
@@ -270,7 +267,7 @@ getElementValues(std::string component, element_no_t elementNo,
   
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    indices[dofIndex] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*this->nComponents_ + componentIndex;
+    indices[dofIndex] = this->mesh_->getDofNo(elementNo,dofIndex)*this->nComponents_ + componentIndex;
   }
   
   VecGetValues(this->values_, N, indices.data(), values.data());
@@ -293,7 +290,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   {
     for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
     {
-      indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*nComponents + componentIndex;
+      indices[j] = this->mesh_->getDofNo(elementNo,dofIndex)*nComponents + componentIndex;
     }
   }
   
@@ -388,6 +385,18 @@ setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
   VecSetValues(this->values_, nComponents, indices.data(), value.data(), INSERT_VALUES);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
 }*/
+
+template<typename BasisOnMeshType>
+void FieldVariableStructured<BasisOnMeshType>::
+setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(this->nComponents == 1);
+  const int nValues = values.size();
+
+  VecSetValues(this->values_, nValues, dofGlobalNos.data(), values.data(), petscInsertMode);
+  
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+}
 
 template<typename BasisOnMeshType>
 void FieldVariableStructured<BasisOnMeshType>::

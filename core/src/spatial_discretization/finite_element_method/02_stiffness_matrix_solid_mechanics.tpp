@@ -157,8 +157,8 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasis
     Vec3 dudxi({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      double dPhidxi = BasisOnMeshType::HighOrderBasisOnMesh::dPhidxi(dofIndex, dimensionColumn, xi);
-      dudxi += dPhidxi * displacement[dofIndex];   // vector-valued addition
+      double dphi_dxi = BasisOnMeshType::HighOrderBasisOnMesh::dphi_dxi(dofIndex, dimensionColumn, xi);
+      dudxi += dphi_dxi * displacement[dofIndex];   // vector-valued addition
     }
     
     // multiply du/dxi with dxi/dx to obtain du/dx

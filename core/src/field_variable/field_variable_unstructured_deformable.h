@@ -157,7 +157,7 @@ public:
   
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)
   {
     std::array<int,nComponents> indices;
     
@@ -173,15 +173,18 @@ public:
         indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
       }
       
-      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), INSERT_VALUES);
+      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
     }
     
     // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
   }
 
+  //! set values for dofs with a single component, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
-  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES)
   {
     std::array<int,nComponents> indices;
     
@@ -191,7 +194,7 @@ public:
       indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
     }
     
-    VecSetValues(this->values_, nComponents, indices.data(), value.data(), INSERT_VALUES);
+    VecSetValues(this->values_, nComponents, indices.data(), value.data(), petscInsertMode);
     // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
   }
   

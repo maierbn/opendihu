@@ -90,9 +90,6 @@ public:
   //! initialize data fields, has to be called after constructor, typically at the begin of a run() method
   void initialize();
   
-  //! return reference to a stiffness matrix
-  Mat &stiffnessMatrix();
-  
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &rightHandSide();
   
@@ -108,6 +105,9 @@ public:
   //! return reference to pressure field
   FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &pressure();
   
+  //! return reference to fu, right hand side in weak form of displacements
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &f();
+  
   //! perform the final assembly of petsc
   void finalAssembly();
   
@@ -120,18 +120,36 @@ public:
   //! create PETSc matrix
   void initializeMassMatrix();
   
+  //! return reference to a stiffness matrix
+  Mat &stiffnessMatrix();
+  
   //! return a reference to the discretization matrix
   Mat &massMatrix();
   
-  //! return the element stiffness matrix kuu
+  //! return a reference to the element stiffness matrix kuu
   Mat &kuu();
   
-  //! return the element stiffness matrix kup
+  //! return a reference to the element stiffness matrix kup
   Mat &kup();
   
-  //! return the element stiffness matrix kpp
+  //! return a reference to the element stiffness matrix kpp
   Mat &kpp();
+
+  //! return a reference to the inverse kpp
+  Mat &kppInverse();
   
+  //! return a reference to the transpose of kup
+  Mat &kupTranspose();
+  
+  //! return a reference to a temporary matrix
+  Mat &tempKupMatrix();
+  
+  //! return a reference to the schur complement kuu-kup*kpp^-1*kup^T
+  Mat &schurComplement();
+      
+  //! get references to fu, fp, tempKppFp, tempKupKppFp vectors
+  void getLocalVectors(Vec &fu, Vec &fp, Vec &tempKppFp, Vec &tempKupKppFp);
+    
   //! get pointers to all field variables that can be written by output writers
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> fieldVariables();
   
@@ -163,7 +181,15 @@ private:
   Mat kuu_;   ///< element stiffness matrix d2/(du*du)int Psi
   Mat kup_;   ///< element stiffness matrix d2/(du*dp)int Psi
   Mat kpp_;   ///< element stiffness matrix d2/(dp*dp)int Psi
-  
+  Mat kppInverse_;  ///< inverse of kpp
+  Mat kupTranspose_; ///< transpose of kup
+  Mat tempKupMatrix_; ///< temporary helper matrix
+  Mat schurComplement_;  ///< schur complement kuu-kup*kpp^-1*kup^T
+  Vec fu_;    ///< element temporary vector for rhs in weak form
+  Vec fp_;    ///< element temporary vector for rhs in weak form
+  Vec tempKppFp_;  ///< temporary vector
+  Vec tempKupKppFp_;  ///< temporary vector
+   
   // field variables
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
@@ -171,6 +197,7 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> geometryReference_;   ///< geometry in reference configuration
   std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> displacement_;   ///< displacement fields u
   std::shared_ptr<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>> pressure_;   ///< pressure field p  
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> f_;   ///< right hand side in weak form of displacements (temporary)
   
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
   

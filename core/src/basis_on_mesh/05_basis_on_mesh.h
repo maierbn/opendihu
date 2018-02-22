@@ -24,11 +24,14 @@ public:
   typedef BasisFunctionType BasisFunction;
   
   //! return an array of all dof nos. of the element  
-  std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 
   getElementDofNos(element_no_t elementNo) const;
+  
+  //! set a vector of all dof nos. of the element  
+  void getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 
   //! return an array of all node nos. of the element  
-  std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> 
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> 
   getElementNodeNos(element_no_t elementNo) const;
   
   //! return an array of the gradients of all nodal basis functions, evaluated at xi  

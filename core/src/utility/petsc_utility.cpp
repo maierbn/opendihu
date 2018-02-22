@@ -19,6 +19,7 @@ void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matr
   matrixValues.resize(nRows*nColumns);
   LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " entries for the " << nRows << "x" << nColumns << " matrix";
   
+  // get values in row-major format
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
 

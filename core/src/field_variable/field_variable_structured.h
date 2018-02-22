@@ -4,6 +4,7 @@
 #include <iostream>
 #include <array>
 #include <map>
+#include <petscvec.h>
 
 #include "field_variable/field_variable_base.h"
 #include "field_variable/field_variable_interface.h"
@@ -43,7 +44,6 @@ public:
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
   {
     this->name_ = name;
-    this->nElementsPerCoordinateDirection_ = fieldVariable.nElementsPerCoordinateDirection();
     this->isGeometryField_ = false;
     this->mesh_ = fieldVariable.mesh();
     
@@ -56,7 +56,7 @@ public:
     this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
     
     
-    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ << ", nElements: " << this->nElementsPerCoordinateDirection_
+    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
      << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
     
     assert(this->nEntries_ != 0);
@@ -82,7 +82,7 @@ public:
   //! get the names of the components
   std::vector<std::string> componentNames() const;
   
-  //! get the number of elements
+  //! get the number of elements per coordinate direction
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
   
   //! for a specific component, get all values
@@ -140,7 +140,7 @@ public:
     {
       for (int componentIndex = 0; componentIndex < this->nComponents_; componentIndex++, j++)
       {
-        indices[j] = BasisOnMeshType::getDofNo(this->nElementsPerCoordinateDirection_,elementNo,dofIndex)*nComponents + componentIndex;
+        indices[j] = this->mesh_->getDofNo(elementNo,dofIndex)*nComponents + componentIndex;
       }
     }
     
@@ -165,7 +165,7 @@ public:
 
   //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)
   {
     std::array<int,nComponents> indices;
     
@@ -181,15 +181,18 @@ public:
         indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
       }
       
-      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), INSERT_VALUES);
+      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
     }
     
     // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
   }
 
+  //! set values for dofs with a single component, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   template<std::size_t nComponents>
-  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
+  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES)
   {
     std::array<int,nComponents> indices;
     
@@ -199,11 +202,10 @@ public:
       indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
     }
     
-    VecSetValues(this->values_, nComponents, indices.data(), value.data(), INSERT_VALUES);
+    VecSetValues(this->values_, nComponents, indices.data(), value.data(), petscInsertMode);
     // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
   }
 
-    
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
   void flushSetValues();
   
@@ -231,7 +233,6 @@ protected:
   //! get the number of dofs, i.e. the number of entries per component
   dof_no_t nDofs() const;
   
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection_;    ///< number of elements in each coordinate direction
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
   int nComponents_;    ///< number of components

@@ -6,7 +6,7 @@
 namespace BasisFunction
 {
 
-/**  Defines Lagrange ansatz functions on the interval xi in [0,1] of given order.
+/**  Defines Lagrange ansatz functions on the interval xi in [0,1] of given order. Space Q_k in literature.
  *   Transformation to the actual physical space is done using a jacobian, see finite element method.
   */
 template<int order=1>

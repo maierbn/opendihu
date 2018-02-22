@@ -40,7 +40,12 @@ setRightHandSide()
   
   PetscUtility::setVector(values, rightHandSide);
   
+  // transform the entries from strong form to weak form
   this->transferRhsToWeakForm();
+  
+  // if implemented for the current equation, further manipulate the rhs values that are now in weak form
+  // this method is empty by default
+  this->manipulateWeakRhs();
 
 #ifndef NDEBUG  
   LOG(DEBUG) << "Transferred to weak form:";

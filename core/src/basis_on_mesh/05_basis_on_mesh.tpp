@@ -10,10 +10,10 @@ namespace BasisOnMesh
 {
 
 template<typename MeshType, typename BasisFunctionType>
-std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
+std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
 getElementDofNos(element_no_t elementNo) const
 {
-  std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> dof;
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> dof;
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     dof[dofIndex] = this->getDofNo(elementNo, dofIndex);
@@ -22,10 +22,21 @@ getElementDofNos(element_no_t elementNo) const
 }
 
 template<typename MeshType, typename BasisFunctionType>
-std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
+void BasisOnMesh<MeshType,BasisFunctionType>::
+getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const
+{
+  globalDofNos.resize(BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement());
+  for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
+  {
+    globalDofNos[dofIndex] = this->getDofNo(elementNo, dofIndex);
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType>
+std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
 getElementNodeNos(element_no_t elementNo) const
 {
-  std::array<int,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> nodes;
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> nodes;
   for (int nodeIndex = 0; nodeIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement(); nodeIndex++)
   {
     nodes[nodeIndex] = this->getNodeNo(elementNo, nodeIndex);

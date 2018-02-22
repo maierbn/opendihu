@@ -8,7 +8,6 @@
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
 #include "mesh/type_traits.h"
 #include "field_variable/element_to_node_mapping.h"
-//#include "field_variable/field_variable.h"
 
 // forward declaration of FieldVariable
 namespace FieldVariable
@@ -34,14 +33,15 @@ public:
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
-  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
 };
+
 
 /** partial specialization for structured mesh, D=1
  */
@@ -53,17 +53,14 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
   
-  //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
-  
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=2
@@ -76,17 +73,14 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
  
-  //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
-  
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
 };
 
 /** partial specialization for structured mesh, D=3
@@ -99,17 +93,14 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
  
-  //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the number of elements in each coordinate direction
-  static int getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex);
-  
   //! return the global dof number of element-local dof dofIndex of element elementNo
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo
-  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
 };
 
 /** partial specialization for unstructured mesh
@@ -130,13 +121,13 @@ public:
   void initialize();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
-  int getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
   
   //! write exelem file to stream
   void outputExelemFile(std::ostream &file);
@@ -176,6 +167,28 @@ protected:
   bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
  
 }; 
+
+
+/** partial specialization for structured mesh and complete polynomials
+ */
+template<typename MeshType,int order>
+class BasisOnMeshDofs<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>,Mesh::isDeformable<MeshType>> :
+  public BasisOnMeshFunction<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
+{
+public:
+  //! inherit constructor
+  using BasisOnMeshFunction<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::BasisOnMeshJacobian;
+  
+  //! return the global dof number of element-local dof dofIndex of element elementNo
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  
+  //! return the global node number of element-local node nodeIndex of element elementNo
+  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  
+  //! get all dofs of a specific node
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+};
+
 }  // namespace
 
 #include "basis_on_mesh/03_basis_on_mesh_dofs.tpp"

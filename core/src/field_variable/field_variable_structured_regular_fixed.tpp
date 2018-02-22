@@ -398,7 +398,7 @@ nComponents() const
   // use the implementation of FieldVariableStructured
   return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::nComponents();
 }
-
+/*
 //! get the number of elements
 template<int D, typename BasisFunctionType>
 std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
@@ -406,7 +406,7 @@ nElementsPerCoordinateDirection() const
 {
   // use the implementation of FieldVariableStructured
   return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::nElementsPerCoordinateDirection();
-}
+}*/
 
 //! get the number of elements
 template<int D, typename BasisFunctionType>

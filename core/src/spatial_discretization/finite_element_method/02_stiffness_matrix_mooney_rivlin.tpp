@@ -26,7 +26,7 @@ initialize()
   FiniteElementMethodBase<BasisOnMeshType,MixedQuadratureType>::initialize();
 }
 
-// compressible mooney rivlin
+// stiffness matrix for compressible mooney rivlin
 template<typename BasisOnMeshType, typename MixedQuadratureType>
 void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
 setStiffnessMatrix()
@@ -76,17 +76,23 @@ setStiffnessMatrix()
   EvaluationsUPMatrixType evaluationsKUP({0});
   EvaluationsPPMatrixType evaluationsKPP({0});
   
+  std::array<std::array<double,nDofsUPerElement>,QuadratureU::numberEvaluations()> evaluationsFU({0});
+  std::array<std::array<double,nDofsPPerElement>,QuadratureP::numberEvaluations()> evaluationsFP({0});
+  
   typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
   typedef std::array<double,21> Tensor4;   // data type for 4th order elasticity tensor with due to symmetry has 21 independent components
   
   // the matrix formulation follows the paper "A finitie element formultaion for nonlinear incomporessible elastic and inelastic analysis" by Sussmann and Bathe
   
+  
+  PetscErrorCode ierr;
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   {
     // get indices of element-local dofs
-    auto dofUNo = basisOnMeshU->getElementDofNos(elementNo);
-    auto dofPNo = basisOnMeshP->getElementDofNos(elementNo);
+    std::vector<dof_no_t> dofUNo;
+    basisOnMeshU->getElementDofNos(elementNo, dofUNo);
+    //std::vector<dof_no_t> dofPNo = basisOnMeshP->getElementDofNos(elementNo);
     
     // get geometry field of current configuration of meshU
     std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> geometryCurrentElementalDofValues;
@@ -103,6 +109,10 @@ setStiffnessMatrix()
     // get separately interpolated pressure field
     std::array<double,LowOrderBasisOnMesh::nDofsPerElement()> separatePressureElementalDofValues;
     this->data_.pressure().template getElementValues<1>(elementNo, separatePressureElementalDofValues);
+    
+    // get right hand side component for displacements in weak form, fu
+    std::array<double,HighOrderBasisOnMesh::nDofsPerElement()> fValues;
+    this->data_.f().template getElementValues<1>(elementNo, fValues);
     
     // loop over integration points (e.g. gauss points) for displacement field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsU.size(); samplingPointIndex++)
@@ -144,14 +154,23 @@ setStiffnessMatrix()
       
       double cpp = -1./pp;
       
-      // set kuu
-      
+      // compute evaluation at current quadrature sampling point for element stiffness matrices kuu, kup and kpp
       // row index
       for (int i = 0; i < nDofsUPerElement; i++)
       {
+        int dofIndexI = i;
+        
+        // dp_tilde/dp_i where the first p_tilde is the interpolated pressure and p_i is the pressure DOF
+        double dpdpi = LowOrderBasisOnMesh::phi(dofIndexI, xi);
+          
         // column index 
         for (int j = 0; j < nDofsUPerElement; j++)
         {
+          int dofIndexJ = j;
+          
+          // dp_tilde/dp_j where the first p_tilde is the interpolated pressure and p_j is the pressure DOF
+          double dpdpj = LowOrderBasisOnMesh::phi(dofIndexJ, xi);
+          
           // indices of elasticity tensor
           for (int k = 0; k < 3; k++)
           {
@@ -161,44 +180,29 @@ setStiffnessMatrix()
               double dp_deps_kl = -kappa_*J3*rightCauchyGreen[l][k];
              
               // deps_kl/du_i
-              double depskl_dui = 0;
-              for (int dofIndex = 0; dofIndex < nDofsUPerElement; dofIndex++)
-              {
-                double depskl_duiL = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dPhidxi(dofIndex, k, xi)
-                  + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dPhidxi(dofIndex, l, xi));
-                depskl_dui += depskl_duiL;
-              }
+              double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)
+                  + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi));
               
               // d^2eps_kl/(dui*duj)
               double d2epskl_duij = 0;
               if (i == j)   // d^2eps_kl/(dui*duj) is zero for i!=j
               {
-                for (int dofIndexL = 0; dofIndexL < HighOrderBasisOnMesh::nDofsPerElement(); dofIndexL++)
-                {
-                  for (int dofIndexM = 0; dofIndexM < HighOrderBasisOnMesh::nDofsPerElement(); dofIndexM++)
-                  {
-                    double d2epskl_duijLM = 1./2*(HighOrderBasisOnMesh::dPhidxi(dofIndexL, k, xi)*HighOrderBasisOnMesh::dPhidxi(dofIndexM, l, xi)
-                      + HighOrderBasisOnMesh::dPhidxi(dofIndexL, l, xi)*HighOrderBasisOnMesh::dPhidxi(dofIndexM, k, xi));
-                    d2epskl_duij += d2epskl_duijLM;
-                  }
-                }
+                d2epskl_duij = 1./2*(HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, l, xi)
+                  + HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi)*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, k, xi));
               }
               
+              // -----------
+              // set kuu
               for (int r = 0; r < 3; r++)
               {  
                 for (int s = 0; s < 3; s++)
                 {
                   // deps_rs/du_j
-                  double depsrs_duj = 0;
-                  for (int dofIndex = 0; dofIndex < HighOrderBasisOnMesh::nDofsPerElement(); dofIndex++)
-                  {
-                    double depsrs_dujL = 1./2*(rightCauchyGreen[s][j]*HighOrderBasisOnMesh::dPhidxi(dofIndex, r, xi)
-                      + rightCauchyGreen[r][j]*HighOrderBasisOnMesh::dPhidxi(dofIndex, s, xi));
-                    depsrs_duj += depsrs_dujL;
-                  }
+                  double depsrs_duj = 1./2*(rightCauchyGreen[s][j]*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, r, xi)
+                    + rightCauchyGreen[r][j]*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, s, xi));
                  
                   // dp/deps_kl: derivative of \bar{p} w.r.t Green-Lagrange strain tensor E (or eps in paper)
-                  double dp_deps_rs = -kappa_*J3*rightCauchyGreen[s][r];
+                  double dp_deps_rs = -kappa_*J3*inverseRightCauchyGreen[s][r];
              
                   // d2p/(deps_kl*deps_rs): 2nd derivative of \bar{p} w.r.t Green-Lagrange strain tensor E (or eps in paper), 
                   double factor = 0;
@@ -210,7 +214,7 @@ setStiffnessMatrix()
                         * rightCauchyGreen[f][c];
                     }
                   }
-                  double d2p_deps_klrs = kappa_*J3*rightCauchyGreen[l][k]*rightCauchyGreen[s][r] - kappa_*1./J3*factor;
+                  double d2p_deps_klrs = kappa_*J3*inverseRightCauchyGreen[l][k]*inverseRightCauchyGreen[s][r] - kappa_*1./J3*factor;
                   
                   
                   double cuu_klrs = getElasticityEntry(elasticity,k,l,r,s)
@@ -223,81 +227,73 @@ setStiffnessMatrix()
                   
                 }  // s
               }  // r
-            }  // l
-          }  // k          
-        }  // j
-      }  // i
-      
-      // set kup 
-      // row index
-      for (int i = 0; i < nDofsUPerElement; i++)
-      {
-        // column index 
-        for (int j = 0; j < nDofsPPerElement; j++)
-        {
-          for (int k = 0; k < 3; k++)
-          {
-            for (int l = 0; l < 3; l++)
-            {
-              // deps_kl/du_i
-              double depskl_dui = 0;
-              for (int dofIndex = 0; dofIndex < nDofsUPerElement; dofIndex++)
-              {
-                double depskl_duiL = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dPhidxi(dofIndex, k, xi)
-                  + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dPhidxi(dofIndex, l, xi));
-                depskl_dui += depskl_duiL;
-              }
-
-              // dp/deps_kl: derivative of \bar{p} w.r.t Green-Lagrange strain tensor E (or eps in paper)
-              double dp_deps_kl = -kappa_*J3*rightCauchyGreen[l][k];
-             
+            
+              // -----------
+              // set kup 
               // CUP
               double cup_kl = -cpp*dp_deps_kl;
               
-              double kup_ij = 0;
-              for (int dofIndex = 0; dofIndex < LowOrderBasisOnMesh::nDofsPerElement(); dofIndex++)
-              { 
-                kup_ij += cup_kl * depskl_dui * LowOrderBasisOnMesh::phi(dofIndex, xi);
-              }
+              double kup_ij = cup_kl * depskl_dui * dpdpj;
              
               evaluationsKUP[samplingPointIndex](i,j) += kup_ij;
+              
             }  // l
-          }  // k
-        }  // j
-      }  // i
-      
-      // set kpp 
-      // row index
-      for (int i = 0; i < nDofsPPerElement; i++)
-      {
-        // column index 
-        for (int j = 0; j < nDofsPPerElement; j++)
-        {
-          double kpp_ij = 0;
-          for (int dofIndexL = 0; dofIndexL < LowOrderBasisOnMesh::nDofsPerElement(); dofIndexL++)
-          {
-            for (int dofIndexM = 0; dofIndexM < LowOrderBasisOnMesh::nDofsPerElement(); dofIndexM++)
-            {
-              kpp_ij += cpp * LowOrderBasisOnMesh::phi(dofIndexL, xi) * LowOrderBasisOnMesh::phi(dofIndexM, xi);
-            }
-          }
+          }  // k   
+          
+          // -----------
+          // set kpp 
+          double kpp_ij = cpp * dpdpi * dpdpj;
+          
           evaluationsKPP[samplingPointIndex](i,j) += kpp_ij;
+          
         }  // j
       }  // i
       
-      VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi;
-      VLOG(2) << "geometryCurrent="<<geometryCurrent<<", geometryReference="<<geometryReference;
-      
-      // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
-      //evaluationsArray[samplingPointIndex] = 
+      // compute evaluation at current quadrature sampling point for weak form rhs vectors fu, fp
+      for (int i = 0; i < nDofsUPerElement; i++)
+      {
+        int dofIndexI = i;
+        // dp_tilde/dp_i where the first p_tilde is the interpolated pressure and p_i is the pressure DOF
+        double dpdpi = LowOrderBasisOnMesh::phi(dofIndexI, xi);
+        
+        // set fu
+        // indices of elasticity tensor
+        for (int k = 0; k < 3; k++)
+        {
+          for (int l = 0; l < 3; l++)
+          {  
+            // deps_kl/du_i
+            double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)
+                + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi));
+            
+            double fu_i = PK2Stress[l][k]*depskl_dui;
+            
+            evaluationsFU[samplingPointIndex][i] += fu_i;
+          }  // l
+        }  // k
+        
+        // set fp
+        double fp_i = -cpp * pressureDifference * dpdpi;
+        evaluationsFP[samplingPointIndex][i] += fp_i;
+      }  // i
       
     }  // function evaluations
   
-    // get matrices 
+    // get references to matrices
     Mat &kuu = data_.kuu();
     Mat &kup = data_.kup();
     Mat &kpp = data_.kpp();
-    
+    Mat &kppInverse = data_.kppInverse();
+    Mat &kupTranspose = data_.kupTranspose();
+    Mat &tempKupMatrix = data_.tempKupMatrix();
+    Mat &schurComplement = data_.schurComplement();
+    Mat &elementStiffness = data_.elementStiffness();
+    Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
+    Vec &fu = data_.fu();
+    Vec &fp = data_.fp();
+    Vec &tempKppFp = data_.tempKppFp();
+    Vec &tempKupKppFp = data_.tempKupKppFp();
+  
     // set entries to 0
     MatZeroEntries(kuu);
     MatZeroEntries(kup);
@@ -313,22 +309,86 @@ setStiffnessMatrix()
     kupMatrix.setPetscMatrix(kup);
     kppMatrix.setPetscMatrix(kpp);
         
-    // solve for seperate pressure increments
+    // perform integration to weak form right hand side
+    std::array<double,nDofsUPerElement> fuVector = QuadratureU::computeIntegral(evaluationsFU);
+    std::array<double,nDofsPPerElement> fpVector = QuadratureP::computeIntegral(evaluationsFP);
     
+    // assign to PETSc types
+    PetscUtility::setVector(fuVector,fu);
+    PetscUtility::setVector(fpVector,fp);
     
+    // -------------
+    // by static condensation solve for separate pressure increments
+    // explicitly create matrix of schur complement k = kuu - kup * kpp^-1 * kup^T
+    MatFactorInfo matFactorInfo;
+    IS *permutation;
+    ierr = PetscMalloc(sizeof(IS),permutation); CHKERRV(ierr); // allocate permutation struct
     
-    // assemble to global stiffness matrix
+    // retrive MPI communicator 
+    MPI_Comm mpiCommunicator;
+    ierr = PetscObjectGetComm((PetscObject)kuu,&mpiCommunicator); CHKERRV(ierr);
+    
+    // create permutation object
+    std::array<int,1> indexSet = {0};
+    ierr = ISCreateBlock(mpiCommunicator,nDofsPPerElement,1,indexSet.data(),permutation); CHKERRV(ierr);
+    
+    // create in-place Cholesky factorization of kpp
+    // This changes the state of the matrix to a factored matrix; it cannot be used for example with MatSetValues() unless one first calls MatSetUnfactored(). 
+    ierr = MatCholeskyFactor(kpp,*permutation,&matFactorInfo); CHKERRV(ierr);
+    
+    // compute schur complement kuu - kup*kpp^-1*kup^T
+    ierr = MatCreateTranspose(kup, kupTranspose); CHKERRV(ierr);                         // create kup^T
+    ierr = MatMatSolve(kpp, kupTranspose, tempKupMatrix); CHKERRV(ierr);                    // solves kpp*t = kup for t = kpp^-1*kup^T
+    ierr = MatMatMult(kup, tempKupMatrix, MAT_INITIAL_MATRIX, 1.0, &schurComplement); CHKERRV(ierr);  // s <= kup*t  
+    ierr = MatAXPY(schurComplement, -1.0, kuu, SUBSET_NONZERO_PATTERN); CHKERRV(ierr);   // s <= s - kuu
+    ierr = MatScale(schurComplement, -1.0); CHKERRV(ierr);                               // s <= -s, i.e. s = -kup*t + kuu
+    
+    // get the entries of the PETSc matrix in a std::vector
+    std::vector<double> schurComplementValues;
+    PetscUtility::getMatrixEntries(schurComplement, schurComplementValues);
+    
+    // assemble local stiffness matrix in global stiffness matrix
     for (int i=0; i<nDofsUPerElement; i++)
     {
       for (int j=0; j<nDofsUPerElement; j++)
       {
         VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureU::computeIntegral(evaluations);
         
-        // integrate value and set entry in stiffness matrix
-        //double value = QuadratureU::computeIntegral(evaluations);
+        double value = schurComplementValues[i*nDofsUPerElement+j];
+        ierr = MatSetValue(stiffnessMatrix, dofUNo[i], dofUNo[j], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
     }  // i
+    
+    // -------------
+    // set matching rhs for k
+    // F = FU - KUP*KPP^-1*FP
+    ierr = MatSolve(kpp, fp, tempKppFp); CHKERRV(ierr);  // solves kpp*t = fp for t = kpp^-1*fp
+    ierr = MatMult(kup, tempKppFp, tempKupKppFp); CHKERRV(ierr);  // tempKupKppFp <= kup*kpp^-1*fp  
+    ierr = VecAXPY(fu, -1.0, tempKupKppFp); CHKERRV(ierr);   // fu <= fu - tempKupKppFp
+    
+    std::array<double, nDofsUPerElement> fuValues;
+    PetscUtility::getVectorEntries(fu, fuValues);
+    
+    // assemble local rhs in global rhs
+    this->data_.f().setValues(dofUNo, fuValues, ADD_VALUES);
+    
   }  // elementNo
+  
+  // assemble data in rhs vector
+  this->data_.f().flushSetValues();
+}
+
+
+// right hand side for compressible mooney rivlin
+template<typename BasisOnMeshType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
+void manipulateWeakRhs()
+{
+  // compute the rhs R-F that fits to the condensed matrix
+ 
+  Vec &rightHandSide = this->data_->rightHandSide();
+  Vec &f = this->data_.f().values();
+  VecAXPY(rightHandSide, -1.0, f);   // rightHandSide <= rightHandSide - f
 }
 
 //! compute the reduced invariants J1 = I1*I3^-1/3, J2 = I2*I3^-2/3, J3=det F

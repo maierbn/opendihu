@@ -20,15 +20,8 @@ using namespace StringUtility;
 
 // element-local dofIndex to global dofNo for 1D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
+dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
-}
-
-template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(std::array<element_no_t, MeshType::dim()> nElementsPerCoordinateDirection, element_no_t elementNo, int dofIndex)
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0,1 2,3
@@ -40,7 +33,7 @@ getDofNo(std::array<element_no_t, MeshType::dim()> nElementsPerCoordinateDirecti
 //! get all dofs of a specific node for 1D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode(); i++)
   {
@@ -50,16 +43,8 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 
 // element-local dofIndex to global dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
+dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
-}
-
-// element-local dofIndex to global dofNo for 2D
-template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
 {
   // L linear  quadratic  H cubic
   //           6 7 8
@@ -70,12 +55,13 @@ getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t eleme
   // averageNDofsPerElement:
   // 1         4          2
   
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  int dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
-  int elementX = int(elementNo % nElements[0]);
-  int elementY = int(elementNo / nElements[0]);
-  int localX = dofIndex % BasisFunctionType::nDofsPerBasis();
-  int localY = int(dofIndex / BasisFunctionType::nDofsPerBasis());
+  dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
+  element_no_t elementX = element_no_t(elementNo % nElements[0]);
+  element_no_t elementY = element_no_t(elementNo / nElements[0]);
+  dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
+  dof_no_t localY = dof_no_t(dofIndex / BasisFunctionType::nDofsPerBasis());
   
   VLOG(2) << "  dof " << elementNo << ":" << dofIndex << ", element: ("<<elementX<<","<<elementY<<"), dofsPerRow="<<dofsPerRow<<", local: ("<<localX<<","<<localY<<")";
   
@@ -86,26 +72,18 @@ getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t eleme
 //! get all dofs of a specific node for 2D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode(); i++)
   {
     dofGlobalNos.push_back(BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
   }
 }
-  
+
 // element-local dofIndex to global dofNo for 3D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
+dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  return BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::getDofNo(this->nElementsPerCoordinateDirection_, elementNo, dofIndex);
-}
- 
-// element-local dofIndex to global dofNo for 3D
-template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t elementNo, int dofIndex)
 {
   // L linear  quadratic  H cubic
   //           6 7 8
@@ -116,16 +94,17 @@ getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t eleme
   // averageNDofsPerElement:
   // 1         4          2
  
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  int dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
-  int dofsPerPlane = (averageNDofsPerElement1D * nElements[1] + BasisFunctionType::nDofsPerNode()) * dofsPerRow;
+  dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
+  dof_no_t dofsPerPlane = (averageNDofsPerElement1D * nElements[1] + BasisFunctionType::nDofsPerNode()) * dofsPerRow;
   
-  int elementZ = int(elementNo / (nElements[0] * nElements[1]));
-  int elementY = int((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
-  int elementX = elementNo % nElements[0];
-  int localZ = int(dofIndex / MathUtility::sqr(BasisFunctionType::nDofsPerBasis()));
-  int localY = int((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis())) / BasisFunctionType::nDofsPerBasis());
-  int localX = dofIndex % BasisFunctionType::nDofsPerBasis();
+  element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
+  element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
+  element_no_t elementX = elementNo % nElements[0];
+  dof_no_t localZ = dof_no_t(dofIndex / MathUtility::sqr(BasisFunctionType::nDofsPerBasis()));
+  dof_no_t localY = dof_no_t((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis())) / BasisFunctionType::nDofsPerBasis());
+  dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
   
   return dofsPerPlane * (elementZ * averageNDofsPerElement1D + localZ)
     + dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
@@ -135,7 +114,7 @@ getDofNo(std::array<element_no_t, MeshType::dim()> nElements, element_no_t eleme
 //! get all dofs of a specific node for 3D
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
 {
   for (int i=0; i<BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode(); i++)
   {
@@ -145,7 +124,7 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
 
 // element-local nodeIndex to global nodeNo for 1D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
+node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // L linear  L quadratic  H cubic
@@ -163,7 +142,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 
 // element-local nodeIndex to global nodeNo for 2D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
+node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // L linear  quadratic  H cubic
@@ -174,15 +153,15 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   // 4         9          4
   
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  const std::array<element_no_t,2> nElements{this->nElements(0), this->nElements(1)};
   
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
-  int nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
-  int elementX = int(elementNo % nElements[0]);
-  int elementY = int(elementNo / nElements[0]);
-  int localX = nodeIndex % nNodesPerElement1D;
-  int localY = int(nodeIndex / nNodesPerElement1D);
+  node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
+  element_no_t elementX = element_no_t(elementNo % nElements[0]);
+  element_no_t elementY = element_no_t(elementNo / nElements[0]);
+  dof_no_t localX = nodeIndex % nNodesPerElement1D;
+  dof_no_t localY = dof_no_t(nodeIndex / nNodesPerElement1D);
   
   return nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
     + averageNNodesPerElement1D * elementX + localX;
@@ -190,23 +169,23 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 
 // element-local nodeIndex to global nodeNo for 3D
 template<typename MeshType,typename BasisFunctionType>
-int BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
+node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  const std::array<element_no_t,3> nElements{this->nElements(0), this->nElements(1), this->nElements(2)};
   
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
-  int nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
-  int nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow;
+  node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
+  node_no_t nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow;
   
-  int elementZ = int(elementNo / (nElements[0] * nElements[1]));
-  int elementY = int((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
-  int elementX = elementNo % nElements[0];
-  int localZ = int(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
-  int localY = int((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
-  int localX = nodeIndex % nNodesPerElement1D;
+  element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
+  element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
+  element_no_t elementX = elementNo % nElements[0];
+  dof_no_t localZ = dof_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
+  dof_no_t localY = dof_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
+  dof_no_t localX = nodeIndex % nNodesPerElement1D;
   
   return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
     + nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
@@ -245,8 +224,7 @@ BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
     // remap names of field variables if specified in config
     this->remapFieldVariables(settings);
     
-    
-    // eliminate scale factors
+    // eliminate scale factors (not yet tested)
     //this->eliminateScaleFactors();
   }
   else if (PythonUtility::containsKey(settings, "nodePositions"))
@@ -531,7 +509,7 @@ remapFieldVariables(PyObject *settings)
 }
 
 template<int D,typename BasisFunctionType>
-int BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
@@ -541,7 +519,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 }
 
 template<int D,typename BasisFunctionType>
-int BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+node_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
@@ -550,16 +528,16 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 //! get all dofs of a specific node, unstructured mesh
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<int> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
 {
   if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
   
-  std::vector<int> &nodeDofs = dofGlobalNos.insert(dofGlobalNos.end(), 
-    this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo));
+  std::vector<dof_no_t> &nodeDofs = this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo);
+  
   dofGlobalNos.reserve(dofGlobalNos.size() + nodeDofs.size());
   
-  for(int dof : nodeDofs)
+  for(dof_no_t dof : nodeDofs)
   {
     dofGlobalNos.push_back(dof);
   }

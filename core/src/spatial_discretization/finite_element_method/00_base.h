@@ -39,6 +39,9 @@ protected:
   //! solve finite element linear system
   virtual void solve();
   
+  //! after rhs is transferred to weak form this method is called and can be overriden later
+  virtual void manipulateWeakRhs(){}
+  
   const DihuContext &context_;    ///< the context object containing everything to be stored
   Data::FiniteElements<BasisOnMeshType> data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key

@@ -191,13 +191,19 @@ pressure()
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+f()
+{
+  return *this->f_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-//! return the element stiffness matrix kuu
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 kuu()
@@ -205,7 +211,6 @@ kuu()
   return kuu_;
 } 
 
-//! return the element stiffness matrix kup
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 kup()
@@ -213,7 +218,6 @@ kup()
   return kup_;
 }
 
-//! return the element stiffness matrix kpp
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 kpp()
@@ -221,6 +225,44 @@ kpp()
   return kpp_;
 }
 
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+kppInverse()
+{
+  return kppInverse_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+kupTranspose()
+{
+  return kupTranspose_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+tempKupMatrix()
+{
+  return tempKupMatrix_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+schurComplement()
+{
+  return schurComplement_;
+}
+    
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+getLocalVectors(Vec &fu, Vec &fp, Vec &tempKppFp, Vec &tempKupKppFp)
+{
+  fu = fu_;
+  fp = fp_;
+  tempKppFp = tempKppFp_;
+  tempKupKppFp = tempKupKppFp_;
+}
+    
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 print()
@@ -342,9 +384,10 @@ initializeFieldVariables()
   displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_, "displacement", components);
   //displacement_->initializeFromFieldVariable(this->mesh_->geometryField(), "displacement", {"x","y","z"});
   
-  std::vector<std::string> pressureComponent({"0"});
-  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", pressureComponent);
+  std::vector<std::string> unnamedSingleComponent({"0"});
+  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
   
+  f_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mixedMesh_->highOrderBasisOnMesh(), "f", unnamedSingleComponent);
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -353,10 +396,13 @@ initializeMatrices()
 {
   PetscErrorCode ierr;
   
-  // create PETSc matrix object
+  // create PETSc matrix objects
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kuu_);  CHKERRV(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kup_);  CHKERRV(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kpp_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kppInverse_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kupTranspose_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->schurComplement_);  CHKERRV(ierr);
   
   const int nu = HighOrderBasisOnMeshType::nDofsPerElement();
   const int np = LowOrderBasisOnMeshType::nDofsPerElement();
@@ -368,6 +414,33 @@ initializeMatrices()
   
   ierr = MatSetSizes(this->kpp_, np, np, np, np);  CHKERRV(ierr);
   ierr = MatSetUp(this->kpp_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kpp_, np, np, np, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kppInverse_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kupTranspose_, np, nu, np, nu);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kupTranspose_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->tempKupMatrix_, nu, np, nu, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->tempKupMatrix_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->schurComplement_, nu, nu, nu, nu);  CHKERRV(ierr);
+  ierr = MatSetUp(this->schurComplement_); CHKERRV(ierr);
+  
+  // create PETSc vector objects
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->fu_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->fp_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->tempKppFp_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->tempKupKppFp_);  CHKERRV(ierr);
+  
+  ierr = VecSetSizes(this->fu_, nu, nu); CHKERRV(ierr);
+  ierr = VecSetSizes(this->fp_, np, np); CHKERRV(ierr);
+  ierr = VecSetSizes(this->tempKppFp_, np, np); CHKERRV(ierr);
+  ierr = VecSetSizes(this->tempKupKppFp_, nu, nu); CHKERRV(ierr);
+  VecSetType(this->fu_, VECSEQ);
+  VecSetType(this->fp_, VECSEQ);
+  VecSetType(this->tempKppFp_, VECSEQ);
+  VecSetType(this->tempKupKppFp_, VECSEQ);
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>

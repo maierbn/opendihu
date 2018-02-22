@@ -9,7 +9,7 @@
 class PetscUtility
 {
 public:
-  ///! extract all entries of the PETSc matrix and store values to std::vector
+  ///! extract all entries of the PETSc matrix and store values row-major to std::vector. The vector is resized to the needed size.
   static void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues);
   
   ///! extract all entries of the PETSc vector and store values to std::vector

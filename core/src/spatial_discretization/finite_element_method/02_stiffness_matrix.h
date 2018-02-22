@@ -19,7 +19,8 @@ public:
   using FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::FiniteElementMethodBase;
   
 protected:
- void setStiffnessMatrix();
+  //! set entries in stiffness matrix
+  void setStiffnessMatrix();
 };
 
 /** stencils
@@ -74,6 +75,8 @@ protected:
   void setStiffnessMatrix();
 };
 
+/** helper class that encapsulates functionality for solid mechanics
+ */
 template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodSolidMechanicsUtility
 {
@@ -143,13 +146,13 @@ public:
   //! assemble the stiffness matrix
   void setStiffnessMatrix();
   
-  //! no set right hand side functionality
-  void setRightHandSide(){}
-  
   //! initialize material constants from config
   void initialize() override;
   
 private:
+  
+  //! assemble right hand side
+  void manipulateWeakRhs() override;
   
   //! compute the reduced invariants J1 = I1*I3^-1/3, J2 = I2*I3^-2/3, J3=det F
   std::array<double,3> computeReducedInvariants(const std::array<double,3> &invariants, double deformationGradientDeterminant);

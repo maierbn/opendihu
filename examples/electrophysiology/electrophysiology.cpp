@@ -29,10 +29,8 @@ int main(int argc, char *argv[])
       >
     >
   >
-  operatorSplitting(settings);
-       
-  Computation computation(settings, operatorSplitting);
-  computation.run();
+  problem(settings);
+  problem.run();
   
   return EXIT_SUCCESS;
 }

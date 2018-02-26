@@ -1,0 +1,1 @@
+The data classes store all payload data used for computation in a single object. The data is stored as PETSc Vec's and Mat's. The purpose of these classes is to keep all computation data together to be able to easily parallelize the code for distributed memory later.

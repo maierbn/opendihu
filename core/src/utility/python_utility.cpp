@@ -585,6 +585,7 @@ void PythonUtility::printDict(PyObject *dict, int indent)
   if (dict == NULL && indent == 0)
   {
     VLOG(1) << "dict is NULL!";
+    return;
   }
   
   // iterate over top level key-value pairs

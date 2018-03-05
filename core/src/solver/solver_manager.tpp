@@ -19,7 +19,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
     std::string solverName = PythonUtility::getOptionString(settings, "solverName", "");
     if (hasSolver(solverName))
     {
-      LOG(DEBUG) << "Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
+      VLOG(1) << "Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
       return std::static_pointer_cast<SolverType>(solvers_[solverName]);
     }
     else if(solverConfiguration_.find(solverName) != solverConfiguration_.end())
@@ -52,7 +52,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
       // check if config is the  same
       if (solver.second->configEquals(settings))
       {
-        LOG(DEBUG) << "Solver \"" << solver.first << "\" matches settings.";
+        VLOG(1) << "Solver \"" << solver.first << "\" matches settings.";
         return std::static_pointer_cast<SolverType>(solver.second);
       }
     }

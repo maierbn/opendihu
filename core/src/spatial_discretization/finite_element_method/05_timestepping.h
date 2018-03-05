@@ -27,6 +27,9 @@ public:
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
   
+  //! return the mesh that is stored in the data class
+  std::shared_ptr<Mesh::Mesh> mesh();
+  
   typedef BasisOnMeshType BasisOnMesh;   ///< the BasisOnMesh type needed for time stepping scheme
   
   friend class StiffnessMatrixTester;    ///< a class used for testing 

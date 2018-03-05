@@ -67,6 +67,7 @@ gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi)
   return gradient;
 }
 
+// for complete polynomials
 template<typename MeshType, int order>
 std::array<double,MeshType::dim()> BasisOnMeshFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::
 gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi)

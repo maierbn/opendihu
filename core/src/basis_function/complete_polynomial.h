@@ -5,6 +5,12 @@
 namespace BasisFunction
 {
 
+/** Complete polynomials of a dimension and order contain all terms up to the given polynomial degree.
+ *  The function space is called P_k for order (polynomial degree) k.
+ *  2D Examples: order=0: p=c0, order=1: p=c0 + c1*x + c2*y, order=2: p=c0 + c1*x^2 + c2*x*y + c3*y^2
+ *  Coefficients of the basis functions in FE computation are later element-based, not node-based like Lagrange basis functions.
+ *  The class CompletePolynomialNDofs computes the numbers of dofs for D and order.
+  */
 template<int D, int order>
 class CompletePolynomialNDofs
 {};

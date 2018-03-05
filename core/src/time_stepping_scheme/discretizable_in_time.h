@@ -29,6 +29,10 @@ public:
   
   //! return whether the object has a specified mesh type and is not independent of the mesh type
   virtual bool knowsMeshType() = 0;
+  
+  //! return the mesh
+  virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
+  
 protected:
   SolutionVectorMapping solutionVectorMapping_;   ///< the solution vector mapping object that contains information if for further computation only a subset of the stored entries in the data_.solution vector will be needed
 };

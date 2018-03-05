@@ -7,20 +7,23 @@
 namespace TimeSteppingScheme
 {
 
-template<typename DiscretizableInTime>
-TimeSteppingSchemeOde<DiscretizableInTime>::TimeSteppingSchemeOde(const DihuContext &context, const std::string name) : 
+template<typename DiscretizableInTimeType>
+TimeSteppingSchemeOde<DiscretizableInTimeType>::
+TimeSteppingSchemeOde(const DihuContext &context, const std::string name) : 
   TimeSteppingScheme(context), data_(context), discretizableInTime_(context[name])
 {
 }
 
-template<typename DiscretizableInTime>
-Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh> &TimeSteppingSchemeOde<DiscretizableInTime>::data()
+template<typename DiscretizableInTimeType>
+Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+data()
 {
   return data_;
 }
 
-template<typename DiscretizableInTime>
-void TimeSteppingSchemeOde<DiscretizableInTime>::setInitialValues()
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+setInitialValues()
 {
   int nDegreesOfFreedom = data_.nDegreesOfFreedom();
   Vec &solution = data_.solution().values();
@@ -41,20 +44,22 @@ void TimeSteppingSchemeOde<DiscretizableInTime>::setInitialValues()
   }
 }
 
-template<typename DiscretizableInTime>
-SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTime>::solutionVectorMapping()
+template<typename DiscretizableInTimeType>
+SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+solutionVectorMapping()
 {
   return discretizableInTime_.solutionVectorMapping();
 }
 
-template<typename DiscretizableInTime>
-Vec &TimeSteppingSchemeOde<DiscretizableInTime>::solution()
+template<typename DiscretizableInTimeType>
+Vec &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+solution()
 {
   return data_.solution().values();
 }
 
-template<typename DiscretizableInTime>
-void TimeSteppingSchemeOde<DiscretizableInTime>::
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 initialize()
 {
   TimeSteppingScheme::initialize();
@@ -64,7 +69,7 @@ initialize()
   discretizableInTime_.initialize();
   data_.setNComponentsPerNode(discretizableInTime_.nComponentsNode());
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-  data_.setMesh(std::static_pointer_cast<typename DiscretizableInTime::BasisOnMesh>(mesh));
+  data_.setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
   data_.initialize();
   
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
@@ -80,8 +85,8 @@ initialize()
   data_.print();
 }
 
-template<typename DiscretizableInTime>
-void TimeSteppingSchemeOde<DiscretizableInTime>::
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 run()
 {
   // initialize
@@ -91,8 +96,8 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename DiscretizableInTime>
-bool TimeSteppingSchemeOde<DiscretizableInTime>::
+template<typename DiscretizableInTimeType>
+bool TimeSteppingSchemeOde<DiscretizableInTimeType>::
 knowsMeshType()
 {
   return this->discretizableInTime_.knowsMeshType();

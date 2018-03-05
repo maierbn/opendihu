@@ -12,7 +12,8 @@
 namespace BasisOnMesh
 {
 
-/** Class with general algorithm to compute jacobian from basis functions. Note that this makes no sense for complete polynomials because these are not used to describe geometry.
+/** Class with general algorithm to compute jacobian from basis functions. 
+ *  Note that this makes no sense for complete polynomials because these are not used to describe geometry.
  */
 template<typename MeshType,typename BasisFunctionType,typename dummy = MeshType>
 class BasisOnMeshJacobian :

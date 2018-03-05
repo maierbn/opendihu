@@ -27,8 +27,9 @@ public:
   static constexpr auto c1 = PARAM(1);
 
   static const auto constexpr strainEnergyDensityFunction 
-    = c0*(I1 - INT(3)) + c1*(I2 - INT(3)) + sin(I3) + pow(I3,INT(5));
+    = c0*(I1 - INT(3)) + c1*(I2 - INT(3));
   
+    
 private:
 };
 

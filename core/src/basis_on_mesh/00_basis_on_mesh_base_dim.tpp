@@ -50,6 +50,7 @@ averageNDofsPerElement()
   return BasisOnMeshBaseDim<D,BasisFunctionType>::averageNNodesPerElement() * BasisFunctionType::nDofsPerNode();
 }
 
+// -------------------------
 // complete polynomials 
 template<int D,int order>
 constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::

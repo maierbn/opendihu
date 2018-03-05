@@ -6,14 +6,16 @@
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "data_management/data.h"
 
+#include "time_stepping_scheme/time_stepping_scheme.h"
+
 namespace TimeSteppingScheme
 {
 
-template<typename DiscretizableInTime>
+template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOde : public TimeSteppingScheme
 {
 public:
-  typedef typename DiscretizableInTime::BasisOnMesh BasisOnMesh;
+  typedef typename DiscretizableInTimeType::BasisOnMesh BasisOnMesh;
   
   //! constructor
   TimeSteppingSchemeOde(const DihuContext &context, const std::string name); 
@@ -31,7 +33,7 @@ public:
   Vec &solution();
   
   //! return the data object
-  Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh> &data();
+  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> &data();
   
   //! initialize discretizableInTime
   void initialize();
@@ -44,10 +46,10 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
-  Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
+  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
   
   int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
-  DiscretizableInTime discretizableInTime_;    ///< the object to be discretized
+  DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
 };
 }  // namespace
 

@@ -18,14 +18,20 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
-      CellmlAdapter
+      ModelOrderReduction::POD<
+        CellmlAdapter,
+        ModelOrderReduction::LinearPart
+      >
     >,
     TimeSteppingScheme::ExplicitEuler<
-      SpatialDiscretization::FiniteElementMethod<
-        Mesh::StructuredRegularFixedOfDimension<1>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<2>,
-        Equation::Dynamic::Diffusion
+      ModelOrderReduction::POD<
+        SpatialDiscretization::FiniteElementMethod<
+          Mesh::StructuredRegularFixedOfDimension<1>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<2>,
+          Equation::Dynamic::Diffusion
+        >,
+        ModelOrderReduction::LinearPart
       >
     >
   >
@@ -34,3 +40,7 @@ int main(int argc, char *argv[])
   
   return EXIT_SUCCESS;
 }
+
+
+
+

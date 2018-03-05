@@ -5,6 +5,7 @@
 #include <Python.h>  // has to be the first included header
 #include <array>
 #include <algorithm>
+#include <numeric>
 
 namespace MathUtility 
 {

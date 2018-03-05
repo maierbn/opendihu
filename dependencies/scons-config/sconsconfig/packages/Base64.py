@@ -159,8 +159,9 @@ class Base64(Package):
         # Setup the build handler.
         self.set_build_handler([
             'mkdir -p  ${PREFIX}/include',
+            'pwd',                       # additional line by Aaron
             'mkdir -p build && cd build && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} ..',
-            'make install',
+            'cd build && make install',
         ])
         
     def check(self, ctx):

@@ -85,14 +85,14 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(example,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++1z -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++14 -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
 else:
   # release build
   variant_dir = os.path.join(example,'build_release')         # folder of build
-  env.MergeFlags('-O3 -std=c++1z -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O3 -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 

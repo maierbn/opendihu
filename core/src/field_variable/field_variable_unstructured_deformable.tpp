@@ -635,7 +635,7 @@ template<int D,typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs)
 {
-  VecCopy(rhs.values_, this->values_);
+  VecCopy(*rhs.values_, *this->values_);
 }
 
 /*
@@ -691,7 +691,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, Inse
   assert(this->nComponents == 1);
   const int nValues = values.size();
 
-  VecSetValues(this->values_, nValues, dofGlobalNos.data(), values.data(), petscInsertMode);
+  VecSetValues(*this->values_, nValues, (const int *) dofGlobalNos.data(), values.data(), petscInsertMode);
   
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
 }
@@ -701,8 +701,8 @@ template<int D,typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 flushSetValues()
 {
-  VecAssemblyBegin(this->values_); 
-  VecAssemblyEnd(this->values_);
+  VecAssemblyBegin(*this->values_); 
+  VecAssemblyEnd(*this->values_);
 }
 
 template<int D, typename BasisFunctionType>

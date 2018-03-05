@@ -53,7 +53,7 @@ setStiffnessMatrix()
   std::array<std::array<double,D>, QuadratureU::numberEvaluations()> samplingPointsU = QuadratureU::samplingPoints();
   std::array<std::array<double,D>, QuadratureP::numberEvaluations()> samplingPointsP = QuadratureP::samplingPoints();
   EvaluationsUArrayType evaluationsUArray;
-  EvaluationsPArrayType evaluationsPArray;
+  //EvaluationsPArrayType evaluationsPArray;
   
   typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
   typedef std::array<double,21> Tensor4;   // data type for 4th order elasticity tensor with due to symmetry has 21 independent components

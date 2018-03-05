@@ -85,13 +85,14 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = "build/debug"           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb -g3 -Og -std=c++1z -DELPP_FEATURE_CRASH_LOG -Werror')   # gcc flags, will be sorted automatically into linker and compiler flags
+
+  env.MergeFlags('-DDEBUG -ggdb -g3 -Og -std=c++14 -DELPP_FEATURE_CRASH_LOG -Werror')   # gcc flags, will be sorted automatically into linker and compiler flags
   # g3: include macros in debug output
   
 else:
   # release build
   variant_dir = 'build/release'         # folder of build
-  env.MergeFlags('-O2 -std=c++1z -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -std=c++14 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
 
 env.MergeFlags('-isystem')   # disable respective warnings that come from easylogging++
 

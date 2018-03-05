@@ -19,3 +19,39 @@ The working title of this software framework is "opendihu" - from the project na
 * distributed memory parallelisation
 * integration of VIS file format
 
+# Documentation
+
+## Interface classes
+Interface classes promise a specific behaviour of the classes that derive from them.
+
+### Runnable
+Class represents a standalone simulation problem that can be run. These have to be the top-level classes in main() because it can be executed.
+**Important methods:** `run()`
+**Derived classes:**
+`TimeSteppingScheme::ExplicitEuler<DiscretizableInTime>`
+`OperatorSplitting::Godunov`
+`OperatorSplitting::Strang`
+`SpatialDiscretization::FiniteElementMethod` (computes a static problem like `Δu = f`)
+
+### DiscretizableInTime
+A time dependent problem of the form u_t = f(t). A time stepping scheme needs a class of this type. 
+**Important methods:** `evaluateTimesteppingRightHandSide()` computes f(t)
+**Derived classes:**
+`CellmlAdapter`
+`ModelOrderReduction::POD<DiscretizableInTimeType, PartType>`
+`SpatialDiscretization::FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term>` for `Equation::hasLaplaceOperatorWithTimeStepping<Term>` (computes a dynamic problem like u_t = Δu)
+
+### TimeSteppingScheme
+A time stepping scheme can compute time steps with a time step width. This class is not a pure interface without functionality but already implements parsing of time step widths and number from the config.
+**Important methods:** `advanceTimeSpan`
+**Derived classes:**
+`TimeSteppingScheme::ExplicitEuler<DiscretizableInTime>`
+`OperatorSplitting::Godunov`
+
+## Classes with state
+Most classes only store helper variables and not real data. Classes that store objects are:
+`TimeSteppingScheme::TimeSteppingSchemeOde<DiscretizableInTime>` stores object of class `DiscretizableInTime` (and therefore all derived timestepping schemes e.g. `ExplicitEuler`).
+`ModelOrderReduction::PODBase<DiscretizableInTime>` stores object of class `DiscretizableInTime`.
+`OperatorSplitting::Godunov<TimeStepping1, TimeStepping2>` stores objects of classes `TimeStepping1`, `TimeStepping2`.
+
+## Config

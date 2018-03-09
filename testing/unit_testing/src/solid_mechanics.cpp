@@ -44,10 +44,9 @@ config = {
       Quadrature::Gauss<3>
     >,
     Equation::Static::SolidMechanics
-  > equationDiscretized(settings);
+  > problem(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  problem.run();
 }
 
 

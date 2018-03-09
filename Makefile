@@ -13,3 +13,6 @@ clean:
 	rm .sconsign.dblite	
 	python dependencies/scons/scons.py -Q -c BUILD_TYPE=DEBUG
 	python dependencies/scons/scons.py -Q -c BUILD_TYPE=RELEASE
+
+functional_testing:
+	cd testing/functional_testing && $(MAKE) default

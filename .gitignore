@@ -14,3 +14,7 @@ build_release
 *.o.part
 *.kate-swp
 *python-test
+.*
+*.dvi
+*.fdb_latexmk
+*.out

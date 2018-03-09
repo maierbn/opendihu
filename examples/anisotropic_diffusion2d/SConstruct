@@ -1,0 +1,9 @@
+# SConstruct file for a single example.
+#
+# Usage: `scons BUILD_TYPE=debug` will build debug version, `scons` will build release version.
+
+# Call the generic SConstruct script which is placed one directory higher.
+# Pass the name of the current example to build that.
+
+
+SConscript('../SConstructSingleExample', exports={"example": "anisotropic_diffusion2d"})

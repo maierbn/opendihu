@@ -566,7 +566,7 @@ config = {
     Mesh::StructuredRegularFixedOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
     Quadrature::None,
-    Equation::Dynamic::Diffusion
+    Equation::Dynamic::IsotropicDiffusion
   > equationDiscretized2(settings);
   
   Computation computation2(settings, equationDiscretized2);

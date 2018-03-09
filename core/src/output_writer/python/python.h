@@ -75,6 +75,6 @@ public:
 
 };  // namespace
 
-#include "output_writer/python/python_regular_fixed.tpp"
+#include "output_writer/python/python_structured_regular_fixed.tpp"
 #include "output_writer/python/python_structured_deformable.tpp"
 #include "output_writer/python/python_unstructured_deformable.tpp"

@@ -1,4 +1,4 @@
-#include "data_management/finite_elements.h"
+#include "data_management/finite_elements_mixed.h"
 
 #include <iomanip>
 #include <iostream>
@@ -20,8 +20,10 @@ namespace Data
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-FiniteElements(const DihuContext &context) : Data<HighOrderBasisOnMeshType>(context)
+FiniteElements(DihuContext context) : Data<HighOrderBasisOnMeshType>(context)
 {
+  LOG(TRACE) << "Data::FiniteElements<Mixed> constructor";
+  PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -368,6 +370,9 @@ initialize()
   LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
   initializeFieldVariables();
   initializeMatrices();
+  
+  // set up diffusion tensor if there is any
+  DiffusionTensor<HighOrderBasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
   
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>

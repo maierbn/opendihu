@@ -9,7 +9,6 @@
 
 #include "equation/laplace.h"
 #include "equation/diffusion.h"
-#include "equation/reaction_diffusion.h"
 #include "equation/solid_mechanics.h"
 
 #include "mesh/structured_regular_fixed.h"

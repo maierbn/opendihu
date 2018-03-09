@@ -189,8 +189,9 @@ class Package(object):
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
       if not res[0]:
-        ctx.Log('  Trying common locations.\n')
-        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies'),
+                       '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        ctx.Log('\n  Trying common locations: %s\n'%str(common_dirs))
         res = (0, '')
         
         # loop over common directories
@@ -206,6 +207,8 @@ class Package(object):
     upp = name.upper()
     env = ctx.env
     res = (False, None)
+    
+    ctx.Log('  ------------------------------\n')
     
     # check if path exists
     if not os.path.exists(cd):
@@ -304,14 +307,18 @@ class Package(object):
     return self.build_handlers.get(None, None)
 
   def auto(self, ctx):
-    sys.stdout.write('\n')
+    #sys.stdout.write('\n')
     
     # Are we forcing this?
     upp = self.name.upper()
     force = self.have_option(ctx.env, upp + '_REDOWNLOAD')
 
     # Create the source directory if it does not already exist.
-    base_dir = os.path.join('../dependencies', self.name.lower())
+    
+    #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
+    #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
+    
+    base_dir = os.path.join(ctx.env['ENV']["PWD"],'dependencies', self.name.lower())
     if not os.path.exists(base_dir):
       os.makedirs(base_dir)
     ctx.Log("Downloading into " + base_dir + "\n")
@@ -362,7 +369,7 @@ class Package(object):
     # Set the directory location.
     ctx.env[self.name.upper() + '_DIR'] = install_dir
 
-    sys.stdout.write('  Configuring with downloaded package ... ')
+    ctx.Log('  Configuring with downloaded package ... ')
     os.chdir(old_dir)
     return (1, '')
 

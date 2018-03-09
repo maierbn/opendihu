@@ -36,6 +36,8 @@ class Python(Package):
                 length += 1
               cflags = cflags[0:startpos] + cflags[startpos+length:]
               
+            
+              
         except:
           ctx.Result(False)
           return False

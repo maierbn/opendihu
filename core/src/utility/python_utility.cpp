@@ -236,7 +236,7 @@ std::array<double,3> PythonUtility::convertFromPython(PyObject *object)
 
 
 
-bool PythonUtility::containsKey(const PyObject* settings, std::string keyString)
+bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
   {
@@ -580,81 +580,108 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
   return result;
 }
 
-void PythonUtility::printDict(PyObject *dict, int indent)
+std::string PythonUtility::getString(PyObject *object, int indent, int first_indent)
 {
-  if (dict == NULL && indent == 0)
+  if (!object)
+    return "NULL";
+  
+  std::stringstream line;
+  line << std::string(first_indent, ' ');
+              
+  if (PyString_CheckExact(object))
+  {
+    std::string objectString = PyString_AsString(object);
+    line << "\""<<objectString<<"\"";
+  }
+  else if (PyInt_CheckExact(object))
+  {
+    long objectLong = PyInt_AsLong(object);
+    line << objectLong;
+  }
+  else if (PyInt_CheckExact(object))
+  {
+    long objectLong = PyInt_AsLong(object);
+    line << objectLong;
+  }
+  else if (PyFloat_CheckExact(object))
+  {
+    double objectDouble = PyFloat_AsDouble(object);
+    line << objectDouble;
+  }
+  else if (PyBool_Check(object))
+  {
+    bool objectBool = PyObject_IsTrue(object);
+    line << std::boolalpha<<objectBool;
+  }
+  else if (PyList_Check(object))
+  {
+    int size = (int)PyList_Size(object);
+    line << "[";
+    for (int index = 0; index < size; index++)
+    {
+      PyObject *item = PyList_GetItem(object, (Py_ssize_t)index);
+      
+      line << getString(item, indent+2, 0) << (index < size-1? ", " : "]");
+    }
+  }
+  else if(PyDict_CheckExact(object))
+  { 
+    // iterate over top level key-value pairs
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+    
+    line << "{";
+    bool first = true;
+    while (PyDict_Next(object, &pos, &key, &value))
+    {
+      if (!first)
+        line << ",";
+      first = false;
+      
+      line << std::endl << std::string(indent+2, ' ');
+      
+      if (PyString_Check(key))
+      {
+        std::string keyString = PyString_AsString(key);
+        line << keyString<<": ";
+      }
+      else if (PyInt_Check(key))
+      {
+        std::string keyString = std::to_string(PyInt_AsLong(key));
+        line << keyString<<": ";
+      }
+      else  
+      {
+        line << "(key is of unknown type): ";
+      }
+      
+      line << getString(value, indent+2, 0);
+    }
+    line << std::endl << std::string(indent, ' ') << "}";
+  }
+  else
+  {
+    line << "<unknown type>";
+  }
+  
+  return line.str();
+}
+
+void PythonUtility::printDict(PyObject *dict)
+{
+  if (dict == NULL)
   {
     VLOG(1) << "dict is NULL!";
     return;
   }
   
-  // iterate over top level key-value pairs
-  PyObject *key, *value;
-  Py_ssize_t pos = 0;
-  
-  while (PyDict_Next(dict, &pos, &key, &value))
+  if (!PyDict_Check(dict))
   {
-    std::stringstream line;
-    line << std::string(indent, ' ');
-    
-    if (PyString_Check(key))
-    {
-      std::string keyString = PyString_AsString(key);
-      line << keyString<<": ";
-    }
-    else if (PyInt_Check(key))
-    {
-      std::string keyString = std::to_string(PyInt_AsLong(key));
-      line << keyString<<": ";
-    }
-    else  
-    {
-      line << "(key is of unknown type): ";
-    }
-                
-    if (PyString_CheckExact(value))
-    {
-      std::string valueString = PyString_AsString(value);
-      line << "\""<<valueString<<"\"";
-      VLOG(1) << line.str();
-    }
-    else if (PyInt_CheckExact(value))
-    {
-      long valueLong = PyInt_AsLong(value);
-      line << valueLong;
-      VLOG(1) << line.str();
-    }
-    else if (PyInt_CheckExact(value))
-    {
-      long valueLong = PyInt_AsLong(value);
-      line << valueLong;
-      VLOG(1) << line.str();
-    }
-    else if (PyFloat_CheckExact(value))
-    {
-      double valueDouble = PyFloat_AsDouble(value);
-      line << valueDouble;
-      VLOG(1) << line.str();
-    }
-    else if (PyBool_Check(value))
-    {
-      bool valueBool = PyObject_IsTrue(value);
-      line << std::boolalpha<<valueBool;
-      VLOG(1) << line.str();
-    }
-    else if(PyDict_CheckExact(value))
-    {
-      line << "{";
-      VLOG(1) << line.str();
-      printDict(value, indent+2);
-      VLOG(1) << std::string(indent, ' ')<<"}";
-    }
-    else
-    {
-      line << "<unknown type>";
-      VLOG(1) << line.str();
-    }
+    VLOG(1) << "Object is not a dict!";
+    return;
   }
+  
+  VLOG(1) << getString(dict);
 }
 
 bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString)

@@ -3,7 +3,7 @@
 namespace Solver
 {
   
-Manager::Manager(const DihuContext &context) : 
+Manager::Manager(DihuContext &context) : 
   context_(context), numberAnonymousSolvers_(0)
 {
   specificSettings_ = this->context_.getPythonConfig();

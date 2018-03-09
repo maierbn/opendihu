@@ -12,7 +12,7 @@ class Godunov : public OperatorSplitting, public Runnable
 {
 public:
   //! constructor
-  Godunov(const DihuContext &context);
+  Godunov(DihuContext context);
   
   //! run the simulation
   void run();
@@ -30,7 +30,7 @@ private:
  
   void initialize();
  
-  //DihuContext &context_;    ///< the context object containing everything to be stored
+  //DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Data::TimeStepping<typename TimeStepping1::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
   
   TimeStepping1 timeStepping1_;    ///< the object to be discretized

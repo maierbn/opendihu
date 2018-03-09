@@ -18,7 +18,7 @@ namespace Data
 
 template<typename BasisOnMeshType>
 TimeStepping<BasisOnMeshType>::
-TimeStepping(const DihuContext &context) : Data<BasisOnMeshType>(context)
+TimeStepping(DihuContext context) : Data<BasisOnMeshType>(context)
 {
 }
 

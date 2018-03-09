@@ -10,11 +10,12 @@ examples = [
   "poisson2d",
   "diffusion1d",
   "diffusion2d",
+  "diffusion2d_2nd_order",
   "cellml",
   "electrophysiology",
 ]
 # here the list is defined again with only a subset of the examples to save compilation time
-examples = ["electrophysiology"]
+examples = ["electrophysiology", "diffusion2d", "diffusion2d_2nd_order", "anisotropic_diffusion2d", "electrophysiology_anisotropic"]
 #examples = ["laplace1d"]
 
 # loop over examples and call SConstruct file

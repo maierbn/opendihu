@@ -18,7 +18,7 @@ public:
   typedef typename DiscretizableInTimeType::BasisOnMesh BasisOnMesh;
   
   //! constructor
-  TimeSteppingSchemeOde(const DihuContext &context, const std::string name); 
+  TimeSteppingSchemeOde(DihuContext context, const std::string name); 
  
   //! destructor  
   virtual ~TimeSteppingSchemeOde() {}

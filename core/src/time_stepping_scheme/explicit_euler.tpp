@@ -9,7 +9,7 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-ExplicitEuler<DiscretizableInTime>::ExplicitEuler(const DihuContext &context) : 
+ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) : 
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();

@@ -17,7 +17,7 @@ class CellmlAdapter : public DiscretizableInTime
 public:
  
   ///! constructor
-  CellmlAdapter(const DihuContext &context);
+  CellmlAdapter(DihuContext context);
   
   ///! destructor
   ~CellmlAdapter();
@@ -69,7 +69,7 @@ private:
   //! scan the given cellml source file for initial values that are given by dummy assignments
   bool scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitialValues);
   
-  const DihuContext &context_;    ///< the context object containing everything to be stored
+  const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   

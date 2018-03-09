@@ -15,7 +15,7 @@ namespace Data
 {
   
 template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::Data(const DihuContext &context) : 
+Data<BasisOnMeshType>::Data(DihuContext context) : 
   context_(context), nComponentsPerNode_(1)
 {
 }
@@ -64,7 +64,7 @@ void Data<BasisOnMeshType>::initialize()
 }
 
 template<typename BasisOnMeshType>
-std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::mesh()
+const std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::mesh() const
 {
   return this->mesh_;
 }

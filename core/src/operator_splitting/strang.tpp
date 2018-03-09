@@ -8,7 +8,7 @@ namespace OperatorSplitting
  
 template<typename TimeStepping1, typename TimeStepping2>
 Strang<TimeStepping1, TimeStepping2>::
-Strang(const DihuContext &context) :
+Strang(DihuContext context) :
   OperatorSplitting(context), data_(context),
   timeStepping1_(context_["StrangSplitting"]["Term1"]),
   timeStepping2_(context_["StrangSplitting"]["Term2"])

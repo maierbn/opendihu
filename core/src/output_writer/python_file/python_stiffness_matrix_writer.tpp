@@ -4,6 +4,8 @@
 #include <memory>
 #include <sstream>
 
+#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+
 namespace OutputWriter
 {
  
@@ -30,7 +32,10 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1) * data.nComponentsPerNode();
+    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
+  
+    nEntries[i] = dofsPerRow * data.nComponentsPerNode();
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   
@@ -67,7 +72,10 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1);
+    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
+  
+    nEntries[i] = dofsPerRow * data.nComponentsPerNode();
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   

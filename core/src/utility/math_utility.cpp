@@ -133,6 +133,9 @@ double applyTransformation(const std::array<double,9> &transformationMatrix, con
   const double m23 = transformationMatrix[5];
   const double m33 = transformationMatrix[8];
   
+  //! computes v1^T * T * v2 where T is the symmetric transformation matrix
+  //! computed by doc/compute_generalized_laplace.py
+  
   // compute result
   result = v21*(m11*v11 + m12*v12 + m13*v13) + v22*(m12*v11 + m22*v12 + m23*v13) + v23*(m13*v11 + m23*v12 + m33*v13);
   return result;
@@ -152,6 +155,9 @@ double applyTransformation(const std::array<double,4> &transformationMatrix, con
   const double m11 = transformationMatrix[0];
   const double m12 = transformationMatrix[1];
   const double m22 = transformationMatrix[3];
+  
+  //! computes v1^T * T * v2 where T is the symmetric transformation matrix
+  //! computed by doc/compute_generalized_laplace.py
   
   // compute result
   result = v21*(m11*v11 + m12*v12) + v22*(m12*v11 + m22*v12);

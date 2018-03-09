@@ -61,7 +61,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
   const int vectorSize = nNodes*3;
   
   // fill initial position from settings
-  if (PythonUtility::containsKey(specificSettings, "nodePositions"))
+  if (PythonUtility::hasKey(specificSettings, "nodePositions"))
   {
     int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
     

@@ -13,13 +13,13 @@ int main(int argc, char *argv[])
   TimeSteppingScheme::ExplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<2>,
-      BasisFunction::Lagrange,
-      Equation::Dynamic::Diffusion
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<3>,
+      Equation::Dynamic::IsotropicDiffusion
     >
-  > equationDiscretized(settings);
+  > problem(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  problem.run();
   
   return EXIT_SUCCESS;
 }

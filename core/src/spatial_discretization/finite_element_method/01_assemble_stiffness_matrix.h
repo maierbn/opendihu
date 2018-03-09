@@ -22,7 +22,6 @@ protected:
   void setStiffnessMatrix();
   
 };
-
  
 };  // namespace
 

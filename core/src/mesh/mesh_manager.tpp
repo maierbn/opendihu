@@ -13,7 +13,7 @@ template<typename BasisOnMeshType>
 std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 {     
   // if mesh was already created earlier
-  if (PythonUtility::containsKey(settings, "meshName"))
+  if (PythonUtility::hasKey(settings, "meshName"))
   {
     std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
     if (hasMesh(meshName))

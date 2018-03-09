@@ -7,10 +7,16 @@ namespace Equation
 namespace Dynamic
 {
 
-class Diffusion : public Dynamic
+/** Δu = f
+  */
+class IsotropicDiffusion : public Dynamic
 {
-public:
-private:
+};
+
+/** ∇•A∇u = f
+  */
+class AnisotropicDiffusion : public Dynamic
+{
 };
 
 }  // namespace

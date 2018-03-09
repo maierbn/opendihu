@@ -10,6 +10,18 @@
 namespace MathUtility 
 {
   
+template<int nRows, int nColumns>
+Matrix<nRows,nColumns>::
+Matrix(const std::array<double, nRows*nColumns> &rhs) : std::array<double, nRows*nColumns>(rhs)
+{
+}
+
+template<int nRows, int nColumns>
+Matrix<nRows,nColumns>::
+Matrix(const std::array<double, nRows*nColumns> &&rhs) : std::array<double, nRows*nColumns>(rhs)
+{
+}
+
 //! return a reference to the entry (rowIndex,columnIndex)
 template<int nRows, int nColumns>
 double &Matrix<nRows,nColumns>::
@@ -33,6 +45,22 @@ setPetscMatrix(Mat &mat)
   
   // assign values to PETSc data structure
   MatSetValues(mat, nRows, rowIndices.data, nColumns, columnIndices.data(), this->data(), INSERT_VALUES);
+}
+
+template<int nRows, int nColumns>
+std::array<double,nRows> Matrix<nRows,nColumns>::
+operator*(const std::array<double,nColumns> &vector)
+{
+  std::array<double,nRows> result({0});
+  for (int columnIndex = 0; columnIndex < nColumns; columnIndex++)
+  {
+#pragma simd
+    for (int rowIndex = 0; rowIndex < nRows; rowIndex++)
+    {
+      result[rowIndex] += this->operator()(rowIndex, columnIndex) * vector[columnIndex];
+    }
+  }
+  return result;
 }
 
 } // namespace

@@ -8,7 +8,7 @@ namespace SpatialDiscretization
  
 /** base class for baseRhs
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh, typename=Term>
 class FiniteElementMethodBaseRhs :
   public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {
@@ -17,7 +17,7 @@ class FiniteElementMethodBaseRhs :
 /** specialization for linear Lagrange, 1D regular mesh (uses stencils)
  */
 template<typename QuadratureType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>> :
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>, Equation::hasLaplaceOperator<Term>> :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
@@ -36,7 +36,7 @@ protected:
 /** specialization for linear Lagrange, 2D regular mesh (uses stencils)
  */
 template<typename QuadratureType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>> :
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>, Equation::hasLaplaceOperator<Term>> :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
@@ -54,7 +54,7 @@ protected:
 /** specialization for linear Lagrange, 3D regular mesh (uses stencils)
  */
 template<typename QuadratureType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>> :
+class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>, Equation::hasLaplaceOperator<Term>> :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
@@ -69,10 +69,11 @@ protected:
   void setMassMatrix();
 };
 
-/** specialisation for Deformable mesh of any dimension D (do proper integration of rhs)
+/** specialisation for RegularFixed not linear Lagrange, and other meshes of any dimension D (do proper integration of rhs)
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term, Mesh::isDeformable<typename BasisOnMeshType::Mesh>> :
+class FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term, 
+    Equation::doesNotUseStencils<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh,Term>> :
   public AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term>
 {
 public:

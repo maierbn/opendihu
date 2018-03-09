@@ -7,7 +7,7 @@
 namespace Mesh 
 {
 
-Manager::Manager(const DihuContext& context) :
+Manager::Manager(DihuContext context) :
   context_(context), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
@@ -60,7 +60,7 @@ std::shared_ptr<Mesh> Manager::
 mesh<None>(PyObject *settings)
 {
   std::string meshName;
-  if (PythonUtility::containsKey(settings, "meshName"))
+  if (PythonUtility::hasKey(settings, "meshName"))
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
     LOG(DEBUG) << "Config contains meshName \""<<meshName<<"\".";
@@ -92,7 +92,7 @@ mesh<None>(PyObject *settings)
   }
   
   // if nElements was specified, create standard regularFixed mesh
-  if (PythonUtility::containsKey(settings, "nElements"))
+  if (PythonUtility::hasKey(settings, "nElements"))
   {
     // create new mesh, store as anonymous object
     std::stringstream anonymousName;

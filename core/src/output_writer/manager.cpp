@@ -16,9 +16,10 @@ void Manager::initialize(PyObject *settings)
 {
   outputWriter_.clear();
   
-  LOG(DEBUG) << "initializeOutputWriter";
+  LOG(DEBUG) << "initializeOutputWriter, settings=" << settings;
+  PythonUtility::printDict(settings);
   
-  if (PythonUtility::containsKey(settings, "OutputWriter"))
+  if (PythonUtility::hasKey(settings, "OutputWriter"))
   {
     // get the first value from the list
     PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(settings, "OutputWriter");

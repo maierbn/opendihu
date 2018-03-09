@@ -24,7 +24,16 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 
 bool DihuContext::initialized_ = false;
  
-DihuContext::DihuContext(int argc, char *argv[]) :
+// copy-constructor
+DihuContext::DihuContext(const DihuContext &rhs)
+{
+  pythonConfig_ = rhs.pythonConfig_;
+  
+  VLOG(4) << "Py_XINCREF(pythonConfig_)";
+  Py_XINCREF(pythonConfig_);
+}
+
+DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
   pythonConfig_(NULL)
 {
   LOG(TRACE) << "DihuContext constructor";
@@ -89,6 +98,7 @@ DihuContext::DihuContext(int argc, char *argv[]) :
     }
 #endif
 
+    // set program name of python script
     char const *programName = "dihu";
     VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
 
@@ -111,7 +121,16 @@ DihuContext::DihuContext(int argc, char *argv[]) :
     
     LOG(DEBUG) << "Python home: " << home;
     
-    loadPythonScriptFromFile(filename);
+    // pass command line arguments to python script, all except first argument
+    /*char **argvNew = new char *[argc-1];
+    std::memcpy(argvNew, &argv[1], argc-1);
+    PySys_SetArgvEx(argc-1, argvNew, 0);*/
+    PySys_SetArgvEx(argc, argv, 0);
+    
+    if(settingsFromFile)
+    {
+      loadPythonScriptFromFile(filename);
+    }
     
     initialized_ = true;
   }
@@ -120,17 +139,20 @@ DihuContext::DihuContext(int argc, char *argv[]) :
   {
     VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<Mesh::Manager>(*this);
+    //Py_XINCREF(pythonConfig_);
   }
   if (!solverManager_)
   {
     VLOG(2) << "create solverManager_";
     solverManager_ = std::make_shared<Solver::Manager>(*this);
+    //Py_XINCREF(pythonConfig_);
   }
 }  
 
-DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv)
+DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv, false)
 {
   loadPythonScript(pythonSettings);
+  PythonUtility::printDict(pythonConfig_);
   
   VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;
@@ -157,19 +179,22 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   return solverManager_;
 }
 
-DihuContext DihuContext::operator[](std::string keyString) const
+DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;
   char **argv = NULL;
   DihuContext dihuContext(argc, argv);
-  if (PythonUtility::containsKey(pythonConfig_, keyString))
+  
+  // if requested child context exists in config
+  if (PythonUtility::hasKey(pythonConfig_, keyString))
   {
     dihuContext.pythonConfig_ = PythonUtility::getOptionPyObject(pythonConfig_, keyString);
     VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
     Py_XINCREF(dihuContext.pythonConfig_);
   }
-  else
+  else  
   {
+    // if config does not contain the requested child dict, create the needed context from the same level in config
     dihuContext.pythonConfig_ = pythonConfig_;
     VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
     Py_XINCREF(dihuContext.pythonConfig_);
@@ -182,7 +207,6 @@ DihuContext DihuContext::operator[](std::string keyString) const
 
 void DihuContext::loadPythonScriptFromFile(std::string filename)
 {
-  LOG(TRACE)<<"loadPythonScriptFromFile";
   // initialize python interpreter
   
   std::ifstream file(filename);
@@ -211,7 +235,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  LOG(TRACE)<<"loadPythonScript";
+  LOG(TRACE)<<"loadPythonScript("<<text.substr(0,std::min(std::size_t(80),text.length()))<<")";
   
   // execute python code
   int ret = 0;
@@ -240,6 +264,8 @@ void DihuContext::loadPythonScript(std::string text)
   // load main module
   PyObject *mainModule = PyImport_AddModule("__main__");
   pythonConfig_ = PyObject_GetAttrString(mainModule, "config");
+  VLOG(4) << "create pythonConfig_ (initialize ref to 1)";
+  
   
   // check if type is valid
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
@@ -335,9 +361,13 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
 DihuContext::~DihuContext()
 {
+  // do not clear pythonConfig_ here, because it crashes
+  //VLOG(4) << "PY_CLEAR(PYTHONCONFIG_)";  // note: calling VLOG in a destructor is critical and can segfault
+  //Py_CLEAR(pythonConfig_);
+  
+  
+  
   // do not finalize Python because otherwise tests keep crashing
-  VLOG(4) << "Py_CLEAR(pythonConfig_)";
-  Py_CLEAR(pythonConfig_);
   //Py_Finalize();
 #if PY_MAJOR_VERSION >= 3  
   Py_Finalize();

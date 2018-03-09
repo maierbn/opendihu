@@ -11,7 +11,7 @@ class OperatorSplitting :
 {
 public:
   //! constructor
-  OperatorSplitting(const DihuContext& context);
+  OperatorSplitting(DihuContext context);
  
   virtual ~OperatorSplitting() {}
 

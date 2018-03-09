@@ -20,9 +20,20 @@ namespace Data
 
 template<typename BasisOnMeshType>
 FiniteElements<BasisOnMeshType>::
-FiniteElements(const DihuContext &context) : Data<BasisOnMeshType>(context)
+FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
+  LOG(TRACE) << "Data::FiniteElements constructor";
+  PythonUtility::printDict(this->context_.getPythonConfig());
 }
+
+template<typename BasisOnMeshType>
+void FiniteElements<BasisOnMeshType>::
+debug(std::string name)
+{ 
+  LOG(TRACE) << "Data::FiniteElements [" << name << "]";
+  PythonUtility::printDict(this->context_.getPythonConfig());
+}
+
 
 template<typename BasisOnMeshType>
 FiniteElements<BasisOnMeshType>::
@@ -34,6 +45,21 @@ FiniteElements<BasisOnMeshType>::
   {
     ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
   }
+}
+
+template<typename BasisOnMeshType>
+void FiniteElements<BasisOnMeshType>::
+initialize()
+{
+  LOG(TRACE) << "FiniteElements::initialize1";
+ 
+  Data<BasisOnMeshType>::initialize();
+  
+  LOG(TRACE) << "FiniteElements::initialize2";
+  PythonUtility::printDict(this->context_.getPythonConfig());
+ 
+  // set up diffusion tensor if there is any
+  DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
 
 /*
@@ -80,7 +106,7 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
     offdiagonalNonZeros = nOverlaps;
     break;
   case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
+    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more zeros
     offdiagonalNonZeros = diagonalNonZeros;
     break;
   case 3:

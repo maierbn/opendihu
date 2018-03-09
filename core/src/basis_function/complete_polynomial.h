@@ -64,6 +64,11 @@ public:
   //! evaluate the derivative of phi(xi) w.r.t xi_i, where i is given by derivativeIdx, i.e. Phi_{dofIndex,derivativeIdx}(xi)
   static double dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,D> xi);
   
+  //! return the basis order value as used in python files and callbacks, e.g. 2
+  static constexpr int getBasisOrder();
+  
+  //! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
+  static std::string getBasisFunctionString();
 private:
 };
 

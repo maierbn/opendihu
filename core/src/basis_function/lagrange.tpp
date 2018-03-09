@@ -26,4 +26,20 @@ nDofsPerBasis()
   return 3;
 }
 
+//! return a basis order string as used in python files and callbacks, e.g. "2"
+template<int order>
+constexpr int LagrangeOfOrder<order>::
+getBasisOrder()
+{
+  return order;
+}
+
+//! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
+template<int order>
+std::string LagrangeOfOrder<order>::
+getBasisFunctionString()
+{
+  return std::string("Lagrange"); 
+}
+
 };  // namespace

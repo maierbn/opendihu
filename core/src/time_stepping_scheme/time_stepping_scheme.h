@@ -13,7 +13,7 @@ class TimeSteppingScheme
 public:
   
   //! constructor
-  TimeSteppingScheme(const DihuContext &context); 
+  TimeSteppingScheme(DihuContext &context); 
  
   ///! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
   virtual void advanceTimeSpan() = 0;
@@ -41,7 +41,7 @@ public:
 
 protected:
  
-  const DihuContext &context_;    ///< the context object containing everything to be stored
+  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   
   double startTime_;        ///< start time of time interval to be simulated by call to advance

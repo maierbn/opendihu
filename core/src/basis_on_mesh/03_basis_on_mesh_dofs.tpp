@@ -208,7 +208,7 @@ BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
 {
   LOG(TRACE) << "BasisOnMeshDofs constructor";
  
-  if (PythonUtility::containsKey(settings, "exelem"))
+  if (PythonUtility::hasKey(settings, "exelem"))
   {
     std::string filenameExelem = PythonUtility::getOptionString(settings, "exelem", "input.exelem");
     std::string filenameExnode = PythonUtility::getOptionString(settings, "exnode", "input.exnode");
@@ -227,7 +227,7 @@ BasisOnMeshDofs(PyObject *settings, bool noGeometryField) :
     // eliminate scale factors (not yet tested)
     //this->eliminateScaleFactors();
   }
-  else if (PythonUtility::containsKey(settings, "nodePositions"))
+  else if (PythonUtility::hasKey(settings, "nodePositions"))
   {
     this->parseFromSettings(settings);
   }
@@ -450,7 +450,7 @@ void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionTyp
 remapFieldVariables(PyObject *settings)
 {
   // remap name of field variables to different names if specified
-  if (PythonUtility::containsKey(settings, "remap"))
+  if (PythonUtility::hasKey(settings, "remap"))
   {
     std::string keyString = "remap";
     std::pair<std::string, std::string> dictItem 

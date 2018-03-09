@@ -8,7 +8,7 @@ namespace OperatorSplitting
  
 template<typename TimeStepping1, typename TimeStepping2>
 Godunov<TimeStepping1, TimeStepping2>::
-Godunov(const DihuContext &context) :
+Godunov(DihuContext context) :
   OperatorSplitting(context), data_(context),
   timeStepping1_(context_["GodunovSplitting"]["Term1"]),
   timeStepping2_(context_["GodunovSplitting"]["Term2"])

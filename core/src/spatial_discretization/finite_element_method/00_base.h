@@ -13,7 +13,7 @@ template<typename BasisOnMeshType, typename QuadratureType>
 class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
-  FiniteElementMethodBase(const DihuContext &context);
+  FiniteElementMethodBase(DihuContext context);
   
   // perform computation
   void run();
@@ -42,7 +42,7 @@ protected:
   //! after rhs is transferred to weak form this method is called and can be overriden later
   virtual void manipulateWeakRhs(){}
   
-  const DihuContext &context_;    ///< the context object containing everything to be stored
+  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Data::FiniteElements<BasisOnMeshType> data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer

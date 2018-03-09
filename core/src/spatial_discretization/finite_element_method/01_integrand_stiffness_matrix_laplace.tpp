@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix_laplace.h"
 
 #include <array>
 
@@ -10,7 +10,7 @@ namespace SpatialDiscretization
 //integrand for stiffness matrix of laplace operator, 1D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<Vec3,1> &jacobian, const std::array<double,1> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,1> &jacobian, const std::array<double,1> xi)
 {
   EvaluationsType evaluations;
   
@@ -18,7 +18,7 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
   double integralFactor = 1. / s;
   
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<std::array<double,1>,BasisOnMeshType::nDofsPerElement()> gradPhi = mesh->getGradPhi(xi);
+  std::array<std::array<double,1>,BasisOnMeshType::nDofsPerElement()> gradPhi = data.mesh()->getGradPhi(xi);
   
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<BasisOnMeshType::nDofsPerElement(); i++)
@@ -37,8 +37,10 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
 {
+  LOG(TRACE) << "evaluateIntegrand LAPLACE";
+  
   EvaluationsType evaluations;
   
   const Vec3 &zeta1 = jacobian[0];  // first column of jacobian
@@ -56,7 +58,7 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
   double l1squared = MathUtility::sqr(l1);
   double l2squared = MathUtility::sqr(l2);
   
-  // compute the 3x3 transformation matrix T = J^{-1}J^{-T} and the absolute of the determinant of the jacobian
+  // compute the 2x2 transformation matrix T
   std::array<double,4> transformationMatrix = {
     MathUtility::sqr(cos(alpha))/l2squared + 1./l1squared,
     sin(alpha)*cos(alpha)/l2squared,
@@ -79,7 +81,7 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
 #endif          
   
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> gradPhi = mesh->getGradPhi(xi);
+  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> gradPhi = data.mesh()->getGradPhi(xi);
   
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<BasisOnMeshType::nDofsPerElement(); i++)
@@ -97,7 +99,7 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<Vec3,3> &jacobian, const std::array<double,3> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,3> &jacobian, const std::array<double,3> xi)
 {
   EvaluationsType evaluations;
   
@@ -119,13 +121,15 @@ evaluateIntegrand(const std::shared_ptr<BasisOnMeshType> mesh, const std::array<
   VLOG(3) << s.str(); 
 #endif          
   
-  std::array<Vec3,BasisOnMeshType::nDofsPerElement()> gradPhi = mesh->getGradPhi(xi);
+  const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> gradPhi = data.mesh()->getGradPhi(xi);
   
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i=0; i<BasisOnMeshType::nDofsPerElement(); i++)
   {
     for (int j=0; j<BasisOnMeshType::nDofsPerElement(); j++)
     {
+     
+      //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
       evaluations[i][j] = integrand;
     }

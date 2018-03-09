@@ -7,16 +7,16 @@ namespace Equation
 namespace Static
 {
 
+/** Δu = f
+  */
 class Poisson : public Static
 {
-public:
-private:
 };
 
+/** ∇•A∇u = f
+  */
 class GeneralizedPoisson : public Static
 {
-public:
-private:
 };
 
 }  // namespace

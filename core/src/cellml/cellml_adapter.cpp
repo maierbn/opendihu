@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
-CellmlAdapter::CellmlAdapter(const DihuContext& context) :
+CellmlAdapter::CellmlAdapter(DihuContext context) :
   DiscretizableInTime(SolutionVectorMapping(true)),
   context_(context), setParameters_(NULL), handleResult_(NULL), 
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL)
@@ -192,7 +192,7 @@ bool CellmlAdapter::createSimdSourceFile(std::string &simdSourceFilename)
     
     // write out source file 
     simdSourceFilename = "simd_source.c";
-    if (PythonUtility::containsKey(specificSettings_, "simdSourceFilename"))
+    if (PythonUtility::hasKey(specificSettings_, "simdSourceFilename"))
     {
       simdSourceFilename = PythonUtility::getOptionString(specificSettings_, "simdSourceFilename", "");
     }
@@ -275,7 +275,7 @@ void CellmlAdapter::initializeRhsRoutine()
   
   // try to load or create simd source
   std::string simdSourceFilename;
-  if (PythonUtility::containsKey(specificSettings_, "sourceFilename"))
+  if (PythonUtility::hasKey(specificSettings_, "sourceFilename"))
   {
     if (!createSimdSourceFile(simdSourceFilename))
       simdSourceFilename = "";
@@ -283,7 +283,7 @@ void CellmlAdapter::initializeRhsRoutine()
   
   if (simdSourceFilename == "")
   {
-    if(PythonUtility::containsKey(specificSettings_, "simdSourceFilename"))
+    if(PythonUtility::hasKey(specificSettings_, "simdSourceFilename"))
     {
       simdSourceFilename = PythonUtility::getOptionString(specificSettings_, "simdSourceFilename", "");
     }
@@ -297,7 +297,7 @@ void CellmlAdapter::initializeRhsRoutine()
     
     // compile source file to a library 
     libraryFilename = "lib.so";
-    if (PythonUtility::containsKey(specificSettings_, "libraryFilename"))
+    if (PythonUtility::hasKey(specificSettings_, "libraryFilename"))
     {
       libraryFilename = PythonUtility::getOptionString(specificSettings_, "libraryFilename", "lib.so");
     }
@@ -473,7 +473,7 @@ void CellmlAdapter::initialize()
   solutionVectorMapping_.setScalingFactor(prefactor);
   
 
-  if (PythonUtility::containsKey(specificSettings_, "setParametersFunction"))
+  if (PythonUtility::hasKey(specificSettings_, "setParametersFunction"))
   {
     pythonSetParametersFunction_ = PythonUtility::getOptionFunction(specificSettings_, "setParametersFunction");
     setParametersCallInterval_ = PythonUtility::getOptionInt(specificSettings_, "setParametersCallInterval", 1, PythonUtility::Positive);
@@ -485,7 +485,7 @@ void CellmlAdapter::initialize()
     LOG(DEBUG) << "registered setParameters function";
   }
 
-  if (PythonUtility::containsKey(specificSettings_, "handleResultFunction"))
+  if (PythonUtility::hasKey(specificSettings_, "handleResultFunction"))
   {
     pythonHandleResultFunction_ = PythonUtility::getOptionFunction(specificSettings_, "handleResultFunction");
     handleResultCallInterval_ = PythonUtility::getOptionInt(specificSettings_, "handleResultCallInterval", 1, PythonUtility::Positive);
@@ -553,7 +553,7 @@ bool CellmlAdapter::setInitialValues(Vec& initialValues)
 {
   LOG(TRACE) << "CellmlAdapter::setInitialValues, sourceFilename_="<<sourceFilename_;
   std::vector<double> states;
-  if(PythonUtility::containsKey(specificSettings_, "statesInitialValues"))
+  if(PythonUtility::hasKey(specificSettings_, "statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
@@ -571,7 +571,7 @@ bool CellmlAdapter::setInitialValues(Vec& initialValues)
     states.resize(nStates_*nInstances_, 0);
   }
   
-  if(PythonUtility::containsKey(specificSettings_, "parametersInitialValues"))
+  if(PythonUtility::hasKey(specificSettings_, "parametersInitialValues"))
   {
     LOG(DEBUG) << "load parametersInitialValues also from config";
     

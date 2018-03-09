@@ -20,7 +20,7 @@ namespace SpatialDiscretization
   
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(const DihuContext &context)
+FiniteElementMethodTimeStepping(DihuContext context)
   : FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>(context),
   DiscretizableInTime(SolutionVectorMapping(true))
 {
@@ -34,6 +34,8 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 initialize()
 {
+  this->data_.debug("FiniteElementMethodTimeStepping::initialize");
+  
   this->data_.initialize();
   this->setStiffnessMatrix();
   this->setMassMatrix();
@@ -83,9 +85,11 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   // compute rhs = stiffnessMatrix*input
   MatMult(stiffnessMatrix, input, rhs);
   
+  // compute output = massMatrix^{-1}*rhs
   recoverRightHandSideStrongForm(output);
   
   this->data_.print();
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>

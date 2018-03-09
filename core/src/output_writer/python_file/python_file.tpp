@@ -38,7 +38,11 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   
   LOG(DEBUG) << "filename is [" << filename << "]";
   
-  // open file
+  // open file, to see if directory needs to be created
+  std::ofstream ofile = openFile(filename);
+  if(ofile.is_open())
+    ofile.close();
+  
 #if PY_MAJOR_VERSION >= 3  
   FILE *fileC = fopen(filename.c_str(), "w");
   int fileDescriptorC = fileno(fileC);

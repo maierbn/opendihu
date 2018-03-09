@@ -16,7 +16,7 @@ class PODBase : public DiscretizableInTime
 {
 public:
   //! constructor
-  PODBase(const DihuContext& context); 
+  PODBase(DihuContext context); 
  
   //! initialize timestepping
   void initialize();
@@ -38,7 +38,7 @@ public:
   
 protected:
   
-  const DihuContext &context_;    ///< the context object containing everything to be stored
+  const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   DiscretizableInTimeType problem_;   ///< the DiscretizableInTime object that is managed by this class
 };
 

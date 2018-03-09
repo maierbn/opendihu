@@ -3,7 +3,7 @@
 namespace OperatorSplitting 
 {
 
-OperatorSplitting::OperatorSplitting(const DihuContext& context)
+OperatorSplitting::OperatorSplitting(DihuContext context)
   : ::TimeSteppingScheme::TimeSteppingScheme(context)
 {
 }

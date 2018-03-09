@@ -20,7 +20,7 @@ class TimeStepping : public Data<BasisOnMeshType>
 public:
  
   //! constructor
-  TimeStepping(const DihuContext &context);
+  TimeStepping(DihuContext context);
   
   //! destructur
   ~TimeStepping();

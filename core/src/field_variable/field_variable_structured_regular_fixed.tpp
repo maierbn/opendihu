@@ -21,7 +21,7 @@ meshWidth() const
 {
   return this->meshWidth_;
 }
-
+/*
 //! for a specific component, get all values
 template<int D,typename BasisFunctionType>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
@@ -84,7 +84,8 @@ getValues(std::string component, std::vector<double> &values)
     }
   }
 }
-
+*/
+/*
 //! for a specific component, get values from their global dof no.s
 template<int D,typename BasisFunctionType>
 template<int N>
@@ -132,7 +133,7 @@ getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<
     }
   }
 }
-
+*/
 /*
 //! get values from their global dof no.s for all components
 template<int D,typename BasisFunctionType>
@@ -177,6 +178,7 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
 }
 */
 
+/*
 //! for a specific component, get the values corresponding to all element-local dofs
 template<int D,typename BasisFunctionType>
 template<int N>
@@ -197,17 +199,18 @@ getElementValues(std::string component, element_no_t elementNo,
   std::array<int,nDofsPerElement> dofGlobalNo;
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    dofGlobalNo[dofIndex] = BasisOnMeshType::dofNo(elementNo, dofIndex);
+    dofGlobalNo[dofIndex] = this->mesh_->dofNo(elementNo, dofIndex);
   }
   
   this->getValues<nDofsPerElement,D,BasisFunctionType>(component, dofGlobalNo, values);
 }
+*/
 /*
 //! get the values corresponding to all element-local dofs for all components
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
 void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   if (!this->isGeometryField_)
   {
@@ -221,12 +224,12 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   std::array<int,nDofsPerElement> dofGlobalNo;
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    dofGlobalNo[dofIndex] = BasisOnMeshType::dofNo(elementNo, dofIndex);
+    dofGlobalNo[dofIndex] = this->mesh_->dofNo(elementNo, dofIndex);
   }
   
   this->getValues<nDofsPerElement,nComponents,D,BasisFunctionType>(dofGlobalNo, values);
-}
-*/
+}*/
+
 //! for a specific component, get a single value from global dof no.
 template<int D,typename BasisFunctionType>
 double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::

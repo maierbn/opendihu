@@ -5,6 +5,7 @@
 #include <memory>
 #include <iostream>
 #include "easylogging++.h"
+#include "utility/python_utility.h"
 
 namespace Solver
 {
@@ -14,7 +15,7 @@ template<typename SolverType>
 std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
 {
   // if solver has already been created earlier
-  if (PythonUtility::containsKey(settings, "solverName"))
+  if (PythonUtility::hasKey(settings, "solverName"))
   {
     std::string solverName = PythonUtility::getOptionString(settings, "solverName", "");
     if (hasSolver(solverName))
@@ -39,7 +40,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
   }
   else
   {
-    LOG(DEBUG) << "Config does not contain solverName.";
+    VLOG(1) << "Config does not contain solverName.";
   }
   
   // check if there is a matching solver already stored

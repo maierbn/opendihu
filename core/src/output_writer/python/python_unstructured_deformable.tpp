@@ -39,12 +39,15 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   
   std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh = fieldVariables.front()->mesh();
   
+  std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
+  int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
+  
   LOG(DEBUG) << pyData << " build data";
   LOG(DEBUG) << "PythonUnStructuredDeformable";
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s i, s O, s i, s d}", "meshType", "UnstructuredDeformable",
-                                 "dimension", D, "nElements", mesh->nElements(), "data", pyData, 
+  PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s i, s d}", "meshType", "UnstructuredDeformable",
+                                 "dimension", D, "nElements", mesh->nElements(), "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, "data", pyData, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
   
   LOG(DEBUG) << data << " done";

@@ -6,7 +6,7 @@ namespace ModelOrderReduction
  
 template<typename DiscretizableInTimeType>
 PODBase<DiscretizableInTimeType>::
-PODBase(const DihuContext &context) : 
+PODBase(DihuContext context) : 
   DiscretizableInTime(SolutionVectorMapping(true)), problem_(context), context_(context)
 {
 }

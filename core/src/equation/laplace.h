@@ -7,10 +7,16 @@ namespace Equation
 namespace Static
 {
 
+/** Δu = 0
+  */
 class Laplace : public Static
 {
-public:
-private:
+};
+
+/** ∇•A∇u = 0
+  */
+class GeneralizedLaplace : public Static
+{
 };
 
 }  // namespace

@@ -163,8 +163,7 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
-  const int nDofsPerElement = BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement();
-  geometry_.getElementValues<nDofsPerElement,3>(elementNo, values);
+  geometry_->template getElementValues<3>(elementNo, values);
 }
 
 template<int D,typename BasisFunctionType>

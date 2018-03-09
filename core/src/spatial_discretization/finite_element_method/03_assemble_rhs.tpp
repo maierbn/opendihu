@@ -212,7 +212,7 @@ setMassMatrix()
 /*
 template<typename MixedBasisOnMeshType, typename MixedQuadratureType>
 AssembleRightHandSide<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::
-AssembleRightHandSide(const DihuContext &context) :
+AssembleRightHandSide(DihuContext &context) :
   FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix(context)
 {
   

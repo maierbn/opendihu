@@ -25,7 +25,9 @@ template<int D>
 element_no_t Structured<D>::nElementsPerCoordinateDirection(int dimension) const
 {
   if (dimension >= D)
+  {
     return 1;
+  }
   return nElementsPerCoordinateDirection_[dimension];
 }
 

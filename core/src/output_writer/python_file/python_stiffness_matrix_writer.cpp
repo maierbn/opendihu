@@ -26,7 +26,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   
   if (nEntriesTotal != (long int)data.size())
   {
-    LOG(ERROR) << "Number of entries " << nEntriesTotal << " does not match vector size "<<data.size()<<".";
+    LOG(ERROR) << "Number of entries " << nEntriesTotal << " " << nEntries << " for file \"" << filename << "\" does not match vector size "<<data.size()<<".";
     return;
   }
   

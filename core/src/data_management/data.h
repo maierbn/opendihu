@@ -8,8 +8,7 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
-
-class DihuContext;
+#include "control/dihu_context.h"
 
 namespace Data
 {
@@ -22,7 +21,7 @@ public:
   typedef BasisOnMeshType BasisOnMesh;
  
   //! constructor
-  Data(const DihuContext &context);
+  Data(DihuContext context);
   
   //! destructor
   virtual ~Data();
@@ -37,7 +36,7 @@ public:
   void setNComponentsPerNode(int n);
   
   //! get the stored mesh
-  std::shared_ptr<BasisOnMeshType> mesh();
+  const std::shared_ptr<BasisOnMeshType> mesh() const;
   
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   int nDegreesOfFreedom();
@@ -56,7 +55,7 @@ protected:
   //! initializes the vectors and stiffness matrix with size
   virtual void createPetscObjects() = 0;
  
-  const DihuContext &context_;
+  const DihuContext context_;     ///< the context object with python config of the class that uses this data object
   
   std::shared_ptr<BasisOnMeshType> mesh_;
   int nComponentsPerNode_;    ///< number of degrees of freedom per mesh node

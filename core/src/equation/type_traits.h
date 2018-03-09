@@ -6,52 +6,97 @@
 #include "equation/static.h"
 #include "equation/solid_mechanics.h"
 #include "equation/compressible_mooney_rivlin.h"
+#include "basis_function/lagrange.h"
+#include "mesh/structured_regular_fixed.h"
 
 namespace Equation
 {
 
-// Equation of the form Δu = f
-template<class Term>
-using hasLaplaceOperatorWithRhs = std::enable_if_t<
+// Equation of the form L = u_t
+template<typename Term>
+using usesTimeStepping = std::enable_if_t<
+  std::is_same<Term, Dynamic::IsotropicDiffusion>::value
+  || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value,
+  Term
+>;
+
+// Equations that include Δu
+template<typename Term>
+using hasLaplaceOperator = std::enable_if_t<
+  std::is_same<Term, Static::Laplace>::value
+  || std::is_same<Term, Static::Poisson>::value
+  || std::is_same<Term, Dynamic::IsotropicDiffusion>::value,
+  Term
+>;
+
+// Equations that include ∇•(A∇u)
+template<typename Term>
+using hasGeneralizedLaplaceOperator = std::enable_if_t<
+  std::is_same<Term, Static::GeneralizedLaplace>::value
+  || std::is_same<Term, Static::GeneralizedPoisson>::value
+  || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value,
+  Term
+>;
+
+// Equations that can have a non-zero rhs (Lu = f), but not Lu = u_t
+template<typename Term>
+using hasRhsNoTimestepping = std::enable_if_t<
   std::is_same<Term, Static::Poisson>::value
   || std::is_same<Term, Static::GeneralizedPoisson>::value,
   Term
 >;
 
-// Equation of the form Δu = u_t
-template<class Term>
-using hasLaplaceOperatorWithTimeStepping = std::enable_if_t<
-  std::is_same<Term, Dynamic::Diffusion>::value,
-  Term
->;
-
-// Equations that include Δu
-template<class Term>
-using hasLaplaceOperator = std::enable_if_t<
-  std::is_same<Term, Static::Laplace>::value
-  || std::is_same<Term, Static::Poisson>::value
-  || std::is_same<Term, Static::GeneralizedPoisson>::value
-  || std::is_same<Term, Dynamic::Diffusion>::value,
-  Term
->;
-
-// Equations that include a proper rhs
-template<class Term>
+// Equations that can have a non-zero rhs (Lu = f)
+template<typename Term>
 using hasRhs = std::enable_if_t<
   std::is_same<Term, Static::Poisson>::value
   || std::is_same<Term, Static::GeneralizedPoisson>::value
-  || std::is_same<Term, Dynamic::Diffusion>::value,
+  || std::is_same<Term, Dynamic::IsotropicDiffusion>::value
+  || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value,
   Term
 >;
 
 // Equations of solid mechanics
-template<class Term>
+template<typename Term>
 using isSolidMechanics = std::enable_if_t<
   std::is_same<Term, Static::SolidMechanics>::value
   || std::is_same<Term, Static::CompressibleMooneyRivlin>::value,
   Term
 >;
 
+template<typename BasisFunction, typename Mesh, typename Term>
+using doesNotUseStencils = std::enable_if_t<
+  // not linear Lagrange on regular fixed mesh
+  !(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+    && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
+  // or has a generalized laplace operator
+  || (std::is_same<Term, Static::GeneralizedLaplace>::value
+      || std::is_same<Term, Static::GeneralizedPoisson>::value
+      || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value)
+  ,
+  Mesh
+>;
+
+template<typename BasisFunction, typename Mesh, typename Term>
+using doesNotUseStencilsNorSolidMechanics = std::enable_if_t<
+  // not linear Lagrange on regular fixed mesh
+  (!(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+    && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
+  // or has a generalized laplace operator
+  || (std::is_same<Term, Static::GeneralizedLaplace>::value
+      || std::is_same<Term, Static::GeneralizedPoisson>::value
+      || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value))
+  
+  // also not solid mechanics
+  && !(std::is_same<Term, Static::SolidMechanics>::value
+       || std::is_same<Term, Static::CompressibleMooneyRivlin>::value)
+  ,
+  Mesh
+>;
 
 
 } // namespace Equation

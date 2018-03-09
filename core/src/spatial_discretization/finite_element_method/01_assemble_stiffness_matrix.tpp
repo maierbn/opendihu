@@ -7,7 +7,7 @@
 
 #include "quadrature/tensor_product.h"
 #include "basis_on_mesh/05_basis_on_mesh.h"
-#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix_laplace.h"
 
 namespace SpatialDiscretization
 {
@@ -93,8 +93,7 @@ setStiffnessMatrix()
       
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex] 
-        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(mesh,jacobian,xi);
-      
+        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(this->data_,jacobian,xi);
       
     }  // function evaluations
     

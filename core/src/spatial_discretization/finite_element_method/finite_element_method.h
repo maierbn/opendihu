@@ -42,7 +42,7 @@ private:
  * use inheritage hierarchy until file 04_rhs.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasLaplaceOperatorWithRhs<Term>> :
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>> :
   public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
@@ -71,7 +71,7 @@ public:
  * use inheritage hierarchy until file 05_timestepping.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasLaplaceOperatorWithTimeStepping<Term>> :
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :
   public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:

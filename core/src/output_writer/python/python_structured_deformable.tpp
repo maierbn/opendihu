@@ -40,11 +40,14 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   std::copy(nElementsPerCoordinateDirection.begin(), nElementsPerCoordinateDirection.end(), nElementsPerCoordinateDirectionArray.begin());
   PyObject *pyNElements = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(nElementsPerCoordinateDirectionArray);
   
+  std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
+  int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
+  
   LOG(DEBUG) << "PythonStructuredDeformable";
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s O, s O, s i, s d}", "meshType", "StructuredDeformable",
-                                 "dimension", D, "nElements", pyNElements, "data", pyData, 
+  PyObject *data = Py_BuildValue("{s s, s i, s O, s s, s i, s O, s i, s d}", "meshType", "StructuredDeformable",
+                                 "dimension", D, "nElements", pyNElements, "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, "data", pyData, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
   
   return data;

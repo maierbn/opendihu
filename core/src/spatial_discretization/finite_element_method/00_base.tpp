@@ -22,11 +22,10 @@ namespace SpatialDiscretization
 
 template<typename BasisOnMeshType, typename QuadratureType>
 FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
-FiniteElementMethodBase(const DihuContext &context) :
-  context_(context), data_(context)
+FiniteElementMethodBase(DihuContext context) :
+  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"])
 {
-  PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "FiniteElementMethod");
+  specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(specificSettings_);
   
   LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
@@ -38,6 +37,10 @@ FiniteElementMethodBase(const DihuContext &context) :
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is set";
   else
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
+  
+  
+  LOG(TRACE) << "FiniteElementsMethodBase";
+  PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename BasisOnMeshType, typename QuadratureType>
@@ -123,6 +126,7 @@ void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 initialize()
 {
   LOG(TRACE) << "FiniteElementMethodBase::initialize";
+  data_.debug("FiniteElementMethodBase::initialize");
   
   data_.initialize();
   setStiffnessMatrix();
@@ -139,7 +143,6 @@ run()
   solve();
   data_.print();
   
-  LOG(TRACE) << "writeOutput";
   outputWriterManager_.writeOutput(data_);
 }
 

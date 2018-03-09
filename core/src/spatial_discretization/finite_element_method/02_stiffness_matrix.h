@@ -28,7 +28,11 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>,QuadratureType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>,
+  QuadratureType, 
+  Term, 
+  Mesh::StructuredRegularFixedOfDimension<1ul>, 
+  Equation::hasLaplaceOperator<Term>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
 {
@@ -45,7 +49,11 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, 
+  QuadratureType, 
+  Term, 
+  Mesh::StructuredRegularFixedOfDimension<2ul>,
+  Equation::hasLaplaceOperator<Term>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
 {
@@ -62,7 +70,11 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>,
+  QuadratureType,
+  Term,
+  Mesh::StructuredRegularFixedOfDimension<3ul>,
+  Equation::hasLaplaceOperator<Term>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
 {
@@ -184,7 +196,7 @@ private:
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMeshType, QuadratureType, Term, Mesh::isDeformable<typename BasisOnMeshType::Mesh>, Equation::hasLaplaceOperator<Term>
+  BasisOnMeshType, QuadratureType, Term, Equation::doesNotUseStencilsNorSolidMechanics<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh, Term>
 > :
   public AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {

@@ -18,20 +18,14 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
-      ModelOrderReduction::POD<
-        CellmlAdapter,
-        ModelOrderReduction::LinearPart
-      >
+      CellmlAdapter
     >,
     TimeSteppingScheme::ExplicitEuler<
-      ModelOrderReduction::POD<
-        SpatialDiscretization::FiniteElementMethod<
-          Mesh::StructuredRegularFixedOfDimension<1>,
-          BasisFunction::LagrangeOfOrder<1>,
-          Quadrature::Gauss<2>,
-          Equation::Dynamic::Diffusion
-        >,
-        ModelOrderReduction::LinearPart
+      SpatialDiscretization::FiniteElementMethod<
+        Mesh::StructuredRegularFixedOfDimension<1>,
+        BasisFunction::LagrangeOfOrder<1>,
+        Quadrature::Gauss<2>,
+        Equation::Dynamic::IsotropicDiffusion
       >
     >
   >

@@ -1,16 +1,34 @@
-# SConstruct file for a single example.
+# SConstruct file to include for a program that uses the opendihu library
 #
-# Usage: `scons BUILD_TYPE=debug` will build debug version, `scons` will build release version.
+# In a directory where you have the sources for your user program, place a SConstruct file with the following contents:
+##--------------------------------------------------------------------------------------------------------
+## import os
+##
+## # get the directory where opendihu is installed (the top level directory of opendihu)
+## opendihu_home = os.environ.get('OPENDIHU_HOME')
+## 
+## # set path where the "SConscript" file is located (set to current path)
+## path_where_to_call_sconscript = Dir('.').srcnode().abspath
+## 
+## # call general SConstruct that will configure everything and then call SConscript at the given path
+## SConscript(os.path.join(opendihu_home,'SConstructGeneral'), 
+##            exports={"path": path_where_to_call_sconscript})
+##
+##--------------------------------------------------------------------------------------------------------
+#
 import os
 import sys
 
-sys.path.append("../dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
+sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
 import sconsconfig
 from sconsconfig import packages, tools
 
-# import the name of the directory from which this Sconstruct script was called
-Import("example")
+# import the path where a SConstruct should be called at the end
+Import("path")
+path_where_to_call_sconscript = path
+
+opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where this file is located
 
 #
 # Select the packages we want to use in the configuration.
@@ -33,13 +51,13 @@ sconsconfig.select(
 
 # By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
 # Note that an absolute path has to be given, otherwise there are problems finding the libraries
-preset_variables = {'LAPACK_DIR': os.path.join(Dir('.').srcnode().abspath, '../dependencies/lapack/install'),
-                    'PETSC_DIR':  os.path.join(Dir('.').srcnode().abspath, '../dependencies/petsc/install')}
+preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
+                    'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
 
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
 variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
 variables.update(preset_variables)  # merge in preset_variables dictionary
-vars = Variables(['../user-variables.scons.py','user-variables.scons.py'], variables)
+vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], variables)
 
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
@@ -69,6 +87,7 @@ if ARGUMENTS.get('VERBOSE') != '1':
   env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
   env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
+  env['ARCOMSTR'] = "\x1b[32mBuilding lib $TARGET\x1b[0m"
            
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
@@ -84,25 +103,25 @@ sconf.Finish()
 if env["BUILD_TYPE"] == "debug":
   
   # debug build
-  variant_dir = os.path.join(example,"build_debug")           # folder of build
+  variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
   env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++14 -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
-  env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/debug')])   # add debug version of opendihu library
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
 else:
   # release build
-  variant_dir = os.path.join(example,'build_release')         # folder of build
+  variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build
   env.MergeFlags('-O3 -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
-  env.Append(LIBPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/build/release')])   # add release version of opendihu library
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build/release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
 env.MergeFlags('-Wunused-variable')
 
 # Set the include path for header files
-env.Append(CPPPATH = [os.path.join(Dir('.').srcnode().abspath, '../core/src')])
+env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
   
 # call SConscript file for the actual build in the specified build directory variant_dir
-SConscript(dirs=example,
+SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,
            duplicate=False,
            exports="env")

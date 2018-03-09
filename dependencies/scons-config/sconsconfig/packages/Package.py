@@ -189,7 +189,7 @@ class Package(object):
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
       if not res[0]:
-        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies'),
+        common_dirs = [os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies'),
                        '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
         ctx.Log('\n  Trying common locations: %s\n'%str(common_dirs))
         res = (0, '')
@@ -313,12 +313,29 @@ class Package(object):
     upp = self.name.upper()
     force = self.have_option(ctx.env, upp + '_REDOWNLOAD')
 
-    # Create the source directory if it does not already exist.
-    
     #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
     #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
     
-    base_dir = os.path.join(ctx.env['ENV']["PWD"],'dependencies', self.name.lower())
+    dependencies_dir_candidates = [
+        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
+    
+    # add directory from environment variable "OPENDIHU_HOME"
+    if os.environ.get('OPENDIHU_HOME') is not None:
+      dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+    
+    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
+    for directory in dependencies_dir_candidates:
+      if directory is not None:
+        if os.path.exists(directory):
+          dependencies_dir = directory
+          break
+    
+    base_dir = os.path.join(dependencies_dir,self.name.lower())
+
+    ctx.Log("  dependencies:["+dependencies_dir+"]\n")
+    ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
+    
+    # Create the source directory if it does not already exist.
     if not os.path.exists(base_dir):
       os.makedirs(base_dir)
     ctx.Log("Downloading into " + base_dir + "\n")
@@ -335,7 +352,6 @@ class Package(object):
 
     ctx.Log("  filename:    ["+filename+"]\n")
     ctx.Log("  old_dir:     ["+old_dir+"]\n")
-    ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
     ctx.Log("  install_dir: ["+install_dir+"] (where to build)\n")
     ctx.Log("  unpack_dir:  ["+unpack_dir+"] (where to unpack)\n")
 

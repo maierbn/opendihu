@@ -1,0 +1,71 @@
+%% Creator: Inkscape inkscape 0.91, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'tonti_diagram.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{499.1420578bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.31211778)%
+    \put(0.29184255,0.24149438){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{S}$}}}}%
+    \put(0.69090058,0.23826296){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\bfeps$}}}}%
+    \put(0.69090058,0.02931082){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{u}$}}}}%
+    \put(0.29184256,0.03102807){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{F}$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{tonti_diagram.pdf}}%
+    \put(0.04729375,0.2588697){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{static BC}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{tonti_diagram.pdf}}%
+    \put(0.79026052,0.05506932){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{geometric BC}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{tonti_diagram.pdf}}%
+    \put(0.08719703,0.15978386){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{equilibrium}}}}%
+    \put(0.71038753,0.16057208){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{kinematics}}}}%
+    \put(0.43245169,0.29821392){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{material}}}}%
+    \put(0.07928398,0.11836729){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(always linear)}}}}%
+    \put(0.42272069,0.26224219){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(nonlinear)}}}}%
+    \put(0.71151823,0.11787783){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(nonlinear)}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{tonti_diagram.pdf}}%
+    \put(0.79824678,0.01742768){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(Dirichlet)}}}}%
+    \put(0.03946747,0.22764552){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(Neumann)}}}}%
+  \end{picture}%
+\endgroup%

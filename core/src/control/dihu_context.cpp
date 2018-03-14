@@ -52,12 +52,21 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     // determine settings filename
     std::string filename = "settings.py";
     
+    // check if the first command line argument is *.py, only then it is treated as config file
+    bool explicitConfigFileGiven = false;
     if (argc > 1)
     {
-      if (argv[1][0] != '-')    // do not consider command line arguments starting with '-' as input settings file
+      std::string firstArgument = argv[1];
+      if (firstArgument.rfind(".py") == firstArgument.size() - 3)
+      {
+        explicitConfigFileGiven = true;
         filename = argv[1];
+      }
+      else
+      {
+        LOG(INFO) << "First command line argument does not have suffix *.py, not considering it as config file!";
+      }
     }
-    
     
     LOG(TRACE) << "initialize python";
 #if 1
@@ -108,9 +117,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     Py_SetProgramName((char *)programName);  /* optional but recommended */
 #endif    
     
+    // initialize python
     VLOG(4) << "Py_Initialize()";
     Py_Initialize();
     
+    // check python home directory for debugging output
     VLOG(4) << "Py_GetPythonHome()";
 
 #if PY_MAJOR_VERSION >= 3
@@ -121,12 +132,24 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     
     LOG(DEBUG) << "Python home: " << home;
     
-    // pass command line arguments to python script, all except first argument
-    /*char **argvNew = new char *[argc-1];
-    std::memcpy(argvNew, &argv[1], argc-1);
-    PySys_SetArgvEx(argc-1, argvNew, 0);*/
-    PySys_SetArgvEx(argc, argv, 0);
+    // pass on command line arguments to python config script
     
+    // determine if the first argument (argv[1]) is *.py, then it is also discarded
+    // always remove the first argument, which is the name of the executable
+    int numberArgumentsToRemove = (explicitConfigFileGiven? 2: 1);
+    
+    int argcReduced = argc - numberArgumentsToRemove;
+    char **argvReduced = new char *[argcReduced];
+    
+    for (int i=0; i<argcReduced; i++)
+    {
+      argvReduced[i] = argv[i+numberArgumentsToRemove];
+    }
+    
+    // pass reduced list of command line arguments to python script
+    PySys_SetArgvEx(numberArgumentsToRemove, argvReduced, 0);
+    
+    // load python script 
     if(settingsFromFile)
     {
       loadPythonScriptFromFile(filename);
@@ -135,17 +158,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     initialized_ = true;
   }
 
+  // if this is the first constructed DihuContext object, create global objects mesh manager and solver manager
   if (!meshManager_)
   {
     VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<Mesh::Manager>(*this);
-    //Py_XINCREF(pythonConfig_);
   }
   if (!solverManager_)
   {
     VLOG(2) << "create solverManager_";
     solverManager_ = std::make_shared<Solver::Manager>(*this);
-    //Py_XINCREF(pythonConfig_);
   }
 }  
 

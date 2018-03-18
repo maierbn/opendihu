@@ -22,11 +22,11 @@ public:
   using FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::FieldVariableData;
  
   //! for a specific component, get all values
-  void getValues(std::string component, std::vector<double> &values)
+  void getValues(std::string component, std::vector<double> &values, bool onlyNodalValues)
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values, onlyNodalValues);
       return;
     }
     
@@ -73,9 +73,12 @@ public:
           }
          
           // set derivative of Hermite to 0 for geometry field
-          for (int dofIndex = 1; dofIndex < nDofsPerNode; dofIndex++)
+          if (!onlyNodalValues)
           {
-            values[vectorIndex++] = 0;
+            for (int dofIndex = 1; dofIndex < nDofsPerNode; dofIndex++)
+            {
+              values[vectorIndex++] = 0;
+            }
           }
         }
       }
@@ -222,29 +225,6 @@ public:
 
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &rhs);
-  
-  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<std::size_t nComponents>
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
-  {
-    if (!this->isGeometryField_)
-    {
-      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
-    }
-  }
-
-  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<std::size_t nComponents>
-  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
-  {
-    if (!this->isGeometryField_)
-    {
-      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
-    }
-  }
-  
-  //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
-  void flushSetValues();
 };
 
 };  // namespace

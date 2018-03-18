@@ -15,7 +15,7 @@ TEST(OperatorSplittingTest, Godunov)
   std::string pythonConfig = R"(
 # Electrophysiology debug
 nElements = 5
-endTime = 1.0
+endTime = 0.1
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -121,7 +121,7 @@ TEST(OperatorSplittingTest, Strang)
   std::string pythonConfig = R"(
 # Electrophysiology debug
 nElements = 5
-endTime = 1.0
+endTime = 0.1
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]

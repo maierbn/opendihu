@@ -7,7 +7,7 @@
 
 namespace FieldVariable
 {
-
+ 
 /** Field variable for a structured mesh, i.e. dof and node information are purely implicit.
  *  This is used for RegularFixed and StructuredDeformable meshes.
  */
@@ -20,7 +20,8 @@ public:
   using FieldVariableDataStructured<BasisOnMeshType>::FieldVariableDataStructured;
  
   //! for a specific component, get all values
-  void getValues(std::string component, std::vector<double> &values);
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValues(std::string component, std::vector<double> &values, bool onlyNodalValues=false);
   
   //! for a specific component, get values from their global dof no.s
   template<int N>

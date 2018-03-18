@@ -11,13 +11,16 @@ namespace OutputWriter
 
 template<int D, typename BasisFunctionType>
 PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime)
+buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
   // data = {
   //   "meshType" : "UnstructuredDeformable",
   //   "dimension": dim,
   //   "nElements" : nElements,
+  //   "basisFunction" : "Lagrange",
+  //   "basisOrder" : "1",
+  //   "onlyNodalValues" : True,
   //   "data" : [
   //      {"name" : "fieldVariableName",
   //       "components" : [
@@ -33,7 +36,7 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   LOG(DEBUG) << "build pyData, " << fieldVariables.size();
  
   // build python object for data  
-  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
+  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
 
   LOG(DEBUG) << "get mesh";
   
@@ -46,8 +49,11 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   LOG(DEBUG) << "PythonUnStructuredDeformable";
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s i, s d}", "meshType", "UnstructuredDeformable",
-                                 "dimension", D, "nElements", mesh->nElements(), "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, "data", pyData, 
+  PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s O, s i, s d}", "meshType", "UnstructuredDeformable",
+                                 "dimension", D, "nElements", mesh->nElements(),
+                                 "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, 
+                                 "onlyNodalValues", onlyNodalValues ? Py_True: Py_False,
+                                 "data", pyData, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
   
   LOG(DEBUG) << data << " done";

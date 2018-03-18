@@ -67,7 +67,8 @@ public:
   std::string exfileBasisFunctionSpecification() const;
   
   //! get all values
-  void getValues(std::vector<double> &values);
+  //! @param onlyNodalValues: if this is true for Hermite only the non-derivative values are returned
+  void getValues(std::vector<double> &values, bool onlyNodalValues=false);
   
   //! get values from their global dof no.s
   template<int N>

@@ -17,8 +17,7 @@ public:
   //! create a python dict that contains data and meta data of field variables
   //! @param onlyNodalValues: if only values at nodes should be contained, this discards the derivative values for Hermite
   static PyObject *buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
-     bool onlyNodalValues=false
-  );
+                                               bool onlyNodalValues);
 };
 
 };  // namespace

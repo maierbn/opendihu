@@ -303,45 +303,4 @@ setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfD
   VecCopy(rhs.values_, this->values_);
 }
 
-/*
-//! set values for dofs
-template<int D,typename BasisFunctionType>
-template<std::size_t nComponents>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
-{
-  if (!this->isGeometryField_)
-  {
-    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-      template setValues<nComponents>(dofGlobalNos, values);
-  }
-}*/
-
-/*
-//! set a single value
-template<int D,typename BasisFunctionType>
-template<std::size_t nComponents>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
-{
-  if (!this->isGeometryField_)
-  {
-    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-      template setValue<nComponents>(dofGlobalNo, value);
-  }
-}
-*/
-
-//! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
-template<int D,typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-flushSetValues()
-{
-  if (!this->isGeometryField_)
-  {
-    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-      flushSetValues();
-  }
-}
-
 };

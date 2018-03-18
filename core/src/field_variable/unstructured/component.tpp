@@ -227,14 +227,17 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-getValues(std::vector<double> &values)
+getValues(std::vector<double> &values, bool onlyNodalValues)
 {
   const dof_no_t nDofs = this->nDofs();
   values.resize(nDofs);
  
+  // set stride to 2 if Hermite, else to 1  
+  const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? 2 : 1);
+  
   // create vector indices for all dofs
   std::vector<int> indices(nDofs,0);
-  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo++)
+  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
   {
     indices[dofGlobalNo] = dofGlobalNo*this->nComponents_ + componentIndex_;
   }

@@ -11,7 +11,7 @@ namespace OutputWriter
 
 template<typename BasisOnMeshType>
 void PythonCallbackWriter<BasisOnMeshType>::
-callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime)
+callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   LOG(TRACE) << "callCallback timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
  
@@ -39,7 +39,7 @@ callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::Fiel
   // }
   
   // build python object for data
-  PyObject *data = Python<BasisOnMeshType>::buildPyDataObject(fieldVariables, timeStepNo, currentTime);
+  PyObject *data = Python<BasisOnMeshType>::buildPyDataObject(fieldVariables, timeStepNo, currentTime, onlyNodalValues);
   //old signature: def callback(data, shape, nEntries, dimension, timeStepNo, currentTime)
   //PyObject *arglist = Py_BuildValue("(O,O,i,i,i,d)", dataList, nEntriesList, data.size(), nEntries.size(), timeStepNo_, currentTime_);
   

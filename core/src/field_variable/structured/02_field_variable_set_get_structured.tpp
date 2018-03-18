@@ -1,24 +1,29 @@
 #include "field_variable/field_variable.h"
 
 #include <sstream>
-#include "utility/string_utility.h"
 #include <cassert>
 #include <array>
+#include <type_traits>
+
+#include "basis_function/hermite.h"
 
 namespace FieldVariable
 {
 //! for a specific component, get all values
 template<typename BasisOnMeshType>
 void FieldVariableSetGetStructured<BasisOnMeshType>::
-getValues(std::string component, std::vector<double> &values)
+getValues(std::string component, std::vector<double> &values, bool onlyNodalValues)
 {
   int componentIndex = this->componentIndex_[component];
   const dof_no_t nDofs = this->mesh_->nDofs();
   values.resize(nDofs);
+
+  // set stride to 2 if Hermite, else to 1  
+  const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? 2 : 1);
   
   // store the array indices for values_ array in dofGlobalNo
   std::vector<int> indices(nDofs,0);
-  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo++)
+  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
   {
     indices[dofGlobalNo] = dofGlobalNo*this->nComponents_ + componentIndex;
   }

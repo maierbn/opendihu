@@ -29,8 +29,9 @@ public:
   
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
   
-  //! for a specific component, get all values
-  void getValues(std::string component, std::vector<double> &values);
+  //! for a specific component, get all values  
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValues(std::string component, std::vector<double> &values, bool onlyNodalValues=false);
   
   //! for a specific component, get values from their global dof no.s
   template<int N>

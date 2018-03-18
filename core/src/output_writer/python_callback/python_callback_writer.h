@@ -15,7 +15,7 @@ class PythonCallbackWriter
 {
 public:
   //! call python callback
-  static void callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
+  static void callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 };  // namespace

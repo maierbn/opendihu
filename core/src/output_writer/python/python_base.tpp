@@ -46,7 +46,7 @@ buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVari
       VLOG(2) << "  component " << componentNo << " [" << *componentIter << "]";
      
       std::vector<double> values;
-      (*fieldVariableIter)->getValues(*componentIter, values);
+      (*fieldVariableIter)->getValues(*componentIter, values, onlyNodalValues);
       
       VLOG(2) << "  values: " << values;
       

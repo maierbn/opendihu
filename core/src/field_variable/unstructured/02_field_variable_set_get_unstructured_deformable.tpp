@@ -15,9 +15,9 @@ using namespace StringUtility;
 //! for a specific component, get all values
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-getValues(std::string component, std::vector<double> &values)
+getValues(std::string component, std::vector<double> &values, bool onlyNodalValues)
 {
-  this->component_[component].getValues(values);
+  this->component_[component].getValues(values, onlyNodalValues);
 }
 
 //! for a specific component, get values from their global dof no.s

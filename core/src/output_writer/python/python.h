@@ -46,7 +46,8 @@ public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
+  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+                                     int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 // specialization for StructuredDeformable
@@ -58,7 +59,8 @@ public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
+  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+                                     int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 // specialization for UnstructuredDeformable
@@ -70,7 +72,8 @@ public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
+  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+                                     int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 };  // namespace

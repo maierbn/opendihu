@@ -1,4 +1,4 @@
-#include "output_writer/python_callback/python_callback.h"
+#include "output_writer/python_file/python_file.h"
 
 #include <Python.h>  // has to be the first included header
 #include <iostream>
@@ -9,9 +9,8 @@
 namespace OutputWriter
 {
 
-PythonCallback::PythonCallback(PyObject *settings) : Generic(settings)
+PythonFile::PythonFile(PyObject *settings) : Generic(settings)
 {
-  callback_ = PythonUtility::getOptionPyObject(settings, "callback");
   onlyNodalValues_ = PythonUtility::getOptionBool(settings, "onlyNodalValues", true);
 }
 

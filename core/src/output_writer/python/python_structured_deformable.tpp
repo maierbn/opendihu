@@ -11,13 +11,17 @@ namespace OutputWriter
 
 template<int D, typename BasisFunctionType>
 PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::
-buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime)
+buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables,
+                  int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
   // data = {
   //   "meshType" : "StructuredDeformable",
   //   "dimension": dim,
   //   "nElements" : [x, y, z],
+  //   "basisFunction" : "Lagrange",
+  //   "basisOrder" : "1",
+  //   "onlyNodalValues" : True,
   //   "data" : [
   //      {"name" : "fieldVariableName",
   //       "components" : [
@@ -31,7 +35,7 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   
   // build python object for data
   
-  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables);
+  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
   
   // prepare number of elements in the dimensions
   std::array<element_no_t, BasisOnMeshType::dim()> nElementsPerCoordinateDirection = fieldVariables.front()->nElementsPerCoordinateDirection();
@@ -46,8 +50,11 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   LOG(DEBUG) << "PythonStructuredDeformable";
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s O, s s, s i, s O, s i, s d}", "meshType", "StructuredDeformable",
-                                 "dimension", D, "nElements", pyNElements, "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, "data", pyData, 
+  PyObject *data = Py_BuildValue("{s s, s i, s O, s s, s i, s O, s O, s i, s d}", "meshType", "StructuredDeformable",
+                                 "dimension", D, "nElements", pyNElements, 
+                                 "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder, 
+                                 "onlyNodalValues", onlyNodalValues ? Py_True: Py_False,
+                                 "data", pyData, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
   
   return data;

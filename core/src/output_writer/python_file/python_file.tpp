@@ -29,7 +29,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   }
   
   // build python object for data
-  PyObject *pyData = Python<typename DataType::BasisOnMesh>::buildPyDataObject(data.fieldVariables(), timeStepNo, currentTime);
+  PyObject *pyData = Python<typename DataType::BasisOnMesh>::buildPyDataObject(data.fieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
   
   // determine file name
   std::stringstream s;

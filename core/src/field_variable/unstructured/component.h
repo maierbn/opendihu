@@ -7,8 +7,8 @@
 #include <memory>
 #include <array>
 
-#include "field_variable/element_to_dof_mapping.h"
-#include "field_variable/exfile_representation.h"
+#include "field_variable/unstructured/element_to_dof_mapping.h"
+#include "field_variable/unstructured/exfile_representation.h"
 
 namespace FieldVariable
 {
@@ -109,4 +109,4 @@ template<typename BasisOnMeshType>
 std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType> &rhs);
 
 };  // namespace
-#include "field_variable/component.tpp"
+#include "field_variable/unstructured/component.tpp"

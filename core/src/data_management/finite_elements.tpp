@@ -98,15 +98,20 @@ void FiniteElements<BasisOnMeshType>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
-  const int nOverlaps = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode()*3;
+  const int nDofsPerNode = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode();
+  const int nDofsPerBasis = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerElement();
+  const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
+  
+  // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
+  
   switch (D)
   {
   case 1:
     diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
+    offdiagonalNonZeros = diagonalNonZeros;
     break;
   case 2:
-    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more zeros
+    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
     offdiagonalNonZeros = diagonalNonZeros;
     break;
   case 3:

@@ -7,8 +7,8 @@
 #include <map>
 
 #include "control/types.h"
-#include "field_variable/exfile_representation.h"
-#include "field_variable/element_to_node_mapping.h"
+#include "field_variable/unstructured/exfile_representation.h"
+#include "field_variable/unstructured/element_to_node_mapping.h"
 
 namespace FieldVariable
 {

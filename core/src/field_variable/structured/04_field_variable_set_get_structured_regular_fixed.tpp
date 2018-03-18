@@ -1,4 +1,4 @@
-#include "field_variable/field_variable_structured_regular_fixed.h"
+#include "field_variable/structured/04_field_variable_set_get_structured_regular_fixed.h"
 
 #include <sstream>
 #include "easylogging++.h"
@@ -7,29 +7,15 @@
 namespace FieldVariable
 {
 
-template<int D, typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-setMeshWidth(double meshWidth)
-{
-  meshWidth_ = meshWidth;
-}
-
-
-template<int D, typename BasisFunctionType>
-double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-meshWidth() const
-{
-  return this->meshWidth_;
-}
 /*
 //! for a specific component, get all values
 template<int D,typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getValues(std::string component, std::vector<double> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values);
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values);
     return;
   }
   
@@ -89,12 +75,12 @@ getValues(std::string component, std::vector<double> &values)
 //! for a specific component, get values from their global dof no.s
 template<int D,typename BasisFunctionType>
 template<int N>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, dofGlobalNo, values);
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, dofGlobalNo, values);
     return;
   }
   
@@ -138,12 +124,12 @@ getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<
 //! get values from their global dof no.s for all components
 template<int D,typename BasisFunctionType>
 template<int N, int nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(dofGlobalNo, values);
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(dofGlobalNo, values);
     return;
   }
 
@@ -182,13 +168,13 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
 //! for a specific component, get the values corresponding to all element-local dofs
 template<int D,typename BasisFunctionType>
 template<int N>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getElementValues(std::string component, element_no_t elementNo, 
                  std::array<double,BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerElement()> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMeshType>::getValues(component, elementNo, values);
+    FieldVariableSetGetStructured<BasisOnMeshType>::getValues(component, elementNo, values);
     return;
   }
   
@@ -209,12 +195,12 @@ getElementValues(std::string component, element_no_t elementNo,
 //! get the values corresponding to all element-local dofs for all components
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMeshType>::getValues(elementNo, values);
+    FieldVariableSetGetStructured<BasisOnMeshType>::getValues(elementNo, values);
     return;
   }
   
@@ -232,12 +218,13 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 
 //! for a specific component, get a single value from global dof no.
 template<int D,typename BasisFunctionType>
-double FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+double FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getValue(std::string component, node_no_t dofGlobalNo)
 {
   if (!this->isGeometryField_)
   {
-    return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValue(component, dofGlobalNo);
+    return FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+      getValue(component, dofGlobalNo);
   }
   
   // for geometry field compute information
@@ -272,12 +259,12 @@ getValue(std::string component, node_no_t dofGlobalNo)
 //! get a single value from global dof no. for all components
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-std::array<double,nComponents> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+std::array<double,nComponents> FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 getValue(node_no_t dofGlobalNo)
 {
   if (!this->isGeometryField_)
   {
-    return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValue<nComponents>(dofGlobalNo);
+    return FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValue<nComponents>(dofGlobalNo);
   }
   
   const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
@@ -310,7 +297,7 @@ getValue(node_no_t dofGlobalNo)
 
 //! copy the values from another field variable of the same type
 template<int D,typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &rhs)
 {
   VecCopy(rhs.values_, this->values_);
@@ -320,12 +307,13 @@ setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfD
 //! set values for dofs
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+      template setValues<nComponents>(dofGlobalNos, values);
   }
 }*/
 
@@ -333,98 +321,27 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
 //! set a single value
 template<int D,typename BasisFunctionType>
 template<std::size_t nComponents>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+      template setValue<nComponents>(dofGlobalNo, value);
   }
 }
 */
 
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
 template<int D,typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
 flushSetValues()
 {
   if (!this->isGeometryField_)
   {
-    FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::flushSetValues();
+    FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
+      flushSetValues();
   }
 }
 
-//! write a exelem file header to a stream, for a particular element
-template<int D, typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo)
-{
-  // use the implementation of FieldVariableStructured
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-    outputHeaderExelem(file, currentElementGlobalNo, fieldVariableNo);
-}
-
-//! write a exelem file header to a stream, for a particular element
-template<int D, typename BasisFunctionType>
-void FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
-{
-  // use the implementation of FieldVariableStructured
-  FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-    outputHeaderExnode(file, currentNodeGlobalNo, valueIndex, fieldVariableNo);
-}
-
-//! tell if 2 elements have the same exfile representation, i.e. same number of versions
-template<int D, typename BasisFunctionType>
-bool FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
-{
-  // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-    haveSameExfileRepresentation(element1, element2);
-}
-
-//! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
-template<int D, typename BasisFunctionType>
-Vec &FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-values()
-{
-  // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::values();
-}
-
-//! get the number of components
-template<int D, typename BasisFunctionType>
-int FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-nComponents() const
-{
-  // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::nComponents();
-}
-/*
-//! get the number of elements
-template<int D, typename BasisFunctionType>
-std::array<element_no_t, BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::Mesh::dim()> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-nElementsPerCoordinateDirection() const
-{
-  // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::nElementsPerCoordinateDirection();
-}*/
-
-//! get the number of elements
-template<int D, typename BasisFunctionType>
-element_no_t FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-nElements() const
-{
-  return this->nElements();
-}
-
-//! get the names of the components that are part of this field variable
-template<int D, typename BasisFunctionType>
-std::vector<std::string> FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-componentNames() const
-{
-  // use the implementation of FieldVariableStructured
-  return FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::componentNames();
-}
 };

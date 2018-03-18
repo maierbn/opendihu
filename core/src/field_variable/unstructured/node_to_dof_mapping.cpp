@@ -1,4 +1,4 @@
-#include "field_variable/node_to_dof_mapping.h"
+#include "field_variable/unstructured/node_to_dof_mapping.h"
 
 #include <cassert>
 

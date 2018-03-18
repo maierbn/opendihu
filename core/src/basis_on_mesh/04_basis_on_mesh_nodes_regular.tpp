@@ -8,7 +8,6 @@
 #include "control/types.h"
 #include "utility/vector_operators.h"
 #include "field_variable/field_variable.h"
-#include "field_variable/field_variable_structured_regular_fixed.h"
 
 namespace BasisOnMesh
 {

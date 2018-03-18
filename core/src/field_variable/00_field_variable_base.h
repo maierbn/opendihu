@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <memory>
+#include "field_variable/interface.h"
 
 namespace FieldVariable
 {
@@ -9,7 +10,8 @@ namespace FieldVariable
 /** base class for a field variable that just stores the mesh the field variable is defined on
  */
 template<typename BasisOnMeshType>
-class FieldVariableBase
+class FieldVariableBase :
+  public Interface<BasisOnMeshType>
 {
 public:
   FieldVariableBase();
@@ -30,4 +32,4 @@ protected:
 };
  
 }; // namespace 
-#include "field_variable/field_variable_base.tpp"
+#include "field_variable/00_field_variable_base.tpp"

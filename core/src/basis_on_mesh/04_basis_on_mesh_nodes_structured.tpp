@@ -5,7 +5,7 @@
 #include <array>
 
 #include "easylogging++.h"
-#include "field_variable/field_variable_structured_deformable.h"
+#include "field_variable/field_variable.h"
 
 namespace BasisOnMesh
 {

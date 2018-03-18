@@ -88,6 +88,7 @@ if ARGUMENTS.get('VERBOSE') != '1':
   env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
   env['LINKCOMSTR'] = "\x1b[32mLinking $TARGET\x1b[0m"
   env['ARCOMSTR'] = "\x1b[32mBuilding lib $TARGET\x1b[0m"
+  env['RANLIBCOMSTR'] = "\x1b[Creating index\x1b[0m"
            
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)

@@ -5,14 +5,14 @@
 #include <array>
 #include <map>
 
-#include "field_variable/field_variable_base.h"
-#include "field_variable/field_variable_interface.h"
-#include "field_variable/field_variable_structured.h"
-#include "field_variable/component.h"
+#include "field_variable/00_field_variable_base.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
 #include "basis_on_mesh/04_basis_on_mesh_nodes.h"
 #include "mesh/unstructured_deformable.h"
-#include "field_variable/element_to_node_mapping.h"
-#include "field_variable/node_to_dof_mapping.h"
+#include "field_variable/unstructured/element_to_node_mapping.h"
+#include "field_variable/unstructured/node_to_dof_mapping.h"
+#include "field_variable/field_variable_data.h"
+#include "field_variable/unstructured/component.h"
 
 namespace FieldVariable
 {
@@ -20,9 +20,8 @@ namespace FieldVariable
 /** FieldVariable class for UnstructuredDeformable mesh
  */
 template<int D, typename BasisFunctionType>
-class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> :
-  public FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>,
-  public Interface<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
+class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> :
+  public FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>
 { 
 public:
   //! inherited constructor 
@@ -31,16 +30,16 @@ public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
   
   //! contructor as data copy with a different name (component names are the same)
-  FieldVariable(FieldVariable<BasisOnMeshType> &rhs, std::string name);
+  FieldVariableData(FieldVariable<BasisOnMeshType> &rhs, std::string name);
   
   //! constructor with mesh, name and components
-  FieldVariable(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent);
+  FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent);
  
   //! empty constructor
-  FieldVariable();
+  FieldVariableData();
   
   //! destructor
-  virtual ~FieldVariable();
+  virtual ~FieldVariableData();
   
   //! set all data but the values from a second field variable
   template<typename FieldVariableType>
@@ -83,123 +82,6 @@ public:
   
   //! get the number of scale factors
   int getNumberScaleFactors(element_no_t globalElementNo) const;
-  
-  //! for a specific component, get all values
-  void getValues(std::string component, std::vector<double> &values);
-  
-  //! for a specific component, get values from their global dof no.s
-  template<int N>
-  void getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
-  
-  //! get values from their global dof no.s for all components
-  template<int N, int nComponents>
-  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
-  {
-    std::array<double,nComponents> resultVector;
-    
-    // transform global dof no.s to vector indices of first component
-    for (int valueIndex = 0; valueIndex < N; valueIndex++)
-    {
-      int valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
-      
-      // create indices vector with values {0,1,2,...,nComponents-1}
-      std::array<int,nComponents> indices;
-      for(int i=0; i<nComponents; i++)
-        indices[i] = valuesVectorIndex + i;
-      
-      // get values and assign them to result values vector
-      VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
-      values[valueIndex] = resultVector;
-    }
-  }
-  
-  //! for a specific component, get the values corresponding to all element-local dofs
-  template<int N>
-  void getElementValues(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
-  {
-    this->component_[component].getElementValues(elementNo, values);
-  }
-  
-  //! get the values corresponding to all element-local dofs for all components
-  template<int N, int nComponents>
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
-  {
-    const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-    
-    std::vector<int> &dofGlobalNo = this->elementToDofMapping_->getElementDofs(elementNo);
-    std::array<double,nComponents> resultVector;
-    
-    // transform global dof no.s to vector indices of first component
-    for (int valueIndex = 0; valueIndex < nDofsPerElement; valueIndex++)
-    {
-      int valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
-      
-      // create indices vector with values {0,1,2,...,nComponents-1}
-      std::array<int,nComponents> indices;
-      for(int i=0; i<nComponents; i++)
-        indices[i] = valuesVectorIndex + i;
-      
-      // get values and assign them to result values vector
-      VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
-      values[valueIndex] = resultVector;
-    }
-  }
-  
-  //! for a specific component, get a single value from global dof no.
-  double getValue(std::string component, node_no_t dofGlobalNo);
-
-  //! get a single value from global dof no. for all components
-  template<std::size_t nComponents>
-  std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
-
-  //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs);
-  
-  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<std::size_t nComponents>
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)
-  {
-    std::array<int,nComponents> indices;
-    
-    // loop over dof numbers
-    int i=0;
-    for (std::vector<dof_no_t>::iterator iter = dofGlobalNos.begin(); iter != dofGlobalNos.end(); iter++, i++)
-    {  
-      dof_no_t dofGlobalNo = *iter;
-      
-      // prepare lookup indices for PETSc vector values_
-      for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
-      {
-        indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
-      }
-      
-      VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
-    }
-    
-    // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
-  }
-
-  //! set values for dofs with a single component, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
-
-  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  template<std::size_t nComponents>
-  void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES)
-  {
-    std::array<int,nComponents> indices;
-    
-    // prepare lookup indices for PETSc vector values_
-    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
-    {
-      indices[componentIndex] = dofGlobalNo*this->nComponents_ + componentIndex;
-    }
-    
-    VecSetValues(this->values_, nComponents, indices.data(), value.data(), petscInsertMode);
-    // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
-  }
-  
-  //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
-  void flushSetValues();
   
   //! write a exelem file header to a stream, for a particular element
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
@@ -277,10 +159,6 @@ protected:
   std::shared_ptr<Vec> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
-// output operator
-template<int D, typename BasisFunctionType>
-std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &rhs);
-
 };  // namespace
 
-#include "field_variable/field_variable_unstructured_deformable.tpp"
+#include "field_variable/unstructured/01_field_variable_data_unstructured_deformable.tpp"

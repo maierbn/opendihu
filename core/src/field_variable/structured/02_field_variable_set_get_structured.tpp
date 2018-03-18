@@ -7,186 +7,9 @@
 
 namespace FieldVariable
 {
- /*
-template<typename BasisOnMeshType>
-template<typename FieldVariableType>
-void FieldVariableStructured<BasisOnMeshType>::
-initializeFromFieldVariable(const FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
-{
-  this->name_ = name;
-  this->isGeometryField_ = false;
-  this->mesh_ = fieldVariable.mesh();
-  
-  int index = 0;
-  for (auto &componentName : componentNames)
-  {
-    this->componentIndex_.insert(std::pair<std::string,int>(componentName,index++));
-  }
-  this->nComponents_ = componentNames.size();
-  this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
-  
-  
-  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
-   << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
-  
-  assert(this->nEntries_ != 0);
-   
-  // create a new values vector for the new field variable
-  
-  // create vector
-  PetscErrorCode ierr;
-  // initialize PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-  
-  // initialize size of vector
-  ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-  
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
-}
-*/
-template<typename BasisOnMeshType>
-FieldVariableStructured<BasisOnMeshType>::
-FieldVariableStructured() : FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
-{
-}
-  
-//! contructor as data copy with a different name (component names are the same)
-template<typename BasisOnMeshType>
-FieldVariableStructured<BasisOnMeshType>::
-FieldVariableStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name) : 
-  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
-{
-  // initialize everything from other field variable
-  initializeFromFieldVariable(rhs, name, rhs.componentNames());
-  
-  // copy entries in values vector
-  VecCopy(rhs.values(), this->values_);
-}
-  
-//! constructor with mesh, name and components
-template<typename BasisOnMeshType>
-FieldVariableStructured<BasisOnMeshType>::
-FieldVariableStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) : 
-  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
-{
-  this->name_ = name;
-  this->isGeometryField_ = false;
-  this->mesh_ = mesh;
-  
-  std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
-  
-  int index = 0;
-  for (auto &componentName : componentNames)
-  {
-    this->componentIndex_.insert(std::pair<std::string,int>(componentName,index++));
-  }
-  this->nComponents_ = componentNames.size();
-  this->nEntries_ = mesh->nDofs() * this->nComponents_;
-  
-  
-  LOG(DEBUG) << "FieldVariableStructured constructor, name=" << this->name_
-   << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
-  
-  assert(this->nEntries_ != 0);
-   
-  // create a new values vector for the new field variable
-  
-  // create vector
-  PetscErrorCode ierr;
-  // initialize PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-  
-  // initialize size of vector
-  ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-  
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
-}
- 
-template<typename BasisOnMeshType>
-FieldVariableStructured<BasisOnMeshType>::
-~FieldVariableStructured()
-{
-  if(this->values_)
-  {
-    //PetscErrorCode ierr = VecDestroy(&this->values_); CHKERRV(ierr);
-  }
-}
-  
-template<typename BasisOnMeshType>
-int FieldVariableStructured<BasisOnMeshType>::
-nComponents() const
-{
-  return this->nComponents_;
-}
-
-template<typename BasisOnMeshType>
-std::vector<std::string> FieldVariableStructured<BasisOnMeshType>::
-componentNames() const
-{
-  std::vector<std::string> result;
-  result.reserve(this->nComponents_);
-  for (auto componentIndex : this->componentIndex_)
-  {   
-    result.push_back(componentIndex.first);
-  }
-  return result;
-}
-  
-template<typename BasisOnMeshType>
-std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableStructured<BasisOnMeshType>::
-nElementsPerCoordinateDirection() const
-{
-  return this->mesh_->nElementsPerCoordinateDirection();
-}
-
-template<typename BasisOnMeshType>
-std::size_t FieldVariableStructured<BasisOnMeshType>::
-nEntries() const
-{
-  return this->nEntries_;
-}
-
-template<typename BasisOnMeshType>
-dof_no_t FieldVariableStructured<BasisOnMeshType>::
-nDofs() const
-{
-  assert(this->nComponents_ != 0);
-  return this->nEntries_ / this->nComponents_;
-}
-
-template<typename BasisOnMeshType>
-Vec &FieldVariableStructured<BasisOnMeshType>::
-values()
-{
-  return this->values_;
-}
-
-template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
-set(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
-    std::size_t nEntries, bool isGeometryField, Vec &values)
-{
-  this->name_ = name;
-  this->isGeometryField_ = isGeometryField;
-  
-  // create numbering for components
-  int i = 0;
-  for (auto& componentName : componentNames)
-  {
-    componentIndex_[componentName] = i++;
-  }
-  nComponents_ = componentNames.size();
-  nEntries_ = nEntries;
-  values_ = values;
-}
-
 //! for a specific component, get all values
 template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 getValues(std::string component, std::vector<double> &values)
 {
   int componentIndex = this->componentIndex_[component];
@@ -206,7 +29,7 @@ getValues(std::string component, std::vector<double> &values)
 //! for a specific component, get values from their global dof no.s
 template<typename BasisOnMeshType>
 template<int N>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
   int componentIndex = this->componentIndex_[component];
@@ -224,7 +47,7 @@ getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<
 //! get values from their global dof no.s for all components
 template<typename BasisOnMeshType>
 template<int N, int nComponents>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<int,N*nComponents> indices;
@@ -256,7 +79,7 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename BasisOnMeshType>
 template<int N>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 getElementValues(std::string component, element_no_t elementNo, 
                  std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
@@ -277,7 +100,7 @@ getElementValues(std::string component, element_no_t elementNo,
 //! get the values corresponding to all element-local dofs for all components
 template<typename BasisOnMeshType>
 template<std::size_t nComponents>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
@@ -309,7 +132,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 
 //! for a specific component, get a single value from global dof no.
 template<typename BasisOnMeshType>
-double FieldVariableStructured<BasisOnMeshType>::
+double FieldVariableSetGetStructured<BasisOnMeshType>::
 getValue(std::string component, node_no_t dofGlobalNo)
 {
   int componentIndex = this->componentIndex_[component];
@@ -323,7 +146,7 @@ getValue(std::string component, node_no_t dofGlobalNo)
 //! get a single value from global dof no. for all components
 template<typename BasisOnMeshType>
 template<std::size_t nComponents>
-std::array<double,nComponents> FieldVariableStructured<BasisOnMeshType>::
+std::array<double,nComponents> FieldVariableSetGetStructured<BasisOnMeshType>::
 getValue(node_no_t dofGlobalNo)
 {
   std::array<int,nComponents> indices;
@@ -344,7 +167,7 @@ getValue(node_no_t dofGlobalNo)
 //! set values for dofs
 template<typename BasisOnMeshType>
 template<std::size_t nComponents>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values)
 {
   std::array<int,nComponents> indices;
@@ -371,7 +194,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
 //! set a single value
 template<typename BasisOnMeshType>
 template<std::size_t nComponents>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 {
   std::array<int,nComponents> indices;
@@ -387,7 +210,7 @@ setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value)
 }*/
 
 template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(this->nComponents == 1);
@@ -399,35 +222,11 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, Inse
 }
 
 template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
+void FieldVariableSetGetStructured<BasisOnMeshType>::
 flushSetValues()
 {
   VecAssemblyBegin(this->values_); 
   VecAssemblyEnd(this->values_);
-}
- 
-//! write a exelem file header to a stream, for a particular element
-template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo)
-{
-  assert(0); // not implemented
-}
-
-//! write a exelem file header to a stream, for a particular element
-template<typename BasisOnMeshType>
-void FieldVariableStructured<BasisOnMeshType>::
-outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
-{
-  assert(0); // not implemented
-}
-
-//! tell if 2 elements have the same exfile representation, i.e. same number of versions
-template<typename BasisOnMeshType>
-bool FieldVariableStructured<BasisOnMeshType>::
-haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
-{
-  return true;   // structured meshes do not have exfile representations 
 }
 
 };

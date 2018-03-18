@@ -1,19 +1,10 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include <iostream>
-#include <array>
-#include <map>
 
-#include "field_variable/field_variable.h"
-#include "field_variable/field_variable_base.h"
-#include "field_variable/field_variable_interface.h"
-#include "field_variable/field_variable_structured.h"
-#include "field_variable/component.h"
-#include "basis_on_mesh/04_basis_on_mesh_nodes.h"
-#include "mesh/unstructured_deformable.h"
-#include "field_variable/element_to_node_mapping.h"
-#include "field_variable/node_to_dof_mapping.h"
+#include "field_variable/structured/03_field_variable_data_structured_regular_fixed.h"
+#include "field_variable/field_variable_set_get.h"
+#include "basis_on_mesh/05_basis_on_mesh.h"
 
 namespace FieldVariable
 {
@@ -21,28 +12,21 @@ namespace FieldVariable
 /** FieldVariable class for RegularFixed mesh
  */
 template<int D, typename BasisFunctionType>
-class FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> :
-  public FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>,
-  public Interface<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
+class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> :
+  public FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! inherited constructor 
-  using FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::FieldVariableStructured;
+  using FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::FieldVariableData;
  
-  //! set the meshWidth
-  void setMeshWidth(double meshWidth);
-  
-  //! get the mesh width
-  double meshWidth() const;
-  
   //! for a specific component, get all values
   void getValues(std::string component, std::vector<double> &values)
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::getValues(component, values);
       return;
     }
     
@@ -104,7 +88,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValues<N>(component, dofGlobalNo, values);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValues<N>(component, dofGlobalNo, values);
       return;
     }
     
@@ -150,7 +134,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValues<N,nComponents>(dofGlobalNo, values);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template getValues<N,nComponents>(dofGlobalNo, values);
       return;
     }
 
@@ -190,7 +174,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMeshType>::getElementValues(component, elementNo, values);
+      FieldVariableSetGetStructured<BasisOnMeshType>::getElementValues(component, elementNo, values);
       return;
     }
     
@@ -213,7 +197,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMeshType>::getElementValues(elementNo, values);
+      FieldVariableSetGetStructured<BasisOnMeshType>::getElementValues(elementNo, values);
       return;
     }
     
@@ -245,7 +229,7 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::template setValues<nComponents>(dofGlobalNos, values);
     }
   }
 
@@ -255,41 +239,14 @@ public:
   {
     if (!this->isGeometryField_)
     {
-      FieldVariableStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
+      FieldVariableSetGetStructured<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>:: template setValue<nComponents>(dofGlobalNo, value);
     }
   }
   
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
   void flushSetValues();
-  
-  //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
-
-  //! write a exelem file header to a stream, for a particular element
-  void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
-
-  //! tell if 2 elements have the same exfile representation, i.e. same number of versions
-  bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
-
-  //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
-  Vec &values();
-  
-  //! get the number of components
-  int nComponents() const;
-  
-  //! get the number of elements in the coordinate directions
-  //std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
-  
-  //! get the total number of elements
-  element_no_t nElements() const;
-  
-  //! get the names of the components that are part of this field variable
-  std::vector<std::string> componentNames() const;
-  
-private:
-  double meshWidth_;   ///< the uniform mesh width
 };
 
 };  // namespace
 
-#include "field_variable/field_variable_structured_regular_fixed.tpp"
+#include "field_variable/structured/04_field_variable_set_get_structured_regular_fixed.tpp"

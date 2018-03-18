@@ -18,55 +18,17 @@ from sets import Set
 import os
 import time
 import pickle
-
-def get_values(data, field_variable_name, component_name):
-  """
-    extract the values of a single component of a field variable
-    :param data: a single dict containing the data
-    :param field_variable_name: the name of the field variable to consider
-    :param component_name: the name of the component of the field_variable. This is often "0"
-  """
-  
-  for field_variable in data['data']:
-    if field_variable['name'] == field_variable_name:
-      for components in field_variable['components']:
-        if components['name'] == component_name:
-          values = components['values']
-          return values
-  
-def get_min_max(data, field_variable_name, component_name):
-  """
-    get the minimum and maximum of a field_variable and component 
-    :param data: list of dicts, from multiple input files
-    :param field_variable_name: the name of the field variable to consider
-    :param component_name: the name of the component of the field_variable. This is often "0"
-  """
-  
-  min_value = None
-  max_value = None
-  
-  # find minimum and maximum solution values
-  for item in data:
-    for field_variable in item['data']:
-      if field_variable['name'] == field_variable_name:
-        for components in field_variable['components']:
-          if components['name'] == component_name:
-            values = components['values']
-            item_min = min(values)
-            item_max = max(values)
-            
-            if min_value == None or item_min < min_value:
-              min_value = item_min
-            if max_value == None or item_max > max_value:
-              max_value = item_max
-            break
-        break
-  return min_value, max_value
+import py_reader    # reader utility for opendihu *.py files
 
 files = ""
 
+show_plot = True
 if len(sys.argv) > 1:
-  files = sys.argv[1:]
+  try:
+    show_plot = int(sys.argv[1])
+    files = sys.argv[2:]
+  except:
+    files = sys.argv[1:]
 else:
   # get all input data in current directory
   ls = os.listdir(".")
@@ -83,28 +45,10 @@ solution_files = list(np.extract(map(solution_condition, files), files))
 solution_shaped_files = list(np.extract(map(solution_shaped_condition, files), files))
 solution_py_files = list(np.extract(map(solution_py_condition, files), files))
 
-print len(solution_py_files),"files:",solution_py_files
+print "{} files".format(len(solution_py_files))
+print solution_py_files[0:min(10,len(solution_py_files))]
 
-data = []
-
-# load py files
-for solution_py_file in solution_py_files:
-
-  with open(solution_py_file,'rb') as f:
-    try:
-      dict_from_file = eval(f.read())
-    except:
-      try: 
-        with open(solution_py_file,'rb') as f:
-          dict_from_file = pickle.load(f)
-      except:
-        dict_from_file = {}
-        print("could not parse file \"{}\"".format(solution_py_file))
-        continue
-    
-    #print "file: {}, dict: {}".format(solution_py_file,dict_from_file)
-
-    data.append(dict_from_file)
+data = py_reader.load_data(solution_py_files)
 
 if len(data) == 0:
   print "no data found."
@@ -116,8 +60,8 @@ dimension = data[0]['dimension']
 # 1D
 if dimension == 1:
   
-  min_value, max_value = get_min_max(data, "solution", "0")
-  min_x, max_x = get_min_max(data, "geometry", "x")
+  min_value, max_value = py_reader.get_min_max(data, "solution", "0")
+  min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
   
   print "value range: [{}, {}]".format(min_value, max_value)
   
@@ -138,8 +82,8 @@ if dimension == 1:
 
   def animate(i):
     # display data
-    xdata = get_values(data[i], "geometry", "x")
-    ydata = get_values(data[i], "solution", "0")
+    xdata = py_reader.get_values(data[i], "geometry", "x")
+    ydata = py_reader.get_values(data[i], "solution", "0")
     line.set_data(xdata, ydata)
     
     # display timestep
@@ -160,15 +104,17 @@ if dimension == 1:
   anim = animation.FuncAnimation(fig, animate, init_func=init,
              frames=len(data), interval=interval, blit=False)
 
-  plt.show()
+  anim.save("anim.mp4")
+  if show_plot:
+    plt.show()
   
 ####################
 # 2D
 if dimension == 2:
   
-  min_value, max_value = get_min_max(data, "solution", "0")
-  min_x, max_x = get_min_max(data, "geometry", "x")
-  min_y, max_y = get_min_max(data, "geometry", "y")
+  min_value, max_value = py_reader.get_min_max(data, "solution", "0")
+  min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
+  min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
   
   print "value range: [{}, {}]".format(min_value, max_value)
   
@@ -194,8 +140,8 @@ if dimension == 2:
       for i in range(dimension):
         nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
     
-    x_positions = get_values(data[0], "geometry", "x")
-    y_positions = get_values(data[0], "geometry", "y")
+    x_positions = py_reader.get_values(data[0], "geometry", "x")
+    y_positions = py_reader.get_values(data[0], "geometry", "y")
     
     X = np.reshape(x_positions, [nEntries[1], nEntries[0]])
     Y = np.reshape(y_positions, [nEntries[1], nEntries[0]])
@@ -209,7 +155,7 @@ if dimension == 2:
     ax.clear()
     
     # display data
-    solution_shaped = get_values(data[i], "solution", "0")
+    solution_shaped = py_reader.get_values(data[i], "solution", "0")
     Z = np.reshape(solution_shaped, nEntries)
     
     #print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
@@ -238,6 +184,7 @@ if dimension == 2:
              frames=len(data), interval=interval, blit=False)
 
   anim.save("anim.mp4")
-  plt.show()
+  if show_plot:
+    plt.show()
   
 sys.exit(0)

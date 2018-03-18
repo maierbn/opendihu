@@ -1,4 +1,4 @@
-#include "field_variable/component.h"
+#include "field_variable/unstructured/component.h"
 
 #include <petscvec.h>
 #include "utility/string_utility.h"

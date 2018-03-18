@@ -7,7 +7,7 @@
 
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
 #include "mesh/type_traits.h"
-#include "field_variable/element_to_node_mapping.h"
+#include "field_variable/unstructured/element_to_node_mapping.h"
 
 // forward declaration of FieldVariable
 namespace FieldVariable

@@ -11,7 +11,7 @@ namespace OutputWriter
 
 template<typename BasisOnMeshType>
 PyObject *PythonBase<BasisOnMeshType>::
-buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
+buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, bool onlyNodalValues)
 {
   // build python dict containing field variables
   // [
@@ -22,7 +22,7 @@ buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVari
   //   },
   // ]
   
- VLOG(2) << "buildPyFieldVariablesObject for " << fieldVariables.size() << " field variables";
+  VLOG(2) << "buildPyFieldVariablesObject for " << fieldVariables.size() << " field variables";
  
   PyObject *pyData = PyList_New((Py_ssize_t)fieldVariables.size());
   

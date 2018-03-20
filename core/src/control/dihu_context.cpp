@@ -147,7 +147,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     }
     
     // pass reduced list of command line arguments to python script
-    PySys_SetArgvEx(numberArgumentsToRemove, argvReduced, 0);
+    PySys_SetArgvEx(argcReduced, argvReduced, 0);
     
     // load python script 
     if(settingsFromFile)

@@ -42,11 +42,18 @@ public:
     
     const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
    
-    LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nDofs() 
+    // determine the number of values to be retrived which is half the number of dofs for Hermite with only nodal values
+    dof_no_t nValues = this->mesh_->nDofs();
+    if (onlyNodalValues)
+      // if the basis function is Hermite
+      if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
+        nValues = this->mesh_->nDofs() / 2;
+   
+    LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nDofs() << ", nValues: " << nValues
       << ", nNodes: " << nNodesInXDirection<<","<<nNodesInYDirection<<","<<nNodesInZDirection
       << ", nDofsPerNode: " << nDofsPerNode;
     
-    values.resize(this->mesh_->nDofs());
+    values.resize(nValues);
     std::size_t vectorIndex = 0;
     
     // loop over all nodes

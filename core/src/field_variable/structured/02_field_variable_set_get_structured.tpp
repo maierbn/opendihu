@@ -16,19 +16,29 @@ getValues(std::string component, std::vector<double> &values, bool onlyNodalValu
 {
   int componentIndex = this->componentIndex_[component];
   const dof_no_t nDofs = this->mesh_->nDofs();
-  values.resize(nDofs);
 
   // set stride to 2 if Hermite, else to 1  
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? 2 : 1);
   
+  // determine the number of values to be retrived which is half the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = nDofs;
+  if (onlyNodalValues)
+    // if the basis function is Hermite
+    if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
+      nValues = nDofs / 2;
+  
   // store the array indices for values_ array in dofGlobalNo
-  std::vector<int> indices(nDofs,0);
+  std::vector<int> indices(nValues,0);
+  dof_no_t indexNo = 0;
   for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
   {
-    indices[dofGlobalNo] = dofGlobalNo*this->nComponents_ + componentIndex;
+    assert(indexNo < nValues);
+    indices[indexNo++] = dofGlobalNo*this->nComponents_ + componentIndex;
   }
   
-  VecGetValues(this->values_, nDofs, indices.data(), values.data());
+  VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
+  values.resize(nValues);
+  VecGetValues(this->values_, nValues, indices.data(), values.data());
 }
 
 //! for a specific component, get values from their global dof no.s

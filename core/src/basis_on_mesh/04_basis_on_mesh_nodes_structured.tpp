@@ -59,32 +59,109 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
   node_no_t nNodes = this->nNodes();
   
   const int vectorSize = nNodes*3;
+  nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
   
   // fill initial position from settings
   if (PythonUtility::hasKey(specificSettings, "nodePositions"))
   {
-    int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
+    bool nodesStoredAsLists = false;
     
-    int inputVectorSize = nNodes * nodeDimension;
-    PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, nodePositions);
-    
-    LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
-
-    // transform vector from (x,y) or (x) entries to (x,y,z) 
-    if (nodeDimension < 3)
+    // check if the node positions are stored as list, e.g. [[x,y,z], [x,y,z],...]
+    PyObject *nodePositionsListPy = PythonUtility::getOptionPyObject(specificSettings, "nodePositions");
+    if (PyList_Check(nodePositionsListPy))
     {
-      nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
-      for(int i=nNodes-1; i>=0; i--)
+      if (PyList_Size(nodePositionsListPy) > 0)
       {
-        
-        if (nodeDimension == 2)
-          nodePositions[i*3+1] = nodePositions[i*nodeDimension+1];
-        else
-          nodePositions[i*3+1] = 0;
-        nodePositions[i*3+0] = nodePositions[i*nodeDimension+0];
-        nodePositions[i*3+2] = 0;
+        PyObject *firstItemPy = PyList_GetItem(nodePositionsListPy, (Py_ssize_t)0);
+        if (PyList_Check(firstItemPy))
+        {
+          nodesStoredAsLists = true;
+        }
       }
     }
+      
+    LOG(DEBUG) << "nodePositions: " << nodePositionsListPy << ", nodesStoredAsLists=" << nodesStoredAsLists;
+      
+    if (nodesStoredAsLists)
+    {
+      node_no_t nNodesInList = PyList_Size(nodePositionsListPy);
+      node_no_t nodeNo = 0;
+      for (; nodeNo < nNodesInList; nodeNo++)
+      {
+        // extract single node position, e.g. [x,y]
+        PyObject *itemNodePositionPy = PyList_GetItem(nodePositionsListPy, (Py_ssize_t)nodeNo);
+        if (PyList_Check(itemNodePositionPy))
+        {
+          // parse components of node, e.g. x
+          int i = 0;
+          for (; i < std::min(3,(int)PyList_Size(itemNodePositionPy)); i++)
+          {
+            PyObject *pointComponentPy = PyList_GetItem(itemNodePositionPy, (Py_ssize_t)i);
+            nodePositions[3*nodeNo + i] = PythonUtility::convertFromPython<double>(pointComponentPy, 0.0);
+          }
+          
+          // set the rest of the values that were not specified to 0.0, e.g. z=0.0
+          for (; i < 3; i++)
+          {
+            nodePositions[3*nodeNo + i] = 0.0;
+          }
+          
+          LOG(DEBUG) << "(1) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+        }
+        else
+        {
+          // if the entry is not a list like [x,y,z] but a single value, assume it is the x value
+          double value = PythonUtility::convertFromPython<double>(itemNodePositionPy, 0.0);
+          nodePositions[3*nodeNo + 0] = value;
+          nodePositions[3*nodeNo + 1] = 0.0;
+          nodePositions[3*nodeNo + 2] = 0.0;
+          
+          LOG(DEBUG) << "(2) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+        }
+      }
+      
+      if (nodeNo < nNodes)
+      {
+        LOG(WARNING) << "Expected " << nNodes << " nodes, nodePositions contains only " << nodeNo << " nodes (" << nNodes - nodeNo << " missing).";
+      }
+      
+      // fill rest of values with 0,0,0
+      for (; nodeNo < nNodes; nodeNo++)
+      {
+        nodePositions[3*nodeNo + 0] = 0.0;
+        nodePositions[3*nodeNo + 1] = 0.0;
+        nodePositions[3*nodeNo + 2] = 0.0;
+        
+        LOG(DEBUG) << "(3) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+      }
+    }
+    else
+    {
+      // nodes are stored as contiguous array, e.g. [x,y,z,x,y,z] or [x,y,x,y,x,y,...]
+     
+      int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
+      
+      int inputVectorSize = nNodes * nodeDimension;
+      PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, nodePositions);
+      
+      LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
+
+      // transform vector from (x,y) or (x) entries to (x,y,z) 
+      if (nodeDimension < 3)
+      {
+        nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
+        for(int i=nNodes-1; i>=0; i--)
+        {
+          
+          if (nodeDimension == 2)
+            nodePositions[i*3+1] = nodePositions[i*nodeDimension+1];
+          else
+            nodePositions[i*3+1] = 0;
+          nodePositions[i*3+0] = nodePositions[i*nodeDimension+0];
+          nodePositions[i*3+2] = 0;
+        }
+      }
+    }   
   }
   else
   {
@@ -100,8 +177,6 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     std::array<double, 3> position{0.,0.,0.};
     
-    nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
-      
     LOG(DEBUG) << "nNodes: " << nNodes << ", vectorSize: " << vectorSize;
     
     for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)

@@ -135,4 +135,8 @@ private:
   static int listIndex;       ///< current index for list
 };
 
+//! output python object
+std::ostream &operator<<(std::ostream &stream, PyObject *object);
+
+
 #include "utility/python_utility.tpp"

@@ -30,7 +30,7 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
       
     if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0 
     {
-      LOG(WARNING) << "convertFromPython: object is no int.";
+      LOG(WARNING) << "convertFromPython: object is no int: " << object;
     }
     
     return int(valueDouble);
@@ -42,7 +42,7 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
   }
   else
   {
-    LOG(WARNING) << "convertFromPython: object is no int.";
+    LOG(WARNING) << "convertFromPython: object is no int: " << object;
   }
   return defaultValue;
 }
@@ -64,7 +64,7 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
       
     if (double(std::size_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0 
     {
-      LOG(WARNING) << "convertFromPython: object is no std::size_t.";
+      LOG(WARNING) << "convertFromPython: object is no std::size_t: " << object;
     }
     
     return std::size_t(valueDouble);
@@ -76,7 +76,7 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
   }
   else
   {
-    LOG(WARNING) << "convertFromPython: object is no std::size_t.";
+    LOG(WARNING) << "convertFromPython: object is no std::size_t: " << object;
   }
   return defaultValue;
 }
@@ -105,7 +105,7 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
   }
   else
   {
-    LOG(WARNING) << "convertFromPython: object is no double.";
+    LOG(WARNING) << "convertFromPython: object is no double: " << object;
   }
   return defaultValue;
 }
@@ -123,7 +123,7 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
   }
   else
   {
-    LOG(WARNING) << "convertFromPython: object is no std::string.";
+    LOG(WARNING) << "convertFromPython: object is no std::string: " << object;
   }
   return defaultValue;
 }
@@ -187,7 +187,7 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
   }
   else
   {
-    LOG(WARNING) << "convertFromPython: object is no bool.";
+    LOG(WARNING) << "convertFromPython: object is no bool: " << object;
   }
   return defaultValue;
 }
@@ -766,6 +766,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
 
 PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
+  LOG(DEBUG) << "create python list with " << data.size() << " entries";
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
@@ -796,4 +797,10 @@ PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference
+}
+
+std::ostream &operator<<(std::ostream &stream, PyObject *object)
+{
+  stream << PythonUtility::getString(object);
+  return stream;
 }

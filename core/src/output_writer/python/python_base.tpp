@@ -48,7 +48,7 @@ buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVari
       std::vector<double> values;
       (*fieldVariableIter)->getValues(*componentIter, values, onlyNodalValues);
       
-      VLOG(2) << "  values: " << values;
+      VLOG(2) << "  values: " << values << ", values.size(): " << values.size();
       
       PyObject *pyValues = PythonUtility::convertToPythonList(values);
       VLOG(2) << " create pyComponent";

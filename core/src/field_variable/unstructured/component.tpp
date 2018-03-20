@@ -230,20 +230,30 @@ void Component<BasisOnMeshType>::
 getValues(std::vector<double> &values, bool onlyNodalValues)
 {
   const dof_no_t nDofs = this->nDofs();
-  values.resize(nDofs);
  
   // set stride to 2 if Hermite, else to 1  
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? 2 : 1);
   
   // create vector indices for all dofs
-  std::vector<int> indices(nDofs,0);
+  dof_no_t nValues = nDofs;
+  
+  // if Hermite and only values at nodes should be retrieved, the number of values is half the number of dofs
+  if (onlyNodalValues)
+    // if the basis function is Hermite
+    if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
+      nValues = nDofs / 2;
+    
+  std::vector<int> indices(nValues,0);
+  dof_no_t indexNo = 0;
   for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
   {
-    indices[dofGlobalNo] = dofGlobalNo*this->nComponents_ + componentIndex_;
+    assert(indexNo < nValues);
+    indices[indexNo++] = dofGlobalNo*this->nComponents_ + componentIndex_;
   }
   
+  values.resize(nValues);
   assert (values_);
-  VecGetValues(*values_, nDofs, indices.data(), values.data());
+  VecGetValues(*values_, nValues, indices.data(), values.data());
 }
 
 template<typename BasisOnMeshType>

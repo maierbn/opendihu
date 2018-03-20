@@ -10,6 +10,7 @@ namespace OutputWriter
 void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string filename, std::vector<long> &nEntries)
 {
 #if 1
+  // prepare shape string for python list, e.g. [5, 1, 1]
   long int nEntriesTotal = 1;
   int dimension = nEntries.size();
   std::stringstream shape;
@@ -37,6 +38,9 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
     LOG(ERROR) << "Could not write temporary files!";
     return;
   }
+  
+  // write 8-byte double values and collect the maximum value
+  double maximum = 0;
   for(auto value : data)
   {
     union {
@@ -49,6 +53,8 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
     else
       d = value;
     
+    if (value > maximum || maximum == 0)
+      maximum = value;
     
     for(int i=0; i<8; i++)
     {
@@ -88,6 +94,13 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
     else
       LOG(INFO) << "Array of shape " << shape.str() << " exported to \"" << filename << "\"";
   }
+  
+  // if solution probably diverged, output a warning
+  if (maximum > 1e100)
+  {
+    LOG(WARNING) << "Maximum is " << maximum;
+  }
+  
   // remove temporary file
   //std::remove("temp1");
 #endif    

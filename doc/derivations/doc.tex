@@ -1022,7 +1022,7 @@ $\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J 
 
 \subsection{Green-Lagrange strain tensor and derivatives}
 
-Quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
+In this subsection quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
 
 The position of a material point $i$ at time $t$ is given by
 \begin{equation*}
@@ -1070,7 +1070,7 @@ We then proceed to compute
     \p{{}^t_o\bfeps_{kl}}{u^L_i} = \dfrac12\Big(\p{{}^t_ox_{b,k}}{u^L_i}\,{}^t_ox_{b,l} + {}^t_ox_{b,k}\,\p{{}^t_ox_{b,l}}{u^L_i}\Big) = \dfrac12\Big( \phi_{L,k}\,\delta_{bi} \,{}^t_ox_{b,l} + {}^t_ox_{b,k}\, \phi_{L,l}\,\delta_{bi}\Big) = \dfrac12\Big( {}^t_ox_{i,l}\,\phi_{L,k} + {}^t_ox_{i,k}\, \phi_{L,l}\Big).
   \end{array}
 \end{equation*}
-We compute the second derivative (results from paper)
+We compute the second derivative (results from \cite{SUSSMAN1987357})
 \begin{equation*}
   \begin{array}{lll}
    \dfrac{\p ^t_o\bfeps_{kl}}{\p u^L_i\,\p u^M_j} = \dots = \frac12\big(\phi_{L,k}\,\phi_{M,l} + \phi_{L,l}\,\phi_{M,k}\big)\,\delta_{ij}.
@@ -1080,6 +1080,10 @@ We compute the second derivative (results from paper)
 \subsection{Solid mechanics derivation}
 
 For incompressible and nearly incompressible analyses it is necessary to use a mixed formulation to avoid convergence problems (locking). \cite{zienkiewicz1977finite}, \cite{bathe2006finite}
+
+The first subsection formulates the classical mixed formulation that is used for compressible / nearly incompressible analyses.
+
+\subsubsection{Mixed formulation}
 
 The following description is completely in reference configuration (material description).
 
@@ -1545,7 +1549,7 @@ The 21 unique entries are:
   \end{array}
 \end{equation*}
 
-\subsection{Constitutive Equation}
+\subsection{Constitutive Equations}
 \subsubsection{Incompressible Mooney-Rivlin}
 The \emph{Mooney-Rivlin} model is used which for incompressible material defines the strain energy function as
 \begin{equation*}

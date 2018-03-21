@@ -73,6 +73,7 @@ recoverRightHandSideStrongForm(Vec &result)
   ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
   
   //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+  LOG(DEBUG) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>

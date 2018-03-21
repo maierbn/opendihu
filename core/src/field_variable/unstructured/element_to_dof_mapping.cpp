@@ -1,6 +1,7 @@
 #include "field_variable/unstructured/element_to_dof_mapping.h"
 
 #include <cassert>
+#include <set>
 
 #include "utility/string_utility.h"
 #include "utility/math_utility.h"
@@ -178,6 +179,21 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
         s << ")";
         VLOG(1) << "     version " << versionIdx << " elements: " << s.str();
       }
+      
+#ifndef NDEBUG      
+      // check if the element has the same nodes multiple times
+      std::set<node_no_t> nodesOfElement;
+      for (unsigned int nodeIndex = 0; nodeIndex < nNodesInElement; nodeIndex++)
+      {
+        node_no_t nodeGlobalNo = element.nodeGlobalNo[nodeIndex];
+        
+        if (nodesOfElement.find(nodeGlobalNo) != nodesOfElement.end())
+        {
+          LOG(ERROR) << "Element " << elementGlobalNo << " contains node " << nodeGlobalNo << " multiple times!";
+        }
+        nodesOfElement.insert(nodeGlobalNo);
+      }
+#endif      
       
     }   // nodeIdx 
   }  // elementGlobalNo

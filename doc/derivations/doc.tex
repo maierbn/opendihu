@@ -1016,6 +1016,7 @@ The definitions are briefly listed here.
 $\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J > 0$.
 %
 \item[$\bullet$] Right Cauchy-Green tensor $\bfC = \bfF^\top \bfF$, symmetric, positive definite, $\det \bfC = J^2 > 0$.
+\item[$\bullet$] Left Cauchy-Green tensor $\bfb = \bfF\bfF^\top$, symmetric, positive definite, $\det \bfb = J^2 > 0$.
 \item[$\bullet$] Green-Lagrange strain tensor $\bfeps = \bfE =\dfrac12(\bfC - \bfI)$, symmetric (Both symbols are used here, because of literature). Note that the computation of $\bfeps$ from a vector of displacement DOFs is nonlinear.
 \item[$\bullet$] 2nd Piola-Kirchhoff stress tensor $\bfS = \p{\Psi(\bfE)}{\bfE} = 2\p{\psi(\bfC)}{\bfC}$, not symmetric.
 \end{itemize}
@@ -1568,7 +1569,20 @@ For incompressible materials the strain energy function is defined as
 and the stress as 
 \begin{equation*}
   \begin{array}{lll}
-    \bfS = 2\dfrac{∂}{∂\bfC}\Psi_\text{Mooney-Rivlin}(I_1,I_2) - \dfrac{∂\big(p(I_3 - 1)\big)}{∂\bfC} = -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\bfI - 2\p{\Psi}{I_2}\bfC
+    \bfS &= 2\dfrac{∂}{∂\bfC}\Psi_\text{Mooney-Rivlin}(I_1,I_2) - \dfrac{∂\big(p(I_3 - 1)\big)}{∂\bfC} = -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\bfI - 2\p{\Psi}{I_2}\bfC\\[4mm]
+    &= -p\bfC^{-1} + 2\,\big(c_1 + \,\tr(\bfC)\,c_2\big)\,\bfI - 2\,c_2\,\bfC
+  \end{array}
+\end{equation*}
+The Cauchy stress:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma &= -p\bfI + 2\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\bfb - 2\,\p{\Psi}{I_2}\,\bfb^2\\[4mm]
+             &= -p\bfI + 2(c_1 + I_1\,c_2)\,\bfb - 2\,c_2\,\bfb^2\\[4mm]
+    \bfsigma &= -p\,\bfI + 2\,c_1\,\bfb - 2\,c_2\,\bfb^{-1}\quad \text{with Left Cauchy-Green tensor }\bfb = \bfF\,\bfF^\top\quad (\text{p.238 Holzapfel})\\[4mm]
+             %&= -p\,\bfI + 2\,c_1\,\bfb - 2\,c_2\,I_3^{-1}\big(\bfb^2 - I_1\,\bfb + I_2\,\bfI)\big)\\[4mm]
+    %\bfb^2 &= I_1\,\bfb - I_2\,\bfI + I_3\,\bfb^{-1}\quad \Rightarrow\quad \bfb^{-1} = I_3^{-1}\big(\bfb^2 - I_1\,\bfb + I_2\,\bfI)\big)
+    \bfb^2 &= \bfb\,\bfb = \bfF\,\bfF^\top\,\bfF\,\bfF^\top, \quad 
+      \bfb_{ij}^2 = \bfb_{ik}\bfb_{kj} = \bfF_{il}\,\bfF_{lk}^\top\,\bfF_{km}\,\bfF^\top_{mj} = \bfF_{il}\,\bfF_{kl}\,\bfF_{km}\,\bfF_{jm} 
   \end{array}
 \end{equation*}
 (Holzapfel p.224 \cite{holzapfel2000nonlinear})
@@ -1584,7 +1598,15 @@ The parameter $p$ is here an indeterminate Lagrange multiplier that is identifie
 \end{equation*}
 (Holzapfel p.247 \cite{holzapfel2000nonlinear})
 
+The stress tensor follows by derivation
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &= 2\p{\Psi}{\bfC} = 2(c_1 + c_2\,I_1)\bfI - 2\,c_2\,\bfC + (2\,c\,J\,(J-1)-d)\bfC^{-1}\\[4mm]
+    &= 2(c_1 + c_2\,\tr{\bfC})\bfI - 2\,c_2\,\bfC + \Big(2\,c\,\det(\bfF)\,\big(\det(\bfF)-1\big)-d\Big)\bfC^{-1}\\[4mm]
+  \end{array}
+\end{equation*}
 
+Alternative model:
 \begin{equation*}
   \begin{array}{lll}
     \Psi = \dfrac12 \kappa (J - 1)^2 + c_1(\bar{I_1} - 3) + c_2(\bar{I_2} - 3)
@@ -1649,7 +1671,75 @@ This leads to volumetric and deviatoric/isochoric contribution of stresses
   \end{array}
 \end{equation*}
 
+\subsection{Formulation in current configuration}
 
+The following spatial quantities are defined in the current configuration.
+\begin{equation*}
+  \begin{array}{lll}
+    \bfx \quad \dots \, &\text{position}\\
+    \bfv = \dot{\bfx} \quad \dots \, &\text{velocity}\\
+    \rho \quad \dots\, & \text{density}\\
+    \bfsigma \quad \dots \, &\text{Cauchy stress}
+  \end{array}
+\end{equation*}
+
+The connection from the symmetric Cauchy stress tensor $\bfsigma$ to the 2nd Piola-Kirchhoff stress tensor $\bfS$ is given by 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma = J^{-1}\bfF\,\bfS\,\bfF^\top\\[4mm]
+    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}
+  \end{array}
+\end{equation*}
+
+(Holzapfel \cite{holzapfel2000nonlinear} p. 135) 
+From the \emph{conservation of mass} we get the spatial equation
+\begin{equation*}
+  \begin{array}{lll}
+    \dot{\rho}(\bfx,t) + \rho(\bfx,t)\,∇\cdot \bfv(\bfx,t)  = 0
+  \end{array}
+\end{equation*}
+which for constant density, $\rho$, reduces to
+\begin{equation*}
+  \begin{array}{lll}
+    ∇\cdot \bfv(\bfx,t) = 0.
+  \end{array}
+\end{equation*}
+
+(Holzapfel \cite{holzapfel2000nonlinear} p. 145) 
+From the \emph{balance of linear momentum} the equations of motion in spatial description can be derived.
+\begin{equation}\label{eq:linmom}
+  \begin{array}{lll}
+    \div \bfsigma + \bfb = \rho\,\dot{\bfv}
+  \end{array}
+\end{equation}
+
+The \emph{balance of angular momentum} enforces the Cauchy stress tensor, $\bfsigma$ to be symmetric (Holzapfel \cite{holzapfel2000nonlinear} p. 147).
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma = \bfsigma^\top
+  \end{array}
+\end{equation*}
+
+\Cref{eq:linmom} can be restated in terms of the displacement $\bfu$ as
+\begin{equation*}
+  \begin{array}{lll}
+    \rho\,\ddot{\bfu} - ∇_\bfx \cdot \bfsigma = 0,\\[4mm]
+    ∇_\bfx\cdot \dot{\bfu} = 0.
+  \end{array}
+\end{equation*}
+
+For the quasi-static case, $\dot{\bfu} = 0$, this reduces to
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\cdot \bfsigma = 0.
+  \end{array}
+\end{equation*}
+Substituting the Cauchy stress $\bfsigma$ for the material configuration stress, $\bfS$, yields
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\cdot (J^{-1}\,\bfF\,\bfS\,\bfF^\top) = 0
+  \end{array}
+\end{equation*}
  
 %------------------------------------------------------------------------------------------------
 \section{Quadrature}

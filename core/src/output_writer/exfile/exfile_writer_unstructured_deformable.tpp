@@ -2,19 +2,81 @@
 
 #include "basis_on_mesh/05_basis_on_mesh.h"
 
+#include <cstdlib>
+
 namespace OutputWriter
 {
 
-//! write exelem file to given stream
-template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
+namespace ExfileLoopOverTuple
 {
-  stream << " Group name: main_group" << std::endl
+
+template<typename OutputFieldVariablesType, int i=0>
+inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
+checkIfNewExelemHeaderNecessary(const OutputFieldVariablesType &fieldVariables, element_no_t currentElementGlobalNo, bool &newHeaderNecessary)
+{
+  VLOG(2) << "check if field variable " << std::get<i>(fieldVariables)->name() << " has the same exfileRepr for elements " 
+    << currentElementGlobalNo-1 << " and " << currentElementGlobalNo;
+   
+  if (!std::get<i>(fieldVariables)->haveSameExfileRepresentation(currentElementGlobalNo-1, currentElementGlobalNo))
+  {
+    newHeaderNecessary = true;
+    return;
+  }
+    
+  // advance to next tuple element
+  checkIfNewExelemHeaderNecessary<OutputFieldVariablesType, i+1>(fieldVariables, currentElementGlobalNo, newHeaderNecessary);
+}
+
+template<typename OutputFieldVariablesType, int i=0>
+inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
+checkIfNewExnodeHeaderNecessary(const OutputFieldVariablesType &fieldVariables, element_no_t currentNodeGlobalNo, bool &newHeaderNecessary)
+{
+  int previousNumberVersions = std::get<i>(fieldVariables)->nodeToDofMapping()->nVersions(currentNodeGlobalNo-1);
+  int currentNumberVersions = std::get<i>(fieldVariables)->nodeToDofMapping()->nVersions(currentNodeGlobalNo);
+  
+  if(previousNumberVersions != currentNumberVersions)
+  {
+    newHeaderNecessary = true;
+    return;
+  }
+    
+  // advance to next tuple element
+  checkIfNewExnodeHeaderNecessary<OutputFieldVariablesType, i+1>(fieldVariables, currentNodeGlobalNo, newHeaderNecessary);
+}
+
+template<typename OutputFieldVariablesType, int i=0>
+inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
+getValuesAtNode(const OutputFieldVariablesType &fieldVariables, element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
+{
+  
+  VLOG(1) << "  fieldVariable " << i << ": " << std::get<i>(fieldVariables)->name() 
+    << " nodeToDofMapping: " << std::get<i>(fieldVariables)->nodeToDofMapping();
+    
+  std::vector<dof_no_t> &dofsAtNode = std::get<i>(fieldVariables)->nodeToDofMapping()->getNodeDofs(currentNodeGlobalNo);
+    
+  // loop over components
+  for (int componentNo = 0; componentNo < std::get<i>(fieldVariables)->getNComponents(); componentNo++)
+  {
+    std::get<i>(fieldVariables)->getValues(componentNo, dofsAtNode, valuesAtNode);
+    VLOG(1) << "   Component " << componentNo << ", dofsAtNode: " << dofsAtNode << ", valuesAtNode: " << valuesAtNode;
+  }
+   
+  // advance to next tuple element
+  getValuesAtNode<OutputFieldVariablesType, i+1>(fieldVariables, currentNodeGlobalNo, valuesAtNode);
+}
+
+};  // namespace
+
+//! write exelem file to given stream
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables)
+{
+  stream << " Group name: Region" << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
   
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();   
-  const element_no_t nElements = fieldVariables.front()->mesh()->nElements();
+  const element_no_t nElements = std::get<0>(fieldVariables)->mesh()->nElements();
  
   bool outputHeader = true;
    
@@ -24,23 +86,13 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     if (currentElementGlobalNo > 0)
     {
       outputHeader = false;
-      for (auto &fieldVariable : fieldVariables)
-      {
-        VLOG(2) << "check if field variable " << fieldVariable->name() << " has the same exfileRepr for elements " 
-          << currentElementGlobalNo-1 << " and " << currentElementGlobalNo;
-          
-        if (!fieldVariable->haveSameExfileRepresentation(currentElementGlobalNo-1, currentElementGlobalNo))
-        {
-          outputHeader = true;
-          break;
-        }
-      }
+      ExfileLoopOverTuple::checkIfNewExelemHeaderNecessary<OutputFieldVariablesType>(fieldVariables, currentElementGlobalNo, outputHeader);
     }
     
     // output header 
     if (outputHeader)
     {    
-      int nScaleFactors = fieldVariables.front()->getNumberScaleFactors(currentElementGlobalNo);
+      int nScaleFactors = std::get<0>(fieldVariables)->getNumberScaleFactors(currentElementGlobalNo);
       
       if (nScaleFactors != 0)
       {
@@ -50,30 +102,26 @@ outputExelem(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
       }
       
       stream << " #Nodes=" << nNodesPerElement << std::endl
-        << " #Fields=" << fieldVariables.size() << std::endl;
+        << " #Fields=" << std::tuple_size<OutputFieldVariablesType>::value << std::endl;
       
-      int fieldVariableNo = 0;     // a number that runs over the field variables
-      for (auto &fieldVariable : fieldVariables)
-      {
-        fieldVariable->outputHeaderExelem(stream, currentElementGlobalNo, fieldVariableNo++);
-      }
+      // loop over field variables and output headers
+      ExfileLoopOverTuple::outputHeaderExelem<OutputFieldVariablesType>(fieldVariables, stream, currentElementGlobalNo);
     }
     
-    fieldVariables.front()->elementToNodeMapping()->outputElementExelemFile(stream, currentElementGlobalNo);
+    std::get<0>(fieldVariables)->elementToNodeMapping()->outputElementExelem(stream, currentElementGlobalNo);
   }
   
 }
 
 //! write exnode file to given stream
-template<int D, typename BasisFunctionType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables)
 {
-  stream << " Group name: main_group" << std::endl;
+  stream << " Group name: Region" << std::endl;
 
   bool outputHeader = true;
-   
-  const node_no_t nNodes = fieldVariables.front()->mesh()->nNodes();
+  const node_no_t nNodes = std::get<0>(fieldVariables)->mesh()->nNodes();
   
   // loop over all nodes
   for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)
@@ -82,29 +130,17 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     if (currentNodeGlobalNo > 0)
     {
       outputHeader = false;
-      for (auto &fieldVariable : fieldVariables)
-      {
-        int previousNumberVersions = fieldVariable->nodeToDofMapping()->nVersions(currentNodeGlobalNo-1);
-        int currentNumberVersions = fieldVariable->nodeToDofMapping()->nVersions(currentNodeGlobalNo);
-        
-        if(previousNumberVersions != currentNumberVersions)
-        {
-          outputHeader = true;
-          break;
-        }
-      }
+      ExfileLoopOverTuple::checkIfNewExnodeHeaderNecessary<OutputFieldVariablesType>(fieldVariables, currentNodeGlobalNo, outputHeader);
     }
     
     // output header 
     if (outputHeader)
     {
-      stream << " #Fields=" << fieldVariables.size() << std::endl;
-      int fieldVariableNo = 0;     // a number that runs over the field variables
+      stream << " #Fields=" << std::tuple_size<OutputFieldVariablesType>::value << std::endl;
       int valueIndex = 0;  // an index that runs over values of components of field variables and corresponds to the index in the values block for a node
-      for (auto &fieldVariable : fieldVariables)
-      {
-        fieldVariable->outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex, fieldVariableNo++);
-      }
+      
+      // output the exnode file header for the current node
+      ExfileLoopOverTuple::outputHeaderExnode<OutputFieldVariablesType>(fieldVariables, stream, currentNodeGlobalNo, valueIndex);
     }
     
     stream << " Node: " << currentNodeGlobalNo+1 << std::endl;
@@ -112,30 +148,9 @@ outputExnode(std::ostream &stream, std::vector<std::shared_ptr<FieldVariable::Fi
     // collect values of all field variables at the current node
     // get dofs
     std::vector<double> valuesAtNode;
-    int i=0;
-    for (auto &fieldVariable : fieldVariables)
-    {
-      VLOG(2) << "  fieldVariable " << i++ << ": " << fieldVariable->name() << " nodeToDofMapping: " << fieldVariable->nodeToDofMapping();
-      
-      std::vector<int> &dofsAtNode = fieldVariable->nodeToDofMapping()->getNodeDofs(currentNodeGlobalNo);
-      
-      // loop over components
-      for (std::string component : fieldVariable->componentNames())
-      {
-        
-        //stream << std::endl << "fieldVariable " << fieldVariable->name() << "." << component<<", dofsAtNode: " << dofsAtNode << std::endl;
-      
-        // loop over dofs 
-        for (dof_no_t dofGlobalNo : dofsAtNode)
-        {
-          double value = fieldVariable->getValue(component, dofGlobalNo);
-          //stream << std::endl << "dof " << dofGlobalNo << ", value: " << value << std::endl;
-          valuesAtNode.push_back(value);
-        }
-      }
-    }
+    ExfileLoopOverTuple::getValuesAtNode<OutputFieldVariablesType>(fieldVariables, currentNodeGlobalNo, valuesAtNode);
     
-    StringUtility::outputValuesBlock(stream, valuesAtNode, 8);
+    StringUtility::outputValuesBlock(stream, valuesAtNode.begin(), valuesAtNode.end(), 8);
   }
 }
 

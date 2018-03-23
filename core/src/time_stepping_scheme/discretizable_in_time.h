@@ -12,6 +12,9 @@ public:
   //! constructor
   DiscretizableInTime(SolutionVectorMapping solutionVectorMapping);
  
+  // Classes that derive from DiscretizableInTime must define a constexpr nComponents that specifies the number of components in the solution field variable
+  //typedef .. nComponents;
+  
   //! initialize timestepping
   virtual void initialize() = 0;
   

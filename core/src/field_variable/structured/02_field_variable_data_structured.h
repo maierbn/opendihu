@@ -7,30 +7,30 @@
 #include <petscvec.h>
 #include "easylogging++.h"
 
-#include "field_variable/00_field_variable_base.h"
+#include "field_variable/01_field_variable_components.h"
 
 namespace FieldVariable
 {
  
 // forward declaration
-template<typename BasisOnMeshType> class FieldVariable;
+template<typename BasisOnMeshType, int nComponents> class FieldVariable;
 
 /** Field variable for a structured mesh, i.e. dof and node information are purely implicit.
  *  This is used for RegularFixed and StructuredDeformable meshes.
  */
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType, int nComponents_>
 class FieldVariableDataStructured : 
-  public FieldVariableBase<BasisOnMeshType>
+  public FieldVariableComponents<BasisOnMeshType,nComponents_>
 {
 public:
   //! inherited constructor 
-  //using FieldVariableBase<BasisOnMeshType>::FieldVariableBase;
+  using FieldVariableComponents<BasisOnMeshType,nComponents_>::FieldVariableComponents;
  
   //! empty contructor
   FieldVariableDataStructured();
   
   //! contructor as data copy with a different name (component names are the same)
-  FieldVariableDataStructured(FieldVariable<BasisOnMeshType> &rhs, std::string name);
+  FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents_> &rhs, std::string name);
   
   //! constructor with mesh, name and components
   FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
@@ -40,46 +40,7 @@ public:
  
   //! set all data but the values from a second field variable
   template<typename FieldVariableType>
-  void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
-  {
-    this->name_ = name;
-    this->isGeometryField_ = false;
-    this->mesh_ = fieldVariable.mesh();
-    
-    int index = 0;
-    for (auto &componentName : componentNames)
-    {
-      this->componentIndex_.insert(std::pair<std::string,int>(componentName,index++));
-    }
-    this->nComponents_ = componentNames.size();
-    this->nEntries_ = fieldVariable.nDofs() * this->nComponents_;
-    
-    
-    LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
-     << ", components: " << this->nComponents_ << ", nEntries: " << this->nEntries_;
-    
-    assert(this->nEntries_ != 0);
-     
-    // create a new values vector for the new field variable
-    
-    // create vector
-    PetscErrorCode ierr;
-    // initialize PETSc vector object
-    ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-    
-    // initialize size of vector
-    ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-    
-    // set sparsity type and other options
-    ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
-  }
-  
-  //! get the number of components
-  int nComponents() const;
-  
-  //! get the names of the components
-  std::vector<std::string> componentNames() const;
+  void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
   
   //! get the number of elements per coordinate direction
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
@@ -103,17 +64,56 @@ public:
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
   
+  //! get the number of dofs, i.e. the number of entries per component
+  dof_no_t nDofs() const;
+  
+  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
+  bool isGeometryField() const;
+  
+  
+  
+  //! not implemented interface methods
+  
+  //! parse current component's exfile representation from file contents
+  virtual void parseHeaderFromExelemFile(std::string content){}
+  
+  //! parse single element from exelem file
+  virtual void parseElementFromExelemFile(std::string content){}
+  
+  //! read in values frorm exnode file
+  virtual void parseFromExnodeFile(std::string content){}
+  
+  //! resize internal representation variable to number of elements
+  virtual void setNumberElements(element_no_t nElements){}
+  
+  //! reduce memory consumption by removing duplicates in ExfileRepresentations
+  virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode){}
+  
+  //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<BasisOnMeshType>> fieldVariable2){}
+  
+  //! initialize PETSc vector with size of total number of dofs for all components of this field variable
+  virtual void initializeValuesVector(){}
+  
+  //! return the component by index
+  virtual std::shared_ptr<Component<BasisOnMeshType>> component(int componentNo) {return nullptr;}   // return empty Component
+  
+  //! get the element to dof mapping object
+  virtual std::shared_ptr<ElementToDofMapping> elementToDofMapping() const {return nullptr;}
+  
+  //! get the node to dof mapping object
+  virtual std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const {return nullptr;}
+  
+  //! get the number of scale factors
+  virtual int getNumberScaleFactors(element_no_t globalElementNo) const {return 0;}
+  
+  
 protected:
  
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;
   
-  //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nDofs() const;
-  
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
-  std::map<std::string, int> componentIndex_;   ///< names of the components and the component index (numbering starts with 0)
-  int nComponents_;    ///< number of components
   std::size_t nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
   
   Vec values_ = PETSC_NULL;          ///< Petsc vector containing the values, the values for the components are stored contiguous, e.g. (comp1val1, comp2val1, comp3val1, comp1val2, comp2val2, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
@@ -121,4 +121,4 @@ protected:
  
 };  // namespace
 
-#include "field_variable/structured/01_field_variable_data_structured.tpp"
+#include "field_variable/structured/02_field_variable_data_structured.tpp"

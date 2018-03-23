@@ -27,15 +27,6 @@ FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 }
 
 template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
-debug(std::string name)
-{ 
-  LOG(TRACE) << "Data::FiniteElements [" << name << "]";
-  PythonUtility::printDict(this->context_.getPythonConfig());
-}
-
-
-template<typename BasisOnMeshType>
 FiniteElements<BasisOnMeshType>::
 ~FiniteElements()
 {
@@ -51,47 +42,11 @@ template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
 initialize()
 {
-  LOG(TRACE) << "FiniteElements::initialize1";
- 
   Data<BasisOnMeshType>::initialize();
-  
-  LOG(TRACE) << "FiniteElements::initialize2";
-  PythonUtility::printDict(this->context_.getPythonConfig());
  
   // set up diffusion tensor if there is any
   DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
-
-/*
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
-{
-  const int nOverlaps = 3;
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
-    break;
-  case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  };
-}*/
-
-// for UnstructuredDeformable and Hermite
-//template<int D>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunction::Hermite>>::
-
-
-//template<int D, typename BasisFunctionType>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 
 template<typename BasisOnMeshType>
 void FiniteElements<BasisOnMeshType>::
@@ -129,8 +84,8 @@ createPetscObjects()
   
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType>::createPetscObjects("<<n<<")";
   
-  this->rhs_ = this->mesh_->createFieldVariable("rhs");
-  this->solution_ = this->mesh_->createFieldVariable("solution");
+  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
+  this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
   
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -187,14 +142,14 @@ stiffnessMatrix()
 }
 
 template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &FiniteElements<BasisOnMeshType>::
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
 template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &FiniteElements<BasisOnMeshType>::
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType>::
 solution()
 {
   return *this->solution_;
@@ -284,16 +239,23 @@ initializeMassMatrix()
 }
 
 template<typename BasisOnMeshType>
-std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> FiniteElements<BasisOnMeshType>::
-fieldVariables()
+typename FiniteElements<BasisOnMeshType>::OutputFieldVariables FiniteElements<BasisOnMeshType>::
+getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
-  result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
-  result.push_back(solution_);
-  result.push_back(rhs_);
-  this->mesh_->addNonGeometryFieldVariables(result);   // add all further field variables that were e.g. present in an input file
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField 
+    = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->geometryField());
+  /*
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> generalField;
   
-  return result;
+  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->fieldVariable("general"));
+  if (!generalField)
+   generalField = geometryField;
+  */
+  return OutputFieldVariables(
+    geometryField,
+    solution_,
+    rhs_
+  );
 }
   
 

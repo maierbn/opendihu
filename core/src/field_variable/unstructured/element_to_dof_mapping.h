@@ -31,7 +31,7 @@ public:
                                           const int nDofsPerNode);
   
   //! get all dofs of an element
-  std::vector<int> &getElementDofs(element_no_t elementGlobalNo);
+  const std::vector<dof_no_t> &getElementDofs(element_no_t elementGlobalNo) const;
   
   //! return the number of dofs
   dof_no_t nDofs() const;
@@ -43,7 +43,7 @@ public:
   bool operator==(const ElementToDofMapping &rhs);
   
 private:
-  std::vector<std::vector<int>> dofs_;  ///< for every element the list of dofs
+  std::vector<std::vector<dof_no_t>> elementDofs_;  ///< for every element the list of dofs
   dof_no_t nDofs_ = 0;            ///< total number of dofs
 };
 

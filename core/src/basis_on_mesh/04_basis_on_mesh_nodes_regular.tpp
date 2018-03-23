@@ -8,6 +8,7 @@
 #include "control/types.h"
 #include "utility/vector_operators.h"
 #include "field_variable/field_variable.h"
+#include "field_variable/00_field_variable_base.h"
 
 namespace BasisOnMesh
 {
@@ -61,7 +62,9 @@ BasisOnMeshNodes(PyObject *specificSettings) :
   LOG(DEBUG) << "  meshWidth: " << this->meshWidth_;
   
   LOG(DEBUG) << "   create geometry field ";
-  this->geometry_ = std::make_unique<FieldVariableType>(); 
+  
+  //FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> a();
+  this->geometry_ = std::make_unique<GeometryFieldType>();
   
   // setup geometry field
   this->geometry_->setMeshWidth(this->meshWidth_);
@@ -154,7 +157,7 @@ template<int D,typename BasisFunctionType>
 Vec3 BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 getGeometry(node_no_t dofGlobalNo) const
 {
-  Vec3 result = geometry_.getValue<3>(dofGlobalNo);
+  Vec3 result = geometry_.getValue(dofGlobalNo);
   return result;
 }  
   
@@ -162,11 +165,11 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
-  geometry_->template getElementValues<3>(elementNo, values);
+  geometry_->template getElementValues(elementNo, values);
 }
 
 template<int D,typename BasisFunctionType>
-typename BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FieldVariableType &BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+typename BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::GeometryFieldType &BasisOnMeshNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 geometryField()
 {
   if (this->geometry_ == nullptr)
@@ -185,7 +188,7 @@ getNodePositions(std::vector<double> &nodes) const
     dof_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
     std::size_t index = nodeGlobalNo*3;
-    Vec3 position = this->geometry_->template getValue<3>(firstNodeDofGlobalNo);
+    Vec3 position = this->geometry_->getValue(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];
     nodes[index+2] = position[2];

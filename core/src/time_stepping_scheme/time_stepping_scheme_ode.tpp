@@ -15,7 +15,7 @@ TimeSteppingSchemeOde(DihuContext context, const std::string name) :
 }
 
 template<typename DiscretizableInTimeType>
-Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
 data()
 {
   return data_;
@@ -67,7 +67,7 @@ initialize()
   
   // initialize underlying DiscretizableInTime object
   discretizableInTime_.initialize();
-  data_.setNComponentsPerNode(discretizableInTime_.nComponentsNode());
+  
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   data_.setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
   data_.initialize();

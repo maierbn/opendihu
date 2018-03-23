@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
-      CellmlAdapter
+      CellmlAdapter<57>
     >,
     TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<

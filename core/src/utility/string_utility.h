@@ -16,8 +16,10 @@ std::string extractUntil(std::string &line, std::string key);
 //! remove whitespace (' ', '\t', '\n') at the beginning and end of the string
 void trim(std::string &str);
 
-//! output the values separated by spaces, after nValuesPerRow there will be a line break
-void outputValuesBlock(std::ostream &stream, const std::vector<double> &values, int nValuesPerRow);
+//! output the values separated by spaces, after nValuesPerRow there will be a line break, disabled if -1
+template<typename IterType>
+void outputValuesBlock(std::ostream &stream, IterType valuesBegin, 
+                       IterType valuesEnd, int nValuesPerRow=-1);
 
 //! replace from by to
 std::string replace(std::string str, const std::string& from, const std::string& to);
@@ -26,4 +28,6 @@ std::string replace(std::string str, const std::string& from, const std::string&
 template<int N>
 std::string multiply(std::string str);
 
-};
+};  // namespace
+
+#include "utility/string_utility.tpp"

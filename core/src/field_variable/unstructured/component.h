@@ -74,6 +74,9 @@ public:
   template<int N>
   void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
   
+  //! get values from their global dof no.s
+  void getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
+  
   //! get the values corresponding to all element-local dofs
   void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
   

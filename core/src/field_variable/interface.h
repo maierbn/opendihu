@@ -44,14 +44,11 @@ struct Interface
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
   virtual Vec &values() = 0;
   
-  //! get the number of components
-  virtual int nComponents() const = 0;
-  
   //! get the names of the components
-  virtual std::vector<std::string> componentNames() const = 0;
+  //virtual std::array<std::string, nComponents> componentNames() const = 0;
   
   //! get the number of elements
-  virtual element_no_t nElements() const = 0;
+  //virtual element_no_t nElements() const = 0;
   
   //! for a specific component, get all values
   //template<int N>
@@ -62,7 +59,7 @@ struct Interface
   //void getValues(std::string component, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
   
   //! get values from their global dof no.s for all components
-  //template<int N, int nComponents>
+  //template<int N>
   //void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
     
   //! for a specific component, get the values corresponding to all element-local dofs
@@ -70,11 +67,10 @@ struct Interface
   //void getElementValuesComponent(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
   
   //! get the values corresponding to all element-local dofs for all components
-  //template<std::size_t nComponents>
   //void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
   
   //! for a specific component, get a single value from global dof no.
-  virtual double getValue(std::string component, node_no_t dofGlobalNo) = 0;
+  //virtual double getValue(std::string component, node_no_t dofGlobalNo) = 0;
 
   //! get a single value from global dof no. for all components
   //template<std::size_t nComponents>

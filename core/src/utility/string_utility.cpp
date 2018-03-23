@@ -39,21 +39,6 @@ void trim(std::string &str)
             str.end());
 }
 
-void outputValuesBlock(std::ostream &stream, const std::vector<double> &values, int nValuesPerRow)
-{
-  for (unsigned int i = 0; i < values.size(); i++)
-  {
-    stream << (values[i] >= 0? " " : "") << " " << std::scientific << std::setw(7) << values[i];
-    
-    // add newline after nValuesPerRow entries per row
-    if ((i+1) % nValuesPerRow == 0 && i < values.size()-1)
-    {
-      stream << std::endl; 
-    }
-  }
-  stream << std::endl;
-};
-
 //! replace from by to
 std::string replace(std::string str, const std::string& from, const std::string& to)
 {

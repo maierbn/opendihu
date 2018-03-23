@@ -23,7 +23,8 @@ void PythonCallback::write(DataType& data, int timeStepNo, double currentTime)
   LOG(TRACE) << "PythonCallback::write timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
   
   // call implementation specific for BasisOnMesh type  
-  PythonCallbackWriter<typename DataType::BasisOnMesh>::callCallback(callback_, data.fieldVariables(), this->timeStepNo_, this->currentTime_, this->onlyNodalValues_);
+  PythonCallbackWriter<typename DataType::BasisOnMesh,typename DataType::OutputFieldVariables>::
+    callCallback(callback_, data.getOutputFieldVariables(), this->timeStepNo_, this->currentTime_, this->onlyNodalValues_);
 }
 
 };

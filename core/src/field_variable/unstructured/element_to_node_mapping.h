@@ -35,7 +35,7 @@ public:
   Element &getElement(element_no_t elementNo);
   
   //! output a single element to exelem file stream
-  void outputElementExelemFile(std::ostream &file, element_no_t elementGlobalNo);
+  void outputElementExelem(std::ostream &file, element_no_t elementGlobalNo);
   
 private:
  

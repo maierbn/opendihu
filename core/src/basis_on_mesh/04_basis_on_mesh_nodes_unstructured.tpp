@@ -15,9 +15,9 @@ node_no_t BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunct
 nNodes() const
 {
   // assert that geometry field variable is set
-  assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
+  assert (this->geometryField_);
   
-  return this->fieldVariable_.at("geometry")->nNodes();
+  return this->geometryField_->nNodes();
 }
 
 template<int D,typename BasisFunctionType>
@@ -25,9 +25,9 @@ Vec3 BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionTy
 getGeometry(node_no_t dofGlobalNo) const
 {
   // assert that geometry field variable is set
-  assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
+  assert (this->geometryField_);
   
-  Vec3 result = this->fieldVariable_.at("geometry")->template getValue<3>(dofGlobalNo);
+  Vec3 result = this->geometryField_->template getValue(dofGlobalNo);
   return result;
 }  
   
@@ -37,10 +37,9 @@ void BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionTy
 getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
   // assert that geometry field variable is set
-  assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
+  assert (this->geometryField_);
   
-  const int nDofsPerElement = BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement();
-  this->fieldVariable_.at("geometry")->template getElementValues<nDofsPerElement,3>(elementNo, values);
+  this->geometryField_->getElementValues(elementNo, values);
 }
 
 
@@ -48,18 +47,18 @@ template<int D,typename BasisFunctionType>
 bool BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 hasGeometryField()
 {
-  return this->fieldVariable_.find("geometry") != this->fieldVariable_.end();
+  return this->geometryField_ != nullptr;
 }
 
 //! create a non-geometry field field variable with no values being set, with given component names
 template<int D,typename BasisFunctionType>
-typename BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableType &BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+typename BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::GeometryFieldType &BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 geometryField()
 {
   // assert that geometry field variable is set
-  assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
+  assert (this->geometryField_);
   
-  return *this->fieldVariable_["geometry"];
+  return *this->geometryField_;
 }
 
 template<int D,typename BasisFunctionType>
@@ -67,14 +66,14 @@ void BasisOnMeshNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionTy
 getNodePositions(std::vector<double> &nodes) const
 {
   // assert that geometry field variable is set
-  assert (this->fieldVariable_.find("geometry") != this->fieldVariable_.end());
+  assert (this->geometryField_);
   
   nodes.resize(this->nNodes()*3);
  
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
-    int nodeFirstDofGlobalNo = this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];
-    Vec3 position = this->fieldVariable_.at("geometry")->template getValue<3>(nodeFirstDofGlobalNo);
+    int nodeFirstDofGlobalNo = this->geometryField_->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];
+    Vec3 position = this->geometryField_->template getValue(nodeFirstDofGlobalNo);
     int index = nodeGlobalNo*3;
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];

@@ -31,48 +31,51 @@ private:
 */
 
 
-template<typename BasisOnMeshType>
+/** Helper class that creates a python object out of a tuple of field variables.
+ *  OutputFieldVariablesType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables that will be output.
+  */
+template<typename BasisOnMeshType, typename OutputFieldVariablesType>
 class Python
 {};
 
 /* Specialization for RegularFixed. This also outputs rhs matrix and stiffness matrix for laplace problems.
  * 
  */
-template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+  public PythonBase<OutputFieldVariablesType>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables, 
                                      int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 // specialization for StructuredDeformable
-template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+  public PythonBase<OutputFieldVariablesType>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables, 
                                      int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 // specialization for UnstructuredDeformable
-template<int D, typename BasisFunctionType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> :
-  public PythonBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+class Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+  public PythonBase<OutputFieldVariablesType>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! call python callback
-  static PyObject *buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+  static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables, 
                                      int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 

@@ -20,7 +20,7 @@ NodeToDofMapping::NodeDofInformation& NodeToDofMapping::getNodeDofInformation(no
   return nodeDofInformation_[nodeGlobalNo];
 }
 
-std::vector<int> &NodeToDofMapping::getNodeDofs(node_no_t nodeGlobalNo)
+std::vector<dof_no_t> &NodeToDofMapping::getNodeDofs(node_no_t nodeGlobalNo)
 {
   assert (nodeGlobalNo < (int)nodeDofInformation_.size());
   return nodeDofInformation_[nodeGlobalNo].dofs;

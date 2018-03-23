@@ -10,12 +10,13 @@
 namespace OutputWriter
 {
  
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType, typename OutputFieldVariablesType>
 class PythonCallbackWriter
 {
 public:
   //! call python callback
-  static void callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues);  
+  static void callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables, 
+                           int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 };  // namespace

@@ -18,181 +18,6 @@ namespace BasisOnMesh
  
 using namespace StringUtility;
 
-// element-local dofIndex to global dofNo for 1D
-template<typename MeshType,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  // L linear  L quadratic  H cubic
-  // 0 1       0 1 2        0,1 2,3
-  // averageNDofsPerElement: 
-  // 1         2            2
-  return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNDofsPerElement() * elementNo + dofIndex;
-}
-
-//! get all dofs of a specific node for 1D
-template<typename MeshType,typename BasisFunctionType>
-void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
-{
-  for (int i=0; i<BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode(); i++)
-  {
-    dofGlobalNos.push_back(BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
-  }
-}
-
-// element-local dofIndex to global dofNo for 2D
-template<typename MeshType,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  // L linear  quadratic  H cubic
-  //           6 7 8
-  // 2 3       3 4 5      45 67
-  // 0 1       0 1 2      01 23
-  // nDofsPerBasis:
-  // 2         3          4
-  // averageNDofsPerElement:
-  // 1         4          2
-  
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
-  int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
-  element_no_t elementX = element_no_t(elementNo % nElements[0]);
-  element_no_t elementY = element_no_t(elementNo / nElements[0]);
-  dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
-  dof_no_t localY = dof_no_t(dofIndex / BasisFunctionType::nDofsPerBasis());
-  
-  VLOG(2) << "  dof " << elementNo << ":" << dofIndex << ", element: ("<<elementX<<","<<elementY<<"), dofsPerRow="<<dofsPerRow<<", local: ("<<localX<<","<<localY<<")";
-  
-  return dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
-    + averageNDofsPerElement1D * elementX + localX;
-}
-
-//! get all dofs of a specific node for 2D
-template<typename MeshType,typename BasisFunctionType>
-void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
-{
-  for (int i=0; i<BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode(); i++)
-  {
-    dofGlobalNos.push_back(BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
-  }
-}
-
-// element-local dofIndex to global dofNo for 3D
-template<typename MeshType,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getDofNo(element_no_t elementNo, int dofIndex) const
-{
-  // L linear  quadratic  H cubic
-  //           6 7 8
-  // 2 3       3 4 5      45 67
-  // 0 1       0 1 2      01 23
-  // nDofsPerBasis:
-  // 2         3          4
-  // averageNDofsPerElement:
-  // 1         4          2
- 
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
-  int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
-  dof_no_t dofsPerPlane = (averageNDofsPerElement1D * nElements[1] + BasisFunctionType::nDofsPerNode()) * dofsPerRow;
-  
-  element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
-  element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
-  element_no_t elementX = elementNo % nElements[0];
-  dof_no_t localZ = dof_no_t(dofIndex / MathUtility::sqr(BasisFunctionType::nDofsPerBasis()));
-  dof_no_t localY = dof_no_t((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis())) / BasisFunctionType::nDofsPerBasis());
-  dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
-  
-  return dofsPerPlane * (elementZ * averageNDofsPerElement1D + localZ)
-    + dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
-    + averageNDofsPerElement1D * elementX + localX;
-}
-
-//! get all dofs of a specific node for 3D
-template<typename MeshType,typename BasisFunctionType>
-void BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
-{
-  for (int i=0; i<BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode(); i++)
-  {
-    dofGlobalNos.push_back(BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i);
-  }
-}
-
-// element-local nodeIndex to global nodeNo for 1D
-template<typename MeshType,typename BasisFunctionType>
-node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeNo(element_no_t elementNo, int nodeIndex) const
-{
-  // L linear  L quadratic  H cubic
-  // 0 1       0 1 2        0 1
-  // averageNDofsPerElement: 
-  // 1         2            2
-  // nDofsPerBasis:
-  // 2         3            4
-  // nDofsPerNode:
-  // 1         1            2
-  // nNodesPerElement:
-  // 2         3            2
-  return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNo + nodeIndex;
-}
-
-// element-local nodeIndex to global nodeNo for 2D
-template<typename MeshType,typename BasisFunctionType>
-node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeNo(element_no_t elementNo, int nodeIndex) const
-{
-  // L linear  quadratic  H cubic
-  //           6 7 8
-  // 2 3       3 4 5      2 3
-  // 0 1       0 1 2      0 1
-  // nNodesPerElement:
-  // 4         9          4
-  
-  // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
-  int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-  int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
-  node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
-  element_no_t elementX = element_no_t(elementNo % nElements[0]);
-  element_no_t elementY = element_no_t(elementNo / nElements[0]);
-  dof_no_t localX = nodeIndex % nNodesPerElement1D;
-  dof_no_t localY = dof_no_t(nodeIndex / nNodesPerElement1D);
-  
-  return nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
-    + averageNNodesPerElement1D * elementX + localX;
-}
-
-// element-local nodeIndex to global nodeNo for 3D
-template<typename MeshType,typename BasisFunctionType>
-node_no_t BasisOnMeshDofs<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeNo(element_no_t elementNo, int nodeIndex) const
-{
-  // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
-  int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-  int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
-  node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
-  node_no_t nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow;
-  
-  element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
-  element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
-  element_no_t elementX = elementNo % nElements[0];
-  dof_no_t localZ = dof_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
-  dof_no_t localY = dof_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
-  dof_no_t localX = nodeIndex % nNodesPerElement1D;
-  
-  return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
-    + nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
-    + averageNNodesPerElement1D * elementX + localX;
-}
-
-
 template<int D,typename BasisFunctionType>
 element_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nElements() const
@@ -259,7 +84,7 @@ parseFromSettings(PyObject *settings)
       PythonUtility::getOptionListNext<PyObject *>(settings, "nodePositions", pyNodePositions))
   {
     Vec3 nodePosition = PythonUtility::convertFromPython<Vec3>(pyNodePositions);
-    LOG(DEBUG) << "node position " << nodePosition;
+    VLOG(1) << "node position " << nodePosition;
     nodePositions.push_back(nodePosition);
   }
   
@@ -298,7 +123,7 @@ parseFromSettings(PyObject *settings)
        // extract the node positions, e.g. [1,0] (global node no., version no.) or just 1 (only global node no., version no. defaults to 0)
        std::array<int,2> elementNode = PythonUtility::convertFromPython<int,2>(pyElementNodes[nodeIndex], 0);
        
-       LOG(DEBUG) << "   elementNode " << elementNode;
+       VLOG(1) << "   elementNode " << elementNode;
        
        currentElement.nodes[nodeIndex].nodeGlobalNo = elementNode[0];
        currentElement.nodes[nodeIndex].versionNo = elementNode[1];
@@ -375,21 +200,18 @@ parseFromSettings(PyObject *settings)
   std::shared_ptr<FieldVariable::NodeToDofMapping> nodeToDofMapping 
     = elementToDofMapping->setup(exfileRepresentation, this->elementToNodeMapping_, this->nDofsPerNode());
   
-  LOG(DEBUG) << "nodeToDofMapping: " << *nodeToDofMapping;
+  VLOG(1) << "nodeToDofMapping: " << *nodeToDofMapping;
     
   this->nDofs_ = elementToDofMapping->nDofs();
     
-  // setup geometric field variable
-  std::pair<std::string, std::shared_ptr<FieldVariableType>> geometryField(
-    "geometry", 
-    std::make_shared<FieldVariableType>());
-  this->fieldVariable_.insert(geometryField);
+  // create and setup geometric field variable
+  this->geometryField_ = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>();
   
-  this->fieldVariable_["geometry"]->initializeFromMappings("geometry", true, exfileRepresentation, elementToDofMapping, 
+  this->geometryField_->initializeFromMappings("geometry", true, exfileRepresentation, elementToDofMapping, 
                                                            this->elementToNodeMapping_, nodeToDofMapping, {"x","y","z"});
   
   // unify exfile representation variables in field variables such that there is only one shared for all components of a field variable
-  this->fieldVariable_["geometry"]->unifyMappings(this->elementToNodeMapping_, this->nDofsPerNode());
+  this->geometryField_->unifyMappings(this->elementToNodeMapping_, this->nDofsPerNode());
   
   // set values from nodePositions
   
@@ -398,11 +220,11 @@ parseFromSettings(PyObject *settings)
   { 
     int nVersions = nodeToDofMapping->nVersions(nodeGlobalNo);
    
-    LOG(DEBUG) << "node " << nodeGlobalNo << ", nVersions: " << nVersions;
+    VLOG(1) << "node " << nodeGlobalNo << ", nVersions: " << nVersions;
     
     // loop over components
     int componentNo = 0;
-    auto &component = this->fieldVariable_["geometry"]->component();
+    std::array<::FieldVariable::Component<BasisOnMeshType>,3> &component = this->geometryField_->component();
     for (auto iter = component.begin(); iter != component.end(); iter++, componentNo++)
     {
       // get value of nodePositions vector that matches current component
@@ -414,14 +236,14 @@ parseFromSettings(PyObject *settings)
       // set first dof of every version for the particular component (this leaves derivative dofs of Hermite at 0)
       for (int versionNo = 0; versionNo < nVersions; versionNo++)
       {
-        LOG(DEBUG) << "    set version " << versionNo << " at " << this->nDofsPerNode()*versionNo << " to " << positionValue;
+        VLOG(1) << "    set version " << versionNo << " at " << this->nDofsPerNode()*versionNo << " to " << positionValue;
         nodeValues[this->nDofsPerNode()*versionNo] = positionValue;
       }
 
-      LOG(DEBUG) << "   component " << iter->first << ", positionValue: " << positionValue << " nodeValues: " <<nodeValues;
+      VLOG(1) << "   component no. " << componentNo << ", positionValue: " << positionValue << " nodeValues: " <<nodeValues;
       
       // set nodal dof values at node
-      iter->second.setNodeValues(nodeGlobalNo, nodeValues.begin());
+      iter->setNodeValues(nodeGlobalNo, nodeValues.begin());
     }
   }
 }
@@ -440,9 +262,9 @@ initialize()
   std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(ptr);
   
   assert(self != nullptr);
-  assert(fieldVariable_.find("geometry") != fieldVariable_.end());
+  assert(geometryField_ != nullptr);
   
-  this->fieldVariable_.at("geometry")->setMesh(self);
+  this->geometryField_->setMesh(self);
 }
 
 template<int D,typename BasisFunctionType>
@@ -459,12 +281,13 @@ remapFieldVariables(PyObject *settings)
     for (; !PythonUtility::getOptionDictEnd(settings, keyString); 
         PythonUtility::getOptionDictNext<std::string, std::string>(settings, keyString, dictItem))
     {
+      // remap request field variable from key to value
       std::string key = dictItem.first;
       std::string value = dictItem.second;
           
       if (this->fieldVariable_.find(key) != this->fieldVariable_.end())
       {
-        std::shared_ptr<FieldVariableType> fieldVariable = this->fieldVariable_[key];
+        std::shared_ptr<FieldVariableBaseType> fieldVariable = this->fieldVariable_[key];
         this->fieldVariable_.erase(key);
         this->fieldVariable_[value] = fieldVariable;
       }
@@ -475,20 +298,32 @@ remapFieldVariables(PyObject *settings)
     }
   }
   
-  // if there is no field with name "geometry"
-  if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
+  // if there is no geometry field stored yet, extract from named variables
+  if (!this->geometryField_)
+  {
+    if (this->fieldVariable_.find("geometry") != this->fieldVariable_.end())
+    {
+      this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(
+         this->fieldVariable_.at("geometry"));
+      this->fieldVariable_.erase("geometry");
+    }
+  }
+  
+  // if there is still no geometry field stored
+  if (!this->geometryField_)
   { 
     bool geometryFieldFound = false;
-    // search for a geometry field 
+    
+    // search for a geometry field that is named differently
     for(auto &fieldVariableEntry : this->fieldVariable_)
     {
       if (fieldVariableEntry.second->isGeometryField())
       {
         LOG(WARNING) << "Remap geometry field variable from \"" << fieldVariableEntry.first << "\" to \"geometry\".";
       
-        std::shared_ptr<FieldVariableType> fieldVariable = fieldVariableEntry.second;
+        std::shared_ptr<FieldVariableBaseType> fieldVariable = fieldVariableEntry.second;
         this->fieldVariable_.erase(fieldVariableEntry.first);
-        this->fieldVariable_["geometry"] = fieldVariable;
+        this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(fieldVariable);
         
         geometryFieldFound = true;
         break;
@@ -512,10 +347,10 @@ template<int D,typename BasisFunctionType>
 dof_no_t BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
+  if (!this->geometryField_)
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
   
-  return this->fieldVariable_.at("geometry")->getDofNo(elementNo, dofIndex);
+  return this->geometryField_->getDofNo(elementNo, dofIndex);
 }
 
 template<int D,typename BasisFunctionType>
@@ -528,12 +363,12 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 //! get all dofs of a specific node, unstructured mesh
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const
+getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const
 {
-  if (this->fieldVariable_.find("geometry") == this->fieldVariable_.end())
+  if (!this->geometryField_)
     LOG(FATAL) << "Mesh contains no field variable \"geometry\". Use remap to create one!";
   
-  std::vector<dof_no_t> &nodeDofs = this->fieldVariable_.at("geometry")->nodeToDofMapping()->getNodeDofs(nodeGlobalNo);
+  std::vector<dof_no_t> &nodeDofs = this->geometryField_->nodeToDofMapping()->getNodeDofs(nodeGlobalNo);
   
   dofGlobalNos.reserve(dofGlobalNos.size() + nodeDofs.size());
   
@@ -547,11 +382,13 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 eliminateScaleFactors()
 {
+  // this method was not tested yet!
   // loop over field variables
   for (auto fieldVariable : this->fieldVariable_)
-  {
     fieldVariable.second->eliminateScaleFactors();
-  }
+  
+  if (geometryField_)
+    geometryField_->eliminateScaleFactors();
 }
 
 template<int D,typename BasisFunctionType>
@@ -562,15 +399,14 @@ nDofs() const
 }
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables)
+std::shared_ptr<::FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> 
+BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+fieldVariable(std::string name)
 {
-  // loop over field variables
-  for (auto fieldVariable : this->fieldVariable_)
-  {
-    if (!fieldVariable.second->isGeometryField())
-      fieldVariables.push_back(fieldVariable.second);
-  }
+  if (fieldVariable_.find(name) != fieldVariable_.end())
+    return fieldVariable_.at(name);
+  else
+    return nullptr;
 }
   
 };  // namespace

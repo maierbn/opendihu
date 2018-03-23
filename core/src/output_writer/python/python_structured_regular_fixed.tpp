@@ -10,9 +10,9 @@
 namespace OutputWriter
 {
 
-template<int D, typename BasisFunctionType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::
-buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, 
+template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
+PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+buildPyDataObject(OutputFieldVariablesType fieldVariables, 
                   int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
@@ -36,10 +36,10 @@ buildPyDataObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<Basis
   
   // build python object for data
   
-  PyObject *pyData = PythonBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
+  PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
   
   // prepare number of elements in the dimensions
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = fieldVariables.front()->nElementsPerCoordinateDirection();
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = std::get<0>(fieldVariables)->nElementsPerCoordinateDirection();
   std::array<long, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionArray;
   
   std::copy(nElementsPerCoordinateDirection.begin(), nElementsPerCoordinateDirection.end(), nElementsPerCoordinateDirectionArray.begin());

@@ -25,7 +25,7 @@ public:
   //! return the basis order value as used in python files and callbacks, e.g. 2
   static int getBasisOrder();
   
-  //! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
+  //! return a basis function type string as used in python files and callbacks, i.e. "Hermite"
   static std::string getBasisFunctionString();
 };
 

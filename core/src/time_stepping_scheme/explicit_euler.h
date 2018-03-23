@@ -9,12 +9,13 @@
 namespace TimeSteppingScheme
 {
 
+/** The explicit Euler integration scheme (forward Euler), u_{t+1} = u_{t} + dt*f(t)
+  */
 template<typename DiscretizableInTime>
 class ExplicitEuler : 
   public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
 {
 public:
- 
  
   //! constructor
   ExplicitEuler(DihuContext context);

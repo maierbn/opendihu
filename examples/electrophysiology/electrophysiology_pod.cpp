@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
       ModelOrderReduction::POD<
-        CellmlAdapter,
+        CellmlAdapter<57>,
         ModelOrderReduction::LinearPart
       >
     >,

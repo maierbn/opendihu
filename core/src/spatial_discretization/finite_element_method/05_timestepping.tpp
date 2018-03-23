@@ -34,12 +34,17 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 initialize()
 {
-  this->data_.debug("FiniteElementMethodTimeStepping::initialize");
-  
   this->data_.initialize();
   this->setStiffnessMatrix();
   this->setMassMatrix();
   this->data_.finalAssembly();
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+nComponents()
+{
+  return BasisOnMeshType::dim();
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>

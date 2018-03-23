@@ -107,7 +107,7 @@ ElementToNodeMapping::Element& ElementToNodeMapping::getElement(element_no_t ele
   return elements_[elementGlobalNo];
 }
 
-void ElementToNodeMapping::outputElementExelemFile(std::ostream &file, element_no_t elementGlobalNo)
+void ElementToNodeMapping::outputElementExelem(std::ostream &file, element_no_t elementGlobalNo)
 {
   assert(elementGlobalNo < (int)elements_.size());
   
@@ -123,7 +123,7 @@ void ElementToNodeMapping::outputElementExelemFile(std::ostream &file, element_n
     << " Scale factors:" << std::endl;
     
   // output scale factors
-  StringUtility::outputValuesBlock(file, elements_[elementGlobalNo].scaleFactors, 5);
+  StringUtility::outputValuesBlock(file, elements_[elementGlobalNo].scaleFactors.begin(), elements_[elementGlobalNo].scaleFactors.end(), 5);
 }
   
 };

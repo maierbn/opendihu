@@ -13,7 +13,7 @@ namespace FieldVariable
   
 void ElementToDofMapping::setNumberElements(element_no_t nElements)
 {
-  dofs_.resize(nElements);
+  elementDofs_.resize(nElements);
 }
 
 std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<ExfileRepresentation> exfileRepresentation,
@@ -24,8 +24,8 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   node_no_t dofGlobalNo = 0;
   
   // for setup to work we need the number of elements already set (by a previous call to setNumberElements)
-  assert(dofs_.size() != 0);
-  element_no_t nElements = dofs_.size();
+  assert(elementDofs_.size() != 0);
+  element_no_t nElements = elementDofs_.size();
   
   // create node to dof mapping 
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping = std::make_shared<NodeToDofMapping>();
@@ -45,7 +45,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
     
     // resize dofs vector for element
     unsigned int nNodesInElement = element.nodeGlobalNo.size();
-    dofs_[elementGlobalNo].resize(nNodesInElement*nDofsPerNode);
+    elementDofs_[elementGlobalNo].resize(nNodesInElement*nDofsPerNode);
     
     VLOG(1) << "element " << elementGlobalNo << ", nNodes: " << nNodesInElement;
     
@@ -104,7 +104,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
         // assign global dof nos
         for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
         {
-          dofs_[elementGlobalNo][elementDofIndex++] = dofGlobalNo;
+          elementDofs_[elementGlobalNo][elementDofIndex++] = dofGlobalNo;
           nodeDofInformation.dofs[exfileNode.valueIndices[dofIndex]] = dofGlobalNo;
           VLOG(1) << "     dofIndex " << dofIndex << " valueIndex " << exfileNode.valueIndices[dofIndex] << " dof global " << dofGlobalNo;
           dofGlobalNo++;
@@ -133,8 +133,8 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
           // get dofs
           for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
           {
-            int dofNo = nodeDofInformation.dofs[exfileNode.valueIndices[dofIndex]];
-            dofs_[elementGlobalNo][elementDofIndex++] = dofNo;
+            dof_no_t dofNo = nodeDofInformation.dofs[exfileNode.valueIndices[dofIndex]];
+            elementDofs_[elementGlobalNo][elementDofIndex++] = dofNo;
           }
           
           VLOG(1) << "      already visited on this version, elements of this version: " << nodeDofInformation.elementsOfVersion[versionNo];
@@ -154,7 +154,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
           // assign global dof nos
           for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
           {
-            dofs_[elementGlobalNo][elementDofIndex++] = dofGlobalNo;
+            elementDofs_[elementGlobalNo][elementDofIndex++] = dofGlobalNo;
             nodeDofInformation.dofs[exfileNode.valueIndices[dofIndex]] = dofGlobalNo;
             dofGlobalNo++;
           }
@@ -210,12 +210,12 @@ dof_no_t ElementToDofMapping::nDofs() const
 
 element_no_t ElementToDofMapping::nElements() const
 {
-  return dofs_.size();
+  return elementDofs_.size();
 }
 
-std::vector<int> &ElementToDofMapping::getElementDofs(element_no_t elementGlobalNo)
+const std::vector<dof_no_t> &ElementToDofMapping::getElementDofs(element_no_t elementGlobalNo) const
 {
-  return dofs_[elementGlobalNo]; 
+  return elementDofs_[elementGlobalNo]; 
 }
 
 bool ElementToDofMapping::operator==(const ElementToDofMapping &rhs)
@@ -223,15 +223,15 @@ bool ElementToDofMapping::operator==(const ElementToDofMapping &rhs)
   if (nDofs_ != rhs.nDofs_)
     return false;
   
-  if (dofs_.size() != rhs.dofs_.size())
+  if (elementDofs_.size() != rhs.elementDofs_.size())
     return false;
   
-  for (unsigned int i=0; i<dofs_.size(); i++)
+  for (unsigned int i=0; i<elementDofs_.size(); i++)
   {
-    if (dofs_[i].size() != rhs.dofs_[i].size())
+    if (elementDofs_[i].size() != rhs.elementDofs_[i].size())
       return false;
-    for (unsigned int j=0; j<dofs_[i].size(); j++)
-      if (dofs_[i][j] != rhs.dofs_[i][j])
+    for (unsigned int j=0; j<elementDofs_[i].size(); j++)
+      if (elementDofs_[i][j] != rhs.elementDofs_[i][j])
         return false;
   }
   return true;

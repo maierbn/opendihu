@@ -33,7 +33,7 @@ public:
   Node &getNode(int nodeIndex);
   
   //! output the exelem file header to the stream
-  void outputHeaderExelemFile(std::ostream &file);
+  void outputHeaderExelem(std::ostream &file);
   
   //! output string representation
   void output(std::ostream &stream) const;

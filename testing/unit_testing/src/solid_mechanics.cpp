@@ -13,7 +13,7 @@
 #include "node_positions_tester.h"
 
 TEST(SolidMechanicsTest, Test0)
-{
+{/*
   std::string pythonConfig = R"(
 # solid mechanics (3D)
 
@@ -46,7 +46,7 @@ config = {
     Equation::Static::SolidMechanics
   > problem(settings);
   
-  problem.run();
+  problem.run();*/
 }
 
 

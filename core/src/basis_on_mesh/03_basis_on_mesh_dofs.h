@@ -8,12 +8,19 @@
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
 #include "mesh/type_traits.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
+#include "field_variable/00_field_variable_base.h"
 
 // forward declaration of FieldVariable
 namespace FieldVariable
 {
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType,int nComponents>
 class FieldVariable;
+
+template<typename BasisOnMeshType>
+class FieldVariableBase;
+
+template<typename BasisOnMeshType>
+class Component;
 };
 
 namespace BasisOnMesh
@@ -39,7 +46,10 @@ public:
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
+  
+  typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;
+  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name){return nullptr;}
 };
 
 
@@ -60,7 +70,11 @@ public:
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode()> &dofGlobalNos) const;
+  
+  typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;
+  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name){return nullptr;}
 };
 
 /** partial specialization for structured mesh, D=2
@@ -80,7 +94,11 @@ public:
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode()> &dofGlobalNos) const;
+  
+  typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;
+  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name){return nullptr;}
 };
 
 /** partial specialization for structured mesh, D=3
@@ -100,7 +118,11 @@ public:
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;  
+  void getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode()> &dofGlobalNos) const;
+  
+  typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;
+  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name){return nullptr;}
 };
 
 /** partial specialization for unstructured mesh
@@ -112,7 +134,8 @@ class BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionTy
 {
 public:
 
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;
+  typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;
+  typedef BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   BasisOnMeshDofs(PyObject *settings, bool noGeometryField=false);
@@ -125,9 +148,9 @@ public:
   
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
-  
-  //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+
+  //! get all dofs of a single node  
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
   
   //! write exelem file to stream
   void outputExelemFile(std::ostream &file);
@@ -141,8 +164,8 @@ public:
   //! return the number of dofs
   dof_no_t nDofs() const;
  
-  //! add all field variables except the geometry field to the vector. This is used to retrive additional field variables that were parsed from an exfile.
-  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables);
+  //! access all stored field variables, the type FieldVariableBaseType does not contain the nComponents template paramet of FieldVariableType, so a cast should be performed in order to access the field variable
+  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
   
 protected:
   //! parse a given *.exelem file and prepare fieldVariable_
@@ -160,14 +183,15 @@ protected:
   //! parse the element and node positions from python settings
   void parseFromSettings(PyObject *settings);
   
-  std::map<std::string, std::shared_ptr<FieldVariableType>> fieldVariable_;   ///< all field variables that were present in exelem/exnode files, should contain "geometry" field variable
+  std::map<std::string, std::shared_ptr<FieldVariableBaseType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField_ = nullptr;  ///< the geometry field variable
+  
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
   element_no_t nElements_ = 0;    ///< number of elements in exelem file 
   dof_no_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
   bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
  
 }; 
-
 
 /** partial specialization for structured mesh and complete polynomials
  */
@@ -186,10 +210,11 @@ public:
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
   
   //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> dofGlobalNos) const;
+  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
 };
 
 }  // namespace
 
-#include "basis_on_mesh/03_basis_on_mesh_dofs.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_dofs_structured.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_dofs_unstructured.tpp"
 #include "basis_on_mesh/03_basis_on_mesh_dofs_input_output.tpp"

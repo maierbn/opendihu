@@ -1,4 +1,4 @@
-#include "field_variable/unstructured/01_field_variable_data_unstructured_deformable.h"
+#include "field_variable/unstructured/02_field_variable_data_unstructured_deformable.h"
 
 #include <sstream>
 #include "utility/string_utility.h"
@@ -13,10 +13,10 @@ namespace FieldVariable
 using namespace StringUtility;
 
 // contructor as data copy with a different name (component names are the same)
-template<int D, typename BasisFunctionType>
-FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-FieldVariableData(FieldVariable<BasisOnMeshType> &rhs, std::string name) :
-  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
+template<int D, typename BasisFunctionType, int nComponents>
+FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name) :
+  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
@@ -26,24 +26,24 @@ FieldVariableData(FieldVariable<BasisOnMeshType> &rhs, std::string name) :
 }
 
 // constructor with mesh, name and components
-template<int D, typename BasisFunctionType>
-FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent) :
-  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
+  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   assert(false); // not implemented
   // this is needed for mixed formulation, to implement this and set as the lower order field variable I need the higher order field variable as parameter
 }
 
-template<int D, typename BasisFunctionType>
-FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 FieldVariableData() :
-  FieldVariableBase<BasisOnMeshType>::FieldVariableBase()
+  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
 }
 
-template<int D, typename BasisFunctionType>
-FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 ~FieldVariableData()
 {
   if (this->values_)
@@ -52,13 +52,13 @@ FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimensi
   }
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 parseHeaderFromExelemFile(std::string content)
 {
   VLOG(2) << "parseHeaderFromExelemFile(" << content << ")";
   bool newComponentStarts = false;
-  int nComponents = 0;
+  int nComponentsParsed = 0;
   int componentNo = 0;
   int nLinesOfNodesFollow = 0;
   
@@ -89,9 +89,16 @@ parseHeaderFromExelemFile(std::string content)
       trim(this->name_);
       std::string type = extractUntil(line, ",");
       isGeometryField_ = type.find("coordinate") != std::string::npos;
-      nComponents = getNumberAfterString(line, "#Components=");
+      nComponentsParsed = getNumberAfterString(line, "#Components=");
+      
+      if (nComponentsParsed != nComponents)
+      {
+        LOG(DEBUG) << "line=[" << line << "]";
+        LOG(ERROR) << "Number of components is not parsed correctly. nComponentsParsed=" << nComponentsParsed << ", nComponents=" << nComponents;
+      }
+      
       newComponentStarts = true;
-      VLOG(2) << "nComponents: " << nComponents;
+      VLOG(2) << "nComponents: " << nComponentsParsed;
       
       componentNo = 0;
       continue;
@@ -105,9 +112,10 @@ parseHeaderFromExelemFile(std::string content)
       {
        
         VLOG(2) << "finish previous component, parse header";
-       
-        component_[componentName].initialize(nullptr, nComponents, componentNo-1, nElements_);
-        component_[componentName].parseHeaderFromExelemFile(componentContent);
+        
+        component_[componentNo-1].initialize(nullptr, nComponents, componentNo-1, nElements_);
+        component_[componentNo-1].parseHeaderFromExelemFile(componentContent);
+        this->componentNames_[componentNo-1] = componentName;
         componentContent = "";
       }
       componentNo++;
@@ -145,63 +153,62 @@ parseHeaderFromExelemFile(std::string content)
   {
     VLOG(2) << "finish previous component, parse header";
    
-    component_[componentName].initialize(nullptr, nComponents, componentNo-1, nElements_);
-    component_[componentName].parseHeaderFromExelemFile(componentContent);
+    component_[componentNo-1].initialize(nullptr, nComponents, componentNo-1, nElements_);
+    component_[componentNo-1].parseHeaderFromExelemFile(componentContent);
+    this->componentNames_[componentNo-1] = componentName;
   }
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 parseElementFromExelemFile(std::string content)
 {
-  for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
+  for (auto &component : component_)
   {
-    Component<BasisOnMeshType> &component = iter->second;
     component.parseElementFromExelemFile(content);
   }
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 setNumberElements(element_no_t nElements)
 {
   this->nElements_ = nElements;
 }
 
-template<int D, typename BasisFunctionType>
-element_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+element_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 nElements() const
 {
   return this->nElements_;
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode)
 {
- 
   VLOG(1) << "unifyMappings 1 with " << component_.size() << " components";
  
   // unify exfileRepresentation object
   // check if exfileRepresentation is equal for all components
-  typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin();
-  if (iter != component_.end())
+  int componentNo = 0;
+  if (componentNo < nComponents)
   { 
-    VLOG(1) << " component " << iter->first;
+    VLOG(1) << " component " << this->componentNames_[componentNo];
    
-    Component<BasisOnMeshType> &firstComponent = iter->second;
-    std::string firstComponentKey = iter->first;
+    Component<BasisOnMeshType> &firstComponent = component_[componentNo];
+    std::string firstComponentName = this->componentNames_[componentNo];
     
     // extract exfile representation from first component
     this->exfileRepresentation_ = firstComponent.exfileRepresentation();
     assert(this->exfileRepresentation_);
     
-    // loop over further component after the first component
-    iter++;
-    for (; iter != component_.end(); iter++)
+    // loop over further components after the first component
+    componentNo++;
+    for (; componentNo < nComponents; componentNo++)
     {
-      VLOG(1) << " component " << iter->first;
-      Component<BasisOnMeshType> &component = iter->second;
+      VLOG(1) << " component " << this->componentNames_[componentNo];
+      Component<BasisOnMeshType> &component = component_[componentNo];
     
       assert(component.exfileRepresentation());
       
@@ -212,7 +219,7 @@ unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const 
       }
       else 
       {
-        LOG(ERROR) << "The components \"" << firstComponentKey << "\" and \"" << iter->first 
+        LOG(ERROR) << "The components \"" << firstComponentName << "\" and \"" << this->componentNames_[componentNo]
           << "\" of field variable \"" << this->name_ << "\" have different exfile representations.";
       }
     }
@@ -221,22 +228,24 @@ unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const 
   createElementToDofMapping(elementToNodeMapping, nDofsPerNode);
 }
   
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &fieldVariable)
+template<int D, typename BasisFunctionType, int nComponents>
+template<int nComponents2>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents2> &fieldVariable)
 {
   VLOG(1) << "unifyMappings 2";
   // loop over own components
-  for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    Component<BasisOnMeshType> &component = iter->second;
-    VLOG(1) << "first: " << iter->first;
+    Component<BasisOnMeshType> &component = component_[componentNo];
+    VLOG(1) << "first: " << this->componentNames_[componentNo];
     
     // loop over components of the other fieldVariable
-    for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
+    for (int componentNo2 = 0; componentNo2 < nComponents2; componentNo2++)  
+    //for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
     {
-      Component<BasisOnMeshType> &component2 = iter2->second;
-      VLOG(1) << "second: " << iter2->first;
+      Component<BasisOnMeshType> &component2 = fieldVariable.component_[componentNo2];
+      VLOG(1) << "second: " << fieldVariable.componentNames_[componentNo2];
       
       // assert that pointers are not null
       assert (component.exfileRepresentation());
@@ -246,24 +255,67 @@ unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformabl
       
       if (*component.exfileRepresentation() == *component2.exfileRepresentation())
       {
-        VLOG(1) << "set exfile rep for " << iter2->first << " to be the same as for " << iter->first;
+        VLOG(1) << "set exfile rep for " << fieldVariable.componentNames_[componentNo2] << " to be the same as for " << this->componentNames_[componentNo];
         component2.setExfileRepresentation(component.exfileRepresentation());
       }
       else VLOG(1) << "exfileRepresentation is different";
       
       if (*component.elementToDofMapping() == *component2.elementToDofMapping())
       {
-        VLOG(1) << "set elementToDof and nodeToDofMapping for " << iter2->first << " to be the same as for " << iter->first;
+        VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable.componentNames_[componentNo2] << " to be the same as for " << this->componentNames_[componentNo];
         component2.setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
       }
       else VLOG(1) << "elementToDofMapping is different";
     }
   }
-  
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+unifyMappings(std::shared_ptr<FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2)
+{
+  VLOG(1) << "unifyMappings 2";
+  // loop over own components
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    Component<BasisOnMeshType> &component = component_[componentNo];
+    VLOG(1) << "first: " << this->componentNames_[componentNo];
+    
+    // loop over components of the other fieldVariable
+    for (int componentNo2 = 0; componentNo2 < fieldVariable2->getNComponents(); componentNo2++)  
+    //for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
+    {
+      std::shared_ptr<Component<BasisOnMeshType>> component2 = fieldVariable2->component(componentNo2);
+      if (!component2)
+        continue;
+      VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
+      
+      // assert that pointers are not null
+      assert (component.exfileRepresentation());
+      assert (component2->exfileRepresentation());
+      assert (component.elementToDofMapping());
+      assert (component2->elementToDofMapping());
+      
+      if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+      {
+        VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
+        component2->setExfileRepresentation(component.exfileRepresentation());
+      }
+      else VLOG(1) << "exfileRepresentation is different";
+      
+      if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
+      {
+        VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2) 
+          << " to be the same as for " << this->componentNames_[componentNo];
+        component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+      }
+      else VLOG(1) << "elementToDofMapping is different";
+    }
+  }
 }
   
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 createElementToDofMapping(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode)
 {
   if (!this->elementToDofMapping_)
@@ -276,16 +328,15 @@ createElementToDofMapping(std::shared_ptr<ElementToNodeMapping> elementToNodeMap
   this->nodeToDofMapping_ = this->elementToDofMapping_->setup(this->exfileRepresentation_, elementToNodeMapping, nDofsPerNode);
   
   // set the element to dof and node to dof mapping at each component
-  for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter = component_.begin(); iter != component_.end(); iter++)
+  for (auto &component : component_)
   {
-    Component<BasisOnMeshType> &component = iter->second;
     component.setDofMappings(this->elementToDofMapping_, this->nodeToDofMapping_);
   }
   elementToNodeMapping_ = elementToNodeMapping;
 }
   
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 parseFromExnodeFile(std::string content)
 {
   //int nFields;
@@ -397,7 +448,18 @@ parseFromExnodeFile(std::string content)
       std::string componentName = extractUntil(line, ".");
       trim(componentName);
       
-      if (component_.find(componentName) == component_.end())
+      // search for component name 
+      bool componentNameFound = false;
+      for (auto component : this->componentNames_)
+      {
+        if (component == componentName)
+        {
+          componentNameFound = true;
+          break;
+        }
+      }
+      
+      if (!componentNameFound)
       {
         LOG(WARNING) << "Component \"" << componentName << "\" of field variable \"" << this->name_ << "\" in exnode file is not present in exelem file.";
       }
@@ -417,12 +479,13 @@ parseFromExnodeFile(std::string content)
       {
         std::string componentName = pair.first;
         int subBlockStartIndex = pair.second;
-        
+        int componentNo = this->findComponent(componentName);
+       
         VLOG(2) << "  componentName=[" << componentName<<"], subBlockStartIndex=" << subBlockStartIndex 
           << " n values: " << blockValues.size() << " previousNodeNo=" << previousNodeNo;
         
         // store data at component
-        component_[componentName].setNodeValuesFromBlock(previousNodeNo, blockValues.begin()+subBlockStartIndex);
+        component_[componentNo].setNodeValuesFromBlock(previousNodeNo, blockValues.begin()+subBlockStartIndex);
       }
       // clear temporary data vector
       blockValues.clear();
@@ -458,73 +521,87 @@ parseFromExnodeFile(std::string content)
       // get data block index of component
       std::string componentName = pair.first;
       int subBlockStartIndex = pair.second;
-      
+      int componentNo = this->findComponent(componentName);
+        
       // store data at component
-      component_[componentName].setNodeValuesFromBlock(nodeNo, blockValues.begin()+subBlockStartIndex);
+      component_[componentNo].setNodeValuesFromBlock(nodeNo, blockValues.begin()+subBlockStartIndex);
     }
     // clear temporary data vector
     blockValues.clear();
   }
+  
+  // finialize Petsc vectors
+  this->flushSetValues();
 }
 
-template<int D, typename BasisFunctionType>
-int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
-  return this->component_.begin()->second.getDofNo(elementNo, dofIndex);
+  return this->component_.begin()->getDofNo(elementNo, dofIndex);
 }
 
-template<int D, typename BasisFunctionType>
-Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-component(std::string key)
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+component(int componentNo)
 {
-  return this->component_[key]; 
+  assert(componentNo >= 0);
+  assert(componentNo < nComponents);
+  return std::make_shared<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(this->component_[componentNo]);
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+component(std::string componentName)
+{
+  int componentNo = this->componentNames_.find(componentName);
+  return this->component_[componentNo];
 }
   
-template<int D, typename BasisFunctionType>
-std::map<std::string, Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::array<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>,nComponents> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 component()
 {
   return this->component_; 
 }
 
-template<int D, typename BasisFunctionType>
-std::shared_ptr<ExfileRepresentation> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<ExfileRepresentation> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 exfileRepresentation() const
 {
   return this->exfileRepresentation_; 
 }
 
-template<int D, typename BasisFunctionType>
-std::shared_ptr<ElementToDofMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<ElementToDofMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 elementToDofMapping() const
 {
   return this->elementToDofMapping_; 
 }
 
-template<int D, typename BasisFunctionType>
-std::shared_ptr<ElementToNodeMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<ElementToNodeMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 elementToNodeMapping() const
 {
   return this->elementToNodeMapping_; 
 }
 
-template<int D, typename BasisFunctionType>
-std::shared_ptr<NodeToDofMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<NodeToDofMapping> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 nodeToDofMapping() const
 {
   return this->nodeToDofMapping_;
 }
 
-template<int D, typename BasisFunctionType>
-Vec &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+Vec &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 values()
 {
   return *this->values_; 
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeValuesVector()
 {
   // initialize the PETSc vector that contains all the value entries
@@ -533,8 +610,8 @@ initializeValuesVector()
   // loop over components
   for (auto &component : this->component_)
   {
-    this->nEntries_ += component.second.nDofs();
-    VLOG(1) << "  component " << component.first << " has " << component.second.nDofs() << " dofs";
+    this->nEntries_ += component.nDofs();
+    VLOG(1) << "  component " << component << " has " << component.nDofs() << " dofs";
   }
   VLOG(1) << "total entries: " << this->nEntries_;
   
@@ -555,77 +632,58 @@ initializeValuesVector()
   // set vector for all components
   for (auto &component : this->component_)
   {
-    component.second.setValuesVector(this->values_);
+    component.setValuesVector(this->values_);
   }
 }
 
-template<int D, typename BasisFunctionType>
-int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-nComponents() const
-{
-  return this->component_.size(); 
-}
-
-template<int D, typename BasisFunctionType>
-std::vector<std::string> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-componentNames() const
-{
-  std::vector<std::string> result;
-  result.reserve(this->nComponents());
-  for (auto componentIndex : this->component_)
-  {   
-    result.push_back(componentIndex.first);
-  }
-  return result;
-}
-  
-template<int D, typename BasisFunctionType>
-std::size_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+std::size_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 nEntries() const
 {
   return this->nEntries_; 
 }
 
-template<int D, typename BasisFunctionType>
-dof_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+dof_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 nDofs() const
 {
-  return this->nEntries_ / this->nComponents(); 
+  return this->nEntries_ / nComponents; 
 }
   
-template<int D, typename BasisFunctionType>
-node_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+node_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 nNodes() const
 {
   return nodeToDofMapping_->nNodes();
 }
   
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation)
 {
   // insert components
-  int nComponents = componentNames.size();
   int componentIndex = 0;
   
+  assert(componentNames.size() == nComponents);
+  std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
+  
   // create a new values vector for the new field variable
-  for(auto &componentName : componentNames)
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    Component<BasisOnMeshType> component;
+    Component<BasisOnMeshType> &component = this->component_[componentNo];
     component.initialize(this->values_, nComponents, componentIndex++, this->nElements_);   // note: this->values_ may be nullptr but is updated by initializeValuesVector
-    component.setName(componentName, exfileBasisRepresentation);
+    component.setName(this->componentNames_[componentNo], exfileBasisRepresentation);
     component.setDofMappings(this->elementToDofMapping_, this->nodeToDofMapping_);
     component.setExfileRepresentation(this->exfileRepresentation_);
-    this->component_.insert(std::pair<std::string, Component<BasisOnMeshType>>(componentName, component));
   }
   
   // set values_ and nEntries_
   initializeValuesVector();
 }
 
-template<int D, typename BasisFunctionType>
+template<int D, typename BasisFunctionType, int nComponents>
 template<typename FieldVariableType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   this->name_ = name;
@@ -639,13 +697,13 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->nodeToDofMapping_ = fieldVariable.nodeToDofMapping();
   this->mesh_ = fieldVariable.mesh();
   
-  std::string exfileBasisRepresentation = fieldVariable.component().begin()->second.exfileBasisFunctionSpecification();
+  std::string exfileBasisRepresentation = fieldVariable.component().begin()->exfileBasisFunctionSpecification();
   
   initializeComponents(componentNames, exfileBasisRepresentation);
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeFromMappings(std::string name, bool isGeometryField, 
                        std::shared_ptr<ExfileRepresentation> exfileRepresentation,
                        std::shared_ptr<ElementToDofMapping> elementToDofMapping,
@@ -677,19 +735,17 @@ initializeFromMappings(std::string name, bool isGeometryField,
   LOG(DEBUG) << "FieldVariable nDofs: " << this->nDofs();
 }
   
-template<int D, typename BasisFunctionType>
-int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getNumberScaleFactors(element_no_t globalElementNo) const
 {
   
   //! return the node numbers and scale factors of the element
   return elementToNodeMapping_->getElement(globalElementNo).scaleFactors.size();
-  
-  //return component_.begin()->second.getNumberScaleFactors(globalNodeNo);
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // set no of field variable in ex file if it was specified
@@ -698,17 +754,17 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
   
   // output first line of header
   stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
-    << ", rectangular cartesian, #Components=" << component_.size() << std::endl;
+    << ", rectangular cartesian, #Components=" << nComponents << std::endl;
     
   // output headers of components
   for (auto &component : component_)
   {
-    component.second.outputHeaderExelem(stream, currentElementGlobalNo);
+    component.outputHeaderExelem(stream, currentElementGlobalNo);
   }
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
   // set no of field variable in ex file if it was specified
@@ -717,33 +773,33 @@ outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &val
   
   // output first line of header
   stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
-    << ", rectangular cartesian, #Components=" << component_.size() << std::endl;
+    << ", rectangular cartesian, #Components=" << nComponents << std::endl;
     
   // output headers of components
   for (auto &component : component_)
   {
-    component.second.outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex);
+    component.outputHeaderExnode(stream, currentNodeGlobalNo, valueIndex);
   }
 }
 
-template<int D, typename BasisFunctionType>
-bool FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+bool FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   // loop over components
   for (auto &component : component_)
   {
-    if(!component.second.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
+    if(!component.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
     {
-      LOG(DEBUG) << "  component " << component.first << " has different exfileRepr for elements " << element1 << " and " << element2;
+      LOG(DEBUG) << "  component " << component << " has different exfileRepr for elements " << element1 << " and " << element2;
       return false;
     }
   }
   return true;
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 eliminateScaleFactors()
 {
   // loop over elements 
@@ -767,7 +823,7 @@ eliminateScaleFactors()
         for (unsigned int dofIdx = 0; dofIdx < nodeDofs.size(); dofIdx++)
         {
           // get dof value
-          double value = component.second.getValue(nodeDofs[dofIdx]);
+          double value = component.getValue(nodeDofs[dofIdx]);
           
           double scaleFactor2 = scaleFactors[dofIdx];
           assert(scaleFactor - scaleFactor2 < 1e-16);
@@ -781,29 +837,29 @@ eliminateScaleFactors()
         }
         
         // set updated values
-        component.second.setValuesForNode(nodeGlobalNo, nodeValues.begin());
+        component.setValuesForNode(nodeGlobalNo, nodeValues.begin());
       }
     }
   }
 }
 
-template<int D, typename BasisFunctionType>
-bool FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-isGeometryField()
+template<int D, typename BasisFunctionType, int nComponents>
+bool FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+isGeometryField() const
 {
   return isGeometryField_; 
 }
 
-template<int D, typename BasisFunctionType>
-void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 output(std::ostream &stream) const
 {
   stream << "\"" << this->name_ << "\", nEntries: " << nEntries_ << ", nElements: " << nElements_ 
     << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
     << "  components:" << std::endl;
-  for (auto &component : component_)
+  for (auto &componentName : this->componentNames_)
   {
-    stream << component.second;
+    stream << componentName;
   }
   stream << "  exfileRepresentation: " << std::endl;
   if (exfileRepresentation_ == nullptr)

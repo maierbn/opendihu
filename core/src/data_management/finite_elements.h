@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <petscmat.h>
 #include <memory>
+#include <tuple>
 
 #include "data_management/data.h"
 #include "data_management/diffusion_tensor.h"
@@ -37,10 +38,10 @@ public:
   Mat &stiffnessMatrix();
   
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType> &rightHandSide();
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
   
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType> &solution();
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &solution();
   
   //! perform the final assembly of petsc
   void finalAssembly();
@@ -57,10 +58,16 @@ public:
   //! return a reference to the discretization matrix
   Mat &massMatrix();
   
-  //! get pointers to all field variables that can be written by output writers
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables();
+  //! field variables that will be output by outputWriters
+  typedef std::tuple<
+    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometry
+    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>,  // solution
+    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>   // rhs
+  > OutputFieldVariables;
   
-  void debug(std::string name);
+  //! get pointers to all field variables that can be written by output writers
+  OutputFieldVariables getOutputFieldVariables();
+  
 private:
  
   //! initializes the vectors and stiffness matrix with size
@@ -70,8 +77,8 @@ private:
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
   bool disablePrinting_ = false;    ///< if printing of matrix and vectors is disabled

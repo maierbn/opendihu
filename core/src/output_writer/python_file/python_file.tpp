@@ -14,7 +14,7 @@ namespace OutputWriter
 template<typename DataType>
 void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 { 
-  LOG(TRACE) << "PythonFile::write " << data.fieldVariables();
+  LOG(TRACE) << "PythonFile::write ";
  
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
@@ -22,14 +22,9 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
   
-  // don't do anything if there are no field variables
-  if (data.fieldVariables().empty())
-  {
-    return;
-  }
-  
   // build python object for data
-  PyObject *pyData = Python<typename DataType::BasisOnMesh>::buildPyDataObject(data.fieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
+  PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    buildPyDataObject(data.getOutputFieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
   
   // determine file name
   std::stringstream s;

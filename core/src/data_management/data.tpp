@@ -16,7 +16,7 @@ namespace Data
   
 template<typename BasisOnMeshType>
 Data<BasisOnMeshType>::Data(DihuContext context) : 
-  context_(context), nComponentsPerNode_(1)
+  context_(context)
 {
 }
 
@@ -26,21 +26,9 @@ Data<BasisOnMeshType>::~Data()
 }
 
 template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::setNComponentsPerNode(int n)
-{
-  this->nComponentsPerNode_ = n;
-}
-
-template<typename BasisOnMeshType>
-int Data<BasisOnMeshType>::nComponentsPerNode()
-{
-  return this->nComponentsPerNode_;
-}
-
-template<typename BasisOnMeshType>
 int Data<BasisOnMeshType>::nDegreesOfFreedom()
 {
-  return this->mesh_->nNodes() * this->nComponentsPerNode_;
+  return this->mesh_->nNodes();
 }
 
 template<typename BasisOnMeshType>

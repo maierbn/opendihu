@@ -5,8 +5,11 @@
 namespace FieldVariable
 {
  
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType,int nComponents>
 class FieldVariableData
-{};
+{
+public:
+ 
+};
  
 }; // namespace 

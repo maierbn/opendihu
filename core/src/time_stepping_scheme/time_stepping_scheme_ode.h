@@ -11,6 +11,8 @@
 namespace TimeSteppingScheme
 {
 
+/** This is the base class for all ode solvers.
+ */ 
 template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOde : public TimeSteppingScheme
 {
@@ -33,7 +35,7 @@ public:
   Vec &solution();
   
   //! return the data object
-  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> &data();
+  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> &data();
   
   //! initialize discretizableInTime
   void initialize();
@@ -46,7 +48,7 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
-  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh> data_;     ///< data object that holds all PETSc vectors and matrices
+  Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> data_;     ///< data object that holds all PETSc vectors and matrices
   
   int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized

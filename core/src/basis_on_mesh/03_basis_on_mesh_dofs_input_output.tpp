@@ -4,6 +4,7 @@
 #include "utility/string_utility.h"
 
 #include "basis_function/basis_function.h"
+#include "field_variable/factory.h"
 
 #include <iostream>
 #include <fstream>
@@ -11,7 +12,6 @@
 namespace BasisOnMesh
 {
  
-
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseExelemFile(std::string exelemFilename)
@@ -24,7 +24,7 @@ parseExelemFile(std::string exelemFilename)
    
   VLOG(1) << "parseExelemFile";
    
-  // find out number of elements in file
+  // first pass of file: find out number of elements in file
   this->nElements_ = 0;
   std::string line;
   while(!file_exelem.eof())
@@ -46,10 +46,11 @@ parseExelemFile(std::string exelemFilename)
   
   VLOG(1) << "nElements: " <<this->nElements_;
   
+  // reset file stream
   file_exelem.clear();
   file_exelem.seekg(0, std::ios::beg);
   
-  // read in dofs for each element
+  // second pass of file: read in dofs for each element
   int fieldNo = 0;
   //int nFields;
   
@@ -68,8 +69,10 @@ parseExelemFile(std::string exelemFilename)
   
   std::vector<int> valueIndices, scaleFactorIndices;
   
+  // loop over lines of file
   while(!file_exelem.eof())
   {
+    // parse line
     getline(file_exelem, line);
     if(file_exelem.eof())
       break;
@@ -132,15 +135,23 @@ parseExelemFile(std::string exelemFilename)
         // finish previous fieldVariable component
         if (fieldNo != 0)
         {
-         
           VLOG(1) << "finish previous fieldVariable component of name [" << fieldName << "]";
-      
+    
+          // extract number of components from fieldContent 
+          if (fieldContent.find("#Components=") == std::string::npos)
+          {
+            LOG(ERROR) << "Could not parse number of components for field variable \"" << fieldName << "\".";
+          }
+          const int nComponents = StringUtility::getNumberAfterString(fieldContent, "#Components=");
+           
+          // if the field variable with this name does not exist already, create new field variable object
           if (this->fieldVariable_.find(fieldName) == this->fieldVariable_.end())
           {
-           
-            std::pair<std::string, std::shared_ptr<FieldVariableType>> newEntry(
-              fieldName, 
-              std::make_shared<FieldVariableType>());
+            std::pair<std::string, std::shared_ptr<FieldVariableBaseType>> newEntry
+            (
+              fieldName,
+              FieldVariable::Factory<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::makeShared(nComponents)
+            );
             this->fieldVariable_.insert(newEntry);
           }
           this->fieldVariable_[fieldName]->setNumberElements(this->nElements_);
@@ -238,7 +249,7 @@ parseExelemFile(std::string exelemFilename)
       if (fieldVariable.first != fieldVariable2.first)
       {
         VLOG(1) << " unifyMappings(fieldVariable) " << fieldVariable.first << "," << fieldVariable2.first;
-        fieldVariable.second->unifyMappings(*fieldVariable2.second);
+        fieldVariable.second->unifyMappings(fieldVariable2.second);
       }
     }
   }
@@ -275,11 +286,16 @@ parseExnodeFile(std::string exnodeFilename)
   }
    
   VLOG(1) << "parseExnodeFile";
+  // read in file content
   std::string content( (std::istreambuf_iterator<char>(file_exnode) ),
                        (std::istreambuf_iterator<char>()    ) );
   
   for(auto &fieldVariable : this->fieldVariable_)
   {
+    // set all values to 0.0
+    fieldVariable.second->setValues(0.0);
+    
+    // parse file and values0
     fieldVariable.second->parseFromExnodeFile(content);
   }
 }
@@ -288,7 +304,7 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 outputExelemFile(std::ostream &file)
 { 
-  file << " Group name: main_group" << std::endl
+  file << " Group name: Region" << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
    
   bool outputHeader = true;
@@ -326,11 +342,11 @@ outputExelemFile(std::ostream &file)
     {
       for (auto &fieldVariable : fieldVariable_)
       {
-        fieldVariable->second->outputHeaderExelemFile(file, currentElementGlobalNo);
+        fieldVariable->second->outputHeaderExelem(file, currentElementGlobalNo);
       }
     }
     
-    elementToNodeMapping_->outputElementExelemFile(file, currentElementGlobalNo);
+    elementToNodeMapping_->outputElementExelem(file, currentElementGlobalNo);
   }
 }
 
@@ -338,7 +354,7 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 outputExnodeFile(std::ostream &file)
 { 
-  file << " Group name: main_group" << std::endl;
+  file << " Group name: Region" << std::endl;
 
   const int nNodesPerElement = BasisOnMeshDofs<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();   
   bool outputHeader = true;
@@ -369,7 +385,7 @@ outputExnodeFile(std::ostream &file)
       int valueIndex = 0;  // an index that runs over values of components of field variables and corresponds to the index in the values block for a node
       for (auto &fieldVariable : fieldVariable_)
       {
-        fieldVariable->second->outputHeaderExnodeFile(file, currentNodeGlobalNo, valueIndex);
+        fieldVariable->second->outputHeaderExnode(file, currentNodeGlobalNo, valueIndex);
       }
     }
     
@@ -381,21 +397,21 @@ outputExnodeFile(std::ostream &file)
     for (auto &fieldVariable : fieldVariable_)
     {
       std::vector<int> dofsAtNode;
-      fieldVariable->second->getNodeDofs(currentNodeGlobalNo, dofsAtNode);
+      fieldVariable->second->mesh()->getNodeDofs(currentNodeGlobalNo, dofsAtNode);
       
       // loop over components
-      for (std::string component : fieldVariable->second.componentNames())
+      for (int componentNo = 0; componentNo <fieldVariable->second.getNComponents(); componentNo++)
       {
         // loop over dofs 
         for (dof_no_t dofGlobalNo : dofsAtNode)
         {
-          double value = fieldVariable->second->getValue(component, dofGlobalNo);
+          double value = fieldVariable->second->getValue(componentNo, dofGlobalNo);
           valuesAtNode.push_back(value);
         }
       }
     }
     
-    StringUtility::outputValuesBlock(file, valuesAtNode, 8);
+    StringUtility::outputValuesBlock(file, valuesAtNode.begin(), valuesAtNode.end(), 8);
   }
 }
 

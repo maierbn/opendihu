@@ -37,36 +37,6 @@ FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshTy
     ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
   }
 }
-/*
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
-{
-  const int nOverlaps = 3;
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
-    break;
-  case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  };
-}*/
-
-// for UnstructuredDeformable and Hermite
-//template<int D>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunction::Hermite>>::
-
-
-//template<int D, typename BasisFunctionType>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
@@ -99,8 +69,8 @@ createPetscObjects()
   
   LOG(DEBUG)<<"FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::createPetscObjects("<<n<<")";
   
-  this->rhs_ = this->mesh_->createFieldVariable("rhs");
-  this->solution_ = this->mesh_->createFieldVariable("solution");
+  this->rhs_ = this->mesh_->template createFieldVariable<3>("rhs");
+  this->solution_ = this->mesh_->template createFieldVariable<3>("solution");
   
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -157,28 +127,28 @@ stiffnessMatrix()
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 solution()
 {
   return *this->solution_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 geometryReference()
 {
   return *this->geometryReference_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 displacement()
 {
   return *this->displacement_;
@@ -186,14 +156,14 @@ displacement()
 
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 pressure()
 {
   return *this->pressure_;
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
 f()
 {
   return *this->f_;
@@ -339,16 +309,14 @@ initializeMassMatrix()
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-fieldVariables()
+typename FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::OutputFieldVariables FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> result;
-  result.push_back(std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_->geometryField()));
-  result.push_back(solution_);
-  result.push_back(rhs_);
-  this->mesh_->addNonGeometryFieldVariables(result);   // add all further field variables that were e.g. present in an input file
-  
-  return result;
+  return OutputFieldVariables(
+    std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField()),
+    solution_,
+    rhs_
+  );
 }
   
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
@@ -381,18 +349,18 @@ initializeFieldVariables()
 {
   // generate geometryReference variable as copy of geometry field
   assert(this->mesh_->hasGeometryField());
-  geometryReference_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_->geometryField(), "geometryReference");
+  geometryReference_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField(), "geometryReference");
   //geometryReference_->initializeFromFieldVariable(this->mesh_->geometryField(), "geometryReference", {"x","y","z"});
   //geometryReference_->setValues(this->mesh_->geometryField());
   
   std::vector<std::string> components({"x","y","z"});
-  displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_, "displacement", components);
+  displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_, "displacement", components);
   //displacement_->initializeFromFieldVariable(this->mesh_->geometryField(), "displacement", {"x","y","z"});
   
   std::vector<std::string> unnamedSingleComponent({"0"});
-  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
+  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
   
-  f_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mixedMesh_->highOrderBasisOnMesh(), "f", unnamedSingleComponent);
+  f_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1>>(this->mixedMesh_->highOrderBasisOnMesh(), "f", unnamedSingleComponent);
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>

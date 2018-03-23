@@ -1,19 +1,22 @@
 #pragma once
 
-#include "field_variable/structured/04_field_variable_set_get_structured_deformable.h"
-#include "field_variable/structured/04_field_variable_set_get_structured_regular_fixed.h"
-#include "field_variable/unstructured/02_field_variable_set_get_unstructured_deformable.h"
+#include "field_variable/structured/06_field_variable_set_get_structured_deformable.h"
+#include "field_variable/structured/07_field_variable_set_get_component_dependent_structured_regular_fixed.h"
+#include "field_variable/unstructured/04_field_variable_set_get_component_dependent_unstructured_deformable.h"
 
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType,int nComponents>
 class FieldVariable :
-  public FieldVariableSetGet<BasisOnMeshType>
+  public FieldVariableSetGet<BasisOnMeshType,nComponents>
 { 
 public:
   //! inherited constructor 
-  using FieldVariableSetGet<BasisOnMeshType>::FieldVariableSetGet;
+//   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  using FieldVariableSetGet<BasisOnMeshType,nComponents>::FieldVariableSetGet;
+  
+  typedef BasisOnMeshType BasisOnMesh;
 };
 // /** FieldVariable class for StructuredRegularFixedOfDimension mesh
 //  */
@@ -58,8 +61,8 @@ public:
 // };
 
 // output operator
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMeshType> &rhs)
+template<typename BasisOnMeshType,int nComponents>
+std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMeshType,nComponents> &rhs)
 {
   rhs.output(stream);
   return stream;

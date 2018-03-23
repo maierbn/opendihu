@@ -25,6 +25,9 @@ class FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOn
 {
 public:
  
+  typedef FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> HighOrderFieldVariableType;
+  typedef FieldVariable::FieldVariable<LowOrderBasisOnMeshType,LowOrderBasisOnMeshType::dim()> LowOrderFieldVariableType;
+ 
   //! constructor
   FiniteElements(DihuContext context);
   
@@ -35,22 +38,22 @@ public:
   virtual void initialize() override;
   
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &rightHandSide();
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &rightHandSide();
   
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &solution();
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &solution();
   
   //! return reference to geometry in reference configuration field
-  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &geometryReference();
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &geometryReference();
   
   //! return reference to displacement field
-  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &displacement();
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &displacement();
   
   //! return reference to pressure field
-  FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &pressure();
+  FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &pressure();
   
   //! return reference to fu, right hand side in weak form of displacements
-  FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &f();
+  FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1> &f();
   
   //! perform the final assembly of petsc
   void finalAssembly();
@@ -95,15 +98,23 @@ public:
   void getLocalVectors(Vec &fu, Vec &fp, Vec &tempKppFp, Vec &tempKupKppFp);
     
   //! get pointers to all field variables that can be written by output writers
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> fieldVariables();
   
   //! set the mixed mesh
   void setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh);
   
   //! get the mixed mesh
   std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh();
+
+  //! field variables that will be output by outputWriters
+  typedef std::tuple<
+    std::shared_ptr<HighOrderFieldVariableType>,  // geometry
+    std::shared_ptr<HighOrderFieldVariableType>,  // solution
+    std::shared_ptr<HighOrderFieldVariableType>   // rhs
+  > OutputFieldVariables;
   
-  void debug(std::string name){}
+  //! get pointers to all field variables that can be written by output writers
+  OutputFieldVariables getOutputFieldVariables();
+  
 private:
  
   //! initializes the vectors and stiffness matrix with size
@@ -136,13 +147,13 @@ private:
   Vec tempKupKppFp_;  ///< temporary vector
    
   // field variables
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> rhs_;                 ///< the rhs vector in weak formulation
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> geometryReference_;   ///< geometry in reference configuration
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> displacement_;   ///< displacement fields u
-  std::shared_ptr<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>> pressure_;   ///< pressure field p  
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>> f_;   ///< right hand side in weak form of displacements (temporary)
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> geometryReference_;   ///< geometry in reference configuration
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> displacement_;   ///< displacement fields u
+  std::shared_ptr<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>> pressure_;   ///< pressure field p  
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1>> f_;   ///< right hand side in weak form of displacements (temporary)
   
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
   

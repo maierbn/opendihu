@@ -35,7 +35,7 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
     int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
     dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
   
-    nEntries[i] = dofsPerRow * data.nComponentsPerNode();
+    nEntries[i] = dofsPerRow * 1;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   
@@ -75,7 +75,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
     int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
     dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
   
-    nEntries[i] = dofsPerRow * data.nComponentsPerNode();
+    nEntries[i] = dofsPerRow;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   

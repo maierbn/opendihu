@@ -262,7 +262,7 @@ setGeometryField(std::vector<double> &nodePositions)
   
   bool isGeometryField = true;   // if the field is a geometry field
   // set geometry field
-  geometry_ = std::make_unique<FieldVariableType>();
+  geometry_ = std::make_unique<GeometryFieldType>();
   std::vector<std::string> componentNames{"x", "y", "z"};
   int nEntries = nDofs * 3;   // 3 components (x,y,z) per dof
   geometry_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
@@ -272,7 +272,7 @@ template<int D,typename BasisFunctionType>
 Vec3 BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 getGeometry(node_no_t dofGlobalNo) const
 {
-  Vec3 result = geometry_->template getValue<3>(dofGlobalNo);
+  Vec3 result = geometry_->getValue(dofGlobalNo);
   return result;
 }  
   
@@ -281,7 +281,7 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
 {
-  geometry_->template getElementValues<3>(elementNo, values);
+  geometry_->getElementValues(elementNo, values);
 }
 
 template<int D,typename BasisFunctionType>
@@ -310,7 +310,7 @@ nDofs() const
 
 //! return the geometry field
 template<int D,typename BasisFunctionType>
-typename BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableType &BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+typename BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::GeometryFieldType &BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 geometryField()
 {
   if (this->geometry_ == nullptr)
@@ -330,7 +330,7 @@ getNodePositions(std::vector<double> &nodes) const
     node_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
     int index = nodeGlobalNo*3;
-    Vec3 position = this->geometry_->template getValue<3>(firstNodeDofGlobalNo);
+    Vec3 position = this->geometry_->getValue(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];
     nodes[index+2] = position[2];

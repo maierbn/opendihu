@@ -44,10 +44,14 @@ public:
                                                   std::array<double,MeshType::dim()> xi) const; 
   
   //! create a non-geometry field field variable with no values being set, with given component names
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
+  std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
   
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
+  std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
+  
+  //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
+  template <int nComponents>
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
   
 };
 

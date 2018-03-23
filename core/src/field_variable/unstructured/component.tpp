@@ -180,8 +180,9 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
       node_no_t nodeIdx = element.nodeIdx;
       std::shared_ptr<ExfileElementRepresentation> exfileElement = exfileRepresentation_->getExfileElementRepresentation(elementGlobalNo);
      
-      VLOG(2) << " element " << elementGlobalNo << " nodeIdx " << nodeIdx;
+      VLOG(2) << " element " << elementGlobalNo << " nodeIdx " << nodeIdx << ", node has the following valueIndices: " << exfileElement->getNode(nodeIdx).valueIndices;
       
+      // loop over block indices
       for (unsigned int i = 0; i < exfileElement->getNode(nodeIdx).valueIndices.size(); i++)
       {
         int blockIndex = exfileElement->getNode(nodeIdx).valueIndices[i];
@@ -203,6 +204,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
   
   assert (values_);
   VLOG(2) << " set " << indices.size() << " values at indices " << indices;
+  VLOG(2) << "                                " << values;
   VecSetValues(*values_, indices.size(), indices.data(), values.data(), INSERT_VALUES);
 }
 
@@ -272,6 +274,33 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 }
   
 template<typename BasisOnMeshType>
+void Component<BasisOnMeshType>::
+getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
+{
+  const int nValues = dofGlobalNo.size();
+  
+  // transform global dof no.s to vector indices
+  for (auto &index : dofGlobalNo)
+  {
+    index = index*nComponents_ + componentIndex_;
+  }
+ 
+ VLOG(1) << "Component getValues, " << nValues << " values, componentIndex=" << componentIndex_ 
+   << ", nComponents= " << nComponents_ << " indices: " << dofGlobalNo;
+   
+  assert (values_);
+  
+  std::size_t previousSize = values.size();
+  VLOG(1) << "previousSize: " << previousSize;
+  values.resize(previousSize+nValues);
+  VLOG(1) << "new size: " << values.size();
+  VecGetValues(*values_, nValues, (PetscInt*)dofGlobalNo.data(), values.data()+previousSize);
+  
+  
+  VLOG(1) << "retrieved values: " << values;
+}
+  
+template<typename BasisOnMeshType>
 double Component<BasisOnMeshType>::
 getValue(node_no_t dofGlobalNo)
 {
@@ -291,16 +320,18 @@ template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
 getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  std::vector<int> &dofs = elementToDofMapping_->getElementDofs(elementNo);
+  const std::vector<dof_no_t> &elementDofs = elementToDofMapping_->getElementDofs(elementNo);
+  
+  std::array<PetscInt, BasisOnMeshType::nDofsPerElement()> indices;
   
   // transform global dof no.s to vector indices
-  for (auto &index : dofs)
+  for (int dofIndex = 0; dofIndex < BasisOnMeshType::nDofsPerElement(); dofIndex++)
   {
-    index = index*nComponents_ + componentIndex_;
+    indices[dofIndex] = elementDofs[dofIndex] * nComponents_ + componentIndex_;
   }
   
   assert (values_);
-  VecGetValues(*values_, BasisOnMeshType::nDofsPerElement(), dofs.data(), values.data());
+  VecGetValues(*values_, BasisOnMeshType::nDofsPerElement(), indices.data(), values.data());
 }
 
 template<typename BasisOnMeshType>
@@ -316,7 +347,7 @@ outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
 {
   file << " " << name_ << ". " << exfileBasisFunctionSpecification_ << ", no modify, standard node based." << std::endl
     << "   #Nodes=" << BasisOnMeshType::nNodesPerElement() << std::endl;
-  exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo)->outputHeaderExelemFile(file);
+  exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo)->outputHeaderExelem(file);
 }
   
 template<typename BasisOnMeshType>

@@ -71,15 +71,15 @@ setStiffnessMatrix()
         
     // get geometry field of reference configuration
     std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> geometryReference;
-    this->data_.geometryReference().template getElementValues<D>(elementNo, geometryReference);
+    this->data_.geometryReference().getElementValues(elementNo, geometryReference);
     
     // get displacement field
     std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> displacement;
-    this->data_.displacement().template getElementValues<D>(elementNo, displacement);
+    this->data_.displacement().getElementValues(elementNo, displacement);
     
     // get separately interpolated pressure field
-    std::array<Vec3,LowOrderBasisOnMesh::nDofsPerElement()> separatePressure;
-    this->data_.pressure().template getElementValues<D>(elementNo, separatePressure);
+    std::array<double,LowOrderBasisOnMesh::nDofsPerElement()> separatePressure;
+    this->data_.pressure().getElementValues(elementNo, separatePressure);
     
     // loop over integration points (e.g. gauss points) for displacement field
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsU.size(); samplingPointIndex++)

@@ -62,14 +62,12 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
   
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
+  typedef FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
    
   //! return the internal geometry field variable
-  FieldVariableType &geometryField();
+  GeometryFieldType &geometryField();
   
-  //! has no effect for structured meshes
-  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
-
   //! if the geometry field is set
   bool hasGeometryField();
   
@@ -77,7 +75,7 @@ protected:
   
   double meshWidth_;   ///< uniform mesh width
  
-  std::unique_ptr<FieldVariableType> geometry_;     ///< the geometry field variable
+  std::unique_ptr<GeometryFieldType> geometry_;     ///< the geometry field variable
 }; 
 
 /** Partial specialization for StructuredDeformable mesh
@@ -112,13 +110,11 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the class typename of the geometry field variable
- 
+  typedef FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
+   
   //! return the geometry field of this mesh
-  FieldVariableType &geometryField();
-  
-  //! has no effect for structured meshes
-  void addNonGeometryFieldVariables(std::vector<std::shared_ptr<FieldVariableType>> &fieldVariables){}
+  GeometryFieldType &geometryField();
   
   //! if the geometry field is set
   bool hasGeometryField();
@@ -131,7 +127,7 @@ protected:
   //! set the geometry field by the node positions in a vector
   void setGeometryField(std::vector<double> &nodePositions);
   
-  std::unique_ptr<FieldVariableType> geometry_;     ///< the geometry field variable
+  std::unique_ptr<GeometryFieldType> geometry_;     ///< the geometry field variable
   bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 };
 
@@ -157,10 +153,10 @@ public:
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values);
  
-  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableType;  ///< the type of a field variable on this mesh
- 
+  typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
+   
   //! return a reference to this mesh' geometry field
-  FieldVariableType &geometryField();
+  GeometryFieldType &geometryField();
  
   //! if the geometry field is set
   bool hasGeometryField();

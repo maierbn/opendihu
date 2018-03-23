@@ -123,7 +123,7 @@ ExfileElementRepresentation::Node& ExfileElementRepresentation::getNode(int node
   return node_[nodeIndex];
 }
 
-void ExfileElementRepresentation::outputHeaderExelemFile(std::ostream &file)
+void ExfileElementRepresentation::outputHeaderExelem(std::ostream &file)
 {
   int no = 1;
   for (std::vector<Node>::const_iterator iter = node_.cbegin(); iter != node_.cend(); iter++, no++)

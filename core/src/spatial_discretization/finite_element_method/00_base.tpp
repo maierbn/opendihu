@@ -125,9 +125,6 @@ template<typename BasisOnMeshType, typename QuadratureType>
 void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
 initialize()
 {
-  LOG(TRACE) << "FiniteElementMethodBase::initialize";
-  data_.debug("FiniteElementMethodBase::initialize");
-  
   data_.initialize();
   setStiffnessMatrix();
   setRightHandSide();

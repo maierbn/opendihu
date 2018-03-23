@@ -9,16 +9,16 @@
 namespace OutputWriter
 {
 
-template<typename BasisOnMeshType>
-void PythonCallbackWriter<BasisOnMeshType>::
-callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues)
+template<typename BasisOnMeshType, typename OutputFieldVariablesType>
+void PythonCallbackWriter<BasisOnMeshType,OutputFieldVariablesType>::
+callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables, 
+             int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   LOG(TRACE) << "callCallback timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
  
-  if (callback == NULL || fieldVariables.empty())
+  if (callback == NULL)
   {
-    if (callback == NULL)
-      LOG(DEBUG) << "PythonCallbackWriter: no callback specified";
+    LOG(DEBUG) << "PythonCallbackWriter: no callback specified";
     return;
   }
   
@@ -39,7 +39,7 @@ callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::Fiel
   // }
   
   // build python object for data
-  PyObject *data = Python<BasisOnMeshType>::buildPyDataObject(fieldVariables, timeStepNo, currentTime, onlyNodalValues);
+  PyObject *data = Python<BasisOnMeshType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, timeStepNo, currentTime, onlyNodalValues);
   //old signature: def callback(data, shape, nEntries, dimension, timeStepNo, currentTime)
   //PyObject *arglist = Py_BuildValue("(O,O,i,i,i,d)", dataList, nEntriesList, data.size(), nEntries.size(), timeStepNo_, currentTime_);
   

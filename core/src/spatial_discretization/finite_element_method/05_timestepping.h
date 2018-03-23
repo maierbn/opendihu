@@ -18,6 +18,9 @@ class FiniteElementMethodTimeStepping :
 public:
   FiniteElementMethodTimeStepping(DihuContext context);
  
+  //! return the compile-time constant number of variable components of the solution field variable
+  static constexpr int nComponents();
+  
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
   

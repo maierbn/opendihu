@@ -24,7 +24,7 @@ public:
    */
   struct NodeDofInformation
   {
-    std::vector<int> dofs;               ///< the dofs of the node
+    std::vector<dof_no_t> dofs;               ///< the dofs of the node
     std::vector<double> scaleFactors;    ///< the scale factors for Hermite basis functions, not used yet, but set maybe for later use
     
     struct ElementLocalNode 
@@ -39,7 +39,7 @@ public:
   NodeDofInformation &getNodeDofInformation(node_no_t nodeGlobalNo);
   
   //! get the dofs of a node
-  std::vector<int> &getNodeDofs(node_no_t nodeGlobalNo);
+  std::vector<dof_no_t> &getNodeDofs(node_no_t nodeGlobalNo);
   
   //! get the dofs of a node
   std::vector<double> &getNodeScaleFactors(node_no_t nodeGlobalNo);

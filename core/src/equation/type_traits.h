@@ -11,7 +11,7 @@
 
 namespace Equation
 {
-
+/*
 // Equation of the form L = u_t
 template<typename Term>
 using usesTimeStepping = std::enable_if_t<
@@ -19,7 +19,8 @@ using usesTimeStepping = std::enable_if_t<
   || std::is_same<Term, Dynamic::AnisotropicDiffusion>::value,
   Term
 >;
-
+*/
+/*
 // Equations that include Δu
 template<typename Term>
 using hasLaplaceOperator = std::enable_if_t<
@@ -28,7 +29,8 @@ using hasLaplaceOperator = std::enable_if_t<
   || std::is_same<Term, Dynamic::IsotropicDiffusion>::value,
   Term
 >;
-
+*/
+/*
 // Equations that include ∇•(A∇u)
 template<typename Term>
 using hasGeneralizedLaplaceOperator = std::enable_if_t<
@@ -45,6 +47,8 @@ using hasRhsNoTimestepping = std::enable_if_t<
   || std::is_same<Term, Static::GeneralizedPoisson>::value,
   Term
 >;
+
+
 
 // Equations that can have a non-zero rhs (Lu = f)
 template<typename Term>
@@ -94,6 +98,64 @@ using doesNotUseStencilsNorSolidMechanics = std::enable_if_t<
   // also not solid mechanics
   && !(std::is_same<Term, Static::SolidMechanics>::value
        || std::is_same<Term, Static::CompressibleMooneyRivlin>::value)
+  ,
+  Mesh
+>;
+*/
+
+
+// Equation of the form L = u_t
+template<typename Term>
+using usesTimeStepping = std::enable_if_t<Term::usesTimeStepping, Term>;
+
+// Equations that include Δu
+template<typename Term>
+using hasLaplaceOperator = std::enable_if_t<Term::hasLaplaceOperator, Term>;
+
+// Equations that include ∇•(A∇u)
+template<typename Term>
+using hasGeneralizedLaplaceOperator = std::enable_if_t<Term::hasGeneralizedLaplaceOperator, Term>;
+
+// Equations that can have a non-zero rhs (Lu = f), but not Lu = u_t
+template<typename Term>
+using hasRhsNoTimestepping = std::enable_if_t<
+  Term::hasRhs && !Term::usesTimeStepping,
+  Term
+>;
+
+// Equations that can have a non-zero rhs (Lu = f)
+template<typename Term>
+using hasRhs = std::enable_if_t<Term::hasRhs,Term>;
+
+// Equations of solid mechanics
+template<typename Term>
+using isSolidMechanics = std::enable_if_t<Term::isSolidMechanics,Term>;
+
+template<typename BasisFunction, typename Mesh, typename Term>
+using doesNotUseStencils = std::enable_if_t<
+  // not linear Lagrange on regular fixed mesh
+  !(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+    && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
+  // or has a generalized laplace operator
+  || Term::hasGeneralizedLaplaceOperator
+  ,
+  Mesh
+>;
+
+template<typename BasisFunction, typename Mesh, typename Term>
+using doesNotUseStencilsNorSolidMechanics = std::enable_if_t<
+  // not linear Lagrange on regular fixed mesh
+  (!(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+    && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
+        || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
+  // or has a generalized laplace operator
+  || Term::hasGeneralizedLaplaceOperator)
+  
+  // also not solid mechanics
+  && !Term::isSolidMechanics
   ,
   Mesh
 >;

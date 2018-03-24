@@ -117,7 +117,8 @@ public:
     
     int n, m;
     MatGetSize(massMatrix, &n, &m);
-    LOG(DEBUG) << "matrix size: " << n << "x" << m << std::endl;
+    LOG(DEBUG) << "matrix size: " << n << "x" << m << ", rhsValues size: " << rhsValues.size() << std::endl;
+    ASSERT_EQ(n,rhsValues.size());
     Vec rhsStrong, rhsWeak;
       
     PetscUtility::createVector(rhsStrong, n, "rhs strong");

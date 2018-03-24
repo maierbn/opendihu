@@ -573,7 +573,7 @@ config = {
   computation2.run();
 
   std::vector<double> initialRhs = {
-    1,8,3,4,5,6,7,8,9,10,11,12
+    1,8,3,4,5,6,7,8,9,10,11
   };
   
   StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
@@ -591,7 +591,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [10],
     "physicalExtent": [4.0],
-    "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],
+    "rightHandSide": [1,8,3,4,5,6,7,8,9,10,11,12],  # note: 1 entry to much
     "relativeTolerance": 1e-15,
   },
 }
@@ -620,7 +620,7 @@ config = {
   computation2.run();
 
   std::vector<double> initialRhs = {
-    1,8,3,4,5,6,7,8,9,10,11,12
+    1,8,3,4,5,6,7,8,9,10,11
   };
   
   StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
@@ -762,7 +762,8 @@ config = {
   computation2.run();
 
   std::vector<double> initialRhs = {
-    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
+    0,0,0,0,0,0,0,0,0,0,0,0
   };
   
   StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);
@@ -810,7 +811,8 @@ config = {
   computation2.run();
 
   std::vector<double> initialRhs = {
-    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
+    0,0,0,0,0,0,0,0,0,0,0,0
   };
   
   StiffnessMatrixTester::testMassMatrix(equationDiscretized, equationDiscretized2, initialRhs);

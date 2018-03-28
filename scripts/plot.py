@@ -139,12 +139,25 @@ if dimension == 2:
       nEntries = dimension * [0]
       for i in range(dimension):
         nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
+        
+    elif data[0]["basisFunction"] == "Hermite":
+      nEntries = dimension * [0]
+      for i in range(dimension):
+        nEntries[i] = data[0]["nElements"][i] + 1
+    
+    nEntries = nEntries[::-1]   # reverse list
     
     x_positions = py_reader.get_values(data[0], "geometry", "x")
     y_positions = py_reader.get_values(data[0], "geometry", "y")
     
-    X = np.reshape(x_positions, [nEntries[1], nEntries[0]])
-    Y = np.reshape(y_positions, [nEntries[1], nEntries[0]])
+    X = np.reshape(x_positions, nEntries)
+    Y = np.reshape(y_positions, nEntries)
+    
+    print "nEntries: ", nEntries
+    print "x_positions: ", x_positions
+    print "X: ",X
+    print "y_positions: ", y_positions
+    print "Y: ",Y
     
     #print "x_positions shape: {}".format(len(x_positions))
     
@@ -158,7 +171,7 @@ if dimension == 2:
     solution_shaped = py_reader.get_values(data[i], "solution", "0")
     Z = np.reshape(solution_shaped, nEntries)
     
-    #print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
+    print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
     
     plot = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
     ax.set_zlim(min_value-margin, max_value+margin)
@@ -183,8 +196,9 @@ if dimension == 2:
   anim = animation.FuncAnimation(fig, animate,
              frames=len(data), interval=interval, blit=False)
 
-  anim.save("anim.mp4")
   if show_plot:
     plt.show()
+  else:
+    anim.save("anim.mp4")
   
 sys.exit(0)

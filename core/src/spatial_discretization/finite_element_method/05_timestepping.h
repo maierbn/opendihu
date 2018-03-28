@@ -43,6 +43,9 @@ protected:
   
   //! Compute from the rhs in weak formulation the rhs vector in strong formulation
   void recoverRightHandSideStrongForm(Vec &result);
+  
+  //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
+  void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
 };
 
 };  // namespace

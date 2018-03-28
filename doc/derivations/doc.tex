@@ -947,10 +947,11 @@ Solving for $u^{(t+1)}$ yields:
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
 \begin{equation*}
   \begin{array}{lll}
-    H(\bfx,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right).
+    H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
+    H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
   \end{array}
 \end{equation*}
-For initial condition
+For $\Omega=\R^d$ and initial condition
 \begin{equation*}
   \begin{array}{lll}
     u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
@@ -959,7 +960,7 @@ For initial condition
 the solution is
 \begin{equation*}
   \begin{array}{lll}
-    u(\bfx,t) = \ds\int_\Omega H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
+    u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
   \end{array}
 \end{equation*}
 

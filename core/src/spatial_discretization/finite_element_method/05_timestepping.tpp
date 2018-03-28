@@ -44,7 +44,7 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 nComponents()
 {
-  return BasisOnMeshType::dim();
+  return 1;   // this may be different for structural mechanics
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -81,12 +81,33 @@ recoverRightHandSideStrongForm(Vec &result)
   LOG(DEBUG) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
 }
 
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+checkDimensions(Mat &stiffnessMatrix, Vec &input)
+{
+#ifndef NDEBUG
+  int nRows, nColumns;
+  MatGetSize(stiffnessMatrix, &nRows, &nColumns);
+  int nEntries;
+  VecGetSize(input, &nEntries);
+  if (nColumns != nEntries)
+  {
+    LOG(ERROR) << "Stiffness matrix dimension " << nRows << "x" << nColumns << " does not match input vector (" << nEntries << ")!";
+  }
+  assert(nColumns == nEntries);
+#endif
+}
+
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
   Vec &rhs = this->data_.rightHandSide().values();
+  
+  // check if matrix and vector sizes match
+  checkDimensions(stiffnessMatrix, input);
   
   // compute rhs = stiffnessMatrix*input
   MatMult(stiffnessMatrix, input, rhs);

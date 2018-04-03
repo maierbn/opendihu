@@ -7,6 +7,10 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
+# if the option no_tests was given, quit the script
+if env['no_examples']:
+  quit()
+  
 # define the source files
 src_files = Split(
 """

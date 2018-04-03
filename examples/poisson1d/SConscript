@@ -7,11 +7,14 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# define the source files
-src_files = Split(
-"""
-  poisson_example_1d.cpp
-""")
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
 
-# create the main executable
-env.Program(target = 'poisson_example', source = src_files)
+  # define the source files
+  src_files = Split(
+  """
+    poisson_example_1d.cpp
+  """)
+
+  # create the main executable
+  env.Program(target = 'poisson_example', source = src_files)

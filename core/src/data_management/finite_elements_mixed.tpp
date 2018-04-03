@@ -11,7 +11,7 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 

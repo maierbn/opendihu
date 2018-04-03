@@ -10,14 +10,15 @@
 
 #include "control/types.h"
 #include "utility/python_utility.h"
+#include "equation/type_traits.h"
 
 
 namespace SpatialDiscretization
 {
 
 // set right hand side for laplace equation (set to 0)
-template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
-void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::Laplace>::
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
+void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::notMixed<BasisFunctionType>>::
 setRightHandSide()
 {
   LOG(TRACE)<<"setRightHandSide for Laplace equation";

@@ -26,7 +26,8 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
         << "Type is "<< typeid(BasisOnMeshType).name()<<".";
-      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(meshConfiguration_[meshName]);
+      PyObject *meshConfiguration = meshConfiguration_.at(meshName);
+      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(meshConfiguration);
       mesh->initialize();
       meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";

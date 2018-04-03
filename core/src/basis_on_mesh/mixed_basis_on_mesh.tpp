@@ -20,14 +20,14 @@ initialize()
   lowOrderBasisOnMesh_->initialize();
   highOrderBasisOnMesh_->initialize();
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 int Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
 dimension() const
 {
   return highOrderBasisOnMesh_->dimension();
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 constexpr int Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
 dim()

@@ -28,13 +28,13 @@ protected:
 /**
  * Partial specialization for solid mechanics
  */
-template<typename MixedBasisOnMeshType, typename MixedQuadratureType, typename Term>
-class AssembleRightHandSide<MixedBasisOnMeshType, MixedQuadratureType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+class AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix;
+  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions

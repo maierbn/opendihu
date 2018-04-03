@@ -4,36 +4,41 @@
 
 #include "spatial_discretization/spatial_discretization.h"
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
+#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 #include "spatial_discretization/finite_element_method/05_timestepping.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 #include "basis_function/mixed.h"
+
+
+#include "control/dihu_context.h"
 
 namespace SpatialDiscretization
 {
  
 /** inherited class that has additional Term template parameter
  */
-template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term, typename = BasisFunctionType>
 class FiniteElementMethod :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 };
 
-/** partial specialisation for Equation::Static::Laplace: has only stiffnessMatrix
+/** partial specialisation for Laplace and solid mechanics: has only stiffnessMatrix
  * use inheritage hierarchy until file 02_stiffness_matrix.h
  */
-template<typename MeshType, typename BasisFunctionType, typename QuadratureType>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Equation::Static::Laplace> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Equation::Static::Laplace>
+template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::notMixed<BasisFunctionType>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Equation::Static::Laplace>
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
     ::FiniteElementMethodStiffnessMatrix;
  
-private:
+protected:
   //! initialize rhs vector to 0
   void setRightHandSide();
 };
@@ -42,7 +47,7 @@ private:
  * use inheritage hierarchy until file 04_rhs.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>> :
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>, BasisFunction::notMixed<BasisFunctionType>> :
   public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
@@ -53,18 +58,20 @@ public:
 
 /* class for mixed formulation for structural mechanics
  */
-template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType>
-class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Equation::Static::SolidMechanics> :
-  public FiniteElementMethodRhs<BasisOnMesh::Mixed<
+template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Term> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<
     BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Equation::Static::SolidMechanics>
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<BasisOnMesh::Mixed<
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<
     BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodRhs;
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
     
+protected:
+  void setRightHandSide(){}
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping

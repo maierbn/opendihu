@@ -22,7 +22,7 @@ protected:
   void setStiffnessMatrix();
   
 };
- 
+
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/01_assemble_stiffness_matrix.tpp"

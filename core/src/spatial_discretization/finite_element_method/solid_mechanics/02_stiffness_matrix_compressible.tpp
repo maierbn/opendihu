@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
 
 #include <Python.h>  // has to be the first included header
 #include <memory>
@@ -7,12 +7,13 @@
 
 #include "semt/Semt.h"
 #include "semt/Shortcuts.h"
-#include "types.h"
+#include "control/types.h"
 #include "utility/math_utility.h"
 
 namespace SpatialDiscretization
 {
-  
+ 
+/* 
 // initialization for mooney rivlin
 template<typename BasisOnMeshType, typename MixedQuadratureType>
 void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>:: 
@@ -1135,5 +1136,5 @@ getElasticityEntry(std::array<double, 21> &elasticity, int k, int l, int r, int 
 {
   return elasticity[getElasticityEntryNo(k,l,r,s)];
 }
-
+*/
 };    // namespace

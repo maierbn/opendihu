@@ -16,3 +16,6 @@ clean:
 
 functional_testing:
 	cd testing/functional_testing && $(MAKE) default
+
+solid_mechanics:
+	cd testing/functional_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py -Q BUILD_TYPE=DEBUG

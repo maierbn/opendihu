@@ -9,7 +9,7 @@
 #include "control/dihu_context.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
 #include "output_writer/manager.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_function/lagrange.h"
 
 /** The is a class that contains cellml equations and can be used with a time stepping scheme.

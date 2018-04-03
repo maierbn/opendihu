@@ -4,13 +4,13 @@
 
 namespace BasisFunction
 {
-  
+  /*
 template<int D, int order>
 constexpr int CompletePolynomialOfDimensionAndOrder<D,order>::
 nDofsPerNode()
 {
   return 0;
-}
+}*/
 
 // 1D
 template<int order>

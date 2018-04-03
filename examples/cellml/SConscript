@@ -7,11 +7,14 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# define the source files
-src_files = Split(
-"""
-  cellml.cpp
-""")
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+    
+  # define the source files
+  src_files = Split(
+  """
+    cellml.cpp
+  """)
 
-# create the main executable
-env.Program(target = 'cellml', source = src_files)
+  # create the main executable
+  env.Program(target = 'cellml', source = src_files)

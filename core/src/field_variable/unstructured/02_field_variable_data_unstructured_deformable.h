@@ -6,8 +6,8 @@
 #include <map>
 
 #include "field_variable/01_field_variable_components.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
-#include "basis_on_mesh/04_basis_on_mesh_nodes.h"
+#include "basis_on_mesh/basis_on_mesh.h"
+#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
 #include "mesh/unstructured_deformable.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
 #include "field_variable/unstructured/node_to_dof_mapping.h"
@@ -120,7 +120,7 @@ public:
   void initializeValuesVector();
   
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
-  int getDofNo(element_no_t elementNo, int dofIndex) const;
+  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
   
   //! return the component by name
   Component<BasisOnMeshType> &component(std::string name);

@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <memory>
 #include "field_variable/interface.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 
 namespace FieldVariable
 {

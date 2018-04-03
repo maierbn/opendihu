@@ -1,4 +1,4 @@
-#include "basis_on_mesh/04_basis_on_mesh_nodes.h"
+#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
 
 #include <Python.h>  // has to be the first included header
 #include <cmath>
@@ -6,53 +6,31 @@
 
 #include "easylogging++.h"
 #include "field_variable/field_variable.h"
+#include "utility/petsc_utility.h"
 
 namespace BasisOnMesh
 {
 
 // constructor
 template<int D,typename BasisFunctionType>
-BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-BasisOnMeshNodes(PyObject *specificSettings, bool noGeometryField) :
-  BasisOnMeshDofs<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(specificSettings), 
-  noGeometryField_(noGeometryField)
+BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(specificSettings)
 {
-  LOG(DEBUG) << "constructor BasisOnMeshNodes StructuredDeformable, noGeometryField_="<<noGeometryField_;
+  LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
  
+  this->noGeometryField_ = noGeometryField;
   std::vector<double> nodePositions;
-  if (!noGeometryField_)
+  if (!this->noGeometryField_)
   {
     this->parseNodePositionsFromSettings(specificSettings, nodePositions);
     this->setGeometryField(nodePositions);
   }
 }
 
-template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-initialize()
-{
-  if (this->geometry_)
-  {
-    std::shared_ptr<BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> ptr = this->shared_from_this();
-    assert(ptr != nullptr);
-    
-    std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> self = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(ptr);
-    assert(self != nullptr);
-    
-    this->geometry_->setMesh(self);
-  }
-}
-
-template<int D,typename BasisFunctionType>
-bool BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-hasGeometryField()
-{
-  return this->geometry_ != nullptr; 
-}
-  
 // read in config nodes
 template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &nodePositions)
 {
   // compute number of nodes
@@ -206,7 +184,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
 
 // create geometry field from config nodes
 template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 setGeometryField(std::vector<double> &nodePositions)
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField";
@@ -262,30 +240,14 @@ setGeometryField(std::vector<double> &nodePositions)
   
   bool isGeometryField = true;   // if the field is a geometry field
   // set geometry field
-  geometry_ = std::make_unique<GeometryFieldType>();
+  this->geometryField_ = std::make_unique<GeometryFieldType>();
   std::vector<std::string> componentNames{"x", "y", "z"};
   int nEntries = nDofs * 3;   // 3 components (x,y,z) per dof
-  geometry_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
 }
 
 template<int D,typename BasisFunctionType>
-Vec3 BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-getGeometry(node_no_t dofGlobalNo) const
-{
-  Vec3 result = geometry_->getValue(dofGlobalNo);
-  return result;
-}  
-  
-//! return an array containing all geometry entries for an element
-template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<D,BasisFunctionType>::nDofsPerElement()> &values)
-{
-  geometry_->getElementValues(elementNo, values);
-}
-
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+node_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nNodes() const
 {
   int result = 1;
@@ -295,31 +257,22 @@ nNodes() const
 }
 
 template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+node_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nNodes(int dimension) const
 {
   return this->nElementsPerCoordinateDirection(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>
-dof_no_t BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+dof_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nDofs() const
 {
   return nNodes() * this->nDofsPerNode();
 }
 
-//! return the geometry field
-template<int D,typename BasisFunctionType>
-typename BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::GeometryFieldType &BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-geometryField()
-{
-  if (this->geometry_ == nullptr)
-    LOG(ERROR) << "Geometry field is not yet set.";
-  return *this->geometry_;
-}
 
 template<int D,typename BasisFunctionType>
-void BasisOnMeshNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
@@ -330,11 +283,12 @@ getNodePositions(std::vector<double> &nodes) const
     node_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
     
     int index = nodeGlobalNo*3;
-    Vec3 position = this->geometry_->getValue(firstNodeDofGlobalNo);
+    Vec3 position = this->geometryField_->getValue(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];
     nodes[index+2] = position[2];
   }
 }
+
 
 };  // namespace

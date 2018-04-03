@@ -64,7 +64,8 @@ vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], varia
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
                       '(Shortcuts: ''d'',''r'')', 'release', allowed_values=('debug', 'release'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release'}))
-
+vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
+vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -105,7 +106,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++14 -Wunused-variable -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++14 -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   

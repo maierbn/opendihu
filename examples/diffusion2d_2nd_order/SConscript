@@ -7,11 +7,14 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# define the source files
-src_files = Split(
-"""
-  diffusion_2d_2nd_order.cpp
-""")
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+    
+  # define the source files
+  src_files = Split(
+  """
+    diffusion_2d_2nd_order.cpp
+  """)
 
-# create the main executable
-env.Program(target = 'diffusion2d_2nd_order', source = src_files)
+  # create the main executable
+  env.Program(target = 'diffusion2d_2nd_order', source = src_files)

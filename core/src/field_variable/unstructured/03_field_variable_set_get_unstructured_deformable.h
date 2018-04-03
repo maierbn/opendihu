@@ -9,8 +9,8 @@
 #include "field_variable/unstructured/component.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
 #include "field_variable/unstructured/node_to_dof_mapping.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
-#include "basis_on_mesh/04_basis_on_mesh_nodes.h"
+#include "basis_on_mesh/basis_on_mesh.h"
+#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
 #include "mesh/unstructured_deformable.h"
 #include "field_variable/field_variable_set_get.h"
 

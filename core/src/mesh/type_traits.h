@@ -7,7 +7,7 @@
 namespace Mesh
 {
 
-// structured meshes
+// structured meshes with given dimension
 template<int D,typename MeshType>
 using isStructuredWithDim = std::enable_if_t<
   std::is_same<MeshType, StructuredRegularFixedOfDimension<D>>::value

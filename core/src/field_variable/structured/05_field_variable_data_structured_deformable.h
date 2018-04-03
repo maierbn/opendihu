@@ -4,7 +4,12 @@
 
 #include "field_variable/structured/04_field_variable_set_get_component_dependent_structured.h"
 #include "field_variable/field_variable_data.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
+
+namespace BasisOnMesh
+{
+ 
+};
 
 namespace FieldVariable
 {
@@ -12,14 +17,14 @@ namespace FieldVariable
 /** FieldVariable class for StructuredDeformable mesh
  */
 template<int D, typename BasisFunctionType, int nComponents>
-class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
+class FieldVariableData<::BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
+  public FieldVariableSetGetComponent<::BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
  
   //! inherited constructor 
-  using FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
+  using FieldVariableSetGetComponent<::BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
   
 };
 

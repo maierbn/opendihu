@@ -4,7 +4,7 @@
 
 #include "field_variable/structured/05_field_variable_data_structured_regular_fixed.h"
 #include "field_variable/field_variable_set_get.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 
 namespace FieldVariable
 {

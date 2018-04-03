@@ -6,7 +6,7 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix_laplace.h"
 
 namespace SpatialDiscretization

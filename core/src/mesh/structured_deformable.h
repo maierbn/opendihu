@@ -27,5 +27,3 @@ public:
 };  
 
 }  // namespace
-
-#include "mesh/structured_deformable.tpp"

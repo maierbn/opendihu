@@ -535,7 +535,7 @@ parseFromExnodeFile(std::string content)
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+dof_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return this->component_.begin()->getDofNo(elementNo, dofIndex);

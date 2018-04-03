@@ -56,7 +56,7 @@ class CompletePolynomialOfDimensionAndOrder :
 public:
   
   //! number of degrees of freedom associated with a node in world space. This is 0 because the degrees of freedom are associated with elements.
-  static constexpr int nDofsPerNode();
+  //static constexpr int nDofsPerNode();
   
   //! evaluate the basis function corresponding to element-local dof dofIndex at xi, xi lives in [0,1]^D
   static double phi(int dofIndex, std::array<double,D> xi);

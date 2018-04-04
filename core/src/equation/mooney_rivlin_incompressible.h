@@ -34,11 +34,11 @@ struct MooneyRivlinIncompressible : public Static
 
   //! the isochoric part of the decoupled strain energy density function, Psi_iso, in terms of the reduced invariants
   static const auto constexpr strainEnergyDensityFunctionIsochoric 
-    = c0*(I1 - INT(3)) + c1*(I2 - INT(3));
+    = c0*(Ibar1 - INT(3)) + c1*(Ibar2 - INT(3));
     
   //! the volumetric part of the strain energy density function, numerical constant * penalty function
-  static constexpr strainEnergyDensityFunctionVolumetric
-    = kappa * INT(1)/INT(2) * pow(J - INT(1), 2);
+  static const auto constexpr strainEnergyDensityFunctionVolumetric
+    = kappa * INT(1)/INT(2) * pow(J - INT(1), INT(2));
 };
 
 }  // namespace

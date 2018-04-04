@@ -29,6 +29,7 @@ public:
   {
     VLOG(3) << "computeJacobian generic for "<<xi;
     std::array<Vec3,MeshType::dim()> jacobian;
+    // loop over columns
     for(int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
     {
       jacobian[dimNo] = Vec3({0.0});

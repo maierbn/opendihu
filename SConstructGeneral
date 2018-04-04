@@ -106,14 +106,14 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb3 -O0 -std=c++14 -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build/debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build
-  env.MergeFlags('-O3 -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build/release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
@@ -121,7 +121,9 @@ env.MergeFlags('-Wunused-variable')
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
-  
+#env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/petsc/install/include')])
+
+
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,

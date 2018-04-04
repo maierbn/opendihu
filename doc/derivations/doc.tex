@@ -1530,7 +1530,7 @@ This is a linear system that has to be solved. It is repeated until the residual
 The left-hand side term of \eqref{eq:newton_update} is derived from \eqref{eq:pvw_r} (Holzapfel p.396),
 \begin{equation}\label{eq:directional_derivative_w_int}
   \begin{array}{lll}
-    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = \ds\int_\Omega \p{\delta u_a}{X_B}(\ub{δ_{ab}\,S_{AB} + F_{aA}\,F_{bC}\,C_{ABCD}}{=k_{abBD}})\p{Δu_b}{X_D}\,\d V
+    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = \ds\int_\Omega \p{\delta u_a}{X_B}(\ub{δ_{ab}\,S_{AB} + F_{aA}\,F_{bC}\,C_{ABCD}}{=\tilde{k}_{abBD}})\p{Δu_b}{X_D}\,\d V
   \end{array}
 \end{equation}
 with
@@ -1540,11 +1540,34 @@ with
     a,b=1, \quad &\dots & \text{indices over degrees of freedom}\\[4mm]
     \bfS, \quad &\dots & \text{current 2nd Piola-Kirchhoff stress tensor}\\[4mm]
     \mathbb{C} = \p{\bfS(\bfE)}{\bfE}, \quad &\dots & \text{elasticity tensor}\\[4mm]
-    k_{abBD}, \quad &\dots & \text{entries of stiffness matrix.}\\[4mm]
+    \tilde{k}_{abBD}, \quad &\dots & \text{integrand to be used for stiffness matrix.}\\[4mm]
+  \end{array}
+\end{equation*}
+Note that the expression is a scalar value in total with the inner parantheses term being a forth-order tensor. The expression is bilinear in $δu$ and $Δu$.
+The virtual displacements, $δ\bfu$ and increments, $Δ\bfu$ are discretized as usual, leading to the stiffness matrix $\bfk$.
+
+Herein, $∂δu_a/∂X_B$ is a virtual displacement in component $a=1,2,3$, derivative $B$. In discretized form it is $δ\hat{u}_{a,B}^L$ with dof index $(L,B)$ and component number $a$. Eq.~\eqref{eq:directional_derivative_w_int} has to hold for all $δ\hat{u}_{a,B}^L$, these are the equations or rows in the stiffness matrix. The columns of the stiffness matrix correspond to the unknown increments, $Δu_d$, discretized as 
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \p{Δu_b}{X_D} = Δ\hat{u}_{b}^M \phi_{b,D}^M.
+  \end{array}
+\end{equation*}
+The coefficients, $Δ\hat{u}_{b}^M$, are also the same for the real increments, not the derivatives, i.e.
+\begin{equation*}
+  \begin{array}{lll}
+    Δu_b = Δ\hat{u}_{b}^M \phi_{b}^M.
   \end{array}
 \end{equation*}
 
-The virtual displacements, $δ\bfu$ and increments, $Δ\bfu$ are discretized as usual, leading to the stiffness matrix $\bfk$.
+The entries of the stiffness matrix, $k_{ij}$ are thus
+\begin{equation*}
+  \begin{array}{lll}
+    k_{ij} = \ds\int_\Omega \p{\phi_a}{X_B}\tilde{k}_{abBD}\p{\phi_b}{X_D}\,\d V
+  \end{array}
+\end{equation*}
+with appropriate mappings $i \mapsto (a,B)$ and $j \mapsto (b,D)$.
+
 The stress, $\bfS$ is computed by
 \begin{equation*}
   \begin{array}{lll}

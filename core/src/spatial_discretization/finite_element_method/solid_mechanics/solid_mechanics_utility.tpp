@@ -9,7 +9,7 @@ namespace SpatialDiscretization
 template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
 std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
 computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasisOnMesh::nDofsPerElement()> &displacement, 
-                           const std::array<Vec3,BasisOnMeshType::dim()> &jacobian, 
+                           const std::array<Vec3,BasisOnMeshType::dim()> &jacobianMaterial, 
                            const std::array<double, BasisOnMeshType::dim()> xi)
 {
  
@@ -29,8 +29,8 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasis
       dudxi += dphi_dxi * displacement[dofIndex];   // vector-valued addition
     }
     
-    // multiply du/dxi with dxi/dx to obtain du/dx
-    deformationGradient[dimensionColumn] = dudxi * jacobian[dimensionColumn];
+    // multiply du/dxi with dxi/dX to obtain du/dx
+    deformationGradient[dimensionColumn] = dudxi * jacobianMaterial[dimensionColumn];
     
     // add Kronecker delta to obtain x_i,j = delta_ij + u_i,j
     deformationGradient[dimensionColumn][dimensionColumn] += 1;
@@ -125,12 +125,13 @@ double computeArtificialPressure(const double deformationGradientDeterminant, do
 
 template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
 std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
-computePK2Stress(const double pressure, 
-                 const std::array<Vec3,3> &rightCauchyGreen, 
-                 const std::array<Vec3,3> &inverseRightCauchyGreen, 
-                 const std::array<double,2> reducedInvariants, 
-                 const double deformationGradientDeterminant,
-                 std::array<Vec3,3> &fictitiousPK2Stress
+computePK2Stress(const double pressure,                             //< [in] pressure value p
+                 const std::array<Vec3,3> &rightCauchyGreen,        //< [in] C
+                 const std::array<Vec3,3> &inverseRightCauchyGreen, //< [in] C^{-1}
+                 const std::array<double,2> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2 
+                 const double deformationGradientDeterminant,      //< [in] J = det(F)
+                 std::array<Vec3,3> &fictitiousPK2Stress,          //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                 std::array<Vec3,3> &pk2StressIsochoric            //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                 )
 {
   // compute the PK2 stress tensor as S=2*dPsi/dC
@@ -206,6 +207,7 @@ computePK2Stress(const double pressure,
       
       // isochoric stress
       const double sIso = factorJ23 * pSbar;
+      pk2StressIsochoric[j][i] = sIso;
       
       // total stress is sum of volumetric and isochoric part
       pK2Stress[j][i] = sVol + sIso;
@@ -311,6 +313,7 @@ computeElasticityTensor(const double pressure,
                         const std::array<Vec3,3> &rightCauchyGreen,
                         const std::array<Vec3,3> &inverseRightCauchyGreen,
                         const std::array<Vec3,3> &fictitiousPK2Stress,
+                        const std::array<Vec3,3> &pk2StressIsochoric,
                         const double deformationGradientDeterminant,
                         const std::array<double,2> reducedInvariants)
 {
@@ -331,7 +334,6 @@ computeElasticityTensor(const double pressure,
   
   std::vector<double> reducedInvariantsVector(reducedInvariants.begin(), reducedInvariants.end());
   
-  //const double dPsidI1 = dPsidI1Expression.apply(invariantsVector);
   const double dPsi_dIbar1 = dPsi_dIbar1Expression.apply(reducedInvariantsVector);
   const double dPsi_dIbar2 = dPsi_dIbar2Expression.apply(reducedInvariantsVector);
   const double d2Psi_dIbar1Ibar1 = d2Psi_dIbar1Ibar1Expression.apply(reducedInvariantsVector);
@@ -340,8 +342,7 @@ computeElasticityTensor(const double pressure,
   
   const double Ibar1 = reducedInvariants[0];
   
-  // formula for C_iso: Holzapfel p.255
-  
+  // formula for C_iso: Holzapfel "Nonlinear Solid Mechanics" p.255
   // formula for C_bar: Holzapfel "Nonlinear Solid Mechanics" p.262
   // compute factors for Cbar
   const double factor1 = 4*(d2Psi_dIbar1Ibar1 + 2*Ibar1*d2Psi_dIbar1Ibar2 + dPsi_dIbar2 + MathUtility::sqr(Ibar1)*d2Psi_dIbar2Ibar2);
@@ -358,7 +359,7 @@ computeElasticityTensor(const double pressure,
   // P = II - 1/3 C^-1 dyad C    (4th order tensor)
   // (P^T)_ijkl = P_klij
   
-  std::array<double,21> elasticity({0});
+  std::array<double,21> elasticity;
   // loop over distinct entries in elasticity tensor
   for (int entryNo = 0; entryNo < 21; entryNo++)
   {
@@ -368,6 +369,7 @@ computeElasticityTensor(const double pressure,
     const int k = indices[entryNo][2];
     const int l = indices[entryNo][3];
     
+    // ----------- Ciso (Holzapfel p.255) -------------------------
     //                          ij ab    cd    kl
     // compute contribution from P : Cbar : P^T
     const double PCbarPT = 0.;
@@ -441,7 +443,12 @@ computeElasticityTensor(const double pressure,
     // compute last term -2/3(C^{-1} dyad S_iso + S_iso dyad C^{-1})
     const double lastTerm = -2./3*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
     
-    elasticity[entryNo] = PCbarPT + trTerm + lastTerm;
+    const double Ciso = PCbarPT + trTerm + lastTerm;
+    
+    // ----------- Cvol p.254 -------------------------
+    const double Cvol = J*pressureTilde*CcTerm2 - 2*J*pressure*CcTerm1;
+    
+    elasticity[entryNo] = Cvol + Ciso;
   }
   
   return elasticity;

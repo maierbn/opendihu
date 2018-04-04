@@ -30,6 +30,7 @@ setStiffnessMatrix()
   const int nDofs = mesh->nDofs();
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int nElements = mesh->nElements();
+  const int nUnknowsPerElement = nDofsPerElement*3;    // 3 directions for displacements per dof
   
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
@@ -73,10 +74,11 @@ setStiffnessMatrix()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
       
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2 jacobian = BasisOnMeshType::computeJacobian(geometryCurrentValues, xi);
+      Tensor2 jacobianMaterial = BasisOnMeshType::computeJacobian(geometryReferenceValues, xi);
+      // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       
       // F
-      Tensor2 deformationGradient = this->computeDeformationGradient(displacementValues, jacobian, xi);
+      Tensor2 deformationGradient = this->computeDeformationGradient(displacementValues, jacobianMaterial, xi);
       double deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
       
       Tensor2 rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
@@ -94,29 +96,59 @@ setStiffnessMatrix()
       
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       std::array<Vec3,3> fictitiousPK2Stress;
-      Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fictitiousPK2Stress);
-      
+      std::array<Vec3,3> pk2StressIsochoric;
+      Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fictitiousPK2Stress, pk2StressIsochoric);      
       // elasticity tensor C_{ijkl}
-      Tensor4 elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, deformationGradientDeterminant);
-      
-      // p = -1/(3J)C:S
-      double pressureFromDisplacements = this->computePressureFromDisplacements(deformationGradientDeterminant, rightCauchyGreen, PK2Stress);
-      pressureFromDisplacements++;  // avoid warning unused variable
-      VLOG(2) << "pressureFromDisplacements: " << pressureFromDisplacements;
-      VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi;
-      VLOG(2) << "geometryCurrent="<<geometryCurrent<<", geometryReference="<<geometryReference;
+      Tensor4 elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, pk2StressIsochoric, deformationGradientDeterminant);
       
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       //evaluationsArray[samplingPointIndex] = 
+         
+      std::array<Vec3,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
+      // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
+      
+      // loop over pairs of basis functions and evaluation integrand at xi
+      for (int aDof = 0; aDof < nDofsPerElement; aDof++)           // index over dofs, each dof has D components
+      {
+        for (int aComponent = 0; aComponent < D; aComponent++)     // lower-case a in derivation
+        {
+          for (int bDirection = 0; bDirection < D; bDirection++)     // capital B in derivation
+          {
+            // compute index of degree of freedom and component (matrix row index)
+            const int i = nDofsPerElement*D*aDof + D*aComponent + bDirection;
+           
+            for (int bDof = 0; bDof < nDofsPerElement; bDof++)
+            {
+              for (int bComponent = 0; bComponent < D; bComponent++)     // lower-case b in derivation
+              {
+                for (int dDirection = 0; dDirection < D; dDirection++)     // capital D in derivation
+                {
+                  // compute index of degree of freedom and component (index of entry in vector of unknows / matrix column index)
+                  const int j = nDofsPerElement*D*bDof + D*bComponent + dDirection;
+              
+                  // k_ij = int dphi_a/dX_B * dphi_b/dX_D * k_abBD 
+                  
+                  // gradPhi[columnIdx][rowIdx] = dphi_(dof columnIdx)/dxi_rowIdx (independent of displacement component)
+                  // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx (independent of displacement component)
+                  
+                  
+                  double integrand = gradPhi[aDof][bDirection] * gradPhi[bDof][dDirection];
+                  //evaluations[i][j] = integrand;
+                }
+              }
+            }
+          }
+        }
+      }
       
     }  // function evaluations
     
     // perform integration and add to entry of stiffness matrix
-    for (int i=0; i<nDofsUPerElement; i++)
+    for (int a=0; a<nDofsUPerElement; a++)
     {
-      for (int j=0; j<nDofsUPerElement; j++)
+      for (int b=0; b<nDofsUPerElement; b++)
       {
-        // extract evaluations for current (i,j) dof-pair
+        // extract evaluations for current (a,b) dof-pair
         std::array<double,QuadratureU::numberEvaluations()> evaluations;
         for (int k=0; k<QuadratureU::numberEvaluations(); k++)
           evaluations[k] = evaluationsUArray[k][i][j];

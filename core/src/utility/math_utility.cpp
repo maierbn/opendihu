@@ -186,7 +186,7 @@ std::array<Vec3,3> computeSymmetricInverse(const std::array<Vec3,3> &matrix, dou
   const double m11 = matrix[0][0];
   const double m21 = matrix[0][1];
   const double m31 = matrix[0][2];
-  const double m12 = matrix[1][0];
+  //const double m12 = matrix[1][0];
   const double m22 = matrix[1][1];
   const double m32 = matrix[1][2];
   const double m33 = matrix[2][2];

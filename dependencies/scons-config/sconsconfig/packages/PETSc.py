@@ -59,18 +59,14 @@ class PETSc(Package):
         #self.headers = ['mysql.h']
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
 
-        print "look for CRAY_PETSC_PREFIX_DIR: ",os.environ.get("CRAY_PETSC_PREFIX_DIR")
         if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
           self.libs = ["craypetsc_cray_real"]
+          print "Cray environment detected, using \"craypetsc_cray_real\" for PETSc"
 
         
         # the system tries to include one of them after other, if linking else fails
-        print "look for LIBSCI_BASE_DIR: ",os.environ.get("LIBSCI_BASE_DIR")
         if os.environ.get("LIBSCI_BASE_DIR") is not None:
           self.extra_libs = ["sci_cray_mpi_mp"]
-
-        print "self.libs=",self.libs
-        print "self.extra_libs=",self.extra_libs
 
         self.check_text = petsc_text
         self.static = False

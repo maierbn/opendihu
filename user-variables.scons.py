@@ -20,7 +20,7 @@ MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
 
 # LAPACK, includes also BLAS
-LAPACK_DOWNLOAD=False
+LAPACK_DOWNLOAD=True
 LAPACK_REDOWNLOAD=False      # force download, even if the files are already present
 
 # PETSc

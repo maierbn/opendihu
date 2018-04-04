@@ -19,6 +19,10 @@
 MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
 
+import os
+if os.environ.get("MPI_HOME") is not None:
+  MPI_DIR = os.environ.get("MPI_HOME")
+
 # LAPACK, includes also BLAS
 LAPACK_DOWNLOAD=True
 LAPACK_REDOWNLOAD=False      # force download, even if the files are already present

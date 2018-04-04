@@ -93,10 +93,11 @@ setStiffnessMatrix()
       const double artificialPressure = this->computeArtificialPressure(deformationGradientDeterminant, artificialPressureTilde);
       
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
-      Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant);
+      std::array<Vec3,3> fictitiousPK2Stress;
+      Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fictitiousPK2Stress);
       
       // elasticity tensor C_{ijkl}
-      Tensor4 elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, deformationGradientDeterminant);
+      Tensor4 elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, deformationGradientDeterminant);
       
       // p = -1/(3J)C:S
       double pressureFromDisplacements = this->computePressureFromDisplacements(deformationGradientDeterminant, rightCauchyGreen, PK2Stress);

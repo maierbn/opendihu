@@ -42,9 +42,9 @@ sconsconfig.select(
     #packages.Cython(required=True),
     #packages.NumpyC(required=True),
     packages.googletest(required=True),
-    packages.libxml2(required=True),
+    #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
-    packages.libcellml(required=True),          # relies on libxml2
+    #packages.libcellml(required=True),          # relies on libxml2 and SWIG
     packages.SEMT(required=True),
     packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
 )

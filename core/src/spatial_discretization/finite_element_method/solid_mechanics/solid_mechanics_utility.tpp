@@ -129,7 +129,9 @@ computePK2Stress(const double pressure,
                  const std::array<Vec3,3> &rightCauchyGreen, 
                  const std::array<Vec3,3> &inverseRightCauchyGreen, 
                  const std::array<double,2> reducedInvariants, 
-                 const double deformationGradientDeterminant)
+                 const double deformationGradientDeterminant,
+                 std::array<Vec3,3> &fictitiousPK2Stress
+                )
 {
   // compute the PK2 stress tensor as S=2*dPsi/dC
   // for explanation see pdf document
@@ -150,13 +152,27 @@ computePK2Stress(const double pressure,
   
   std::array<Vec3,3> pK2Stress;
   
+  // compute fictitiousPK2Stress:
+  // Sbar = factor1*I + factor2*Cbar, Cbar = J^{-2/3}*C
+  
+  // row index
+  for (int i=0; i<3; i++)
+  {
+    // column index
+    for (int j=0; j<3; j++)
+    {
+      int delta_ij = (i == j? 1 : 0);
+      fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * factorJ23 * rightCauchyGreen[j][i];
+    }
+  }
+  
   // Holzapfel p.234
   // S = S_vol + S_iso
   // S_vol = J*p*C^-1
-  // S_iso = 2*dPsi_iso/dC = J^(-2/3) P : Sbar   (P: Holzapfel p.229)
+  // S_iso = 2*dPsi_iso/dC = J^(-2/3) P : Sbar   (P = II - 1/3(C^{-1} dyad C): Holzapfel p.229)
   // pSbar = P : Sbar, P: 4th order tensor, Sbar: 2nd order tensor, note: A:B = A_ijkl*B_kl*e_i dyad e_j
-  // Sbar = factor1*I + factor2*Cbar, Cbar = J^{-2/3}*C
   
+  // compute S = S_vol + S_iso
   // row index
   for (int i=0; i<3; i++)
   {
@@ -180,16 +196,11 @@ computePK2Stress(const double pressure,
         for (int l=0; l<3; l++)
         {
           const int delta_jl = (j == l? 1 : 0);
-          const int delta_kl = (k == l? 1 : 0);
-     
           const int Ii = delta_ik * delta_jl;
-          
-          const double cBar = factorJ23 * rightCauchyGreen[l][k];
-          const double sBar = factor1*delta_kl + factor2*cBar;
           
           const double Cc = 1./3 * inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];
           
-          pSbar += Ii * sBar - Cc * sBar;
+          pSbar += Ii * fictitiousPK2Stress[l][k] - Cc * fictitiousPK2Stress[l][k];
         }
       }
       
@@ -299,6 +310,7 @@ computeElasticityTensor(const double pressure,
                         const double pressureTilde,
                         const std::array<Vec3,3> &rightCauchyGreen,
                         const std::array<Vec3,3> &inverseRightCauchyGreen,
+                        const std::array<Vec3,3> &fictitiousPK2Stress,
                         const double deformationGradientDeterminant,
                         const std::array<double,2> reducedInvariants)
 {
@@ -402,11 +414,34 @@ computeElasticityTensor(const double pressure,
             const double Cbar_abcd = factorJ43 * J43Cbar;
             
             PCbarPT += P_ijab * Cbar_abcd * PT_cdkl;
-            //TODO: p.255
           }
         }
       }
     }
+  
+    // compute Tr(Sbar)
+    // Sbar = fictitiousPK2Stress, Tr(•) = (•):C
+    double TrSbar = 0.0;
+    for (int a=0; a<3; a++)
+    {
+      // column index
+      for (int b=0; b<3; b++)
+      {
+        TrSbar += fictitiousPK2Stress[b][a] * rightCauchyGreen[b][a];
+      }
+    }
+    
+    // Holzapfel p.255
+    const double CcTerm1 = 1./2*(inverseRightCauchyGreen[k][i]*inverseRightCauchyGreen[l][j] + inverseRightCauchyGreen[l][i]*inverseRightCauchyGreen[k][j]);
+    const double CcTerm2 = inverseRightCauchyGreen[j][i]*inverseRightCauchyGreen[l][k];
+    const double pTerm = CcTerm1 - 1./3*CcTerm2;
+    
+    const double trTerm = 2./3*TrSbar*factorJ23 * pTerm; 
+    
+    // compute last term -2/3(C^{-1} dyad S_iso + S_iso dyad C^{-1})
+    const double lastTerm = -2./3*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
+    
+    elasticity[entryNo] = PCbarPT + trTerm + lastTerm;
   }
   
   return elasticity;

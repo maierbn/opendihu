@@ -70,6 +70,12 @@ int main(int argc, char* argv[]) {
         self.libs = ["lapack", "blas"]
         self.headers = ["lapacke.h"]
 
+        print "look for LIBSCI_BASE_DIR: ",os.environ.get("LIBSCI_BASE_DIR")
+        if os.environ.get("LIBSCI_BASE_DIR") is not None:
+          self.libs = ["sci_cray_mpi_mp"]
+
+        print "self.libs=",self.libs
+
     def check(self, ctx):
         env = ctx.env
         ctx.Message('Checking for LAPACK ... ')

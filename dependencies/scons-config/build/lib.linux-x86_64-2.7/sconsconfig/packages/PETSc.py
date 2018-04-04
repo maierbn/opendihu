@@ -52,13 +52,26 @@ class PETSc(Package):
         defaults.update(kwargs)
         super(PETSc, self).__init__(**defaults)
         #self.ext = '.c'
-        #self.sub_dirs = [
+        self.sub_dirs = [('include','lib')]
         #    ('include/mysql', 'lib'),
         #    ('include/mysql', 'lib64'),
         #]
         #self.headers = ['mysql.h']
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
-        self.extra_libs = ['blas']        # the system tries to include one of them after other, if linking else fails
+
+        print "look for CRAY_PETSC_PREFIX_DIR: ",os.environ.get("CRAY_PETSC_PREFIX_DIR")
+        if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
+          self.libs = ["craypetsc_cray_real"]
+
+        
+        # the system tries to include one of them after other, if linking else fails
+        print "look for LIBSCI_BASE_DIR: ",os.environ.get("LIBSCI_BASE_DIR")
+        if os.environ.get("LIBSCI_BASE_DIR") is not None:
+          self.extra_libs = ["sci_cray_mpi_mp"]
+
+        print "self.libs=",self.libs
+        print "self.extra_libs=",self.extra_libs
+
         self.check_text = petsc_text
         self.static = False
         #self.set_rpath = False
@@ -67,7 +80,8 @@ class PETSc(Package):
         self.set_build_handler([
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.so\
-            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so',
+            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so\
+            --with-mpi-dir=${MPI_DIR}',
             'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
             'make install',
             'make test',

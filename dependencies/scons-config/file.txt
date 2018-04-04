@@ -4,6 +4,7 @@
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/EGG-INFO/not-zip-safe
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/EGG-INFO/top_level.txt
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/EGG-INFO/PKG-INFO
+/usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/packages.tar.gz
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/__init__.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/setup.py
 /usr/local/lib/python2.7/dist-packages/scons_config-0.1-py2.7.egg/sconsconfig/setup.pyc

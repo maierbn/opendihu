@@ -80,7 +80,8 @@ class PETSc(Package):
         self.set_build_handler([
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.so\
-            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so',
+            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so\
+            --with-mpi-dir=${MPI_DIR}',
             'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
             'make install',
             'make test',

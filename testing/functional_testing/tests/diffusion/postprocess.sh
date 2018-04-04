@@ -58,6 +58,7 @@ python check_results.py 0 build_${variant}/out/${name}*
 # move resulting animation
 mkdir -p results
 mv numerical_analytical.mp4 results/${name}_numerical_analytical.mp4
+mv log.txt results/log.txt
 
 done
 

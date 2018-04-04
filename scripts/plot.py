@@ -7,10 +7,7 @@
 
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import animation
-from matplotlib import cm
+
 import csv
 import collections
 import copy
@@ -35,6 +32,17 @@ else:
 
   # sort files by number in file name
   files = sorted(ls)
+
+
+# import needed packages from matplotlib
+if not show_plot:
+  import matplotlib as mpl
+  mpl.use('Agg')
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import animation
+from matplotlib import cm
 
 # extract the files that are npy files
 solution_condition = lambda filename: "solution.npy" in filename
@@ -131,7 +139,7 @@ if dimension == 2:
   ax.set_zlabel('Z')
   
   # create mesh
-  if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed":
+  if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed" or data[0]["meshType"] == "StructuredDeformable":
     
     print "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"])
     
@@ -161,17 +169,26 @@ if dimension == 2:
     
     #print "x_positions shape: {}".format(len(x_positions))
     
-  elif data[0]["meshType"] == "StructuredDeformable":
-    pass
+  elif data[0]["meshType"] == "UnstructuredDeformable":
+    x_positions = py_reader.get_values(data[0], "geometry", "x")
+    y_positions = py_reader.get_values(data[0], "geometry", "y")
+    X = x_positions
+    Y = y_positions
   
   def animate(i):
     ax.clear()
     
     # display data
     solution_shaped = py_reader.get_values(data[i], "solution", "0")
-    Z = np.reshape(solution_shaped, nEntries)
+    try:
+      Z = np.reshape(solution_shaped, nEntries)
+    except:
+      Z = solution_shaped
     
-    print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
+    try:
+      print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
+    except:
+      pass
     
     plot = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
     ax.set_zlim(min_value-margin, max_value+margin)

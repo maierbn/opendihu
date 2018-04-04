@@ -8,10 +8,6 @@
 
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import animation
-from matplotlib import cm
 import csv
 import collections
 import copy
@@ -39,6 +35,16 @@ else:
 
   # sort files by number in file name
   files = sorted(ls)
+
+# import needed packages from matplotlib
+if not show_plot:
+  import matplotlib as mpl
+  mpl.use('Agg')
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import animation
+from matplotlib import cm
 
 # extract the files that are npy files
 solution_condition = lambda filename: ".py" in filename

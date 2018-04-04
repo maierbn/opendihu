@@ -12,4 +12,5 @@ scons-config
 SConstruct
 sphinx
 test
-
+pk
+semt

@@ -209,6 +209,37 @@ std::array<Vec3,3> computeSymmetricInverse(const std::array<Vec3,3> &matrix, dou
   return result;
 }
 
+std::array<Vec3,3> computeInverse(const std::array<Vec3,3> &matrix, double &determinant)
+{
+  // rename input values
+  const double m11 = matrix[0][0];
+  const double m21 = matrix[0][1];
+  const double m31 = matrix[0][2];
+  const double m12 = matrix[1][0];
+  const double m22 = matrix[1][1];
+  const double m32 = matrix[1][2];
+  const double m13 = matrix[2][0];
+  const double m23 = matrix[2][1];
+  const double m33 = matrix[2][2];
+  TODO
+  determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
+  double invDet = 1./determinant;
+  
+  std::array<Vec3,3> result;
+  
+  result[0][0] = invDet*(m22*m33 - sqr(m32));  // entry m11
+  result[1][0] = invDet*(-m21*m33 + m31*m32);  // entry m12
+  result[2][0] = invDet*(m21*m32 - m22*m31);   // entry m13
+  result[0][1] = invDet*(-m21*m33 + m31*m32);  // entry m21
+  result[1][1] = invDet*(m11*m33 - sqr(m31));  // entry m22
+  result[2][1] = invDet*(-m11*m32 + m21*m31);  // entry m23
+  result[0][2] = invDet*(m21*m32 - m22*m31);   // entry m31
+  result[1][2] = invDet*(-m11*m32 + m21*m31);  // entry m32
+  result[2][2] = invDet*(m11*m22 - sqr(m21));  // entry m33
+  
+  return result;
+}
+
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos)
 {
   if (b.empty())

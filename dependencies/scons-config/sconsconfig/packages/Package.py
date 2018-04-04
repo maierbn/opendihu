@@ -399,6 +399,10 @@ class Package(object):
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
       import urllib
+    except:
+      ctx.Log("Failed to download file: Could not import urllib\n")
+      return False
+    try:
       urllib.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True

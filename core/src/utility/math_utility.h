@@ -40,6 +40,9 @@ double computeDeterminant(const std::array<Vec3,3> &jacobian);
 //! computes the inverse of the symmetric matrix and the determinant
 std::array<Vec3,3> computeSymmetricInverse(const std::array<Vec3,3> &matrix, double &determinant);
 
+//! computes the inverse of the non-symmetric matrix and the determinant
+std::array<Vec3,3> computeInverse(const std::array<Vec3,3> &matrix, double &determinant);
+
 //! computes v1^T * T * v2 where T is the symmetric transformation matrix (3D)
 double applyTransformation(const std::array<double,9> &transformationMatrix, const Vec3 &vector1, const Vec3 &vector2);
 

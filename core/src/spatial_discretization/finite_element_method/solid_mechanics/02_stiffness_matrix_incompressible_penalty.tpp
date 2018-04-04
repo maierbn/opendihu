@@ -75,6 +75,7 @@ setStiffnessMatrix()
       
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2 jacobianMaterial = BasisOnMeshType::computeJacobian(geometryReferenceValues, xi);
+      Tensor2 inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       
       // F
@@ -112,19 +113,19 @@ setStiffnessMatrix()
       {
         for (int aComponent = 0; aComponent < D; aComponent++)     // lower-case a in derivation
         {
-          for (int bDirection = 0; bDirection < D; bDirection++)     // capital B in derivation
+          for (int bInternal = 0; bInternal < D; bInternal++)     // capital B in derivation
           {
             // compute index of degree of freedom and component (matrix row index)
-            const int i = nDofsPerElement*D*aDof + D*aComponent + bDirection;
+            const int i = nDofsPerElement*D*aDof + D*aComponent + bInternal;
            
             for (int bDof = 0; bDof < nDofsPerElement; bDof++)
             {
               for (int bComponent = 0; bComponent < D; bComponent++)     // lower-case b in derivation
               {
-                for (int dDirection = 0; dDirection < D; dDirection++)     // capital D in derivation
+                for (int dInternal = 0; dInternal < D; dInternal++)     // capital D in derivation
                 {
                   // compute index of degree of freedom and component (index of entry in vector of unknows / matrix column index)
-                  const int j = nDofsPerElement*D*bDof + D*bComponent + dDirection;
+                  const int j = nDofsPerElement*D*bDof + D*bComponent + dInternal;
               
                   // k_ij = int dphi_a/dX_B * dphi_b/dX_D * k_abBD 
                   
@@ -132,7 +133,7 @@ setStiffnessMatrix()
                   // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx (independent of displacement component)
                   
                   
-                  double integrand = gradPhi[aDof][bDirection] * gradPhi[bDof][dDirection];
+                  double integrand = gradPhi[aDof][bInternal] * gradPhi[bDof][dInternal];
                   //evaluations[i][j] = integrand;
                 }
               }

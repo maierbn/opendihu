@@ -107,13 +107,7 @@ setStiffnessMatrix()
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
-        // extract evaluations for current (i,j) dof-pair
-        /*std::array<double,QuadratureDD::numberEvaluations()> evaluations;
-        for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
-          evaluations[k] = evaluationsArray[k][i][j];        */
-        
         // integrate value and set entry in stiffness matrix
-        //double integratedValue = QuadratureDD::computeIntegral(evaluations);
         double integratedValue = integratedValues(i,j);
         double value = -prefactor * integratedValue;
         

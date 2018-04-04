@@ -1563,10 +1563,10 @@ The coefficients, $Δ\hat{u}_{b}^M$, are also the same for the real increments, 
 The entries of the stiffness matrix, $k_{ij}$ are thus
 \begin{equation*}
   \begin{array}{lll}
-    k_{ij} = \ds\int_\Omega \p{\phi_a}{X_B}\tilde{k}_{abBD}\p{\phi_b}{X_D}\,\d V
+    k_{ij} = \ds\int_\Omega \p{\phi_a^L}{X_B}\tilde{k}_{abBD}\p{\phi_b^M}{X_D}\,\d V \qquad \text{(sum over $B$ and $D$)}
   \end{array}
 \end{equation*}
-with appropriate mappings $i \mapsto (a,B)$ and $j \mapsto (b,D)$.
+with appropriate mappings $i \mapsto (a,L)$ and $j \mapsto (b,M)$.
 
 The stress, $\bfS$ is computed by
 \begin{equation*}

@@ -26,7 +26,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::
     for (int j=0; j<BasisOnMeshType::nDofsPerElement(); j++)
     {
       double integrand = gradPhi[i][0] * gradPhi[j][0] * integralFactor;
-      evaluations[i][j] = integrand;
+      evaluations(i,j) = integrand;
       VLOG(2) << "   dofs("<<i<<","<<j<<") integrand="<<gradPhi[i][0]<<"*"<<gradPhi[j][0]<<"*"<<integralFactor<<"="<<integrand;
     }
   }
@@ -89,7 +89,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::
     for (int j=0; j<BasisOnMeshType::nDofsPerElement(); j++)
     {
       double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * integrationFactor;
-      evaluations[i][j] = integrand;
+      evaluations(i,j) = integrand;
     }
   }
   
@@ -131,7 +131,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::
      
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
-      evaluations[i][j] = integrand;
+      evaluations(i,j) = integrand;
     }
   }
   

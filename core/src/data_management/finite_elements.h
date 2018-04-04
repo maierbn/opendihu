@@ -85,6 +85,7 @@ private:
   bool disableMatrixPrinting_ = false; ///< if the matrix should not be printed
   
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
+
 };
 
 }  // namespace

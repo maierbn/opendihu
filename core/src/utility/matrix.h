@@ -36,6 +36,9 @@ struct Matrix :
   //! default move assignment operator
   Matrix<nRows,nColumns>& operator=(Matrix<nRows,nColumns> &&) = default;
   
+  //! constructor to set all values at once
+  Matrix(double value);
+  
   //! default destructor
   virtual ~Matrix() = default;
     

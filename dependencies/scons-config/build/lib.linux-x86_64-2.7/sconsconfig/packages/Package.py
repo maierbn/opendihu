@@ -399,15 +399,17 @@ class Package(object):
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
       import urllib
-    except:
+    except Exception as e:
       ctx.Log("Failed to download file: Could not import urllib\n")
+      print(e)
       return False
     try:
       urllib.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True
-    except:
+    except Exception as e:
       sys.stdout.write('failed.\n')
+      print(e)
       ctx.Log("Failed to download file - retry in 5s\n")
       time.sleep(5)
       
@@ -415,8 +417,9 @@ class Package(object):
         urllib.urlretrieve(self.download_url, filename)
         sys.stdout.write('done.\n')
         return True
-      except:
+      except Exception as e:
         sys.stdout.write('failed.\n')
+        print(e)
         ctx.Log("Failed to download file again\n")
         return False
       
@@ -488,7 +491,7 @@ class Package(object):
       sys.stdout.flush()
 
   def auto_build(self, ctx, install_dir, source_dir):
-    sys.stdout.write('  Building package, this could take a while ... \n')
+    sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
 
@@ -624,9 +627,9 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
       
-    # compile with C++11 for cpp test files
+    # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++11")
+      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
@@ -642,12 +645,12 @@ class Package(object):
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
-    # remove C++11 flag
+    # remove C++11 and C++14 flags
     if 'cpp' in self.ext:
       ccflags = ctx.env["CCFLAGS"]
       ccflags_new = []
       for entry in ccflags:
-        if entry != "-std=c++11":
+        if entry != "-std=c++14" and entry != "-std=c++11":
           ccflags_new.append(entry)
       ctx.Log("recovered ccflags:")
       ctx.Log(str(ccflags_new))

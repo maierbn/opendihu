@@ -408,7 +408,18 @@ class Package(object):
       return True
     except:
       sys.stdout.write('failed.\n')
-      ctx.Log("Failed to download file\n")
+      ctx.Log("Failed to download file - retry in 5s\n")
+      time.sleep(5)
+      
+      try:
+        urllib.urlretrieve(self.download_url, filename)
+        sys.stdout.write('done.\n')
+        return True
+      except:
+        sys.stdout.write('failed.\n')
+        ctx.Log("Failed to download file again\n")
+        return False
+      
       return False
 
   def auto_unpack(self, ctx, filename, unpack_dir):

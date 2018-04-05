@@ -25,8 +25,12 @@ class Python(Package):
             cflags = subprocess.check_output("python3-config --includes", shell=True)
             ldflags = subprocess.check_output("python3-config --ldflags", shell=True)
           else:
-            cflags = subprocess.check_output("python2.7-config --includes", shell=True)
-            ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
+            try:
+              cflags = subprocess.check_output("python2.7-config --includes", shell=True)
+              ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
+            except:
+              cflags = subprocess.check_output("python-config --includes", shell=True)
+              ldflags = subprocess.check_output("python-config --ldflags", shell=True)
           
           for flag_to_remove in flags_to_remove:            
             while flag_to_remove in cflags:

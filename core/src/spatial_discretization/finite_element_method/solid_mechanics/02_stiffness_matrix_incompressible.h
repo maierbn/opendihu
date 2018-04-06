@@ -2,6 +2,7 @@
 
 #include "spatial_discretization/finite_element_method/00_base.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.h"
+#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/type_traits.h"
 
@@ -53,7 +54,7 @@ class FiniteElementMethodStiffnessMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType, 
   Term,
-  Mesh::isDeformable<typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
 > :
   public FiniteElementMethodBase<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, MixedQuadratureType, Term>,
@@ -70,15 +71,15 @@ public:
 };
 
 /** specialisation for incompressible solid mechanics, not mixed formulation, i.e. penalty formulation,
- * currently not implemented
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 > :
   public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>,
   public SolidMechanicsUtility<BasisOnMeshType, Term>
@@ -94,7 +95,7 @@ public:
   void setDisplacements(Vec &x);
   
   //! return the tangent stiffness matrix, called from a PETSc SNES callback
-  Vec &tangentStiffnessMatrix();
+  Mat &tangentStiffnessMatrix();
   
   //! compute the internal virtual work term, dW_int
   void computeInternalVirtualWork(Vec &result);
@@ -102,15 +103,18 @@ public:
   //! set entries in f to the entry in rhs for which Dirichlet BC are set
   void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f);
   
-protected:
-  //! solve nonlinear system
-  virtual void solve();
-  
   //! initialize everything, set rhs and compute tangent stiffness matrix
   virtual void initialize();
   
+protected:
+  //! solve nonlinear system
+  virtual void solve() override;
+  
   //! initialize Dirichlet boundary conditions
   void initializeBoundaryConditions();
+  
+  //! read material parameters from config and set the values for static expressions within SEMT
+  void initializeMaterialParameters();
   
   std::vector<dof_no_t> dirichletIndices_;  ///< the indices of unknowns (not dofs) for which the displacement is fixed
   std::vector<double> dirichletValues_;     ///< the to dirichletIndices corresponding fixed values for the displacement

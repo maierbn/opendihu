@@ -24,7 +24,7 @@ template<typename ValueType>
 ValueType Gauss<1>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   result = *evaluationsIter;
   return result;
 }
@@ -35,7 +35,7 @@ template<typename ValueType>
 ValueType Gauss<2>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,2> weights {1./2,1./2};
   for (int i = 0; i < 2; i++)
   {
@@ -50,7 +50,7 @@ template<typename ValueType>
 ValueType Gauss<3>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,3> weights {5./18, 4./9., 5./18};
   for (int i = 0; i < 3; i++)
   {
@@ -65,7 +65,7 @@ template<typename ValueType>
 ValueType Gauss<4>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,4> weights {
     (18.-sqrt(30.))/36./2.,
     (18.+sqrt(30.))/36./2.,
@@ -85,7 +85,7 @@ template<typename ValueType>
 ValueType Gauss<5>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,5> weights {
     (322.-13.*sqrt(70.))/900./2.,
     (322.+13.*sqrt(70.))/900./2.,
@@ -106,7 +106,7 @@ template<typename ValueType>
 ValueType Gauss<6>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,6> weights {
     0.3607615730481386/2.,
     0.3607615730481386/2.,
@@ -128,7 +128,7 @@ template<typename ValueType>
 ValueType Gauss<7>::
 computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const_iterator evaluationsIter)
 {
-  ValueType result(0.0);
+  ValueType result({0.0});
   std::array<double,7> weights {
     0.4179591836734694/2.,
     0.3818300505051189/2.,

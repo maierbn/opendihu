@@ -1,7 +1,15 @@
 #pragma once
 
-#include "equation/type_traits.h"
 #include "control/types.h"
+#include "equation/type_traits.h"
+
+/*
+namespace Equation
+{
+template<typename Term>
+using hasLaplaceOperator = std::enable_if_t<Term::hasLaplaceOperator, Term>;
+}
+*/
 
 namespace SpatialDiscretization
 {

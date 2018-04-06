@@ -24,8 +24,9 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
-  std::vector<std::string> componentNames;
+  std::vector<std::string> componentNames(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), componentNames.begin());
+   
   initializeFromFieldVariable(rhs, name, componentNames);
   
   // copy entries in values vector

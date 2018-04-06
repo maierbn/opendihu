@@ -7,18 +7,76 @@
 
 #include "easylogging++.h"
 #include "solver/nonlinear.h"
+#include "data_management/finite_elements_solid_mechanics.h"
 
 namespace SpatialDiscretization
 {
  
-// general implementation of nonlinear solving for solid mechanics
+/** 
+ * Nonlinear function F that gets solved by PETSc, solve for x such that F(x) = b
+ *  Input Parameters:
+ *  snes - the SNES context
+ *  x    - input vector
+ *  context  - optional user-defined context
+ *
+ *  Output Parameter:
+ *  f - function vector
+ */
+template<typename T>
+PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
+{
+  T* object = static_cast<T*>(context);
+ 
+  // save the current displacement values
+  object->setDisplacements(x);
+  
+  // compute the lhs which is the virtual work
+  object->computeInternalVirtualWork(f);
+  
+  // set rows in f to rhs for which dirichlet BC in u is given
+  object->applyDirichletBoundaryConditionsInNonlinearFunction(f);
+  
+  return 0;
+};
+
+/**
+ * FormJacobian1 - Evaluates Jacobian matrix
+ *  Input Parameters:
+ *  snes - the SNES context
+ *  x    - input vector
+ *  context  - optional user-defined context
+ *
+ *  Output Parameters:
+ *  jac - Jacobian matrix
+ *  b   - optionally different preconditioning matrix
+ */
+template<typename T>
+PetscErrorCode jacobianFunction(SNES snes, Vec x, Mat jac, Mat b, void *context)
+{
+  T* object = static_cast<T*>(context);
+ 
+  // save the current displacement values
+  object->setDisplacements(x);
+  
+  // compute the tangent stiffness matrix
+  object->setStiffnessMatrix();
+  
+  // store the tangent stiffness matrix in output Vecs
+  Mat &tangentStiffnessMatrix = object->tangentStiffnessMatrix();
+  jac = tangentStiffnessMatrix;
+  b = jac;
+  return 0;
+};
+ 
+// general implementation of nonlinear solving for solid mechanics (here for penalty formulation)
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 solve()
 {
@@ -37,62 +95,23 @@ solve()
   
   assert(snes != nullptr);
   
-    
-  /** 
-   * Nonlinear function F that gets solved by PETSc, solve for x such that F(x) = b
-   *  Input Parameters:
-   *  snes - the SNES context
-   *  x    - input vector
-   *  ctx  - optional user-defined context
-   *
-   *  Output Parameter:
-   *  f - function vector
-   */
-  auto nonlinearFunction = [this](SNES snes, Vec &x, Vec &f, void *ctx) -> PetscErrorCode
-  {
-    // save the current displacement values
-    this->setDisplacements(x);
-    
-    // compute the lhs which is the virtual work
-    this->computeInternalVirtualWork(f);
-    
-    // set rows in f to rhs for which dirichlet BC in u is given
-    this->applyDirichletBoundaryConditionsInNonlinearFunction(f);
-    
-    return 0;
-  };
-
-  /**
-   * FormJacobian1 - Evaluates Jacobian matrix
-   *  Input Parameters:
-   *  snes - the SNES context
-   *  x    - input vector
-   *  ctx  - optional user-defined context
-   *
-   *  Output Parameters:
-   *  jac - Jacobian matrix
-   *  b   - optionally different preconditioning matrix
-   */
-  auto jacobianFunction = [this](SNES snes, Vec &x, Mat &jac, Mat &b, void *ctx) -> PetscErrorCode
-  {
-    // save the current displacement values
-    this->setDisplacements(x);
-    
-    // compute the tangent stiffness matrix
-    this->setStiffnessMatrix();
-    
-    // store the tangent stiffness matrix in output Vecs
-    Mat &tangentStiffnessMatrix = this->tangentStiffnessMatrix();
-    jac = tangentStiffnessMatrix;
-    b = jac;
-    return 0;
-  };
+  typedef FiniteElementMethodStiffnessMatrix<
+    BasisOnMeshType,
+    QuadratureType,
+    Term,
+    typename BasisOnMeshType::Mesh,
+    Equation::isIncompressible<Term>,
+    BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  > ThisClass;
+  
+  PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *) = *nonlinearFunction<ThisClass>;
+  PetscErrorCode (*callbackJacobian)(SNES, Vec, Mat, Mat, void *) = *jacobianFunction<ThisClass>;
   
   // set function
-  SNESSetFunction(*snes, residual, nonlinearFunction, NULL);
+  SNESSetFunction(*snes, residual, callbackNonlinearFunction, this);
   
   // set jacobian 
-  SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, jacobianFunction, NULL);
+  SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobian, this);
   
   // zero initial values
   ierr = VecSet(displacements, 0.0); CHKERRV(ierr);

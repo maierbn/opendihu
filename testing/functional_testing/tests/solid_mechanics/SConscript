@@ -13,7 +13,7 @@ testcases = [
   "mooney_rivlin_incompressible_penalty",
 ]
 
-testcases = ["mooney_rivlin_incompressible_mixed_condensation",]
+testcases = ["mooney_rivlin_incompressible_penalty",]
 
 for testcase in testcases:
   env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

@@ -18,7 +18,7 @@ public:
 };
 
 template<typename BasisFunctionType>
-using notMixed = std::enable_if_t<
+using isNotMixed = std::enable_if_t<
   !BasisFunctionType::isMixed,
   BasisFunctionType
 >;

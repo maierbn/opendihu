@@ -90,8 +90,7 @@ class FiniteElementMethodRhs :
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>
-    ::FiniteElementMethodBaseRhs;
+  using FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBaseRhs;
  
   friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:

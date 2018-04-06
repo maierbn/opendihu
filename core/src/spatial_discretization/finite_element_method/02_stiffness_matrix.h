@@ -7,9 +7,9 @@
 namespace SpatialDiscretization
 {
 
-/** general template for any mesh
+/** general template for any mesh, this should not be in use
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh, typename=Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh, typename=Term, typename=typename BasisOnMeshType::BasisFunction>
 class FiniteElementMethodStiffnessMatrix :
   public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
 {
@@ -19,7 +19,7 @@ public:
   
 protected:
   //! set entries in stiffness matrix
-  void setStiffnessMatrix();
+  void setStiffnessMatrix(){LOG(FATAL)<<"FiniteElementMethodStiffnessMatrix inheritance is wrong!";}
 };
 
 /** stencils
@@ -31,7 +31,8 @@ class FiniteElementMethodStiffnessMatrix<
   QuadratureType, 
   Term, 
   Mesh::StructuredRegularFixedOfDimension<1ul>, 
-  Equation::hasLaplaceOperator<Term>
+  Equation::hasLaplaceOperator<Term>,
+  BasisFunction::LagrangeOfOrder<1>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
@@ -52,7 +53,8 @@ class FiniteElementMethodStiffnessMatrix<
   QuadratureType, 
   Term, 
   Mesh::StructuredRegularFixedOfDimension<2ul>,
-  Equation::hasLaplaceOperator<Term>
+  Equation::hasLaplaceOperator<Term>,
+  BasisFunction::LagrangeOfOrder<1>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
@@ -73,7 +75,8 @@ class FiniteElementMethodStiffnessMatrix<
   QuadratureType,
   Term,
   Mesh::StructuredRegularFixedOfDimension<3ul>,
-  Equation::hasLaplaceOperator<Term>
+  Equation::hasLaplaceOperator<Term>,
+  BasisFunction::LagrangeOfOrder<1>
 > :
   public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
@@ -90,7 +93,12 @@ protected:
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMeshType, QuadratureType, Term, Equation::doesNotUseStencilsNorSolidMechanics<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh, Term>
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  Equation::doesNotUseStencilsNorSolidMechanics<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh,Term>,
+  Term,
+  typename BasisOnMeshType::BasisFunction
 > :
   public AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
 {
@@ -99,7 +107,10 @@ public:
   using AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::AssembleStiffnessMatrix;  
 };
 
+
+
  
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix_stencils.tpp"
+#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"

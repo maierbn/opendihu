@@ -152,7 +152,8 @@ computeReducedInvariants(const std::array<double,3> invariants, const double def
 
 
 template<typename BasisOnMeshType, typename Term>
-double computeArtificialPressure(const double deformationGradientDeterminant, double artificialPressureTilde)
+double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeArtificialPressure(const double deformationGradientDeterminant, double &artificialPressureTilde)
 {
   // compute the artifical pressure for penalty formulation, p = dPsi_vol/dJ 
   auto dPsidJExpression = SEMT::deriv_t(Term::strainEnergyDensityFunctionVolumetric, Term::J);
@@ -226,13 +227,11 @@ computePK2Stress(const double pressure,                             //< [in] pre
     // column index
     for (int j=0; j<3; j++)
     {
-      const double delta_ij = (i == j? 1 : 0);
-     
       // volumetric stress
       const double sVol = J * pressure * inverseRightCauchyGreen[j][i];
       
       // compute P : Sbar
-      const double pSbar = 0;
+      double pSbar = 0;
       
       // row index
       for (int k=0; k<3; k++)
@@ -380,7 +379,7 @@ computeElasticityTensor(const double pressure,
   
   std::vector<double> reducedInvariantsVector(reducedInvariants.begin(), reducedInvariants.end());
   
-  const double dPsi_dIbar1 = dPsi_dIbar1Expression.apply(reducedInvariantsVector);
+  //const double dPsi_dIbar1 = dPsi_dIbar1Expression.apply(reducedInvariantsVector);
   const double dPsi_dIbar2 = dPsi_dIbar2Expression.apply(reducedInvariantsVector);
   const double d2Psi_dIbar1Ibar1 = d2Psi_dIbar1Ibar1Expression.apply(reducedInvariantsVector);
   const double d2Psi_dIbar1Ibar2 = d2Psi_dIbar1Ibar2Expression.apply(reducedInvariantsVector);
@@ -418,7 +417,7 @@ computeElasticityTensor(const double pressure,
     // ----------- Ciso (Holzapfel p.255) -------------------------
     //                          ij ab    cd    kl
     // compute contribution from P : Cbar : P^T
-    const double PCbarPT = 0.;
+    double PCbarPT = 0.;
     
     // row index
     for (int a=0; a<3; a++)
@@ -445,7 +444,7 @@ computeElasticityTensor(const double pressure,
             const double P_klcd = delta_kc * delta_ld - 1./3 * inverseRightCauchyGreen[l][k] * rightCauchyGreen[d][c];
             const double PT_cdkl = P_klcd;
              
-            const double J43Cbar = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
+            double J43Cbar = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
             
             // factor1 * (I dyad I)
             J43Cbar += factor1 * (a==b) * (c==d);   

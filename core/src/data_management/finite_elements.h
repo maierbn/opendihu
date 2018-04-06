@@ -18,7 +18,7 @@ class DihuContext;
 namespace Data
 {
  
-template<typename BasisOnMeshType,typename Term,typename = Term>
+template<typename BasisOnMeshType,typename Term,typename = Term,typename = typename BasisOnMeshType::BasisFunction>
 class FiniteElements : 
   public Data<BasisOnMeshType>,
   public DiffusionTensor<BasisOnMeshType::dim()>
@@ -85,6 +85,22 @@ private:
 
 };
 
+/*
+#include "equation/type_traits.h"
+
+template<typename BasisOnMeshType,typename Term>
+class FiniteElements<
+  BasisOnMeshType,
+  Term,
+  Equation::isSolidMechanics<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+> : 
+  public Data<BasisOnMeshType>
+{
+public:
+  void tangentStiffnessMatrix();
+};
+*/
 }  // namespace
 
 #include "data_management/finite_elements.tpp"

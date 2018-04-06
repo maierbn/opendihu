@@ -18,16 +18,16 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
   PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 ~FiniteElements()
 {
   PetscErrorCode ierr;
@@ -38,8 +38,8 @@ FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
   }
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initialize()
 {
   Data<BasisOnMeshType>::initialize();
@@ -48,8 +48,8 @@ initialize()
   DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
@@ -76,13 +76,13 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
   dof_no_t n = this->mesh_->nDofs();
   
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
   
   this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
   this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
@@ -119,8 +119,8 @@ createPetscObjects()
   }
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 finalAssembly()
 {
   PetscErrorCode ierr;
@@ -134,36 +134,36 @@ finalAssembly()
   LOG(DEBUG) << "finalAssembly";
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -204,15 +204,15 @@ print()
   VLOG(4)<<"======================";
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-bool FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+bool FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -235,8 +235,8 @@ initializeMassMatrix()
   this->massMatrixInitialized_ = true;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
-typename FiniteElements<BasisOnMeshType,Term,DummyForTraits>::OutputFieldVariables FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+typename FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::OutputFieldVariables FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 getOutputFieldVariables()
 {
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField 

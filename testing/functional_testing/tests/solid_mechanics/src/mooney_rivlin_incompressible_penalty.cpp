@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<3>,
-    BasisFunction::BasisFunction::LagrangeOfOrder<1>,
+    BasisFunction::LagrangeOfOrder<1>,
     Quadrature::Gauss<3>,
     Equation::Static::MooneyRivlinIncompressible
   >

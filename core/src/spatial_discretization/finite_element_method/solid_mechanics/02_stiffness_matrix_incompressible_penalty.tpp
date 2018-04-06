@@ -20,8 +20,9 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 setStiffnessMatrix()
 {
@@ -29,7 +30,6 @@ setStiffnessMatrix()
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
   const int D = BasisOnMeshType::dim();  // = 3
-  const int nDofs = mesh->nDofs();
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int nElements = mesh->nElements();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
@@ -41,11 +41,11 @@ setStiffnessMatrix()
   typedef MathUtility::Matrix<nUnknowsPerElement,nUnknowsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
-            QuadratureType::numberEvaluations()
+            QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;     // evaluations[nGP^D](nUnknows,nUnknows)
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureType::numberEvaluations()> samplingPoints = QuadratureType::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray;
   
   typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
@@ -124,8 +124,8 @@ setStiffnessMatrix()
       std::array<Vec3,3> pk2StressIsochoric;
       Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fictitiousPK2Stress, pk2StressIsochoric);      
       // elasticity tensor C_{ijkl}
-      ElasticityTensor elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, pk2StressIsochoric, deformationGradientDeterminant);
-      
+      ElasticityTensor elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, pk2StressIsochoric, deformationGradientDeterminant, reducedInvariants);
+
       std::array<Vec3,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
@@ -154,8 +154,8 @@ setStiffnessMatrix()
                 {
                   // ----------------------------
                   // compute derivatives of phi
-                  const double dphiL_dXB = 0.0;
-                  const double dphiM_dXD = 0.0;
+                  double dphiL_dXB = 0.0;
+                  double dphiM_dXD = 0.0;
                   
                   // helper index k for multiplication with inverse Jacobian
                   for (int k = 0; k < D; k++)
@@ -180,7 +180,7 @@ setStiffnessMatrix()
                   const double S_BD = PK2Stress[dInternal][bInternal];
                   
                   // compute ffC = FaA * FbC * C_ABCD
-                  const double ffC = 0.0;
+                  double ffC = 0.0;
                   for (int aInternal = 0; aInternal < D; aInternal++)     // capital A in derivation
                   {
                     for (int cInternal = 0; cInternal < D; cInternal++)    // capital C in derivation
@@ -198,6 +198,8 @@ setStiffnessMatrix()
                   integrand += dphiL_dXB * ktilde_abBD * dphiM_dXD;
                 }
               }
+              
+              // store integrand in evaluations array
               evaluationsArray[samplingPointIndex](i,j) = integrand * fabs(jacobianDeterminant);
             }  // b
           }  // M 
@@ -256,25 +258,27 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 setDisplacements(Vec &x)
 {
   // copy values of x to displacements
-  VecCopy(x,this->data_.displacements());
+  VecCopy(x,this->data_.displacements().values());
   
   // set entries of Dirichlet BCs to specified values
-  VecSetValues(this->data_.displacements(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES);
+  VecSetValues(this->data_.displacements().values(), dirichletIndices_.size(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES);
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-Vec &FiniteElementMethodStiffnessMatrix<
+Mat &FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 tangentStiffnessMatrix()
 {
@@ -286,8 +290,9 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 computeInternalVirtualWork(Vec &resultVec)
 {
@@ -295,7 +300,7 @@ computeInternalVirtualWork(Vec &resultVec)
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
   const int D = BasisOnMeshType::dim();  // = 3
-  const int nDofs = mesh->nDofs();
+  //const int nDofs = mesh->nDofs();
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int nElements = mesh->nElements();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
@@ -307,11 +312,11 @@ computeInternalVirtualWork(Vec &resultVec)
   typedef std::array<double, nUnknowsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
-            QuadratureType::numberEvaluations()
+            QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;     // evaluations[nGP^D](nUnknows,nUnknows)
   
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureType::numberEvaluations()> samplingPoints = QuadratureType::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray;
   
   typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
@@ -390,8 +395,8 @@ computeInternalVirtualWork(Vec &resultVec)
               
               // ----------------------------
               // compute derivatives of phi
-              const double dphiL_dXA = 0.0;
-              const double dphiL_dXB = 0.0;
+              double dphiL_dXA = 0.0;
+              double dphiL_dXB = 0.0;
               
               // helper index k for multiplication with inverse Jacobian
               for (int k = 0; k < D; k++)
@@ -412,6 +417,10 @@ computeInternalVirtualWork(Vec &resultVec)
                          
             }  // B, bInternal
           }  // A, aInternal
+          
+          // store integrand in evaluations array
+          evaluationsArray[samplingPointIndex][i] = integrand;
+          
         }  // a
       }  // L
     }  // function evaluations
@@ -458,11 +467,13 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 initialize()
 {
+  initializeMaterialParameters();
   this->data_.initialize();
   this->setStiffnessMatrix();
   this->setRightHandSide();
@@ -475,15 +486,39 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+initializeMaterialParameters()
+{
+  std::array<double,Term::nMaterialParameters> parameters 
+    = PythonUtility::template getOptionArray<double, Term::nMaterialParameters>(this->specificSettings_, "materialParameters", 0.0);
+ 
+  LOG(DEBUG) << "Material has " << Term::nMaterialParameters << " parameters, parsed from \"materialParameters\": " << parameters;
+  
+  std::vector<double> parametersVector(Term::nMaterialParameters);
+  std::copy(parameters.begin(), parameters.end(), parametersVector.begin());
+  
+  // set all PARAM(i) values to the values given by materialParameters
+  SEMT::set_parameters<Term::nMaterialParameters>::to(parametersVector);
+}
+  
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 initializeBoundaryConditions()
 {
   LOG(TRACE)<<"initializeBoundaryConditions";
  
   dof_no_t nUnknowns = this->data_.nUnknowns();
-  Vec &rightHandSide = this->data_.externalVirtualEnergy();
+  Vec &rightHandSide = this->data_.externalVirtualEnergy().values();
   
   PetscErrorCode ierr;
   
@@ -526,8 +561,9 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
-  Mesh::isDeformable<typename BasisOnMeshType::Mesh>,
-  Equation::isIncompressible<Term>
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
 applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f)
 {

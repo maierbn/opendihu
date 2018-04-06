@@ -31,6 +31,8 @@ public:
   
   //! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
   static std::string getBasisFunctionString();
+  
+  static constexpr bool isNodalBased = true;  //< specify that this basis function is nodal based
 private:
 };
 

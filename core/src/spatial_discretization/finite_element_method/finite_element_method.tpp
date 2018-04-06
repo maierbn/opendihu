@@ -18,7 +18,7 @@ namespace SpatialDiscretization
 
 // set right hand side for laplace equation (set to 0)
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::notMixed<BasisFunctionType>>::
+void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>>::
 setRightHandSide()
 {
   // fill rhs vector with 0

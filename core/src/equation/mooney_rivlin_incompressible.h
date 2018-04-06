@@ -31,7 +31,10 @@ struct MooneyRivlinIncompressible : public Static
   static constexpr auto c0 = PARAM(0);   //< material parameter
   static constexpr auto c1 = PARAM(1);   //< material parameter
   static constexpr auto kappa = PARAM(2);   //< penalty parameter, kappa->infinity is incompressible
-
+  
+  static constexpr int nMaterialParameters = 3;  //< number of material parameters
+  
+  
   //! the isochoric part of the decoupled strain energy density function, Psi_iso, in terms of the reduced invariants
   static const auto constexpr strainEnergyDensityFunctionIsochoric 
     = c0*(Ibar1 - INT(3)) + c1*(Ibar2 - INT(3));

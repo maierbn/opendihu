@@ -17,7 +17,12 @@ namespace Data
 {
  
 template<typename BasisOnMeshType,typename Term>
-class FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>> : 
+class FiniteElements<
+  BasisOnMeshType,
+  Term,
+  Equation::isSolidMechanics<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+> : 
   public Data<BasisOnMeshType>
 {
 public:
@@ -81,6 +86,13 @@ public:
   
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
+  
+  //! return reference to a stiffness matrix
+  Mat &stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
+  
+  //! unneeded getter method
+  FieldVariable::FieldVariable<BasisOnMeshType,3> solution(){LOG(FATAL)<<"this should not be in use";}
+  FieldVariable::FieldVariable<BasisOnMeshType,3> rightHandSide(){LOG(FATAL)<<"this should not be in use";}
   
 private:
  

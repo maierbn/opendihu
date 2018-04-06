@@ -4,8 +4,8 @@
 
 #include "spatial_discretization/spatial_discretization.h"
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
-#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
-#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
+//#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
+//#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 #include "spatial_discretization/finite_element_method/05_timestepping.h"
 #include "basis_on_mesh/basis_on_mesh.h"
@@ -26,11 +26,11 @@ class FiniteElementMethod :
 {
 };
 
-/** partial specialisation for Laplace and solid mechanics: has only stiffnessMatrix
+/** partial specialisation for Laplace: has only stiffnessMatrix
  * use inheritage hierarchy until file 02_stiffness_matrix.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::notMixed<BasisFunctionType>> :
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
@@ -61,11 +61,11 @@ protected:
   void setRightHandSide(){}
 };
 
-/** common class for not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static and has a rhs
+/** common class for not specialized MeshType, BasisFunctionType, for poisson equation/solid mechanics/everything that is static and has a rhs
  * use inheritage hierarchy until file 04_rhs.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>, BasisFunction::notMixed<BasisFunctionType>> :
+class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
   public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:

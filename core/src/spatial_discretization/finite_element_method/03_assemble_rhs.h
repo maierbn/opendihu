@@ -26,16 +26,15 @@ protected:
 };
  
 /**
- * Partial specialization for solid mechanics
+ * Partial specialization for solid mechanics, mixed formulation
  */
-/*
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename QuadratureType,typename Term>
+class AssembleRightHandSide<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
+  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
+  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -43,7 +42,7 @@ protected:
   
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
   void setMassMatrix(){}
-};*/
+};
 
 };  // namespace
 

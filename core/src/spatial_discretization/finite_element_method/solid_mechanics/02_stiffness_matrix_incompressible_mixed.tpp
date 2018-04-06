@@ -17,7 +17,7 @@ void FiniteElementMethodStiffnessMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType, 
   Term,
-  Mesh::isDeformable<typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 setStiffnessMatrix()

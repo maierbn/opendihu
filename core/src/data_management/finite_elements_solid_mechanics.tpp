@@ -19,7 +19,15 @@ namespace Data
 {
 
 template<typename BasisOnMeshType,typename Term>
-FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+using FiniteElementsSolidMechanics = FiniteElements<
+  BasisOnMeshType,
+  Term,
+  Equation::isSolidMechanics<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>;
+ 
+template<typename BasisOnMeshType,typename Term>
+FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
@@ -27,7 +35,7 @@ FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 }
 
 template<typename BasisOnMeshType,typename Term>
-FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 ~FiniteElements()
 {
   PetscErrorCode ierr;
@@ -39,14 +47,14 @@ FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 initialize()
 {
   Data<BasisOnMeshType>::initialize();
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
@@ -74,22 +82,22 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 }
 
 template<typename BasisOnMeshType,typename Term>
-dof_no_t FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 nUnknowns()
 {
   return this->mesh_->nNodes() * 3;  // 3 components for displacements
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 createPetscObjects()
 {
   dof_no_t n = this->mesh_->nDofs();
   
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects("<<n<<")";
   
   this->residual_ = this->mesh_->template createFieldVariable<3>("residual");
-  this->externalVirtualEnergy = this->mesh_->template createFieldVariable<3>("externalVirtualEnergy");
+  this->externalVirtualEnergy_ = this->mesh_->template createFieldVariable<3>("externalVirtualEnergy");
   this->increment_ = this->mesh_->template createFieldVariable<3>("increment");
   this->displacements_ = this->mesh_->template createFieldVariable<3>("displacements");
   this->geometryReference_ = this->mesh_->template createFieldVariable<3>("geometryReference");
@@ -127,7 +135,7 @@ createPetscObjects()
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 finalAssembly()
 {
   PetscErrorCode ierr;
@@ -140,35 +148,35 @@ finalAssembly()
 }
 
 template<typename BasisOnMeshType,typename Term>
-Mat &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+Mat &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 tangentStiffnessMatrix()
 {
   return this->tangentStiffnessMatrix_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 residual()
 {
   return *this->residual_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 geometryActual()
 {
   return this->mesh_->geometryField();
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 geometryReference()
 {
   return *this->geometryReference_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 displacements()
 {
   return *this->displacements_;
@@ -176,21 +184,21 @@ displacements()
 
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 externalVirtualEnergy()
 {
   return *this->externalVirtualEnergy_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-Mat &FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+Mat &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -201,7 +209,7 @@ print()
   MatGetSize(this->tangentStiffnessMatrix_, &nRows, &nColumns);
   VLOG(4)<<"tangentStiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
-  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->tangentStiffnessMatrix_, this->rhs_->values());
+  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->tangentStiffnessMatrix_, this->residual_->values());
   VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->tangentStiffnessMatrix_);
   
   MatInfo info;
@@ -232,14 +240,14 @@ print()
 }
 
 template<typename BasisOnMeshType,typename Term>
-bool FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+bool FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -263,8 +271,8 @@ initializeMassMatrix()
 }
 
 template<typename BasisOnMeshType,typename Term>
-typename FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::OutputFieldVariables 
-FiniteElements<BasisOnMeshType,Term,Equation::isSolidMechanics<Term>>::
+typename FiniteElementsSolidMechanics<BasisOnMeshType,Term>::OutputFieldVariables 
+FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 getOutputFieldVariables()
 {
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> actualGeometryField 

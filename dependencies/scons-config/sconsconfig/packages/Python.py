@@ -56,8 +56,9 @@ class Python(Package):
         if ldflags[-1] == '\n':
           ldflags = ldflags[:-1]
         
-        #print "cflags: [{}]".format(cflags)
-        #print "ldflags: [{}]".format(ldflags)
+        ctx.Log("python includes and ldflags:")
+        ctx.Log("cflags: [{}]".format(cflags))
+        ctx.Log("ldflags: [{}]".format(ldflags))
         
         env.MergeFlags(cflags)
         env.MergeFlags(ldflags)

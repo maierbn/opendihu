@@ -43,6 +43,24 @@ protected:
   void setRightHandSide();
 };
 
+/* class for mixed formulation for structural mechanics
+ */
+template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType, typename Term>
+class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Term> :
+  public FiniteElementMethodRhs<BasisOnMesh::Mixed<
+    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodRhs<BasisOnMesh::Mixed<
+    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
+    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodRhs;
+    
+protected:
+  void setRightHandSide(){}
+};
+
 /** common class for not specialized MeshType, BasisFunctionType, for poisson equation/everything that is static and has a rhs
  * use inheritage hierarchy until file 04_rhs.h
  */
@@ -54,24 +72,6 @@ public:
   //! use constructor of base class
   using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodRhs;
   
-};
-
-/* class for mixed formulation for structural mechanics
- */
-template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType, typename Term>
-class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Term> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<
-    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>
-{
-public:
-  //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<
-    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
-    
-protected:
-  void setRightHandSide(){}
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping

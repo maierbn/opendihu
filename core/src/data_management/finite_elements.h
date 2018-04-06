@@ -18,7 +18,7 @@ class DihuContext;
 namespace Data
 {
  
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType,typename Term,typename = Term>
 class FiniteElements : 
   public Data<BasisOnMeshType>,
   public DiffusionTensor<BasisOnMeshType::dim()>
@@ -81,9 +81,6 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
   
-  bool disablePrinting_ = false;    ///< if printing of matrix and vectors is disabled
-  bool disableMatrixPrinting_ = false; ///< if the matrix should not be printed
-  
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
 
 };
@@ -92,3 +89,4 @@ private:
 
 #include "data_management/finite_elements.tpp"
 #include "data_management/finite_elements_mixed.h"
+#include "data_management/finite_elements_solid_mechanics.h"

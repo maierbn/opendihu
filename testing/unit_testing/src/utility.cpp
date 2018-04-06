@@ -5,7 +5,7 @@
 #include <fstream>
 #include "gtest/gtest.h"
 
-void assertFileMatchesContent(std::string filename, std::string referenceContent)
+void assertFileMatchesContent(std::string filename, std::string referenceContent, std::string referenceContent2)
 {
   // read in generated exnode file 
   std::ifstream file(filename);
@@ -23,5 +23,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   // read in file contents
   file.read(&fileContents[0], fileSize);
   
-  ASSERT_EQ(fileContents, referenceContent) << "file content is different";
+  if (fileContents != referenceContent && fileContents != referenceContent2)
+  {
+    ASSERT_EQ(fileContents, referenceContent) << "file content of file \"" << filename << "\" is different (referenceContent)";
+    ASSERT_EQ(fileContents, referenceContent2) << "file content of file \"" << filename << "\" is different (referenceContent2)";
+  }
 }

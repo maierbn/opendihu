@@ -59,8 +59,8 @@ increment()
 }
 
 template<typename BasisOnMeshType,int nComponents>
-int TimeStepping<BasisOnMeshType,nComponents>::
-nDegreesOfFreedom()
+dof_no_t TimeStepping<BasisOnMeshType,nComponents>::
+nUnknowns()
 {
   return this->mesh_->nNodes() * nComponents;
 }

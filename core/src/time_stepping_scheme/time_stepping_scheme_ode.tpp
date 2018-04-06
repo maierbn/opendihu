@@ -25,7 +25,7 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 setInitialValues()
 {
-  int nDegreesOfFreedom = data_.nDegreesOfFreedom();
+  dof_no_t nUnknowns = data_.nUnknowns();
   Vec &solution = data_.solution().values();
  
   // initialize with 0
@@ -34,14 +34,9 @@ setInitialValues()
   
   // set from settings
   std::vector<double> values;
-  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDegreesOfFreedom, values);
+  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, values);
   
-  // loop over initialValues list
-  for(int i=0; i<nDegreesOfFreedom; i++)
-  {
-    //                 vector    row  value
-    ierr = VecSetValue(solution, i, values[i], INSERT_VALUES); CHKERRV(ierr);
-  }
+  PetscUtility::setVector(values, solution);
 }
 
 template<typename DiscretizableInTimeType>

@@ -96,6 +96,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   {
     // output python object
     PyFile_WriteObject(pyData, file, 0);
+    LOG(INFO) << (usePickle? "Binary" : "ASCII") << " file \"" << filename << "\" written.";
     LOG(DEBUG) << "PyFile_WriteObject done";
   }
   

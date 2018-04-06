@@ -117,6 +117,8 @@ setStiffnessMatrix()
       }  // j
     }  // i
   }  // elementNo
+  
+  // MatAssemblyBegin(stiffnessMatrix,MAT_FINAL_ASSEMBLY) is called after this via data->finalAssembly
 }
 
 };

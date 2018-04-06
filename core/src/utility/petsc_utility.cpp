@@ -193,7 +193,7 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
   return s.str();
 }
 
-std::string PetscUtility::getStringConvergedReason(KSPConvergedReason convergedReason)
+std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 {
   
   // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPGetConvergedReason.html
@@ -250,6 +250,67 @@ std::string PetscUtility::getStringConvergedReason(KSPConvergedReason convergedR
   case KSP_DIVERGED_PCSETUP_FAILED:
     return "KSP_DIVERGED_PCSETUP_FAILED";
     
+  default:
+    break;
+  }
+  
+  std::stringstream s;
+  if (convergedReason < 0)
+    s << "divergence, ";
+  else
+    s << "converged, ";
+  s << "unknown reason (" << int(convergedReason) << ")";
+  return s.str();
+}
+
+std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason convergedReason)
+{
+  
+  // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/SNES/SNESConvergedReason.html#SNESConvergedReason
+  switch(convergedReason)
+  {
+  case SNES_CONVERGED_FNORM_ABS:
+    return "SNES_CONVERGED_FNORM_ABS: ||F|| < atol";
+
+  case SNES_CONVERGED_FNORM_RELATIVE:
+    return "SNES_CONVERGED_FNORM_RELATIVE: ||F|| < rtol*||F_initial||";
+
+  case SNES_CONVERGED_SNORM_RELATIVE:
+    return "SNES_CONVERGED_SNORM_RELATIVE: Newton computed step size small; || delta x || < stol || x ||";
+
+  case SNES_CONVERGED_ITS:
+    return "SNES_CONVERGED_ITS: maximum iterations reached";
+
+  case SNES_CONVERGED_TR_DELTA:
+    return " SNES_CONVERGED_TR_DELTA";
+
+  case SNES_DIVERGED_FUNCTION_DOMAIN:
+    return "SNES_DIVERGED_FUNCTION_DOMAIN: the new x location passed the function is not in the domain of F";
+
+  case SNES_DIVERGED_FUNCTION_COUNT:
+    return "SNES_DIVERGED_FUNCTION_COUNT: returned if the solver is not yet finished";
+
+  case SNES_DIVERGED_LINEAR_SOLVE:
+    return "SNES_DIVERGED_LINEAR_SOLVE: the linear solve failed";
+
+  case SNES_DIVERGED_FNORM_NAN:
+    return "SNES_DIVERGED_FNORM_NAN";
+
+  case SNES_DIVERGED_MAX_IT:
+    return "SNES_DIVERGED_MAX_IT";
+
+  case SNES_DIVERGED_LINE_SEARCH :
+    return "SNES_DIVERGED_LINE_SEARCH: the line search failed";
+
+  case SNES_DIVERGED_INNER:
+    return "SNES_DIVERGED_INNER: inner solve failed";
+      
+  case SNES_DIVERGED_LOCAL_MIN:
+    return "SNES_DIVERGED_LOCAL_MIN: || J^T b || is small, implies converged to local minimum of F()";
+      
+  case SNES_CONVERGED_ITERATING:
+    return "SNES_CONVERGED_ITERATING";
+      
   default:
     break;
   }

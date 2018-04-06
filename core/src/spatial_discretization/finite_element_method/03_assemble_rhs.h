@@ -28,6 +28,7 @@ protected:
 /**
  * Partial specialization for solid mechanics
  */
+/*
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
   public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
@@ -42,7 +43,7 @@ protected:
   
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
   void setMassMatrix(){}
-};
+};*/
 
 };  // namespace
 

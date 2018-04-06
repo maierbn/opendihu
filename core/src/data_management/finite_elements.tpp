@@ -18,16 +18,16 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType>
-FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
   PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType>
-FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 ~FiniteElements()
 {
   PetscErrorCode ierr;
@@ -38,8 +38,8 @@ FiniteElements<BasisOnMeshType>::
   }
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 initialize()
 {
   Data<BasisOnMeshType>::initialize();
@@ -48,8 +48,8 @@ initialize()
   DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
@@ -76,13 +76,13 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 createPetscObjects()
 {
   dof_no_t n = this->mesh_->nDofs();
   
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits>::createPetscObjects("<<n<<")";
   
   this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
   this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
@@ -119,8 +119,8 @@ createPetscObjects()
   }
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 finalAssembly()
 {
   PetscErrorCode ierr;
@@ -134,36 +134,36 @@ finalAssembly()
   LOG(DEBUG) << "finalAssembly";
 }
 
-template<typename BasisOnMeshType>
-Mat &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename BasisOnMeshType>
-Mat &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -174,11 +174,8 @@ print()
   MatGetSize(this->stiffnessMatrix_, &nRows, &nColumns);
   VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
-  if (!this->disableMatrixPrinting_)
-  {
-    VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
-    VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
-  }
+  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
+  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
   
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_, MAT_LOCAL, &info);
@@ -207,15 +204,15 @@ print()
   VLOG(4)<<"======================";
 }
 
-template<typename BasisOnMeshType>
-bool FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+bool FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -238,8 +235,8 @@ initializeMassMatrix()
   this->massMatrixInitialized_ = true;
 }
 
-template<typename BasisOnMeshType>
-typename FiniteElements<BasisOnMeshType>::OutputFieldVariables FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits>
+typename FiniteElements<BasisOnMeshType,Term,DummyForTraits>::OutputFieldVariables FiniteElements<BasisOnMeshType,Term,DummyForTraits>::
 getOutputFieldVariables()
 {
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField 

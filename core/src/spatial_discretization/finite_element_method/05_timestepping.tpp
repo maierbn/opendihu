@@ -130,7 +130,7 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 mesh()
 {
-  return FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::mesh();
+  return FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::mesh();
 }
   
 } // namespace SpatialDiscretization

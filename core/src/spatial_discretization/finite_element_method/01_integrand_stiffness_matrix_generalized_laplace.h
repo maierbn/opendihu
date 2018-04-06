@@ -17,7 +17,7 @@ template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 class IntegrandStiffnessMatrix<1,EvaluationsType,BasisOnMeshType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data,
                                            const std::array<Vec3,1> &jacobian, const std::array<double,1> xi);
 };
 
@@ -28,7 +28,7 @@ template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 class IntegrandStiffnessMatrix<2,EvaluationsType,BasisOnMeshType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data,
                                            const std::array<Vec3,2> &jacobian, const std::array<double,2> xi);
 };
 
@@ -39,7 +39,7 @@ template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 class IntegrandStiffnessMatrix<3,EvaluationsType,BasisOnMeshType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>
 {
 public:
-  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data,
+  static EvaluationsType evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data,
                                            const std::array<Vec3,3> &jacobian, const std::array<double,3> xi);
 };
 

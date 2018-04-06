@@ -10,7 +10,7 @@ namespace SpatialDiscretization
 //integrand for stiffness matrix of laplace operator, 1D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,1> &jacobian, const std::array<double,1> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const std::array<Vec3,1> &jacobian, const std::array<double,1> xi)
 {
   EvaluationsType evaluations;
   
@@ -37,7 +37,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
 {
   LOG(TRACE) << "evaluateIntegrand LAPLACE";
   
@@ -99,7 +99,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType> &data, const std::array<Vec3,3> &jacobian, const std::array<double,3> xi)
+evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const std::array<Vec3,3> &jacobian, const std::array<double,3> xi)
 {
   EvaluationsType evaluations;
   

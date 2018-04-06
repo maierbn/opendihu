@@ -45,7 +45,7 @@ public:
   static constexpr int getNDofsPerNode();
   
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual int nDegreesOfFreedom();
+  virtual dof_no_t nUnknowns();
   
   //! field variables that will be output by outputWriters
   typedef std::tuple<

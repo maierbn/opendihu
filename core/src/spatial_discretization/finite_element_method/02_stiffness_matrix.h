@@ -11,11 +11,11 @@ namespace SpatialDiscretization
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh, typename=Term>
 class FiniteElementMethodStiffnessMatrix :
-  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType>
+  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix
@@ -33,11 +33,11 @@ class FiniteElementMethodStiffnessMatrix<
   Mesh::StructuredRegularFixedOfDimension<1ul>, 
   Equation::hasLaplaceOperator<Term>
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix
@@ -54,11 +54,11 @@ class FiniteElementMethodStiffnessMatrix<
   Mesh::StructuredRegularFixedOfDimension<2ul>,
   Equation::hasLaplaceOperator<Term>
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix
@@ -75,11 +75,11 @@ class FiniteElementMethodStiffnessMatrix<
   Mesh::StructuredRegularFixedOfDimension<3ul>,
   Equation::hasLaplaceOperator<Term>
 > :
-  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>
+  public FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
   
 protected:
   //! set entries in stiffness matrix

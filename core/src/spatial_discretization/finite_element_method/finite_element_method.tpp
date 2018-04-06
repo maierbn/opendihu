@@ -21,21 +21,11 @@ template<typename MeshType, typename BasisFunctionType, typename QuadratureType,
 void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::notMixed<BasisFunctionType>>::
 setRightHandSide()
 {
-  LOG(TRACE)<<"setRightHandSide for Laplace equation";
-
-  int nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
-  
-  // fill rhs vector
+  // fill rhs vector with 0
   PetscErrorCode ierr;
   
   Vec &rightHandSide = this->data_.rightHandSide().values();
-  
-  for (node_no_t nodeNo = 0; nodeNo < nDegreesOfFreedom; nodeNo++)
-  {
-   
-    //                 vector         row     value
-    ierr = VecSetValue(rightHandSide, nodeNo, 0.0, INSERT_VALUES); CHKERRV(ierr);
-  }
+  ierr = VecZeroEntries(rightHandSide); CHKERRV(ierr);
 }
 
 };

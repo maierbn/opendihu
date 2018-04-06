@@ -62,7 +62,7 @@ template<typename FieldVariableType>
 PyObject *PythonBase<OutputFieldVariablesType>::
 buildPyFieldVariableObject(FieldVariableType fieldVariable, bool onlyNodalValues)
 {
-  VLOG(2) << "field variable";
+  VLOG(2) << "field variable \"" << fieldVariable->name() << "\"";
   VLOG(2) << "has "<<fieldVariable->getNComponents()<<" components: "<<fieldVariable->componentNames();
   
   const int nComponents = fieldVariable->getNComponents();

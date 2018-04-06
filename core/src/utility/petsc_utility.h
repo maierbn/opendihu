@@ -5,6 +5,7 @@
 
 #include <petscmat.h>
 #include <petscksp.h>
+#include <petscsnes.h>
 
 class PetscUtility
 {
@@ -34,5 +35,8 @@ public:
   static std::string getStringSparsityPattern(const Mat &matrix);
   
   ///! return a string description of the reason why the solution has finished
-  static std::string getStringConvergedReason(KSPConvergedReason convergedReason);
+  static std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason);
+  
+  ///! return a string description of the reason why the solution has finished
+  static std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReason);
 };    

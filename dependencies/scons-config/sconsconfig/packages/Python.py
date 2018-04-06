@@ -19,32 +19,36 @@ class Python(Package):
         pythonVersion = "2.7"   # set to 2.7 or 3
         
         # remove specified flags 
-        try:
-          #cflags = subprocess.check_output("python-config --cflags", shell=True)+' '
-          if pythonVersion == "3":
+        #cflags = subprocess.check_output("python-config --cflags", shell=True)+' '
+        if pythonVersion == "3":
+          try:
             cflags = subprocess.check_output("python3-config --includes", shell=True)
             ldflags = subprocess.check_output("python3-config --ldflags", shell=True)
-          else:
+          except:
+            ctx.Result(False)
+            return False
+        else:
+          try:
+            cflags = subprocess.check_output("python2.7-config --includes", shell=True)
+            ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
+          except:
+            print "command python2.7-config failed, try python-config instead"
             try:
-              cflags = subprocess.check_output("python2.7-config --includes", shell=True)
-              ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
-            except:
               cflags = subprocess.check_output("python-config --includes", shell=True)
               ldflags = subprocess.check_output("python-config --ldflags", shell=True)
-          
-          for flag_to_remove in flags_to_remove:            
-            while flag_to_remove in cflags:
-              startpos = cflags.index(flag_to_remove)
-              length = len(flag_to_remove)
-              while cflags[startpos+length] == ' ':
-                length += 1
-              cflags = cflags[0:startpos] + cflags[startpos+length:]
+            except:
+              ctx.Result(False)
+              return False
+        
+        for flag_to_remove in flags_to_remove:            
+          while flag_to_remove in cflags:
+            startpos = cflags.index(flag_to_remove)
+            length = len(flag_to_remove)
+            while cflags[startpos+length] == ' ':
+              length += 1
+            cflags = cflags[0:startpos] + cflags[startpos+length:]
               
             
-              
-        except:
-          ctx.Result(False)
-          return False
         
         # remove trailing newline
         if cflags[-1] == '\n':

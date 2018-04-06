@@ -112,8 +112,6 @@ setStiffnessMatrix()
   
   integralFactor = prefactor*integralFactor;
   
-  //int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
-  
   LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<", elementLength="<<elementLength0<<"x"<<elementLength1;
   LOG(DEBUG) << "integralFactor="<<integralFactor;
   
@@ -328,8 +326,6 @@ setStiffnessMatrix()
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
   
   integralFactor = prefactor*integralFactor;
-  
-  //int nDegreesOfFreedom = this->data_.mesh()->nDegreesOfFreedom();
   
   LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<"x"<<nElements2<<
     ", elementLength="<<elementLength0<<"x"<<elementLength1<<"x"<<elementLength2;

@@ -61,6 +61,7 @@ template<typename MeshType, typename BasisFunctionType>
 std::array<std::array<double,MeshType::dim()>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 getGradPhi(std::array<double,MeshType::dim()> xi) const
 {
+  // column-major storage, gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
   std::array<std::array<double,MeshType::dim()>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> gradPhi;
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {

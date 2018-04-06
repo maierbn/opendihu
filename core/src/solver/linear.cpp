@@ -15,7 +15,10 @@ Linear::Linear(PyObject *specificSettings) :
   //KSP *ksp;
   ksp_ = std::make_shared<KSP>();
   PetscErrorCode ierr = KSPCreate (PETSC_COMM_WORLD, ksp_.get()); CHKERRV(ierr);
-  //ksp_ = std::shared_ptr<KSP>(ksp);
+  
+  // set options from command line as specified by PETSc
+  KSPSetFromOptions(*ksp_);
+  
   
   // extract preconditioner context
   PC pc;

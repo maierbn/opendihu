@@ -6,31 +6,77 @@
 namespace SpatialDiscretization
 {  
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
-computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasisOnMesh::nDofsPerElement()> &displacement, 
-                           const std::array<Vec3,BasisOnMeshType::dim()> &jacobianMaterial, 
-                           const std::array<double, BasisOnMeshType::dim()> xi)
+template<typename BasisOnMeshType, typename Term>
+std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+                                         const std::array<double, BasisOnMeshType::dim()> xi)
 {
  
-  // compute the deformation gradient x_i,j = d_ij + u_i,j
+  // compute the deformation gradient w.r.t parameter space, dx/dxi = x_i,j = d_ij + u_i,j
   // where j is dimensionColumn and i is component of the used Vec3's
-  std::array<Vec3,BasisOnMeshType::dim()> deformationGradient;
+  // The real deformation gradient would be dx/dX, but computed here is dx/dxi 
+  std::array<Vec3,BasisOnMeshType::dim()> deformationGradientParameterSpace;
  
-  const int nDofsPerElement = BasisOnMeshType::HighOrderBasisOnMesh::nDofsPerElement();
+  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
-  // loop over dimension, i.e. columns of deformation gradient
+  // loop over dimension, i.e. columns of deformation gradient, j
   for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
   {
-    Vec3 dudxi({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
+    Vec3 du_dxi({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
+    // loop over dof no., M
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      double dphi_dxi = BasisOnMeshType::HighOrderBasisOnMesh::dphi_dxi(dofIndex, dimensionColumn, xi);
-      dudxi += dphi_dxi * displacement[dofIndex];   // vector-valued addition
+      double dphi_dxi = BasisOnMeshType::dphi_dxi(dofIndex, dimensionColumn, xi);
+      du_dxi += dphi_dxi * displacement[dofIndex];   // vector-valued addition
     }
     
-    // multiply du/dxi with dxi/dX to obtain du/dx
-    deformationGradient[dimensionColumn] = dudxi * jacobianMaterial[dimensionColumn];
+    deformationGradientParameterSpace[dimensionColumn] = du_dxi;
+    
+    // add Kronecker delta to obtain x_i,j = delta_ij + u_i,j
+    deformationGradientParameterSpace[dimensionColumn][dimensionColumn] += 1;
+  }
+  
+  return deformationGradientParameterSpace;
+}
+
+template<typename BasisOnMeshType, typename Term>
+std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+                           const std::array<Vec3,BasisOnMeshType::dim()> &inverseJacobianMaterial,
+                           const std::array<double, BasisOnMeshType::dim()> xi
+                          )
+{
+  // compute the deformation gradient x_i,j = d_ij + u_i,j
+  // where j is dimensionColumn and i is component of the used Vec3's
+  
+ 
+  std::array<Vec3,BasisOnMeshType::dim()> deformationGradient;
+ 
+  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  
+  // loop over dimension, i.e. columns of deformation gradient, j
+  for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
+  {
+    // compute du_i/dX_columnIndex
+    Vec3 du_dX({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
+    
+    // loop over dof no., M
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      // compute dphi_dofIndex/dX_dimensionColumn
+      double dphi_dX = 0;
+      for (int l = 0; l < 3; l++)
+      {
+        double dphi_dxil = BasisOnMeshType::dphi_dxi(dofIndex, l, xi);
+        double dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
+        dphi_dX += dphi_dxil * dxil_dX;
+      }
+      
+      // multiply dphi/dxi with dxi/dX to obtain dphi/dX
+      du_dX += dphi_dX * displacement[dofIndex];   // vector-valued addition
+    }
+    
+    deformationGradient[dimensionColumn] = du_dX;
     
     // add Kronecker delta to obtain x_i,j = delta_ij + u_i,j
     deformationGradient[dimensionColumn][dimensionColumn] += 1;
@@ -39,8 +85,8 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::HighOrderBasis
   return deformationGradient;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -64,8 +110,8 @@ computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &def
   return rightCauchyGreenTensor;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,3> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+std::array<double,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeInvariants(const std::array<Vec3,BasisOnMeshType::dim()> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
 {
   std::array<double,3> invariants;
@@ -93,8 +139,8 @@ computeInvariants(const std::array<Vec3,BasisOnMeshType::dim()> &rightCauchyGree
 }
 
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,2> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+std::array<double,2> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,2> reducedInvariants;
@@ -105,7 +151,7 @@ computeReducedInvariants(const std::array<double,3> invariants, const double def
 }
 
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename BasisOnMeshType, typename Term>
 double computeArtificialPressure(const double deformationGradientDeterminant, double artificialPressureTilde)
 {
   // compute the artifical pressure for penalty formulation, p = dPsi_vol/dJ 
@@ -123,8 +169,8 @@ double computeArtificialPressure(const double deformationGradientDeterminant, do
   return artificialPressure;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computePK2Stress(const double pressure,                             //< [in] pressure value p
                  const std::array<Vec3,3> &rightCauchyGreen,        //< [in] C
                  const std::array<Vec3,3> &inverseRightCauchyGreen, //< [in] C^{-1}
@@ -217,8 +263,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
   return pK2Stress;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,21> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants)
 {
   // the 21 distinct indices (i,j,k,l) of different values of C_{ijkl}
@@ -306,8 +352,8 @@ computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchy
   return elasticity;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,21> SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeElasticityTensor(const double pressure, 
                         const double pressureTilde,
                         const std::array<Vec3,3> &rightCauchyGreen,
@@ -359,7 +405,7 @@ computeElasticityTensor(const double pressure,
   // P = II - 1/3 C^-1 dyad C    (4th order tensor)
   // (P^T)_ijkl = P_klij
   
-  std::array<double,21> elasticity;
+  ElasticityTensor elasticity;
   // loop over distinct entries in elasticity tensor
   for (int entryNo = 0; entryNo < 21; entryNo++)
   {
@@ -454,8 +500,8 @@ computeElasticityTensor(const double pressure,
   return elasticity;
 }
 
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-double SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Term>:: 
+template<typename BasisOnMeshType, typename Term>
+double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computePressureFromDisplacements(double deformationGradientDeterminant, const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &PK2Stress)
 {
   double pressure = 0;

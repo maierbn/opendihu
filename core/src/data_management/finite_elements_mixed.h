@@ -18,8 +18,8 @@ namespace Data
 {
 /** partial specialization for mixed formulation
  */
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-class FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> :
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+class FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term> :
   public Data<HighOrderBasisOnMeshType>,
   public DiffusionTensor<HighOrderBasisOnMeshType::dim()>
 {

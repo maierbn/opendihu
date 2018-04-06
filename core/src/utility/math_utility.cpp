@@ -211,6 +211,8 @@ std::array<Vec3,3> computeSymmetricInverse(const std::array<Vec3,3> &matrix, dou
 
 std::array<Vec3,3> computeInverse(const std::array<Vec3,3> &matrix, double &determinant)
 {
+  // matrices are stored column-major
+  
   // rename input values
   const double m11 = matrix[0][0];
   const double m21 = matrix[0][1];
@@ -221,21 +223,21 @@ std::array<Vec3,3> computeInverse(const std::array<Vec3,3> &matrix, double &dete
   const double m13 = matrix[2][0];
   const double m23 = matrix[2][1];
   const double m33 = matrix[2][2];
-  TODO
-  determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
+  
+  determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
   double invDet = 1./determinant;
   
   std::array<Vec3,3> result;
   
-  result[0][0] = invDet*(m22*m33 - sqr(m32));  // entry m11
-  result[1][0] = invDet*(-m21*m33 + m31*m32);  // entry m12
-  result[2][0] = invDet*(m21*m32 - m22*m31);   // entry m13
-  result[0][1] = invDet*(-m21*m33 + m31*m32);  // entry m21
-  result[1][1] = invDet*(m11*m33 - sqr(m31));  // entry m22
-  result[2][1] = invDet*(-m11*m32 + m21*m31);  // entry m23
+  result[0][0] = invDet*(m22*m33 - m23*m32);   // entry m11
+  result[1][0] = invDet*(-m12*m33 + m13*m32);  // entry m12
+  result[2][0] = invDet*(m12*m23 - m13*m22);   // entry m13
+  result[0][1] = invDet*(-m21*m33 + m23*m31);  // entry m21
+  result[1][1] = invDet*(m11*m33 - m13*m31);   // entry m22
+  result[2][1] = invDet*(-m11*m23 + m13*m21);  // entry m23
   result[0][2] = invDet*(m21*m32 - m22*m31);   // entry m31
-  result[1][2] = invDet*(-m11*m32 + m21*m31);  // entry m32
-  result[2][2] = invDet*(m11*m22 - sqr(m21));  // entry m33
+  result[1][2] = invDet*(-m11*m32 + m12*m31);  // entry m32
+  result[2][2] = invDet*(m11*m22 - m12*m21);   // entry m33
   
   return result;
 }

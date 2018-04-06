@@ -1437,7 +1437,7 @@ with body forces in reference configuration, $\bfB=J\,\bfb$, and the first Piola
 The principle of virtual work is (Holzapfel \cite{holzapfel2000nonlinear}, p.385)
 \begin{equation*}
   \begin{array}{lll}
-    \ub{\ds\int_{\Omega} \bfP : ∇_\bfX \delta\bfu\,\d V}{=δW_\text{int}} = \ub{\ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d s}{=δW_\text{ext}}
+    \ub{\ds\int_{\Omega} \bfP : ∇_\bfX \delta\bfu\,\d V}{=δW_\text{int}} = \ub{\ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d s}{=δW_\text{ext}}
   \end{array}
 \end{equation*}
 The internal virtual work $δW_\text{int}$ can be expressed in terms of Green-Lagrange strain, $\bfE$, and 2nd Piola-Kirchhoff stress, $\bfS$,
@@ -1492,18 +1492,52 @@ In comparison with \eqref{eq:stress_split} we identify the split of the 2nd Piol
 \end{equation*}
 The penalty parameter $\kappa$ is a numerical parameter, for $\kappa \to \infty$ the problem gets incompressible, but ill-conditioned.
 
+The variation of the Green-Lagrange strain tensor, $δ\bfE$ is given by (p.375)
+\begin{equation}\label{eq:deltae}
+  \begin{array}{lll}
+    δ\bfE = \sym(\bfF^\top\,∇δu) = \dfrac12\big((\bfF^\top ∇δ\bfu)^\top + \bfF^\top ∇δ\bfu\big),\\[4mm]
+    δE_{AB} = \dfrac12\left(F_{aB}\,\p{δu_a}{X_A} + F_{aA}\,\p{δu_a}{X_B}\right)
+  \end{array}
+\end{equation}
+
 The governing equations are given by the principle of virtual work,
-\begin{equation*}
+\begin{equation}\label{eq:pvw_r}
   \begin{array}{lll}
     δW_\text{int}(\bfu) - δW_\text{ext} = 0.
   \end{array}
-\end{equation*}
-The displacement field, $\bfu$, is discretized using ansatz functions with coefficient vector $\hat{\bfu}$, yielding
-\begin{equation}\label{eq:pvw_r}
+\end{equation}
+The extern virtual energy is assumed to not depend on the displacements.
+
+\eqref{eq:pvw_r}  has to hold for arbitrary virtual displacements, $δ\bfu$. The system of equations is thus
+\begin{equation}\label{eq:fullp}
   \begin{array}{lll}
-    \ub{δW_\text{int}(\hat{\bfu}) - δW_\text{ext}}{=:\bfR} = 0.
+    \ub{\ds\int_{\Omega}\bfS:δ\bfE(δ\bfu)\,\d V}{=δW_\text{int}} 
+    - \ub{\ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d s}{=δW_\text{ext}} = 0,\qquad \forall\,δ\bfu
   \end{array}
 \end{equation}
+With the usual discretization,
+\begin{equation*}
+  \begin{array}{lll}
+    u_a = u^L_a\,\phi_L, \quad δu_a = δu^L_a\,\phi_L, \qquad \hat{\bfu} = (u_a^L)_{a=1,2,3}, \quad δ\hat{\bfu} = (δu_a^L)_{a=1,2,3},
+  \end{array}
+\end{equation*}
+we get from \eqref{eq:deltae} and \eqref{eq:fullp} in index form
+\begin{equation}\label{eq:iind}
+  \begin{array}{lll}
+    &\ds\int_{\Omega}\dfrac12S_{AB}\left(F_{aB}\,\p{δu_a}{X_A} + F_{aA}\,\p{δu_a}{X_B}\right) \,\d V 
+    - \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu_a\,\d V + \ds\int_{∂\Omega}  \bar{T}_a δu_a\,\d s= 0\\[4mm]
+    \Leftrightarrow\quad & 
+    \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V 
+    - \text{rhs}= 0\\[4mm]
+  \end{array}
+\end{equation}
+where the constant $\text{rhs}$, which is the discretized $δW_\text{ext}$, is given by
+\begin{equation*}
+  \begin{array}{lll}
+    \text{rhs} = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu^L_a\,\phi_L\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu^L_a\,\phi_L\,\d s.
+  \end{array}
+\end{equation*}
+This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $\delta_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $\delta_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
 
 Within the Newton-Raphson scheme the equation is linearized around iterative values $\hat{\bfu}^{(k)}$.
 \begin{equation*} 
@@ -1530,7 +1564,7 @@ This is a linear system that has to be solved. It is repeated until the residual
 The left-hand side term of \eqref{eq:newton_update} is derived from \eqref{eq:pvw_r} (Holzapfel p.396),
 \begin{equation}\label{eq:directional_derivative_w_int}
   \begin{array}{lll}
-    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = \ds\int_\Omega \p{\delta u_a}{X_B}(\ub{δ_{ab}\,S_{AB} + F_{aA}\,F_{bC}\,C_{ABCD}}{=\tilde{k}_{abBD}})\p{Δu_b}{X_D}\,\d V
+    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = \ds\int_\Omega \p{\delta u_a}{X_B}(\ub{δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,C_{ABCD}}{=\tilde{k}_{abBD}})\p{Δu_b}{X_D}\,\d V
   \end{array}
 \end{equation}
 with

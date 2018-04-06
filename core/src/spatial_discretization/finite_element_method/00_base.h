@@ -9,7 +9,7 @@ namespace SpatialDiscretization
  * Base class containing basic finite element functionality such as initializing and solving.
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
-template<typename BasisOnMeshType, typename QuadratureType>
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
 class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
@@ -43,7 +43,7 @@ protected:
   virtual void manipulateWeakRhs(){}
   
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  Data::FiniteElements<BasisOnMeshType> data_;     ///< data object that holds all PETSc vectors and matrices
+  Data::FiniteElements<BasisOnMeshType,Term> data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 };

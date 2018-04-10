@@ -15,11 +15,44 @@ from sets import Set
 import os
 import time
 import datetime
+import scipy.integrate
 
 import py_reader
 import settings_1d
 import settings_2d
 
+# define analytic solution for testing
+def analytic_solution_2d(x0,x1,t):
+  
+  def h(x0,x1,t):
+    c=settings_2d.c
+    return 1./(4*np.pi*c*t)*np.exp(-(x0**2+x1**2) / (4*c*t))
+  
+  def integrand(y0,y1):
+    #print "integrand({},{})={}".format(y0,y1,initial_values_function(y0,y1)*h(x0-y0,x1-y1,t))
+    
+    return settings_2d.initial_values_function(y0,y1)*h(x0-y0,x1-y1,t)
+  
+    
+  #(value,error) = scipy.integrate.nquad(integrand, [(0.0, 4.0), (0.0, 3.0)], opts={"limit":5})
+  (value,error) = scipy.integrate.nquad(integrand, [(-np.infty, np.infty), (-np.infty, np.infty)])
+  
+  #print "analytic_solution({},{},{})={} (integration error {})".format(x0,x1,t,value,error)
+  return value
+  
+# define analytic solution for testing
+def analytic_solution_1d(x,t):
+  # note: this analytic solution would be correct for a non-bounded domain
+  
+  def h(x,t):
+    c=settings_1d.c
+    return 1./np.sqrt(4*np.pi*c*t)*np.exp(-x**2 / (4*c*t))
+  
+  def integrand(y):
+    return settings_1d.initial_values_function(y)*h(x-y,t)
+    
+  (value,error) = scipy.integrate.quad(integrand, -np.infty, np.infty)
+  return value
 files = ""
 
 show_plot = True
@@ -83,7 +116,7 @@ if dimension == 1:
     xdata = py_reader.get_values(dataset, "geometry", "x")
     ydata = py_reader.get_values(dataset, "solution", "0")
   
-    y_analytic = [settings_1d.analytic_solution(x,t) for x in xdata]
+    y_analytic = [analytic_solution_1d(x,t) for x in xdata]
     
     error_absolute = np.array(ydata) - np.array(y_analytic)
     error_absolute_norm = np.linalg.norm(error_absolute) / len(ydata)
@@ -148,7 +181,7 @@ if dimension == 1:
     # display data
     xdata = py_reader.get_values(data[i], "geometry", "x")
     ydata_numerical = py_reader.get_values(data[i], "solution", "0")
-    ydata_analytical = [settings_1d.analytic_solution(x,t) for x in xdata]
+    ydata_analytical = [analytic_solution_1d(x,t) for x in xdata]
     line_numerical.set_data(xdata, ydata_numerical)
     line_analytical.set_data(xdata, ydata_analytical)
     
@@ -213,7 +246,7 @@ if dimension == 2:
       fdata_subset = fdata[test_index_subset]
       
       # compute the analytic solution
-      f_analytic = [settings_2d.analytic_solution(x,y,t) for (x,y) in zip(xdata_subset,ydata_subset)]
+      f_analytic = [analytic_solution_2d(x,y,t) for (x,y) in zip(xdata_subset,ydata_subset)]
       
       #print "f_analytic:   ",f_analytic
       #print "fdata_subset: ",fdata_subset
@@ -319,7 +352,7 @@ if dimension == 2:
     fdata_numerical = py_reader.get_values(data[i], "solution", "0")
     
     # compute analytical solution, this takes very long
-    fdata_analytical = [settings_2d.analytic_solution(x,y,t) for y in y_positions for x in x_positions]
+    fdata_analytical = [analytic_solution_2d(x,y,t) for y in y_positions for x in x_positions]
     
     # reshape arrays
     fdata_numerical = np.reshape(fdata_numerical, nEntries)

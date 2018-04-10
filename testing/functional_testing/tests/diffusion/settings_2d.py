@@ -3,7 +3,7 @@
 # command arguments: <name> <number elements>
 
 import numpy as np
-import scipy.integrate
+#import scipy.integrate
 import sys
 
 n = 5   # number of elements
@@ -70,24 +70,6 @@ initial_values = [initial_values_function(x0,x1) for x1 in np.linspace(0,3.0,n_n
 #print "initial_values: ",initial_values
 #print "len: ", len(initial_values)
 
-# define analytic solution for testing
-def analytic_solution(x0,x1,t):
-  
-  def h(x0,x1,t):
-    return 1./(4*np.pi*c*t)*np.exp(-(x0**2+x1**2) / (4*c*t))
-  
-  def integrand(y0,y1):
-    #print "integrand({},{})={}".format(y0,y1,initial_values_function(y0,y1)*h(x0-y0,x1-y1,t))
-    
-    return initial_values_function(y0,y1)*h(x0-y0,x1-y1,t)
-  
-    
-  #(value,error) = scipy.integrate.nquad(integrand, [(0.0, 4.0), (0.0, 3.0)], opts={"limit":5})
-  (value,error) = scipy.integrate.nquad(integrand, [(-np.infty, np.infty), (-np.infty, np.infty)])
-  
-  #print "analytic_solution({},{},{})={} (integration error {})".format(x0,x1,t,value,error)
-  return value
-  
 
 config = {
   "ExplicitEuler" : {

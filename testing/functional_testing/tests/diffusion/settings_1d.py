@@ -3,7 +3,7 @@
 # command arguments: <name> <number elements>
 
 import numpy as np
-import scipy.integrate
+#import scipy.integrate
 import sys
 
 n = 20   # number of elements
@@ -49,18 +49,6 @@ if name == "1d_unstructured_deformable_quadratic":
 # set initial values
 initial_values = [initial_values_function(x) for x in np.linspace(0,4.0,n_nodes)]
 
-# define analytic solution for testing
-def analytic_solution(x,t):
-  # note: this analytic solution would be correct for a non-bounded domain
-  
-  def h(x,t):
-    return 1./np.sqrt(4*np.pi*c*t)*np.exp(-x**2 / (4*c*t))
-  
-  def integrand(y):
-    return initial_values_function(y)*h(x-y,t)
-    
-  (value,error) = scipy.integrate.quad(integrand, -np.infty, np.infty)
-  return value
   
 
 config = {

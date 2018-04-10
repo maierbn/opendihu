@@ -4,7 +4,7 @@ variant="debug"
 
 # for all testcases
 
-#for name in "2d_structured_regular_fixed_linear"
+#for name in "1d_structured_regular_fixed_linear"
 #for name in \
 #  "1d_structured_regular_fixed_linear" \
 #  "1d_structured_regular_fixed_quadratic" \
@@ -36,15 +36,15 @@ variant="debug"
 #  "3d_unstructured_deformable_quadratic" \
 #  "3d_unstructured_deformable_hermite"
 for name in \
-  "2d_structured_regular_fixed_linear" \
-  "2d_structured_regular_fixed_quadratic" \
-  "2d_structured_regular_fixed_hermite" \
-  "2d_structured_deformable_linear" \
-  "2d_structured_deformable_linear" \
-  "2d_structured_deformable_hermite" \
-  "2d_unstructured_deformable_linear" \
-  "2d_unstructured_deformable_quadratic" \
-  "2d_unstructured_deformable_hermite"
+  "1d_structured_regular_fixed_linear" \
+  "1d_structured_regular_fixed_quadratic" \
+  "1d_structured_regular_fixed_hermite" \
+  "1d_structured_deformable_linear" \
+  "1d_structured_deformable_linear" \
+  "1d_structured_deformable_hermite" \
+  "1d_unstructured_deformable_linear" \
+  "1d_unstructured_deformable_quadratic" \
+  "1d_unstructured_deformable_hermite"
 do
 
 # arguments to plot.py and check_results.py: <1=show plot window, 0=don't> <filenames>

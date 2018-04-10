@@ -19,14 +19,28 @@ ny = 1
 nz = 1
 # [1,1,1] = 1 element, 8 dofs per element, 8 dofs, 24 unknowns
 
+dirichletBC = {
+  0: 0.0, 1: 0.0, 2: 0.0,
+  6: 0.0, 8: 0.0,
+  12: 0.0, 13: 0.0,
+  18: 0.0
+} 
+
+traction = {
+  3: 1.0,
+  9: 1.0,
+  15: 1.0,
+  21: 1.0
+}
+
 config = {
   "FiniteElementMethod" : {
     "nElements": [nx,ny,nz],
     "nodeDimension": 1,
     "physicalExtent": [2.*nx,2.*ny,2.*nz],
-    "DirichletBoundaryCondition": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},  # displacement Dirichlet bc
+    "DirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
     "relativeTolerance": 1e-15,
-    "rightHandSide": {0: -1.0},  # surface traction or body force
+    "rightHandSide": traction,  # surface traction or body force
     "materialParameters": [6.352e-10, 3.627, 100],  # c0, c1, kappa
   },
   "OutputWriter" : [
@@ -37,7 +51,7 @@ config = {
 }
 
 # output config in a readable format
-if False:
+if True:
   import pprint 
   pp = pprint.PrettyPrinter()
   pp.pprint(config)

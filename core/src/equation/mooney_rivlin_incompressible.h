@@ -39,9 +39,9 @@ struct MooneyRivlinIncompressible : public Static
   static const auto constexpr strainEnergyDensityFunctionIsochoric 
     = c0*(Ibar1 - INT(3)) + c1*(Ibar2 - INT(3));
     
-  //! the volumetric part of the strain energy density function, numerical constant * penalty function
+  //! the volumetric part of the strain energy density function, numerical constant (kappa) * penalty function
   static const auto constexpr strainEnergyDensityFunctionVolumetric
-    = kappa * INT(1)/INT(2) * pow(J - INT(1), INT(2));
+    = kappa/INT(2) * pow(J - INT(1), INT(2));
 };
 
 }  // namespace

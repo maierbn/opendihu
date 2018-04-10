@@ -44,6 +44,7 @@ public:
   
   //! return reference to the increment field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,3> &increment();
+  FieldVariable::FieldVariable<BasisOnMeshType,3> &solution(){LOG(FATAL)<<"this should not be in use";}
   
   //! return reference to the actual geometry field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,3> &geometryActual();
@@ -56,6 +57,10 @@ public:
   
   //! return reference to the rhs field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,3> &externalVirtualEnergy();
+  
+  //! alias for externalVirtualEnergy, needed such that rhs setting functionality works
+  FieldVariable::FieldVariable<BasisOnMeshType,3> &rightHandSide();
+  
   
   //! perform the final assembly of petsc
   void finalAssembly();
@@ -89,10 +94,6 @@ public:
   
   //! return reference to a stiffness matrix
   Mat &stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
-  
-  //! unneeded getter method
-  FieldVariable::FieldVariable<BasisOnMeshType,3> solution(){LOG(FATAL)<<"this should not be in use";}
-  FieldVariable::FieldVariable<BasisOnMeshType,3> rightHandSide(){LOG(FATAL)<<"this should not be in use";}
   
 private:
  

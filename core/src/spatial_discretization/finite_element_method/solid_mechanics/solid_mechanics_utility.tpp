@@ -1,5 +1,8 @@
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.h"
 
+#include "easylogging++.h"
+#include "utility/math_utility.h"
+
 #include <cmath>
 #include <array>
 
@@ -155,14 +158,20 @@ template<typename BasisOnMeshType, typename Term>
 double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeArtificialPressure(const double deformationGradientDeterminant, double &artificialPressureTilde)
 {
+  //Psi_vol = kappa*1/2*(J-1)^2, dPsi_vol/dJ = kappa*(J-1)
+ 
   // compute the artifical pressure for penalty formulation, p = dPsi_vol/dJ 
   auto dPsidJExpression = SEMT::deriv_t(Term::strainEnergyDensityFunctionVolumetric, Term::J);
   auto dpdJExpression = SEMT::deriv_t(dPsidJExpression, Term::J);
   
-  std::vector<double> deformationGradientDeterminantVector(1,deformationGradientDeterminant);
+  VLOG(2) << "computeArtificialPressure, psi=" << Term::strainEnergyDensityFunctionVolumetric << ", dPsi/dJ=" << dPsidJExpression << ", dp/dJ=" << dpdJExpression;
+  
+  std::vector<double> deformationGradientDeterminantVector(3,deformationGradientDeterminant);
   
   const double artificialPressure = dPsidJExpression.apply(deformationGradientDeterminantVector);
   const double dpdJ = dpdJExpression.apply(deformationGradientDeterminantVector);
+  
+  VLOG(2) << "  artificialPressure: " << artificialPressure << ", dpdJ: " << dpdJ;
   
   // pTilde = p + J*dp/dJ
   artificialPressureTilde = artificialPressure + deformationGradientDeterminant*dpdJ;
@@ -210,7 +219,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
     for (int j=0; j<3; j++)
     {
       int delta_ij = (i == j? 1 : 0);
-      fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * factorJ23 * rightCauchyGreen[j][i];
+      const double cBar = factorJ23 * rightCauchyGreen[j][i];
+      fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * cBar;
     }
   }
   
@@ -244,9 +254,10 @@ computePK2Stress(const double pressure,                             //< [in] pre
           const int delta_jl = (j == l? 1 : 0);
           const int Ii = delta_ik * delta_jl;
           
-          const double Cc = 1./3 * inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];
+          const double Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];
+          const double Pp = (Ii - 1./3 * Cc);
           
-          pSbar += Ii * fictitiousPK2Stress[l][k] - Cc * fictitiousPK2Stress[l][k];
+          pSbar += Pp * fictitiousPK2Stress[l][k];
         }
       }
       
@@ -256,12 +267,50 @@ computePK2Stress(const double pressure,                             //< [in] pre
       
       // total stress is sum of volumetric and isochoric part
       pK2Stress[j][i] = sVol + sIso;
+      
+      //LOG(DEBUG) << "  Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i]; 
     }
+  }
+  
+  //check symmetry of PK2 stress
+  if (VLOG_IS_ON(1))
+  {
+    bool pK2IsSymmetric = true;
+    for (int a=0; a<3; a++)
+    {
+      for (int b=0; b<3; b++)
+      {
+        if (pK2Stress[a][b] != pK2Stress[b][a])
+        {
+          VLOG(1) << "pK2Stress["<<a<<"]["<<b<<"] != " << "pK2Stress["<<b<<"]["<<a<<"] ("<<pK2Stress[b][a]<<" != "<<pK2Stress[a][b]<<")";
+          pK2IsSymmetric = false;
+        }
+      }
+    }
+    if (pK2IsSymmetric)
+      VLOG(1) << "PK2 stress tensor is symmetric!";
   }
   
   return pK2Stress;
 }
 
+template<typename BasisOnMeshType, typename Term>
+std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeGreenLagrangeStrain(const std::array<Vec3,3> &rightCauchyGreen)
+{
+  std::array<Vec3,3> greenLagrangeStrain;
+  
+  for (int columnIndex = 0; columnIndex < 3; columnIndex++)
+  {
+    for (int rowIndex = 0; rowIndex < 3; rowIndex++)
+    {
+      const int delta_ij = (columnIndex == rowIndex? 1 : 0);
+      greenLagrangeStrain[columnIndex][rowIndex] = 0.5*(rightCauchyGreen[columnIndex][rowIndex] - delta_ij);
+    }
+  }
+  return greenLagrangeStrain;
+}
+  
 template<typename BasisOnMeshType, typename Term>
 ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants)
@@ -352,8 +401,8 @@ computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchy
 }
 
 template<typename BasisOnMeshType, typename Term>
-ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeElasticityTensor(const double pressure, 
+double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeElasticityTensorEntry(const int i, const int j, const int k, const int l,const double pressure, 
                         const double pressureTilde,
                         const std::array<Vec3,3> &rightCauchyGreen,
                         const std::array<Vec3,3> &inverseRightCauchyGreen,
@@ -362,14 +411,6 @@ computeElasticityTensor(const double pressure,
                         const double deformationGradientDeterminant,
                         const std::array<double,2> reducedInvariants)
 {
-  // the 21 distinct indices (i,j,k,l) of different values of C_{ijkl}
-  int indices[21][4] = {
-    {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
-    {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
-    {2,2,2,2}
-  };
-  
-  
   auto dPsi_dIbar1Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar1);
   auto dPsi_dIbar2Expression = SEMT::deriv_t(Term::strainEnergyDensityFunctionIsochoric, Term::Ibar2);
   
@@ -401,8 +442,259 @@ computeElasticityTensor(const double pressure,
   
   // Cbar = J^{-2/3}*C
   
-  // P = II - 1/3 C^-1 dyad C    (4th order tensor)
+  // P = II - 1/3 C^-1 dyad C    (4th order tensor, p.229)
+  // II_ijkl = delta_ik*delta_jl (p.23)
   // (P^T)_ijkl = P_klij
+  
+#if 0
+  //check symmetry of right Cauchy-Green tensor
+  bool cIsSymmetric = true;
+  for (int a=0; a<3; a++)
+  {
+    for (int b=0; b<3; b++)
+    {
+      if (rightCauchyGreen[a][b] != rightCauchyGreen[b][a])
+      {
+        std::cout << "rightCauchyGreen["<<a<<"]["<<b<<"] != " << "rightCauchyGreen["<<b<<"]["<<a<<"] ("<<rightCauchyGreen[b][a]<<" != "<<rightCauchyGreen[a][b]<<")"<<std::endl;
+        cIsSymmetric = false;
+      }
+    }
+  }
+  if (cIsSymmetric)
+    LOG(DEBUG) << "right cauchy green tensor is symmetric!";
+  
+  double Cbar[3][3][3][3];
+  double Ii1[3][3][3][3];
+  double Ii2[3][3][3][3];
+  double Icci[3][3][3][3];
+  double Cc[3][3][3][3];
+  
+  std::stringstream s;
+  for (int a=0; a<3; a++)
+  {
+    for (int b=0; b<3; b++)
+    {
+      for (int c=0; c<3; c++)
+      {
+        for (int d=0; d<3; d++)
+        {
+          // C = J^(2/3) * Cbar  =>   Cbar = J^(-2/3) * C = factorJ23*rightCauchyGreen
+          double J43Cbar = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
+          
+          // factor1 * (I dyad I)
+          J43Cbar += factor1 * (a==b) * (c==d);   
+          
+          // factor2 * (I dyad Cbar + Cbar dyad I)
+          J43Cbar += factor2 * factorJ23 * ((a==b) * rightCauchyGreen[d][c] + rightCauchyGreen[b][a] * (c==d));  
+          
+          // factor3 * (Cbar dyad Cbar)
+          J43Cbar += factor3 * (factorJ23 * rightCauchyGreen[b][a] * factorJ23 * rightCauchyGreen[d][c]);
+          
+          // factor4 * II (where II = delta_{ac}*delta_{bd}*e_a dyad e_b dyad e_c dyad e_d
+          J43Cbar += factor4 * (a==c) * (b==d);
+          
+          const double Cbar_abcd = factorJ43 * J43Cbar;
+          Cbar[a][b][c][d] = Cbar_abcd;
+          
+          Ii1[a][b][c][d] = (a==b? 1 : 0) * (c==d? 1 : 0);
+          Ii2[a][b][c][d] = (a==c? 1 : 0) * (b==d? 1 : 0);
+          Icci[a][b][c][d] = (a==b? 1 : 0) * factorJ23 * rightCauchyGreen[d][c] + factorJ23 * rightCauchyGreen[b][a] * (c==d? 1 : 0);
+          Cc[a][b][c][d] = factorJ23 * rightCauchyGreen[b][a] * factorJ23 * rightCauchyGreen[d][c];
+          
+          s << Cbar_abcd << " ";
+        }
+      }
+      s << std::endl;
+    }
+  }
+  
+  LOG(DEBUG) << "    Cbar_abcd: " << std::endl << s.str();
+  checkSymmetry(Cbar,"Cbar");
+  checkSymmetry(Ii1,"Ii1");
+  checkSymmetry(Ii2,"Ii2");
+  checkSymmetry(Icci,"Icci");
+  checkSymmetry(Cc,"Cc");
+  
+  
+  double CbarIiT[3][3][3][3];
+  s.str("");
+  for (int a=0; a<3; a++)
+  {
+    for (int b=0; b<3; b++)
+    {
+      for (int k=0; k<3; k++)
+      {
+        for (int l=0; l<3; l++)
+        {
+          double CbarIiT_abkl = 0;
+          
+          for (int c=0; c<3; c++)
+          {
+            for (int d=0; d<3; d++)
+            {
+              double J43Cbar = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
+              
+              // factor1 * (I dyad I)
+              J43Cbar += factor1 * (a==b) * (c==d);   
+              
+              // factor2 * (I dyad Cbar + Cbar dyad I)
+              J43Cbar += factor2 * factorJ23 * ((a==b) * rightCauchyGreen[d][c] + rightCauchyGreen[b][a] * (c==d));  
+              
+              // factor3 * (Cbar dyad Cbar)
+              J43Cbar += factor3 * (factorJ23 * rightCauchyGreen[b][a] * factorJ23 * rightCauchyGreen[d][c]);
+              
+              // factor4 * II (where II = delta_{ac}*delta_{bd}*e_a dyad e_b dyad e_c dyad e_d
+              J43Cbar += factor4 * (a==c) * (b==d);
+              
+              const double Cbar_abcd = factorJ43 * J43Cbar;
+              
+              const int delta_kc = (k == c? 1 : 0);
+              const int delta_ld = (l == d? 1 : 0);
+          
+        
+              const int Ii_klcd = delta_kc * delta_ld;
+              const int IiT_cdkl = Ii_klcd;
+              
+              CbarIiT_abkl += Cbar_abcd * IiT_cdkl;
+            }
+          }
+        
+          CbarIiT[a][b][k][l] = CbarIiT_abkl;
+          s << CbarIiT_abkl << " ";
+        }
+      }
+      s << std::endl;
+    }
+  }
+  
+  LOG(DEBUG) << "    CbarIiT_abkl: " << std::endl << s.str();
+  checkSymmetry(CbarIiT,"CbarIiT");
+#endif  
+  
+  // ----------- Ciso (Holzapfel p.255) -------------------------
+  //                          ij ab    cd    kl
+  // compute contribution from P : Cbar : P^T
+  double PCbarPT_ijkl = 0.;
+  
+  // row index
+  for (int a=0; a<3; a++)
+  {
+    // column index
+    for (int b=0; b<3; b++)
+    {
+      const int delta_ia = (i == a? 1 : 0);
+      const int delta_jb = (j == b? 1 : 0);
+      
+      // P = II - 1/3 C^-1 dyad C    (4th order tensor, p.229)
+      const int Ii_ijab = delta_ia * delta_jb;
+      const double P_ijab = Ii_ijab - 1./3 * inverseRightCauchyGreen[j][i] * rightCauchyGreen[b][a];
+      //const double P_ijab = Ii_ijab;
+     
+      double CbarPT_abkl = 0.0;
+      
+      // row index
+      for (int c=0; c<3; c++)
+      {
+        const int delta_kc = (k == c? 1 : 0);
+        
+        // column index
+        for (int d=0; d<3; d++)
+        {
+          const int delta_ld = (l == d? 1 : 0);
+          
+          const int Ii_klcd = delta_kc * delta_ld;
+          const double P_klcd = Ii_klcd - 1./3 * inverseRightCauchyGreen[l][k] * rightCauchyGreen[d][c];
+          //const double P_klcd = Ii_klcd;
+          
+          const double PT_cdkl = P_klcd;  // Holzapfel p.23
+           
+          double J43Ccbar_abcd = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
+          // Cbar: Holzapfel p.262
+          
+          const int delta_ab = (a == b? 1 : 0);
+          const int delta_cd = (c == d? 1 : 0);
+          const int delta_ac = (a == c? 1 : 0);
+          const int delta_bd = (b == d? 1 : 0);
+          
+          // factor1 * (I dyad I)
+          J43Ccbar_abcd += factor1 * delta_ab * delta_cd;   
+          
+          // factor2 * (I dyad Cbar + Cbar dyad I)
+          J43Ccbar_abcd += factor2 * factorJ23 * (delta_ab * rightCauchyGreen[d][c] + rightCauchyGreen[b][a] * delta_cd);  
+          
+          // factor3 * (Cbar dyad Cbar)
+          J43Ccbar_abcd += factor3 * (factorJ23 * rightCauchyGreen[b][a] * factorJ23 * rightCauchyGreen[d][c]);
+          
+          // factor4 * II (where II = delta_{ac}*delta_{bd}*e_a dyad e_b dyad e_c dyad e_d
+          J43Ccbar_abcd += factor4 * delta_ac * delta_bd;
+          
+          const double Cbar_abcd = factorJ43 * J43Ccbar_abcd;
+          
+          //LOG(DEBUG) << "    Cbar_abcd [" << a << b << c << d << "]: " << Cbar_abcd << ", add " << Cbar_abcd << "*" << PT_cdkl << "=" << Cbar_abcd * PT_cdkl;
+          
+          CbarPT_abkl += Cbar_abcd * PT_cdkl;
+        }
+      }
+      
+      PCbarPT_ijkl += P_ijab * CbarPT_abkl;
+      
+      //LOG(DEBUG) << "   CbarPT_abkl [" << a << b << k << l <<"]: " << CbarPT_abkl;
+      
+    }
+  }
+
+  //LOG(DEBUG) << "   PCbarPT_ijkl [" << i << j << k << l << "]: " << PCbarPT_ijkl;
+  
+  // compute Tr(Sbar)
+  // Sbar = fictitiousPK2Stress, Tr(•) = (•):C
+  double TrSbar = 0.0;
+  for (int a=0; a<3; a++)
+  {
+    // column index
+    for (int b=0; b<3; b++)
+    {
+      TrSbar += fictitiousPK2Stress[b][a] * rightCauchyGreen[b][a];
+    }
+  }
+  
+  // Holzapfel p.255
+  const double CcTerm1_ijkl = 1./2*(inverseRightCauchyGreen[k][i]*inverseRightCauchyGreen[l][j] + inverseRightCauchyGreen[l][i]*inverseRightCauchyGreen[k][j]);
+  const double CcTerm2_ijkl = inverseRightCauchyGreen[j][i]*inverseRightCauchyGreen[l][k];
+  const double pTilde_ijkl = CcTerm1_ijkl - 1./3 * CcTerm2_ijkl;
+  
+  const double trTerm_ijkl = 2./3 * factorJ23 * TrSbar * pTilde_ijkl;
+  
+  // compute last term -2/3(C^{-1} dyad S_iso + S_iso dyad C^{-1})
+  const double lastTerm_ijkl = -2./3*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
+  
+  const double Ciso = PCbarPT_ijkl + trTerm_ijkl + lastTerm_ijkl;
+  
+  // ----------- Cvol p.254 -------------------------
+  const double Cvol = J*pressureTilde*CcTerm2_ijkl - 2*J*pressure*CcTerm1_ijkl;
+  
+  //LOG(DEBUG) << "    Cvol: " << Cvol << ", Ciso: " << Ciso << " = " << PCbarPT_ijkl << " + " << trTerm_ijkl << " + " << lastTerm_ijkl;
+  
+  return Cvol + Ciso;
+}
+
+template<typename BasisOnMeshType, typename Term>
+ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeElasticityTensor(const double pressure, 
+                        const double pressureTilde,
+                        const std::array<Vec3,3> &rightCauchyGreen,
+                        const std::array<Vec3,3> &inverseRightCauchyGreen,
+                        const std::array<Vec3,3> &fictitiousPK2Stress,
+                        const std::array<Vec3,3> &pk2StressIsochoric,
+                        const double deformationGradientDeterminant,
+                        const std::array<double,2> reducedInvariants)
+{
+  // the 21 distinct indices (i,j,k,l) of different values of C_{ijkl}
+  // the symmetries are: C_ijkl = C_klij, C_ijkl = C_jikl = C_ijlk = C_jilk
+  int indices[21][4] = {
+    {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
+    {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
+    {2,2,2,2}
+  };
   
   ElasticityTensor elasticity;
   // loop over distinct entries in elasticity tensor
@@ -414,86 +706,27 @@ computeElasticityTensor(const double pressure,
     const int k = indices[entryNo][2];
     const int l = indices[entryNo][3];
     
-    // ----------- Ciso (Holzapfel p.255) -------------------------
-    //                          ij ab    cd    kl
-    // compute contribution from P : Cbar : P^T
-    double PCbarPT = 0.;
+    LOG(DEBUG) << " ----";
+    LOG(DEBUG) << " elasticity ijkl = " << i << j << k << l << " (entry " << entryNo << ")";
+    double entry_ijkl = computeElasticityTensorEntry(i,j,k,l,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
     
-    // row index
-    for (int a=0; a<3; a++)
-    {
-      // column index
-      for (int b=0; b<3; b++)
-      {
-        const int delta_ia = (i == a? 1 : 0);
-        const int delta_jb = (j == b? 1 : 0);
-        
-        // P = II - 1/3 C^-1 dyad C    (4th order tensor)
-        const double P_ijab = delta_ia * delta_jb - 1./3 * inverseRightCauchyGreen[j][i] * rightCauchyGreen[b][a];
-       
-        // row index
-        for (int c=0; c<3; c++)
-        {
-          const int delta_kc = (k == c? 1 : 0);
-          
-          // column index
-          for (int d=0; d<3; d++)
-          {
-            const int delta_ld = (l == d? 1 : 0);
-            
-            const double P_klcd = delta_kc * delta_ld - 1./3 * inverseRightCauchyGreen[l][k] * rightCauchyGreen[d][c];
-            const double PT_cdkl = P_klcd;
-             
-            double J43Cbar = 0.;  // J43Cbar = J^{4/3}*Cbar_abcd => J^{-4/3} * J43Cbar = Cbar_abcd
-            
-            // factor1 * (I dyad I)
-            J43Cbar += factor1 * (a==b) * (c==d);   
-            
-            // factor2 * (I dyad Cbar + Cbar dyad I)
-            J43Cbar += factor2 * factorJ23 * ((a==b) * rightCauchyGreen[d][c] + rightCauchyGreen[b][a] * (c==d));  
-            
-            // factor3 * (Cbar dyad Cbar)
-            J43Cbar += factor3 * (factorJ23 * rightCauchyGreen[b][a] * factorJ23 * rightCauchyGreen[d][c]);
-            
-            // factor4 * II (where II = delta_{ac}*delta_{bd}*e_a dyad e_b dyad e_c dyad e_d
-            J43Cbar += factor4 * (a==c) * (b==d);
-            
-            const double Cbar_abcd = factorJ43 * J43Cbar;
-            
-            PCbarPT += P_ijab * Cbar_abcd * PT_cdkl;
-          }
-        }
-      }
-    }
-  
-    // compute Tr(Sbar)
-    // Sbar = fictitiousPK2Stress, Tr(•) = (•):C
-    double TrSbar = 0.0;
-    for (int a=0; a<3; a++)
-    {
-      // column index
-      for (int b=0; b<3; b++)
-      {
-        TrSbar += fictitiousPK2Stress[b][a] * rightCauchyGreen[b][a];
-      }
-    }
+    //const double tol = 1e-15;
+    LOG(DEBUG) << " ijkl: " << entry_ijkl;
     
-    // Holzapfel p.255
-    const double CcTerm1 = 1./2*(inverseRightCauchyGreen[k][i]*inverseRightCauchyGreen[l][j] + inverseRightCauchyGreen[l][i]*inverseRightCauchyGreen[k][j]);
-    const double CcTerm2 = inverseRightCauchyGreen[j][i]*inverseRightCauchyGreen[l][k];
-    const double pTerm = CcTerm1 - 1./3*CcTerm2;
+    //double entry_jikl = computeElasticityTensorEntry(j,i,k,l,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
+    //LOG(DEBUG) << " jikl: " << entry_jikl << " (diff: " << entry_jikl-entry_ijkl << ")";
     
-    const double trTerm = 2./3*TrSbar*factorJ23 * pTerm; 
+    //double entry_ijlk = computeElasticityTensorEntry(i,j,l,k,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
+    //LOG(DEBUG) << " ijlk: " << entry_ijlk << " (diff: " << entry_ijlk-entry_ijkl << ")";
     
-    // compute last term -2/3(C^{-1} dyad S_iso + S_iso dyad C^{-1})
-    const double lastTerm = -2./3*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
+    //double entry_klij = computeElasticityTensorEntry(k,l,i,j,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
+    //LOG(DEBUG) << " klij: " << entry_klij << " (diff: " << entry_klij-entry_ijkl << ")";
     
-    const double Ciso = PCbarPT + trTerm + lastTerm;
+    //assert(fabs(entry_ijkl - entry_jikl) < tol);
+    //assert(fabs(entry_ijkl - entry_ijlk) < tol);
+    //assert(fabs(entry_ijkl - entry_klij) < tol);
     
-    // ----------- Cvol p.254 -------------------------
-    const double Cvol = J*pressureTilde*CcTerm2 - 2*J*pressure*CcTerm1;
-    
-    elasticity[entryNo] = Cvol + Ciso;
+    elasticity[entryNo] = entry_ijkl;
   }
   
   return elasticity;

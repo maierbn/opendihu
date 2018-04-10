@@ -13,7 +13,9 @@ m31,m32,m33 = symbols('m31,m32,m33')
 
 # compute inverse of M
 M=Matrix([[m11,m12,m13],[m21,m22,m23],[m31,m32,m33]])
+print "matrix:"
 print M
+print ""
 print "inv:",simplify(M.inv())
 # inv = 1/det * adj
 
@@ -21,6 +23,20 @@ print "adj:",simplify(M.adjugate())
  
 print "det:",simplify(M.det())
 print "T: 1/(det**2)*",simplify(M.adjugate()*M.adjugate().transpose())
+ 
+# compute inverse of a symmetric matrix
+M=Matrix([[m11,m21,m31],[m21,m22,m32],[m31,m32,m33]])
+print ""
+print "symmetric matrix:"
+print M
+print ""
+print "inv:",simplify(M.inv())
+print ""
+print "adj:",simplify(M.adjugate())
+print ""
+print "det:",simplify(M.det())
+print ""
+print ""
  
 # 3D
 # compute T

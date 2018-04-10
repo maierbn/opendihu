@@ -23,7 +23,7 @@ FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
-  PythonUtility::printDict(this->context_.getPythonConfig());
+  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>

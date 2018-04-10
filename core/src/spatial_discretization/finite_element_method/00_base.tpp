@@ -28,8 +28,11 @@ FiniteElementMethodBase(DihuContext context) :
   specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(specificSettings_);
   
-  LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
-  PythonUtility::printDict(specificSettings_);
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
+    PythonUtility::printDict(specificSettings_);
+  }
   
   std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<BasisOnMeshType>(specificSettings_);
   data_.setMesh(std::static_pointer_cast<BasisOnMeshType>(mesh));
@@ -37,10 +40,6 @@ FiniteElementMethodBase(DihuContext context) :
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is set";
   else
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
-  
-  
-  LOG(TRACE) << "FiniteElementsMethodBase";
-  PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename BasisOnMeshType,typename QuadratureType,typename Term>

@@ -33,6 +33,11 @@ template<int nRows, int nColumns>
 double &Matrix<nRows,nColumns>::
 operator()(int rowIndex, int columnIndex)
 {
+  assert(rowIndex >= 0);
+  assert(rowIndex < nRows);
+  assert(columnIndex >= 0);
+  assert(columnIndex < nColumns);
+  
   //return operator[](columnIndex*nRows + rowIndex);   // column-major
   return this->operator[](rowIndex*nColumns + columnIndex);   // row-major
 }

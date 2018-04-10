@@ -31,7 +31,7 @@ FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
-  PythonUtility::printDict(this->context_.getPythonConfig());
+  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -92,15 +92,19 @@ template<typename BasisOnMeshType,typename Term>
 void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 createPetscObjects()
 {
-  dof_no_t n = this->mesh_->nDofs();
+  // dimension of the tangent stiffness matrix
+  dof_no_t n = this->mesh_->nDofs()*3;
   
-  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, dimension of tangent stiffness matrix: "<<n<<"x"<<n<<"";
   
   this->residual_ = this->mesh_->template createFieldVariable<3>("residual");
   this->externalVirtualEnergy_ = this->mesh_->template createFieldVariable<3>("externalVirtualEnergy");
   this->increment_ = this->mesh_->template createFieldVariable<3>("increment");
   this->displacements_ = this->mesh_->template createFieldVariable<3>("displacements");
   this->geometryReference_ = this->mesh_->template createFieldVariable<3>("geometryReference");
+  
+  // set geometryReference to be the same as the initial geometry field
+  this->geometryReference_->setValues(this->mesh_->geometryField());
   
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -110,6 +114,8 @@ createPetscObjects()
   int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
   
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  diagonalNonZeros = std::min(diagonalNonZeros, n);
+  offdiagonalNonZeros = std::min(offdiagonalNonZeros, n);
   
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
@@ -117,15 +123,21 @@ createPetscObjects()
   // sparse matrix
   if (true)
   {
-    ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n, 
-                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
+    ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
+    ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE, PETSC_DECIDE, n, n); CHKERRV(ierr);
+    ierr = MatSetFromOptions(this->tangentStiffnessMatrix_); CHKERRV(ierr);
+
+
+    //ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n, 
+    //                  diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
     ierr = MatMPIAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+    ierr = MatSeqAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
   }
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
-  //MatSetOption(this->tangentStiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
+  MatSetOption(this->tangentStiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
   
   // dense matrix
-  if (false)
+  if(false)
   {
     ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_);  CHKERRV(ierr);
     ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE,PETSC_DECIDE, n, n);  CHKERRV(ierr);
@@ -182,6 +194,12 @@ displacements()
   return *this->displacements_;
 }
 
+template<typename BasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+rightHandSide()
+{
+  return *this->externalVirtualEnergy_;
+}
 
 template<typename BasisOnMeshType,typename Term>
 FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::

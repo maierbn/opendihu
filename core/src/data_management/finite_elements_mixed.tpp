@@ -23,7 +23,7 @@ FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshTy
 FiniteElements(DihuContext context) : Data<HighOrderBasisOnMeshType>(context)
 {
   LOG(TRACE) << "Data::FiniteElements<Mixed> constructor";
-  PythonUtility::printDict(this->context_.getPythonConfig());
+  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>

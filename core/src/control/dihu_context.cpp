@@ -46,6 +46,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
     
+    // configure PETSc to abort on errorm
+    PetscOptionsSetValue(NULL, "-on_error_abort", "");
+    
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
     

@@ -14,7 +14,7 @@
 namespace SpatialDiscretization
 {
   
-// general implementation for solid mechanics
+// general implementation for solid mechanics penalty 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
@@ -24,7 +24,7 @@ void FiniteElementMethodStiffnessMatrix<
   Equation::isIncompressible<Term>,
   BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
-setStiffnessMatrix()
+setStiffnessMatrix(Mat stiffnessMatrix)
 {
   // get pointer to mesh object
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
@@ -50,37 +50,58 @@ setStiffnessMatrix()
   
   typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
   PetscErrorCode ierr;
-  Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
+  Mat &tangentStiffnessMatrix = (stiffnessMatrix == PETSC_NULL ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
+  
+  LOG(DEBUG) << "nUnknowsPerElement: " << nUnknowsPerElement<<", n evaluations for quadrature: " << QuadratureDD::numberEvaluations();
   
   // initialize values to zero
-  int cntr = 1;
-  // loop over elements 
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  if (!tangentStiffnessMatrixInitialized_)
   {
-    auto dofNo = mesh->getElementDofNos(elementNo);
-    
-    for (int aDof = 0; aDof < nDofsPerElement; aDof++)
+    // there are no previous non-zero entries, so loop over all later needed entries and manually set to zero
+   
+    int cntr = 1;
+    // loop over elements 
+    for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
-      for (int aComponent = 0; aComponent < D; aComponent++)
+      auto dofNo = mesh->getElementDofNos(elementNo);
+      
+      for (int aDof = 0; aDof < nDofsPerElement; aDof++)
       {
-        for (int bDof = 0; bDof < nDofsPerElement; bDof++)
+        for (int aComponent = 0; aComponent < D; aComponent++)
         {
-          for (int bComponent = 0; bComponent < D; bComponent++)
+          for (int bDof = 0; bDof < nDofsPerElement; bDof++)
           {
-            dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
-            dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
-        
-            VLOG(3) << " initialize tangentStiffnessMatrix entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
-            ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0, INSERT_VALUES); CHKERRV(ierr);
+            for (int bComponent = 0; bComponent < D; bComponent++)
+            {
+              dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
+              dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
+          
+              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
+              ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
+            }
           }
         }
       }
     }
   }
+  else
+  {
+    // zero all previous non-zero entries, keeps matrix structure
+    MatZeroEntries(tangentStiffnessMatrix);
+    
+    VLOG(3) << " zero tangentStiffnessMatrix";              
+  }
+  
+  // log file
+  std::ofstream pk2file("pk2.txt", std::ios::out | std::ios::binary);
+  if (!pk2file.is_open())
+    LOG(FATAL) << "could not open pk2.txt";
+  pk2file << "--" << std::endl;
   
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   { 
+   
     // get geometry field of reference configuration
     std::array<Vec3,nDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
@@ -130,13 +151,33 @@ setStiffnessMatrix()
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
       
+      VLOG(2) << "geometryReferenceValues: " << geometryReferenceValues;
+      VLOG(2) << "Jacobian: J_phi=" << jacobianMaterial;
+      VLOG(2) << "jacobianDeterminant: J=" << jacobianDeterminant;
+      VLOG(2) << "inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
+      VLOG(2) << "deformationGradient: F=" << deformationGradient;
+      VLOG(2) << "deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
+      VLOG(2) << "rightCauchyGreen: C=" << rightCauchyGreen;
+      VLOG(2) << "rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
+      VLOG(2) << "inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
+      VLOG(2) << "invariants: I1,I2,I3: " << invariants;
+      VLOG(2) << "reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
+      VLOG(2) << "artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
+      VLOG(2) << "fictitiousPK2Stress: Sbar=" << fictitiousPK2Stress;
+      VLOG(2) << "pk2StressIsochoric: S_iso=" << pk2StressIsochoric;
+      VLOG(2) << "PK2Stress: S=" << PK2Stress;
+      VLOG(2) << "gradPhi: " << gradPhi;
+      VLOG(2) << "elasticity: C=" << elasticity;
+      
+      pk2file << xi << " " << PK2Stress << std::endl;
+      
       // loop over pairs of basis functions and evaluate integrand at xi
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)           // index over dofs, each dof has D components, L in derivation
       {
         for (int aComponent = 0; aComponent < D; aComponent++)     // lower-case a in derivation, index over displacement components
         {
           // compute index of degree of freedom and component (matrix row index)
-          const int i = nDofsPerElement*aDof + aComponent;
+          const int i = D*aDof + aComponent;
          
           for (int bDof = 0; bDof < nDofsPerElement; bDof++)       // index M in derivation
           {
@@ -144,7 +185,7 @@ setStiffnessMatrix()
             {
          
               // compute index of degree of freedom and component (index of entry in vector of unknows / matrix column index)
-              const int j = nDofsPerElement*bDof + bComponent;
+              const int j = D*bDof + bComponent;
              
               // compute integrand[i][j]
               double integrand = 0.0;
@@ -173,7 +214,6 @@ setStiffnessMatrix()
                     dphiM_dXD += dphiM_dxik * dxik_dXD;
                   }
                  
-                 
                   // ----------------------------
                   // compute ktilde_abBD
                   const int delta_ab = (aComponent == bComponent? 1 : 0);
@@ -199,12 +239,15 @@ setStiffnessMatrix()
                 }
               }
               
+              //LOG(DEBUG) << "(L,a),(M,b)=(" << aDof << ","<<aComponent<<"),("<<bDof<<","<<bComponent<<"), (i,j)=("<<i<<","<<j<<"), integrand=" << integrand;
+              
               // store integrand in evaluations array
               evaluationsArray[samplingPointIndex](i,j) = integrand * fabs(jacobianDeterminant);
             }  // b
           }  // M 
         }  // a
       }  // L
+      
     }  // function evaluations
     
     // integrate all values for the (i,j) dof pairs at once
@@ -220,14 +263,14 @@ setStiffnessMatrix()
       for (int aComponent = 0; aComponent < D; aComponent++)
       {
         // compute index of degree of freedom and component (matrix row index)
-        const int i = nDofsPerElement*aDof + aComponent;
+        const int i = D*aDof + aComponent;
        
         for (int bDof = 0; bDof < nDofsPerElement; bDof++)
         {
           for (int bComponent = 0; bComponent < D; bComponent++)
           {
             // compute index of degree of freedom and component (index of entry in vector of unknows / matrix column index)
-            const int j = nDofsPerElement*bDof + bComponent;
+            const int j = D*bDof + bComponent;
                 
             // integrate value and set entry in stiffness matrix
             double integratedValue = integratedValues(i,j);
@@ -248,27 +291,28 @@ setStiffnessMatrix()
     }  // aDof
   }  // elementNo
   
+  pk2file.close();
+  
   // because this is used in nonlinear solver context, assembly has to be called here, not via data->finalAssembly
   MatAssemblyBegin(tangentStiffnessMatrix,MAT_FINAL_ASSEMBLY);
   MatAssemblyEnd(tangentStiffnessMatrix,MAT_FINAL_ASSEMBLY);
-}
-
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
-  BasisOnMeshType,
-  QuadratureType,
-  Term,
-  typename BasisOnMeshType::Mesh,
-  Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
->::
-setDisplacements(Vec &x)
-{
-  // copy values of x to displacements
-  VecCopy(x,this->data_.displacements().values());
   
-  // set entries of Dirichlet BCs to specified values
-  VecSetValues(this->data_.displacements().values(), dirichletIndices_.size(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES);
+  if (!tangentStiffnessMatrixInitialized_)
+  {
+    VLOG(3) << "tangent stiffness matrix before zero rows columns: " << PetscUtility::getStringMatrix(tangentStiffnessMatrix);
+    VLOG(3) << "number dirichletIndices: " << dirichletIndices_.size();
+    
+    // zero rows and columns for which Dirichlet BC is set 
+    MatZeroRowsColumns(tangentStiffnessMatrix, dirichletIndices_.size(), dirichletIndices_.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE);
+  
+    VLOG(3) << "tangent stiffness matrix after zero rows columns: " << PetscUtility::getStringMatrix(tangentStiffnessMatrix);
+    
+    // set option that all insert/add operations to new nonzero locations will be discarded. This keeps the nonzero structure forever.
+    // (The diagonal entries will be set to different values, but that doesn't matter because the Dirichlet values for updates are 0 and thus independent of the diagonal scaling (d*Δx=0 -> Δx=0 independent of d))
+    MatSetOption(tangentStiffnessMatrix, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+    
+    tangentStiffnessMatrixInitialized_ = true;
+  }
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -286,6 +330,48 @@ tangentStiffnessMatrix()
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+Vec &FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+rightHandSide()
+{
+  return this->data_.rightHandSide().values();
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+Vec &FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+displacements()
+{
+  return this->data_.displacements().values();
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+setDisplacements(Vec &displacements)
+{
+  VecCopy(displacements, this->data_.displacements().values());
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<
   BasisOnMeshType,
   QuadratureType,
@@ -296,6 +382,8 @@ void FiniteElementMethodStiffnessMatrix<
 >::
 computeInternalVirtualWork(Vec &resultVec)
 {
+  LOG(TRACE) << "computeInternalVirtualWork";
+ 
   // get pointer to mesh object
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
@@ -376,13 +464,38 @@ computeInternalVirtualWork(Vec &resultVec)
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
       
+      VLOG(2) << "";
+      VLOG(2) << "element " << elementNo << " xi: " << xi;
+      VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
+      VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
+      VLOG(2) << "  jacobianDeterminant: J=" << jacobianDeterminant;
+      VLOG(2) << "  inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
+      VLOG(2) << "  deformationGradient: F=" << deformationGradient;
+      VLOG(2) << "  deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
+      VLOG(2) << "  rightCauchyGreen: C=" << rightCauchyGreen;
+      VLOG(2) << "  rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
+      VLOG(2) << "  inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
+      VLOG(2) << "  invariants: I1,I2,I3: " << invariants;
+      VLOG(2) << "  reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
+      VLOG(2) << "  artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
+      VLOG(2) << "  fictitiousPK2Stress: Sbar=" << fictitiousPK2Stress;
+      VLOG(2) << "  pk2StressIsochoric: S_iso=" << pk2StressIsochoric;
+      VLOG(2) << "  PK2Stress: S=" << PK2Stress;
+      VLOG(2) << "  gradPhi: " << gradPhi;
+      
+      if (VLOG_IS_ON(2))
+      {
+        Tensor2 greenLangrangeStrain = this->computeGreenLagrangeStrain(rightCauchyGreen);
+        VLOG(2) << "  strain E=" << greenLangrangeStrain;
+      }
+      
       // loop basis functions and evaluate integrand at xi
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)           // index over dofs, each dof has D components, L in derivation
       {
         for (int aComponent = 0; aComponent < D; aComponent++)     // lower-case a in derivation, index over displacement components
         {
           // compute index of degree of freedom and component (result vector index)
-          const int i = nDofsPerElement*aDof + aComponent;
+          const int i = D*aDof + aComponent;
          
           // compute result[i]
           double integrand = 0.0;
@@ -438,7 +551,7 @@ computeInternalVirtualWork(Vec &resultVec)
       for (int aComponent = 0; aComponent < D; aComponent++)
       {
         // compute index of degree of freedom and component (matrix row index)
-        const int i = nDofsPerElement*aDof + aComponent;
+        const int i = D*aDof + aComponent;
    
         // integrate value and set entry in stiffness matrix
         double integratedValue = integratedValues[i];
@@ -450,7 +563,7 @@ computeInternalVirtualWork(Vec &resultVec)
         VLOG(2) << "  result vector "<<aDof<<","<<aComponent<<" = " <<i<<", dof " << dofNo[aDof];
         VLOG(2) << "      vector index "<<resultVectorIndex<<", integrated value: "<<integratedValue;
             
-        ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
+        ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, INSERT_VALUES); CHKERRV(ierr);
         
       }  // aComponent
     }  // aDof
@@ -460,6 +573,9 @@ computeInternalVirtualWork(Vec &resultVec)
   VecAssemblyEnd(resultVec);
   // return memory acces of result vector back to PETSc (not used)
   //VecRestoreArray(resultVec, &result);
+  
+  VLOG(1) << "    disp: " << PetscUtility::getStringVector(this->data_.displacements().values());
+  VLOG(1) << "  ->wInt: " << PetscUtility::getStringVector(resultVec);
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -475,10 +591,10 @@ initialize()
 {
   initializeMaterialParameters();
   this->data_.initialize();
-  this->setStiffnessMatrix();
+  initializeBoundaryConditions();
+  //this->setStiffnessMatrix();
   this->setRightHandSide();
   this->data_.finalAssembly();
-  initializeBoundaryConditions();
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -567,8 +683,29 @@ void FiniteElementMethodStiffnessMatrix<
 >::
 applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f)
 {
+  LOG(TRACE) << "applyDirichletBoundaryConditionsInNonlinearFunction";
+
   // overwrite the values in f that correspond to entries for which Dirichlet BC are set with rhs values, such that nonlinear equation is satisfied for them
   VecSetValues(f, dirichletIndices_.size(), dirichletIndices_.data(), rhsValues_.data(), INSERT_VALUES);
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+applyDirichletBoundaryConditionsInDisplacements()
+{
+  LOG(TRACE) << "applyDirichletBoundaryConditionsInDisplacements";
+ 
+  // set entries of Dirichlet BCs to specified values
+  VecSetValues(this->data_.displacements().values(), dirichletIndices_.size(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES);
+  
+  VLOG(1) << "after applying Dirichlet BC, displacements u:" << this->data_.displacements().values();
 }
   
 };    // namespace

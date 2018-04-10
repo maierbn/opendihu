@@ -969,34 +969,34 @@ the solution is
 
 Currently not compiled because unpublished.
 
-%
-%The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
-%\begin{equation}
-%  \begin{array}{lll}\label{eq:multidomain1}
-%    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
-%  \end{array}
-%\end{equation}
-%\begin{equation}\label{eq:multidomain2}
-%  \begin{array}{lll}
-%    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
-%  \end{array}
-%\end{equation}
-%The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
-%$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
-%
-%Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
-%  \end{array}
-%\end{equation*}
-%
-%The bidomain equation is used for computation of EMG:
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
-%  \end{array}
-%\end{equation*}
+
+The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
+\begin{equation}
+  \begin{array}{lll}\label{eq:multidomain1}
+    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
+  \end{array}
+\end{equation}
+\begin{equation}\label{eq:multidomain2}
+  \begin{array}{lll}
+    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
+  \end{array}
+\end{equation}
+The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
+$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
+
+Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
+  \end{array}
+\end{equation*}
+
+The bidomain equation is used for computation of EMG:
+\begin{equation*}
+  \begin{array}{lll}
+    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
+  \end{array}
+\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \section{Structural mechanics}
@@ -1019,7 +1019,7 @@ $\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J 
 \item[$\bullet$] Right Cauchy-Green tensor $\bfC = \bfF^\top \bfF$, symmetric, positive definite, $\det \bfC = J^2 > 0$.
 \item[$\bullet$] Left Cauchy-Green tensor $\bfb = \bfF\bfF^\top$, symmetric, positive definite, $\det \bfb = J^2 > 0$.
 \item[$\bullet$] Green-Lagrange strain tensor $\bfeps = \bfE =\dfrac12(\bfC - \bfI)$, symmetric (Both symbols are used here, because of literature). Note that the computation of $\bfeps$ from a vector of displacement DOFs is nonlinear.
-\item[$\bullet$] 2nd Piola-Kirchhoff stress tensor $\bfS = \p{\Psi(\bfE)}{\bfE} = 2\p{\psi(\bfC)}{\bfC}$, not symmetric.
+\item[$\bullet$] 2nd Piola-Kirchhoff stress tensor $\bfS = \p{\Psi(\bfE)}{\bfE} = 2\p{\psi(\bfC)}{\bfC}$, symmetric.
 \end{itemize}
 
 \subsection{Green-Lagrange strain tensor and derivatives}
@@ -1073,6 +1073,12 @@ From that we get
 \begin{equation*}
   \begin{array}{rll}
     \bfE &= \dfrac12\big((∇\bfu)^\top + ∇\bfu\big) + \dfrac12 ∇\bfu^\top ∇\bfu, \qquad \text{where the gradient is w.r.t $\bfX$ (material description)}.
+  \end{array}
+\end{equation*}
+Note that for virtual strain (used later) the virtual displacements are infinitesimally small and the quadratic term can be neglected, yielding
+\begin{equation*}
+  \begin{array}{lll}
+    {}^t_o δ\bfeps_{kl}= \dfrac12\big(δu_{l,k} + δu_{k,l}\big) ,\qquad δ\bfE = \dfrac12\big((∇δ\bfu)^\top + ∇δ\bfu\big).
   \end{array}
 \end{equation*}
 
@@ -1165,9 +1171,23 @@ The coefficients $\delta_1, \dots \delta_8$ are defined by
 The elasticity tensor $\bbC$ has the following symmetries:
 \begin{equation*}
   \begin{array}{lll}
-    \bbC_{ijrs} = \bbC_{rsij}\quad \bbC{ijrs} = \bbC{jirs} = \bbC{ijsr} = \bbC{jisr}
+   \bbC_{ijrs} = \bbC_{jirs} = \bbC_{ijsr} = \bbC_{jisr} \quad \text{minor symmetries}\\[4mm]
+    \bbC_{ijrs} = \bbC_{rsij} \quad \text{major symmetries}
   \end{array}
 \end{equation*}
+The minor symmetries are due to the symmetry of the 2nd Piola Kirchhoff tensor, $\bfS$ and the right Cauchy-Green tensor, $\bfC$, because
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{ijrs} = \p{S_{ij}}{C_{rs}}.
+  \end{array}
+\end{equation*}
+The major symmetries are because of the existence of the strain density function because
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{ijrs} = \dfrac{∂^2\Psi(\bfC)}{∂C_{ij}\,∂C_{rs}}.
+  \end{array}
+\end{equation*}
+
 The 21 unique entries are:
 \begin{equation*}
   \begin{array}{lll}
@@ -1615,17 +1635,60 @@ The elasticity tensor
     \C = \C_\text{vol} + \C_\text{iso} = 2 \p{\bfS_\text{vol}}{\bfC} + 2 \p{\bfS_\text{iso}}{\bfC}
   \end{array}
 \end{equation*}
-See Holzapfel \cite{holzapfel2000nonlinear}
-$\C_\text{vol}$ p.254,
-$\C_\text{iso}$ p.255,
-$\bar{\C}$ p.262,
-$\bfS_\text{iso}$ p.234
+According to Holzapfel \cite{holzapfel2000nonlinear} the required quantities are as follows:
 %
 \begin{equation*}
   \begin{array}{lll}
-    \bfS_\text{iso} = J^{-2/3}\mathbb{P}:\bar{\bfS}, \quad \bar{S} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC}.
+    J = \det(\bfF), \quad \bfC = \bfF^\top \bfF\\[4mm]
+    \bar{\bfC} = J^{-2/3}\bfC \quad &\text{(p.228)}\\[4mm]
+    \bar{\gamma}_1 = 2\left(\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\right)\quad &\text{(p.234)}\\[4mm]
+    \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\quad &\text{(p.234)}\\[4mm]
+    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC}\quad &\text{(p.234)}\\[4mm]
+    (\mathbb{I})_{abcd} = \delta_{ac}\,\delta_{bd}&\text{(p.23)}\\[4mm]
+    \mathbb{P} = \mathbb{I} - \dfrac13 \bfC^{-1} \otimes \bfC \quad &\text{(p.229)}\\[4mm]
+    \bfS_\text{iso} = J^{-2/3}\mathbb{P}:\bar{\bfS} \quad &\text{(p.234)}\\[4mm]
+    p = \d{\Psi_\text{vol}(J)}{J} \quad &\text{(p.230)}\\[4mm]
+    \bfS_\text{vol} = J\,p\,\bfC^{-1} \quad &\text{(p.230, p.245)}\\[4mm]
+    \bfS = \bfS_\text{iso} + \bfS_\text{vol} \quad &\text{(p.233)}\\[4mm]
+    \tilde{p} = p + J\,\d{p}{J} \quad &\text{(p.255)}\\[4mm]
+    \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
+    \mathbb{C}_\text{vol} = J\,\tilde{p}\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254)}\\[4mm]
+    \bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
+    \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
+    \bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
+    \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
+    \bar{\mathbb{C}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{I} \right) \quad &\text{(p.262)}\\[4mm]
+    \tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \quad &\text{(p.255)}\\[4mm]
+    \mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big) \quad &\text{(p.255)}\\[4mm]
+    \mathbb{C} = \mathbb{C}_\text{vol} + \mathbb{C}_\text{iso} \quad &\text{(p.254)}\\[4mm]
   \end{array}
 \end{equation*}
+
+\subsubsection{Handling of Dirichlet boundary conditions}
+%
+The Newton algorithm to solve the nonlinear equation $f(\bfx) = \bfb$ for $\bfx$ with respect to Dirichlet boundary conditions $\bfx_{i} = \bfx_{0i}$ for $i \in \mathcal{I}$ can be summarized as follows:
+\begin{equation*}
+  \begin{array}{lll}
+    \text{set initial $\bfx_0$}\\
+    \bfx_i := \bfx_{0i} \quad \text{(initial values satisfy boundary conditions)}\\
+    \bff := f(\bfx_i)\\
+    \textbf{while } \Vert \bfb - \bff \Vert \geq \text{tol}\\
+    \quad \texttt{apply\_BC\_to\_$\bff$}\\
+    \quad \mathbb{C}_i := J_f(\bfx_i)\\ 
+    \quad \texttt{apply\_BC\_to\_$\mathbb{C}_i$}\\
+    \quad \text{solve } \quad \mathbb{C}_i\,Δ\bfx_i = \bfb - \bff \quad \text{ for $Δ\bfx_i$}\\
+    \quad \bfx_{i+1} := \bfx_i + Δ\bfx_i\\
+    \quad \bff := f(\bfx_{i+1})
+  \end{array}
+\end{equation*}
+The operation \texttt{apply\_BC\_to\_$\bff$} sets values $\bff_{i} = \bfb_{i}$ for all $i \in \mathcal{I}$. The operation \texttt{apply\_BC\_to\_$\mathbb{C}_i$} sets rows and columns for which BC are specified to the identity matrix, i.e. set 
+\begin{equation*}
+  \begin{array}{lll}
+    \mathbb{C}_{ii} = 1\quad \forall\,i \in \mathcal{I}\\[4mm]
+    \mathbb{C}_{ij} = \mathbb{C}_{ji} = 0, \quad \forall j\neq i\, \forall i \in \mathcal{I}.
+  \end{array}
+\end{equation*}
+By doing so the system of linear equation $\mathbb{C}_i\,Δ\bfx_i = \bfb - \bff$ contains the equations $Δx_i = b_i - f_i = 0$ for $i\in \mathcal{I}$. Therefore the variables $\bfx_i$ don't change their value in the loop and keep the initially assigned Dirichlet BC value.
 
 \subsubsection{Mixed formulation}\label{sec:mixed}
 %

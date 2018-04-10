@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/elasticity_tensor.h"
+#include "control/types.h"
 
 namespace SpatialDiscretization
 {
@@ -47,11 +48,23 @@ protected:
                                       std::array<Vec3,3> &fictitiousPK2Stress,
                                       std::array<Vec3,3> &pk2StressIsochoric
                                      );
+  //! compute the Green-Lagrange strain tensor E=1/2*(C-I)
+  std::array<Vec3,3> computeGreenLagrangeStrain(const std::array<Vec3,3> &rightCauchyGreen);
   
   //! compute the elasticity tensor C = 2*dS/dC. Due to hyperelasticity there are symmetries C_{ijrs} = C_{jirs} and C_{ijrs} = C_{rsij} that leave 21 independent values.
   ElasticityTensor computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchyGreen,
                                                               const std::array<Vec3,3> &inverseRightCauchyGreen,
                                                               const std::array<double,3> invariants);
+  
+  //! helper function for computeElasticityTensor, TODO: remove after debugging
+  double computeElasticityTensorEntry(const int i, const int j, const int k, const int l,const double pressure, 
+                                           const double pressureTilde,
+                                           const std::array<Vec3,3> &rightCauchyGreen,
+                                           const std::array<Vec3,3> &inverseRightCauchyGreen,
+                                           const std::array<Vec3,3> &fictitiousPK2Stress,
+                                           const std::array<Vec3,3> &pk2StressIsochoric,
+                                           const double deformationGradientDeterminant,
+                                           const std::array<double,2> reducedInvariants);
   
   //! compute the elasticity tensor C = 2*dS/dC. Due to hyperelasticity there are symmetries C_{ijrs} = C_{jirs} and C_{ijrs} = C_{rsij} that leave 21 independent values.
   ElasticityTensor computeElasticityTensor(const double pressure, 
@@ -69,6 +82,9 @@ protected:
                                           const std::array<Vec3,3> &PK2Stress);
 };
  
+//! check if the given 4th order tensor has minor and major symmetries
+void checkSymmetry(double Cbar[3][3][3][3], std::string name);
+
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.tpp"

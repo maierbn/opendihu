@@ -89,16 +89,26 @@ public:
   using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
   
   //! assemble the stiffness matrix
-  void setStiffnessMatrix();
-  
-  //! set current value of displacements, called from a PETSc SNES callback
-  void setDisplacements(Vec &x);
+  void setStiffnessMatrix(Mat stiffnessMatrix);
+  void setStiffnessMatrix(){setStiffnessMatrix(PETSC_NULL);}
   
   //! return the tangent stiffness matrix, called from a PETSc SNES callback
   Mat &tangentStiffnessMatrix();
   
+  //! return the virtual external energy which is constant
+  Vec &rightHandSide();
+  
+  //! return the displacements values
+  Vec &displacements();
+  
+  //! set the internal displacement variable as copy of the given values
+  void setDisplacements(Vec &displacements);
+  
   //! compute the internal virtual work term, dW_int
   void computeInternalVirtualWork(Vec &result);
+  
+  //! set entries in displacements to Dirichlet BC values
+  void applyDirichletBoundaryConditionsInDisplacements();
   
   //! set entries in f to the entry in rhs for which Dirichlet BC are set
   void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f);
@@ -119,6 +129,8 @@ protected:
   std::vector<dof_no_t> dirichletIndices_;  ///< the indices of unknowns (not dofs) for which the displacement is fixed
   std::vector<double> dirichletValues_;     ///< the to dirichletIndices corresponding fixed values for the displacement
   std::vector<double> rhsValues_;           ///< the entries in rhs for which for u Dirichlet values are specified
+  
+  bool tangentStiffnessMatrixInitialized_ = false;   ///< if the tangentStiffnessMatrix has been set 
 };
 
 };  // namespace

@@ -18,7 +18,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
     PyObject *key = PyString_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
-      PythonUtility::printDict((PyObject *)settings);
+      //PythonUtility::printDict((PyObject *)settings);
       
       PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
       if (PyDict_Check(dict))

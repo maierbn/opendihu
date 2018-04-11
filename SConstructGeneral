@@ -84,7 +84,12 @@ if unknown:
 Help(vars.GenerateHelpText(env))
 
 # set console messages for compilation and linking
-if ARGUMENTS.get('VERBOSE') != '1':
+tty_available = True
+try:
+  screen = open('/dev/tty', 'w')
+except:
+  tty_available = False
+if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
@@ -107,7 +112,6 @@ sconf.Finish()
 
 # -----------------------------------------------
 # progress display e.g. [50%]
-screen = open('/dev/tty', 'w')
 
 env["node_count"] = 0
 env["node_count_max"] = 0
@@ -119,9 +123,9 @@ def progress_function(node):
   global env
   env["node_count"] += env["node_count_interval"]
   if env["node_count"] > env["node_count_max"]: env["node_count_max"] = 0
-  if env["node_count_max"]>0 :
-    screen.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
-    screen.flush()
+  if env["node_count_max"]>0 and tty_available:
+    sys.stdout.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
+    sys.stdout.flush()
   # write out 
   try:
     with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])

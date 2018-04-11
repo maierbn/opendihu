@@ -123,7 +123,9 @@ def progress_function(node):
     screen.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
     screen.flush()
   # write out 
-  with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
+  try:
+    with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
+  except: pass
 
 try:
   with open(env["node_count_fname"]) as f: env["node_count_max"] = int(f.readline())

@@ -489,6 +489,8 @@ class Package(object):
         continue
         
       p = int(float(n) / number_of_lines * 100.0)
+      if p > 100.0:
+        sys.stdout.write(str(p)+"% (miscounted, sorry)"+"\b"*(len(str(p))+21))
       sys.stdout.write(str(p)+"%"+"\b"*(len(str(p))+1))
       sys.stdout.flush()
 

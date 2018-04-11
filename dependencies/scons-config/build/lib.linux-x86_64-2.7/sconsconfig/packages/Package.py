@@ -489,6 +489,8 @@ class Package(object):
         continue
         
       p = int(float(n) / number_of_lines * 100.0)
+      if p > 100.0:
+        sys.stdout.write(str(p)+"% (miscounted, sorry)"+"\b"*(len(str(p))+21))
       sys.stdout.write(str(p)+"%"+"\b"*(len(str(p))+1))
       sys.stdout.flush()
 
@@ -616,7 +618,7 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11")
+    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program

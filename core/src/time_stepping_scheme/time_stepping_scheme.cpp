@@ -5,7 +5,7 @@
 namespace TimeSteppingScheme
 {
   
-TimeSteppingScheme::TimeSteppingScheme(DihuContext &context) : 
+TimeSteppingScheme::TimeSteppingScheme(DihuContext context) : 
   context_(context)
 {
   specificSettings_ = NULL;   // needs to be set by deriving class

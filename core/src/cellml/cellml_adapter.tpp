@@ -375,8 +375,12 @@ initializeRhsRoutine()
     LOG(FATAL) << "Could not create or locate dynamic library for cellml right hand side routine.";
   }
   
+  system("ls -al");
+  system("pwd");
   // load dynamic library
-  void* handle = dlopen(libraryFilename.c_str(), RTLD_LOCAL | RTLD_LAZY);
+  //
+  std::string currentWorkingDirectory = getcwd(NULL,0);
+  void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
   if (handle)
   {
     // load rhs method
@@ -445,7 +449,7 @@ initializeRhsRoutine()
   }
   else
   {
-    LOG(FATAL) << "Could not load dynamic library \""<<libraryFilename<<"\".";
+    LOG(FATAL) << "Could not load dynamic library \""<<libraryFilename<<"\". Reason: "<<dlerror();
   }
     
 }

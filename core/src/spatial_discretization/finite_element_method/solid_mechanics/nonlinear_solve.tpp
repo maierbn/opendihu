@@ -35,7 +35,7 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec u, Vec f, void *context)
   if (u != object->displacements())
   {
     object->setDisplacements(u);
-    object->applyDirichletBoundaryConditionsInDisplacements();
+    //object->applyDirichletBoundaryConditionsInDisplacements();
   }
   
   // compute the lhs which is the virtual work

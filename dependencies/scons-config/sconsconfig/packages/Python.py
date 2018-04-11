@@ -6,7 +6,8 @@ class Python(Package):
     def __init__(self, **kwargs):
         defaults = {
           #'download_url': 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz',
-          'download_url': 'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
+          #'download_url': 'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
+          'download_url': 'https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz'
         }
         defaults.update(kwargs)
         super(Python, self).__init__(**defaults)
@@ -30,7 +31,7 @@ class Python(Package):
         '''
     
         # Setup the build handler.
-        self.libs = ["python2.7"]
+        self.libs = ["python3.6m"]
         self.headers = ["Python.h"]
         
         # check configuration of gcc
@@ -41,10 +42,11 @@ class Python(Package):
         pos2 = pos1+11+gcc_config[pos1+11:].find(" ")
         pos3 = pos2+gcc_config[pos2+1:].find(" ")
         print "GCC version: {}".format(gcc_config[pos2+1:pos3+1])
+        gcc_config = ""
         
         # if gcc was compiled such that -fuse-linker-plugin is available, compile with optimizations
         if "--enable-plugin" in gcc_config:        
-          print "gcc has --enable-plugin, compile python with optimizations"
+          #print "gcc has --enable-plugin, compile python with optimizations"
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
             #'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} --enable-optimizations && make && make install',

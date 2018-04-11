@@ -71,7 +71,18 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     }
     
     LOG(TRACE) << "initialize python";
-#if 1
+    
+    // set program name of python script
+    char const *programName = "dihu";
+    VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
+
+#if PY_MAJOR_VERSION >= 3
+    wchar_t *programNameWChar = Py_DecodeLocale(programName, NULL);
+    Py_SetProgramName(programNameWChar);  /* optional but recommended */
+#else
+    Py_SetProgramName((char *)programName);  /* optional but recommended */
+#endif    
+    
     // find location where libpython2.7.a is located and extract the beginning of the path until '/lib' is encountered
     // this serves as the PYTHONHOME value that will be set via Py_SetPythonHome.
     // possible examples:
@@ -84,6 +95,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     //   sed 's/\/lib.*//': remove everything after "/lib" is found
     //   > tmp: write to file "tmp"
     //int ret = system("printf %s $(find /usr -name \"libpython*.a\" | head -n 1 | sed 's/\\/lib.*//') > tmp");
+    
+#if PY_MAJOR_VERSION >= 3
+    std::string pythonSearchPath = std::string("/store/software/opendihu/dependencies/python/install");
+    const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
+    Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
+    
+    std::string pythonPath("/store/software/opendihu/dependencies/python/install/lib/python3.6");
+    const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
+    Py_SetPath((wchar_t *)pythonPathWChar);
+#else
     int ret = 0;
     if (ret == 0)
     {
@@ -100,24 +121,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
       LOG(DEBUG) << "Set python search path to \""<<pythonSearchPath<<"\".";
       
       VLOG(4) << "Py_SetPythonHome(" << pythonHome << ")";
-#if PY_MAJOR_VERSION >= 3
-      //Py_SetPythonHome((wchar_t *)pythonSearchPath);
-#else
-      Py_SetPythonHome((char *)pythonSearchPath);
-#endif
-      
     }
+    Py_SetPythonHome((char *)pythonSearchPath);
 #endif
-
-    // set program name of python script
-    char const *programName = "dihu";
-    VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
-
-#if PY_MAJOR_VERSION >= 3
-    Py_SetProgramName((wchar_t *)programName);  /* optional but recommended */
-#else
-    Py_SetProgramName((char *)programName);  /* optional but recommended */
-#endif    
     
     // initialize python
     VLOG(4) << "Py_Initialize()";
@@ -127,12 +133,18 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     VLOG(4) << "Py_GetPythonHome()";
 
 #if PY_MAJOR_VERSION >= 3
-    wchar_t *home = Py_GetPythonHome();
+    wchar_t *homeWChar = Py_GetPythonHome();
+    char *home = Py_EncodeLocale(homeWChar, NULL);
+    LOG(DEBUG) << "python home: " << home;
+    
+    wchar_t *pathWChar = Py_GetPath();
+    char *path = Py_EncodeLocale(pathWChar, NULL);
+    LOG(DEBUG) << "python path: " << path;
 #else
     char *home = Py_GetPythonHome();
+    LOG(DEBUG) << "Python home: " << home;
 #endif    
     
-    LOG(DEBUG) << "Python home: " << home;
     
     // pass on command line arguments to python config script
     
@@ -141,15 +153,26 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     int numberArgumentsToRemove = (explicitConfigFileGiven? 2: 1);
     
     int argcReduced = argc - numberArgumentsToRemove;
+    VLOG(4) << "argcReduced: " << argcReduced << ", numberArgumentsToRemove: " << numberArgumentsToRemove;
     char **argvReduced = new char *[argcReduced];
+#if PY_MAJOR_VERSION >= 3
+    wchar_t **argvReducedWChar = new wchar_t *[argcReduced];
+#endif
     
     for (int i=0; i<argcReduced; i++)
     {
       argvReduced[i] = argv[i+numberArgumentsToRemove];
+#if PY_MAJOR_VERSION >= 3
+      argvReducedWChar[i] = Py_DecodeLocale(argvReduced[i], NULL);
+#endif      
     }
     
     // pass reduced list of command line arguments to python script
+#if PY_MAJOR_VERSION >= 3
+    PySys_SetArgvEx(argcReduced, argvReducedWChar, 0);
+#else    
     PySys_SetArgvEx(argcReduced, argvReduced, 0);
+#endif
     
     // load python script 
     if(settingsFromFile)

@@ -7,12 +7,16 @@
 #include <vector>
 
 // With python3+ PyString_* was renamed to PyBytes_*
-//(This ugly check should be removed when decided if python2.7 or python3 will be used. Do that now and remove it now!)
+//(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
 #if PY_MAJOR_VERSION >= 3
 #define PyString_Check PyBytes_Check
 #define PyString_CheckExact PyBytes_CheckExact
 #define PyString_FromString PyBytes_FromString
 #define PyString_AsString PyBytes_AsString
+#define PyInt_Check PyLong_Check
+#define PyInt_AsLong PyLong_AsLong
+#define PyInt_FromLong PyLong_FromLong
+#define PyInt_CheckExact PyLong_CheckExact
 #endif
 
 /** Utility class that handles parsing of python config data to c type objects

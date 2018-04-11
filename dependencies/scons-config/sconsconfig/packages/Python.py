@@ -5,7 +5,9 @@ class Python(Package):
 
     def __init__(self, **kwargs):
         defaults = {
-          'download_url': 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz',
+          #'download_url': 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz',
+          'download_url': 'https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz',
+          #https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz
         }
         defaults.update(kwargs)
         super(Python, self).__init__(**defaults)

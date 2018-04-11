@@ -75,15 +75,27 @@ class PETSc(Package):
         # Setup the build handler.
         self.set_build_handler([
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-            --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.so\
-            --with-blas-lib=${LAPACK_DIR}/lib/libblas.so\
-            --with-mpi-dir=${MPI_DIR}',
+            --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+            --with-mpi-dir=${MPI_DIR}\
+            COPTFLAGS=-O3\
+            CXXOPTFLAGS=-O3\
+            FOPTFLAGS=-O3',
             'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
             'make install',
             'make test',
         ])
 
-        self.number_output_lines = 1850
+        #self.set_build_handler([
+        #    './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+        #    --with-lapack-lib=${LAPACK_DIR}/lib/liblapack.so\
+        #    --with-blas-lib=${LAPACK_DIR}/lib/libblas.so\
+        #    --with-mpi-dir=${MPI_DIR}',
+        #    'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
+        #    'make install',
+        #    'make test',
+        #])
+
+        self.number_output_lines = 1885
         
     def check(self, ctx):
         env = ctx.env

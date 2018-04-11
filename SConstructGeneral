@@ -51,12 +51,12 @@ sconsconfig.select(
 
 # By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
 # Note that an absolute path has to be given, otherwise there are problems finding the libraries
-preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
-                    'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
+#preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
+#                    'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
 
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
 variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
-variables.update(preset_variables)  # merge in preset_variables dictionary
+#variables.update(preset_variables)  # merge in preset_variables dictionary
 vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], variables)
 
 # specify type and default value for recognized variables
@@ -73,6 +73,7 @@ sconsconfig.add_options(vars)
 # initialize environment object containing build system settings such as compilers and flags
 # command line options are considered
 env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = vars, ENV = os.environ)
+vars.Save('out.py',env)
 
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
@@ -88,8 +89,12 @@ if ARGUMENTS.get('VERBOSE') != '1':
   env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
   env['LINKCOMSTR'] = "\x1b[32mLinking   $TARGET\x1b[0m"
-  env['ARCOMSTR'] = "\x1b[32mBuilding archive $TARGET\x1b[0m"
-  env['RANLIBCOMSTR'] = "\x1b[32mCreating archive index\x1b[0m"
+  env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
+  env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
+
+# add basic linker flags
+ldflags = "-lpthread -ldl -lutil -lm"
+env.MergeFlags(ldflags)
            
 # Create our configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
@@ -99,6 +104,33 @@ sconsconfig.check(sconf)
 
 # Finish the configuration and save it to file.
 sconf.Finish()
+
+# -----------------------------------------------
+# progress display e.g. [50%]
+screen = open('/dev/tty', 'w')
+
+env["node_count"] = 0
+env["node_count_max"] = 0
+env["node_count_interval"] = 1
+node_count_fname = str(env.Dir('#')) + '/.scons_node_count'
+env["node_count_fname"]=node_count_fname
+
+def progress_function(node):
+  global env
+  env["node_count"] += env["node_count_interval"]
+  if env["node_count"] > env["node_count_max"]: env["node_count_max"] = 0
+  if env["node_count_max"]>0 :
+    screen.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
+    screen.flush()
+  # write out 
+  with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
+
+try:
+  with open(env["node_count_fname"]) as f: env["node_count_max"] = int(f.readline())
+except: pass
+# add progress display function
+
+Progress(progress_function, interval=env["node_count_interval"])
 
 # -----------------------------------------------
 # depending on the variable BUILD_TYPE either build with debug or release settings and link corresponding version of core
@@ -123,9 +155,9 @@ env.MergeFlags('-Wunused-variable')
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 #env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/petsc/install/include')])
 
-
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,
            duplicate=False,
            exports="env")
+

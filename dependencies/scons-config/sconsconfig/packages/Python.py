@@ -1,67 +1,51 @@
-import subprocess
+import sys, os, multiprocessing
 from Package import Package
 
-##
-##  Handles Python interpreter C library
-##
 class Python(Package):
 
     def __init__(self, **kwargs):
-        super(Python, self).__init__(**kwargs)
+        defaults = {
+          'download_url': 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz',
+        }
+        defaults.update(kwargs)
+        super(Python, self).__init__(**defaults)
+        self.ext = '.cpp'
+        #self.sub_dirs = [
+        #    ('include/mysql', 'lib'),
+        #    ('include/mysql', 'lib64'),
+        #]
+        #self.headers = ['mysql.h']
+        #self.libs = ['mysqlclient']
+        #self.extra_libs = ['lapack', 'blas']
+        self.check_text = r'''
+          #include <stdlib.h>
+          #include <stdio.h>
+          #include <Python.h>
+          int main(int argc, char* argv[])
+          {
+            Py_Initialize();
+            return EXIT_SUCCESS;
+          }
+        '''
+    
+        # Setup the build handler.
+        self.libs = ["python2.7"]
+        self.headers = ["Python.h"]
+        self.set_build_handler([
+          'mkdir -p ${PREFIX}',
+          'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} --enable-optimizations && make && make install',
+          #'cd ${PREFIX} && make',
+          #'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
+        ])
+        self.number_output_lines = 7082
 
     def check(self, ctx):
         env = ctx.env
         ctx.Message('Checking for Python ... ')
-        
-        # remove "-Wstrict-prototypes" because it is only valid for c and not c++
-        flags_to_remove = ["-Wstrict-prototypes ", '-DNDEBUG ', '-g ', '-O2 ', '-fno-strict-aliasing ', '-Wp,-D_FORTIFY_SOURCE=2 ']
-        
-        pythonVersion = "2.7"   # set to 2.7 or 3
-        
-        # remove specified flags 
-        #cflags = subprocess.check_output("python-config --cflags", shell=True)+' '
-        if pythonVersion == "3":
-          try:
-            cflags = subprocess.check_output("python3-config --includes", shell=True)
-            ldflags = subprocess.check_output("python3-config --ldflags", shell=True)
-          except:
-            ctx.Result(False)
-            return False
-        else:
-          try:
-            cflags = subprocess.check_output("python2.7-config --includes", shell=True)
-            ldflags = subprocess.check_output("python2.7-config --ldflags", shell=True)
-          except:
-            print "command python2.7-config failed, try python-config instead"
-            try:
-              cflags = subprocess.check_output("python-config --includes", shell=True)
-              ldflags = subprocess.check_output("python-config --ldflags", shell=True)
-            except:
-              ctx.Result(False)
-              return False
-        
-        for flag_to_remove in flags_to_remove:            
-          while flag_to_remove in cflags:
-            startpos = cflags.index(flag_to_remove)
-            length = len(flag_to_remove)
-            while cflags[startpos+length] == ' ':
-              length += 1
-            cflags = cflags[0:startpos] + cflags[startpos+length:]
-              
-            
-        
-        # remove trailing newline
-        if cflags[-1] == '\n':
-          cflags = cflags[:-1]
-        if ldflags[-1] == '\n':
-          ldflags = ldflags[:-1]
-        
-        ctx.Log("python includes and ldflags:")
-        ctx.Log("cflags: [{}]".format(cflags))
-        ctx.Log("ldflags: [{}]".format(ldflags))
-        
-        env.MergeFlags(cflags)
-        env.MergeFlags(ldflags)
-          
-        ctx.Result(True)
-        return True
+        self.check_options(env)
+
+        res = super(Python, self).check(ctx)
+
+        self.check_required(res[0], ctx)
+        ctx.Result(res[0])
+        return res[0]

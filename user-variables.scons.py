@@ -19,46 +19,38 @@
 MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
 
+# use value of environment variable 'MPI_HOME' if it is set
 import os
 if os.environ.get("MPI_HOME") is not None:
   MPI_DIR = os.environ.get("MPI_HOME")
 
-# LAPACK, includes also BLAS
+# LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
-LAPACK_REDOWNLOAD=False      # force download, even if the files are already present
+#LAPACK_REDOWNLOAD=True      # force download, even if the files are already present
 
 # PETSc
-#PETSC_DOWNLOAD=False
 PETSC_DOWNLOAD=True
-PETSC_REDOWNLOAD=False
-#PETSC_DIR="../dependencies/petsc"
+#PETSC_REDOWNLOAD=True
 
-# EasyLoggingPP
-EASYLOGGINGPP_DOWNLOAD=True
-#EASYLOGGINGPP_REDOWNLOAD=True
+# Python
+PYTHON_DOWNLOAD=True    # This downloads and uses Python 2.7.14, use it to be independent of an eventual system python
+#PYTHON_REDOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True
-
-# NumpyC
-CYTHON_DOWNLOAD=True
-NUMPYC_DOWNLOAD=True
 
 # Google Test
 GOOGLETEST_DOWNLOAD=True
 #GOOGLETEST_REDOWNLOAD=True
 
-# libxml2
-LIBXML2_DOWNLOAD=True
-#LIBXML2_REDOWNLOAD=True
-
-# Sphinx
-SPHINX_DOWNLOAD=True
-
-# libcellml
-LIBCELLML_DOWNLOAD=True
-#LIBCELLML_REDOWNLOAD=True
-
 # SEMT
 SEMT_DOWNLOAD=True
 #SEMT_REDOWNLOAD=True
+
+# EasyLoggingPP
+EASYLOGGINGPP_DOWNLOAD=True
+#EASYLOGGINGPP_REDOWNLOAD=True
+
+
+
+

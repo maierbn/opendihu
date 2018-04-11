@@ -105,6 +105,8 @@ class Package(object):
 
     upp = name.upper()
     
+    #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
+    
     # Check if the user requested to download this package.
     if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL') and self.download_url:
 

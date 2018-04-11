@@ -2,7 +2,7 @@
 
 all: debug release
 
-ifneq ("$(wildcard ./dependencies/python/install/bin/python))","")
+ifneq ("$(wildcard ./dependencies/python/install/bin/python)","")
 python := ./dependencies/python/install/bin/python
 else
 python := python

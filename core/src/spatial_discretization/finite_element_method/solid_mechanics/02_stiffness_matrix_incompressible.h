@@ -113,6 +113,9 @@ public:
   //! set entries in f to the entry in rhs for which Dirichlet BC are set
   void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f);
   
+  //! set rows and columns in stiffness matrix to 0 for which boundary conditions are specified
+  void applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix);
+  
   //! initialize everything, set rhs and compute tangent stiffness matrix
   virtual void initialize();
   

@@ -65,7 +65,7 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec u, Vec f, void *context)
  *  b   - optionally different preconditioning matrix
  */
 template<typename T>
-PetscErrorCode jacobianFunction(SNES snes, Vec x, Mat jac, Mat b, void *context)
+PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *context)
 {
   T* object = static_cast<T*>(context);
  
@@ -85,11 +85,27 @@ PetscErrorCode jacobianFunction(SNES snes, Vec x, Mat jac, Mat b, void *context)
   //MatCopy(tangentStiffnessMatrix,jac,SAME_NONZERO_PATTERN);
   //MatCopy(tangentStiffnessMatrix,b,SAME_NONZERO_PATTERN);
   
-  VLOG(1) << "-- computed tangent stiffness matrix: " << PetscUtility::getStringMatrix(jac);
+  VLOG(1) << "-- computed tangent stiffness matrix analytically: " << PetscUtility::getStringMatrix(jac);
   
   return 0;
 };
  
+
+template<typename T>
+PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat b, void *context)
+{
+  T* object = static_cast<T*>(context);
+ 
+  SNESComputeJacobianDefault(snes, x, jac, b, context);
+  
+  // zero rows and columns for which Dirichlet BC is set 
+  object->applyDirichletBoundaryConditionsInStiffnessMatrix(b);
+  
+  VLOG(1) << "-- computed tangent stiffness matrix by finite differences: " << PetscUtility::getStringMatrix(jac);
+  
+  return 0;
+};
+
 /**
  * Monitor convergence of nonlinear solver
  * 
@@ -121,6 +137,7 @@ solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
   
+  bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
   PetscErrorCode ierr;
   
   Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
@@ -148,14 +165,26 @@ solve()
   > ThisClass;
   
   PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *) = *nonlinearFunction<ThisClass>;
-  PetscErrorCode (*callbackJacobian)(SNES, Vec, Mat, Mat, void *) = *jacobianFunction<ThisClass>;
+  PetscErrorCode (*callbackJacobianAnalytic)(SNES, Vec, Mat, Mat, void *) = *jacobianFunctionAnalytic<ThisClass>;
+  PetscErrorCode (*callbackJacobianFiniteDifferences)(SNES, Vec, Mat, Mat, void *) = *jacobianFunctionFiniteDifferences<ThisClass>;
   PetscErrorCode (*callbackMonitorFunction)(SNES, PetscInt, PetscReal, void *) = *monitorFunction<ThisClass>;
   
   // set function
   ierr = SNESSetFunction(*snes, residual, callbackNonlinearFunction, this); CHKERRV(ierr);
   
   // set jacobian 
-  ierr = SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobian, this); CHKERRV(ierr);
+  if (useAnalyticJacobian)
+  {
+    ierr = SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobianAnalytic, this); CHKERRV(ierr);
+    LOG(DEBUG) << "Use analytical jacobian";
+  }
+  else 
+  {
+    // set function to compute jacobian from finite differences
+    ierr = SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
+    LOG(DEBUG) << "Use Finite-Differences approximation for jacobian";
+    
+  }
 
   // set monitor function  
   ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
@@ -169,7 +198,13 @@ solve()
   VLOG(1) << "Dirichlet BC: indices: " << this->dirichletIndices_ << ", values: " << dirichletValues_ << ", rhsValues: " << rhsValues_;
   VLOG(1) << "initial values: " << PetscUtility::getStringVector(displacements);
 
-  LOG(DEBUG) << "start solve";
+  if (!useAnalyticJacobian)
+  {
+     LOG(DEBUG) << "compute analytical jacobian to initialize non-zero structure of matrix";
+     callbackJacobianAnalytic(*snes, displacements, tangentStiffnessMatrix, tangentStiffnessMatrix, this);
+  }
+  
+  LOG(DEBUG) << "------------------  start solve  ------------------";
   
   // solve the system nonlinearFunction(displacements) = externalVirtualEnergy
   // not sure if externalVirtualEnergy and displacements have to be different vectors from the ones used in the provided functions

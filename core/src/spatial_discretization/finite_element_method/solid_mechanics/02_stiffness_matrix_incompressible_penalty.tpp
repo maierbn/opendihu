@@ -52,6 +52,7 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   PetscErrorCode ierr;
   Mat &tangentStiffnessMatrix = (stiffnessMatrix == PETSC_NULL ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
   
+  LOG(TRACE) << "setStiffnessMatrix - compute tangent stiffness matrix";
   LOG(DEBUG) << "nUnknowsPerElement: " << nUnknowsPerElement<<", n evaluations for quadrature: " << QuadratureDD::numberEvaluations();
   
   // initialize values to zero
@@ -91,12 +92,6 @@ setStiffnessMatrix(Mat stiffnessMatrix)
     
     VLOG(3) << " zero tangentStiffnessMatrix";              
   }
-  
-  // log file
-  std::ofstream pk2file("pk2.txt", std::ios::out | std::ios::binary);
-  if (!pk2file.is_open())
-    LOG(FATAL) << "could not open pk2.txt";
-  pk2file << "--" << std::endl;
   
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
@@ -168,8 +163,6 @@ setStiffnessMatrix(Mat stiffnessMatrix)
       VLOG(2) << "PK2Stress: S=" << PK2Stress;
       VLOG(2) << "gradPhi: " << gradPhi;
       VLOG(2) << "elasticity: C=" << elasticity;
-      
-      pk2file << xi << " " << PK2Stress << std::endl;
       
       // loop over pairs of basis functions and evaluate integrand at xi
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)           // index over dofs, each dof has D components, L in derivation
@@ -290,8 +283,6 @@ setStiffnessMatrix(Mat stiffnessMatrix)
       }  // aComponent
     }  // aDof
   }  // elementNo
-  
-  pk2file.close();
   
   // because this is used in nonlinear solver context, assembly has to be called here, not via data->finalAssembly
   MatAssemblyBegin(tangentStiffnessMatrix,MAT_FINAL_ASSEMBLY);
@@ -414,6 +405,12 @@ computeInternalVirtualWork(Vec &resultVec)
   //const PetscScalar *result;
   //VecGetArray(resultVec, &result);
   
+  // log file for PK2 stress
+  std::ofstream pk2file("pk2.txt", std::ios::out | std::ios::binary);
+  if (!pk2file.is_open())
+    LOG(FATAL) << "could not open pk2.txt";
+  pk2file << "#PK2 stress, xi" << std::endl;
+  
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   { 
@@ -438,14 +435,20 @@ computeInternalVirtualWork(Vec &resultVec)
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
       
+      checkInverseIsCorrect(jacobianMaterial, inverseJacobianMaterial, "jacobianMaterial");
+      
       // F
       Tensor2 deformationGradient = this->computeDeformationGradient(displacementValues, inverseJacobianMaterial, xi);
       double deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
       
       Tensor2 rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
       
+      checkSymmetry(rightCauchyGreen, "C");
+      
       double rightCauchyGreenDeterminant;   // J^2
       Tensor2 inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      
+      checkInverseIsCorrect(rightCauchyGreen, inverseRightCauchyGreen, "rightCauchyGreen");
       
       // invariants
       std::array<double,3> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant);  // I_1, I_2, I_3
@@ -458,7 +461,15 @@ computeInternalVirtualWork(Vec &resultVec)
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       std::array<Vec3,3> fictitiousPK2Stress;
       std::array<Vec3,3> pk2StressIsochoric;
+      
+      //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2 PK2Stress = this->computePK2Stress(artificialPressure, rightCauchyGreen, inverseRightCauchyGreen, reducedInvariants, deformationGradientDeterminant, fictitiousPK2Stress, pk2StressIsochoric);      
+      
+      // check if PK2 is the same as from explicit formula for Mooney-Rivlin (p.249)
+      if (VLOG_IS_ON(1))
+      {
+        this->checkFictitiousPK2Stress(fictitiousPK2Stress, rightCauchyGreen, deformationGradientDeterminant, reducedInvariants);
+      }
       
       std::array<Vec3,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
@@ -482,6 +493,8 @@ computeInternalVirtualWork(Vec &resultVec)
       VLOG(2) << "  pk2StressIsochoric: S_iso=" << pk2StressIsochoric;
       VLOG(2) << "  PK2Stress: S=" << PK2Stress;
       VLOG(2) << "  gradPhi: " << gradPhi;
+      
+      pk2file << PK2Stress << " " << xi << std::endl;
       
       if (VLOG_IS_ON(2))
       {
@@ -537,6 +550,8 @@ computeInternalVirtualWork(Vec &resultVec)
         }  // a
       }  // L
     }  // function evaluations
+    
+    pk2file.close();
     
     // integrate all values for result vector entries at once
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
@@ -706,6 +721,21 @@ applyDirichletBoundaryConditionsInDisplacements()
   VecSetValues(this->data_.displacements().values(), dirichletIndices_.size(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES);
   
   VLOG(1) << "after applying Dirichlet BC, displacements u:" << this->data_.displacements().values();
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix)
+{
+  // zero rows and columns for which Dirichlet BC is set 
+  MatZeroRowsColumns(matrix, dirichletIndices_.size(), dirichletIndices_.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE);
 }
   
 };    // namespace

@@ -13,7 +13,7 @@ class TimeSteppingScheme
 public:
   
   //! constructor
-  TimeSteppingScheme(DihuContext &context); 
+  TimeSteppingScheme(DihuContext context); 
  
   ///! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
   virtual void advanceTimeSpan() = 0;

@@ -9,7 +9,7 @@ namespace OperatorSplitting
 template<typename TimeStepping1, typename TimeStepping2>
 OperatorSplitting<TimeStepping1, TimeStepping2>::
 OperatorSplitting(DihuContext context, std::string schemeName) :
-  ::TimeSteppingScheme::TimeSteppingScheme(context_),
+  ::TimeSteppingScheme::TimeSteppingScheme(context),
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"])
 {

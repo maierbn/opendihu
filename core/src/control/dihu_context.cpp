@@ -28,7 +28,6 @@ bool DihuContext::initialized_ = false;
 DihuContext::DihuContext(const DihuContext &rhs)
 {
   pythonConfig_ = rhs.pythonConfig_;
-  
   VLOG(4) << "Py_XINCREF(pythonConfig_)";
   Py_XINCREF(pythonConfig_);
 }

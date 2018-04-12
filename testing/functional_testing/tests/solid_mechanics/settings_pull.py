@@ -42,6 +42,7 @@ config = {
     "relativeTolerance": 1e-15,
     "rightHandSide": traction,  # surface traction or body force
     "materialParameters": [6.352e-10, 3.627, 100],  # c0, c1, kappa
+    "analyticJacobian": False,   # False = compute Jacobian by finite differences
   },
   "OutputWriter" : [
     #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},

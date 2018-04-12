@@ -31,6 +31,7 @@ sconsconfig/packages/PTScotch.py
 sconsconfig/packages/Package.py
 sconsconfig/packages/ParMETIS.py
 sconsconfig/packages/PostgreSQL.py
+sconsconfig/packages/Pp.py
 sconsconfig/packages/Python.py
 sconsconfig/packages/SEMT.py
 sconsconfig/packages/SOCI.py

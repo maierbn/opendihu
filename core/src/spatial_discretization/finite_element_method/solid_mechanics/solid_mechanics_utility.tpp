@@ -96,16 +96,17 @@ computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &def
   // the quantities are 3x3 tensors for the 3D case (3x2 for 2D, but not sure if that is required, 2D is not used anyway)
   std::array<Vec3,BasisOnMeshType::dim()> rightCauchyGreenTensor({Vec3{0}});
   
-  // loop over dimension, i.e. columns of right cauchy green tensor
+  // loop over dimension, i.e. columns of right cauchy green tensor, i
   for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
   {
-    // loop over row of tensor
+    
+    // loop over row of tensor, j
     for (int dimensionRow = 0; dimensionRow < 3; dimensionRow++)
     {
       for (int k = 0; k < 3; k++)
       {
         rightCauchyGreenTensor[dimensionColumn][dimensionRow] += 
-          deformationGradient[dimensionColumn][k] * deformationGradient[k][dimensionRow];
+          deformationGradient[dimensionColumn][k] * deformationGradient[dimensionRow][k];
       }
     }
   }
@@ -273,25 +274,72 @@ computePK2Stress(const double pressure,                             //< [in] pre
   }
   
   //check symmetry of PK2 stress
-  if (VLOG_IS_ON(1))
+  const double errorTolerance = 1e-14;
+  if (VLOG_IS_ON(2))
   {
     bool pK2IsSymmetric = true;
     for (int a=0; a<3; a++)
     {
       for (int b=0; b<3; b++)
       {
-        if (pK2Stress[a][b] != pK2Stress[b][a])
+        if (fabs(pK2Stress[a][b] - pK2Stress[b][a]) > errorTolerance)
         {
-          VLOG(1) << "pK2Stress["<<a<<"]["<<b<<"] != " << "pK2Stress["<<b<<"]["<<a<<"] ("<<pK2Stress[b][a]<<" != "<<pK2Stress[a][b]<<")";
+          LOG(ERROR) << "pK2Stress["<<a<<"]["<<b<<"] != pK2Stress["<<b<<"]["<<a<<"] ("<<pK2Stress[b][a]<<" != "<<pK2Stress[a][b]<<")";
           pK2IsSymmetric = false;
         }
       }
     }
     if (pK2IsSymmetric)
-      VLOG(1) << "PK2 stress tensor is symmetric!";
+      VLOG(2) << "PK2 stress tensor is symmetric!";
   }
   
   return pK2Stress;
+}
+
+template<typename BasisOnMeshType, typename Term>
+void SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
+                         const std::array<Vec3,3> &rightCauchyGreen, 
+                         const double deformationGradientDeterminant,
+                         const std::array<double,2> reducedInvariants)
+{
+  if (VLOG_IS_ON(1))
+  {
+    // explicit formula in Holzapfel p.249
+   
+    const double factorJ23 = pow(deformationGradientDeterminant, -2./3);
+    
+    const double c0 = SEMT::Parameter<0>::get_value();
+    const double c1 = SEMT::Parameter<1>::get_value();
+    //const double c0 = PARAM(0).get_value();   //< material parameter
+    //const double c1 = PARAM(1).get_value();   //< material parameter
+
+    const double Ibar1 = reducedInvariants[0];
+    
+    const double gamma1 = 2*(c0 + c1*Ibar1);
+    const double gamma2 = -2*c1;
+    
+    const double errorTolerance = 1e-14;
+    bool mismatch = false;
+    for (int a = 0; a < 3; a++)
+    {
+      for (int b = 0; b < 3; b++)
+      {
+        const int delta_ab = (a == b? 1 : 0);
+        double cBar = factorJ23 * rightCauchyGreen[b][a];
+        double sBar = gamma1*delta_ab + gamma2*cBar;
+        
+        if (fabs(sBar - fictitiousPK2Stress[b][a]) > errorTolerance)
+        {
+          LOG(ERROR) << "mismatch in Sbar_" << a << b << ": derived: " << fictitiousPK2Stress << ", explicit formula: " << sBar;
+          mismatch = true;
+        }
+      }
+    }
+    if (!mismatch)
+      VLOG(2) << "Sbar is correct!";
+    
+  }
 }
 
 template<typename BasisOnMeshType, typename Term>
@@ -706,21 +754,21 @@ computeElasticityTensor(const double pressure,
     const int k = indices[entryNo][2];
     const int l = indices[entryNo][3];
     
-    LOG(DEBUG) << " ----";
-    LOG(DEBUG) << " elasticity ijkl = " << i << j << k << l << " (entry " << entryNo << ")";
+    VLOG(2) << " ----";
+    VLOG(2) << " elasticity ijkl = " << i << j << k << l << " (entry " << entryNo << ")";
     double entry_ijkl = computeElasticityTensorEntry(i,j,k,l,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
     
     //const double tol = 1e-15;
-    LOG(DEBUG) << " ijkl: " << entry_ijkl;
+    VLOG(2) << " ijkl: " << entry_ijkl;
     
     //double entry_jikl = computeElasticityTensorEntry(j,i,k,l,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
-    //LOG(DEBUG) << " jikl: " << entry_jikl << " (diff: " << entry_jikl-entry_ijkl << ")";
+    //VLOG(2) << " jikl: " << entry_jikl << " (diff: " << entry_jikl-entry_ijkl << ")";
     
     //double entry_ijlk = computeElasticityTensorEntry(i,j,l,k,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
-    //LOG(DEBUG) << " ijlk: " << entry_ijlk << " (diff: " << entry_ijlk-entry_ijkl << ")";
+    //VLOG(2) << " ijlk: " << entry_ijlk << " (diff: " << entry_ijlk-entry_ijkl << ")";
     
     //double entry_klij = computeElasticityTensorEntry(k,l,i,j,pressure,pressureTilde,rightCauchyGreen,inverseRightCauchyGreen,fictitiousPK2Stress,pk2StressIsochoric,deformationGradientDeterminant,reducedInvariants);
-    //LOG(DEBUG) << " klij: " << entry_klij << " (diff: " << entry_klij-entry_ijkl << ")";
+    //VLOG(2) << " klij: " << entry_klij << " (diff: " << entry_klij-entry_ijkl << ")";
     
     //assert(fabs(entry_ijkl - entry_jikl) < tol);
     //assert(fabs(entry_ijkl - entry_ijlk) < tol);

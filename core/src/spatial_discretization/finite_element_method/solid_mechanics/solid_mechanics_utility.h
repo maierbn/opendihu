@@ -80,10 +80,24 @@ protected:
   double computePressureFromDisplacements(double deformationGradientDeterminant, 
                                           const std::array<Vec3,3> &rightCauchyGreen, 
                                           const std::array<Vec3,3> &PK2Stress);
+
+ 
+  //! check Cbar for Mooney-Rivlin by explicit formula
+  void checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
+                                const std::array<Vec3,3> &rightCauchyGreen, 
+                                const double deformationGradientDeterminant,
+                                const std::array<double,2> reducedInvariants);
+  
 };
  
 //! check if the given 4th order tensor has minor and major symmetries
 void checkSymmetry(double Cbar[3][3][3][3], std::string name);
+
+//! check the symmetry of a 2nd order tensor
+void checkSymmetry(const std::array<Vec3,3> &rightCauchyGreen, std::string name);
+
+//! check if rightCauchyGreen * inverseRightCauchyGreen = identity
+void checkInverseIsCorrect(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, std::string name);
 
 };  // namespace
 

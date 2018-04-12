@@ -62,5 +62,3 @@ const double PI = 3.14159265358979323846;
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos);
  
 }  // namespace
-
-#include "utility/math_utility.tpp"

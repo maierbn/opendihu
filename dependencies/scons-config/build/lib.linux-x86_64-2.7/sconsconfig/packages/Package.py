@@ -105,6 +105,8 @@ class Package(object):
 
     upp = name.upper()
     
+    #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
+    
     # Check if the user requested to download this package.
     if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL') and self.download_url:
 
@@ -487,6 +489,8 @@ class Package(object):
         continue
         
       p = int(float(n) / number_of_lines * 100.0)
+      if p > 100.0:
+        sys.stdout.write(str(p)+"% (miscounted, sorry)"+"\b"*(len(str(p))+21))
       sys.stdout.write(str(p)+"%"+"\b"*(len(str(p))+1))
       sys.stdout.flush()
 
@@ -586,11 +590,12 @@ class Package(object):
     sys.stdout.write('  done.\n')
     return True
 
-  def env_setup_libs(self, env, libs):
+  def env_setup_libs(self, ctx, libs):
     defaults = {
       'prepend': True,
       'libraries': libs,
     }
+    env = ctx.env
 
     # If we were given a dictionary update our defaults.
     if len(libs) and isinstance(libs[0], dict):
@@ -599,7 +604,7 @@ class Package(object):
 
     # Remove any pre-existing libraries.
     defaults['libraries'] = [d for d in defaults['libraries'] if d not in env.get('LIBS', [])]
-
+    
     # Prepend or append?
     if defaults['prepend']:
       libs = defaults['libraries'] + conv.to_iter(env.get('LIBS', []))
@@ -613,7 +618,7 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11")
+    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program
@@ -634,6 +639,7 @@ class Package(object):
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
     ccflags = ctx.env["CCFLAGS"]
     for i in ccflags:
       ctx.Log("  CCFLAGS "+str(i)+"\n")
@@ -652,14 +658,17 @@ class Package(object):
       for entry in ccflags:
         if entry != "-std=c++14" and entry != "-std=c++11":
           ccflags_new.append(entry)
-      ctx.Log("recovered ccflags:")
-      ctx.Log(str(ccflags_new))
+      #ctx.Log("recovered ccflags:")
+      #ctx.Log(str(ccflags_new)+"\n")
       ctx.env.Replace(CCFLAGS = ccflags_new)
       
     if not res[0]:
+      ctx.Log("Compile/Run failed.\n");
+      ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
       env_restore(ctx.env, bkp)
     else:
-      ctx.Log("Program output:\n"+res[1])
+      ctx.Log("Compile/Run succeeded.\n");
+      ctx.Log("Program output: \""+res[1]+"\"\n")
         
     return res
 
@@ -669,9 +678,15 @@ class Package(object):
     if not extra_libs:
       extra_libs = [[]]
       
+    ctx.Log("try to compile with one of the following libs: "+str(libs)+"\n")
+    if len(extra_libs) > 0:
+      ctx.Log("also always try to include one of the following extra libs: "+str(extra_libs)+"\n")
+    
     for l in libs:
       l = conv.to_iter(l)
-      l_bkp = self.env_setup_libs(ctx.env, l)
+      ctx.Log("try library "+str(l)+"\n")
+      
+      l_bkp = self.env_setup_libs(ctx, l)
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
@@ -689,6 +704,7 @@ class Package(object):
           break
         env_restore(ctx.env, e_bkp)
       if res[0]:
+        ctx.Log("this was successful (using "+str(l)+"), done with list of libraries\n")
         break
       env_restore(ctx.env, l_bkp)
     return res
@@ -775,6 +791,7 @@ class Package(object):
       if not sub_dirs:
         sub_dirs = [[]]
 
+      ctx.Log("Try the following combinations of (include, lib) directories: "+str(sub_dirs)+"\n")
       res = (False, None)
       for inc_sub_dirs, lib_sub_dirs in sub_dirs:
         inc_sub_dirs = list(conv.to_iter(inc_sub_dirs))
@@ -795,8 +812,7 @@ class Package(object):
         if loc_callback:
           loc_callback(ctx, base, inc_sub_dirs, lib_sub_dirs, libs, extra_libs)
 
-        ctx.Log('Trying include dirs: ' + str(inc_sub_dirs) + '\n')
-        ctx.Log('Trying library dirs: ' + str(lib_sub_dirs) + '\n')
+        ctx.Log('Trying include directories: "' + str(inc_sub_dirs) + '" and library directories: "' + str(lib_sub_dirs) + '"\n')
 
         # Before continuing, try and find all of the sample headers.
         if not self.try_headers(ctx, inc_sub_dirs, **kwargs):
@@ -823,6 +839,8 @@ class Package(object):
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)
         if res[0]:
           self.base_dir = base # set base directory
+          
+          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.")
           return res
           #break
         env_restore(ctx.env, bkp)

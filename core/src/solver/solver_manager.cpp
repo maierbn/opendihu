@@ -3,10 +3,9 @@
 namespace Solver
 {
   
-Manager::Manager(DihuContext &context) : 
-  context_(context), numberAnonymousSolvers_(0)
+Manager::Manager(PyObject *specificSettings) : 
+  specificSettings_(specificSettings), numberAnonymousSolvers_(0)
 {
-  specificSettings_ = this->context_.getPythonConfig();
   storePreconfiguredSolvers();
 }
   

@@ -11,8 +11,6 @@
 #include "field_variable/field_variable.h"
 #include "equation/type_traits.h"
 
-class DihuContext;
-
 namespace Data
 {
  

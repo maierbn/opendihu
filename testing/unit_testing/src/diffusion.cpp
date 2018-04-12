@@ -32,7 +32,6 @@ config = {
     ]
   },
 }
-print config
 )";
 
   DihuContext settings(argc, argv, pythonConfig);

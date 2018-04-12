@@ -33,7 +33,7 @@ PETSC_DOWNLOAD=True
 #PETSC_REDOWNLOAD=True
 
 # Python
-PYTHON_DOWNLOAD=True    # This downloads and uses Python 2.7.14, use it to be independent of an eventual system python
+PYTHON_DOWNLOAD=True    # This downloads and uses Python 2.7.13, use it to be independent of an eventual system python
 #PYTHON_REDOWNLOAD=True
 
 # Base64

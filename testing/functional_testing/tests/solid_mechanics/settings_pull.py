@@ -19,6 +19,11 @@ ny = 1
 nz = 1
 # [1,1,1] = 1 element, 8 dofs per element, 8 dofs, 24 unknowns
 
+# dimensions: lx, lz
+lx = 1.0
+lz = 1.0
+area_z = lz*lz
+
 dirichletBC = {
   0: 0.0, 1: 0.0, 2: 0.0,
   6: 0.0, 8: 0.0,
@@ -27,17 +32,17 @@ dirichletBC = {
 } 
 
 traction = {
-  3: 1.0,
-  9: 1.0,
-  15: 1.0,
-  21: 1.0
+  3: area_z/4.,
+  9: area_z/4.,
+  15: area_z/4.,
+  21: area_z/4.
 }
 
 config = {
   "FiniteElementMethod" : {
     "nElements": [nx,ny,nz],
     "nodeDimension": 1,
-    "physicalExtent": [2.*nx,2.*ny,2.*nz],
+    "physicalExtent": [lx,lz,lz],
     "DirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
     "relativeTolerance": 1e-15,
     "rightHandSide": traction,  # surface traction or body force

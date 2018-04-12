@@ -9,8 +9,6 @@
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
 
-class DihuContext;
-
 namespace Data
 {
  

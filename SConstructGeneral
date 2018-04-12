@@ -38,9 +38,9 @@ sconsconfig.select(
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
     packages.Python(required=True),
-    packages.Base64(required=True),
     #packages.Cython(required=True),
     #packages.NumpyC(required=True),
+    packages.Base64(required=True),
     packages.googletest(required=True),
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
@@ -84,7 +84,12 @@ if unknown:
 Help(vars.GenerateHelpText(env))
 
 # set console messages for compilation and linking
-if ARGUMENTS.get('VERBOSE') != '1':
+tty_available = True
+try:
+  screen = open('/dev/tty', 'w')
+except:
+  tty_available = False
+if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
   env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
@@ -106,32 +111,34 @@ sconsconfig.check(sconf)
 sconf.Finish()
 
 # -----------------------------------------------
-# progress display e.g. [50%]
-screen = open('/dev/tty', 'w')
+# progress display e.g. [ 50%]
 
-env["node_count"] = 0
-env["node_count_max"] = 0
-env["node_count_interval"] = 1
-node_count_fname = str(env.Dir('#')) + '/.scons_node_count'
+# set needed global variables
+env["node_count"] = 0                                         # current counter of nodes to compile
+env["node_count_max"] = 0                                     # maximum number of nodes to compile that was determined earlier
+env["node_count_interval"] = 1                                # the interval in which the progress output should be updated
+node_count_fname = str(env.Dir('#')) + '/.scons_node_count'   # filename of the stored maximum node count
 env["node_count_fname"]=node_count_fname
 
 def progress_function(node):
+  """ function to be called before a new node is compiled, outputs progress information like [ 50%] if it is <=100%"""
   global env
   env["node_count"] += env["node_count_interval"]
   if env["node_count"] > env["node_count_max"]: env["node_count_max"] = 0
-  if env["node_count_max"]>0 :
-    screen.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
-    screen.flush()
+  if env["node_count_max"]>0 and tty_available:
+    sys.stdout.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
+    sys.stdout.flush()
   # write out 
   try:
     with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
   except: pass
 
+# read in maximum node count from an earlier compilation
 try:
   with open(env["node_count_fname"]) as f: env["node_count_max"] = int(f.readline())
 except: pass
-# add progress display function
 
+# add progress display target
 Progress(progress_function, interval=env["node_count_interval"])
 
 # -----------------------------------------------

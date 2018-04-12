@@ -53,7 +53,7 @@ sconsconfig.select(
 # Note that an absolute path has to be given, otherwise there are problems finding the libraries
 preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
                     'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
-
+preset_variables = {}
 # read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
 variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
 variables.update(preset_variables)  # merge in preset_variables dictionary

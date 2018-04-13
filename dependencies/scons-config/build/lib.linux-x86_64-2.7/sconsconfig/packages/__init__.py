@@ -40,3 +40,4 @@ from SEMT import SEMT
 from Python import Python
 from SciPy import SciPy
 from bzip2 import bzip2
+from Matplotlib import Matplotlib

@@ -1,6 +1,9 @@
 import sys, os, multiprocessing, subprocess
 from Package import Package
 
+#
+# Python requires bzip2 (for matplotlib to work)
+#
 class Python(Package):
 
     def __init__(self, **kwargs):
@@ -52,7 +55,10 @@ class Python(Package):
           #print("gcc has --enable-plugin, compile python with optimizations")
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} LDFLAGS="-Wl,--rpath=${PREFIX}/lib" && make && make install',
+            'cd ${SOURCE_DIR} && ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} \
+              LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
+              CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
+              && make && make install',
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
@@ -61,7 +67,10 @@ class Python(Package):
           print("gcc has no --enable-plugin, compile python without optimizations")
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && ./configure --enable-shared --prefix=${PREFIX} LDFLAGS="-Wl,--rpath=${PREFIX}/lib" && make && make install',
+            'cd ${SOURCE_DIR} && ./configure --enable-shared --prefix=${PREFIX} \
+              LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
+              CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
+              && make && make install',
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])

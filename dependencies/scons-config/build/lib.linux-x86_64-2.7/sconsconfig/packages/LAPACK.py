@@ -11,6 +11,8 @@ from Package import Package
 ## - ``libopenblas-base``: fast and runtime detected so no tuning required but a
 ##   very recent version is needed (>=0.2.15 is recommended).  Older versions of
 ##   OpenBLAS suffered from correctness issues on some CPUs.
+##
+##   We use OpenBLAS
 ## 
 ##
 class LAPACK(Package):

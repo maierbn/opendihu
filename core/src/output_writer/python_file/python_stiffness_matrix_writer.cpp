@@ -9,6 +9,7 @@ namespace OutputWriter
 
 void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string filename, std::vector<long> &nEntries)
 {
+  VLOG(1) << "writeToNumpyFile (filename=\"" << filename << "\")";
 #if 1
   // prepare shape string for python list, e.g. [5, 1, 1]
   long int nEntriesTotal = 1;
@@ -31,8 +32,12 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
     return;
   }
   
+  static int tempcntr = 0;
+  std::stringstream temporaryFilename;
+  temporaryFilename << "temp" << tempcntr++;
+  
   // write data to binary file
-  std::ofstream file("temp1", std::ios::out | std::ios::binary | std::ios::trunc);
+  std::ofstream file(temporaryFilename.str().c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open())
   {
     LOG(ERROR) << "Could not write temporary files!";
@@ -64,13 +69,14 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   
   file.close();
   
-  VLOG(1) << "data " << data << " written to file temp1";
+  VLOG(1) << "data " << data << " written to file " << temporaryFilename.str();
   
   // convert to numpy file by python script
   std::stringstream converterScript;
   converterScript << "import numpy as np" << std::endl
-    << "v = np.fromfile(\"temp1\")" << std::endl 
+    << "v = np.fromfile(\""<< temporaryFilename.str() << "\")" << std::endl 
     << "v = np.reshape(v," << shape.str() << ")" << std::endl
+    << "print(v)" << std::endl
     << "np.save(\"" << filename << "\",v)";
   
   //LOG(DEBUG) << converterScript.str();
@@ -88,11 +94,22 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   {
     VLOG(1) << "converterScript: ["<<converterScript.str()<<"]";
     
-    int ret = PyRun_SimpleString(converterScript.str().c_str());
-    if (ret != 0)
-      LOG(WARNING) << "Conversion to numpy file \"" << filename << "\" failed.";
-    else
-      LOG(INFO) << "Array of shape " << shape.str() << " exported to \"" << filename << "\"";
+    int ret = 1;
+    // try 2 times, because sometimes it fails for the first time
+    for(int nTries = 0; ret != 0 && nTries < 2; nTries++)
+    {
+      ret = PyRun_SimpleString(converterScript.str().c_str());
+      if (ret != 0)
+      {
+        LOG(WARNING) << "Conversion to numpy file \"" << filename << "\" failed.";
+        if (PyErr_Occurred())
+        {
+          PyErr_Print();
+        }
+      }
+      else
+        LOG(INFO) << "Array of shape " << shape.str() << " exported to \"" << filename << "\"";
+    }
   }
   
   // if solution probably diverged, output a warning
@@ -102,7 +119,11 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   }
   
   // remove temporary file
-  //std::remove("temp1");
+  if (!VLOG_IS_ON(1))
+  {
+    std::remove(temporaryFilename.str().c_str());
+  }
+  
 #endif    
   // directly write npy file by using numpy c API (not working)
 #if 0

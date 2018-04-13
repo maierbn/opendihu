@@ -17,8 +17,6 @@ release:
 clean:
 	rm -rf .sconf_temp
 	rm .sconsign.dblite	
-	$(python) dependencies/scons/scons.py -c BUILD_TYPE=DEBUG
-	$(python) dependencies/scons/scons.py -c BUILD_TYPE=RELEASE
 
 functional_testing:
 	cd testing/functional_testing && $(MAKE) default

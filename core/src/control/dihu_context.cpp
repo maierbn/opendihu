@@ -336,6 +336,10 @@ void DihuContext::loadPythonScript(std::string text)
     if (numpyModule == NULL)
       LOG(DEBUG) << "failed to import numpy";
     ret = PyRun_SimpleString(text.c_str());
+    if (PyErr_Occurred())
+    {
+      PyErr_Print();
+    }
   }
   catch(...)
   {

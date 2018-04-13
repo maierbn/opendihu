@@ -29,7 +29,7 @@ def analytic_solution_2d(x0,x1,t):
     return 1./(4*np.pi*c*t)*np.exp(-(x0**2+x1**2) / (4*c*t))
   
   def integrand(y0,y1):
-    #print "integrand({},{})={}".format(y0,y1,initial_values_function(y0,y1)*h(x0-y0,x1-y1,t))
+    #print("integrand({},{})={}".format(y0,y1,initial_values_function(y0,y1)*h(x0-y0,x1-y1,t)))
     
     return settings_2d.initial_values_function(y0,y1)*h(x0-y0,x1-y1,t)
   
@@ -37,7 +37,7 @@ def analytic_solution_2d(x0,x1,t):
   #(value,error) = scipy.integrate.nquad(integrand, [(0.0, 4.0), (0.0, 3.0)], opts={"limit":5})
   (value,error) = scipy.integrate.nquad(integrand, [(-np.infty, np.infty), (-np.infty, np.infty)])
   
-  #print "analytic_solution({},{},{})={} (integration error {})".format(x0,x1,t,value,error)
+  #print("analytic_solution({},{},{})={} (integration error {})".format(x0,x1,t,value,error))
   return value
   
 # define analytic solution for testing
@@ -83,12 +83,12 @@ from matplotlib import cm
 solution_condition = lambda filename: ".py" in filename
 solution_files = list(np.extract(map(solution_condition, files), files))
 
-print "{} files".format(len(solution_files))
+print("{} files".format(len(solution_files)))
 
 data = py_reader.load_data(solution_files)
 
 if len(data) == 0:
-  print "no data found."
+  print("no data found.")
   sys.exit(0)
 
 dimension = data[0]['dimension']
@@ -103,7 +103,7 @@ if dimension == 1:
   # check if solution diverged
   diverged_tolerance = 1e100
   if min_value < -diverged_tolerance or max_value > diverged_tolerance:
-    print "Test failed: solution diverged. Value range: [{}, {}]".format(min_value, max_value)
+    print("Test failed: solution diverged. Value range: [{}, {}]".format(min_value, max_value))
     sys.exit(0)
   
   # compare to reference solution
@@ -144,7 +144,7 @@ if dimension == 1:
     format(error_absolute_mean, error_absolute_median, error_relative_mean, error_relative_median)
   
   # print message and write to log file
-  print message
+  print(message)
   with open("log.txt","a+") as f:
     name = solution_files[0]
     while "/" in name:
@@ -211,12 +211,12 @@ if dimension == 2:
   min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
   min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
   
-  print "value range: [{}, {}]".format(min_value, max_value)
+  print("value range: [{}, {}]".format(min_value, max_value))
   
   # check if solution diverged
   diverged_tolerance = 1e100
   if min_value < -diverged_tolerance or max_value > diverged_tolerance:
-    print "Test failed: solution diverged. Value range: [{}, {}]".format(min_value, max_value)
+    print("Test failed: solution diverged. Value range: [{}, {}]".format(min_value, max_value))
     sys.exit(0)
   
   if True:
@@ -248,8 +248,8 @@ if dimension == 2:
       # compute the analytic solution
       f_analytic = [analytic_solution_2d(x,y,t) for (x,y) in zip(xdata_subset,ydata_subset)]
       
-      #print "f_analytic:   ",f_analytic
-      #print "fdata_subset: ",fdata_subset
+      #print("f_analytic:   ",f_analytic)
+      #print("fdata_subset: ",fdata_subset)
       
       error_absolute = np.array(fdata_subset) - np.array(f_analytic)
       error_absolute_norm = np.linalg.norm(error_absolute) / len(fdata_subset)
@@ -260,7 +260,7 @@ if dimension == 2:
       error_absolute_timestep.append(error_absolute_norm)
       error_relative_timestep.append(error_relative_norm)
       
-      #print "t={}, error absolute/relative: {}/{}".format(t,error_absolute_norm,error_relative_norm)
+      #print("t={}, error absolute/relative: {}/{}".format(t,error_absolute_norm,error_relative_norm))
       
     # reduce error values for all timesteps
     error_absolute_mean = np.mean(error_absolute_timestep)
@@ -279,7 +279,7 @@ if dimension == 2:
       format(error_absolute_mean, error_absolute_median, error_relative_mean, error_relative_median)
     
     # print message and write to log file
-    print message
+    print(message)
     with open("log.txt","a+") as f:
       name = solution_files[0]
       while "/" in name:
@@ -304,7 +304,7 @@ if dimension == 2:
   # create mesh
   if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed":
     
-    print "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"])
+    print("basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"]))
     
     if data[0]["basisFunction"] == "Lagrange":
       nEntries = dimension * [0]
@@ -319,7 +319,7 @@ if dimension == 2:
     X = np.reshape(x_positions, nEntries)
     Y = np.reshape(y_positions, nEntries)
     
-    #print "x_positions shape: {}".format(len(x_positions))
+    #print("x_positions shape: {}".format(len(x_positions)))
     
   elif data[0]["meshType"] == "StructuredDeformable":
     pass
@@ -358,10 +358,10 @@ if dimension == 2:
     fdata_numerical = np.reshape(fdata_numerical, nEntries)
     fdata_analytical = np.reshape(fdata_analytical, nEntries)
     
-    #print "xdata: ",xdata
-    #print "ydata: ",ydata
-    #print "fdata_numerical: ",fdata_numerical
-    #print "x shape: {}, y shape: {}, z shape: {}".format(xdata.shape, ydata.shape, fdata_numerical.shape)
+    #print("xdata: ",xdata)
+    #print("ydata: ",ydata)
+    #print("fdata_numerical: ",fdata_numerical)
+    #print("x shape: {}, y shape: {}, z shape: {}".format(xdata.shape, ydata.shape, fdata_numerical.shape))
     
     # plot 2D functions
     surface_numerical = ax.plot_surface(xdata, ydata, fdata_numerical, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)

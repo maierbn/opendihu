@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "Python.h"
+#include <Python.h>
 #include "easylogging++.h"
 
 PyObject *PythonUtility::itemList = NULL;
@@ -19,9 +19,9 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
   if(object == NULL)
     return defaultValue;
   
-  if (PyInt_Check(object))
+  if (PyLong_Check(object))
   {
-    long valueLong = PyInt_AsLong(object);
+    long valueLong = PyLong_AsLong(object);
     return int(valueLong);
   }
   else if (PyFloat_Check(object))
@@ -35,9 +35,9 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
     
     return int(valueDouble);
   }
-  else if (PyString_Check(object))
+  else if (PyUnicode_Check(object))
   {
-    std::string valueString = PyString_AsString(object);
+    std::string valueString = pyUnicodeToString(object);
     return atoi(valueString.c_str());
   }
   else
@@ -53,9 +53,9 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
   if(object == NULL)
     return defaultValue;
   
-  if (PyInt_Check(object))
+  if (PyLong_Check(object))
   {
-    long valueLong = PyInt_AsLong(object);
+    long valueLong = PyLong_AsLong(object);
     return std::size_t(valueLong);
   }
   else if (PyFloat_Check(object))
@@ -69,9 +69,9 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
     
     return std::size_t(valueDouble);
   }
-  else if (PyString_Check(object))
+  else if (PyUnicode_Check(object))
   {
-    std::string valueString = PyString_AsString(object);
+    std::string valueString = pyUnicodeToString(object);
     return atoi(valueString.c_str());
   }
   else
@@ -93,14 +93,14 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
       
     return valueDouble;
   }
-  else if (PyInt_Check(object))
+  else if (PyLong_Check(object))
   {
-    long valueLong = PyInt_AsLong(object);
+    long valueLong = PyLong_AsLong(object);
     return double(valueLong);
   }
-  else if (PyString_Check(object))
+  else if (PyUnicode_Check(object))
   {
-    std::string valueString = PyString_AsString(object);
+    std::string valueString = pyUnicodeToString(object);
     return atof(valueString.c_str());
   }
   else
@@ -116,9 +116,9 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
   if(object == NULL)
     return defaultValue;
   
-  if (PyString_Check(object))
+  if (PyUnicode_Check(object))
   {
-    std::string valueString = PyString_AsString(object);
+    std::string valueString = pyUnicodeToString(object);
     return valueString;
   }
   else
@@ -160,14 +160,14 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
     }
     return false;
   }
-  if (PyInt_Check(object))
+  if (PyLong_Check(object))
   {
-    long valueLong = PyInt_AsLong(object);
+    long valueLong = PyLong_AsLong(object);
     return bool(valueLong);
   }
-  else if (PyString_Check(object))
+  else if (PyUnicode_Check(object))
   {
-    std::string valueString = PyString_AsString(object); 
+    std::string valueString = pyUnicodeToString(object); 
     std::transform(valueString.begin(), valueString.end(), valueString.begin(), ::tolower);
     if (valueString.find("true") != std::string::npos || valueString.find("1") != std::string::npos 
       || valueString.find("yes") != std::string::npos || valueString.find("on") != std::string::npos)
@@ -241,7 +241,7 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   if (settings)
   {
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     
     if(PyDict_Contains((PyObject *)settings, key))
     {
@@ -258,7 +258,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   if (settings)
   {
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -286,7 +286,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   }
   
   // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
@@ -379,7 +379,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     return result;
   
   // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
@@ -470,7 +470,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
     return result;
   
   // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
@@ -524,7 +524,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
     return result;
   
   // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
@@ -550,7 +550,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
     return result;
   
   // check if input dictionary contains the key
-  PyObject *key = PyString_FromString(keyString.c_str());
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
   { 
     // extract the value of the key and check its type
@@ -588,19 +588,19 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
   std::stringstream line;
   line << std::string(first_indent, ' ');
               
-  if (PyString_CheckExact(object))
+  if (PyUnicode_CheckExact(object))
   {
-    std::string objectString = PyString_AsString(object);
+    std::string objectString = pyUnicodeToString(object);
     line << "\""<<objectString<<"\"";
   }
-  else if (PyInt_CheckExact(object))
+  else if (PyLong_CheckExact(object))
   {
-    long objectLong = PyInt_AsLong(object);
+    long objectLong = PyLong_AsLong(object);
     line << objectLong;
   }
-  else if (PyInt_CheckExact(object))
+  else if (PyLong_CheckExact(object))
   {
-    long objectLong = PyInt_AsLong(object);
+    long objectLong = PyLong_AsLong(object);
     line << objectLong;
   }
   else if (PyFloat_CheckExact(object))
@@ -640,14 +640,14 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
       
       line << std::endl << std::string(indent+2, ' ');
       
-      if (PyString_Check(key))
+      if (PyUnicode_Check(key))
       {
-        std::string keyString = PyString_AsString(key);
+        std::string keyString = pyUnicodeToString(key);
         line << keyString<<": ";
       }
-      else if (PyInt_Check(key))
+      else if (PyLong_Check(key))
       {
-        std::string keyString = std::to_string(PyInt_AsLong(key));
+        std::string keyString = std::to_string(PyLong_AsLong(key));
         line << keyString<<": ";
       }
       else  
@@ -706,7 +706,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
   {
     
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     { 
       // extract the value of the key and check its type
@@ -781,7 +781,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
-    PyObject *item = PyInt_FromLong(data[i]);
+    PyObject *item = PyLong_FromLong(data[i]);
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item 
   }
   return result;    // return value: new reference
@@ -797,6 +797,19 @@ PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference
+}
+
+std::string PythonUtility::pyUnicodeToString(PyObject* object)
+{
+#if PY_MAJOR_VERSION >= 3
+  PyObject *asciiString = PyUnicode_AsASCIIString(object);
+  std::string result = PyBytes_AsString(asciiString);
+  Py_DECREF(asciiString);
+#else
+  std::string result = pyUnicodeToString(object);
+#endif
+  
+  return result;
 }
 
 std::ostream &operator<<(std::ostream &stream, PyObject *object)

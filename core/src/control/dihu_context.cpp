@@ -1,6 +1,8 @@
 #include "control/dihu_context.h"
 
-#include "Python.h"  // this has to be the first included header
+#include <Python.h>  // this has to be the first included header
+#include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -36,7 +38,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
   pythonConfig_(NULL)
 {
   LOG(TRACE) << "DihuContext constructor";
-
+  
   if (!initialized_)
   {
     // load configuration from file if it exits
@@ -72,6 +74,36 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     
     LOG(TRACE) << "initialize python";
 #if 1
+    
+    // set program name of python script
+    char const *programName = "dihu";
+    VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
+
+#if PY_MAJOR_VERSION >= 3
+    wchar_t *programNameWChar = Py_DecodeLocale(programName, NULL);
+    Py_SetProgramName(programNameWChar);  /* optional but recommended */
+#else
+    Py_SetProgramName((char *)programName);  /* optional but recommended */
+#endif    
+    
+#if PY_MAJOR_VERSION >= 3
+    // set python home and path, apparently this is not needed
+#if 1
+    VLOG(1) << "python home directory: \"" << PYTHON_HOME_DIRECTORY << "\"";
+    std::string pythonSearchPath = PYTHON_HOME_DIRECTORY;
+    //std::string pythonSearchPath = std::string("/store/software/opendihu/dependencies/python/install");
+    const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
+    Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
+    
+    //std::string pythonPath = ".:" PYTHON_HOME_DIRECTORY "/lib/python3.6:" PYTHON_HOME_DIRECTORY "/lib/python3.6/site-packages";
+    //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
+    //Py_SetPath((wchar_t *)pythonPathWChar);
+#endif
+    
+#else   // python 2.7
+
+    // set python home and path
+    
     // find location where libpython2.7.a is located and extract the beginning of the path until '/lib' is encountered
     // this serves as the PYTHONHOME value that will be set via Py_SetPythonHome.
     // possible examples:
@@ -84,6 +116,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     //   sed 's/\/lib.*//': remove everything after "/lib" is found
     //   > tmp: write to file "tmp"
     //int ret = system("printf %s $(find /usr -name \"libpython*.a\" | head -n 1 | sed 's/\\/lib.*//') > tmp");
+    
     int ret = 0;
     if (ret == 0)
     {
@@ -100,39 +133,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
       LOG(DEBUG) << "Set python search path to \""<<pythonSearchPath<<"\".";
       
       VLOG(4) << "Py_SetPythonHome(" << pythonHome << ")";
-#if PY_MAJOR_VERSION >= 3
-      //Py_SetPythonHome((wchar_t *)pythonSearchPath);
-#else
-      Py_SetPythonHome((char *)pythonSearchPath);
-#endif
-      
     }
+    Py_SetPythonHome((char *)pythonSearchPath);
 #endif
-
-    // set program name of python script
-    char const *programName = "dihu";
-    VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
-
-#if PY_MAJOR_VERSION >= 3
-    Py_SetProgramName((wchar_t *)programName);  /* optional but recommended */
-#else
-    Py_SetProgramName((char *)programName);  /* optional but recommended */
-#endif    
     
     // initialize python
     VLOG(4) << "Py_Initialize()";
     Py_Initialize();
     
-    // check python home directory for debugging output
-    VLOG(4) << "Py_GetPythonHome()";
-
-#if PY_MAJOR_VERSION >= 3
-    wchar_t *home = Py_GetPythonHome();
-#else
-    char *home = Py_GetPythonHome();
-#endif    
-    
-    LOG(DEBUG) << "Python home: " << home;
+    VLOG(4) << "Py_SetStandardStreamEncoding()";
+    Py_SetStandardStreamEncoding(NULL, NULL);
     
     // pass on command line arguments to python config script
     
@@ -141,15 +151,69 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     int numberArgumentsToRemove = (explicitConfigFileGiven? 2: 1);
     
     int argcReduced = argc - numberArgumentsToRemove;
+    VLOG(4) << "argcReduced: " << argcReduced << ", numberArgumentsToRemove: " << numberArgumentsToRemove;
+    
     char **argvReduced = new char *[argcReduced];
+#if PY_MAJOR_VERSION >= 3
+    wchar_t **argvReducedWChar = new wchar_t *[argcReduced];
+#endif
     
     for (int i=0; i<argcReduced; i++)
     {
       argvReduced[i] = argv[i+numberArgumentsToRemove];
+      LOG(DEBUG) << "argv[" << i << "]=" << argvReduced[i];
+#if PY_MAJOR_VERSION >= 3
+      argvReducedWChar[i] = Py_DecodeLocale(argvReduced[i], NULL);
+#endif      
     }
     
     // pass reduced list of command line arguments to python script
+#if PY_MAJOR_VERSION >= 3
+    PySys_SetArgvEx(argcReduced, argvReducedWChar, 0);
+#else    
     PySys_SetArgvEx(argcReduced, argvReduced, 0);
+#endif
+    
+    
+
+#if PY_MAJOR_VERSION >= 3
+    // check different python setting for debugging
+    wchar_t *homeWChar = Py_GetPythonHome();
+    char *home = Py_EncodeLocale(homeWChar, NULL);
+    VLOG(2) << "python home: " << home;
+    
+    wchar_t *pathWChar = Py_GetPath();
+    char *path = Py_EncodeLocale(pathWChar, NULL);
+    VLOG(2) << "python path: " << path;
+    
+    wchar_t *prefixWChar = Py_GetPrefix();
+    char *prefix = Py_EncodeLocale(prefixWChar, NULL);
+    VLOG(2) << "python prefix: " << prefix;
+    
+    wchar_t *execPrefixWChar = Py_GetExecPrefix();
+    char *execPrefix = Py_EncodeLocale(execPrefixWChar, NULL);
+    VLOG(2) << "python execPrefix: " << execPrefix;
+    
+    wchar_t *programFullPathWChar = Py_GetProgramFullPath();
+    char *programFullPath = Py_EncodeLocale(programFullPathWChar, NULL);
+    VLOG(2) << "python programFullPath: " << programFullPath;
+    
+    const char *version = Py_GetVersion();
+    VLOG(2) << "python version: " << version;
+    
+    const char *platform = Py_GetPlatform();
+    VLOG(2) << "python platform: " << platform;
+    
+    const char *compiler = Py_GetCompiler();
+    VLOG(2) << "python compiler: " << compiler;
+    
+    const char *buildInfo = Py_GetBuildInfo();
+    VLOG(2) << "python buildInfo: " << buildInfo;
+#else
+    // check python home directory for debugging output
+    char *home = Py_GetPythonHome();
+    VLOG(2) << "Python home: " << home;
+#endif    
     
     // load python script 
     if(settingsFromFile)
@@ -157,19 +221,20 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
       loadPythonScriptFromFile(filename);
     }
     
+#endif    
     initialized_ = true;
   }
-
   // if this is the first constructed DihuContext object, create global objects mesh manager and solver manager
   if (!meshManager_)
   {
     VLOG(2) << "create meshManager_";
-    meshManager_ = std::make_shared<Mesh::Manager>(*this);
+    meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
   }
+  
   if (!solverManager_)
   {
     VLOG(2) << "create solverManager_";
-    solverManager_ = std::make_shared<Solver::Manager>(*this);
+    solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
   }
 }  
 
@@ -180,9 +245,9 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : D
   
   VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;
-  meshManager_ = std::make_shared<Mesh::Manager>(*this);
+  meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
   solverManager_ = nullptr;
-  solverManager_ = std::make_shared<Solver::Manager>(*this);
+  solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
   
 }
 
@@ -266,6 +331,10 @@ void DihuContext::loadPythonScript(std::string text)
   LOG(INFO)<<std::string(80, '-');
   try
   {
+    LOG(DEBUG) << "run python script";
+    PyObject *numpyModule = PyImport_ImportModule("numpy");
+    if (numpyModule == NULL)
+      LOG(DEBUG) << "failed to import numpy";
     ret = PyRun_SimpleString(text.c_str());
   }
   catch(...)
@@ -394,7 +463,7 @@ DihuContext::~DihuContext()
   // do not finalize Python because otherwise tests keep crashing
   //Py_Finalize();
 #if PY_MAJOR_VERSION >= 3  
-  Py_Finalize();
+  //Py_Finalize();
 #endif
 
   // do not finalize Petsc because otherwise there can't be multiple DihuContext objects for testing

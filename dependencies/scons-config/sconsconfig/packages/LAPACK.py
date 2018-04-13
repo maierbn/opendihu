@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
         
         if os.environ.get("LIBSCI_BASE_DIR") is not None:
           self.libs = ["sci_cray_mpi_mp"]
-          print "Cray environment detected, using \"sci_cray_mpi_mp\" for LAPACK"
+          print("Cray environment detected, using \"sci_cray_mpi_mp\" for LAPACK")
 
         elif False:
           # reference blas, make based, only static libraries

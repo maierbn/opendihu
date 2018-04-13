@@ -7,11 +7,12 @@
 # <PACKAGE>_LIBS        List of libraries, optional since the standard names are already hardcoded.
 # <PACKAGE>_DOWNLOAD    Download, build and use a local copy of the package.
 # <PACKAGE>_REDOWNLOAD  Force update of previously downloaded copy. For that <PACKAGE>_DOWNLOAD has to be also true.
+# <PACKAGE>_REBUILD     Force a new build of the package without redownloading it if already has been downloaded earlier.
 #
 # You do one of the following:
-# 1. Not specify any of the variables. Then standard locations in dependencies as well as /usr, /usr/local are searched
-# 2. Specify <PACKAGE>_DIR to directly give the base directory to the package's location
-# 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library files
+# 1. Not specify any of the variables. Then standard locations in dependencies as well as /usr, /usr/local are searched.
+# 2. Specify <PACKAGE>_DIR to directly give the base directory to the package's location. Do this to e.g. use system provided libraries.
+# 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
 
@@ -33,8 +34,22 @@ PETSC_DOWNLOAD=True
 #PETSC_REDOWNLOAD=True
 
 # Python
-PYTHON_DOWNLOAD=True    # This downloads and uses Python 2.7.14, use it to be independent of an eventual system python
-#PYTHON_REDOWNLOAD=True
+PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
+PYTHON_REDOWNLOAD=False
+
+#Numpy
+CYTHON_DOWNLOAD=True
+CYTHON_REDOWNLOAD=False
+NUMPYC_DOWNLOAD=True
+NUMPYC_REDOWNLOAD=False
+NUMPYC_REBUILD=False
+
+# SciPy
+SCIPY_DOWNLOAD=True
+
+# Matplotlib
+BZIP2_DOWNLOAD=True
+MATPLOTLIB_DOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True

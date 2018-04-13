@@ -25,6 +25,11 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   // build python object for data
   PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
     buildPyDataObject(data.getOutputFieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
+  //PyObject *pyData = PyDict_New();
+  //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
+  //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
+  
+  //PythonUtility::printDict(pyData);
   
   // determine file name
   std::stringstream s;
@@ -39,9 +44,16 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     ofile.close();
   
 #if PY_MAJOR_VERSION >= 3  
-  FILE *fileC = fopen(filename.c_str(), "w");
-  int fileDescriptorC = fileno(fileC);
-  PyObject *file = PyFile_FromFd(fileDescriptorC, NULL, "w", -1, NULL, NULL, NULL, true);
+  //FILE *fileC = fopen(filename.c_str(), "w");
+  //int fileDescriptorC = fileno(fileC);
+  //PyObject *file = PyFile_FromFd(fileDescriptorC, NULL, "w", -1, NULL, NULL, NULL, true);
+  
+  //PyGILState_STATE gilState = PyGILState_Ensure();
+
+  PyObject *ioModule = PyImport_ImportModule("io");
+
+  PyObject *file = PyObject_CallMethod(ioModule, "open", "ss", filename.c_str(), "w");
+  Py_DECREF(ioModule);
 #else 
   // python 2.7
   char filenameC[filename.size()+1];
@@ -65,21 +77,18 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   if (usePickle)
   {
     // load pickle module if is was not loaded in an earlier call
-    static PyObject *module = NULL;
-    if (module == NULL)
+    static PyObject *pickleModule = NULL;
+    if (pickleModule == NULL)
     {
-      //module = PyImport_ImportModuleNoBlock("cpickle");
-      if (module == NULL)
-        module = PyImport_ImportModuleNoBlock("pickle");
+      pickleModule = PyImport_ImportModuleNoBlock("pickle");
     }
-    
-    if (module == NULL)
+    if (pickleModule == NULL)
     {
-      LOG(ERROR) << "Could not load python pickle package";
+      LOG(ERROR) << "Could not import pickle module";
     }
     else
     {
-      PyObject *pickle;
+     /*
       std::string methodNameStr("dump");
       char methodName[methodNameStr.size()+1];
       std::strcpy(methodName, methodNameStr.c_str());
@@ -87,15 +96,39 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
       std::string formatStr("(O O i)");
       char format[formatStr.size()+1];
       std::strcpy(format, formatStr.c_str());
-      
-      pickle = PyObject_CallMethod(module, methodName, format, pyData, file, 1);
+      */
+      PyObject *pickle = PyObject_CallMethod(pickleModule, "dump", "(O O i)", pyData, file, 1);
       Py_XDECREF(pickle);
     }
   }
   else
   {
     // output python object
+   
+#if PY_MAJOR_VERSION >= 3 
+    // load json module
+    static PyObject *jsonModule = NULL;
+    if (jsonModule == NULL)
+    {
+      jsonModule = PyImport_ImportModule("json");
+    }
+    if (jsonModule == NULL)
+    {
+      LOG(ERROR) << "Could not import json module";
+    }
+    else
+    {
+      // convert data object to string representation and save in file
+      //PyObject *pyDataJson = 
+      PyObject_CallMethod(jsonModule, "dump", "O, O", pyData, file);
+     
+      PyObject_CallMethod(file, "flush", NULL);
+      PyObject_CallMethod(file, "close", NULL);
+    }
+#else
     PyFile_WriteObject(pyData, file, 0);
+#endif
+    
     LOG(INFO) << (usePickle? "Binary" : "ASCII") << " file \"" << filename << "\" written.";
     LOG(DEBUG) << "PyFile_WriteObject done";
   }
@@ -103,6 +136,10 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   // decrement reference counters for python objects
   Py_XDECREF(pyData);
   Py_XDECREF(file);
+  
+#if PY_MAJOR_VERSION >= 3  
+  //PyGILState_Release(gilState);
+#endif
   
   LOG(DEBUG) << "writeNumpySolution";
   

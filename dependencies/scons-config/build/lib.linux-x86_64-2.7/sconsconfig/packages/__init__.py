@@ -38,3 +38,5 @@ from libxml2 import libxml2
 from Sphinx import Sphinx
 from SEMT import SEMT
 from Python import Python
+from SciPy import SciPy
+from bzip2 import bzip2

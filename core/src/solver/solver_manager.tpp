@@ -1,6 +1,6 @@
 #include "solver/solver_manager.h"
 
-#include "Python.h" // this header has to be included first
+#include <Python.h> // this header has to be included first
 
 #include <memory>
 #include <iostream>

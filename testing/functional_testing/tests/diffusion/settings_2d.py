@@ -16,7 +16,7 @@ if len(sys.argv) > 1:
     name = sys.argv[0]
     n = int(sys.argv[1])
     
-    print "name: \"{}\", n: {}".format(name, n)
+    print("name: \"{}\", n: {}".format(name, n))
 
 def initial_values_function(x,y):
   if 0.75 < x < 1.25 and 0.75 < y < 1.75:

@@ -1379,7 +1379,9 @@ The connection from the symmetric Cauchy stress tensor $\bfsigma$ to the 2nd Pio
 \begin{equation*}
   \begin{array}{lll}
     \bfsigma = J^{-1}\bfF\,\bfS\,\bfF^\top\\[4mm]
-    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}
+    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}\\[4mm]
+    \bfsigma = \dfrac1{J}\bfP\,\bfF^\top \quad \Rightarrow \quad \bfP = J \bfsigma\,\bfF^{-\top}\\[4mm]
+    \bfS = \bfF^{-1}\bfP\quad \Rightarrow \quad \bfP = \bfF\,\bfS
   \end{array}
 \end{equation*}
 
@@ -2095,7 +2097,47 @@ with
 \end{equation*}
 (Zienkiewicz I p.470)
 
-Solve with \emph{leap frog}.
+Solve with \emph{leapfrog} integration.
+
+\subsection{Examples with analytical solution}
+\subsubsection{Uniaxial extension}
+
+\bild{uniaxial_extension}{0.8\textwidth}{Uniaxial extension example}
+
+Domain in reference and current configuration (see \cref{fig:uniaxial_extension}):
+\begin{equation*}
+  \begin{array}{lll}
+    \Omega_\text{ref} = [0, l_x] \times [0, l_z]^2\\[4mm]
+    \Omega_\text{current} = [0, \lambda\,l_x] \times [0, l_z/\sqrt{\lambda}]^2,
+  \end{array}
+\end{equation*}
+A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geomtric quantities can be computed to
+\begin{equation*}
+  \begin{array}{lll}
+    \bfx = \mat{\lambda X_1\\[2mm] X_2/\sqrt{\lambda} \\[2mm] X_3/\sqrt{\lambda}}, 
+    \quad \bfF = \matt{\lambda & 0 & 0\\[2mm] 0 & 1/\sqrt{\lambda} & 0 \\[2mm] 0 & 0 & 1/\sqrt{\lambda}},
+    \quad \bfC = \matt{\lambda^2 & 0 & 0\\[2mm] 0 & 1/\lambda & 0 \\[2mm] 0 & 0 & 1/\lambda },\\[12mm]
+    \tr(\bfC) = \lambda^2 + 2/\sqrt{\lambda}, \quad \tr(\bfC^2) = \lambda^4 + 2/\lambda^2\\[4mm]
+    I_1 = \tr(\bfC) = \lambda^2 + 2/\lambda \quad \\[4mm]
+    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) 
+    = \dfrac{1}{2}\big(\lambda^4 + \dfrac{4\,\lambda^2}{\sqrt{\lambda}} + \dfrac{4}{\lambda} - \lambda^4 - \dfrac{2}{\lambda^2}\big)
+    = 2\,\lambda^{3/2} + 2\lambda^{-1} - \lambda^{-2}\\[4mm]
+    \bfE = \dfrac12\matt{\lambda^2-1 & 0 & 0\\[2mm] 0 & 1/\lambda-1 & 0 \\[2mm] 0 & 0 & 1/\lambda-1}
+  \end{array}
+\end{equation*}
+For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the PK2 stress tensor as,
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bfC = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad -2\,c_2/\lambda, \quad -2\,c_2/\lambda\Big)
+  \end{array}
+\end{equation*}
+From equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}
+    S_{11} = t_\text{max} \quad \Rightarrow \quad \lambda = \dfrac{4\,c_2}{t_\text{max} - 2\,c_1},\\[4mm]
+    \bfS = \diag\Big( t_\text{max}, \quad  c_1-t_\text{max}/2, \quad c_1-t_\text{max}/2 \Big)
+  \end{array}
+\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \section{Quadrature}

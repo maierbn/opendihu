@@ -12,7 +12,7 @@ if len(sys.argv) > 0:
   if "check_results.py" not in sys.argv[0]:
     name = sys.argv[0]
     
-    print "name: \"{}\"".format(name)
+    print("name: \"{}\"".format(name))
 
 nx = 1
 ny = 1

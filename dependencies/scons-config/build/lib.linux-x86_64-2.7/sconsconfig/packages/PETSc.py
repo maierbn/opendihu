@@ -61,7 +61,7 @@ class PETSc(Package):
 
         if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
           self.libs = ["craypetsc_cray_real"]
-          print "Cray environment detected, using \"craypetsc_cray_real\" for PETSc"
+          print("Cray environment detected, using \"craypetsc_cray_real\" for PETSc")
 
         
         # the system tries to include one of them after other, if linking else fails

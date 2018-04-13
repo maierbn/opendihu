@@ -11,9 +11,6 @@
 #include "field_variable/field_variable.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 
-class DihuContext;
-//class BasisOnMesh::Mixed;
-
 namespace Data
 {
 /** partial specialization for mixed formulation

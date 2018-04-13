@@ -7,11 +7,10 @@
 namespace Mesh 
 {
 
-Manager::Manager(DihuContext context) :
-  context_(context), numberAnonymousMeshes_(0)
+Manager::Manager(PyObject *specificSettings) :
+  specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
-  specificSettings_ = this->context_.getPythonConfig();
   storePreconfiguredMeshes();
 }
 

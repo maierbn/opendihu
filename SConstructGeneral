@@ -37,10 +37,13 @@ sconsconfig.select(
     packages.MPI(required=True),
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
+    packages.bzip2(required=False),
     packages.Python(required=True),
+    packages.Cython(required=True),
+    packages.NumpyC(required=True),
+    packages.SciPy(required=True),
+    #packages.Matplotlib(required=False),
     packages.Base64(required=True),
-    #packages.Cython(required=True),
-    #packages.NumpyC(required=True),
     packages.googletest(required=True),
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
@@ -113,15 +116,17 @@ sconsconfig.check(sconf)
 sconf.Finish()
 
 # -----------------------------------------------
-# progress display e.g. [50%]
+# progress display e.g. [ 50%]
 
-env["node_count"] = 0
-env["node_count_max"] = 0
-env["node_count_interval"] = 1
-node_count_fname = str(env.Dir('#')) + '/.scons_node_count'
+# set needed global variables
+env["node_count"] = 0                                         # current counter of nodes to compile
+env["node_count_max"] = 0                                     # maximum number of nodes to compile that was determined earlier
+env["node_count_interval"] = 1                                # the interval in which the progress output should be updated
+node_count_fname = str(env.Dir('#')) + '/.scons_node_count'   # filename of the stored maximum node count
 env["node_count_fname"]=node_count_fname
 
 def progress_function(node):
+  """ function to be called before a new node is compiled, outputs progress information like [ 50%] if it is <=100%"""
   global env
   env["node_count"] += env["node_count_interval"]
   if env["node_count"] > env["node_count_max"]: env["node_count_max"] = 0
@@ -133,11 +138,12 @@ def progress_function(node):
     with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
   except: pass
 
+# read in maximum node count from an earlier compilation
 try:
   with open(env["node_count_fname"]) as f: env["node_count_max"] = int(f.readline())
 except: pass
-# add progress display function
 
+# add progress display target
 Progress(progress_function, interval=env["node_count_interval"])
 
 # -----------------------------------------------

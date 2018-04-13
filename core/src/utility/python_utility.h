@@ -7,12 +7,17 @@
 #include <vector>
 
 // With python3+ PyString_* was renamed to PyBytes_*
-//(This ugly check should be removed when decided if python2.7 or python3 will be used. Do that now and remove it now!)
+//(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
 #if PY_MAJOR_VERSION >= 3
-#define PyString_Check PyBytes_Check
-#define PyString_CheckExact PyBytes_CheckExact
-#define PyString_FromString PyBytes_FromString
-#define PyString_AsString PyBytes_AsString
+#else   // python 2.7
+#define PyUnicode_FromString PyString_FromString
+#define PyUnicode_CheckExact PyString_CheckExact
+#define PyUnicode_Check PyString_Check
+
+#define PyLong_Check PyInt_Check
+#define PyLong_AsLong PyInt_AsLong
+#define PyLong_FromLong PyInt_FromLong
+#define PyLong_CheckExact PyInt_CheckExact
 #endif
 
 /** Utility class that handles parsing of python config data to c type objects
@@ -125,6 +130,9 @@ public:
   //! convert a python list to a std::array
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object);
+  
+  //! convert a PyUnicode object to a std::string
+  static std::string pyUnicodeToString(PyObject *object);
   
 private:
   

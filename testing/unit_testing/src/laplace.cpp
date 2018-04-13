@@ -241,7 +241,6 @@ TEST(LaplaceTest, MatrixIsCorrect2DSmall)
 {
   std::string pythonConfig = R"(
 # Laplace 2D
-print "start"
 n = 2.
 m = 3.
 
@@ -253,7 +252,7 @@ for i in range(int(n+1)):
   i2 = (n+1)*m + i
   bc[int(i2)] = x
   
-  print "bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2])
+  print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
 
 config = {
   "disablePrinting": False,

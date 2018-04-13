@@ -95,9 +95,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
     Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
     
-    std::string pythonPath = std::string(PYTHON_HOME_DIRECTORY) + "/lib/python3.6";
-    const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
-    Py_SetPath((wchar_t *)pythonPathWChar);
+    //std::string pythonPath = ".:" PYTHON_HOME_DIRECTORY "/lib/python3.6:" PYTHON_HOME_DIRECTORY "/lib/python3.6/site-packages";
+    //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
+    //Py_SetPath((wchar_t *)pythonPathWChar);
 #endif
     
 #else   // python 2.7
@@ -331,6 +331,10 @@ void DihuContext::loadPythonScript(std::string text)
   LOG(INFO)<<std::string(80, '-');
   try
   {
+    LOG(DEBUG) << "run python script";
+    PyObject *numpyModule = PyImport_ImportModule("numpy");
+    if (numpyModule == NULL)
+      LOG(DEBUG) << "failed to import numpy";
     ret = PyRun_SimpleString(text.c_str());
   }
   catch(...)

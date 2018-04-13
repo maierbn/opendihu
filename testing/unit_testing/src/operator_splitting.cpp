@@ -26,13 +26,13 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58           # membrane capacitance [uF/cm^2]
 
 def setParameters(n_instances, time_step_no, current_time, parameters):
-  #print "       > called at ",time_step_no,", time=",current_time, ", n_instances=", n_instances, ", p=",parameters[0]
+  #print("       > called at ",time_step_no,", time=",current_time, ", n_instances=", n_instances, ", p=",parameters[0])
   
   center_node = n_instances / 2
   
   parameters[0] = 0
   if current_time - int(current_time) < 0.1 and current_time < 10:
-    print "parameters len: {}, set I_Stim for node {} to 1200".format(len(parameters),center_node)
+    print("parameters len: {}, set I_Stim for node {} to 1200".format(len(parameters),center_node))
     if center_node > 0:
       parameters[center_node-1] = 400.
     parameters[center_node] = 400.
@@ -132,13 +132,13 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58           # membrane capacitance [uF/cm^2]
 
 def setParameters(n_instances, time_step_no, current_time, parameters):
-  #print "       > called at ",time_step_no,", time=",current_time, ", n_instances=", n_instances, ", p=",parameters[0]
+  #print("       > called at ",time_step_no,", time=",current_time, ", n_instances=", n_instances, ", p=",parameters[0])
   
   center_node = n_instances / 2
   
   parameters[0] = 0
   if current_time - int(current_time) < 0.1 and current_time < 10:
-    print "parameters len: {}, set I_Stim for node {} to 1200".format(len(parameters),center_node)
+    print("parameters len: {}, set I_Stim for node {} to 1200".format(len(parameters),center_node))
     if center_node > 0:
       parameters[center_node-1] = 400.
     parameters[center_node] = 400.

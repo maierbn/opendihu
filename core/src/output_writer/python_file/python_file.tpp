@@ -23,13 +23,13 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   }
   
   // build python object for data
-  //PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
-  //  buildPyDataObject(data.getOutputFieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
-  PyObject *pyData = PyDict_New();
-  PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
-  PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
+  PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    buildPyDataObject(data.getOutputFieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
+  //PyObject *pyData = PyDict_New();
+  //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
+  //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
   
-  PythonUtility::printDict(pyData);
+  //PythonUtility::printDict(pyData);
   
   // determine file name
   std::stringstream s;
@@ -144,7 +144,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   LOG(DEBUG) << "writeNumpySolution";
   
   // for regular fixed also output stiffness matrix 
-  //PythonStiffnessMatrixWriter<DataType>::writeNumpySolution(data, this->filename_);
+  PythonStiffnessMatrixWriter<DataType>::writeNumpySolution(data, this->filename_);
 }
 
 };

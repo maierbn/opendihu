@@ -12,7 +12,7 @@ if len(sys.argv) > 0:
   if "check_results.py" not in sys.argv[0]:
     name = sys.argv[0]
     
-    print "name: \"{}\"".format(name)
+    print("name: \"{}\"".format(name))
 
 nx = 1
 ny = 1
@@ -23,6 +23,7 @@ nz = 1
 lx = 1.0
 lz = 1.0
 area_z = lz*lz
+tmax = 2.0
 
 dirichletBC = {
   0: 0.0, 1: 0.0, 2: 0.0,
@@ -32,11 +33,18 @@ dirichletBC = {
 } 
 
 traction = {
-  3: area_z/4.,
-  9: area_z/4.,
-  15: area_z/4.,
-  21: area_z/4.
+  3: tmax/4.,
+  9: tmax/4.,
+  15: tmax/4.,
+  21: tmax/4.
 }
+
+material_parameters = [6.352e-10, 3.627, 100]  # c0, c1, kappa
+
+lambda = 4*material_parameters[1] / (tmax - 2*material_parameters[0])
+analytical_pk2_stress = [2*material_parameters[0] + 4*material_parameters[1]/lambda, -2*material_parameters[1]/lambda, -2*material_parameters[1]/lambda]
+
+print("lambda: ",lambda)
 
 config = {
   "FiniteElementMethod" : {
@@ -46,7 +54,7 @@ config = {
     "DirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
     "relativeTolerance": 1e-15,
     "rightHandSide": traction,  # surface traction or body force
-    "materialParameters": [6.352e-10, 3.627, 100],  # c0, c1, kappa
+    "materialParameters": material_parameters,  # c0, c1, kappa
     "analyticJacobian": False,   # False = compute Jacobian by finite differences
   },
   "OutputWriter" : [

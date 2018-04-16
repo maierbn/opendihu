@@ -970,34 +970,34 @@ the solution is
 Currently not compiled because unpublished.
 
 
-The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
-\begin{equation}
-  \begin{array}{lll}\label{eq:multidomain1}
-    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
-  \end{array}
-\end{equation}
-\begin{equation}\label{eq:multidomain2}
-  \begin{array}{lll}
-    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
-  \end{array}
-\end{equation}
-The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
-$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
-
-Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
-\begin{equation*}
-  \begin{array}{lll}
-    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
-  \end{array}
-\end{equation*}
-
-The bidomain equation is used for computation of EMG:
-\begin{equation*}
-  \begin{array}{lll}
-    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
-  \end{array}
-\end{equation*}
-
+%The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
+%\begin{equation}
+%  \begin{array}{lll}\label{eq:multidomain1}
+%    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
+%  \end{array}
+%\end{equation}
+%\begin{equation}\label{eq:multidomain2}
+%  \begin{array}{lll}
+%    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
+%  \end{array}
+%\end{equation}
+%The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
+%$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
+%
+%Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
+%  \end{array}
+%\end{equation*}
+%
+%The bidomain equation is used for computation of EMG:
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
+%  \end{array}
+%\end{equation*}
+%
 %------------------------------------------------------------------------------------------------
 \section{Structural mechanics}
 The order in this section may be a bit confusing or lacking transition texts. It should be seen more as a collection of the theory and formulas.

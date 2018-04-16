@@ -5,7 +5,7 @@
 # Functions to parse opendihu *.py output files
 #
 
-import pickle
+import pickle, json
 
 def get_values(data, field_variable_name, component_name):
   """
@@ -62,26 +62,24 @@ def load_data(filenames):
   # load py files
   for filename in filenames:
 
-    with open(filename,'rb') as f:
-      
-      # try to load file content directly, this works if it is an ascii file
-      try:
-        dict_from_file = eval(f.read())
+    # try to load file content using json, this works if it is an ascii file
+    try:
+      with open(filename,'r') as f:
+        dict_from_file = json.load(f)
+    except Exception as e:
+      # try to load file contents using pickle, this works for binary files
+      try: 
+        with open(filename,'rb') as f:
+          dict_from_file = pickle.load(f)
       except:
         
-        # try to load file contents using pickle, this works for binary files
-        try: 
-          with open(filename,'rb') as f:
-            dict_from_file = pickle.load(f)
-        except:
-          
-          # loading did not work either way
-          dict_from_file = {}
-          print("Could not parse file \"{}\"".format(filename))
-          continue
-      
-      #print "file: {}, dict: {}".format(filename,dict_from_file)
+        # loading did not work either way
+        dict_from_file = {}
+        print("Could not parse file \"{}\"".format(filename))
+        continue
+    
+    #print "file: {}, dict: {}".format(filename,dict_from_file)
 
-      data.append(dict_from_file)
+    data.append(dict_from_file)
   return data
 

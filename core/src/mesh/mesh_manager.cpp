@@ -20,28 +20,39 @@ void Manager::storePreconfiguredMeshes()
   if (specificSettings_)
   {
     std::string keyString("Meshes");
-    std::pair<std::string, PyObject *> dictItem 
-      = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
-    
-    for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
-        PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
+    if (PythonUtility::hasKey(specificSettings_, "Meshes"))
     {
-      std::string key = dictItem.first;
-      PyObject *value = dictItem.second;
-          
-      if (value == NULL)
+      
+      std::pair<std::string, PyObject *> dictItem 
+        = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
+      
+      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
+          PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
       {
-        LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
+        std::string key = dictItem.first;
+        PyObject *value = dictItem.second;
+            
+        if (value == NULL)
+        {
+          LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
+        }
+        else if(!PyDict_Check(value))
+        {
+          LOG(WARNING) << "Value for mesh with name \""<<key<<"\" should be a dict.";
+        }
+        else
+        {
+          LOG(DEBUG) << "store mesh configuration with key \""<<key<<"\".";
+          meshConfiguration_[key] = value;
+        }
       }
-      else if(!PyDict_Check(value))
-      {
-        LOG(WARNING) << "Value for mesh with name \""<<key<<"\" should be a dict.";
-      }
-      else
-      {
-        LOG(DEBUG) << "store mesh configuration with key \""<<key<<"\".";
-        meshConfiguration_[key] = value;
-      }
+    }
+    else
+    {
+      LOG(INFO) << "You have specified the mesh in-line and not under the extra key \"Meshes\". You could do so,"
+        " by defining \"Meshes\": {\"<your custom mesh name>\": {<your mesh parameters>}} at the beginning of the"
+        " config and \"meshName\": \"<your custom mesh name>\" where you currently have specified the mesh parameters."
+        " This is required if you want to use the same mesh for multiple objects.";
     }
   }
 }

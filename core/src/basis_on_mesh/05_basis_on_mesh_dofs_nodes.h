@@ -56,6 +56,9 @@ public:
   
 protected:
   
+  //! create the geometry field from meshWidth_
+  void setupGeometryField();
+  
   double meshWidth_;   ///< uniform mesh width, this is a copy of the value which is stored in this->geometryField_
 }; 
 

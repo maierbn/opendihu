@@ -70,5 +70,9 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
   }
 }
 
+bool Manager::hasOutputWriters()
+{
+  return !outputWriter_.empty();
+}
 
 };

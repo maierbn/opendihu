@@ -63,17 +63,7 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
   
   LOG(DEBUG) << "   create geometry field ";
   
-  //FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> a();
-  this->geometryField_ = std::make_unique<GeometryFieldType>();
-  
-  // setup geometry field
-  this->geometryField_->setMeshWidth(this->meshWidth_);
-  std::vector<std::string> componentNames{"x","y","z"};
-  bool isGeometryField = true;
-  Vec values;
-  dof_no_t nDofs = this->nDofs();
-  std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
-  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+  setupGeometryField();
 }
 
 template<int D,typename BasisFunctionType>
@@ -98,6 +88,24 @@ BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D
       LOG(ERROR) << "mesh width: " << this->meshWidth_ << ", other: " << *physicalExtentIter << "/" << *nElementsIter << "=" << meshWidthCurrentDirection;
     }
   }
+  
+  setupGeometryField();
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+setupGeometryField()
+{
+  this->geometryField_ = std::make_unique<GeometryFieldType>();
+  
+  // setup geometry field
+  this->geometryField_->setMeshWidth(this->meshWidth_);
+  std::vector<std::string> componentNames{"x","y","z"};
+  bool isGeometryField = true;
+  Vec values;
+  dof_no_t nDofs = this->nDofs();
+  std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
+  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
 }
 
 

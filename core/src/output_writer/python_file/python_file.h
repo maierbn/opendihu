@@ -23,6 +23,12 @@ public:
   
 private:
  
+  //! open a python file stream using io module (python 3) or with low-level api (python 2.7)
+  PyObject *openPythonFileStream(std::string filename, std::string writeFlag);
+ 
+  //! write a python object to an already opened python file stream
+  void outputPyObject(PyObject *file, PyObject *pyData);
+  
   bool onlyNodalValues_;  ///< if only nodal values should be output, this omits the derivative values for Hermite ansatz functions, for Lagrange functions it has no effect
 };
 

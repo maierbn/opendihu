@@ -76,7 +76,6 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   converterScript << "import numpy as np" << std::endl
     << "v = np.fromfile(\""<< temporaryFilename.str() << "\")" << std::endl 
     << "v = np.reshape(v," << shape.str() << ")" << std::endl
-    << "print(v)" << std::endl
     << "np.save(\"" << filename << "\",v)";
   
   //LOG(DEBUG) << converterScript.str();

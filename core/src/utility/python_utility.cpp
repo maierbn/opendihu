@@ -323,7 +323,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
       // convert to double or take default value
       result = convertFromPython<double>(value, defaultValue);
       
-      LOG(DEBUG)<<"PythonUtility::getOptionDouble: Value for key \""<<keyString<<"\" found: "<<result<<".";
+      //LOG(DEBUG)<<"PythonUtility::getOptionDouble: Value for key \""<<keyString<<"\" found: "<<result<<".";
     }
   }
   else
@@ -766,7 +766,6 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
 
 PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
-  LOG(DEBUG) << "create python list with " << data.size() << " entries";
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
@@ -789,7 +788,6 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 
 PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data)
 {
-  LOG(DEBUG) << "create python list with " << nEntries << " entries";
   PyObject *result = PyList_New((Py_ssize_t)nEntries);
   for (unsigned int i=0; i<nEntries; i++)
   {

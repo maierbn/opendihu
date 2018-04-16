@@ -40,7 +40,7 @@ template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,BasisOnMeshType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
 evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
 {
-  LOG(TRACE) << "evaluateIntegrand generalized Laplace";
+  VLOG(1) << "evaluateIntegrand generalized Laplace";
  
   EvaluationsType evaluations;
   
@@ -49,7 +49,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const 
   
   double integrationFactor = MathUtility::computeIntegrationFactor<2>(jacobian);
   MathUtility::Matrix<2,2> diffusionTensor = data.diffusionTensor();
-  LOG(DEBUG) << "diffusionTensor: " << diffusionTensor;
+  VLOG(1) << "diffusionTensor: " << diffusionTensor;
   
   double l1 = MathUtility::length(zeta1);
   double lh = MathUtility::length(zetah);

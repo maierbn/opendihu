@@ -16,7 +16,7 @@ void Manager::initialize(PyObject *settings)
 {
   outputWriter_.clear();
   
-  LOG(DEBUG) << "initializeOutputWriter, settings=" << settings;
+  VLOG(1) << "initializeOutputWriter, settings=" << settings;
   //PythonUtility::printDict(settings);
   
   if (PythonUtility::hasKey(settings, "OutputWriter"))

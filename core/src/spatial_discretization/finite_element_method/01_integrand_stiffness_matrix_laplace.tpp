@@ -39,7 +39,7 @@ template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,BasisOnMeshType,Term,Equation::hasLaplaceOperator<Term>>::
 evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
 {
-  LOG(TRACE) << "evaluateIntegrand LAPLACE";
+  VLOG(1) << "evaluateIntegrand LAPLACE";
   
   EvaluationsType evaluations;
   

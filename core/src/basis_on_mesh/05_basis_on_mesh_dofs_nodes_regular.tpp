@@ -27,7 +27,11 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
   std::array<double, D> physicalExtent;
   // only get physicalExtent if it is not a 1-node mesh with 0 elements
   if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
+  {
+    if (PythonUtility::hasKey(specificSettings, "physicalExtend"))
+      LOG(ERROR) << "You misspelled \"physicalExtent\" as \"physicalExtend\"!";
     physicalExtent = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtent", 1.0, PythonUtility::Positive);
+  }
   else
     physicalExtent[0] = 1.0;
  

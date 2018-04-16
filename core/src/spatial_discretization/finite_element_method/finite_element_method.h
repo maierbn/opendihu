@@ -24,6 +24,7 @@ template<typename MeshType, typename BasisFunctionType, typename QuadratureType,
 class FiniteElementMethod :
   public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
+public:
 };
 
 /** partial specialisation for Laplace: has only stiffnessMatrix

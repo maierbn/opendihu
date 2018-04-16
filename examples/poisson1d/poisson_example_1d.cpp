@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
   
   SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
-    BasisFunction::Lagrange,
+    BasisFunction::LagrangeOfOrder<1>,
+    Quadrature::Gauss<2>,
     Equation::Static::Poisson
-  > equationDiscretized(settings);
+  > problem(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  problem.run();
   
   return EXIT_SUCCESS;
 }

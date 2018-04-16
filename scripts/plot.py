@@ -108,11 +108,16 @@ if dimension == 1:
     
   interval = 5000.0 / len(data)
         
-  # call the animator.  blit=True means only re-draw the parts that have changed.
-  anim = animation.FuncAnimation(fig, animate, init_func=init,
-             frames=len(data), interval=interval, blit=False)
+  if len(data) == 1:
+    init()
+    animate(0)
+    
+  else:
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+               frames=len(data), interval=interval, blit=False)
 
-  anim.save("anim.mp4")
+    anim.save("anim.mp4")
   if show_plot:
     plt.show()
   
@@ -209,9 +214,13 @@ if dimension == 2:
     
   interval = 5000.0 / len(data)
         
-  # call the animator.  blit=True means only re-draw the parts that have changed.
-  anim = animation.FuncAnimation(fig, animate,
-             frames=len(data), interval=interval, blit=False)
+  if len(data) == 1:
+    animate(0)
+    
+  else:
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate,
+               frames=len(data), interval=interval, blit=False)
 
   if show_plot:
     plt.show()

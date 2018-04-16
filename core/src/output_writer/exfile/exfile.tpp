@@ -14,7 +14,7 @@
 #include "mesh/structured_deformable.h"
 #include "mesh/unstructured_deformable.h"
 #include "mesh/mesh.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "output_writer/exfile/exfile_writer.h"
 
 namespace OutputWriter
@@ -43,8 +43,10 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   std::string filenameExelem = s.str();
 
   // open file
-  std::ofstream file = openFile(filenameExelem); 
-  ExfileWriter<typename DataType::BasisOnMesh>::outputExelem(file, data.fieldVariables()); 
+  std::ofstream file = openFile(filenameExelem);
+  //TODO: instead of data.fieldVariables() pass field variables and static information about number of components to writer
+  ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    outputExelem(file, data.getOutputFieldVariables()); 
   file.close();
   
   // exnode file
@@ -54,7 +56,8 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
 
   // open file
   file = openFile(filenameExnode);
-  ExfileWriter<typename DataType::BasisOnMesh>::outputExnode(file, data.fieldVariables()); 
+  ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    outputExnode(file, data.getOutputFieldVariables()); 
   file.close();
 }
 

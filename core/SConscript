@@ -5,7 +5,7 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # define the source files
-src_files = Glob('src/*/*.cpp') + Glob('src/*.cpp') + Glob('src/*/*/*.cpp')
+src_files = Glob('src/*/*.cpp') + Glob('src/*.cpp') + Glob('src/*/*/*.cpp') + Glob('src/*/*/*/*.cpp') + Glob('src/*/*/*/*/*.cpp')
 
 # define include directory for header files
 env.Append(CPPPATH = 'src')

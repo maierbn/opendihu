@@ -20,17 +20,19 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType, typename QuadratureType>
-FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
-FiniteElementMethodBase(const DihuContext &context) :
-  context_(context), data_(context)
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+FiniteElementMethodBase(DihuContext context) :
+  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"])
 {
-  PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "FiniteElementMethod");
+  specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(specificSettings_);
   
-  LOG(DEBUG) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
-  PythonUtility::printDict(specificSettings_);
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
+    PythonUtility::printDict(specificSettings_);
+  }
   
   std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<BasisOnMeshType>(specificSettings_);
   data_.setMesh(std::static_pointer_cast<BasisOnMeshType>(mesh));
@@ -40,15 +42,15 @@ FiniteElementMethodBase(const DihuContext &context) :
     LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
 }
 
-template<typename BasisOnMeshType, typename QuadratureType>
-void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 applyBoundaryConditions()
 {
   // PETSc Mat object for stiffness matrix needs to be assembled for this
  
   LOG(TRACE)<<"applyBoundaryConditions";
  
-  dof_no_t nDegreesOfFreedom = this->data_.nDegreesOfFreedom();
+  dof_no_t nUnknowns = this->data_.nUnknowns();
   
   Vec &rightHandSide = data_.rightHandSide().values();
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
@@ -70,10 +72,10 @@ applyBoundaryConditions()
     if (boundaryConditionNodeIndex < 0)
       continue;
     
-    if (boundaryConditionNodeIndex > nDegreesOfFreedom) 
+    if (boundaryConditionNodeIndex > nUnknowns) 
     {
       LOG(WARNING) << "Boundary condition specified for degree of freedom no. "<<boundaryConditionNodeIndex
-       <<", but scenario has only "<<nDegreesOfFreedom<<" degrees of freedom.";
+       <<", but scenario has only "<<nUnknowns<<" degrees of freedom.";
        continue;
     }
     
@@ -83,20 +85,20 @@ applyBoundaryConditions()
     LOG(DEBUG) << "  BC node " << boundaryConditionNodeIndex << " value " << boundaryConditionValue;
     
     // get the column number boundaryConditionNodeIndex of the stiffness matrix. It is needed for updating the rhs.
-    std::vector<int> rowIndices((int)nDegreesOfFreedom);
+    std::vector<int> rowIndices((int)nUnknowns);
     std::iota (rowIndices.begin(), rowIndices.end(), 0);    // fill with increasing numbers: 0,1,2,...
     std::vector<int> columnIndices = {(int)boundaryConditionNodeIndex};
     
-    std::vector<double> coefficients(nDegreesOfFreedom);
+    std::vector<double> coefficients(nUnknowns);
     
-    ierr = MatGetValues(stiffnessMatrix, nDegreesOfFreedom, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
+    ierr = MatGetValues(stiffnessMatrix, nUnknowns, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
         
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionNodeIndex;
     ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &matrixIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
 
     // update rhs
-    for (node_no_t rowNo = 0; rowNo < nDegreesOfFreedom; rowNo++)
+    for (node_no_t rowNo = 0; rowNo < nUnknowns; rowNo++)
     {
       if (rowNo == boundaryConditionNodeIndex)
        continue;
@@ -111,19 +113,17 @@ applyBoundaryConditions()
   }
 }
 
-template<typename BasisOnMeshType, typename QuadratureType>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 mesh()
 {
   return data_.mesh();
 }
   
-template<typename BasisOnMeshType, typename QuadratureType>
-void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 initialize()
 {
-  LOG(TRACE) << "FiniteElementMethodBase::initialize";
-  
   data_.initialize();
   setStiffnessMatrix();
   setRightHandSide();
@@ -131,23 +131,26 @@ initialize()
   applyBoundaryConditions();
 }
   
-template<typename BasisOnMeshType, typename QuadratureType>
-void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 run()
 {
   initialize();
   solve();
   data_.print();
   
-  LOG(TRACE) << "writeOutput";
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename BasisOnMeshType, typename QuadratureType>
-void FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 solve()
 {
+  // solve k*d=f for d
   LOG(TRACE) << "FiniteElementMethod::solve";
+  
+  if (std::is_same<Term,Equation::None>::value)
+   return;
   
   PetscErrorCode ierr;
   
@@ -179,7 +182,7 @@ solve()
   ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
   
   LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm 
-    << ": " << PetscUtility::getStringConvergedReason(convergedReason);
+    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
   
   // check if solution is correct
   if (false)

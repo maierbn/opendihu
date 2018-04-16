@@ -18,24 +18,23 @@ int main(int argc, char *argv[])
   
   OperatorSplitting::Godunov<
     TimeSteppingScheme::ExplicitEuler<
-      CellmlAdapter
+      CellmlAdapter<57>
     >,
     TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::StructuredRegularFixedOfDimension<1>,
-        //Mesh::StructuredRegularFixedOfDimension<<1>,
         BasisFunction::LagrangeOfOrder<1>,
-        //BasisFunction::LagrangeOfOrder<1>,
         Quadrature::Gauss<2>,
-        //Quadrature::Gauss<2>,
-        Equation::Dynamic::Diffusion
+        Equation::Dynamic::IsotropicDiffusion
       >
     >
   >
-  operatorSplitting(settings);
-       
-  Computation computation(settings, operatorSplitting);
-  computation.run();
+  problem(settings);
+  problem.run();
   
   return EXIT_SUCCESS;
 }
+
+
+
+

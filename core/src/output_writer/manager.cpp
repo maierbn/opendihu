@@ -16,9 +16,10 @@ void Manager::initialize(PyObject *settings)
 {
   outputWriter_.clear();
   
-  LOG(DEBUG) << "initializeOutputWriter";
+  VLOG(1) << "initializeOutputWriter, settings=" << settings;
+  //PythonUtility::printDict(settings);
   
-  if (PythonUtility::containsKey(settings, "OutputWriter"))
+  if (PythonUtility::hasKey(settings, "OutputWriter"))
   {
     // get the first value from the list
     PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(settings, "OutputWriter");
@@ -40,44 +41,38 @@ void Manager::initialize(PyObject *settings)
 
 void Manager::createOutputWriterFromSettings(PyObject *settings)
 {
-  PyObject *key = PyString_FromString("format");
-  if (PyDict_Contains(settings, key))
+  
+  if (PythonUtility::hasKey(settings, "format"))
   {
-    PyObject *type = PyDict_GetItem(settings, key);
-    if (PyString_Check(type))
+    // depending on type string create different OutputWriter object
+    std::string typeString = PythonUtility::getOptionString(settings, "format", "none");
+    if (typeString == "Paraview")
     {
-      // depending on type string create different OutputWriter object
-      std::string typeString = PyString_AsString(type);
-      if (typeString == "Paraview")
-      {
-        outputWriter_.push_back(std::make_shared<Paraview>(settings));
-      }
-      else if(typeString == "PythonCallback")
-      {
-        outputWriter_.push_back(std::make_shared<PythonCallback>(settings));
-      }
-      else if(typeString == "PythonFile")
-      {
-        outputWriter_.push_back(std::make_shared<PythonFile>(settings));
-      }
-      else if(typeString == "Exfile")
-      {
-        outputWriter_.push_back(std::make_shared<Exfile>(settings));
-      }
-      else
-      {
-        LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". " 
-          << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
-      }
+      outputWriter_.push_back(std::make_shared<Paraview>(settings));
+    }
+    else if(typeString == "PythonCallback")
+    {
+      outputWriter_.push_back(std::make_shared<PythonCallback>(settings));
+    }
+    else if(typeString == "PythonFile")
+    {
+      outputWriter_.push_back(std::make_shared<PythonFile>(settings));
+    }
+    else if(typeString == "Exfile" || typeString == "ExFile")
+    {
+      outputWriter_.push_back(std::make_shared<Exfile>(settings));
     }
     else
     {
-      LOG(WARNING) << "Output writer type is not a string";
+      LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". " 
+        << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
     }
   }
-  
-  Py_CLEAR(key);
 }
 
+bool Manager::hasOutputWriters()
+{
+  return !outputWriter_.empty();
+}
 
 };

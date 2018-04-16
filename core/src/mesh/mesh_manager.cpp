@@ -1,17 +1,16 @@
 #include "mesh/mesh_manager.h"
 
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
 namespace Mesh 
 {
 
-Manager::Manager(const DihuContext& context) :
-  context_(context), numberAnonymousMeshes_(0)
+Manager::Manager(PyObject *specificSettings) :
+  specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
-  specificSettings_ = this->context_.getPythonConfig();
   storePreconfiguredMeshes();
 }
 
@@ -21,28 +20,39 @@ void Manager::storePreconfiguredMeshes()
   if (specificSettings_)
   {
     std::string keyString("Meshes");
-    std::pair<std::string, PyObject *> dictItem 
-      = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
-    
-    for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
-        PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
+    if (PythonUtility::hasKey(specificSettings_, "Meshes"))
     {
-      std::string key = dictItem.first;
-      PyObject *value = dictItem.second;
-          
-      if (value == NULL)
+      
+      std::pair<std::string, PyObject *> dictItem 
+        = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
+      
+      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
+          PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
       {
-        LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
+        std::string key = dictItem.first;
+        PyObject *value = dictItem.second;
+            
+        if (value == NULL)
+        {
+          LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
+        }
+        else if(!PyDict_Check(value))
+        {
+          LOG(WARNING) << "Value for mesh with name \""<<key<<"\" should be a dict.";
+        }
+        else
+        {
+          LOG(DEBUG) << "store mesh configuration with key \""<<key<<"\".";
+          meshConfiguration_[key] = value;
+        }
       }
-      else if(!PyDict_Check(value))
-      {
-        LOG(WARNING) << "Value for mesh with name \""<<key<<"\" should be a dict.";
-      }
-      else
-      {
-        LOG(DEBUG) << "store mesh configuration with key \""<<key<<"\".";
-        meshConfiguration_[key] = value;
-      }
+    }
+    else
+    {
+      LOG(INFO) << "You have specified the mesh in-line and not under the extra key \"Meshes\". You could do so,"
+        " by defining \"Meshes\": {\"<your custom mesh name>\": {<your mesh parameters>}} at the beginning of the"
+        " config and \"meshName\": \"<your custom mesh name>\" where you currently have specified the mesh parameters."
+        " This is required if you want to use the same mesh for multiple objects.";
     }
   }
 }
@@ -60,7 +70,7 @@ std::shared_ptr<Mesh> Manager::
 mesh<None>(PyObject *settings)
 {
   std::string meshName;
-  if (PythonUtility::containsKey(settings, "meshName"))
+  if (PythonUtility::hasKey(settings, "meshName"))
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
     LOG(DEBUG) << "Config contains meshName \""<<meshName<<"\".";
@@ -92,7 +102,7 @@ mesh<None>(PyObject *settings)
   }
   
   // if nElements was specified, create standard regularFixed mesh
-  if (PythonUtility::containsKey(settings, "nElements"))
+  if (PythonUtility::hasKey(settings, "nElements"))
   {
     // create new mesh, store as anonymous object
     std::stringstream anonymousName;

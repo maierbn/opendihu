@@ -12,7 +12,9 @@
 namespace BasisOnMesh
 {
 
-// general algorithm to compute jacobian from basis functions
+/** Class with general algorithm to compute jacobian from basis functions. 
+ *  Note that this makes no sense for complete polynomials because these are not used to describe geometry.
+ */
 template<typename MeshType,typename BasisFunctionType,typename dummy = MeshType>
 class BasisOnMeshJacobian :
   public BasisOnMeshFunction<MeshType,BasisFunctionType>
@@ -21,18 +23,19 @@ public:
   //! inherit constructor
   using BasisOnMeshFunction<MeshType,BasisFunctionType>::BasisOnMeshFunction;
   
-  //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
+  //! compute the (geometry) jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   static std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
                                                           const std::array<double,MeshType::dim()> xi)
   {
     VLOG(3) << "computeJacobian generic for "<<xi;
     std::array<Vec3,MeshType::dim()> jacobian;
+    // loop over columns
     for(int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
     {
       jacobian[dimNo] = Vec3({0.0});
       for(int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
       {
-        double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dPhidxi(dofIndex, dimNo, xi);
+        double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
         jacobian[dimNo] += coefficient * geometryField[dofIndex];
         VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex] 
          << " -> " << jacobian[dimNo];
@@ -43,7 +46,8 @@ public:
 
 };
 
-// partial specialization for linear Lagrange, D=1
+/** partial specialization for linear Lagrange, D=1
+ */
 template<typename MeshType>
 class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<1,MeshType>> :
   public BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>

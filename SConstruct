@@ -5,7 +5,9 @@
 SConscript('core/SConstruct')
 
 # build tests
-SConscript('testing/SConstruct')
+if 'no_tests' not in ARGUMENTS:
+  SConscript('testing/unit_testing/SConstruct')
 
 # build examples
-SConscript('examples/SConstruct')
+if 'no_examples' not in ARGUMENTS:
+  SConscript('examples/SConstruct')

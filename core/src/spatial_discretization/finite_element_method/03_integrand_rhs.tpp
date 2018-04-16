@@ -23,7 +23,7 @@ evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D>
     {
       VLOG(2) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian;
       double integrand = BasisOnMeshType::phi(i,xi) * BasisOnMeshType::phi(j,xi) * integrationFactor;
-      evaluations[i][j] = integrand;
+      evaluations(i,j) = integrand;
     }
   }
   

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <array>
 
-#include "Python.h"
+#include <Python.h>
 #include "easylogging++.h"
 
 template<typename Key, typename Value>
@@ -15,10 +15,10 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
   if (settings)
   {
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
-      PythonUtility::printDict((PyObject *)settings);
+      //PythonUtility::printDict((PyObject *)settings);
       
       PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
       if (PyDict_Check(dict))
@@ -82,7 +82,7 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
   if (settings)
   {
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
       // check if it is a list
@@ -197,7 +197,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   if (settings)
   { 
     // check if input dictionary contains the key
-    PyObject *key = PyString_FromString(keyString.c_str());
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
@@ -264,7 +264,7 @@ PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)
   PyObject *result = PyList_New((Py_ssize_t)D);
   for (unsigned int i=0; i<D; i++)
   {
-    PyObject *item = PyInt_FromLong(data[i]);
+    PyObject *item = PyLong_FromLong(data[i]);
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference

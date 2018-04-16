@@ -14,7 +14,7 @@ namespace OutputWriter
 template<typename DataType>
 void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 { 
-  LOG(TRACE) << "PythonFile::write " << data.fieldVariables();
+  LOG(TRACE) << "PythonFile::write ";
  
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
@@ -22,14 +22,15 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
   
-  // don't do anything if there are no field variables
-  if (data.fieldVariables().empty())
-  {
-    return;
-  }
-  
   // build python object for data
-  PyObject *pyData = Python<typename DataType::BasisOnMesh>::buildPyDataObject(data.fieldVariables(), timeStepNo, currentTime);
+  PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    buildPyDataObject(data.getOutputFieldVariables(), timeStepNo, currentTime, this->onlyNodalValues_);
+  //PyObject *pyData = PyDict_New();
+  //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
+  //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
+  
+  LOG(DEBUG) << "in python_file.tpp, data to write: " ;
+  PythonUtility::printDict(pyData);
   
   // determine file name
   std::stringstream s;
@@ -38,49 +39,33 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   
   LOG(DEBUG) << "filename is [" << filename << "]";
   
-  // open file
-#if PY_MAJOR_VERSION >= 3  
-  FILE *fileC = fopen(filename.c_str(), "w");
-  int fileDescriptorC = fileno(fileC);
-  PyObject *file = PyFile_FromFd(fileDescriptorC, NULL, "w", -1, NULL, NULL, NULL, true);
-#else 
-  // python 2.7
-  char filenameC[filename.size()+1];
-  std::strcpy(filenameC, filename.c_str());
-  
-  char mode[3];
-  std::strcpy(mode, "wb");
-
-  PyObject *file = PyFile_FromString(filenameC, mode);
-#endif
- 
-  if (!file) 
-  {
-    LOG(ERROR) << "Could not open file \""<<filename<<"\" for output of python object.";
-    return;
-  }
+  // open file, to see if directory needs to be created
+  std::ofstream ofile = openFile(filename);
+  if(ofile.is_open())
+    ofile.close();
   
   // pickle is the python library to serialize objects
   bool usePickle = PythonUtility::getOptionBool(specificSettings_, "binary", false);
   
+  std::string writeFlag = (usePickle? "wb" : "w");
+  
+  PyObject *file = openPythonFileStream(filename, writeFlag);
+  
   if (usePickle)
   {
     // load pickle module if is was not loaded in an earlier call
-    static PyObject *module = NULL;
-    if (module == NULL)
+    static PyObject *pickleModule = NULL;
+    if (pickleModule == NULL)
     {
-      //module = PyImport_ImportModuleNoBlock("cpickle");
-      if (module == NULL)
-        module = PyImport_ImportModuleNoBlock("pickle");
+      pickleModule = PyImport_ImportModuleNoBlock("pickle");
     }
-    
-    if (module == NULL)
+    if (pickleModule == NULL)
     {
-      LOG(ERROR) << "Could not load python pickle package";
+      LOG(ERROR) << "Could not import pickle module";
     }
     else
     {
-      PyObject *pickle;
+     /*
       std::string methodNameStr("dump");
       char methodName[methodNameStr.size()+1];
       std::strcpy(methodName, methodNameStr.c_str());
@@ -88,15 +73,17 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
       std::string formatStr("(O O i)");
       char format[formatStr.size()+1];
       std::strcpy(format, formatStr.c_str());
-      
-      pickle = PyObject_CallMethod(module, methodName, format, pyData, file, 1);
+      */
+      PyObject *pickle = PyObject_CallMethod(pickleModule, "dump", "(O O i)", pyData, file, 1);
       Py_XDECREF(pickle);
     }
   }
   else
   {
     // output python object
-    PyFile_WriteObject(pyData, file, 0);
+    outputPyObject(file, pyData);
+    
+    LOG(INFO) << (usePickle? "Binary" : "ASCII") << " file \"" << filename << "\" written.";
     LOG(DEBUG) << "PyFile_WriteObject done";
   }
   
@@ -104,10 +91,15 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   Py_XDECREF(pyData);
   Py_XDECREF(file);
   
+#if PY_MAJOR_VERSION >= 3  
+  //PyGILState_Release(gilState);
+#endif
+  
   LOG(DEBUG) << "writeNumpySolution";
   
   // for regular fixed also output stiffness matrix 
   PythonStiffnessMatrixWriter<DataType>::writeNumpySolution(data, this->filename_);
+
 }
 
 };

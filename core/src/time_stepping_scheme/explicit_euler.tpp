@@ -9,7 +9,7 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-ExplicitEuler<DiscretizableInTime>::ExplicitEuler(const DihuContext &context) : 
+ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) : 
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
@@ -34,6 +34,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
     
+    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_.solution().values());
+    
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSide(
@@ -46,6 +48,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
+    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_.solution().values());
     // write current output values
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
     

@@ -23,6 +23,7 @@ sconsconfig/packages/KLEE.py
 sconsconfig/packages/LAPACK.py
 sconsconfig/packages/METIS.py
 sconsconfig/packages/MPI.py
+sconsconfig/packages/Matplotlib.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py
@@ -31,15 +32,18 @@ sconsconfig/packages/PTScotch.py
 sconsconfig/packages/Package.py
 sconsconfig/packages/ParMETIS.py
 sconsconfig/packages/PostgreSQL.py
+sconsconfig/packages/Pp.py
 sconsconfig/packages/Python.py
 sconsconfig/packages/SEMT.py
 sconsconfig/packages/SOCI.py
+sconsconfig/packages/SciPy.py
 sconsconfig/packages/SkyMaker.py
 sconsconfig/packages/Sphinx.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
 sconsconfig/packages/boost.py
+sconsconfig/packages/bzip2.py
 sconsconfig/packages/cfitsio.py
 sconsconfig/packages/clock.py
 sconsconfig/packages/glut.py

@@ -63,7 +63,7 @@ class Package(object):
     self.check_text = ''      # a test program that checks if the package is included successfully
     self.ext = '.c'           # extension of the check program, this determines if it is compiled with g++ or gcc
     self.options = []         # scons options that should be available to the user via the config script (default includes *_DIR, *_DOWNLOAD etc.)
-    self.one_shot_options = []  
+    self.one_shot_options = []   # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
     self.test_names = ['Check' + self.name]
     self.custom_tests = {'Check' + self.name: self.check}
     self.auto_add_libs=True
@@ -105,8 +105,10 @@ class Package(object):
 
     upp = name.upper()
     
+    #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
+    
     # Check if the user requested to download this package.
-    if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL') and self.download_url:
+    if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL', upp + '_REBUILD') and self.download_url:
 
       # Perform the auto-management of this package.
       res = self.auto(ctx)
@@ -118,7 +120,7 @@ class Package(object):
         if not res[0]:
           self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.\n'%(name, value)
           # ctx.Log(msg)
-          # print msg
+          # print(msg)
           # env.Exit(1)
 
     elif self.have_option(env, upp + '_DIR'):
@@ -128,7 +130,7 @@ class Package(object):
       if not res[0]:
         self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.'%(name, value)
         # ctx.Log(msg)
-        # print msg
+        # print(msg)
         # env.Exit(1)
 
     elif self.have_any_options(env, upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS'):
@@ -180,7 +182,7 @@ class Package(object):
           self._msg += '  Libraries: %s\n'%str([l.path for l in cur_libs])
         self._msg += 'Inspect "config.log" to see what went wrong.\n'
         # ctx.Log(msg)
-        # print msg
+        # print(msg)
         # env.Exit(1)
 
     else:
@@ -189,8 +191,9 @@ class Package(object):
       res = self.try_libs(ctx, libs, extra_libs, **kwargs)
 
       if not res[0]:
-        ctx.Log('  Trying common locations.\n')
-        common_dirs = [os.path.join(os.getcwd(),'../dependencies'), '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        common_dirs = [os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies'),
+                       '/usr', '/usr/lib/openmpi', '/usr/local', os.environ['HOME'], os.path.join(os.environ['HOME'], 'soft'), '/sw']
+        ctx.Log('\n  Trying common locations: %s\n'%str(common_dirs))
         res = (0, '')
         
         # loop over common directories
@@ -206,6 +209,8 @@ class Package(object):
     upp = name.upper()
     env = ctx.env
     res = (False, None)
+    
+    ctx.Log('  ------------------------------\n')
     
     # check if path exists
     if not os.path.exists(cd):
@@ -246,19 +251,19 @@ class Package(object):
     # Failed specified location?
     if not result and hasattr(self, '_msg') and self.required:
       ctx.Log(self._msg)
-      print self._msg
+      print(self._msg)
       sys.exit(1)
 
     # General failure?
     if not result and self.required:
-      print '\n'
-      print 'Unable to locate required package %s. You can do the following:'%name
-      print '  - Define %s_DIR with a directory containing "include" and "lib" or "lib64" subdirectories.'%upp
-      print '  - Define %s_INC_DIR, %s_LIB_DIR and %s_LIBS'%(upp, upp, upp)
-      print '  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp
-      print '    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp
-      print '    if it was already done earlier.'
-      print 'If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.'
+      print('\n')
+      print('Unable to locate required package %s. You can do the following:'%name)
+      print('  - Define %s_DIR with a directory containing "include" and "lib" or "lib64" subdirectories.'%upp)
+      print('  - Define %s_INC_DIR, %s_LIB_DIR and %s_LIBS'%(upp, upp, upp))
+      print('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp)
+      print('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp)
+      print('    if it was already done earlier.')
+      print('If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.')
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor
@@ -277,7 +282,9 @@ class Package(object):
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
+      vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
       self.one_shot_options.append(upp + '_REDOWNLOAD')
+      self.one_shot_options.append(upp + '_REBUILD')
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler
@@ -304,14 +311,41 @@ class Package(object):
     return self.build_handlers.get(None, None)
 
   def auto(self, ctx):
-    sys.stdout.write('\n')
+    #sys.stdout.write('\n')
     
     # Are we forcing this?
     upp = self.name.upper()
-    force = self.have_option(ctx.env, upp + '_REDOWNLOAD')
+    force_redownload = self.have_option(ctx.env, upp + '_REDOWNLOAD')
+    force_rebuild = self.have_option(ctx.env, upp + '_REBUILD')
+    
+    if force_redownload:
+      ctx.Log("Option force redownload is set.\n")
+    if force_rebuild:
+      ctx.Log("Option force rebuild is set.\n")
 
+    #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
+    #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
+    
+    dependencies_dir_candidates = [
+        os.path.join(os.getcwd(),'dependencies'), os.path.join(os.getcwd(),'../dependencies'), os.path.join(os.getcwd(),'../../dependencies')]
+    
+    # add directory from environment variable "OPENDIHU_HOME"
+    if os.environ.get('OPENDIHU_HOME') is not None:
+      dependencies_dir_candidates = [os.path.join(os.environ.get('OPENDIHU_HOME'),'dependencies')] + dependencies_dir_candidates
+    
+    dependencies_dir = os.path.join(os.getcwd(),'dependencies')
+    for directory in dependencies_dir_candidates:
+      if directory is not None:
+        if os.path.exists(directory):
+          dependencies_dir = directory
+          break
+    
+    base_dir = os.path.join(dependencies_dir,self.name.lower())
+
+    ctx.Log("  dependencies:["+dependencies_dir+"]\n")
+    ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
+    
     # Create the source directory if it does not already exist.
-    base_dir = os.path.join('../dependencies', self.name.lower())
     if not os.path.exists(base_dir):
       os.makedirs(base_dir)
     ctx.Log("Downloading into " + base_dir + "\n")
@@ -328,18 +362,17 @@ class Package(object):
 
     ctx.Log("  filename:    ["+filename+"]\n")
     ctx.Log("  old_dir:     ["+old_dir+"]\n")
-    ctx.Log("  base_dir:    ["+base_dir+"] (where to download the archive to)\n")
     ctx.Log("  install_dir: ["+install_dir+"] (where to build)\n")
     ctx.Log("  unpack_dir:  ["+unpack_dir+"] (where to unpack)\n")
 
     # Download if the file is not already available.
-    if not os.path.exists(filename) or force:
+    if not os.path.exists(filename) or force_redownload:
       if not self.auto_download(ctx, filename):
         os.chdir(old_dir)
         return (0, '')
 
     # Unpack if there is not already a build directory by the same name.
-    if not os.path.exists(unpack_dir) or force:
+    if not os.path.exists(unpack_dir) or force_redownload:
       if not self.auto_unpack(ctx, filename, unpack_dir):
         os.chdir(old_dir)
         return (0, '')
@@ -349,20 +382,24 @@ class Package(object):
     os.chdir(unpack_dir)
     entries = os.listdir('.')
     if len(entries) == 1:
-      os.chdir(entries[0])
+      if (os.path.isdir(entries[0])):
+        os.chdir(entries[0])
     source_dir = os.getcwd()
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
+    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success:"+str(not os.path.exists('scons_build_success'))+"\n")
+
     # Build the package.
-    if not os.path.exists('scons_build_success') or force:
-      if not self.auto_build(ctx, install_dir, source_dir):
+    if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
+      ctx.Log("build")
+      if not self.auto_build(ctx, install_dir, source_dir, dependencies_dir):
         os.chdir(old_dir)
         return (0, '')
 
     # Set the directory location.
     ctx.env[self.name.upper() + '_DIR'] = install_dir
 
-    sys.stdout.write('  Configuring with downloaded package ... ')
+    ctx.Log('  Configuring with downloaded package ... \n')
     os.chdir(old_dir)
     return (1, '')
 
@@ -376,12 +413,30 @@ class Package(object):
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
       import urllib
+    except Exception as e:
+      ctx.Log("Failed to download file: Could not import urllib\n")
+      print(e)
+      return False
+    try:
       urllib.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True
-    except:
+    except Exception as e:
       sys.stdout.write('failed.\n')
-      ctx.Log("Failed to download file\n")
+      print(e)
+      ctx.Log("Failed to download file - retry in 5s\n")
+      time.sleep(5)
+      
+      try:
+        urllib.urlretrieve(self.download_url, filename)
+        sys.stdout.write('done.\n')
+        return True
+      except Exception as e:
+        sys.stdout.write('failed.\n')
+        print(e)
+        ctx.Log("Failed to download file again\n")
+        return False
+      
       return False
 
   def auto_unpack(self, ctx, filename, unpack_dir):
@@ -405,6 +460,11 @@ class Package(object):
         sys.stdout.write('failed.\n')
         ctx.Log("Failed to extract file\n")
         return False
+    elif os.path.splitext(filename)[1] == '.whl':
+      ctx.Log("Python wheel detected - do not extract\n")
+      # create unpack_dir
+      os.makedirs(unpack_dir)
+      return True
     else:
       ctx.Log("Using tar\n")
       try:
@@ -446,11 +506,13 @@ class Package(object):
         continue
         
       p = int(float(n) / number_of_lines * 100.0)
+      if p > 100.0:
+        sys.stdout.write(str(p)+"% (miscounted, sorry)"+"\b"*(len(str(p))+21))
       sys.stdout.write(str(p)+"%"+"\b"*(len(str(p))+1))
       sys.stdout.flush()
 
-  def auto_build(self, ctx, install_dir, source_dir):
-    sys.stdout.write('  Building package, this could take a while ... \n')
+  def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
+    sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
 
@@ -461,7 +523,10 @@ class Package(object):
 
     # Remove the installation directory.
     if os.path.exists(install_dir):
-      shutil.rmtree(install_dir)
+      if os.path.islink(install_dir):
+        os.unlink(install_dir)
+      else:
+        shutil.rmtree(install_dir)
 
     # Hunt down the correct build handler.
     handler = self.get_build_handler()
@@ -485,6 +550,7 @@ class Package(object):
         # Perform substitutions.
         args = [ctx.env.subst(a.replace('${PREFIX}', install_dir)) for a in args]
         args = [ctx.env.subst(a.replace('${SOURCE_DIR}', source_dir)) for a in args]
+        args = [ctx.env.subst(a.replace('${DEPENDENCIES_DIR}', dependencies_dir)) for a in args]
 
         # Call the function.
         func(*args)
@@ -497,11 +563,21 @@ class Package(object):
         if cmd[0] == '!':
           allow_errors = True
           cmd = cmd[1:]
+          
+        # If the first character in a command is a "$", then it means environment variables are not substituted
+        substitute_environment_variables = True
+        if cmd[0] == '$':
+          substitute_environment_variables = False
+          cmd = cmd[1:]
 
         # Perform substitutions.
         cmd = cmd.replace('${PREFIX}', install_dir)
         cmd = cmd.replace('${SOURCE_DIR}', source_dir)
-        cmd = ctx.env.subst(cmd)
+        cmd = cmd.replace('${DEPENDENCIES_DIR}', dependencies_dir)
+        
+        if substitute_environment_variables:
+          cmd = ctx.env.subst(cmd)
+          
         sys.stdout.write("    $"+cmd+"  ")
         sys.stdout.flush()
     
@@ -545,11 +621,12 @@ class Package(object):
     sys.stdout.write('  done.\n')
     return True
 
-  def env_setup_libs(self, env, libs):
+  def env_setup_libs(self, ctx, libs):
     defaults = {
       'prepend': True,
       'libraries': libs,
     }
+    env = ctx.env
 
     # If we were given a dictionary update our defaults.
     if len(libs) and isinstance(libs[0], dict):
@@ -558,7 +635,7 @@ class Package(object):
 
     # Remove any pre-existing libraries.
     defaults['libraries'] = [d for d in defaults['libraries'] if d not in env.get('LIBS', [])]
-
+    
     # Prepend or append?
     if defaults['prepend']:
       libs = defaults['libraries'] + conv.to_iter(env.get('LIBS', []))
@@ -572,7 +649,7 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11")
+    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program
@@ -586,13 +663,14 @@ class Package(object):
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
       
-    # compile with C++11 for cpp test files
+    # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++11")
+      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
     ccflags = ctx.env["CCFLAGS"]
     for i in ccflags:
       ctx.Log("  CCFLAGS "+str(i)+"\n")
@@ -604,21 +682,24 @@ class Package(object):
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
-    # remove C++11 flag
+    # remove C++11 and C++14 flags
     if 'cpp' in self.ext:
       ccflags = ctx.env["CCFLAGS"]
       ccflags_new = []
       for entry in ccflags:
-        if entry != "-std=c++11":
+        if entry != "-std=c++14" and entry != "-std=c++11":
           ccflags_new.append(entry)
-      ctx.Log("recovered ccflags:")
-      ctx.Log(str(ccflags_new))
+      #ctx.Log("recovered ccflags:")
+      #ctx.Log(str(ccflags_new)+"\n")
       ctx.env.Replace(CCFLAGS = ccflags_new)
       
     if not res[0]:
+      ctx.Log("Compile/Run failed.\n");
+      ctx.Log("Output: \""+str(ctx.lastTarget)+"\"\n")
       env_restore(ctx.env, bkp)
     else:
-      ctx.Log("Program output:\n"+res[1])
+      ctx.Log("Compile/Run succeeded.\n");
+      ctx.Log("Program output: \""+res[1]+"\"\n")
         
     return res
 
@@ -628,9 +709,15 @@ class Package(object):
     if not extra_libs:
       extra_libs = [[]]
       
+    ctx.Log("try to compile with one of the following libs: "+str(libs)+"\n")
+    if len(extra_libs) > 0:
+      ctx.Log("also always try to include one of the following extra libs: "+str(extra_libs)+"\n")
+    
     for l in libs:
       l = conv.to_iter(l)
-      l_bkp = self.env_setup_libs(ctx.env, l)
+      ctx.Log("try library "+str(l)+"\n")
+      
+      l_bkp = self.env_setup_libs(ctx, l)
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
@@ -648,6 +735,7 @@ class Package(object):
           break
         env_restore(ctx.env, e_bkp)
       if res[0]:
+        ctx.Log("this was successful (using "+str(l)+"), done with list of libraries\n")
         break
       env_restore(ctx.env, l_bkp)
     return res
@@ -734,6 +822,7 @@ class Package(object):
       if not sub_dirs:
         sub_dirs = [[]]
 
+      ctx.Log("Try the following combinations of (include, lib) directories: "+str(sub_dirs)+"\n")
       res = (False, None)
       for inc_sub_dirs, lib_sub_dirs in sub_dirs:
         inc_sub_dirs = list(conv.to_iter(inc_sub_dirs))
@@ -754,8 +843,7 @@ class Package(object):
         if loc_callback:
           loc_callback(ctx, base, inc_sub_dirs, lib_sub_dirs, libs, extra_libs)
 
-        ctx.Log('Trying include dirs: ' + str(inc_sub_dirs) + '\n')
-        ctx.Log('Trying library dirs: ' + str(lib_sub_dirs) + '\n')
+        ctx.Log('Trying include directories: "' + str(inc_sub_dirs) + '" and library directories: "' + str(lib_sub_dirs) + '"\n')
 
         # Before continuing, try and find all of the sample headers.
         if not self.try_headers(ctx, inc_sub_dirs, **kwargs):
@@ -782,6 +870,8 @@ class Package(object):
         res = self.try_libs(ctx, libs, extra_libs, **kwargs)
         if res[0]:
           self.base_dir = base # set base directory
+          
+          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.")
           return res
           #break
         env_restore(ctx.env, bkp)
@@ -822,22 +912,22 @@ class Package(object):
 
     # Either base or include/library paths.
     if self.have_option(env, name + '_DIR') and self.have_any_options(env, name + '_INC_DIR', name + '_LIB_DIR'):
-      print '\n'
-      print 'Please specify either %s_DIR or either of %s_INC_DIR or'%(name, name)
-      print '%s_LIB_DIR.\n'%name
+      print('\n')
+      print('Please specify either %s_DIR or either of %s_INC_DIR or'%(name, name))
+      print('%s_LIB_DIR.\n'%name)
       env.Exit(1)
 
     # Either download or location. (both is allowed, download overrides given directory)
     #elif self.have_option(env, name + '_DOWNLOAD') and self.have_any_options(env, name + '_DIR', name + '_INC_DIR', name + '_LIB_DIR'):
-    #  print '\n'
-    #  print 'Cannot specify to download %s and also give a system location.'%self.name
+    #  print('\n')
+    #  print('Cannot specify to download %s and also give a system location.'%self.name)
     #  env.Exit(1)
 
   def need_cmake(self, env):
     if not self.have_cmake():
-      print '\n'
-      print '%s requires CMake to be installed to autobuild.'%self.name
-      print
+      print('\n')
+      print('%s requires CMake to be installed to autobuild.'%self.name)
+      print("")
       env.Exit(1)
 
   def have_cmake(self):

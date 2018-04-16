@@ -15,8 +15,8 @@ namespace Data
 {
   
 template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::Data(const DihuContext &context) : 
-  context_(context), nComponentsPerNode_(1)
+Data<BasisOnMeshType>::Data(DihuContext context) : 
+  context_(context)
 {
 }
 
@@ -26,21 +26,9 @@ Data<BasisOnMeshType>::~Data()
 }
 
 template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::setNComponentsPerNode(int n)
+dof_no_t Data<BasisOnMeshType>::nUnknowns()
 {
-  this->nComponentsPerNode_ = n;
-}
-
-template<typename BasisOnMeshType>
-int Data<BasisOnMeshType>::nComponentsPerNode()
-{
-  return this->nComponentsPerNode_;
-}
-
-template<typename BasisOnMeshType>
-int Data<BasisOnMeshType>::nDegreesOfFreedom()
-{
-  return this->mesh_->nNodes() * this->nComponentsPerNode_;
+  return this->mesh_->nNodes() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
 template<typename BasisOnMeshType>
@@ -64,7 +52,7 @@ void Data<BasisOnMeshType>::initialize()
 }
 
 template<typename BasisOnMeshType>
-std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::mesh()
+const std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::mesh() const
 {
   return this->mesh_;
 }

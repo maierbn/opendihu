@@ -4,7 +4,7 @@
 #include <map>
 
 #include "control/dihu_context.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 
 namespace Mesh
 {
@@ -21,7 +21,7 @@ class Manager
 {
 public:
   //! constructor
-  Manager(const DihuContext &context);
+  Manager(PyObject *specificSettings);
   
   //! return previously created mesh or create on the fly
   template<typename BasisOnMeshType=None>
@@ -36,8 +36,6 @@ private:
   //! store settings for all meshes that are specified in specificSettings_
   void storePreconfiguredMeshes();
  
-  const DihuContext &context_;    ///< the context object containing everything to be stored
-  
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
   

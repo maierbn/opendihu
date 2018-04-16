@@ -1,4 +1,4 @@
-#include "data_management/finite_elements.h"
+#include "data_management/finite_elements_mixed.h"
 
 #include <iomanip>
 #include <iostream>
@@ -11,21 +11,23 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 
 namespace Data
 {
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-FiniteElements(const DihuContext &context) : Data<HighOrderBasisOnMeshType>(context)
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+FiniteElements(DihuContext context) : Data<HighOrderBasisOnMeshType>(context)
 {
+  LOG(TRACE) << "Data::FiniteElements<Mixed> constructor";
+  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 ~FiniteElements()
 {
   PetscErrorCode ierr;
@@ -35,39 +37,9 @@ FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshTy
     ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
   }
 }
-/*
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
-{
-  const int nOverlaps = 3;
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
-    break;
-  case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  };
-}*/
 
-// for UnstructuredDeformable and Hermite
-//template<int D>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunction::Hermite>>::
-
-
-//template<int D, typename BasisFunctionType>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
@@ -89,16 +61,16 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 createPetscObjects()
 {
   dof_no_t n = this->mesh_->nDofs();
   
-  LOG(DEBUG)<<"FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::createPetscObjects("<<n<<")";
   
-  this->rhs_ = this->mesh_->createFieldVariable("rhs");
-  this->solution_ = this->mesh_->createFieldVariable("solution");
+  this->rhs_ = this->mesh_->template createFieldVariable<3>("rhs");
+  this->solution_ = this->mesh_->template createFieldVariable<3>("solution");
   
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -132,8 +104,8 @@ createPetscObjects()
   }
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 finalAssembly()
 {
   PetscErrorCode ierr;
@@ -147,82 +119,124 @@ finalAssembly()
   LOG(DEBUG) << "finalAssembly";
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 geometryReference()
 {
   return *this->geometryReference_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<HighOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 displacement()
 {
   return *this->displacement_;
 }
 
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-FieldVariable::FieldVariable<LowOrderBasisOnMeshType> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 pressure()
 {
   return *this->pressure_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+f()
+{
+  return *this->f_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-//! return the element stiffness matrix kuu
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 kuu()
 {
   return kuu_;
 } 
 
-//! return the element stiffness matrix kup
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 kup()
 {
   return kup_;
 }
 
-//! return the element stiffness matrix kpp
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 kpp()
 {
   return kpp_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+kppInverse()
+{
+  return kppInverse_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+kupTranspose()
+{
+  return kupTranspose_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+tempKupMatrix()
+{
+  return tempKupMatrix_;
+}
+
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+Mat &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+schurComplement()
+{
+  return schurComplement_;
+}
+    
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+getLocalVectors(Vec &fu, Vec &fp, Vec &tempKppFp, Vec &tempKupKppFp)
+{
+  fu = fu_;
+  fp = fp_;
+  tempKppFp = tempKppFp_;
+  tempKupKppFp = tempKupKppFp_;
+}
+    
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -263,15 +277,15 @@ print()
   VLOG(4)<<"======================";
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-bool FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+bool FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -294,21 +308,19 @@ initializeMassMatrix()
   this->massMatrixInitialized_ = true;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
-fieldVariables()
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+typename FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::OutputFieldVariables FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>> result;
-  result.push_back(std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_->geometryField()));
-  result.push_back(solution_);
-  result.push_back(rhs_);
-  this->mesh_->addNonGeometryFieldVariables(result);   // add all further field variables that were e.g. present in an input file
-  
-  return result;
+  return OutputFieldVariables(
+    std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField()),
+    solution_,
+    rhs_
+  );
 }
   
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh)
 {
   mixedMesh_ = mixedMesh;
@@ -317,8 +329,8 @@ setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasi
   this->mesh_ = mixedMesh_->highOrderBasisOnMesh();
 } 
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 initialize()
 {
   Data<HighOrderBasisOnMeshType>::initialize();
@@ -326,37 +338,44 @@ initialize()
   LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
   initializeFieldVariables();
   initializeMatrices();
+  
+  // set up diffusion tensor if there is any
+  DiffusionTensor<HighOrderBasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
 }
   
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 initializeFieldVariables()
 {
   // generate geometryReference variable as copy of geometry field
   assert(this->mesh_->hasGeometryField());
-  geometryReference_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_->geometryField(), "geometryReference");
+  geometryReference_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField(), "geometryReference");
   //geometryReference_->initializeFromFieldVariable(this->mesh_->geometryField(), "geometryReference", {"x","y","z"});
   //geometryReference_->setValues(this->mesh_->geometryField());
   
   std::vector<std::string> components({"x","y","z"});
-  displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType>>(this->mesh_, "displacement", components);
+  displacement_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_, "displacement", components);
   //displacement_->initializeFromFieldVariable(this->mesh_->geometryField(), "displacement", {"x","y","z"});
   
-  std::vector<std::string> pressureComponent({"0"});
-  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", pressureComponent);
+  std::vector<std::string> unnamedSingleComponent({"0"});
+  pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
   
+  f_ = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,1>>(this->mixedMesh_->highOrderBasisOnMesh(), "f", unnamedSingleComponent);
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 initializeMatrices()
 {
   PetscErrorCode ierr;
   
-  // create PETSc matrix object
+  // create PETSc matrix objects
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kuu_);  CHKERRV(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kup_);  CHKERRV(ierr);
   ierr = MatCreate(PETSC_COMM_WORLD, &this->kpp_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kppInverse_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->kupTranspose_);  CHKERRV(ierr);
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->schurComplement_);  CHKERRV(ierr);
   
   const int nu = HighOrderBasisOnMeshType::nDofsPerElement();
   const int np = LowOrderBasisOnMeshType::nDofsPerElement();
@@ -368,10 +387,37 @@ initializeMatrices()
   
   ierr = MatSetSizes(this->kpp_, np, np, np, np);  CHKERRV(ierr);
   ierr = MatSetUp(this->kpp_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kpp_, np, np, np, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kppInverse_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->kupTranspose_, np, nu, np, nu);  CHKERRV(ierr);
+  ierr = MatSetUp(this->kupTranspose_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->tempKupMatrix_, nu, np, nu, np);  CHKERRV(ierr);
+  ierr = MatSetUp(this->tempKupMatrix_); CHKERRV(ierr);
+  
+  ierr = MatSetSizes(this->schurComplement_, nu, nu, nu, nu);  CHKERRV(ierr);
+  ierr = MatSetUp(this->schurComplement_); CHKERRV(ierr);
+  
+  // create PETSc vector objects
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->fu_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->fp_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->tempKppFp_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->tempKupKppFp_);  CHKERRV(ierr);
+  
+  ierr = VecSetSizes(this->fu_, nu, nu); CHKERRV(ierr);
+  ierr = VecSetSizes(this->fp_, np, np); CHKERRV(ierr);
+  ierr = VecSetSizes(this->tempKppFp_, np, np); CHKERRV(ierr);
+  ierr = VecSetSizes(this->tempKupKppFp_, nu, nu); CHKERRV(ierr);
+  VecSetType(this->fu_, VECSEQ);
+  VecSetType(this->fp_, VECSEQ);
+  VecSetType(this->tempKppFp_, VECSEQ);
+  VecSetType(this->tempKupKppFp_, VECSEQ);
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
-std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>>::
+template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
+std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 mixedMesh()
 {
   return mixedMesh_;

@@ -6,7 +6,7 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "spatial_discretization/finite_element_method/03_integrand_rhs.h"
 
 namespace SpatialDiscretization
@@ -23,7 +23,7 @@ transferRhsToWeakForm()
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
+  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
@@ -81,19 +81,19 @@ transferRhsToWeakForm()
       
     }  // function evaluations
     
+    // integrate all values for the (i,j) dof pairs at once
+    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    
     // perform integration and add to entry in rhs vector
     for (int i=0; i<nDofsPerElement; i++)
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
-        // extract evaluations for current (i,j) dof-pair
-        std::array<double,QuadratureDD::numberEvaluations()> evaluations;
-        for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
-          evaluations[k] = evaluationsArray[k][i][j];
+        // integrate value and set entry in stiffness matrix
+        double integratedValue = integratedValues(i,j);
         
-        
-        double value = QuadratureDD::computeIntegral(evaluations) * rhsValues[dof[j]];
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureDD::computeIntegral(evaluations)<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
+        double value = integratedValue * rhsValues[dof[j]];
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), integrated value: "<<integratedValue<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
         
         ierr = VecSetValue(rightHandSide, dof[i], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
@@ -123,7 +123,7 @@ setMassMatrix()
     // define shortcuts for integrator and basis
     typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
     const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-    typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
+    typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
     typedef std::array<
               EvaluationsType,
               QuadratureDD::numberEvaluations()
@@ -186,20 +186,19 @@ setMassMatrix()
         evaluationsArray[samplingPointIndex] = IntegrandRightHandSide<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(jacobian,xi);
         
       }  // function evaluations
-      
+         
+      // integrate all values for the (i,j) dof pairs at once
+      EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+     
       // perform integration and add to entry in rhs vector
       for (int i=0; i<nDofsPerElement; i++)
       {
         for (int j=0; j<nDofsPerElement; j++)
         {
-          // extract evaluations for current (i,j) dof-pair
-          std::array<double,QuadratureDD::numberEvaluations()> evaluations;
-          for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
-            evaluations[k] = evaluationsArray[k][i][j];
-          
           // integrate value and set entry in discretization matrix
-          double value = QuadratureDD::computeIntegral(evaluations);
-          ierr = MatSetValue(massMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
+          double integratedValue = integratedValues(i,j);
+         
+          ierr = MatSetValue(massMatrix, dof[i], dof[j], integratedValue, ADD_VALUES); CHKERRV(ierr);
         }  // j
       }  // i
     }  // elementNo
@@ -212,7 +211,7 @@ setMassMatrix()
 /*
 template<typename MixedBasisOnMeshType, typename MixedQuadratureType>
 AssembleRightHandSide<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::
-AssembleRightHandSide(const DihuContext &context) :
+AssembleRightHandSide(DihuContext &context) :
   FiniteElementMethodStiffnessMatrix<MixedBasisOnMeshType, MixedQuadratureType, Equation::Static::SolidMechanics>::FiniteElementMethodStiffnessMatrix(context)
 {
   

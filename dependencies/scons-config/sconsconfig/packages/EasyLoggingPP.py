@@ -49,7 +49,7 @@ class EasyLoggingPP(Package):
             'mv ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src',
             'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -o ${PREFIX}/src/easylogging++.o',
         ])
-        self.build_flags = '-std=c++1z'
+        self.build_flags = '-std=c++14'
         
     def check(self, ctx):
         env = ctx.env

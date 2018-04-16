@@ -28,7 +28,6 @@ from CUDA import CUDA
 from glut import glut
 from AntTweakBar import AntTweakBar
 from LAPACK import LAPACK
-from Python import Python
 from EasyLoggingPP import EasyLoggingPP
 from Base64 import Base64
 from Cython import Cython
@@ -38,3 +37,7 @@ from libcellml import libcellml
 from libxml2 import libxml2
 from Sphinx import Sphinx
 from SEMT import SEMT
+from Python import Python
+from SciPy import SciPy
+from bzip2 import bzip2
+from Matplotlib import Matplotlib

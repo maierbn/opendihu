@@ -1,0 +1,389 @@
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\ProvidesPackage{beamertheme_simtechtalk}
+          [2009/08/14 v0.2  beamer-Folien-Style fuer Lehrstuhl SCCS]
+
+%% History:
+% (modifiziertes Package 'beamerthemelined')
+% added options 'igsse', 'mac', 'cse', 'bgce',
+% 'conference', 'course', 'lecture', 'blank' 
+% for title slides
+% package option 'hjblecture' for lecture slides
+% added
+
+
+\RequirePackage{helvet}
+
+
+\pgfdeclareimage[height=0.3cm]{tumlogo}{figs/stgtlogo}
+\usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{figs/Hintergrund_skaliert_sr}}
+
+%simtech farben
+\definecolor{hblau}{rgb}{0.6,0.8,1.0}
+\definecolor{brown}{rgb}{0.91,0.67,0.01}
+\definecolor{dbrown}{rgb}{0.77,0.38,0.0}
+\definecolor{drill}{rgb}{0.90,0.71,0.35}
+\definecolor{grey}{rgb}{0.85,0.85,0.85}
+\definecolor{green}{rgb}{0.0,0.9,0.0}
+\definecolor{Green}{rgb}{0.0,0.60,0.0}
+\definecolor{dblau}{rgb}{0.0,0.0,0.69}
+\definecolor{LightBlue}{rgb}{.557,.682,.875}
+\definecolor{DarkBlue}{rgb}{0,.255,.525}
+\definecolor{Orange}{rgb}{.937,.427,.0}
+\definecolor{White}{rgb}{1.,1.,1.}
+\definecolor{Black}{rgb}{0.,0.,0.}
+\definecolor{Red}{rgb}{.85,0.1,.35}
+
+% define some colors that are needed here
+\definecolor{tumblau}{RGB}{0,101,189} %ersatz fuer 'beamerstructure'
+\definecolor{tumorange}{RGB}{227,114,34}
+\definecolor{tumXred}{RGB}{229,52,24}
+\definecolor{darkred}{rgb}{0.5,0,0}
+\definecolor{tumblueII}{RGB}{0,82,147}
+
+% format itemize-environment
+%\beamertemplatedotitem
+\setbeamerfont{itemize/enumerate subbody}{size=\normalsize} % no smaller textsize in nested items 
+\newcommand{\itemST}{\item[]\includegraphics[height=2mm]{figs/Punkt}\hskip 0.7em}
+
+% Default für \footmp
+\def\footmp{\insertshortsubtitle}
+
+\mode<presentation>
+
+% frame title
+\renewcommand{\frametitle}[1]{\vskip2pt\vbox{\structure{\color{Orange}\bfseries \Large #1}} \vskip10pt}
+\setbeamersize{text margin left=35pt}
+
+% Headline
+\setbeamertemplate{headline}[text line]
+{%
+  \vbox{%
+  \vskip22pt%
+%     \vskip8pt%
+%     \tinyline{\color{tumblau}\insertshortinstitute \hfill \pgfuseimage{tumlogo}}%
+%     \vskip0.5pt%
+%     \insertvrule{0.5pt}{tumblau}%
+%     \vskip0.1pt%
+%
+%%     \vskip3pt%
+%%     \beamerline{\insertsectionnavigationhorizontal{0.925\paperwidth}{}{} \hfill \pgfuseimage{tumlogo}}%
+%%     \vskip0.5pt%
+%%     \insertvrule{0.5pt}{tumblau}%
+%%     \vskip0.1pt%
+  }
+}
+
+% Footline
+\setbeamertemplate{footline}[text line]
+{%
+  \vbox{%
+%    \insertvrule{0.5pt}{tumblau}%
+    \vskip1.5pt%
+    \setbox\beamer@logobox=\hbox{\lower1pt\hbox{\usebeamertemplate*{logo}}}%
+    \tinyline{\hskip5pt\color{tumblau}\insertshortauthor: \insertshorttitle\hfill}%
+    \tinyline{\hskip5pt\color{tumblau}\footmp, \insertshortdate
+% of \insertdocumentendpage
+       \hfill \hskip0.1cm\hbox{\dp\beamer@logobox=0pt\ht\beamer@logobox=0pt\box\beamer@logobox}
+       \color{tumblau}\insertframenumber\ 
+    }%
+    \vskip1pt%
+  }%
+
+}
+
+
+\userightsidebartemplate{0cm}{}
+
+\mode
+<all>
+
+% Logos
+\pgfdeclareimage[height=1.5cm]{titlelogo}{figs/sgs}
+\pgfdeclareimage[height=0.48cm]{sccslogo}{figs/sgs}
+\logo{\pgfuseimage{sccslogo}}
+
+\titlegraphic{\pgfuseimage{titlelogo}}
+
+% titlepage with title, author, ...
+ \usetitlepagetemplate{
+         \vbox{}
+         \vfill
+         \vskip1em
+         \begin{centering}
+            \structure{\Large \inserttitle}\vskip2em\par
+            {\insertauthor\par}\vskip0.5em
+            {\small \insertdate \par}\par\vskip2.5em
+            \begin{center}
+                \inserttitlegraphic
+            \end{center}
+         \end{centering}
+         \vfill
+ }
+
+\DeclareOption{igsse}%
+{
+  \pgfdeclareimage[height=5em]{titlelogo}{igsselogo}
+  \pgfdeclareimage[height=0.5cm]{sccslogo}{igsselogo}
+}
+
+\DeclareOption{sgs}%
+{
+  \pgfdeclareimage[height=5em]{titlelogo}{sgslogo}
+  \pgfdeclareimage[height=0.5cm]{sccslogo}{sgslogo}
+}
+
+\DeclareOption{mac}%
+{
+  \pgfdeclareimage[height=5em]{titlelogo}{TUM_Inst_MAC_SU_RGB}
+  \pgfdeclareimage[height=1.5em]{sccslogo}{MAC_os}
+}
+
+\DeclareOption{cse}%
+{
+  \pgfdeclareimage[height=3em]{titlelogo}{cse_logo}
+  \pgfdeclareimage[height=0.4cm]{sccslogo}{cse_logo}
+}
+
+\DeclareOption{bgce}%
+{
+  \pgfdeclareimage[height=5em]{titlelogo}{bgce_blue_box}
+  \pgfdeclareimage[height=0.55cm]{sccslogo}{bgce_blue}
+}
+
+\DeclareOption{conference}%
+{
+ \usetitlepagetemplate{
+         \vbox{}
+         \vfill
+         \vskip1em
+         \begin{centering}
+            \insertsubtitle\\
+            \vskip1.5em\par
+            \structure{\Large \inserttitle}\vskip2em\par
+            {\insertauthor\par}\vskip0.5em
+            {\small\insertinstitute\par}\vskip0.5em
+            {\small \insertdate \par}\par\vskip1.5em
+            \begin{center}
+                \inserttitlegraphic
+            \end{center}
+         \end{centering}
+         \vfill
+ }
+}
+
+\DeclareOption{course}%
+{
+ \usetitlepagetemplate{
+         \vbox{}
+         \vfill
+         \vskip1em
+         \begin{centering}
+            \insertinstitute\\
+            \vskip1.5em\par
+            \structure{\Large \inserttitle}\vskip1em\par
+            {\large \insertsubtitle}\vskip1em\par
+            {\insertauthor\par}\vskip0.5em
+            {\small \insertdate \par}\par\vskip2em
+            \begin{center}
+                \inserttitlegraphic
+            \end{center}
+         \end{centering}
+         \vfill
+ }
+}
+
+\DeclareOption{lecture}%
+{
+ \usetitlepagetemplate{
+         \vbox{}
+         \vfill
+         \vskip1em
+         \begin{centering}
+            \structure{\Large \inserttitle}\vskip1em\par
+            {\large \insertsubtitle}\vskip1em\par
+            {\insertauthor\par}\vskip0.5em
+            {\small \insertdate \par}\par\vskip2em
+            \begin{center}
+                \inserttitlegraphic
+            \end{center}
+         \end{centering}
+         \vfill
+ }
+}
+
+\DeclareOption{blank}%
+{
+   \setbeamertemplate{headline}[text line]
+   {%
+   }
+   \setbeamertemplate{footline}[text line]
+   {%
+   }
+}
+
+
+
+% Vorlesungsfolien-Layout fuer uebliche nummerierte Vorlesungskapitel
+\DeclareOption{hjblecture}
+{
+
+  % define special headline for lecture template
+  \setbeamertemplate{headline}[text line]
+  {%
+    \vbox{%
+      \vskip3pt%
+      \beamerline{\insertsectionnavigationhorizontal{0.925\paperwidth}{}{} \hfill \pgfuseimage{tumlogo}}%
+      \vskip0.5pt%
+      \insertvrule{0.5pt}{tumblau}%
+      \vskip0.1pt%
+    }%
+  }
+  
+  % define special footline for lecture template
+  \setbeamertemplate{footline}[text line]
+  {%
+    \vbox{%
+      \insertvrule{0.5pt}{tumblau}%
+      \vskip1.5pt%
+      \setbox\beamer@logobox=\hbox{\lower1pt\hbox{\usebeamertemplate*{logo}}}%
+      \tinyline{\color{tumblau}\insertshorttitle\ \insertshortsubtitle\hfill}%
+      \tinyline{\color{tumblau}\lecture, \insertshortauthor
+		\hfill page \insertframenumber\ of \inserttotalframenumber 
+		%\hskip0.2cm \insertbackfindforwardnavigationsymbol
+		\hskip0.2cm \hbox{\dp\beamer@logobox=0pt\ht\beamer@logobox=0pt\box\beamer@logobox}
+      }%
+    }%
+  }
+
+  % define special title page template for lecture with chapters
+  \usetitlepagetemplate{
+        \vbox{}
+        \vfill
+        \vskip3.5em
+        \begin{centering}
+        \Large
+        \structure{\inserttitle}
+        \vskip1em
+        \emph{\color{tumorange} \insertsubtitle}
+        \par
+        \end{centering}
+        \vfill
+  }
+
+  
+  % Frametitle neu definieren, so dass oberhalb von frametitle ggf. 
+  % noch section/subsection-Ueberschrift eingefuegt werden kann
+  \renewcommand{\frametitle}[1]{\vskip13pt\vbox{\structure{\hskip20pt\bfseries \Large #1}} \vskip10pt}
+
+
+  % Ueberschrift bei Beginn einer section einfuegen
+  % Achtung: der Befehl '\section' muss immer INNERHALB einer Folie stehen
+  \AtBeginSection[]{
+    \hspace{-0.9cm} \structure{\color{tumorange} \bfseries \Large \thesection.~\insertsection \vskip5pt}
+  }
+
+  % Ueberschrift bei Beginn einer subsection einfuegen
+  \AtBeginSubsection[]{
+    \hspace{-0.9cm} \structure{\color{tumXred} \bfseries \large \thesubsection.~\insertsubsection \vskip5pt}
+  }
+
+
+  % sectioning
+  \newcounter{chapter} % muss in Datei mit Inhalt definiert werden
+  \renewcommand{\thechapter}{\arabic{chapter}}
+  \renewcommand{\thesection}{\thechapter.\arabic{section}}
+  \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+  
+  
+   % besser formatierte itemize-Umgebung
+  \newenvironment{itemize*}{ \begin{itemize} \setlength{\parskip}{.4ex} }{ \end{itemize} }
+  \newenvironment{enumerate*}{ \begin{enumerate}\normalsize \setlength{\parskip}{.4ex} }{ \end{enumerate} }
+
+  %\beamertemplatedotitem  % bereits oben definiert
+  %\setbeamerfont{itemize/enumerate subbody}{size=\normalsize}  % bereits oben definiert
+  \usesubitemizeitemtemplate{\usebeamercolor{normal text} \color{fg} --}
+  
+   % more possible options in itemize-environments:
+  %
+  % \newenvironment{itemize*}{
+  % %\renewcommand{\baselinestretch}{1.1}
+  %  \begin{itemize}
+  %   % \setlength{\itemsep}{.6ex} % Definiert den Abstand, der zwischen zwei Listenpunkten (item) zusätzlich zum normalen parsep eingefügt wird.
+  %  \setlength{\parskip}{.4ex} % Legt den Abstand zwischen den nachfolgenden Absätzen fest.
+  %   %\setlength{\parsep}{.6ex} % Legt innerhalb einer Liste den Abstand zwischen zwei Absätzen fest.
+  %   %\setlength{\topsep}{.3ex} % Legt den Abstand fest, der vor und nach einer Liste zusätzlich eingefügt wird.
+  %   %\setlength{\topmargin}{.3ex}
+  % }{
+  % \end{itemize} 
+  % %\renewcommand{\baselinestretch}{1}
+  % }
+  
+}
+
+% Erweiterung zu hjblecture:
+% Diese Option ermoeglicht es, auch Folien ohne Chapter-Nummer zu erstellen.
+% Es werden dann Sections mit 1., 2., etc. nummeriert
+\DeclareOption{noChapNr}
+{
+  \renewcommand{\thesection}{\arabic{section}}
+  \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+  
+  
+   % define special footline for lecture template
+  \setbeamertemplate{footline}[text line]
+  {%
+    \vbox{%
+      \insertvrule{0.5pt}{tumblau}%
+      \vskip1.5pt%
+      \setbox\beamer@logobox=\hbox{\lower1pt\hbox{\usebeamertemplate*{logo}}}%
+      \tinyline{\color{tumblau}\insertshorttitle\ \insertshortsubtitle\hfill}%
+      \tinyline{\color{tumblau}\insertshortauthor
+		\hfill page \insertframenumber\ of \inserttotalframenumber 
+		%\hskip0.2cm \insertbackfindforwardnavigationsymbol
+		\hskip0.2cm \hbox{\dp\beamer@logobox=0pt\ht\beamer@logobox=0pt\box\beamer@logobox}
+      }%
+    }%
+  }
+}
+
+
+% diese Option in Kombination mit den Vorlesungsfolien nutzen, um entsprechend
+% formatierte itemize-Umgebungen, math. Befehle und Formatierungsbefehle fuer
+% Hervorhebungen nutzen zu koennen
+\DeclareOption{backcomp}
+{
+  % Abkuerzungen
+  \newcommand{\dd}{\mathrm{d}}
+  \newcommand{\eps}{\varepsilon}
+  \newcommand{\IN}{\mathbb{N}}  %nat
+  \newcommand{\IZ}{\mathbb{Z}}  %ganz
+  \newcommand{\IQ}{\mathbb{Q}}  %rat
+  \newcommand{\IR}{\mathbb{R}}  %reel  %\mathds{R} {\rm I\!R}  \Bbb{R}
+  \newcommand{\IFLOA}{\mathbb{F}}  %float
+  \newcommand{\IC}{\mathbb{C}}  %comp
+  \newcommand{\IP}{\mathbb{P}}  %pol
+  \newcommand{\cI}{\mathcal{I}}
+  \newcommand{\norm}[1]{\left\| #1 \right\|}
+
+  % eine andere Variante (aus den Stuttgarter Folien)
+  \def\reel{\mathbb{R}}
+  \def\ganz{\mathbb{Z}}
+  \def\nat{\mathbb{N}}
+  \def\comp{\mathbb{C}}
+  \def\rat{\mathbb{Q}}
+  \def\F{\mathbb{F}}
+  \def\pol{\mathbb{P}}
+  \def\float{\mathbb{F}}
+
+
+  % farbige Hervorhebungen, die in den Vorlesungsfolien verwendet werden (teilweise aus alten Layouts abstammend)
+  \newcommand{\Red }{\bfseries\color{darkred}} % roter, fetter Text
+  \newcommand{\begriff}[1]{{\bfseries\color{tumorange}#1}} % oranger Text
+  \newcommand{\concept}{\begriff}
+  \newcommand{\bfstructure}[1]{\structure{\bfseries #1}}
+  \newcommand{\emit }{\it \color{tumblueII}}  % ehemals: {\em\it ...}
+}
+
+
+\ProcessOptions
+

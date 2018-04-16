@@ -1,5 +1,6 @@
 #include "utility/vector_operators.h"
 
+#include "utility/petsc_utility.h"
 
 //! vector difference
 template<std::size_t nComponents>
@@ -125,3 +126,36 @@ bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2)
       return false;
   return true;
 }
+
+/*
+std::ostream &operator<<(std::ostream &stream, const Mat &mat)
+{
+  int nRows, nColumns;
+  MatGetSize(mat, &nRows, &nColumns);
+  
+  if (nRows*nColumns > 100) 
+  {
+    stream << "Mat(" << nRows << "x" << nColumns << ")";
+  }
+  else
+  {
+    stream << PetscUtility::getStringMatrix(mat);
+  }
+  return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, const Vec &vec)
+{
+  int nEntries;
+  VecGetSize(vec, &nEntries);
+  
+  if (nEntries > 100) 
+  {
+    stream << "Vec(" << nEntries << ")";
+  }
+  else
+  {
+    stream << PetscUtility::getStringVector(vec);
+  }
+  return stream;
+}*/

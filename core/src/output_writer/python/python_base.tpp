@@ -2,16 +2,40 @@
 
 #include <Python.h>   // this has to be the first included header
 #include <iostream>
+#include <tuple>
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
 
 namespace OutputWriter
 {
+ 
+namespace PythonLoopOverTuple
+{
+ 
+template<typename OutputFieldVariablesType, int i=0>
+inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
+loopOverTuple(const OutputFieldVariablesType &fieldVariables, PyObject *pyData, bool onlyNodalValues)
+{
+  // extract field variable
+  typedef typename std::tuple_element<i,OutputFieldVariablesType>::type FieldVariableType;
+  FieldVariableType fieldVariable = std::get<i>(fieldVariables);
+  
+  // create python object
+  PyObject *pyFieldVariable = PythonBase<FieldVariableType>::
+    buildPyFieldVariableObject(fieldVariable, onlyNodalValues);
+  
+  // add to list 
+  PyList_SetItem(pyData, (Py_ssize_t)i, pyFieldVariable);    // steals reference to pyFieldVariable 
+ 
+  loopOverTuple<OutputFieldVariablesType,i+1>(fieldVariables, pyData, onlyNodalValues);
+}
 
-template<typename BasisOnMeshType>
-PyObject *PythonBase<BasisOnMeshType>::
-buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables)
+}  // namespace
+
+template<typename OutputFieldVariablesType>
+PyObject *PythonBase<OutputFieldVariablesType>::
+buildPyFieldVariablesObject(OutputFieldVariablesType fieldVariables, bool onlyNodalValues)
 {
   // build python dict containing field variables
   // [
@@ -21,56 +45,55 @@ buildPyFieldVariablesObject(std::vector<std::shared_ptr<FieldVariable::FieldVari
   //    ]
   //   },
   // ]
-  
- VLOG(2) << "buildPyFieldVariablesObject for " << fieldVariables.size() << " field variables";
  
-  PyObject *pyData = PyList_New((Py_ssize_t)fieldVariables.size());
+  const int nFieldVariables = std::tuple_size<OutputFieldVariablesType>::value;
+  VLOG(2) << "buildPyFieldVariablesObject for " << nFieldVariables << " field variables";
+ 
+  PyObject *pyData = PyList_New((Py_ssize_t)nFieldVariables);
   
-  // loop over field variables
-  int fieldVariableNo = 0;
-  for (typename std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>>::iterator fieldVariableIter = fieldVariables.begin();
-       fieldVariableIter != fieldVariables.end(); fieldVariableIter++, fieldVariableNo++)
-  {
-    VLOG(2) << "field variable no " << fieldVariableNo;
-    VLOG(2) << "has "<<(*fieldVariableIter)->nComponents()<<" components: "<<(*fieldVariableIter)->componentNames();
-   
-    std::vector<std::string> componentNames = (*fieldVariableIter)->componentNames();
-    
-    PyObject *pyComponents = PyList_New((Py_ssize_t)(*fieldVariableIter)->nComponents());
-    
-    // loop over components of field variable 
-    int componentNo = 0;
-    for (std::vector<std::string>::iterator componentIter = componentNames.begin(); 
-         componentIter != componentNames.end(); componentIter++, componentNo++)
-    {
-      VLOG(2) << "  component " << componentNo << " [" << *componentIter << "]";
-     
-      std::vector<double> values;
-      (*fieldVariableIter)->getValues(*componentIter, values);
-      
-      VLOG(2) << "  values: " << values;
-      
-      PyObject *pyValues = PythonUtility::convertToPythonList(values);
-      VLOG(2) << " create pyComponent";
-      PyObject *pyComponent = Py_BuildValue("{s s, s O}", "name", (*componentIter).c_str(), "values", pyValues);
-      
-      VLOG(2) << " add to list";
-      
-      // add to list 
-      PyList_SetItem(pyComponents, (Py_ssize_t)componentNo, pyComponent);    // steals reference to pyComponent 
-    }
-   
-    VLOG(2) << "create pyFieldVariable";
-   
-    PyObject *pyFieldVariable = Py_BuildValue("{s s, s O}", "name", (*fieldVariableIter)->name().c_str(), "components", pyComponents);
-    
-    VLOG(2) << "add to list";
-    
-    // add to list 
-    PyList_SetItem(pyData, (Py_ssize_t)fieldVariableNo, pyFieldVariable);    // steals reference to pyFieldVariable 
-  }
+  PythonLoopOverTuple::loopOverTuple<OutputFieldVariablesType>(fieldVariables, pyData, onlyNodalValues);
   
   return pyData;
 }
  
+ 
+template<typename OutputFieldVariablesType>
+template<typename FieldVariableType>
+PyObject *PythonBase<OutputFieldVariablesType>::
+buildPyFieldVariableObject(FieldVariableType fieldVariable, bool onlyNodalValues)
+{
+  VLOG(2) << "field variable \"" << fieldVariable->name() << "\"";
+  VLOG(2) << "has "<<fieldVariable->getNComponents()<<" components: "<<fieldVariable->componentNames();
+  
+  const int nComponents = fieldVariable->getNComponents();
+  PyObject *pyComponents = PyList_New((Py_ssize_t)nComponents);
+  
+  // loop over components of field variable 
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    std::string componentName = fieldVariable->componentNames()[componentNo];
+    VLOG(2) << "  component " << componentNo << " " << componentName;
+   
+    std::vector<double> values;
+    fieldVariable->getValues(componentNo, values, onlyNodalValues);
+    
+    VLOG(2) << "  values: " << values << ", values.size(): " << values.size();
+    
+    PyObject *pyValues = PythonUtility::convertToPythonList(values);
+    VLOG(2) << " create pyComponent";
+    PyObject *pyComponent = Py_BuildValue("{s s, s O}", "name", componentName.c_str(), "values", pyValues);
+    
+    VLOG(2) << " add to list";
+    
+    // add to list 
+    PyList_SetItem(pyComponents, (Py_ssize_t)componentNo, pyComponent);    // steals reference to pyComponent 
+  }
+ 
+  VLOG(2) << "create pyFieldVariable";
+ 
+  PyObject *pyFieldVariable = Py_BuildValue("{s s, s O}", "name", fieldVariable->name().c_str(), "components", pyComponents);
+   
+  return pyFieldVariable;
+}
+
 };

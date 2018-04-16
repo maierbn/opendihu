@@ -5,17 +5,18 @@
 #include <vector>
 #include <memory>
 
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 
 namespace OutputWriter
 {
  
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType, typename OutputFieldVariablesType>
 class PythonCallbackWriter
 {
 public:
   //! call python callback
-  static void callCallback(PyObject *callback, std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> fieldVariables, int timeStepNo, double currentTime);  
+  static void callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables, 
+                           int timeStepNo, double currentTime, bool onlyNodalValues);  
 };
 
 };  // namespace

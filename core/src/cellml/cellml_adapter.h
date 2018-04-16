@@ -9,18 +9,28 @@
 #include "control/dihu_context.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
 #include "output_writer/manager.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_function/lagrange.h"
 
-class CellmlAdapter : public DiscretizableInTime
+/** The is a class that contains cellml equations and can be used with a time stepping scheme.
+ *  The nStates template parameter specifies the number of state variables that should be used with the integrator.
+ *  It is necessary that this value is fixed at compile time because the timestepping scheme needs to know which field variable types is has to construct.
+ *  This class can also be computed easily in multiple instances along the nodes of a mesh.
+ */
+template <int nStates>
+class CellmlAdapter : 
+  public DiscretizableInTime
 {
 public:
  
   ///! constructor
-  CellmlAdapter(const DihuContext &context);
+  CellmlAdapter(DihuContext context);
   
   ///! destructor
   ~CellmlAdapter();
+  
+  ///! return the compile-time constant number of state variables of one instance that will be integrated
+  static constexpr int nComponents();
   
   ///! load model
   void initialize();
@@ -47,11 +57,8 @@ public:
   //! return a the mesh
   std::shared_ptr<Mesh::Mesh> mesh();
   
-  //! return the number of states per instance
-  int nComponentsNode();
-  
-  //! get number of states, number of instances, number of intermediates and number of parameters
-  void getNumbers(int &nStates, int &nInstances, int &nIntermediates, int &nParameters);
+  //! get number of instances, number of intermediates and number of parameters
+  void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
@@ -69,7 +76,7 @@ private:
   //! scan the given cellml source file for initial values that are given by dummy assignments
   bool scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitialValues);
   
-  const DihuContext &context_;    ///< the context object containing everything to be stored
+  const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   
@@ -82,7 +89,7 @@ private:
   
   std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
   
-  int nStates_;           ///< number of states in one instance of the CellML problem
+  //int nStates_;           ///< number of states in one instance of the CellML problem (template parameter)
   int nInstances_;        ///< number of instances of the CellML problem, equals number of mesh nodes
   int nParameters_;       ///< number of parameters (=CellML name "known") in one instance of the CellML problem
   int nIntermediates_;    ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
@@ -98,3 +105,5 @@ private:
   std::vector<double> parameters_; ///< vector of values that will be provided to CellML by the code, given by python config, CellML name: known
   std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
 };
+
+#include "cellml/cellml_adapter.tpp"

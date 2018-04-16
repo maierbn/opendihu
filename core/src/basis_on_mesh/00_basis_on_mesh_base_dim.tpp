@@ -10,7 +10,8 @@
 
 namespace BasisOnMesh
 {
-  
+ 
+// lagrange and hermite polynomials  
 template<int D,typename BasisFunctionType>
 constexpr int BasisOnMeshBaseDim<D,BasisFunctionType>::
 nDofsPerElement()
@@ -47,6 +48,43 @@ averageNDofsPerElement()
  // averageNNodesPerBasis = nNodesPerBasis - 1
  // averageNDofsPerElement = averageNNodesPerBasis * nDofsPerNode
   return BasisOnMeshBaseDim<D,BasisFunctionType>::averageNNodesPerElement() * BasisFunctionType::nDofsPerNode();
+}
+
+// -------------------------
+// complete polynomials 
+template<int D,int order>
+constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
+nDofsPerElement()
+{
+  return BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>::nDofsPerBasis();
+}
+ 
+template<int D,int order>
+constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
+nNodesPerElement()
+{
+  return 0;
+}
+
+template<int D,int order>
+constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
+nDofsPerNode()
+{
+  return 0;
+}
+
+template<int D,int order>
+constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
+averageNDofsPerElement()
+{
+  return nDofsPerElement();
+}
+
+template<int D,int order>
+constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
+averageNNodesPerElement()
+{
+  return 0;
 }
 
 };  // namespace

@@ -16,14 +16,14 @@
 namespace Data 
 {
 
-template<typename BasisOnMeshType>
-TimeStepping<BasisOnMeshType>::
-TimeStepping(const DihuContext &context) : Data<BasisOnMeshType>(context)
+template<typename BasisOnMeshType,int nComponents>
+TimeStepping<BasisOnMeshType,nComponents>::
+TimeStepping(DihuContext context) : Data<BasisOnMeshType>(context)
 {
 }
 
-template<typename BasisOnMeshType>
-TimeStepping<BasisOnMeshType>::
+template<typename BasisOnMeshType,int nComponents>
+TimeStepping<BasisOnMeshType,nComponents>::
 ~TimeStepping()
 {
   // free PETSc objects
@@ -34,32 +34,46 @@ TimeStepping<BasisOnMeshType>::
   }
 }
 
-template<typename BasisOnMeshType>
-void TimeStepping<BasisOnMeshType>::
+template<typename BasisOnMeshType,int nComponents>
+void TimeStepping<BasisOnMeshType,nComponents>::
 createPetscObjects()
 {
-  LOG(DEBUG)<<"TimeStepping<BasisOnMeshType>::createPetscObjects("<<this->nComponentsPerNode_<<")"<<std::endl;
+  LOG(DEBUG)<<"TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
   assert(this->mesh_);
-  this->solution_ = this->mesh_->createFieldVariable("solution", this->nComponentsPerNode_);
-  this->increment_ = this->mesh_->createFieldVariable("increment", this->nComponentsPerNode_);
+  this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
+  this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &TimeStepping<BasisOnMeshType>::
+template<typename BasisOnMeshType,int nComponents>
+FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeStepping<BasisOnMeshType,nComponents>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &TimeStepping<BasisOnMeshType>::
+template<typename BasisOnMeshType,int nComponents>
+FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeStepping<BasisOnMeshType,nComponents>::
 increment()
 {
   return *this->increment_;
 }
 
-template<typename BasisOnMeshType>
-void TimeStepping<BasisOnMeshType>::
+template<typename BasisOnMeshType,int nComponents>
+dof_no_t TimeStepping<BasisOnMeshType,nComponents>::
+nUnknowns()
+{
+  return this->mesh_->nNodes() * nComponents;
+}
+
+template<typename BasisOnMeshType,int nComponents>
+constexpr int TimeStepping<BasisOnMeshType,nComponents>::
+getNDofsPerNode()
+{
+  return nComponents;
+}
+
+template<typename BasisOnMeshType,int nComponents>
+void TimeStepping<BasisOnMeshType,nComponents>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -79,18 +93,15 @@ print()
   VLOG(4)<<"======================";
 }
 
-template<typename BasisOnMeshType>
-std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> TimeStepping<BasisOnMeshType>::
-fieldVariables()
+template<typename BasisOnMeshType,int nComponents>
+typename TimeStepping<BasisOnMeshType,nComponents>::OutputFieldVariables TimeStepping<BasisOnMeshType,nComponents>::
+getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
-  result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
-  result.push_back(solution_);
-  result.push_back(increment_);
-  
-  return result;
+  return OutputFieldVariables(
+    std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->geometryField()),
+    solution_
+  );
 }
-  
 
 
 } // namespace

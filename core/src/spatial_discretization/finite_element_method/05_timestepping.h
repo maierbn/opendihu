@@ -16,8 +16,11 @@ class FiniteElementMethodTimeStepping :
   public DiscretizableInTime
 {
 public:
-  FiniteElementMethodTimeStepping(const DihuContext &context);
+  FiniteElementMethodTimeStepping(DihuContext context);
  
+  //! return the compile-time constant number of variable components of the solution field variable
+  static constexpr int nComponents();
+  
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
@@ -26,6 +29,9 @@ public:
   
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
+  
+  //! return the mesh that is stored in the data class
+  std::shared_ptr<Mesh::Mesh> mesh();
   
   typedef BasisOnMeshType BasisOnMesh;   ///< the BasisOnMesh type needed for time stepping scheme
   
@@ -37,6 +43,9 @@ protected:
   
   //! Compute from the rhs in weak formulation the rhs vector in strong formulation
   void recoverRightHandSideStrongForm(Vec &result);
+  
+  //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
+  void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
 };
 
 };  // namespace

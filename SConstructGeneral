@@ -1,0 +1,177 @@
+# SConstruct file to include for a program that uses the opendihu library
+#
+# In a directory where you have the sources for your user program, place a SConstruct file with the following contents:
+##--------------------------------------------------------------------------------------------------------
+## import os
+##
+## # get the directory where opendihu is installed (the top level directory of opendihu)
+## opendihu_home = os.environ.get('OPENDIHU_HOME')
+## 
+## # set path where the "SConscript" file is located (set to current path)
+## path_where_to_call_sconscript = Dir('.').srcnode().abspath
+## 
+## # call general SConstruct that will configure everything and then call SConscript at the given path
+## SConscript(os.path.join(opendihu_home,'SConstructGeneral'), 
+##            exports={"path": path_where_to_call_sconscript})
+##
+##--------------------------------------------------------------------------------------------------------
+#
+import os
+import sys
+
+sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
+
+import sconsconfig
+from sconsconfig import packages, tools
+
+# import the path where a SConstruct should be called at the end
+Import("path")
+path_where_to_call_sconscript = path
+
+opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where this file is located
+
+#
+# Select the packages we want to use in the configuration.
+#
+sconsconfig.select(
+    packages.MPI(required=True),
+    packages.LAPACK(required=True),
+    packages.PETSc(required=True),
+    packages.bzip2(required=False),
+    packages.Python(required=True),
+    packages.Cython(required=False),
+    packages.NumpyC(required=False),
+    packages.SciPy(required=False),
+    packages.Matplotlib(required=False),
+    packages.Base64(required=True),
+    packages.googletest(required=True),
+    #packages.libxml2(required=True),
+    #packages.Sphinx(required=True),
+    #packages.libcellml(required=True),          # relies on libxml2 and SWIG
+    packages.SEMT(required=True),
+    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
+)
+
+# By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
+# Note that an absolute path has to be given, otherwise there are problems finding the libraries
+
+#preset_variables = {'LAPACK_DIR': os.path.join(opendihu_home, 'dependencies/lapack/install'),
+#                    'PETSC_DIR':  os.path.join(opendihu_home, 'dependencies/petsc/install')}
+
+
+# read variables from user file 'user-variables.scons.py' and from command line arguments, e.g. `scons BUILD_TYPE=release`
+variables = ARGUMENTS.copy()        # command line arguments are in the global ARGUMENTS dictionary
+#variables.update(preset_variables)  # merge in preset_variables dictionary
+vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], variables)
+
+# specify type and default value for recognized variables
+#vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
+vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
+                      '(Shortcuts: ''d'',''r'')', 'release', allowed_values=('debug', 'release'), ignorecase = 2, 
+                      map={'d':'debug', 'r':'release'}))
+vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
+vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+    
+# Add options from any packages we want to use.
+sconsconfig.add_options(vars)
+
+# initialize environment object containing build system settings such as compilers and flags
+# command line options are considered
+env = Environment(tools = ['default'], toolpath = ['config/tools'], variables = vars, ENV = os.environ)
+vars.Save('out.py',env)
+
+# check for unknown variables and output warning
+unknown = vars.UnknownVariables()
+if unknown:
+  print "WARNING: Unknown variables from command line arguments or config file 'user-variables.scons.py':", unknown.keys()
+    
+# generate help text for the page `scons -h`
+Help(vars.GenerateHelpText(env))
+
+# set console messages for compilation and linking
+tty_available = True
+try:
+  screen = open('/dev/tty', 'w')
+except:
+  tty_available = False
+if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
+  env['CXXCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['CCCOMSTR'] = "\x1b[32mCompiling $SOURCE\x1b[0m"
+  env['ASCOMSTR'] = "\x1b[32mAssembling $TARGET\x1b[0m"
+  env['LINKCOMSTR'] = "\x1b[32mLinking   $TARGET\x1b[0m"
+  env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
+  env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
+
+# add basic linker flags
+ldflags = "-lpthread -ldl -lutil -lm"
+env.MergeFlags(ldflags)
+           
+# Create our configuration environment, passing the set of custom tests.
+sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+
+# Run our custom tests with any options needed.
+sconsconfig.check(sconf)
+
+# Finish the configuration and save it to file.
+sconf.Finish()
+
+# -----------------------------------------------
+# progress display e.g. [ 50%]
+
+# set needed global variables
+env["node_count"] = 0                                         # current counter of nodes to compile
+env["node_count_max"] = 0                                     # maximum number of nodes to compile that was determined earlier
+env["node_count_interval"] = 1                                # the interval in which the progress output should be updated
+node_count_fname = str(env.Dir('#')) + '/.scons_node_count'   # filename of the stored maximum node count
+env["node_count_fname"]=node_count_fname
+
+def progress_function(node):
+  """ function to be called before a new node is compiled, outputs progress information like [ 50%] if it is <=100%"""
+  global env
+  env["node_count"] += env["node_count_interval"]
+  if env["node_count"] > env["node_count_max"]: env["node_count_max"] = 0
+  if env["node_count_max"]>0 and tty_available:
+    sys.stdout.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
+    sys.stdout.flush()
+  # write out 
+  try:
+    with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
+  except: pass
+
+# read in maximum node count from an earlier compilation
+try:
+  with open(env["node_count_fname"]) as f: env["node_count_max"] = int(f.readline())
+except: pass
+
+# add progress display target
+Progress(progress_function, interval=env["node_count_interval"])
+
+# -----------------------------------------------
+# depending on the variable BUILD_TYPE either build with debug or release settings and link corresponding version of core
+if env["BUILD_TYPE"] == "debug":
+  
+  # debug build
+  variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
+  env.Prepend(LIBS = ['opendihud'])
+  
+else:
+  # release build
+  variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build
+  env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
+  env.Prepend(LIBS = ['opendihu'])
+
+env.MergeFlags('-Wunused-variable')
+
+# Set the include path for header files
+env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
+#env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/petsc/install/include')])
+
+# call SConscript file for the actual build in the specified build directory variant_dir
+SConscript(dirs=path_where_to_call_sconscript,
+           variant_dir=variant_dir,
+           duplicate=False,
+           exports="env")
+

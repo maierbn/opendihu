@@ -20,7 +20,7 @@ namespace SpatialDiscretization
   
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(const DihuContext &context)
+FiniteElementMethodTimeStepping(DihuContext context)
   : FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>(context),
   DiscretizableInTime(SolutionVectorMapping(true))
 {
@@ -38,6 +38,19 @@ initialize()
   this->setStiffnessMatrix();
   this->setMassMatrix();
   this->data_.finalAssembly();
+  
+  if (this->outputWriterManager_.hasOutputWriters())
+  {
+    LOG(WARNING) << "You have specified output writers for a FiniteElementMethod which is used for a time stepping problem. "
+      "The output will not contain any solution data, only geometry. Probably you want to get output from the time stepping scheme, then define the output writers there.";
+  }
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+nComponents()
+{
+  return 1;   // this may be different for structural mechanics
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -71,6 +84,25 @@ recoverRightHandSideStrongForm(Vec &result)
   ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
   
   //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+  LOG(DEBUG) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+}
+
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+checkDimensions(Mat &stiffnessMatrix, Vec &input)
+{
+#ifndef NDEBUG
+  int nRows, nColumns;
+  MatGetSize(stiffnessMatrix, &nRows, &nColumns);
+  int nEntries;
+  VecGetSize(input, &nEntries);
+  if (nColumns != nEntries)
+  {
+    LOG(ERROR) << "Stiffness matrix dimension " << nRows << "x" << nColumns << " does not match input vector (" << nEntries << ")!";
+  }
+  assert(nColumns == nEntries);
+#endif
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -80,12 +112,17 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
   Vec &rhs = this->data_.rightHandSide().values();
   
+  // check if matrix and vector sizes match
+  checkDimensions(stiffnessMatrix, input);
+  
   // compute rhs = stiffnessMatrix*input
   MatMult(stiffnessMatrix, input, rhs);
   
+  // compute output = massMatrix^{-1}*rhs
   recoverRightHandSideStrongForm(output);
   
   this->data_.print();
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -93,6 +130,13 @@ bool FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 knowsMeshType()
 {
   return true;
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+mesh()
+{
+  return FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::mesh();
 }
   
 } // namespace SpatialDiscretization

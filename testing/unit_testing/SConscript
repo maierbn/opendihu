@@ -1,0 +1,28 @@
+# SConscript file for testing
+#
+
+Import('env')     # import Environment object from calling SConstruct
+
+# if the option no_tests was given, quit the script
+if not env['no_tests']:
+
+  # define the source files
+  src_files = Glob('src/*.cpp')
+
+  #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
+  #src_files = ['src/output.cpp', 'src/main.cpp', 'src/utility.cpp']
+  #print ""
+  #print "WARNING: only compiling ",src_files
+
+  program = env.Program('run_tests', source=src_files)
+  #Depends(test, program)
+
+  if env["BUILD_TYPE"] == "debug":
+    variant_directory = "build_debug"
+  else:
+    variant_directory = "build_release"
+  #env.Install(variant_directory, program)
+
+  # add command that runs the tests after build
+  test = env.Command(target = 'test', source = './run_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./run_tests')
+  AlwaysBuild(test)

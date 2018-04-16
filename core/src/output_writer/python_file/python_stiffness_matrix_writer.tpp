@@ -4,12 +4,14 @@
 #include <memory>
 #include <sstream>
 
+#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+
 namespace OutputWriter
 {
  
-template<int D, typename BasisFunctionType>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>>::
-writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &data, std::string filename)
+template<int D,typename BasisFunctionType,typename Term>
+void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
+writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
   LOG(TRACE) << "writeNumpySolution RegularFixed, D="<<D;
   
@@ -30,7 +32,10 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1) * data.nComponentsPerNode();
+    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
+  
+    nEntries[i] = dofsPerRow * 1;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   
@@ -41,9 +46,9 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   writeMatrices(data, filename);
 }
 
-template<int D, typename BasisFunctionType>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>>::
-writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> &data, std::string filename)
+template<int D,typename BasisFunctionType,typename Term>
+void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
+writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
   // solution and rhs vectors in mesh shape
   // determine file names
@@ -67,7 +72,10 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    nEntries[i] = (data.mesh()->nElementsPerCoordinateDirection(i) + 1);
+    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
+  
+    nEntries[i] = dofsPerRow;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
   
@@ -100,6 +108,11 @@ template<typename DataType>
 void PythonStiffnessMatrixWriter<DataType>::
 writeNumpySolution(DataType &data, std::string filename)
 {
+  // determine file names
+  std::stringstream s;
+  s << filename << "_solution.npy";
+  std::string filenameSolution = s.str();
+  
   // get PETSc vector of values
   std::vector<double> values;
   PetscUtility::getVectorEntries(data.solution().values(), values);
@@ -108,7 +121,7 @@ writeNumpySolution(DataType &data, std::string filename)
   std::vector<long> nEntries(1, values.size());
   
   // write to a file
-  writeToNumpyFile(values, filename, nEntries);
+  writeToNumpyFile(values, filenameSolution, nEntries);
 }
 
 };   // namespace

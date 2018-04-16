@@ -25,4 +25,16 @@ double Hermite::phi(int i, double xi)
   return xi*xi * (xi-1);              // xi*xi*xi - xi*xi
 }
 
+//! return a basis order string as used in python files and callbacks, e.g. "2"
+int Hermite::getBasisOrder()
+{
+  return 3;
+}
+
+//! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
+std::string Hermite::getBasisFunctionString()
+{
+  return std::string("Hermite");
+}
+
 };  //namespace

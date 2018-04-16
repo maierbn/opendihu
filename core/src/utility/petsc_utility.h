@@ -5,11 +5,12 @@
 
 #include <petscmat.h>
 #include <petscksp.h>
+#include <petscsnes.h>
 
 class PetscUtility
 {
 public:
-  ///! extract all entries of the PETSc matrix and store values to std::vector
+  ///! extract all entries of the PETSc matrix and store values row-major to std::vector. The vector is resized to the needed size.
   static void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues);
   
   ///! extract all entries of the PETSc vector and store values to std::vector
@@ -34,5 +35,8 @@ public:
   static std::string getStringSparsityPattern(const Mat &matrix);
   
   ///! return a string description of the reason why the solution has finished
-  static std::string getStringConvergedReason(KSPConvergedReason convergedReason);
+  static std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason);
+  
+  ///! return a string description of the reason why the solution has finished
+  static std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReason);
 };    

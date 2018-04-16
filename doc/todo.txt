@@ -3,5 +3,9 @@
 √ BasisFunction::LagrangeOfOrder, Mesh..ofDimension
 √ dimension -> direction 
 √ 1 meshWidth in fixed grid
-- readme files in folders
+√ readme files in folders
 - fix examples
+
+
+
+

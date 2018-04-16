@@ -7,12 +7,17 @@
 #include <vector>
 
 // With python3+ PyString_* was renamed to PyBytes_*
-//(This ugly check should be removed when decided if python2.7 or python3 will be used. Do that now and remove it now!)
+//(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
 #if PY_MAJOR_VERSION >= 3
-#define PyString_Check PyBytes_Check
-#define PyString_CheckExact PyBytes_CheckExact
-#define PyString_FromString PyBytes_FromString
-#define PyString_AsString PyBytes_AsString
+#else   // python 2.7
+#define PyUnicode_FromString PyString_FromString
+#define PyUnicode_CheckExact PyString_CheckExact
+#define PyUnicode_Check PyString_Check
+
+#define PyLong_Check PyInt_Check
+#define PyLong_AsLong PyInt_AsLong
+#define PyLong_FromLong PyInt_FromLong
+#define PyLong_CheckExact PyInt_CheckExact
 #endif
 
 /** Utility class that handles parsing of python config data to c type objects
@@ -32,7 +37,7 @@ public:
   PythonUtility();
     
   //! checks if the settings contain the given key, no warning is printed
-  static bool containsKey(const PyObject *settings, std::string key);
+  static bool hasKey(const PyObject *settings, std::string key);
   
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
   static PyObject *getOptionPyObject(const PyObject *settings, std::string key);
@@ -87,8 +92,11 @@ public:
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
   static void getOptionVector(const PyObject *settings, std::string keyString, int nEntries, std::vector<double> &values);
   
-  //! print python dictionary to stdout
-  static void printDict(PyObject *dict, int indent=0);
+  //! recursively print python dictionary to VLOG(1)
+  static void printDict(PyObject *dict);
+  
+  //! recursively print a single python value
+  static std::string getString(PyObject *value, int indent=0, int first_indent=0);
   
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   template<typename T>
@@ -123,6 +131,9 @@ public:
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object);
   
+  //! convert a PyUnicode object to a std::string
+  static std::string pyUnicodeToString(PyObject *object);
+  
 private:
   
   static PyObject *itemList;    ///< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
@@ -131,5 +142,9 @@ private:
   static PyObject *list;      ///< python list to use for getOptionListBegin, getOptionListEnd, getOptionListNext
   static int listIndex;       ///< current index for list
 };
+
+//! output python object
+std::ostream &operator<<(std::ostream &stream, PyObject *object);
+
 
 #include "utility/python_utility.tpp"

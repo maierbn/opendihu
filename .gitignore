@@ -1,7 +1,7 @@
 .sconsign.dblite
 *.o
 *.a
-.sconf_temp*
+*/.sconf_temp*
 config.log
 dependencies/lapack
 dependencies/petsc
@@ -14,3 +14,10 @@ build_release
 *.o.part
 *.kate-swp
 *python-test
+.*
+*.dvi
+*.fdb_latexmk
+*.out
+*.synctex.gz
+*.toc
+*[conflicted*

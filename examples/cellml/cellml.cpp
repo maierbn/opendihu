@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   TimeSteppingScheme::ExplicitEuler<
-    CellmlAdapter
+    CellmlAdapter<57>
   > equationDiscretized(settings);
   
   Computation computation(settings, equationDiscretized);

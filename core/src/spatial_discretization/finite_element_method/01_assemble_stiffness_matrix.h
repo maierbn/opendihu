@@ -12,18 +12,17 @@ namespace SpatialDiscretization
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class AssembleStiffnessMatrix :
-  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType>
+  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
   
 protected:
   void setStiffnessMatrix();
   
 };
 
- 
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/01_assemble_stiffness_matrix.tpp"

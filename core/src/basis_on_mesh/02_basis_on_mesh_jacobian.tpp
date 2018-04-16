@@ -71,7 +71,7 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
     jacobian[dimNo] = Vec3({0.0});
     for(int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
     {
-      double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dPhidxi(dofIndex, dimNo, xi);
+      double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
       jacobian[dimNo] += coefficient * geometryField[dofIndex];
       VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex] 
        << " -> " << jacobian[dimNo];

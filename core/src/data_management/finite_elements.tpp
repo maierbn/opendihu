@@ -11,21 +11,23 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
+#include "basis_on_mesh/basis_on_mesh.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 
 namespace Data
 {
 
-template<typename BasisOnMeshType>
-FiniteElements<BasisOnMeshType>::
-FiniteElements(const DihuContext &context) : Data<BasisOnMeshType>(context)
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
+  LOG(TRACE) << "Data::FiniteElements constructor";
+  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType>
-FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 ~FiniteElements()
 {
   PetscErrorCode ierr;
@@ -36,51 +38,35 @@ FiniteElements<BasisOnMeshType>::
   }
 }
 
-/*
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+initialize()
 {
-  const int nOverlaps = 3;
-  switch (this->mesh_->dimension())
-  {
-  case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
-    break;
-  case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
-    break;
-  };
-}*/
+  Data<BasisOnMeshType>::initialize();
+ 
+  // set up diffusion tensor if there is any
+  DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
+}
 
-// for UnstructuredDeformable and Hermite
-//template<int D>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunction::Hermite>>::
-
-
-//template<int D, typename BasisFunctionType>
-//void FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>::
-
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
   const int D = this->mesh_->dimension();
-  const int nOverlaps = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode()*3;
+  const int nDofsPerNode = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode();
+  const int nDofsPerBasis = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerElement();
+  const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
+  
+  // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
+  
   switch (D)
   {
   case 1:
     diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = nOverlaps;
+    offdiagonalNonZeros = diagonalNonZeros;
     break;
   case 2:
-    diagonalNonZeros = pow(nOverlaps, 2);
+    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
     offdiagonalNonZeros = diagonalNonZeros;
     break;
   case 3:
@@ -90,16 +76,16 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
   dof_no_t n = this->mesh_->nDofs();
   
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
   
-  this->rhs_ = this->mesh_->createFieldVariable("rhs");
-  this->solution_ = this->mesh_->createFieldVariable("solution");
+  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
+  this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
   
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -133,8 +119,8 @@ createPetscObjects()
   }
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 finalAssembly()
 {
   PetscErrorCode ierr;
@@ -148,36 +134,36 @@ finalAssembly()
   LOG(DEBUG) << "finalAssembly";
 }
 
-template<typename BasisOnMeshType>
-Mat &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
-template<typename BasisOnMeshType>
-FieldVariable::FieldVariable<BasisOnMeshType> &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename BasisOnMeshType>
-Mat &FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -188,11 +174,8 @@ print()
   MatGetSize(this->stiffnessMatrix_, &nRows, &nColumns);
   VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
   
-  if (!this->disableMatrixPrinting_)
-  {
-    VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
-    VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
-  }
+  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
+  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
   
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_, MAT_LOCAL, &info);
@@ -221,15 +204,15 @@ print()
   VLOG(4)<<"======================";
 }
 
-template<typename BasisOnMeshType>
-bool FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+bool FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
-template<typename BasisOnMeshType>
-void FiniteElements<BasisOnMeshType>::
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -252,17 +235,24 @@ initializeMassMatrix()
   this->massMatrixInitialized_ = true;
 }
 
-template<typename BasisOnMeshType>
-std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> FiniteElements<BasisOnMeshType>::
-fieldVariables()
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+typename FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::OutputFieldVariables FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType>>> result;
-  result.push_back(std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType>>(this->mesh_->geometryField()));
-  result.push_back(solution_);
-  result.push_back(rhs_);
-  this->mesh_->addNonGeometryFieldVariables(result);   // add all further field variables that were e.g. present in an input file
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField 
+    = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->geometryField());
+  /*
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> generalField;
   
-  return result;
+  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->fieldVariable("general"));
+  if (!generalField)
+   generalField = geometryField;
+  */
+  return OutputFieldVariables(
+    geometryField,
+    solution_,
+    rhs_
+  );
 }
   
 

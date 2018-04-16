@@ -12,4 +12,9 @@ scons-config
 SConstruct
 sphinx
 test
-
+pk
+semt
+python
+bzip2
+scipy
+matplotlib

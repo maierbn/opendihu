@@ -1,10 +1,11 @@
 #include "solver/solver_manager.h"
 
-#include "Python.h" // this header has to be included first
+#include <Python.h> // this header has to be included first
 
 #include <memory>
 #include <iostream>
 #include "easylogging++.h"
+#include "utility/python_utility.h"
 
 namespace Solver
 {
@@ -14,12 +15,12 @@ template<typename SolverType>
 std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
 {
   // if solver has already been created earlier
-  if (PythonUtility::containsKey(settings, "solverName"))
+  if (PythonUtility::hasKey(settings, "solverName"))
   {
     std::string solverName = PythonUtility::getOptionString(settings, "solverName", "");
     if (hasSolver(solverName))
     {
-      LOG(DEBUG) << "Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
+      VLOG(1) << "Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
       return std::static_pointer_cast<SolverType>(solvers_[solverName]);
     }
     else if(solverConfiguration_.find(solverName) != solverConfiguration_.end())
@@ -39,7 +40,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
   }
   else
   {
-    LOG(DEBUG) << "Config does not contain solverName.";
+    VLOG(1) << "Config does not contain solverName.";
   }
   
   // check if there is a matching solver already stored
@@ -52,7 +53,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
       // check if config is the  same
       if (solver.second->configEquals(settings))
       {
-        LOG(DEBUG) << "Solver \"" << solver.first << "\" matches settings.";
+        VLOG(1) << "Solver \"" << solver.first << "\" matches settings.";
         return std::static_pointer_cast<SolverType>(solver.second);
       }
     }

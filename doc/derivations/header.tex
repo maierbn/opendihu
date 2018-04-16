@@ -31,7 +31,7 @@
 
 
 \usepackage[ngerman]{babel}
-\usepackage{ngerman}
+%\usepackage{ngerman}
 \usepackage[tbtags,sumlimits,intlimits,namelimits]{amsmath}
 
 %\usepackage{amsfonts}
@@ -80,6 +80,7 @@
 \usepackage{booktabs}
 \usepackage{morefloats}
 \usepackage{cleveref}
+\usepackage{mathrsfs}       % mathscr
 
 \newsavebox\lstbox
 \mdfdefinestyle{MyFrame}{%
@@ -214,6 +215,7 @@
 \def\ba#1{\begin{array}{#1}}
 \def\ea{\end{array}}
 \def\mat#1{\left(\begin{matrix}#1\end{matrix}\right)}   % added by Georg
+\def\matt#1{\left[\begin{matrix}#1\end{matrix}\right]}
 
 \newcommand{\Name}[1]   {\textit{#1}\/}                 % Eigennamen kursiv
 \renewcommand{\emph}[1]{\textit{#1}\/}
@@ -237,7 +239,12 @@
 \def\det{\hbox{det} \,}
 \def\span{\hbox{span} \,}
 \def\div{\hbox{div} \,}
+\def\grad{\hbox{grad} \,}
 \def\supp{\hbox{supp} \,}
+\def\tr{\hbox{tr} \,}
+\def\sym{\hbox{sym} \,}
+\def\diag{\hbox{diag} \,}
+\def\dyad{\otimes}
 %\def\spur{\hbox{\textup{spur}} \,}
 \DeclareMathOperator{\spur}{spur}
 \newcommand{\stern}[1] {\overset{*}{#1}}        %Sternchen auf Buchstabe
@@ -253,6 +260,7 @@
 \def\bbC{\mathbb{C}} % elasticity tensor
 \def\bbI{\mathbb{I}} % identity tensor
 \def\P{\mathcal{P}} % C2 domain of elasticity
+\def\G{G} % C2 domain of elasticity
 
 %----------------------Ableitungen------------------------
 
@@ -370,3 +378,4 @@
 \newcommand{\bfXi}{\boldsymbol{\Xi}}
 \newcommand{\bfxi}{\boldsymbol{\xi}}
 \newcommand{\bfzeta}{\boldsymbol{\zeta}}
+\newcommand{\bfmu}{\boldsymbol{\mu}}

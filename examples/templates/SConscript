@@ -7,10 +7,13 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# define the source files
-src_files = Split(
-"""
-  main.cpp
-""")
-# create the main executable
-env.Program(target = 'templates', source = src_files)
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+    
+  # define the source files
+  src_files = Split(
+  """
+    main.cpp
+  """)
+  # create the main executable
+  env.Program(target = 'templates', source = src_files)

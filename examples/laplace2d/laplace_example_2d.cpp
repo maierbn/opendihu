@@ -13,11 +13,11 @@ int main(int argc, char *argv[])
   SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
     BasisFunction::LagrangeOfOrder<1>,
+    Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
   
   return EXIT_SUCCESS;
 }

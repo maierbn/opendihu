@@ -6,8 +6,8 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
-#include "basis_on_mesh/05_basis_on_mesh.h"
-#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix.h"
+#include "basis_on_mesh/basis_on_mesh.h"
+#include "spatial_discretization/finite_element_method/01_integrand_stiffness_matrix_laplace.h"
 
 namespace SpatialDiscretization
 {
@@ -18,7 +18,7 @@ void AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   const int D = BasisOnMeshType::dim();
-  LOG(TRACE)<<"setStiffnessMatrix " << D << "D";
+  LOG(TRACE)<<"setStiffnessMatrix " << D << "D, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
  
   // get prefactor value
   const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
@@ -26,7 +26,8 @@ setStiffnessMatrix()
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
+  //typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
+  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
@@ -50,6 +51,7 @@ setStiffnessMatrix()
       for (int j=0; j<nDofsPerElement; j++)
       {
         VLOG(3) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
+        //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
         ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
       }
     }
@@ -93,29 +95,30 @@ setStiffnessMatrix()
       
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex] 
-        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(mesh,jacobian,xi);
-      
+        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(this->data_,jacobian,xi);
       
     }  // function evaluations
+    
+    // integrate all values for the (i,j) dof pairs at once
+    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
     
     // perform integration and add to entry of stiffness matrix
     for (int i=0; i<nDofsPerElement; i++)
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
-        // extract evaluations for current (i,j) dof-pair
-        std::array<double,QuadratureDD::numberEvaluations()> evaluations;
-        for (int k=0; k<QuadratureDD::numberEvaluations(); k++)
-          evaluations[k] = evaluationsArray[k][i][j];
-        
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), evaluations: "<<evaluations<<", integrated value: "<<QuadratureDD::computeIntegral(evaluations);
-        
         // integrate value and set entry in stiffness matrix
-        double value = -prefactor * QuadratureDD::computeIntegral(evaluations);
+        double integratedValue = integratedValues(i,j);
+        double value = -prefactor * integratedValue;
+        
+        VLOG(2) << "  dof pair (" << i<<","<<j<<") dofs ("<<dof[i]<<","<<dof[j]<<"), prefactor: " << prefactor <<", integrated value: "<<integratedValue;
+        
         ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
       }  // j
     }  // i
   }  // elementNo
+  
+  // MatAssemblyBegin(stiffnessMatrix,MAT_FINAL_ASSEMBLY) is called after this via data->finalAssembly
 }
 
 };

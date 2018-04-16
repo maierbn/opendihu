@@ -5,7 +5,7 @@
 namespace TimeSteppingScheme
 {
   
-TimeSteppingScheme::TimeSteppingScheme(const DihuContext &context) : 
+TimeSteppingScheme::TimeSteppingScheme(DihuContext context) : 
   context_(context)
 {
   specificSettings_ = NULL;   // needs to be set by deriving class
@@ -40,12 +40,12 @@ void TimeSteppingScheme::initialize()
   // initialize time stepping values
   startTime_ = 0.0;
   endTime_ = 1.0;
-  if (PythonUtility::containsKey(specificSettings_, "endTime"))
+  if (PythonUtility::hasKey(specificSettings_, "endTime"))
     endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
   
   LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime="<<endTime_;
   
-  if (PythonUtility::containsKey(specificSettings_, "timeStepWidth"))
+  if (PythonUtility::hasKey(specificSettings_, "timeStepWidth"))
   {
     timeStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive);
     setTimeStepWidth(timeStepWidth_);
@@ -54,7 +54,7 @@ void TimeSteppingScheme::initialize()
       <<PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive)
       <<", compute numberTimeSteps="<<numberTimeSteps_;
     
-    if (PythonUtility::containsKey(specificSettings_, "numberTimeSteps"))
+    if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
     {
       numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
       isTimeStepWidthSignificant_ = false;

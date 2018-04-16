@@ -7,6 +7,7 @@
 
 #include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
 #include "mesh/mesh.h"
+#include "basis_function/complete_polynomial.h"
 
 namespace BasisOnMesh
 {
@@ -22,7 +23,7 @@ public:
   static double phi(int dofIndex, std::array<double,MeshType::dim()> xi);
   
   //! evaluate the derivative of Phi(xi) w.r.t xi_i, where i is given by derivativeIdx, i.e. Phi_{dofIndex,derivativeIdx}(xi)
-  static double dPhidxi(int dofIndex, int derivativeIdx, std::array<double,MeshType::dim()> xi);
+  static double dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,MeshType::dim()> xi);
 
   //! evaluate the first derivative of the basis function corresponding to element-local dof dofIndex at xi, interval for xi is [0,1]^D
   static std::array<double,MeshType::dim()> gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi);
@@ -33,6 +34,20 @@ private:
   static int getBasisFunctionIndex1D(int dofIndex, int dimNo);
 };
 
+/** different specialization for complete polynomials, derive from CompletePolynomialOfDimensionAndOrder class
+ */
+template<typename MeshType, int order>
+class BasisOnMeshFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>> : 
+  public BasisOnMeshBaseDim<MeshType::dim(),BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>,
+  public BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>,
+  public MeshType
+{
+public:
+  using MeshType::MeshType;
+ 
+  //! evaluate the first derivative of the basis function corresponding to element-local dof dofIndex at xi, interval for xi is [0,1]^D
+  static std::array<double,MeshType::dim()> gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi);
+};
 
 }  // namespace
 

@@ -3,12 +3,24 @@ from Package import Package
 
 ##
 ##  Handles LAPACK library and also BLAS. There are fortran and C versions for each.
+## 
+## - ``libblas-dev``: reference BLAS (not very optimized)
+## - ``libatlas-base-dev``: generic tuned ATLAS, it is recommended to tune it to
+##   the available hardware, see /usr/share/doc/libatlas3-base/README.Debian for
+##   instructions
+## - ``libopenblas-base``: fast and runtime detected so no tuning required but a
+##   very recent version is needed (>=0.2.15 is recommended).  Older versions of
+##   OpenBLAS suffered from correctness issues on some CPUs.
+##
+##   We use OpenBLAS
+## 
 ##
 class LAPACK(Package):
 
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://github.com/Reference-LAPACK/lapack-release/archive/lapack-3.7.1.zip',
+            #'download_url': 'https://github.com/Reference-LAPACK/lapack-release/archive/lapack-3.7.1.zip',
+            'download_url': 'http://github.com/xianyi/OpenBLAS/archive/v0.2.20.tar.gz',
         }
         defaults.update(kwargs)
         super(LAPACK, self).__init__(**defaults)
@@ -33,10 +45,16 @@ int main(int argc, char* argv[]) {
         # get number of available processors
         p = multiprocessing.cpu_count()
 
+        use_reference_blas = False
         # Setup the build handler.
         
-        # make based, only static libraries
-        if False:
+        
+        if os.environ.get("LIBSCI_BASE_DIR") is not None:
+          self.libs = ["sci_cray_mpi_mp"]
+          print("Cray environment detected, using \"sci_cray_mpi_mp\" for LAPACK")
+
+        elif False:
+          # reference blas, make based, only static libraries
           self.set_build_handler([
               'cp make.inc.example make.inc',
               'make lapack_install -j '+str(p),
@@ -56,19 +74,32 @@ int main(int argc, char* argv[]) {
               'ln -s ${SOURCE_DIR}/libtmglib.a ${PREFIX}/lib/',
           ])
           self.number_output_lines = 4768
-        else:
+          
+        elif use_reference_blas:
             
-          # cmake based, dynamic libraries
+          # reference blas, cmake based, dynamic libraries
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
             'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
             'cd ${PREFIX} && make',
             'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
           ])
+          
           self.number_output_lines = 4626
+            
+          self.libs = ["lapack", "blas"]
+          self.headers = ["lapacke.h"]
         
-        self.libs = ["lapack", "blas"]
-        self.headers = ["lapacke.h"]
+        else:  
+          # use OpenBLAS
+          self.set_build_handler([
+            'mkdir -p ${PREFIX}',
+            'cd ${SOURCE_DIR} && make && make install PREFIX=${PREFIX}',
+          ])
+          self.number_output_lines = 18788
+        
+          self.libs = ["openblas"]
+          self.headers = ["lapacke.h"]
 
     def check(self, ctx):
         env = ctx.env

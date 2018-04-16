@@ -19,7 +19,7 @@ class Manager
 {
 public:
   //! constructor
-  Manager(const DihuContext &context);
+  Manager(PyObject *specificSettings);
   
   //! return previously created solver or create on the fly
   template<typename SolverType>
@@ -32,8 +32,6 @@ private:
   //! store settings for all solvers that are specified in specificSettings_
   void storePreconfiguredSolvers();
  
-  const DihuContext &context_;    ///< the context object containing everything to be stored
-  
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   int numberAnonymousSolvers_;     ///< how many inline solvers without a given name in the python config are contained in solvers_. These have a key "anonymous<no>"
   

@@ -7,11 +7,12 @@
 # <PACKAGE>_LIBS        List of libraries, optional since the standard names are already hardcoded.
 # <PACKAGE>_DOWNLOAD    Download, build and use a local copy of the package.
 # <PACKAGE>_REDOWNLOAD  Force update of previously downloaded copy. For that <PACKAGE>_DOWNLOAD has to be also true.
+# <PACKAGE>_REBUILD     Force a new build of the package without redownloading it if already has been downloaded earlier.
 #
 # You do one of the following:
-# 1. Not specify any of the variables. Then standard locations in dependencies as well as /usr, /usr/local are searched
-# 2. Specify <PACKAGE>_DIR to directly give the base directory to the package's location
-# 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library files
+# 1. Not specify any of the variables. Then standard locations in dependencies as well as /usr, /usr/local are searched.
+# 2. Specify <PACKAGE>_DIR to directly give the base directory to the package's location. Do this to e.g. use system provided libraries.
+# 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
 
@@ -19,42 +20,52 @@
 MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
 
-# LAPACK, includes also BLAS
+# use value of environment variable 'MPI_HOME' if it is set
+import os
+if os.environ.get("MPI_HOME") is not None:
+  MPI_DIR = os.environ.get("MPI_HOME")
+
+# LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
-LAPACK_REDOWNLOAD=False      # force download, even if the files are already present
+#LAPACK_REDOWNLOAD=True      # force download, even if the files are already present
 
 # PETSc
-#PETSC_DOWNLOAD=False
 PETSC_DOWNLOAD=True
-PETSC_REDOWNLOAD=False
-#PETSC_DIR="../dependencies/petsc"
+#PETSC_REDOWNLOAD=True
 
-# EasyLoggingPP
-EASYLOGGINGPP_DOWNLOAD=True
-#EASYLOGGINGPP_REDOWNLOAD=True
+# Python
+PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
+PYTHON_REDOWNLOAD=False
+
+#Numpy
+CYTHON_DOWNLOAD=True
+CYTHON_REDOWNLOAD=False
+NUMPYC_DOWNLOAD=True
+NUMPYC_REDOWNLOAD=False
+NUMPYC_REBUILD=False
+
+# SciPy
+SCIPY_DOWNLOAD=True
+
+# Matplotlib
+BZIP2_DOWNLOAD=True
+MATPLOTLIB_DOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True
-
-# NumpyC
-CYTHON_DOWNLOAD=True
-NUMPYC_DOWNLOAD=True
 
 # Google Test
 GOOGLETEST_DOWNLOAD=True
 #GOOGLETEST_REDOWNLOAD=True
 
-# libxml2
-LIBXML2_DOWNLOAD=True
-#LIBXML2_REDOWNLOAD=True
-
-# Sphinx
-SPHINX_DOWNLOAD=True
-
-# libcellml
-LIBCELLML_DOWNLOAD=True
-#LIBCELLML_REDOWNLOAD=True
-
 # SEMT
 SEMT_DOWNLOAD=True
 #SEMT_REDOWNLOAD=True
+
+# EasyLoggingPP
+EASYLOGGINGPP_DOWNLOAD=True
+#EASYLOGGINGPP_REDOWNLOAD=True
+
+
+
+

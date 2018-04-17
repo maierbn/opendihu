@@ -36,7 +36,7 @@
   }%
   \providecommand\rotatebox[2]{#2}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{278.45090088bp}%
+    \setlength{\unitlength}{266.65090088bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -48,20 +48,16 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.41608182)%
+  \begin{picture}(1,0.43449453)%
+    \put(0.56262102,0.04981247){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{current}$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=1]{uniaxial_extension.pdf}}%
-    \put(0.18362959,0.37775011){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
+    \put(0.74453781,0.35169561){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
+    \put(0.19175568,0.39446654){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{uniaxial_extension.pdf}}%
-    \put(0.23994176,0.00836772){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_x$}}}}%
+    \put(0.25055981,0.00873802){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_x$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=3]{uniaxial_extension.pdf}}%
-    \put(-0.00197521,0.20521729){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(-0.00206262,0.21429869){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=4]{uniaxial_extension.pdf}}%
-    \put(0.05160609,0.36892548){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
-    \put(0,0){\includegraphics[width=\unitlength,page=5]{uniaxial_extension.pdf}}%
-    \put(0.91658741,0.3367917){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
-    \put(0,0){\includegraphics[width=\unitlength,page=6]{uniaxial_extension.pdf}}%
-    \put(0.86772185,0.17092566){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{A}}}}%
-    %\put(0,0){\includegraphics[width=\unitlength,page=7]{uniaxial_extension.pdf}}%
-    %\put(0.58115596,0.11521794){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{current}$}}}}%
+    \put(0.0538898,0.3852514){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
   \end{picture}%
 \endgroup%

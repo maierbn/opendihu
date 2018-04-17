@@ -1496,7 +1496,7 @@ we get back to the virtual work terms.
 For incompressible materials we use the decoupled representation of the strain enery function,
 \begin{equation*}
   \begin{array}{lll}
-    \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J), \quad \G(J) := \dfrac12 (J-1)^2
+    \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J)
   \end{array}
 \end{equation*}
 The derivative yields
@@ -2111,7 +2111,7 @@ Domain in reference and current configuration (see \cref{fig:uniaxial_extension}
     \Omega_\text{current} = [0, \lambda\,l_x] \times [0, l_z/\sqrt{\lambda}]^2,
   \end{array}
 \end{equation*}
-A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geometric quantities can be computed to
+A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geomtric quantities can be computed to
 \begin{equation*}
   \begin{array}{lll}
     \bfx = \mat{\lambda X_1\\[2mm] X_2/\sqrt{\lambda} \\[2mm] X_3/\sqrt{\lambda}}, 
@@ -2136,12 +2136,6 @@ From equilibrium we get
   \begin{array}{lll}
     S_{11} = t_\text{max} \quad \Rightarrow \quad \lambda = \dfrac{4\,c_2}{t_\text{max} - 2\,c_1},\\[4mm]
     \bfS = \diag\Big( t_\text{max}, \quad  c_1-t_\text{max}/2, \quad c_1-t_\text{max}/2 \Big)
-  \end{array}
-\end{equation*}
-The displacements at node A are given by
-\begin{equation*}
-  \begin{array}{lll}
-    \hat{\bfu}^A = \big(\lambda\,l_x - l_x, \dfrac{l_z}{\sqrt{\lambda}} - l_z,\dfrac{l_z}{\sqrt{\lambda}} - l_z\big) = \big((\lambda-1)\,l_x,(\dfrac1{\sqrt{\lambda}}-1)\,l_z,(\dfrac1{\sqrt{\lambda}}-1)\,l_z\big)
   \end{array}
 \end{equation*}
 

@@ -23,7 +23,7 @@ nz = 1
 lx = 1.0
 lz = 1.0
 area_z = lz*lz
-tmax = 0.5
+tmax = 2.0
 
 dirichletBC = {
   0: 0.0, 1: 0.0, 2: 0.0,
@@ -39,13 +39,12 @@ traction = {
   21: tmax/4.
 }
 
-material_parameters = [6.352e-10, 3.627, 0]  # c0, c1, kappa
-# kappa = 0 means disable incompressibility and volume effects
+material_parameters = [6.352e-10, 3.627, 100]  # c0, c1, kappa
 
-lambdaValue = 4*material_parameters[1] / (tmax - 2*material_parameters[0])
-analytical_pk2_stress = [2*material_parameters[0] + 4*material_parameters[1]/lambdaValue, -2*material_parameters[1]/lambdaValue, -2*material_parameters[1]/lambdaValue]
+lambda = 4*material_parameters[1] / (tmax - 2*material_parameters[0])
+analytical_pk2_stress = [2*material_parameters[0] + 4*material_parameters[1]/lambda, -2*material_parameters[1]/lambda, -2*material_parameters[1]/lambda]
 
-print("lambdaValue: ",lambdaValue,"> 1")
+print("lambda: ",lambda)
 
 config = {
   "FiniteElementMethod" : {

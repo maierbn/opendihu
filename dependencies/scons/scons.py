@@ -2,7 +2,7 @@
 #
 # SCons - a Software Constructor
 #
-# Copyright (c) 2001 - 2017 The SCons Foundation
+# Copyright (c) 2001 - 2016 The SCons Foundation
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -23,17 +23,15 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from __future__ import print_function
+__revision__ = "src/script/scons.py rel_2.5.1:3735:9dc6cee5c168 2016/11/03 14:02:02 bdbaddog"
 
-__revision__ = "src/script/scons.py 74b2c53bc42290e911b334a6b44f187da698a668 2017/11/14 13:16:53 bdbaddog"
+__version__ = "2.5.1"
 
-__version__ = "3.0.1"
+__build__ = "rel_2.5.1:3735:9dc6cee5c168[MODIFIED]"
 
-__build__ = "74b2c53bc42290e911b334a6b44f187da698a668"
+__buildsys__ = "mongodog"
 
-__buildsys__ = "hpmicrodog"
-
-__date__ = "2017/11/14 13:16:53"
+__date__ = "2016/11/03 14:02:02"
 
 __developer__ = "bdbaddog"
 
@@ -58,14 +56,14 @@ import sys
 # engine modules if they're in either directory.
 
 
-if (3,0,0) < sys.version_info < (3,5,0) or sys.version_info < (2,7,0):
+if sys.version_info >= (3,0,0):
     msg = "scons: *** SCons version %s does not run under Python version %s.\n\
-Python < 3.5 is not yet supported.\n"
+Python 3 is not yet supported.\n"
     sys.stderr.write(msg % (__version__, sys.version.split()[0]))
     sys.exit(1)
 
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
+script_dir = sys.path[0]
 
 if script_dir in sys.path:
     sys.path.remove(script_dir)
@@ -100,7 +98,7 @@ try:
 except ImportError:
     pass
 else:
-    # when running from an egg add the egg's directory
+    # when running from an egg add the egg's directory 
     try:
         d = pkg_resources.get_distribution('scons')
     except pkg_resources.DistributionNotFound:
@@ -193,7 +191,7 @@ if __name__ == "__main__":
     except ImportError:
         print("SCons import failed. Unable to find engine files in:")
         for path in libs:
-            print("  {}".format(path))
+            print("  %s" % path)
         raise
 
     # this does all the work, and calls sys.exit

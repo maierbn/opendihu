@@ -14,6 +14,9 @@ echo "=================="
 # change directory to test directory
 cd $workdir/$name
 
+# compile
+../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE
+
 # run tests and postprocessing
 . run_tests.sh
 . postprocess.sh

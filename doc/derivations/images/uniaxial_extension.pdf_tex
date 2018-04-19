@@ -36,7 +36,7 @@
   }%
   \providecommand\rotatebox[2]{#2}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{266.65090088bp}%
+    \setlength{\unitlength}{278.45090088bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -48,16 +48,26 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.43449453)%
-    \put(0.56262102,0.04981247){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{current}$}}}}%
+  \begin{picture}(1,0.51994285)%
     \put(0,0){\includegraphics[width=\unitlength,page=1]{uniaxial_extension.pdf}}%
-    \put(0.74453781,0.35169561){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
-    \put(0.19175568,0.39446654){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
+    \put(0.18362959,0.48161113){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{uniaxial_extension.pdf}}%
-    \put(0.25055981,0.00873802){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_x$}}}}%
+    \put(0.23994176,0.11222875){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_x$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=3]{uniaxial_extension.pdf}}%
-    \put(-0.00206262,0.21429869){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(-0.00197521,0.30907831){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=4]{uniaxial_extension.pdf}}%
-    \put(0.0538898,0.3852514){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(0.05160609,0.4727865){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{uniaxial_extension.pdf}}%
+    \put(0.91658741,0.44065272){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{uniaxial_extension.pdf}}%
+    \put(0.86772185,0.27478668){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{A}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{uniaxial_extension.pdf}}%
+    \put(0.58115596,0.21907896){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{current}$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{uniaxial_extension.pdf}}%
+    \put(0.13228868,0.00197521){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$x$}}}}%
+    \put(0.03101409,0.0766742){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$z$}}}}%
+    \put(0.12263452,0.0766742){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$y$}}}}%
+    %\put(0,0){\includegraphics[width=\unitlength,page=9]{uniaxial_extension.pdf}}%
+    %%
   \end{picture}%
 \endgroup%

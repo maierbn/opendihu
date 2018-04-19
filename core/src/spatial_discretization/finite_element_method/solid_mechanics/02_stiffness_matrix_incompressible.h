@@ -123,6 +123,9 @@ protected:
   //! solve nonlinear system
   virtual void solve() override;
   
+  //! debugging method
+  void debug();
+  
   //! initialize Dirichlet boundary conditions
   void initializeBoundaryConditions();
   

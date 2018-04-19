@@ -273,8 +273,8 @@ setStiffnessMatrix(Mat stiffnessMatrix)
             dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
             dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
             
-            VLOG(2) << "  unknown pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<")";
-            VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
+            //VLOG(2) << "  unknown pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<")";
+            //VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
             
             ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
             
@@ -575,8 +575,8 @@ computeInternalVirtualWork(Vec &resultVec)
         // Therefore the nDofsPerElement number is not the number of unknows.
         dof_no_t resultVectorIndex = dofNo[aDof]*D + aComponent;
         
-        VLOG(2) << "  result vector "<<aDof<<","<<aComponent<<" = " <<i<<", dof " << dofNo[aDof];
-        VLOG(2) << "      vector index "<<resultVectorIndex<<", integrated value: "<<integratedValue;
+        //VLOG(2) << "  result vector "<<aDof<<","<<aComponent<<" = " <<i<<", dof " << dofNo[aDof];
+        //VLOG(2) << "      vector index "<<resultVectorIndex<<", integrated value: "<<integratedValue;
             
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, INSERT_VALUES); CHKERRV(ierr);
         

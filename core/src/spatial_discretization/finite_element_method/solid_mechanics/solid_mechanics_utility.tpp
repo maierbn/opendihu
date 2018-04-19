@@ -53,31 +53,77 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
   // where j is dimensionColumn and i is component of the used Vec3's
   
  
+  VLOG(3) << "compute deformation gradient Fij, displacements: " << displacement;
+ 
   std::array<Vec3,BasisOnMeshType::dim()> deformationGradient;
  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
+  // easier understandable version, less optimized
+#if 0  
+  VLOG(3) << "A=1, a=2";
+  
+  for (int A = 0; A < 3; A++) // dimensionColumn
+  {
+    for (int a = 0; a < 3; a++)
+    {
+      VLOG(3) << " entry " << a << A;
+      double sum = 0;
+      double sum_dphi_dxil2 = 0;
+      for (int M = 0; M < nDofsPerElement; M++)
+      {
+        double dPhi_dXA = 0;
+        for (int l = 0; l < 3; l++)
+        {
+          double dphi_dxil = BasisOnMeshType::dphi_dxi(M, l, xi);
+          double dxil_dXA = inverseJacobianMaterial[A][l];     // inverseJacobianMaterial[A][l] = J_lA = dxi_l/dX_A
+        
+          //VLOG(3) << "  L=" << M << ", l=" << l << ", dphiL/dxil=" << dphi_dxil << ", dxil/dXA=" << dxil_dXA << "u^L_a=" << displacement[M][a];
+        
+          dPhi_dXA += dphi_dxil * dxil_dXA;
+        }
+        VLOG(3) << "  L=" << M << ", dPhi_dXA: " << dPhi_dXA << ", u: " << displacement[M][a];
+        
+        sum += dPhi_dXA * displacement[M][a];
+        sum_dphi_dxil2 += BasisOnMeshType::dphi_dxi(M, 2, xi);
+      }
+      VLOG(3) << "    sum_dphi_dxil2: " << sum_dphi_dxil2;
+      deformationGradient[A][a] = (a==A? 1: 0) + sum;
+      VLOG(3) << " entry " << a << A << " = " << deformationGradient[A][a];
+    }
+  }
+#endif  
+
   // loop over dimension, i.e. columns of deformation gradient, j
   for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
   {
     // compute du_i/dX_columnIndex
     Vec3 du_dX({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
     
+    VLOG(3) << " j = " << dimensionColumn;
+    
     // loop over dof no., M
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
+      VLOG(3) << "  M = " << dofIndex;
       // compute dphi_dofIndex/dX_dimensionColumn
       double dphi_dX = 0;
       for (int l = 0; l < 3; l++)
       {
+        VLOG(3) << "   l = " << l;
         double dphi_dxil = BasisOnMeshType::dphi_dxi(dofIndex, l, xi);
         double dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
+        
+        VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;
         dphi_dX += dphi_dxil * dxil_dX;
       }
+      VLOG(3) << "   dphi_dX = " << dphi_dX;
       
       // multiply dphi/dxi with dxi/dX to obtain dphi/dX
+      VLOG(3) << "   displ_M: " << displacement[dofIndex];
       du_dX += dphi_dX * displacement[dofIndex];   // vector-valued addition
     }
+    VLOG(3) << " du_dXj: " << du_dX;
     
     deformationGradient[dimensionColumn] = du_dX;
     
@@ -85,6 +131,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
     deformationGradient[dimensionColumn][dimensionColumn] += 1;
   }
   
+  VLOG(3) << "deformationGradient: " << deformationGradient;
   return deformationGradient;
 }
 

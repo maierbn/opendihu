@@ -123,6 +123,87 @@ PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mc
   return 0;
 };
  
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+debug()
+{
+  LOG(DEBUG) << "------- debug method ------";
+ 
+  //bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
+  PetscErrorCode ierr;
+  
+  //Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
+  //Vec &residual = this->data_.residual().values();
+  Vec &displacements = this->data_.displacements().values();
+  Vec &externalVirtualEnergy = this->data_.externalVirtualEnergy().values();
+  
+  Vec internalVirtualEnergy;
+  VecDuplicate(externalVirtualEnergy, &internalVirtualEnergy);
+  
+  // zero initial values
+  ierr = VecSet(displacements, 0.0); CHKERRV(ierr);
+  
+  double lx = 1.0;
+  double lz = 1.0;
+  double tmax = 0.5;
+  
+  const double c0 = SEMT::Parameter<0>::get_value();
+  const double c1 = SEMT::Parameter<1>::get_value();
+  assert(c1 == 0);
+  
+  double lambdaValue = pow(1 + tmax/(2*c0), 3);
+  LOG(DEBUG) << "c0: " << c0 << ", c1: " << c1 << ", tmax: " << tmax << ", lambdaValue: " << lambdaValue;
+
+  LOG(DEBUG) << "expected F: diag( " << lambdaValue << ", " << 1./sqrt(lambdaValue) << ", " << 1./sqrt(lambdaValue) << ")";
+  LOG(DEBUG) << "expected C: diag( " << lambdaValue*lambdaValue << ", " << 1./lambdaValue << ", " << 1./lambdaValue << ")";
+  LOG(DEBUG) << "expected I1: " << lambdaValue*lambdaValue + 2/lambdaValue;
+  LOG(DEBUG) << "expected S: diag( " << 2*c0 + 4*c1/lambdaValue << ", " << -2*c1/lambdaValue << ", " << -2*c1/lambdaValue <<  " )";
+  
+  std::vector<double> knownValues = {
+   0.0, 0.0, 0.0, 
+   (lambdaValue-1.0)*lx, 0.0, 0.0,
+   0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0, 
+   (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0,
+   0.0, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 
+   (lambdaValue-1.0)*lx, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz,
+   0.0, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz, 
+   (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz
+  };
+  PetscUtility::setVector(knownValues, displacements);
+  
+  // set prescribed Dirchlet BC displacements values
+  //applyDirichletBoundaryConditionsInDisplacements();
+  
+  VLOG(1) << "displacements values: " << PetscUtility::getStringVector(displacements);
+  VLOG(1) << "W_ext: " << PetscUtility::getStringVector(externalVirtualEnergy);
+  
+  this->computeInternalVirtualWork(internalVirtualEnergy);
+  VLOG(1) << "W_int: " << PetscUtility::getStringVector(internalVirtualEnergy);
+  
+  std::vector<double> wExt, wInt;
+  PetscUtility::getVectorEntries(externalVirtualEnergy, wExt);
+  PetscUtility::getVectorEntries(internalVirtualEnergy, wInt);
+  
+  std::stringstream s;
+  s << std::endl << "no.  Wext  Wint" << std::endl;
+  for (int i=0; i<wExt.size(); i++)
+  {
+    s << i << "   " << wExt[i] << "   " << wInt[i] << std::endl;
+  }
+  LOG(DEBUG) << s.str();
+  
+  LOG(DEBUG) << "------- debug method end, exit------";
+  exit(0);
+  
+}
+
 // general implementation of nonlinear solving for solid mechanics (here for penalty formulation)
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<
@@ -136,6 +217,9 @@ void FiniteElementMethodStiffnessMatrix<
 solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
+  
+  debug();
+  exit(0);
   
   bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
   PetscErrorCode ierr;
@@ -183,7 +267,6 @@ solve()
     // set function to compute jacobian from finite differences
     ierr = SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobianFiniteDifferences, this); CHKERRV(ierr);
     LOG(DEBUG) << "Use Finite-Differences approximation for jacobian";
-    
   }
 
   // set monitor function  

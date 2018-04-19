@@ -970,34 +970,34 @@ the solution is
 Currently not compiled because unpublished.
 
 
-%The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
-%\begin{equation}
-%  \begin{array}{lll}\label{eq:multidomain1}
-%    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
-%  \end{array}
-%\end{equation}
-%\begin{equation}\label{eq:multidomain2}
-%  \begin{array}{lll}
-%    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
-%  \end{array}
-%\end{equation}
-%The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
-%$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
-%
-%Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
-%  \end{array}
-%\end{equation*}
-%
-%The bidomain equation is used for computation of EMG:
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
-%  \end{array}
-%\end{equation*}
-%
+The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
+\begin{equation}
+  \begin{array}{lll}\label{eq:multidomain1}
+    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
+  \end{array}
+\end{equation}
+\begin{equation}\label{eq:multidomain2}
+  \begin{array}{lll}
+    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
+  \end{array}
+\end{equation}
+The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
+$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
+
+Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
+  \end{array}
+\end{equation*}
+
+The bidomain equation is used for computation of EMG:
+\begin{equation*}
+  \begin{array}{lll}
+    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
+  \end{array}
+\end{equation*}
+
 %------------------------------------------------------------------------------------------------
 \section{Structural mechanics}
 The order in this section may be a bit confusing or lacking transition texts. It should be seen more as a collection of the theory and formulas.
@@ -1026,10 +1026,10 @@ $\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J 
 
 In this subsection quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
 
-The position of a material point $i$ at time $t$ is given by
+The position $({}^tx_1^M,{}^tx_2^M,{}^tx_3^M)$ of a material point $M$ at time $t$ is given by
 \begin{equation*}
   \begin{array}{lll}
-    {}^tx_i = {}^ox_i + {}^tu_i,
+    {}^tx_i^M = {}^ox_i^M + {}^tu_i^M,
   \end{array}
 \end{equation*}
 where ${}^ox_i$ is the position in reference configuration and ${}^tu_i$ is the displacement. The deformation gradient $\bfF$ is defined by the entries
@@ -1051,8 +1051,14 @@ The symbol ${}^tu_i^L$ stands for the nodal degree of freedom $L$ of the displac
 Differentiation yields
 \begin{equation*}
   \begin{array}{lll}
-    {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j} = \delta_{ij} + \p{{}^tu_i}{{}^ox_j} = \delta_{ij} + \phi_{L,j}(x)\,{}^tu_i^L = \delta_{ij} + u_{i,j},\quad \text{i.e.}\\[4mm]
+    {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j} = \delta_{ij} + \p{{}^tu_i}{{}^ox_j} = \delta_{ij} + \phi_{L,j}({}^o\bfx)\,{}^tu_i^L = \delta_{ij} + u_{i,j},\quad \text{i.e.}\\[4mm]
     \bfF = \bfI + ∇_\bfX \bfu.
+  \end{array}
+\end{equation*}
+We have
+\begin{equation*}
+  \begin{array}{lll}
+    \phi_{L,j}({}^o\bfx) = \d{\phi_{L}\big(\bfxi({}^o\bfx)\big)}{{}^ox_j} = \p{\phi_{L}}{\xi_\ell}\p{\xi_\ell}{{}^ox_j}.
   \end{array}
 \end{equation*}
 The Green-Lagrange strain tensor ${}^t_o\bfeps$ is defined as 
@@ -1496,7 +1502,7 @@ we get back to the virtual work terms.
 For incompressible materials we use the decoupled representation of the strain enery function,
 \begin{equation*}
   \begin{array}{lll}
-    \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J)
+    \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J), \quad \G(J) := \dfrac12 (J-1)^2
   \end{array}
 \end{equation*}
 The derivative yields
@@ -2111,7 +2117,7 @@ Domain in reference and current configuration (see \cref{fig:uniaxial_extension}
     \Omega_\text{current} = [0, \lambda\,l_x] \times [0, l_z/\sqrt{\lambda}]^2,
   \end{array}
 \end{equation*}
-A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geomtric quantities can be computed to
+A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geometric quantities can be computed to
 \begin{equation*}
   \begin{array}{lll}
     \bfx = \mat{\lambda X_1\\[2mm] X_2/\sqrt{\lambda} \\[2mm] X_3/\sqrt{\lambda}}, 
@@ -2119,23 +2125,111 @@ A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The 
     \quad \bfC = \matt{\lambda^2 & 0 & 0\\[2mm] 0 & 1/\lambda & 0 \\[2mm] 0 & 0 & 1/\lambda },\\[12mm]
     \tr(\bfC) = \lambda^2 + 2/\sqrt{\lambda}, \quad \tr(\bfC^2) = \lambda^4 + 2/\lambda^2\\[4mm]
     I_1 = \tr(\bfC) = \lambda^2 + 2/\lambda \quad \\[4mm]
-    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) 
+    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) \\[4mm]
+    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
     = \dfrac{1}{2}\big(\lambda^4 + \dfrac{4\,\lambda^2}{\sqrt{\lambda}} + \dfrac{4}{\lambda} - \lambda^4 - \dfrac{2}{\lambda^2}\big)
     = 2\,\lambda^{3/2} + 2\lambda^{-1} - \lambda^{-2}\\[4mm]
-    \bfE = \dfrac12\matt{\lambda^2-1 & 0 & 0\\[2mm] 0 & 1/\lambda-1 & 0 \\[2mm] 0 & 0 & 1/\lambda-1}
+    \bfE = \dfrac12\matt{\lambda^2-1 & 0 & 0\\[2mm] 0 & 1/\lambda-1 & 0 \\[2mm] 0 & 0 & 1/\lambda-1}, \quad \bfC^{-1} = \matt{1/\lambda^2 & 0 & 0\\[2mm] 0 & \lambda & 0 \\[2mm] 0 & 0 & \lambda }
   \end{array}
 \end{equation*}
-For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the PK2 stress tensor as,
+For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the fictitious PK2 stress tensor as,
 \begin{equation*}
   \begin{array}{lll}
-    \bfS = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bfC = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad -2\,c_2/\lambda, \quad -2\,c_2/\lambda\Big)
+    \bar{\bfS} = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bar{\bfC} = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad -2\,c_2/\lambda, \quad -2\,c_2/\lambda\Big)
+  \end{array}
+\end{equation*}
+The displacements at node A are given by
+\begin{equation*}
+  \begin{array}{lll}
+    \hat{\bfu}^A = \big(\lambda\,l_x - l_x, \dfrac{l_z}{\sqrt{\lambda}} - l_z,0\big) = \big((\lambda-1)\,l_x,(\dfrac1{\sqrt{\lambda}}-1)\,l_z,0\big).
+  \end{array}
+\end{equation*}
+Computation of the fictitious stress tensor involves coefficients, $\bar{\gamma}_1, \bar{\gamma}_2$:
+\begin{equation*}
+  \begin{array}{lll}
+    \bar{\gamma}_1 = 2\left( \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2} \right)\\[4mm]
+    \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}
+  \end{array}
+\end{equation*}
+With $\Psi(\bar{I}_1,\bar{I}_2) = c_1\,(\bar{I}_1-3) + c_2\,(\bar{I}_2 - 3)$ we get
+\begin{equation*}
+  \begin{array}{lll}
+    \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} = c_1, \quad \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2} = c_2
+  \end{array}
+\end{equation*}
+Now assume $c_2 = 0$.
+\begin{equation*}
+  \begin{array}{lll}
+    \bfC : \bar{\bfS} &= 2\,c_1\,\lambda^2 \\[4mm]
+    \bfS_\text{iso} &= J^{-2/3}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac13 (\bfC^{-1} \otimes \bfC):\bar{\bfS} \\[4mm]
+     &= \bar{\bfS} - \dfrac13 \matt{
+    1/\lambda^2 \cdot 2\,c_1\,\lambda^2 & 0 & 0 \\[2mm]
+    0 & \lambda \cdot 2\,c_1\,\lambda^2 & 0 \\[2mm]
+    0 & 0 & \lambda \cdot 2\,c_1\,\lambda^2} \\[8mm]
+    &= \matt{2c_1 & 0 & 0\\[2mm] 0 & 0 & 0 \\[2mm] 0 & 0 & 0} - \dfrac13 \matt{
+    2\,c_1 & 0 & 0 \\[2mm]
+    0 & 2\,c_1\,\lambda^3 & 0 \\[2mm]
+    0 & 0 & 2\,c_1\,\lambda^3} = \matt{
+    \frac43\,c_1 & 0 & 0 \\[2mm]
+    0 & -\frac23\,c_1\,\lambda^3 & 0 \\[2mm]
+    0 & 0 & -\frac23\,c_1\,\lambda^3}\\[12mm]
+    \bfS &= \bfS_\text{iso} + \bfS_\text{vol} = \bfS_\text{iso} + J\,p\,\bfC^{-1} = \matt{
+    \frac43\,c_1 + p/\lambda^2 & 0 & 0 \\[2mm]
+    0 & -\frac23\,c_1\,\lambda^3 + p\,\lambda & 0 \\[2mm]
+    0 & 0 & -\frac23\,c_1\,\lambda^3 + p\,\lambda}
   \end{array}
 \end{equation*}
 From equilibrium we get
 \begin{equation*}
   \begin{array}{lll}
-    S_{11} = t_\text{max} \quad \Rightarrow \quad \lambda = \dfrac{4\,c_2}{t_\text{max} - 2\,c_1},\\[4mm]
-    \bfS = \diag\Big( t_\text{max}, \quad  c_1-t_\text{max}/2, \quad c_1-t_\text{max}/2 \Big)
+    S_{22} = 0 \quad \Rightarrow \quad -\frac23\,c_1\,\lambda^3 + p\,\lambda = 0 \quad \Rightarrow \quad  p = \frac23\,c_1\,\lambda^2\\[4mm]
+    S_{11} = -t_\text{max} \quad \Rightarrow \quad \frac43\,c_1 + p/\lambda^2 = -t_\text{max} \quad \Rightarrow \quad \lambda = \sqrt{\dfrac{p}{-t_\text{max} - \frac43\,c_1}}  \\[4mm]
+  \end{array}
+\end{equation*}
+which is obviously wrong.
+
+Different approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
+     &= -p\bfC^{-1} + 2\,c_1\,\bfI =
+      \matt{-p/\lambda^2 + 2\,c_1 & 0 & 0\\[2mm] 
+     0 & -p\,\lambda + 2\,c_1 & 0\\[2mm]
+     0 & 0 & -p\,\lambda + 2\,c_1}
+  \end{array}
+\end{equation*}
+From equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
+    S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = -t_\text{max} \quad \Rightarrow \quad \lambda = \left(1+\dfrac{t_\text{max}}{2\,c_1}\right)^3.
+  \end{array}
+\end{equation*}
+Assume Mooney-Rivlin with $c_2 \neq 0$,
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
+     &= -p\bfC^{-1} + (2\,c_1 + \tr\bfC c_2)\,\bfI - 2\,c_2\,\bfC \\[4mm]
+    &= \diag\big( -p\,\lambda^{-2} + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^2,\\[4mm]
+    &\qquad
+    -p\,\lambda + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^{-1},\\[4mm]
+    &\qquad
+     -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^{-1}\big)\\[4mm]
+    &= \diag\big( -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1},\\[4mm]
+    &\qquad
+    -p\,\lambda + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1},\\[4mm]
+    &\qquad
+     -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1}\big)
+  \end{array}
+\end{equation*}
+From equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1} = 0\\[4mm]
+    \quad \Rightarrow\quad 
+   p = 2\,c_1\,\lambda^{-1} + 2\,c_2\,\lambda + 2\,c_2\,\lambda^{-2}\\[4mm]
+    S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad   -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = -t_\text{max} \\[4mm]
+    \quad \Rightarrow \quad  
+    2\,c_1\,\lambda^{-3} + 2\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = -t_\text{max}\\[4mm]
+    \quad \Rightarrow\quad  2\,c_1\,\lambda^{-3} + 6\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 = -t_\text{max}
   \end{array}
 \end{equation*}
 

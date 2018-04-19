@@ -46,6 +46,7 @@ class Package(object):
 
   ## Default include/library sub-directories to search.
   DEFAULT_SUB_DIRS = [('include', 'lib'), ('include', 'lib64')]
+  one_shot_options = []  # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
 
   ##
   # @param[in] required Boolean indicating whether the configuration should fail if this package
@@ -63,7 +64,6 @@ class Package(object):
     self.check_text = ''      # a test program that checks if the package is included successfully
     self.ext = '.c'           # extension of the check program, this determines if it is compiled with g++ or gcc
     self.options = []         # scons options that should be available to the user via the config script (default includes *_DIR, *_DOWNLOAD etc.)
-    self.one_shot_options = []   # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
     self.test_names = ['Check' + self.name]
     self.custom_tests = {'Check' + self.name: self.check}
     self.auto_add_libs=True
@@ -78,6 +78,7 @@ class Package(object):
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
+    
 
   ##
   # TODO: Make more general
@@ -283,8 +284,6 @@ class Package(object):
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
-      self.one_shot_options.append(upp + '_REDOWNLOAD')
-      self.one_shot_options.append(upp + '_REBUILD')
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler
@@ -320,8 +319,24 @@ class Package(object):
     
     if force_redownload:
       ctx.Log("Option force redownload is set.\n")
+      ctx.Log("Already performed one shot options that are prevented a second time: "+str(Package.one_shot_options)+"\n")
+      if upp + '_REDOWNLOAD' in Package.one_shot_options:
+        ctx.Log("Redownload is a one shot option and was performed earlier, disable it this time.\n")
+        Package.one_shot_options.remove(upp + '_REDOWNLOAD')
+        force_redownload = False
+      else:
+        Package.one_shot_options.append(upp + '_REDOWNLOAD')
+        
     if force_rebuild:
       ctx.Log("Option force rebuild is set.\n")
+      ctx.Log("one shot options: "+str(Package.one_shot_options)+"\n")
+      if upp + '_REBUILD' in Package.one_shot_options:
+        ctx.Log("Rebuild is a one shot option and was performed earlier, disable it this time.\n")
+        Package.one_shot_options.remove(upp + '_REBUILD')
+        force_rebuild = False
+      else:
+        Package.one_shot_options.append(upp + '_REBUILD')
+        
 
     #ctx.Log("ctx.env.items: "+str(ctx.env.items()))
     #ctx.Log("ctx.env.items['ENV']: "+str(ctx.env['ENV'].items()))
@@ -391,7 +406,7 @@ class Package(object):
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
-      ctx.Log("build")
+      ctx.Log("build package\n")
       if not self.auto_build(ctx, install_dir, source_dir, dependencies_dir):
         os.chdir(old_dir)
         return (0, '')

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 def setParameters(n_instances, time_step_no, current_time, parameters):
   #print "       > called at ",time_step_no,", time=",current_time, ", p=",parameters[0]
   
-  center_node = n_instances / 2
+  center_node = int(n_instances / 2)
   
   parameters[0] = 0
   if current_time - int(current_time/10)*10 < 0.1 and current_time > 1000:
@@ -29,7 +29,7 @@ def handleResult(nInstances, timeStepNo, currentTime, states, intermediates):
   #print "time step {}, t={}".format(timeStepNo, currentTime)
   #print "intermediates: {}".format(intermediates)
     
-  if currentTime > 1000:
+  if currentTime > 100:
     
     xdata.append(currentTime)
     gamma_data.append(intermediates[0])
@@ -84,7 +84,7 @@ config = {
   "disableMatrixPrinting": False,
   "ExplicitEuler" : {
     "timeStepWidth": 1e-5,
-    "endTime" : 1000.0,
+    "endTime" : 20000.0,
     "initialValues": [],
     "timeStepOutputInterval": 1e5,
     
@@ -101,7 +101,7 @@ config = {
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1e3,
       "handleResultFunction": handleResult,
-      "handleResultCallInterval": 5e3,
+      "handleResultCallInterval": 1e3,
       
       "numberStates": 57,
       "numberIntermediates": 1,   # intermediates=wanted: gamma

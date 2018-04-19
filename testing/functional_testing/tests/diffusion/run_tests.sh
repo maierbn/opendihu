@@ -5,6 +5,7 @@ echo "running example $(pwd)"
 workdir=$(pwd)
 variant="debug"
 
+mkdir -p build_${variant}
 cd build_${variant}
 
 # remove old output data

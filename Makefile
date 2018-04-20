@@ -2,11 +2,11 @@
 
 all: debug release
 
-ifneq ("$(wildcard ./dependencies/python/install/bin/python)","")
-python := ./dependencies/python/install/bin/python
-else
-python := python
-endif
+#ifneq ("$(wildcard ./dependencies/python/install/bin/python)","")
+#python := ./dependencies/python/install/bin/python
+#else
+python := python2.7
+#endif
 
 debug:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG

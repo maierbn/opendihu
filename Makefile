@@ -23,3 +23,6 @@ functional_testing:
 
 solid_mechanics:
 	cd testing/functional_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+multiple_fibers:
+	cd examples/multiple_fibers && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

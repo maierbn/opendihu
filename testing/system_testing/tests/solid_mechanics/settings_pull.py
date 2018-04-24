@@ -53,7 +53,7 @@ config = {
     "physicalExtent": [lx,lz,lz],
     "DirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
     "relativeTolerance": 1e-15,
-    "rightHandSide": traction,  # surface traction or body force
+    "rightHandSide": traction,  # surface traction T or body force B, both in material description
     "materialParameters": material_parameters,  # c0, c1, kappa
     "analyticJacobian": False,   # False = compute Jacobian by finite differences
   },

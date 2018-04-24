@@ -153,18 +153,31 @@ debug()
   double lx = 1.0;
   double lz = 1.0;
   double tmax = 0.5;
+  double that = 0.5;
   
   const double c0 = SEMT::Parameter<0>::get_value();
   const double c1 = SEMT::Parameter<1>::get_value();
   assert(c1 == 0);
   
-  double lambdaValue = pow(1 + tmax/(2*c0), 3);
+  //double lambdaValue = pow(1 + tmax/(2*c0), 3);
+  
+  // constant load per surface area, t = that, but total load varying
+  double lambdaValue = 0.30285343213869*pow(c0,(-0.5))*
+  pow(18.0*pow(c0,1.5) + 2.44948974278318*pow((54.0*pow(c0,3) 
+  - pow(that,3)),0.5),-0.333333333333333)
+  *(1.81712059283214*that + pow((18.0*pow(c0,1.5) 
+  + 2.44948974278318*pow((54.0*pow(c0,3) - pow(that,3)),0.5)),0.666666666666667));
+  
   LOG(DEBUG) << "c0: " << c0 << ", c1: " << c1 << ", tmax: " << tmax << ", lambdaValue: " << lambdaValue;
 
   LOG(DEBUG) << "expected F: diag( " << lambdaValue << ", " << 1./sqrt(lambdaValue) << ", " << 1./sqrt(lambdaValue) << ")";
   LOG(DEBUG) << "expected C: diag( " << lambdaValue*lambdaValue << ", " << 1./lambdaValue << ", " << 1./lambdaValue << ")";
   LOG(DEBUG) << "expected I1: " << lambdaValue*lambdaValue + 2/lambdaValue;
   LOG(DEBUG) << "expected S: diag( " << 2*c0 + 4*c1/lambdaValue << ", " << -2*c1/lambdaValue << ", " << -2*c1/lambdaValue <<  " )";
+  
+  double s11 = 2*c0 + 4*c1/lambdaValue;
+  
+  LOG(DEBUG) << "expected W[9]: " << 1./4*lz*lz*lambdaValue*s11 << " = " << 1./4*tmax;
   
   std::vector<double> knownValues = {
    0.0, 0.0, 0.0, 

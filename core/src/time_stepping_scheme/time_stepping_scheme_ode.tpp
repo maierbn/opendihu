@@ -1,5 +1,6 @@
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 
+#include <Python.h>  // has to be the first included header
 #include <vector>
 
 #include "utility/python_utility.h"

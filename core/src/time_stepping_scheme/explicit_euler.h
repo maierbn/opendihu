@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "control/runnable.h"
 #include "data_management/time_stepping.h"

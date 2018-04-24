@@ -52,11 +52,11 @@
     \put(0,0){\includegraphics[width=\unitlength,page=1]{uniaxial_extension.pdf}}%
     \put(0.18362959,0.48161113){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{uniaxial_extension.pdf}}%
-    \put(0.23994176,0.11222875){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_x$}}}}%
+    \put(0.23994176,0.11222875){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_x$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=3]{uniaxial_extension.pdf}}%
-    \put(-0.00197521,0.30907831){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(-0.00197521,0.30907831){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_z$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=4]{uniaxial_extension.pdf}}%
-    \put(0.05160609,0.4727865){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$l_z$}}}}%
+    \put(0.05160609,0.4727865){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_z$}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=5]{uniaxial_extension.pdf}}%
     \put(0.91658741,0.44065272){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=6]{uniaxial_extension.pdf}}%

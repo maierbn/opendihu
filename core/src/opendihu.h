@@ -2,6 +2,7 @@
 
 #include "control/dihu_context.h"
 #include "control/computation.h"
+#include "control/multiple_instances.h"
 
 #include "basis_function/lagrange.h"
 #include "basis_function/hermite.h"

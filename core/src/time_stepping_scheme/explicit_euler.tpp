@@ -1,6 +1,6 @@
 #include "time_stepping_scheme/explicit_euler.h"
 
-#include <Python.h>
+#include <Python.h>  // has to be the first included header
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"

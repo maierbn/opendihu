@@ -48,7 +48,7 @@ class NumpyC(Package):
             '$cd ${DEPENDENCIES_DIR}/python/install/lib/ \
              && cd $(find . -maxdepth 1 -type d -name "python*") \
              && cd site-packages/ \
-             && cd $(find . -maxdepth 1 -type d -name "numpy*") \
+             && cd $(find . -maxdepth 1 -type d -name "numpy*.egg") \
              && cd numpy/core \
              && rm -f ${PREFIX} && ln -s $(pwd) ${PREFIX}'
             #'ln -s ${SOURCE_DIR}/numpy/core ${PREFIX}',

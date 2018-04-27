@@ -7,14 +7,14 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-testcases = [
-  "mooney_rivlin_incompressible_mixed",
-  "mooney_rivlin_incompressible_mixed_condensation",
-  "mooney_rivlin_incompressible_penalty3d",
-  "mooney_rivlin_incompressible_penalty2d",
-]
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+      
+  # define the source files
+  src_files = Split(
+  """
+    multidomain_2d.cpp
+  """)
 
-testcases = ["mooney_rivlin_incompressible_penalty2d",]
-
-for testcase in testcases:
-  env.Program(target = testcase, source = "src/{}.cpp".format(testcase))
+  # create the main executable
+  env.Program(target = 'multidomain2d', source = src_files)

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
       Quadrature::Gauss<2>,
       Quadrature::Gauss<3>
     >,
-    Equation::Static::MooneyRivlinIncompressible
+    Equation::Static::MooneyRivlinIncompressible3D
   >
   problem(settings);
   

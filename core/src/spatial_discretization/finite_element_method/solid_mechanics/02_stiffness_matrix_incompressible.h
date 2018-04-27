@@ -1,10 +1,13 @@
 #pragma once
 
+#include <vector>
+
 #include "spatial_discretization/finite_element_method/00_base.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.h"
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/type_traits.h"
+#include "mesh/face_t.h"
 
 namespace SpatialDiscretization
 {
@@ -102,10 +105,10 @@ public:
   Vec &displacements();
   
   //! set the internal displacement variable as copy of the given values
-  void setDisplacements(Vec &displacements);
+  void setDisplacements(Vec &solverDisplacementVariable);
   
-  //! compute the internal virtual work term, dW_int
-  void computeInternalVirtualWork(Vec &result);
+  //! compute the value of dW_int - dW_ext
+  void computeInternalMinusExternalVirtualWork(Vec &result);
   
   //! set entries in displacements to Dirichlet BC values
   void applyDirichletBoundaryConditionsInDisplacements();
@@ -116,8 +119,20 @@ public:
   //! set rows and columns in stiffness matrix to 0 for which boundary conditions are specified
   void applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix);
   
+  //! copy all values that are not constrained by dirichlet BC nor are z-displacements for 2D problems from the input to the output vector
+  void reduceVector(Vec &input, Vec &output);
+  
+  //! reverse operation to reduceVector
+  void expandVector(Vec &input, Vec &output);
+  
+  //! compute and return the appropriate analytical stiffness matrix
+  void computeAnalyticalStiffnessMatrix(Mat &solverStiffnessMatrix);
+  
   //! initialize everything, set rhs and compute tangent stiffness matrix
   virtual void initialize();
+  
+  //! print boundary conditions
+  void printBoundaryConditions();  
   
 protected:
   //! solve nonlinear system
@@ -132,9 +147,39 @@ protected:
   //! read material parameters from config and set the values for static expressions within SEMT
   void initializeMaterialParameters();
   
+  //! compute the internal virtual work term, dW_int
+  void computeInternalVirtualWork(Vec &result);
+  
+  //! get the extern virtual work term, dW_ext. It is computed if it depends on displacements, otherwise the stored value is returned.
+  void getExternalVirtualWork(Vec &result);
+  
+  //! compute the extern virtual work term, dW_ext.  
+  void computeExternalVirtualWork(Vec &result);
+  
+  //! extract the submatrix that only contains entries for dofs that are not constraint by Dirichlet BCs
+  void reduceMatrix(Mat &input, Mat &output);
+  
   std::vector<dof_no_t> dirichletIndices_;  ///< the indices of unknowns (not dofs) for which the displacement is fixed
   std::vector<double> dirichletValues_;     ///< the to dirichletIndices corresponding fixed values for the displacement
-  std::vector<double> rhsValues_;           ///< the entries in rhs for which for u Dirichlet values are specified
+  std::vector<double> zeros_;           ///< a vector of 0s, number of dirichlet values
+  
+  //TODO split into boundary conditions class
+  struct TractionBoundaryCondition
+  {
+    element_no_t elementGlobalNo;
+    
+    Mesh::face_t face;
+    std::vector<std::pair<dof_no_t, VecD<BasisOnMeshType::dim()>>> dofVectors;  //<element-local dof no, value>
+    
+    // parse values from python config, e.g. {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
+    TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<BasisOnMeshType> mesh);
+  };
+  
+  std::vector<TractionBoundaryCondition> tractionReferenceConfiguration_;   //< tractions for elements
+  std::vector<TractionBoundaryCondition> tractionCurrentConfiguration_;
+  
+  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceReferenceConfiguration_;  //< <element global no, vector>
+  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceCurrentConfiguration_;    //< <element global no, vector>
   
   bool tangentStiffnessMatrixInitialized_ = false;   ///< if the tangentStiffnessMatrix has been set 
 };

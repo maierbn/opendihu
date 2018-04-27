@@ -28,7 +28,7 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
   double xi2 = xi[1];
   Vec3 jacobianColumn0 = (1-xi2) * (node[1]-node[0]) + xi2 * (node[3]-node[2]);
   Vec3 jacobianColumn1 = (1-xi1) * (node[2]-node[0]) + xi1 * (node[3]-node[1]);
-  LOG(DEBUG) << "computeJacobian for ("<<xi1<<","<<xi2<<")";
+  VLOG(3) << "computeJacobian for ("<<xi1<<","<<xi2<<")";
   return std::array<Vec3,2>({jacobianColumn0, jacobianColumn1});
 }
 

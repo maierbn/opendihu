@@ -219,5 +219,4 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     + averageNNodesPerElement1D * elementX + localX;
 }
 
-
 };  // namespace

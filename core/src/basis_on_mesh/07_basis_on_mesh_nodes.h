@@ -4,7 +4,7 @@
 
 #include <array>
 #include "control/types.h"
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
+#include "basis_on_mesh/06_basis_on_mesh_faces.h"
 #include "mesh/mesh.h"
 
 namespace BasisOnMesh
@@ -14,12 +14,12 @@ namespace BasisOnMesh
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNodes : 
-  public BasisOnMeshDofsNodes<MeshType,BasisFunctionType>
+  public BasisOnMeshFaces<MeshType,BasisFunctionType>
 {
 public:
    
   //! inherit constructor
-  using BasisOnMeshDofsNodes<MeshType,BasisFunctionType>::BasisOnMeshDofsNodes;
+  using BasisOnMeshFaces<MeshType,BasisFunctionType>::BasisOnMeshFaces;
   
   //! return an array of all node nos. of the element  
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nNodesPerElement()> 
@@ -45,4 +45,4 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/06_basis_on_mesh_nodes.tpp"
+#include "basis_on_mesh/07_basis_on_mesh_nodes.tpp"

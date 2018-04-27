@@ -11,10 +11,10 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   SpatialDiscretization::FiniteElementMethod<
-    Mesh::StructuredDeformableOfDimension<3>,
+    Mesh::StructuredDeformableOfDimension<2>,
     BasisFunction::LagrangeOfOrder<1>,
-    Quadrature::Gauss<3>,
-    Equation::Static::MooneyRivlinIncompressible
+    Quadrature::Gauss<2>,
+    Equation::Static::MooneyRivlinIncompressible2D
   >
   problem(settings);
   

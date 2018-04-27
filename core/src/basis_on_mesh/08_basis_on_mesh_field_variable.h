@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "basis_on_mesh/06_basis_on_mesh_nodes.h"
+#include "basis_on_mesh/07_basis_on_mesh_nodes.h"
 
 namespace BasisOnMesh
 {
@@ -40,8 +40,14 @@ public:
   template <int nComponents>
   std::array<double,nComponents> interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                                                   std::array<double,MeshType::dim()> xi) const;
+                                    
+  //! compute the normal in world space, normal to face at xi, use the given geometry values, that can by obtained by fieldVariable->getElementValues(elementNo, geometryValues) or mesh->getElementGeometry(elementNo, geometryValues)
+  Vec3 getNormal(Mesh::face_t face, std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);
+  
+  //! compute the normal in world space, normal to face at xi
+  Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
 };
 
 }  // namespace
 
-#include "basis_on_mesh/07_basis_on_mesh_field_variable.tpp"
+#include "basis_on_mesh/08_basis_on_mesh_field_variable.tpp"

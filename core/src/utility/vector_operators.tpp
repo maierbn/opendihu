@@ -42,6 +42,18 @@ std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vecto
   return vector1;
 }
 
+//! vector multiply operation
+template<std::size_t nComponents>
+std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vector1, double lambda)
+{
+  #pragma simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    vector1[i] *= lambda;
+  }
+  return vector1;
+}
+
 //! scalar*vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(double lambda, const std::array<double,nComponents> vector)
@@ -80,6 +92,25 @@ std::array<double,nComponents> operator*(const std::array<double,nComponents> ve
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] * vector2[i];
+  }
+  return result;
+}
+
+//! matrix-vector multiplication
+template<std::size_t M, std::size_t N>
+std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector)
+{
+  std::array<double,M> result({0.0});
+  
+  // column index
+  for (int j = 0; j < N; j++)
+  {
+    // row index
+    #pragma simd
+    for (int i = 0; i < M; i++)
+    {
+      result[i] += matrix[j][i] * vector[j];
+    }
   }
   return result;
 }

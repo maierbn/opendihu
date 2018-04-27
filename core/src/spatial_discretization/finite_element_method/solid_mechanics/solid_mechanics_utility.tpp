@@ -2,15 +2,16 @@
 
 #include "easylogging++.h"
 #include "utility/math_utility.h"
+#include "control/types.h"
 
 #include <cmath>
 #include <array>
 
 namespace SpatialDiscretization
-{  
+{
 
 template<typename BasisOnMeshType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
                                          const std::array<double, BasisOnMeshType::dim()> xi)
 {
@@ -18,7 +19,7 @@ computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::
   // compute the deformation gradient w.r.t parameter space, dx/dxi = x_i,j = d_ij + u_i,j
   // where j is dimensionColumn and i is component of the used Vec3's
   // The real deformation gradient would be dx/dX, but computed here is dx/dxi 
-  std::array<Vec3,BasisOnMeshType::dim()> deformationGradientParameterSpace;
+  Tensor2<BasisOnMeshType::dim()> deformationGradientParameterSpace;
  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
@@ -43,9 +44,9 @@ computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::
 }
 
 template<typename BasisOnMeshType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
-                           const std::array<Vec3,BasisOnMeshType::dim()> &inverseJacobianMaterial,
+                           const Tensor2<BasisOnMeshType::dim()> &inverseJacobianMaterial,
                            const std::array<double, BasisOnMeshType::dim()> xi
                           )
 {
@@ -55,7 +56,8 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
  
   VLOG(3) << "compute deformation gradient Fij, displacements: " << displacement;
  
-  std::array<Vec3,BasisOnMeshType::dim()> deformationGradient;
+  const int D = BasisOnMeshType::dim();
+  Tensor2<D> deformationGradient;
  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
@@ -63,9 +65,9 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
 #if 0  
   VLOG(3) << "A=1, a=2";
   
-  for (int A = 0; A < 3; A++) // dimensionColumn
+  for (int A = 0; A < BasisOnMeshType::dim(); A++) // dimensionColumn
   {
-    for (int a = 0; a < 3; a++)
+    for (int a = 0; a < BasisOnMeshType::dim(); a++)
     {
       VLOG(3) << " entry " << a << A;
       double sum = 0;
@@ -73,7 +75,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
       for (int M = 0; M < nDofsPerElement; M++)
       {
         double dPhi_dXA = 0;
-        for (int l = 0; l < 3; l++)
+        for (int l = 0; l < BasisOnMeshType::dim(); l++)
         {
           double dphi_dxil = BasisOnMeshType::dphi_dxi(M, l, xi);
           double dxil_dXA = inverseJacobianMaterial[A][l];     // inverseJacobianMaterial[A][l] = J_lA = dxi_l/dX_A
@@ -98,7 +100,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
   for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
   {
     // compute du_i/dX_columnIndex
-    Vec3 du_dX({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
+    std::array<double,D> du_dX({0});   // handle full-dimension vector of displacement (i.e. (x,y,z))
     
     VLOG(3) << " j = " << dimensionColumn;
     
@@ -108,7 +110,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
       VLOG(3) << "  M = " << dofIndex;
       // compute dphi_dofIndex/dX_dimensionColumn
       double dphi_dX = 0;
-      for (int l = 0; l < 3; l++)
+      for (int l = 0; l < BasisOnMeshType::dim(); l++)
       {
         VLOG(3) << "   l = " << l;
         double dphi_dxil = BasisOnMeshType::dphi_dxi(dofIndex, l, xi);
@@ -121,7 +123,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
       
       // multiply dphi/dxi with dxi/dX to obtain dphi/dX
       VLOG(3) << "   displ_M: " << displacement[dofIndex];
-      du_dX += dphi_dX * displacement[dofIndex];   // vector-valued addition
+      du_dX += dphi_dX * MathUtility::transformToD<D,3>(displacement[dofIndex]);   // vector-valued addition
     }
     VLOG(3) << " du_dXj: " << du_dX;
     
@@ -136,21 +138,21 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
 }
 
 template<typename BasisOnMeshType, typename Term>
-std::array<Vec3,BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &deformationGradient)
+Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeRightCauchyGreenTensor(const Tensor2<BasisOnMeshType::dim()> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
-  // the quantities are 3x3 tensors for the 3D case (3x2 for 2D, but not sure if that is required, 2D is not used anyway)
-  std::array<Vec3,BasisOnMeshType::dim()> rightCauchyGreenTensor({Vec3{0}});
+  // the quantities are 3x3 tensors for the 3D case
+  Tensor2<BasisOnMeshType::dim()> rightCauchyGreenTensor({std::array<double,BasisOnMeshType::dim()>({0})});
   
   // loop over dimension, i.e. columns of right cauchy green tensor, i
   for (int dimensionColumn = 0; dimensionColumn < BasisOnMeshType::dim(); dimensionColumn++)
   {
     
     // loop over row of tensor, j
-    for (int dimensionRow = 0; dimensionRow < 3; dimensionRow++)
+    for (int dimensionRow = 0; dimensionRow < BasisOnMeshType::dim(); dimensionRow++)
     {
-      for (int k = 0; k < 3; k++)
+      for (int k = 0; k < BasisOnMeshType::dim(); k++)
       {
         rightCauchyGreenTensor[dimensionColumn][dimensionRow] += 
           deformationGradient[dimensionColumn][k] * deformationGradient[dimensionRow][k];
@@ -163,18 +165,22 @@ computeRightCauchyGreenTensor(const std::array<Vec3,BasisOnMeshType::dim()> &def
 
 template<typename BasisOnMeshType, typename Term>
 std::array<double,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeInvariants(const std::array<Vec3,BasisOnMeshType::dim()> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
+computeInvariants(const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen, const double rightCauchyGreenDeterminant)
 {
   std::array<double,3> invariants;
   
   // I1 = tr(C)
-  invariants[0] = rightCauchyGreen[0][0] + rightCauchyGreen[1][1] + rightCauchyGreen[2][2];
+  invariants[0] = 0.0;
+  for (int i = 0; i < BasisOnMeshType::dim(); i++)
+  {
+    invariants[0] += rightCauchyGreen[i][i];
+  }
   
   // tr(C^2)
   double traceC2 = 0;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < BasisOnMeshType::dim(); i++)
   {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < BasisOnMeshType::dim(); j++)
     {
       traceC2 += rightCauchyGreen[i][j] * rightCauchyGreen[j][i];
     }
@@ -195,12 +201,28 @@ std::array<double,2> SolidMechanicsUtility<BasisOnMeshType, Term>::
 computeReducedInvariants(const std::array<double,3> invariants, const double deformationGradientDeterminant)
 {
   std::array<double,2> reducedInvariants;
-  reducedInvariants[0] = pow(deformationGradientDeterminant, -2./3) * invariants[0];
-  reducedInvariants[1] = pow(deformationGradientDeterminant, -4./3) * invariants[1];
+  
+  // 3D: Fbar = J^{1/3}*F such that det(Fbar) = 1
+  // 2D: Fbar = J^{1/2}*F such that det(Fbar) = 1
+  
+  // 3D: Cbar = J^{2/3}*C such that det(Cbar) = 1
+  // 2D: Cbar = J^{2/2}*C = J*C = J*F^T*F = J*J^{-1/2}*J^{-1/2}*Fbar^T*Fbar such that det(Cbar) = 1
+  
+  
+  double factor23 = -2./3;
+  double factor43 = -4./3;
+  
+  if (BasisOnMeshType::dim() == 2)
+  {
+    factor23 = -1./2;
+    factor43 = -2./2;
+  }
+  
+  reducedInvariants[0] = pow(deformationGradientDeterminant, factor23) * invariants[0];
+  reducedInvariants[1] = pow(deformationGradientDeterminant, factor43) * invariants[1];
   
   return reducedInvariants;
 }
-
 
 template<typename BasisOnMeshType, typename Term>
 double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
@@ -219,7 +241,7 @@ computeArtificialPressure(const double deformationGradientDeterminant, double &a
   const double artificialPressure = dPsidJExpression.apply(deformationGradientDeterminantVector);
   const double dpdJ = dpdJExpression.apply(deformationGradientDeterminantVector);
   
-  VLOG(2) << "  artificialPressure: " << artificialPressure << ", dpdJ: " << dpdJ;
+  VLOG(2) << "  J = 1+" << (deformationGradientDeterminant-1) << " kappa=" << SEMT::Parameter<2>::get_value() << " => artificialPressure p = " << artificialPressure << ", dpdJ: " << dpdJ;
   
   // pTilde = p + J*dp/dJ
   artificialPressureTilde = artificialPressure + deformationGradientDeterminant*dpdJ;
@@ -228,14 +250,14 @@ computeArtificialPressure(const double deformationGradientDeterminant, double &a
 }
 
 template<typename BasisOnMeshType, typename Term>
-std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computePK2Stress(const double pressure,                             //< [in] pressure value p
-                 const std::array<Vec3,3> &rightCauchyGreen,        //< [in] C
-                 const std::array<Vec3,3> &inverseRightCauchyGreen, //< [in] C^{-1}
+                 const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen,        //< [in] C
+                 const Tensor2<BasisOnMeshType::dim()> &inverseRightCauchyGreen, //< [in] C^{-1}
                  const std::array<double,2> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2 
                  const double deformationGradientDeterminant,      //< [in] J = det(F)
-                 std::array<Vec3,3> &fictitiousPK2Stress,          //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                 std::array<Vec3,3> &pk2StressIsochoric            //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+                 Tensor2<BasisOnMeshType::dim()> &fictitiousPK2Stress,          //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                 Tensor2<BasisOnMeshType::dim()> &pk2StressIsochoric            //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                 )
 {
   // compute the PK2 stress tensor as S=2*dPsi/dC
@@ -251,24 +273,34 @@ computePK2Stress(const double pressure,                             //< [in] pre
   const double Ibar1 = reducedInvariants[0];
   const double J = deformationGradientDeterminant;
   
+  double factor23 = -2./3;
+  if (BasisOnMeshType::dim() == 2)
+  {
+    factor23 = -1./2;
+  }
+  
   double factor1 = 2*(dPsi_dIbar1 + Ibar1*dPsi_dIbar2);
   double factor2 = -2*dPsi_dIbar2;
-  double factorJ23 = pow(J, -2./3);
+  double factorJ23 = pow(J, factor23);
   
-  std::array<Vec3,3> pK2Stress;
+  Tensor2<BasisOnMeshType::dim()> pK2Stress;
   
   // compute fictitiousPK2Stress:
   // Sbar = factor1*I + factor2*Cbar, Cbar = J^{-2/3}*C
   
   // row index
-  for (int i=0; i<3; i++)
+  for (int i=0; i<BasisOnMeshType::dim(); i++)
   {
     // column index
-    for (int j=0; j<3; j++)
+    for (int j=0; j<BasisOnMeshType::dim(); j++)
     {
       int delta_ij = (i == j? 1 : 0);
       const double cBar = factorJ23 * rightCauchyGreen[j][i];
       fictitiousPK2Stress[j][i] = factor1 * delta_ij + factor2 * cBar;
+      
+      //if (i == j)
+      //  LOG(DEBUG) << "  C_" << i << j << " = " << rightCauchyGreen[j][i] << ", factorJ23 = " << factorJ23 << ", SBar_" << i << j << ": " << fictitiousPK2Stress[j][i] 
+      //    << " = " << factor1 << " * " << delta_ij << " + " << factor2 << "*" << cBar ;
     }
   }
   
@@ -280,32 +312,37 @@ computePK2Stress(const double pressure,                             //< [in] pre
   
   // compute S = S_vol + S_iso
   // row index
-  for (int i=0; i<3; i++)
+  for (int i=0; i<BasisOnMeshType::dim(); i++)
   {
     // column index
-    for (int j=0; j<3; j++)
+    for (int j=0; j<BasisOnMeshType::dim(); j++)
     {
       // volumetric stress
       const double sVol = J * pressure * inverseRightCauchyGreen[j][i];
       
       // compute P : Sbar
       double pSbar = 0;
+      //double ccs = 0;  // (C^-1 dyad C)*Sbar
+      //double cSbar = 0;  // C:Sbar
       
       // row index
-      for (int k=0; k<3; k++)
+      for (int k=0; k<BasisOnMeshType::dim(); k++)
       {
         const int delta_ik = (i == k? 1 : 0);
         
         // column index
-        for (int l=0; l<3; l++)
+        for (int l=0; l<BasisOnMeshType::dim(); l++)
         {
           const int delta_jl = (j == l? 1 : 0);
           const int Ii = delta_ik * delta_jl;
           
           const double Cc = inverseRightCauchyGreen[j][i] * rightCauchyGreen[l][k];
-          const double Pp = (Ii - 1./3 * Cc);
+          const double Pp = (Ii - 1./BasisOnMeshType::dim() * Cc);
           
           pSbar += Pp * fictitiousPK2Stress[l][k];
+          
+          //cSbar += rightCauchyGreen[l][k] * fictitiousPK2Stress[l][k];
+          //ccs += Cc * fictitiousPK2Stress[l][k];
         }
       }
       
@@ -316,7 +353,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
       // total stress is sum of volumetric and isochoric part
       pK2Stress[j][i] = sVol + sIso;
       
-      //LOG(DEBUG) << "  Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i]; 
+      //if (i == j)
+      //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i]; 
     }
   }
   
@@ -325,9 +363,9 @@ computePK2Stress(const double pressure,                             //< [in] pre
   if (VLOG_IS_ON(2))
   {
     bool pK2IsSymmetric = true;
-    for (int a=0; a<3; a++)
+    for (int a=0; a<BasisOnMeshType::dim(); a++)
     {
-      for (int b=0; b<3; b++)
+      for (int b=0; b<BasisOnMeshType::dim(); b++)
       {
         if (fabs(pK2Stress[a][b] - pK2Stress[b][a]) > errorTolerance)
         {
@@ -345,8 +383,8 @@ computePK2Stress(const double pressure,                             //< [in] pre
 
 template<typename BasisOnMeshType, typename Term>
 void SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
-                         const std::array<Vec3,3> &rightCauchyGreen, 
+checkFictitiousPK2Stress(const Tensor2<BasisOnMeshType::dim()> &fictitiousPK2Stress,
+                         const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen, 
                          const double deformationGradientDeterminant,
                          const std::array<double,2> reducedInvariants)
 {
@@ -354,7 +392,12 @@ checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
   {
     // explicit formula in Holzapfel p.249
    
-    const double factorJ23 = pow(deformationGradientDeterminant, -2./3);
+    double factor23 = -2./3;
+    if (BasisOnMeshType::dim() == 2)
+    {
+      factor23 = -1./2;
+    }
+    const double factorJ23 = pow(deformationGradientDeterminant, factor23);
     
     const double c0 = SEMT::Parameter<0>::get_value();
     const double c1 = SEMT::Parameter<1>::get_value();
@@ -368,9 +411,9 @@ checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
     
     const double errorTolerance = 1e-14;
     bool mismatch = false;
-    for (int a = 0; a < 3; a++)
+    for (int a = 0; a < BasisOnMeshType::dim(); a++)
     {
-      for (int b = 0; b < 3; b++)
+      for (int b = 0; b < BasisOnMeshType::dim(); b++)
       {
         const int delta_ab = (a == b? 1 : 0);
         double cBar = factorJ23 * rightCauchyGreen[b][a];
@@ -390,14 +433,14 @@ checkFictitiousPK2Stress(const std::array<Vec3,3> &fictitiousPK2Stress,
 }
 
 template<typename BasisOnMeshType, typename Term>
-std::array<Vec3,3> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeGreenLagrangeStrain(const std::array<Vec3,3> &rightCauchyGreen)
+Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
+computeGreenLagrangeStrain(const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen)
 {
-  std::array<Vec3,3> greenLagrangeStrain;
+  Tensor2<BasisOnMeshType::dim()> greenLagrangeStrain;
   
-  for (int columnIndex = 0; columnIndex < 3; columnIndex++)
+  for (int columnIndex = 0; columnIndex < BasisOnMeshType::dim(); columnIndex++)
   {
-    for (int rowIndex = 0; rowIndex < 3; rowIndex++)
+    for (int rowIndex = 0; rowIndex < BasisOnMeshType::dim(); rowIndex++)
     {
       const int delta_ij = (columnIndex == rowIndex? 1 : 0);
       greenLagrangeStrain[columnIndex][rowIndex] = 0.5*(rightCauchyGreen[columnIndex][rowIndex] - delta_ij);
@@ -408,7 +451,9 @@ computeGreenLagrangeStrain(const std::array<Vec3,3> &rightCauchyGreen)
   
 template<typename BasisOnMeshType, typename Term>
 ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeElasticityTensorCoupledStrainEnergy(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants)
+computeElasticityTensorCoupledStrainEnergy(const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen, 
+                                           const Tensor2<BasisOnMeshType::dim()> &inverseRightCauchyGreen, 
+                                           const std::array<double,3> invariants)
 {
   // the 21 distinct indices (i,j,k,l) of different values of C_{ijkl}
   int indices[21][4] = {
@@ -499,10 +544,10 @@ template<typename BasisOnMeshType, typename Term>
 double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeElasticityTensorEntry(const int i, const int j, const int k, const int l,const double pressure, 
                         const double pressureTilde,
-                        const std::array<Vec3,3> &rightCauchyGreen,
-                        const std::array<Vec3,3> &inverseRightCauchyGreen,
-                        const std::array<Vec3,3> &fictitiousPK2Stress,
-                        const std::array<Vec3,3> &pk2StressIsochoric,
+                        const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen,
+                        const Tensor2<BasisOnMeshType::dim()> &inverseRightCauchyGreen,
+                        const Tensor2<BasisOnMeshType::dim()> &fictitiousPK2Stress,
+                        const Tensor2<BasisOnMeshType::dim()> &pk2StressIsochoric,
                         const double deformationGradientDeterminant,
                         const std::array<double,2> reducedInvariants)
 {
@@ -532,8 +577,16 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
   const double factor4 = -4*dPsi_dIbar2;
   
   const double J = deformationGradientDeterminant;
-  const double factorJ23 = pow(J,-2./3);
-  const double factorJ43 = pow(J,-4./3);
+  
+  double factor23 = -2./3;
+  double factor43 = -4./3;
+  if (BasisOnMeshType::dim() == 2)
+  {
+    factor23 = -1./2;
+    factor43 = -1;
+  }
+  const double factorJ23 = pow(J,factor23);
+  const double factorJ43 = pow(J,factor43);
   
   // Cbar = J^{-2/3}*C
   
@@ -672,33 +725,33 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
   double PCbarPT_ijkl = 0.;
   
   // row index
-  for (int a=0; a<3; a++)
+  for (int a=0; a<BasisOnMeshType::dim(); a++)
   {
     // column index
-    for (int b=0; b<3; b++)
+    for (int b=0; b<BasisOnMeshType::dim(); b++)
     {
       const int delta_ia = (i == a? 1 : 0);
       const int delta_jb = (j == b? 1 : 0);
       
       // P = II - 1/3 C^-1 dyad C    (4th order tensor, p.229)
       const int Ii_ijab = delta_ia * delta_jb;
-      const double P_ijab = Ii_ijab - 1./3 * inverseRightCauchyGreen[j][i] * rightCauchyGreen[b][a];
+      const double P_ijab = Ii_ijab - 1./BasisOnMeshType::dim() * inverseRightCauchyGreen[j][i] * rightCauchyGreen[b][a];
       //const double P_ijab = Ii_ijab;
      
       double CbarPT_abkl = 0.0;
       
       // row index
-      for (int c=0; c<3; c++)
+      for (int c=0; c<BasisOnMeshType::dim(); c++)
       {
         const int delta_kc = (k == c? 1 : 0);
         
         // column index
-        for (int d=0; d<3; d++)
+        for (int d=0; d<BasisOnMeshType::dim(); d++)
         {
           const int delta_ld = (l == d? 1 : 0);
           
           const int Ii_klcd = delta_kc * delta_ld;
-          const double P_klcd = Ii_klcd - 1./3 * inverseRightCauchyGreen[l][k] * rightCauchyGreen[d][c];
+          const double P_klcd = Ii_klcd - 1./BasisOnMeshType::dim() * inverseRightCauchyGreen[l][k] * rightCauchyGreen[d][c];
           //const double P_klcd = Ii_klcd;
           
           const double PT_cdkl = P_klcd;  // Holzapfel p.23
@@ -743,10 +796,10 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
   // compute Tr(Sbar)
   // Sbar = fictitiousPK2Stress, Tr(•) = (•):C
   double TrSbar = 0.0;
-  for (int a=0; a<3; a++)
+  for (int a=0; a<BasisOnMeshType::dim(); a++)
   {
     // column index
-    for (int b=0; b<3; b++)
+    for (int b=0; b<BasisOnMeshType::dim(); b++)
     {
       TrSbar += fictitiousPK2Stress[b][a] * rightCauchyGreen[b][a];
     }
@@ -755,12 +808,12 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
   // Holzapfel p.255
   const double CcTerm1_ijkl = 1./2*(inverseRightCauchyGreen[k][i]*inverseRightCauchyGreen[l][j] + inverseRightCauchyGreen[l][i]*inverseRightCauchyGreen[k][j]);
   const double CcTerm2_ijkl = inverseRightCauchyGreen[j][i]*inverseRightCauchyGreen[l][k];
-  const double pTilde_ijkl = CcTerm1_ijkl - 1./3 * CcTerm2_ijkl;
+  const double pTilde_ijkl = CcTerm1_ijkl - 1./BasisOnMeshType::dim() * CcTerm2_ijkl;
   
-  const double trTerm_ijkl = 2./3 * factorJ23 * TrSbar * pTilde_ijkl;
+  const double trTerm_ijkl = -factor23 * factorJ23 * TrSbar * pTilde_ijkl;
   
   // compute last term -2/3(C^{-1} dyad S_iso + S_iso dyad C^{-1})
-  const double lastTerm_ijkl = -2./3*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
+  const double lastTerm_ijkl = factor23*(inverseRightCauchyGreen[j][i]*pk2StressIsochoric[l][k] + pk2StressIsochoric[j][i]*inverseRightCauchyGreen[l][k]);
   
   const double Ciso = PCbarPT_ijkl + trTerm_ijkl + lastTerm_ijkl;
   
@@ -776,10 +829,10 @@ template<typename BasisOnMeshType, typename Term>
 ElasticityTensor SolidMechanicsUtility<BasisOnMeshType, Term>:: 
 computeElasticityTensor(const double pressure, 
                         const double pressureTilde,
-                        const std::array<Vec3,3> &rightCauchyGreen,
-                        const std::array<Vec3,3> &inverseRightCauchyGreen,
-                        const std::array<Vec3,3> &fictitiousPK2Stress,
-                        const std::array<Vec3,3> &pk2StressIsochoric,
+                        const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen,
+                        const Tensor2<BasisOnMeshType::dim()> &inverseRightCauchyGreen,
+                        const Tensor2<BasisOnMeshType::dim()> &fictitiousPK2Stress,
+                        const Tensor2<BasisOnMeshType::dim()> &pk2StressIsochoric,
                         const double deformationGradientDeterminant,
                         const std::array<double,2> reducedInvariants)
 {
@@ -829,21 +882,23 @@ computeElasticityTensor(const double pressure,
 
 template<typename BasisOnMeshType, typename Term>
 double SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computePressureFromDisplacements(double deformationGradientDeterminant, const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &PK2Stress)
+computePressureFromDisplacements(double deformationGradientDeterminant, 
+                                 const Tensor2<BasisOnMeshType::dim()> &rightCauchyGreen, 
+                                 const Tensor2<BasisOnMeshType::dim()> &PK2Stress)
 {
   double pressure = 0;
   double factor = 0;
   
   // row index
-  for (int i=0; i<3; i++)
+  for (int i=0; i<BasisOnMeshType::dim(); i++)
   {
     // column index
-    for (int j=0; j<3; j++)
+    for (int j=0; j<BasisOnMeshType::dim(); j++)
     {
       factor += rightCauchyGreen[j][i] * PK2Stress[j][i];
     }
   }
-  pressure = -1.0 / (3*deformationGradientDeterminant) * factor;
+  pressure = -1.0 / (BasisOnMeshType::dim()*deformationGradientDeterminant) * factor;
   
   return pressure;
 }

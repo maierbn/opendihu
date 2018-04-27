@@ -1,10 +1,11 @@
-#include "basis_on_mesh/07_basis_on_mesh_field_variable.h"
+#include "basis_on_mesh/08_basis_on_mesh_field_variable.h"
 
 #include <cmath>
 #include <array>
 #include <sstream>
 
 #include "easylogging++.h"
+#include "mesh/face_t.h"
 
 namespace BasisOnMesh
 {
@@ -82,6 +83,45 @@ interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshF
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
   }
   return result;
+}
+
+template<typename MeshType, typename BasisFunctionType>
+Vec3 BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+getNormal(Mesh::face_t face, std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi)
+{
+  // compute normal analog to nansons formula
+  // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
+ 
+  const int D = MeshType::dim(); 
+ 
+  // compute the 3xD jacobian of the parameter space to world space mapping
+  std::array<Vec3,D> jacobian = this->computeJacobian(geometryValues, xi);
+  
+  std::array<Vec3,3> jacobian3x3 = MathUtility::transformToDxD<3,D>(jacobian);
+      
+  // compute J F^-T, J = det F, F = jacobian
+  std::array<Vec3,3> cofactor = MathUtility::computeCofactorMatrix<3>(jacobian3x3);
+  
+  // transform the index space normal using Nanson's formula
+  Vec3 normalIndexSpace = MathUtility::transformToD<3,D>(Mesh::getNormal<D>(face));
+  Vec3 result = cofactor * normalIndexSpace;
+  MathUtility::normalize<3>(result);
+  return result;
+}
+  
+
+template<typename MeshType, typename BasisFunctionType>
+Vec3 BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi)
+{
+  // compute normal analog to nansons formula
+  // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
+ 
+  // get geometry field values of element
+  std::array<Vec3,BasisOnMeshBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> geometryValues;
+  this->getElementGeometry(elementNo, geometryValues);
+  
+  return getNormal(face, geometryValues, xi);
 }
 
 };  // namespace

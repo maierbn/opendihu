@@ -80,7 +80,6 @@ setStiffnessMatrix()
   std::array<std::array<double,nDofsUPerElement>,QuadratureU::numberEvaluations()> evaluationsFU({0});
   std::array<std::array<double,nDofsPPerElement>,QuadratureP::numberEvaluations()> evaluationsFP({0});
   
-  typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
   typedef std::array<double,21> Tensor4;   // data type for 4th order elasticity tensor with due to symmetry has 21 independent components
   
   // the matrix formulation follows the paper "A finitie element formultaion for nonlinear incomporessible elastic and inelastic analysis" by Sussmann and Bathe

@@ -61,7 +61,6 @@ setStiffnessMatrix()
   EvaluationsUArrayType evaluationsUArray;
   //EvaluationsPArrayType evaluationsPArray;
   
-  typedef std::array<Vec3,BasisOnMeshType::dim()> Tensor2;
   typedef std::array<double,21> Tensor4;   // data type for 4th order elasticity tensor with due to symmetry has 21 independent components
   
   // loop over elements 

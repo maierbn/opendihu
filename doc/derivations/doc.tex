@@ -46,7 +46,7 @@ The Laplace operator can be written as $Δu=∇\cdot(∇u)$. Applying divergence
   \end{array}
 \end{equation}
 Because $\phi$ is zero on the boundary, the second term vanishes:
-\begin{equation}\label{eq:laplace_weak}
+\begin{equation}
   \begin{array}{ll}
     -\ds\int_{\Omega}∇u \cdot ∇\phi \,\d \bfx = 0 \quad \forall \phi\in H^1_0(\Omega)
   \end{array}
@@ -969,34 +969,96 @@ the solution is
 
 Currently not compiled because unpublished.
 
-
-The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
-\begin{equation}
-  \begin{array}{lll}\label{eq:multidomain1}
-    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
-  \end{array}
-\end{equation}
-\begin{equation}\label{eq:multidomain2}
-  \begin{array}{lll}
-    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0 \qquad\forall\,k \in 1\dots M_\text{mu}\\[4mm]
-  \end{array}
-\end{equation}
-The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment.
-$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
-
-Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
-\begin{equation*}
-  \begin{array}{lll}
-    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)
-  \end{array}
-\end{equation*}
-
-The bidomain equation is used for computation of EMG:
-\begin{equation*}
-  \begin{array}{lll}
-    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
-  \end{array}
-\end{equation*}
+%
+%The multidomain equations generalized the bidomain equation by having multiple compartments at each spatial point. Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
+%
+%First multidomain equation:
+%\begin{equation}
+%  \begin{array}{lll}\label{eq:multidomain1}
+%    \div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
+%  \end{array}
+%\end{equation}
+%Second multidomain equation:
+%\begin{equation}\label{eq:multidomain2}
+%  \begin{array}{lll}
+%    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) = 0\\[4mm]
+%  \end{array}
+%\end{equation}
+%The unknowns are the transmembrane voltages, $V_m^k$ and the extracellular potential, $\phi_e$. $f_i^k \in [0,1]$ is a spatially varying factor of the presence of the compartment with $\sum_k f_i^k = 1$.
+%$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the fibres and extracellular space.
+%
+%Solving \eqref{eq:multidomain1} for $∂V_m^k/∂t$ yields:
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)\quad \text{and}\\[4mm]
+%  \end{array}
+%\end{equation*}
+%After discretizing in time with a backward Euler scheme,
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \p{V_m^k}{t} = f(V_m^k) \quad\to\quad  \dfrac1{dt} (V_m^{k,(i+1)} - V_m^{k,(i)})  = f(V_m^{k,(i+1)})
+%  \end{array}
+%\end{equation*}
+%we have,
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)} + \phi_e)\big)  = (V_m^{k,(i+1)} - V_m^{k,(i)}) + \dfrac{dt}{C_m^k}\,I_\text{ion}(V_m^{k,(i+1)})\\[4mm]
+%    \Leftrightarrow\quad \dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)} + \phi_e)\big) -V_m^{k,(i+1)} = - V_m^{k,(i)} + \dfrac{dt}{C_m^k}\,I_\text{ion}(V_m^{k,(i+1)})\\[4mm]
+%    \Leftrightarrow\quad 
+%    -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)})\big) - \dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\phi_e)\big) + V_m^{k,(i+1)} = V_m^{k,(i)} - \dfrac{dt}{C_m^k}\,I_\text{ion}(V_m^{k,(i+1)})\\[4mm]
+%  \end{array}
+%\end{equation*}
+%\Cref{eq:multidomain2} can be written as
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \div\big((\bfsigma_e + \ub{\ds\sum\limits_{k}^{M_\text{mu}} f_i^k\bfsigma_i^k}{=:\bfsigma_i}) \,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_i^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k )\big) = 0
+%  \end{array}
+%\end{equation*}
+%
+%
+%Now the total system of equations reads
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \left[\begin{array}{@{}ccc|c@{}}
+%      \bfK_{V_m,V_m}^1 &  & & \bfK_{V_m,\phi_e} \\[2mm]
+%      & \ddots &   & \bfK_{V_m,\phi_e} \\[2mm]
+%      &  & \bfK_{V_m,V_m}^{M_\text{mu}} & \bfK_{V_m,\phi_e} \\[2mm] \hline
+%      \bfK_{\phi_e,V_m}^1 & \dots & \bfK_{\phi_e,V_m}^{M_\text{mu}} & \bfK_{\phi_e,\phi_e} \\[2mm]
+%    \end{array}\right]
+%    \left[\begin{array}{@{}c@{}}
+%      V_{m,i}^{1,(i+1)} \\[2mm] \vdots \\[2mm] V_{m,i}^{M_\text{mu},(i+1)} \\[2mm]\hline \phi_{e,i} 
+%    \end{array}\right]
+%    = 
+%    \left[\begin{array}{@{}c@{}}
+%      \bfb_{V_m,i}^{1,(i+1)} \\[2mm] \vdots \\[2mm] \bfb_{V_m,i}^{M_\text{mu},(i+1)} \\[2mm]\hline \bfb_{{\phi_e},i}, 
+%    \end{array}\right]
+%  \end{array}
+%\end{equation*}
+%where
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfK^k_{V_m,V_m} &\dots\quad\text{ discretization of }\quad -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\cdot)\big) + (\cdot) \\[4mm]
+%    \bfK^k_{V_m,\phi_e} &\dots\quad\text{ discretization of }\quad -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\cdot)\big)\\[4mm]
+%    \bfK^k_{\phi_e,V_m} &\dots\quad\text{ discretization of }\quad f_i^k\,\div\big(\bfsigma_i^k\,\grad(\cdot)\big)\\[4mm]
+%    \bfK^k_{\phi_e,\phi_e} &\dots\quad\text{ discretization of }\quad 
+%  \div\big((\bfsigma_e + \bfsigma_i),\grad(\cdot)\big)
+%  \end{array}
+%\end{equation*}
+%%
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfb_{V_m,k}^{1,(i+1)} = V_m^{k,(i)} - \dfrac{dt}{C_m^k}\,I_\text{ion}(V_m^{k,(i+1)}) \quad \text{($I_\text{ion}$ solved using splitting scheme)}\\[4mm]
+%    \bfb_{{\phi_e},i} = \bfzero.
+%  \end{array}
+%\end{equation*}
+%    
+%    
+%The bidomain equation can be used for computation of EMG ($\phi_e$), after the Heidlauf model, when only $V_m$ is known.
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
+%  \end{array}
+%\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \section{Structural mechanics}
@@ -1008,6 +1070,7 @@ In this section the Einstein sum convention is used.
 No quantities that are completely defined in the actual configuration are considered. $\bfF$ maps between configurations, $\bfS, \bfC, \bfeps$ are completely in the reference configuration.
 The definitions are briefly listed here.
 \begin{itemize}
+\item[$\bullet$] The deformation gradient $\bfF = \partial{\bfx}/\partial{\bfX}$ gives the linear approximation to the deformed image $\bflambda_{\bfa_0}$ (stretch vector) of a material vector $\bfa_0$, i.e. $\bflambda_{\bfa_0} = \bfF\,\bfa$ with $\bfy - \bfx = \bfF(\bfX)(\bfY-\bfX) + o(\bfY-\bfX)$.
 \item[$\bullet$] Polar decomposition of deformation gradient $\bfF$:
 \begin{equation*}
   \begin{array}{lll}
@@ -1015,6 +1078,15 @@ The definitions are briefly listed here.
   \end{array}
 \end{equation*}
 $\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J > 0$.
+%
+\item[$\bullet$] Mapping properties between reference ($\d\bfX, \d\bfS, \d V$) and current configuration ($\d\bfx, \d\bfs, \d v$):
+\begin{equation*}
+  \begin{array}{lll}
+    \d\bfx = \bfF(\bfX)\,\d\bfX \qquad &\text{line map,}\\[4mm]
+    \d\bfs = J\bfF^{-\top}(\bfX)\,\d\bfS \qquad & \text{surface map (Nansons' formula),}\\[4mm]
+    \d v = J(\bfX)\,\d V \qquad & \text{volume map.}
+  \end{array}
+\end{equation*}
 %
 \item[$\bullet$] Right Cauchy-Green tensor $\bfC = \bfF^\top \bfF$, symmetric, positive definite, $\det \bfC = J^2 > 0$.
 \item[$\bullet$] Left Cauchy-Green tensor $\bfb = \bfF\bfF^\top$, symmetric, positive definite, $\det \bfb = J^2 > 0$.
@@ -1443,6 +1515,13 @@ Substituting the Cauchy stress $\bfsigma$ for the material configuration stress,
  
 \subsection{Incompressible solid mechanics}
 
+A material is incompressible if one of the following necessary and sufficient conditions are satisfied (Holzapfel \cite{holzapfel2000nonlinear} p.103):
+\begin{equation*}
+  \begin{array}{lll}
+    J = 1, \quad \d v = \text{const}, \quad \dot{J} = 0, \quad \bfF^{-\top} : \dot{\bfF} = 0, \quad \div(\bfv) = 0
+  \end{array}
+\end{equation*}
+
 \bild{tonti_diagram}{0.8\textwidth}{Tonti diagram}
 
 A nonlinear case occurs if the constitutive relation between $\bfS$ and $\bfeps$ is nonlinear or if the relationship between displacement $\bfu$ and strain $\bfeps$ is nonlinear, as depicted in the Tonti diagram, \cref{fig:tonti_diagram}.
@@ -1455,7 +1534,7 @@ Sec.~\ref{sec:penalty} describes the penalty method, Sec.~\ref{sec:mixed} formul
 
 \subsubsection{Material description}
 
-Starting point is the equation of motian in the material description
+Starting point is the equation of motion in the material description
 \begin{equation*}
   \begin{array}{lll}
     ∇_\bfX\cdot \bfP + \bfB = \rho_0\,\ddot{\bfu},
@@ -1499,7 +1578,7 @@ we get back to the virtual work terms.
 
 
 \subsubsection{Penalty method}\label{sec:penalty}
-For incompressible materials we use the decoupled representation of the strain enery function,
+For incompressible materials we use the decoupled representation of the strain energy function,
 \begin{equation*}
   \begin{array}{lll}
     \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J), \quad \G(J) := \dfrac12 (J-1)^2
@@ -2106,18 +2185,38 @@ with
 Solve with \emph{leapfrog} integration.
 
 \subsection{Examples with analytical solution}
-\subsubsection{Uniaxial extension}
+\subsubsection{Uniaxial extension with constant total load}
 
 \bild{uniaxial_extension}{0.8\textwidth}{Uniaxial extension example}
 
-Domain in reference and current configuration (see \cref{fig:uniaxial_extension}):
+The domain in reference and current configuration is depicted in \cref{fig:uniaxial_extension}) and defined as follows, symmetry between $y$ and $z$-direction is assumed.
 \begin{equation*}
   \begin{array}{lll}
-    \Omega_\text{ref} = [0, l_x] \times [0, l_z]^2\\[4mm]
-    \Omega_\text{current} = [0, \lambda\,l_x] \times [0, l_z/\sqrt{\lambda}]^2,
+    \Omega_\text{ref} = [0, L_x] \times [0, L_z]^2\\[4mm]
+    \Omega_\text{current} = [0, \lambda\,L_x] \times [0, L_z/\sqrt{\lambda}]^2,
   \end{array}
 \end{equation*}
-A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The geometric quantities can be computed to
+A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. In reference configuration it is
+\begin{equation*}
+  \begin{array}{lll}
+    T(\bfx) = \dfrac{t_\text{max}}{L_z^2},\\[4mm]
+  \end{array}
+\end{equation*}
+in current configuration
+\begin{equation*}
+  \begin{array}{lll}
+    t(\bfx) &= \dfrac{t_\text{max}}{l_z^2} = \dfrac{t_\text{max}}{\bfL_z \cdot\bfC \bfL_z} \quad \text{with }\bfL_z = (0, 0, L_z), \quad l_z^2 = \dfrac{L_z^2}{\lambda}\\[4mm]
+    &= t_\text{max}\,\dfrac{\lambda}{L_z^2}
+  \end{array}
+\end{equation*}
+Because the normal vector is the same, $\bfn = \bfN$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    T(\bfx)\,\d S = \bft\,\d s, \quad T(\bfx) = \bft(\bfx)\,\dfrac{\d s}{\d S} = \bft(\bfx)\, \dfrac{l_z^2}{L_z^2} = t(\bfx) \dfrac1{\lambda} = \dfrac{t_\text{max}}{L_z^2}
+  \end{array}
+\end{equation*}
+
+The geometric quantities can be computed to
 \begin{equation*}
   \begin{array}{lll}
     \bfx = \mat{\lambda X_1\\[2mm] X_2/\sqrt{\lambda} \\[2mm] X_3/\sqrt{\lambda}}, 
@@ -2126,22 +2225,24 @@ A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. The 
     \tr(\bfC) = \lambda^2 + 2/\sqrt{\lambda}, \quad \tr(\bfC^2) = \lambda^4 + 2/\lambda^2\\[4mm]
     I_1 = \tr(\bfC) = \lambda^2 + 2/\lambda \quad \\[4mm]
     I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) \\[4mm]
-    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
     = \dfrac{1}{2}\big(\lambda^4 + \dfrac{4\,\lambda^2}{\sqrt{\lambda}} + \dfrac{4}{\lambda} - \lambda^4 - \dfrac{2}{\lambda^2}\big)
     = 2\,\lambda^{3/2} + 2\lambda^{-1} - \lambda^{-2}\\[4mm]
+    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
     \bfE = \dfrac12\matt{\lambda^2-1 & 0 & 0\\[2mm] 0 & 1/\lambda-1 & 0 \\[2mm] 0 & 0 & 1/\lambda-1}, \quad \bfC^{-1} = \matt{1/\lambda^2 & 0 & 0\\[2mm] 0 & \lambda & 0 \\[2mm] 0 & 0 & \lambda }
   \end{array}
 \end{equation*}
+\textbf{Solution using penalty method}
+
 For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the fictitious PK2 stress tensor as,
 \begin{equation*}
   \begin{array}{lll}
-    \bar{\bfS} = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bar{\bfC} = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad -2\,c_2/\lambda, \quad -2\,c_2/\lambda\Big)
+    \bar{\bfS} = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bar{\bfC} = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad 2\,c_1 -2\,c_2/\lambda, \quad 2\,c_1 -2\,c_2/\lambda\Big)
   \end{array}
 \end{equation*}
 The displacements at node A are given by
 \begin{equation*}
   \begin{array}{lll}
-    \hat{\bfu}^A = \big(\lambda\,l_x - l_x, \dfrac{l_z}{\sqrt{\lambda}} - l_z,0\big) = \big((\lambda-1)\,l_x,(\dfrac1{\sqrt{\lambda}}-1)\,l_z,0\big).
+    \hat{\bfu}^A = \big(\lambda\,L_x - L_x, \dfrac{L_z}{\sqrt{\lambda}} - L_z,0\big) = \big((\lambda-1)\,L_x,(\dfrac1{\sqrt{\lambda}}-1)\,L_z,0\big).
   \end{array}
 \end{equation*}
 Computation of the fictitious stress tensor involves coefficients, $\bar{\gamma}_1, \bar{\gamma}_2$:
@@ -2160,35 +2261,65 @@ With $\Psi(\bar{I}_1,\bar{I}_2) = c_1\,(\bar{I}_1-3) + c_2\,(\bar{I}_2 - 3)$ we 
 Now assume $c_2 = 0$.
 \begin{equation*}
   \begin{array}{lll}
-    \bfC : \bar{\bfS} &= 2\,c_1\,\lambda^2 \\[4mm]
+    \bfC : \bar{\bfS} &= 2\,c_1\,\lambda^2 + 4\,c_1\,\lambda^{-1} \\[4mm]
     \bfS_\text{iso} &= J^{-2/3}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac13 (\bfC^{-1} \otimes \bfC):\bar{\bfS} \\[4mm]
      &= \bar{\bfS} - \dfrac13 \matt{
-    1/\lambda^2 \cdot 2\,c_1\,\lambda^2 & 0 & 0 \\[2mm]
-    0 & \lambda \cdot 2\,c_1\,\lambda^2 & 0 \\[2mm]
-    0 & 0 & \lambda \cdot 2\,c_1\,\lambda^2} \\[8mm]
-    &= \matt{2c_1 & 0 & 0\\[2mm] 0 & 0 & 0 \\[2mm] 0 & 0 & 0} - \dfrac13 \matt{
-    2\,c_1 & 0 & 0 \\[2mm]
-    0 & 2\,c_1\,\lambda^3 & 0 \\[2mm]
-    0 & 0 & 2\,c_1\,\lambda^3} = \matt{
-    \frac43\,c_1 & 0 & 0 \\[2mm]
-    0 & -\frac23\,c_1\,\lambda^3 & 0 \\[2mm]
-    0 & 0 & -\frac23\,c_1\,\lambda^3}\\[12mm]
+    1/\lambda^2 \cdot (2\,c_1\,\lambda^2 + 4\,c_1\,\lambda^{-1}) & 0 & 0 \\[2mm]
+    0 & \lambda \cdot (2\,c_1\,\lambda^2+ 4\,c_1\,\lambda^{-1}) & 0 \\[2mm]
+    0 & 0 & \lambda \cdot (2\,c_1\,\lambda^2+ 4\,c_1\,\lambda^{-1})} \\[8mm]
+    &= \matt{2\,c_1 & 0 & 0\\[2mm] 0 & 2\,c_1 & 0 \\[2mm] 0 & 0 & 2\,c_1} - \dfrac13 \matt{
+    2\,c_1 + 4\,c_1\,\lambda^{-3} & 0 & 0 \\[2mm]
+    0 & 2\,c_1\,\lambda^3 + 4\,c_1 & 0 \\[2mm]
+    0 & 0 & 2\,c_1\,\lambda^3 + 4\,c_1} \\[8mm]
+    &= \matt{
+    \frac43\,c_1\,(1-\lambda^{-3}) & 0 & 0 \\[2mm]
+    0 & \frac23\,c_1\,(1-\lambda^3) & 0 \\[2mm]
+    0 & 0 & \frac23\,c_1\,(1-\lambda^3)}\\[12mm]
     \bfS &= \bfS_\text{iso} + \bfS_\text{vol} = \bfS_\text{iso} + J\,p\,\bfC^{-1} = \matt{
-    \frac43\,c_1 + p/\lambda^2 & 0 & 0 \\[2mm]
-    0 & -\frac23\,c_1\,\lambda^3 + p\,\lambda & 0 \\[2mm]
-    0 & 0 & -\frac23\,c_1\,\lambda^3 + p\,\lambda}
+    \frac43\,c_1\,(1-\lambda^{-3}) + p\,\lambda^{-2} & 0 & 0 \\[2mm]
+    0 & \frac23\,c_1\,(1-\lambda^3) + p\,\lambda & 0 \\[2mm]
+    0 & 0 & \frac23\,c_1\,(1-\lambda^3) + p\,\lambda}
   \end{array}
 \end{equation*}
-From equilibrium we get
+The artifical pressure, $p$ is different from the real hydrostatic pressure. It is given by
 \begin{equation*}
   \begin{array}{lll}
-    S_{22} = 0 \quad \Rightarrow \quad -\frac23\,c_1\,\lambda^3 + p\,\lambda = 0 \quad \Rightarrow \quad  p = \frac23\,c_1\,\lambda^2\\[4mm]
-    S_{11} = -t_\text{max} \quad \Rightarrow \quad \frac43\,c_1 + p/\lambda^2 = -t_\text{max} \quad \Rightarrow \quad \lambda = \sqrt{\dfrac{p}{-t_\text{max} - \frac43\,c_1}}  \\[4mm]
+    p = \d{\Psi_\text{vol}(J)}{J} = \d{J} \big(\dfrac{\kappa}{2}(J - 1)^2\big) = \kappa\,(J-1)
   \end{array}
 \end{equation*}
-which is obviously wrong.
+An incompressible solution has $J\approx 1$ but because $\kappa \to \infty$ it has a $p \neq 0$.
+To satisfy the force equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}
+    \textbf{$y$-direction:}\\
+    S_{22} = 0 \quad \Rightarrow \quad 
+    \dfrac23\,c_1\,(1-\lambda^3) + p\,\lambda = 0 \quad \Rightarrow \quad p =  \dfrac23\,c_1\,(\lambda^3-1)\lambda^{-1}\\[4mm]
+    
+    \textbf{$x$-direction:}\\
+    -\sigma_{11}\,l_z^2 + t_\text{max}\,\dfrac{\lambda}{L_z^2}\,l_z^2 = 0,\quad \Rightarrow \quad 
+    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_z^2}\\[4mm]
+    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
+    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
+    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
+    \Leftrightarrow \quad   \dfrac43\,c_1\,(1-\lambda^{-3}) + \left( \dfrac23\,c_1\,(\lambda^3-1)\lambda^{-1} \right)\lambda^{-2} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}   \\[4mm]
+    \Leftrightarrow \quad   \dfrac43\,c_1\,(1-\lambda^{-3}) + \dfrac23\,c_1\,(1-\lambda^{-3}) = \dfrac{t_\text{max}}{L_z^2\,\lambda}   \\[4mm]
+    \Leftrightarrow \quad   2\,c_1\,(1-\lambda^{-3}) = \dfrac{t_\text{max}}{L_z^2\,\lambda} 
+    \quad  \Leftrightarrow \quad   2\,L_z^2\,c_1\,(\lambda-\lambda^{-2}) = t_\text{max}   \\[4mm]
+    \Leftrightarrow \quad   2\,c_1\,L_z^2\,(\lambda^3 - 1) - t_\text{max}\,\lambda^2 = 0
+  \end{array}
+\end{equation*}
+\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
+  >>> solve(2./3*c0*lz*lz*(lambdaValue**3 - 1) - tmax*lambdaValue**2,
+   lambdaValue, simplify=True, positive=True)[2]
+  0.5*tmax**2/(c0*lz**2*(4.0*c0**3*lz**6 + tmax**3 + (-tmax**6 + (4.0*
+  c0**3*lz**6 + tmax**3)**2)**0.5)**(1/3)) + 0.5*tmax/(c0*lz**2) + 0.5
+  *(4.0*c0**3*lz**6 + tmax**3 + (-tmax**6 + (4.0*c0**3*lz**6 + tmax**3
+  )**2)**0.5)**(1/3)/(c0*lz**2)
+\end{lstlisting}
 
-Different approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
+\textbf{Direct solution using pressure from equilibrium}
+
+Analytical approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
 \begin{equation*}
   \begin{array}{lll}
     \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
@@ -2200,10 +2331,91 @@ Different approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
 \end{equation*}
 From equilibrium we get
 \begin{equation*}
-  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
-    S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = -t_\text{max} \quad \Rightarrow \quad \lambda = \left(1+\dfrac{t_\text{max}}{2\,c_1}\right)^3.
+  \begin{array}{lll}
+    \textbf{$y$-direction:}\\
+    S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
+    
+    \textbf{$x$-direction:}\\
+    -\sigma_{11}\,l_z^2 + t_\text{max}\,\dfrac{\lambda}{L_z^2}\,l_z^2 = 0,\quad \Rightarrow \quad 
+    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_z^2}\\[4mm]
+    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
+    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\
+    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
+    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
+    \quad \Rightarrow \quad 2\,c_1\,\lambda^{3} - \dfrac{t_\text{max}}{L_z^2}\,\lambda^2 -2\,c_1 = 0
+    \quad \Rightarrow \quad \lambda = \text{nonlinear($t_\text{max}$)}
+    %\quad \Rightarrow \quad \lambda \approx \left(1+\dfrac{t_\text{max}}{2\,c_1}\right)^3 \text{  (in reference configuration)}
   \end{array}
 \end{equation*}
+\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
+  >>> solve(2*c1*l**3 -t*l**2 -2*c1, l, simplify=True, positive=True)[2]
+  -t**2/(6*c1*(-108*c1**3 - t**3 + sqrt(-t**6 + (108*c1**3 + t**3)**2)
+  )**(1/3)) + t/(6*c1) - (-108*c1**3 - t**3 + sqrt(-t**6 + (108*c1**3
+   + t**3)**2))**(1/3)/(6*c1)
+\end{lstlisting}
+%Test: the stress in reference configuration yields
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfS &= \diag\big(-p\,\lambda^{-2} + 2\,c_1, \quad -p\,\lambda + 2\,c_1, \quad -p\,\lambda + 2\,c_1\big)\\[4mm]
+%    &= \diag\big(-2\,c_1\,\lambda^{-3} + 2\,c_1, \quad -2\,c_1 + 2\,c_1, \quad -2\,c_1 + 2\,c_1\big)\\[4mm]
+%    &= \diag\big(-2\,c_1\,(1+\dfrac{t_\text{max}}{2\,c_1}) + 2\,c_1, \quad 0, \quad 0\big)\\[4mm]
+%    &= \diag\big(-t_\text{max}, \quad 0, \quad 0\big) \quad \checkmark\\[4mm]
+%  \end{array}
+%\end{equation*}
+
+Internal energy:
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V
+  \end{array}
+\end{equation*}
+Now we assume a virtual displacement at node $\mathcal{A}$, $\delta u_a(\bfX) = δu_a^\mathcal{A} \phi^\mathcal{A} (\bfX)$.
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{A}\,\left(F_{aB}\,\p{\phi^\mathcal{A}}{X_A} + F_{aA}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V,
+  \end{array}
+\end{equation*}
+The ansatz function $\phi^\mathcal{A}$ and their derivatives are:
+\begin{equation*}
+  \begin{array}{lll}
+    \phi^\mathcal{A}(\bfX) = \dfrac{X_1}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right),\\[4mm]
+    \p{\phi^\mathcal{A}}{X_1} = \dfrac1{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right), \\[4mm]
+    \p{\phi^\mathcal{A}}{X_2} = \dfrac1{L_z}\dfrac{X_1}{L_x}\left(1 - \dfrac{X_3}{L_z}\right),\\[4mm]
+    \p{\phi^\mathcal{A}}{X_3} = -\dfrac{X_1}{L_x}\dfrac{X_2}{L_z}\dfrac{1}{L_z},\\[4mm]
+  \end{array}
+\end{equation*}
+For $\delta\bfu(\bfX) = (\phi^\mathcal{A}(\bfX), 0, 0)^\top$, i.e. $δ u_1^\mathcal{A} = 1, δu_2^\mathcal{A} = δu_3^\mathcal{A} = 0$ we compute the virtual internal energy:
+\begin{equation*} 
+  \begin{array}{lll}
+    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{A}}{X_A} + F_{1A}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V 
+    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{A}}{X_1} + F_{11} \p{\phi^\mathcal{A}}{X_1} \right) \,\d V\\[4mm]
+    &= S_{11}\ds\int_{\Omega} \lambda \dfrac1{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right) \,\d V 
+    =  S_{11}\, \lambda \,\dfrac{L_x}{L_x} \dfrac12 \dfrac{L_z^2}{L_z} \ds\int_{0}^{L_z}\left(1 - \dfrac{X_3}{L_z}\right) \,\d X_3 \\[4mm]
+    &= S_{11}\, \lambda \, \dfrac12 L_z \left(L_z - \dfrac12\dfrac{L_z^2}{L_z}\right)\\[4mm]
+    &= \dfrac14\, L_z^2\,S_{11}\, \lambda  = \dfrac14 \,L_z^2 \,F_{11}\,S_{11}\\[4mm]
+  \end{array}
+\end{equation*}
+Virtual external energy
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{ext} 
+    &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
+    &= \ds\int_{∂\Omega}  (T(\bfX),0,0)^\top \cdot \big(δu_1(\bfX),δu_2(\bfX),δu_3(\bfX)\big)^\top\,\d S \\[4mm]
+    &= \ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z}  \dfrac{t_\text{max}}{L_z^2}\,\phi^\mathcal{A}(L_x, X_2, X_3) \,\d X_2\,\d X_3\\[4mm]
+    &= \dfrac{t_\text{max}}{L_z^2}\ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z} \dfrac{L_x}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right)  \,\d X_2\,\d X_3\\[8mm]
+    &= \dfrac{t_\text{max}}{L_z^2} \dfrac12 \dfrac{L_z^2}{L_z} \left(L_z - \dfrac12 \dfrac{L_z^2}{L_z}\right) = \dfrac14\, L_z^2\, t_\text{max}\dfrac{1}{L_z^2} = \dfrac14\, t_\text{max} = \dfrac14\,L_z^2\, T(\bfx)
+  \end{array}
+\end{equation*}
+From principle of virtual work we should get the correct stress.
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} - δW_\text{ext} = 0 \quad \Leftrightarrow \quad \dfrac14 \, L_z^2\,S_{11}\, \lambda - \dfrac14\, t_\text{max} = 0 \\[4mm]
+    \quad \Leftrightarrow \quad \dfrac14 \,(L_z^2\,S_{11}\,\lambda - t_\text{max}) = 0\\[4mm]
+    \quad \Leftrightarrow \quad L_z^2\,S_{11}\,\lambda = t_\text{max} \quad \Leftrightarrow \quad S_{11} = \dfrac{t_\text{max}}{\lambda\,L_z^2} = \dfrac1{\lambda^2}t(\bfX) = \dfrac1{\lambda}T(\bfX) \quad \checkmark
+  \end{array}
+\end{equation*}
+Note: we do not get any further information from the principle of virtual work further than the equilibrium conditions. This is because the stress was preserved as variable and not replaced by the constitutive equations, that relate them to strain and stretch $\lambda$. 
+
 Assume Mooney-Rivlin with $c_2 \neq 0$,
 \begin{equation*}
   \begin{array}{lll}
@@ -2221,19 +2433,299 @@ Assume Mooney-Rivlin with $c_2 \neq 0$,
      -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1}\big)
   \end{array}
 \end{equation*}
-From equilibrium we get
+%From equilibrium we get
+%\begin{equation*}
+%  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1} = 0\\[4mm]
+%    \quad \Rightarrow\quad 
+%   p = 2\,c_1\,\lambda^{-1} + 2\,c_2\,\lambda + 2\,c_2\,\lambda^{-2}\\[4mm]
+%    -S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad   -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = t_\text{max} \\[4mm]
+%    \quad \Rightarrow \quad  
+%    2\,c_1\,\lambda^{-3} + 2\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = t_\text{max}\\[4mm]
+%    \quad \Rightarrow\quad  2\,c_1\,\lambda^{-3} + 6\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 = t_\text{max}
+%  \end{array}
+%\end{equation*}
+
+\subsubsection{Uniaxial extension with constant load per surface area}
+This is the same example as the previous except now with load constant per surface area, but total load varying, ${t(\bfX) = \hat{t} = t_\text{max}/L_z^2}, {T = \hat{t}/\lambda}$. For Neo-Hookean we have the equilibrium conditions,
 \begin{equation*}
-  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1} = 0\\[4mm]
-    \quad \Rightarrow\quad 
-   p = 2\,c_1\,\lambda^{-1} + 2\,c_2\,\lambda + 2\,c_2\,\lambda^{-2}\\[4mm]
-    S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad   -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = -t_\text{max} \\[4mm]
-    \quad \Rightarrow \quad  
-    2\,c_1\,\lambda^{-3} + 2\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = -t_\text{max}\\[4mm]
-    \quad \Rightarrow\quad  2\,c_1\,\lambda^{-3} + 6\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 = -t_\text{max}
+  \begin{array}{lll}
+    \textbf{$y$-direction:}\\
+    S_{22} = 0  \quad\Rightarrow\quad -p\,\lambda + 2\,c_1 = 0\quad\Rightarrow\quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
+    \textbf{$x$-direction:}\\
+    \sigma_{11} = \hat{t} \quad \Leftrightarrow \quad
+    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
+    \Rightarrow \quad S_{11} = \hat{t} \, \lambda^{-2}
+    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = \hat{t}\,\lambda^{-2}\\[4mm]
+    \Rightarrow \quad 2\,c_1\,\lambda^3 - \hat{t}\,\lambda-2\,c_1  = 0
   \end{array}
 \end{equation*}
 
+\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
+  >>> solve(2*c1*l**(3) -t*l**2 -2*c1, l, simplify=True, positive=True)[0].evalf()
+  0.30285343213869*(1.81712059283214*that + (18.0*c0**1.5 + 2.44948974278318*(54.0*c0**3 - that**3)**0.5)**(2/3))/(sqrt(c0)*(18.0*c0**1.5 + 2.44948974278318*(54.0*c0**3 - that**3)**0.5)**(1/3))
+\end{lstlisting}
+
+Internal virtual energy:
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \dfrac14 \,L_z^2 \,F_{11}\,S_{11}
+  \end{array}
+\end{equation*}
+
+External virtual energy:
+\begin{equation*}
+  \begin{array}{lll}
+     δW_\text{ext} &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
+    &= \ds\int_{∂\Omega}  (T(\bfX),0,0)^\top \cdot δ\bfu\,\d S = \ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z}  \dfrac{\hat{t}}{\lambda}\,\phi^\mathcal{A}(L_x, X_2, X_3) \,\d X_2\,\d X_3\\[4mm]
+    &= \dfrac{\hat{t}}{\lambda}\,\ds\int\limits_{0}^{L_Z}\ds\int\limits_{0}^{L_z} \dfrac{L_x}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right)  \,\d X_2\,\d X_3\\[8mm]
+    &= \dfrac{\hat{t}}{\lambda}\,\dfrac12 \dfrac{L_z^2}{L_z} \left(L_z - \dfrac12 \dfrac{L_z^2}{L_z}\right) = \dfrac14\, L_z^2\, \dfrac{\hat{t}}{\lambda} 
+  \end{array}
+\end{equation*}
+We get
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} - δW_\text{ext} = \dfrac14\,L_z^2\left(F_{11}\,S_{11} - \dfrac{\hat{t}}{\lambda}\right) \quad\Leftrightarrow\quad  S_{11} = \hat{t}\,\lambda^{-2}\quad\checkmark
+  \end{array}
+\end{equation*}
 %------------------------------------------------------------------------------------------------
+\subsection{2D uniaxial extension with constant total load}
+
+\bild{uniaxial_extension_2d}{0.8\textwidth}{Uniaxial extension example}
+
+The domain in reference and current configuration is depicted in \cref{fig:uniaxial_extension_2d}) and defined as follows,
+\begin{equation*}
+  \begin{array}{lll}
+    \Omega_\text{ref} = [0, L_x] \times [0, L_y]\\[4mm]
+    \Omega_\text{current} = [0, \lambda\,L_x] \times [0, L_y\,\lambda^{-1}],
+  \end{array}
+\end{equation*}
+A load $t(\bfx) = t_\text{max}/l_y$ is defined on the right border. In reference configuration it is
+\begin{equation*}
+  \begin{array}{lll}
+    T(\bfx) = \dfrac{t_\text{max}}{L_y},\\[4mm]
+  \end{array}
+\end{equation*}
+in current configuration
+\begin{equation*}
+  \begin{array}{lll}
+    t(\bfx) &= \dfrac{t_\text{max}}{l_y} = t_\text{max}\,\dfrac{\lambda}{L_y}.
+  \end{array}
+\end{equation*}
+Because the normal vector is the same, $\bfn = \bfN$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    T(\bfx)\,\d S = \bft\,\d s, \quad T(\bfx) = \bft(\bfx)\,\dfrac{\d s}{\d S} = \bft(\bfx)\, \dfrac{l_y}{L_y} = t(\bfx) \dfrac1{\lambda}, \quad \text{i.e.}\quad \quad T(\bfx) = t(\bfx)\,\lambda^{-1}
+  \end{array}
+\end{equation*}
+
+The geometric quantities can be computed to
+\begin{equation*}
+  \begin{array}{lll}
+    \bfx = \mat{\lambda \,X_1\\[2mm]\lambda^{-1}\, X_2 }, 
+    \quad \bfF = \matt{\lambda & 0\\[2mm] 0 & \lambda^{-1}},
+    \quad \bfC = \matt{\lambda^2 & 0\\[2mm] 0 & \lambda^{-2} },\\[12mm]
+    \tr(\bfC) = \lambda^2 + \lambda^{-2}, \quad \tr(\bfC^2) = \lambda^4 + \lambda^{-4}\\[4mm]
+    I_1 = \tr(\bfC) = \lambda^2 + \lambda^{-2} \quad \\[4mm]
+    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) = \dfrac12(\lambda^4 + 2 + \lambda^{-4} - \lambda^{4} - \lambda^{-4}) = 1 \\[4mm]
+    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
+    \bfE = \dfrac12\matt{\lambda^2-1 & 0 \\[2mm] 0 & \lambda^{-2}-1 }, \quad \bfC^{-1} = \matt{\lambda^{-2} & 0 \\[2mm] 0 & \lambda^{2}}
+  \end{array}
+\end{equation*}
+\textbf{Solution using penalty method}
+
+For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the fictitious PK2 stress tensor as,
+The displacements at node A are given by
+\begin{equation*}
+  \begin{array}{lll}
+    \hat{\bfu}^A = \big(\lambda\,L_x - L_x, L_y\,\lambda^{-1} - L_y\big) = \big((\lambda-1)\,L_x,(\lambda^{-1}-1)\,L_y\big).
+  \end{array}
+\end{equation*}
+
+Assuming Neo-Hookean material law, $\Psi(I_1) = c_1\,(I_1 - 2)$ the fictitious PK2 stress tensor yields
+\begin{equation*}
+  \begin{array}{lll}
+    \bar{\bfS} = 2\,c_1\,\bfI.
+  \end{array}
+\end{equation*}
+and the stress tensor
+\begin{equation*}
+  \begin{array}{lll}
+    \bfC : \bar{\bfS} &= 2\,c_1\,(\lambda^2 + \lambda^{-2}) \\[4mm]
+    \bfS_\text{iso} &= J^{-1}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac12 (\bfC^{-1} \otimes \bfC):\bar{\bfS} \\[4mm]
+     &= \bar{\bfS} - \dfrac12 \matt{
+    \lambda^{-2} \cdot \big(2\,c_1\,(\lambda^2 + \lambda^{-2})\big) & 0 \\[2mm]
+    0 & \lambda^{2} \cdot \big(2\,c_1\,(\lambda^2 + \lambda^{-2})\big)} \\[8mm]
+    &= \matt{2\,c_1 & 0 \\[2mm] 0 & 2\,c_1} - \dfrac12 \matt{
+    2\,c_1\,(1 + \lambda^{-4}) & 0 \\[2mm]
+    0 & 2\,c_1\,(\lambda^4 + 1)} \\[8mm]
+    &= \matt{
+    c_1\,(1-\lambda^{-4}) & 0 \\[2mm]
+    0 & c_1\,(1-\lambda^4)}
+  \end{array}
+\end{equation*}
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &= \bfS_\text{iso} + \bfS_\text{vol} = \bfS_\text{iso} + J\,p\,\bfC^{-1} = \matt{
+    c_1\,(1-\lambda^{-4}) + p\,\lambda^{-2} & 0 \\[2mm]
+    0 & c_1\,(1-\lambda^4) + p\,\lambda^{2}}
+  \end{array}
+\end{equation*}
+The artifical pressure, $p$ is different from the real hydrostatic pressure. It is given by
+\begin{equation*}
+  \begin{array}{lll}
+    p = \d{\Psi_\text{vol}(J)}{J} = \d{J} \big(\dfrac{\kappa}{2}(J - 1)^2\big) = \kappa\,(J-1)
+  \end{array}
+\end{equation*}
+An incompressible solution has $J\approx 1$ but because $\kappa \to \infty$ it has a $p \neq 0$.
+To satisfy the force equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}
+    \textbf{$y$-direction:}\\
+    S_{22} = 0 \quad \Rightarrow \quad 
+    c_1\,(1-\lambda^4) + p\,\lambda^{2} = 0 \quad \Rightarrow \quad p =  \big(c_1\,(\lambda^4-1)\big)\lambda^{-2} 
+    = c_1\,(\lambda^2-\lambda^{-2})\\[4mm]
+    
+    \textbf{$x$-direction:}\\
+    -\sigma_{11}\,l_y + t_\text{max}\,\dfrac{\lambda}{L_y}\,l_y = 0,\quad \Rightarrow \quad 
+    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_y}\\[4mm]
+    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
+    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
+    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
+    \Leftrightarrow \quad   c_1\,(1-\lambda^{-4}) + \left( c_1\,(\lambda^2-\lambda^{-2}) \right)\lambda^{-2} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}   \\[4mm]
+    \Leftrightarrow \quad   c_1\,(1-\lambda^{-4}) + c_1\,(1-\lambda^{-4}) = \dfrac{t_\text{max}}{L_y\,\lambda}   \\[4mm]
+    \Leftrightarrow \quad    2\,c_1\,(1-\lambda^{-4}) = \dfrac{t_\text{max}}{L_y\,\lambda} 
+    \quad  \Leftrightarrow \quad   2\,L_y\,c_1\,(\lambda-\lambda^{-3}) = t_\text{max}   \\[4mm]
+    \Leftrightarrow \quad   2\,c_1\,L_y\,(\lambda^4 - 1) - t_\text{max}\,\lambda^3 = 0
+  \end{array}
+\end{equation*}
+\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
+  >>> solve(2*c0*ly*(lambdaValue**4 - 1) - tmax*lambdaValue**3, 
+  lambdaValue, simplify=True, positive=True)[2]
+  (tmax/8 + sqrt(-384*3**(2/3)*c0**(8/3)*ly**(8/3)/(-9*tmax**2
+   + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
+   + 24*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 + sqrt(3)*
+   sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) + 9*tmax**2)/24
+    - sqrt(384*3**(2/3)*c0**(8/3)*ly**(8/3)/(-9*tmax**2 + 
+    sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
+    - 24*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 + sqrt(3)*
+    sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
+    + 18*sqrt(3)*tmax**3/sqrt(-128*3**(2/3)*c0**(8/3)*ly**(8/3)
+    /(-9*tmax**2 + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))
+    **(1/3) + 8*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 
+    + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
+    + 3*tmax**2) + 18*tmax**2)/24)/(c0*ly)
+\end{lstlisting}
+
+From the penalty parameter $p = c_1\,(\lambda^2-\lambda^{-2})$ we can compute the amount by which the system violates incompressibility:
+\begin{equation*}
+  \begin{array}{lll}
+    p = \kappa\,(J-1) \quad \Rightarrow \quad J = 1 + \dfrac{p}{\kappa}
+  \end{array}
+\end{equation*}
+
+\textbf{Direct solution using pressure from equilibrium}
+
+Analytical approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
+     &= -p\bfC^{-1} + 2\,c_1\,\bfI =
+      \matt{-p\,\lambda^{-2} + 2\,c_1 & 0\\[2mm] 
+     0 & -p\,\lambda^2 + 2\,c_1 }
+  \end{array}
+\end{equation*}
+From equilibrium we get
+\begin{equation*}
+  \begin{array}{lll}
+    \textbf{$y$-direction:}\\
+    S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda^2 + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda^2}\\[4mm]
+    
+    \textbf{$x$-direction:}\\
+    -\sigma_{11}\,l_y + t_\text{max}\,\dfrac{\lambda}{L_y}\,l_y = 0,\quad \Rightarrow \quad 
+    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_y}\\[4mm]
+    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
+    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\
+    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
+    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-4} + 2\,c_1 = \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
+    \quad \Rightarrow \quad 2\,c_1\,\lambda^{4} - \dfrac{t_\text{max}}{L_y}\,\lambda^3 -2\,c_1 = 0
+    \quad \Rightarrow \quad \lambda = \text{nonlinear($t_\text{max}$)}
+  \end{array}
+\end{equation*}
+\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
+  >>> solve(2.*c0*ly*(lambdaValue**4. - 1.) - tmax*lambdaValue**3.,
+   lambdaValue, simplify=True, positive=True)[3]
+  
+  (0.125*tmax + 0.0416666666666667*sqrt(34.6139896873778*
+  c0**1.33333333333333*ly**1.33333333333333*
+  (-9.0*tmax**2 + 1.73205080756888*(4096.0*
+  c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 
+  - 798.752188051931*c0**2.66666666666667*ly**2.66666666666667
+  *(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 9.0*tmax**2) + 0.0416666666666667*sqrt(-34.6139896873778*c0**1.33333333333333*ly**1.33333333333333*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 + 798.752188051931*c0**2.66666666666667*ly**2.66666666666667*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 31.1769145362398*tmax**3*(11.5379965624593*c0**1.33333333333333*ly**1.33333333333333*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 - 266.250729350644*c0**2.66666666666667*ly**2.66666666666667*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 3.0*tmax**2)**(-0.5) + 18.0*tmax**2))/(c0*ly)
+\end{lstlisting}
+%Test: the stress in reference configuration yields
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfS &= \diag\big(-p\,\lambda^{-2} + 2\,c_1, \quad -p\,\lambda + 2\,c_1, \quad -p\,\lambda + 2\,c_1\big)\\[4mm]
+%    &= \diag\big(-2\,c_1\,\lambda^{-3} + 2\,c_1, \quad -2\,c_1 + 2\,c_1, \quad -2\,c_1 + 2\,c_1\big)\\[4mm]
+%    &= \diag\big(-2\,c_1\,(1+\dfrac{t_\text{max}}{2\,c_1}) + 2\,c_1, \quad 0, \quad 0\big)\\[4mm]
+%    &= \diag\big(-t_\text{max}, \quad 0, \quad 0\big) \quad \checkmark\\[4mm]
+%  \end{array}
+%\end{equation*}
+
+Internal energy:
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V
+  \end{array}
+\end{equation*}
+Now we assume a virtual displacement at node $\mathcal{A}$, $\delta u_a(\bfX) = δu_a^\mathcal{A} \phi^\mathcal{A} (\bfX)$.
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{A}\,\left(F_{aB}\,\p{\phi^\mathcal{A}}{X_A} + F_{aA}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V,
+  \end{array}
+\end{equation*}
+The ansatz function $\phi^\mathcal{A}$ and their derivatives are given by:
+\begin{equation*}
+  \begin{array}{lll}
+    \phi^\mathcal{A}(\bfX) = \dfrac{X_1}{L_x}\dfrac{X_2}{L_y},\quad 
+    \p{\phi^\mathcal{A}}{X_1} = \dfrac1{L_x}\dfrac{X_2}{L_y}, \quad 
+    \p{\phi^\mathcal{A}}{X_2} = \dfrac1{L_y}\dfrac{X_1}{L_x}
+  \end{array}
+\end{equation*}
+For $\delta\bfu(\bfX) = (\phi^\mathcal{A}(\bfX), 0)^\top$, i.e. $δ u_1^\mathcal{A} = 1, δu_2^\mathcal{A} = 0$ we compute the virtual internal energy:
+\begin{equation*} 
+  \begin{array}{lll}
+    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{A}}{X_A} + F_{1A}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V 
+    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{A}}{X_1} + F_{11} \p{\phi^\mathcal{A}}{X_1} \right) \,\d V\\[4mm]
+    &= S_{11}\ds\int_{\Omega} \lambda \dfrac1{L_x}\dfrac{X_2}{L_y} \,\d V 
+    =  S_{11}\, \lambda \,\dfrac{L_x}{L_x} \dfrac12 \dfrac{L_y^2}{L_y}\\[4mm]
+    &= \dfrac12\, L_y\,S_{11}\, \lambda  = \dfrac12 \,L_y \,F_{11}\,S_{11}\\[4mm]
+  \end{array}
+\end{equation*}
+Virtual external energy
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{ext} 
+    &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
+    &= \ds\int_{∂\Omega}  (T(\bfX),0)^\top \cdot \big(δu_1(\bfX),δu_2(\bfX)\big)^\top\,\d S \\[4mm]
+    &= \ds\int\limits_{0}^{L_y}\dfrac{t_\text{max}}{L_y}\,\phi^\mathcal{A}(L_x, X_2) \,\d X_2\\[4mm]
+    &= \dfrac{t_\text{max}}{L_y}\ds\int\limits_{0}^{L_y} \dfrac{L_x}{L_x}\dfrac{X_2}{L_y}\,\d X_2\\[8mm]
+    &= \dfrac{t_\text{max}}{L_y} \dfrac12 \dfrac{L_y^2}{L_y} = \dfrac12\, t_\text{max} = \dfrac12\,L_y\, T(\bfx)
+  \end{array}
+\end{equation*}
+From principle of virtual work we should get the correct stress.
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} - δW_\text{ext} = 0 \quad \Leftrightarrow \quad \dfrac14 \, L_z^2\,S_{11}\, \lambda - \dfrac14\, t_\text{max} = 0 \\[4mm]
+    \quad \Leftrightarrow \quad \dfrac12 \,(L_y\,S_{11}\,\lambda - t_\text{max}) = 0\\[4mm]
+    \quad \Leftrightarrow \quad L_y\,S_{11}\,\lambda = t_\text{max} \quad \Leftrightarrow \quad S_{11} = \dfrac{t_\text{max}}{\lambda\,L_y} = \dfrac1{\lambda^2}t(\bfX) = \dfrac1{\lambda}T(\bfX) \quad \checkmark
+  \end{array}
+\end{equation*}
+Note: we do not get any further information from the principle of virtual work further than the equilibrium conditions. This is because the stress was preserved as variable and not replaced by the constitutive equations, that relate them to strain and stretch $\lambda$. 
+
+
+\newpage
+%%------------------------------------------------------------------------------------------------
 \section{Quadrature}
 
 The aim is to compute a good approximation for the integral
@@ -2416,6 +2908,7 @@ where the definition of $\mathcal{J}_d(\bfxi)$  depends on the dimension $d$ as 
 
 % -------------- Literaturseite --------------------
 \newpage
+\nocite{*}
 \bibliography{literatur}{}
 \bibliographystyle{abbrv}
 

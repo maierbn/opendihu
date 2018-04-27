@@ -18,11 +18,11 @@ clean:
 	rm -rf .sconf_temp
 	rm .sconsign.dblite	
 
-functional_testing:
-	cd testing/functional_testing && $(MAKE) default
+system_testing:
+	cd testing/system_testing && $(MAKE) default
 
 solid_mechanics:
-	cd testing/functional_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd testing/system_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 multiple_fibers:
 	cd examples/multiple_fibers && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

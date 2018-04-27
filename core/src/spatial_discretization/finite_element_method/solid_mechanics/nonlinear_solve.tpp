@@ -26,29 +26,33 @@ template<typename T>
 PetscErrorCode nonlinearFunction(SNES snes, Vec u, Vec f, void *context)
 {
   T* object = static_cast<T*>(context);
-  // note: the input vector u is the same as object->displacement, therefore it does not need to be passed to a method
   
-  LOG(DEBUG) << "   (pointer u input: " << u << ")";
-  LOG(DEBUG) << "   (pointer displac: " << object->displacements() << ")";
+  //LOG(DEBUG) << "   nonlinear function, pointer u input: " << u;
+  //LOG(DEBUG) << "   nonlinear function, pointer displac: " << object->displacements();
   //assert(u == object->displacements());
-  
+      
+  // note: if the input vector u is the same as object->displacement, it does not need to be passed to a method
   if (u != object->displacements())
   {
     object->setDisplacements(u);
-    //object->applyDirichletBoundaryConditionsInDisplacements();
   }
   
-  // compute the lhs which is the virtual work
-  object->computeInternalVirtualWork(f);
+  object->applyDirichletBoundaryConditionsInDisplacements();
   
-  // set rows in f to rhs for which dirichlet BC in u is given
+  // compute the lhs which is the virtual work
+  object->computeInternalMinusExternalVirtualWork(f);
+  
+  // set rows in f to 0 for which dirichlet BC in u is given
   object->applyDirichletBoundaryConditionsInNonlinearFunction(f);
   
+  LOG(DEBUG) << "--            displ input u with BC: " << PetscUtility::getStringVector(u);
+  //LOG(DEBUG) << "--            displ input u with BC: " << PetscUtility::getStringVector(object->displacements());
+  LOG(DEBUG) << "-- computed f=dW_int-dW_ext with BC: " << PetscUtility::getStringVector(f);
   
-  
-  VLOG(1) << "-- displ in u: " << PetscUtility::getStringVector(u);
-  VLOG(1) << "-- computed f: " << PetscUtility::getStringVector(f);
-  VLOG(1) << "-- rhs      b: " << PetscUtility::getStringVector(object->rightHandSide());
+  // compute and output function norm
+  PetscReal functionNorm;
+  VecNorm(f, NORM_2, &functionNorm);
+  LOG(DEBUG) << "function norm: " << functionNorm;
   
   return 0;
 };
@@ -69,18 +73,14 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
 {
   T* object = static_cast<T*>(context);
  
-  // note: the input vector x is the same as object->displacement, therefore it does not need to be passed to a method
+  // note: if the input vector x is the same as object->displacement, it does not need to be passed to a method
+  if (x != object->displacements())
+  {
+    object->setDisplacements(x);
+  }
   
   // compute the tangent stiffness matrix
-  object->setStiffnessMatrix();
-  
-  // store the tangent stiffness matrix in output Vecs
-  Mat &tangentStiffnessMatrix = object->tangentStiffnessMatrix();
-  //jac = tangentStiffnessMatrix;
-  
-  assert (tangentStiffnessMatrix == jac);
-  assert (tangentStiffnessMatrix == b);
-  assert (b == jac);
+  object->computeAnalyticalStiffnessMatrix(jac);
   
   //MatCopy(tangentStiffnessMatrix,jac,SAME_NONZERO_PATTERN);
   //MatCopy(tangentStiffnessMatrix,b,SAME_NONZERO_PATTERN);
@@ -119,7 +119,7 @@ template<typename T>
 PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mctx)
 {
   //T* object = static_cast<T*>(mctx);
-  VLOG(1) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
+  LOG(DEBUG) << "  Nonlinear solver: iteration " << its << ", residual norm " << norm;
   return 0;
 };
  
@@ -142,67 +142,153 @@ debug()
   //Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
   //Vec &residual = this->data_.residual().values();
   Vec &displacements = this->data_.displacements().values();
-  Vec &externalVirtualEnergy = this->data_.externalVirtualEnergy().values();
+  Vec &externalVirtualWork = this->data_.externalVirtualWork().values();
   
-  Vec internalVirtualEnergy;
-  VecDuplicate(externalVirtualEnergy, &internalVirtualEnergy);
+  Vec internalVirtualWork;
+  VecDuplicate(externalVirtualWork, &internalVirtualWork);
   
   // zero initial values
   ierr = VecSet(displacements, 0.0); CHKERRV(ierr);
-  
-  double lx = 1.0;
-  double lz = 1.0;
-  double tmax = 0.5;
-  double that = 0.5;
-  
-  const double c0 = SEMT::Parameter<0>::get_value();
-  const double c1 = SEMT::Parameter<1>::get_value();
-  assert(c1 == 0);
-  
-  //double lambdaValue = pow(1 + tmax/(2*c0), 3);
-  
-  // constant load per surface area, t = that, but total load varying
-  double lambdaValue = 0.30285343213869*pow(c0,(-0.5))*
-  pow(18.0*pow(c0,1.5) + 2.44948974278318*pow((54.0*pow(c0,3) 
-  - pow(that,3)),0.5),-0.333333333333333)
-  *(1.81712059283214*that + pow((18.0*pow(c0,1.5) 
-  + 2.44948974278318*pow((54.0*pow(c0,3) - pow(that,3)),0.5)),0.666666666666667));
-  
-  LOG(DEBUG) << "c0: " << c0 << ", c1: " << c1 << ", tmax: " << tmax << ", lambdaValue: " << lambdaValue;
-
-  LOG(DEBUG) << "expected F: diag( " << lambdaValue << ", " << 1./sqrt(lambdaValue) << ", " << 1./sqrt(lambdaValue) << ")";
-  LOG(DEBUG) << "expected C: diag( " << lambdaValue*lambdaValue << ", " << 1./lambdaValue << ", " << 1./lambdaValue << ")";
-  LOG(DEBUG) << "expected I1: " << lambdaValue*lambdaValue + 2/lambdaValue;
-  LOG(DEBUG) << "expected S: diag( " << 2*c0 + 4*c1/lambdaValue << ", " << -2*c1/lambdaValue << ", " << -2*c1/lambdaValue <<  " )";
-  
-  double s11 = 2*c0 + 4*c1/lambdaValue;
-  
-  LOG(DEBUG) << "expected W[9]: " << 1./4*lz*lz*lambdaValue*s11 << " = " << 1./4*tmax;
-  
-  std::vector<double> knownValues = {
-   0.0, 0.0, 0.0, 
-   (lambdaValue-1.0)*lx, 0.0, 0.0,
-   0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0, 
-   (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0,
-   0.0, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 
-   (lambdaValue-1.0)*lx, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz,
-   0.0, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz, 
-   (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz
-  };
-  PetscUtility::setVector(knownValues, displacements);
-  
+ 
+  if (BasisOnMeshType::dim() == 3)
+  {
+    double lx = 1.0;
+    double lz = 1.0;
+    double tmax = 0.5;
+    
+    const double c0 = SEMT::Parameter<0>::get_value();
+    const double c1 = SEMT::Parameter<1>::get_value();
+    assert(c1 == 0);
+    
+    double lambdaValue = 1.0;
+    
+    // constant total load
+    
+    // analytical solution from equilibrium
+    lambdaValue = MathUtility::sqr(tmax)/(6*c0*MathUtility::sqr(lz)*pow((108*pow(c0,3)*pow(lz,6) + pow(tmax,3) + sqrt(-pow(tmax,6)
+    + pow((108*pow(c0,3)*pow(lz,6) + pow(tmax,3)),2))),1./3.))
+    + tmax/(6*c0*MathUtility::sqr(lz))
+    + pow(108*pow(c0,3)*pow(lz,6) + pow(tmax,3) + sqrt(-pow(tmax,6) + MathUtility::sqr(108*pow(c0,3)*pow(lz,6) + pow(tmax,3))),1./3.)
+    /(6*c0*MathUtility::sqr(lz));
+    
+    // solution from penalty formulation 
+    lambdaValue = MathUtility::sqr(tmax)/(6*c0*MathUtility::sqr(lz)*pow((108*pow(c0,3)*pow(lz,6) + pow(tmax,3)
+      + sqrt(-pow(tmax,6) + pow((108*pow(c0,3)*pow(lz,6)
+      + pow(tmax,3)),2))),1./3.)) + tmax/(6*c0*MathUtility::sqr(lz)) + pow((108*pow(c0,3)*pow(lz,6) + pow(tmax,3) 
+      + sqrt(-pow(tmax,6) + pow((108*pow(c0,3)*pow(lz,6) + pow(tmax,3)),2))),1./3.)/(6*c0*MathUtility::sqr(lz));
+    
+    double s11FromEquilibrium = tmax/(lambdaValue*lz*lz);
+    
+    double optimalP = 2./3*c0*(pow(lambdaValue,3)-1)/lambdaValue;
+    
+    // constant load per surface area, t = that, but total load varying
+    double that = 0.5;
+    lambdaValue = 0.30285343213869*(1.81712059283214*that + pow((18.0*pow(c0,1.5) + 2.44948974278318*pow((54.0*pow(c0,3) - pow(that,3)),0.5)),2./3.))
+      /(sqrt(c0)*pow((18.0*pow(c0,1.5) + 2.44948974278318*pow((54.0*pow(c0,3) - pow(that,3)),0.5)),1./3.));
+    
+    //double s11FromEquilibrium = 2*c0 + 4*c1/lambdaValue;
+    
+    //lambdaValue = 1.8;
+    
+    LOG(DEBUG) << "c0: " << c0 << ", c1: " << c1 << ", tmax: " << tmax ;
+    LOG(DEBUG) << "lambdaValue: " << lambdaValue << ", lambdaValue^2: " << MathUtility::sqr(lambdaValue) << ", lambdaValue^{-1}: " << 1./lambdaValue << ", lambdaValue^{-2}: " << 1./MathUtility::sqr(lambdaValue);
+    LOG(DEBUG) << "solution p value: " << optimalP;
+    
+    LOG(DEBUG) << "expected F: diag( " << lambdaValue << ", " << 1./sqrt(lambdaValue) << ", " << 1./sqrt(lambdaValue) << ")";
+    LOG(DEBUG) << "expected C: diag( " << lambdaValue*lambdaValue << ", " << 1./lambdaValue << ", " << 1./lambdaValue << ")";
+    LOG(DEBUG) << "expected I1: " << lambdaValue*lambdaValue + 2/lambdaValue;
+    LOG(DEBUG) << "expected Sbar_00: " << 2*c0 + 4*c1/lambdaValue << ", C:Sbar = " << 2*c0*lambdaValue*lambdaValue + 4*c0/lambdaValue;
+    LOG(DEBUG) << "expected correct S: diag( " << 2*c0 + 4*c1/lambdaValue << ", " << -2*c1/lambdaValue << ", " << -2*c1/lambdaValue <<  " ), "
+     << " S penalty: diag( " << 4./3 * c0 * (1 - pow(lambdaValue,-3)) << ", " << 2./3*c0*(1 - pow(lambdaValue,3)) << ")";
+    
+    
+    LOG(DEBUG) << "expected W[9]: " << s11FromEquilibrium * lambdaValue * MathUtility::sqr(lz) / 4.;
+    
+    std::vector<double> knownValues = {
+     0.0, 0.0, 0.0, 
+     (lambdaValue-1.0)*lx, 0.0, 0.0,
+     0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0, 
+     (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, 0.0,
+     0.0, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz, 
+     (lambdaValue-1.0)*lx, 0.0, (1./sqrt(lambdaValue) - 1.0)*lz,
+     0.0, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz, 
+     (lambdaValue-1.0)*lx, (1./sqrt(lambdaValue) - 1.0)*lz, (1./sqrt(lambdaValue) - 1.0)*lz
+    };
+    PetscUtility::setVector(knownValues, displacements);
+     
+    if (this->data_.computeWithReducedVectors())
+    {
+      reduceVector(displacements, this->data_.displacementsReduced());
+    }
+  }
+  else if(BasisOnMeshType::dim() == 2)
+  {
+    
+    double lx = 1.0;
+    double ly = 1.0;
+    double tmax = 0.5;
+    
+    const double c0 = SEMT::Parameter<0>::get_value();
+    const double c1 = SEMT::Parameter<1>::get_value();
+    assert(c1 == 0);
+    
+    double lambdaValue = 1.0;
+    
+    // constant total load
+    
+    // analytical solution from equilibrium
+    lambdaValue = (0.125*tmax + 0.0416666666666667*sqrt(34.6139896873778*pow(c0,1.33333333333333)*pow(ly,1.33333333333333)
+    *pow((-9.0*pow(tmax,2.) + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),0.333333333333333)
+    - 798.752188051931*pow(c0,2.66666666666667)*pow(ly,2.66666666666667)*pow((-9.0*pow(tmax,2.) 
+    + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),-0.333333333333333) 
+    + 9.0*pow(tmax,2.)) + 0.0416666666666667*sqrt(-34.6139896873778*pow(c0,1.33333333333333)*pow(ly,1.33333333333333)
+    *pow((-9.0*pow(tmax,2.) + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),0.333333333333333)
+    + 798.752188051931*pow(c0,2.66666666666667)*pow(ly,2.66666666666667)*pow((-9.0*pow(tmax,2.) 
+    + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),-0.333333333333333)
+    + 31.1769145362398*pow(tmax,3.)*pow((11.5379965624593*pow(c0,1.33333333333333)*pow(ly,1.33333333333333)*pow((-9.0*pow(tmax,2.) 
+    + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),0.333333333333333) 
+    - 266.250729350644*pow(c0,2.66666666666667)*pow(ly,2.66666666666667)*pow((-9.0*pow(tmax,2.)
+    + 1.73205080756888*pow((4096.0*pow(c0,4.)*pow(ly,4.) + 27.0*pow(tmax,4.)),0.5)),-0.333333333333333)
+    + 3.0*pow(tmax,2.)),-0.5) + 18.0*pow(tmax,2.)))/(c0*ly);
+    
+    // solution from penalty formulation (same)
+    
+    double optimalP = c0*(pow(lambdaValue,2) - pow(lambdaValue,-2.));
+    
+    LOG(DEBUG) << "c0: " << c0 << ", c1: " << c1 << ", tmax: " << tmax ;
+    LOG(DEBUG) << "lambdaValue: " << lambdaValue << ", lambdaValue^2: " << MathUtility::sqr(lambdaValue) << ", lambdaValue^{-1}: " << 1./lambdaValue << ", lambdaValue^{-2}: " << 1./MathUtility::sqr(lambdaValue);
+    LOG(DEBUG) << "solution p value: " << optimalP;
+    
+    std::vector<double> knownValues = {
+     0.0, 0.0, 0.0, 
+     (lambdaValue-1.0)*lx, 0.0, 0.0,
+     0.0, (1./lambdaValue - 1.0)*ly, 0.0, 
+     (lambdaValue-1.0)*lx, (1./lambdaValue - 1.0)*ly, 0.0
+    };
+    PetscUtility::setVector(knownValues, displacements);
+    
+    if (this->data_.computeWithReducedVectors())
+    {
+      reduceVector(displacements, this->data_.displacementsReduced());
+    }
+  }
   // set prescribed Dirchlet BC displacements values
   //applyDirichletBoundaryConditionsInDisplacements();
   
+#if 0  
   VLOG(1) << "displacements values: " << PetscUtility::getStringVector(displacements);
-  VLOG(1) << "W_ext: " << PetscUtility::getStringVector(externalVirtualEnergy);
   
-  this->computeInternalVirtualWork(internalVirtualEnergy);
-  VLOG(1) << "W_int: " << PetscUtility::getStringVector(internalVirtualEnergy);
+  this->computeExternalVirtualWork(externalVirtualWork);
+  VLOG(1) << "W_ext: " << PetscUtility::getStringVector(externalVirtualWork);
+  
+  
+  
+  this->computeInternalVirtualWork(internalVirtualWork);
+  VLOG(1) << "W_int: " << PetscUtility::getStringVector(internalVirtualWork);
   
   std::vector<double> wExt, wInt;
-  PetscUtility::getVectorEntries(externalVirtualEnergy, wExt);
-  PetscUtility::getVectorEntries(internalVirtualEnergy, wInt);
+  PetscUtility::getVectorEntries(externalVirtualWork, wExt);
+  PetscUtility::getVectorEntries(internalVirtualWork, wInt);
   
   std::stringstream s;
   s << std::endl << "no.  Wext  Wint" << std::endl;
@@ -211,9 +297,9 @@ debug()
     s << i << "   " << wExt[i] << "   " << wInt[i] << std::endl;
   }
   LOG(DEBUG) << s.str();
-  
+#endif  
   LOG(DEBUG) << "------- debug method end, exit------";
-  exit(0);
+  //exit(0);
   
 }
 
@@ -231,19 +317,21 @@ solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
   
-  debug();
-  exit(0);
+  //debug();
   
   bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
   PetscErrorCode ierr;
   
-  Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
-  Vec &residual = this->data_.residual().values();
-  Vec &displacements = this->data_.displacements().values();
-  Vec &externalVirtualEnergy = this->data_.externalVirtualEnergy().values();
+  Mat tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
+  Vec residual = this->data_.residual().values();
+  Vec solverDisplacementVariable = this->data_.displacements().values();
   
-  LOG(DEBUG) << "residual: " << residual;
-  LOG(DEBUG) << "displacements: " << displacements;
+  if (this->data_.computeWithReducedVectors())
+  {
+    residual = this->data_.residualReduced();
+    solverDisplacementVariable = this->data_.displacementsReduced();
+    tangentStiffnessMatrix = this->data_.tangentStiffnessMatrixReduced();
+  }
   
   // create nonlinear solver PETSc context (snes)
   std::shared_ptr<Solver::Nonlinear> nonlinearSolver = this->context_.solverManager()->template solver<Solver::Nonlinear>(this->specificSettings_);
@@ -286,25 +374,27 @@ solve()
   ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
 
   // zero initial values
-  ierr = VecSet(displacements, 0.0); CHKERRV(ierr);
+  ierr = VecSet(solverDisplacementVariable, 0.0); CHKERRV(ierr);
+  
+  debug();
   
   // set prescribed Dirchlet BC displacements values
   applyDirichletBoundaryConditionsInDisplacements();
   
-  VLOG(1) << "Dirichlet BC: indices: " << this->dirichletIndices_ << ", values: " << dirichletValues_ << ", rhsValues: " << rhsValues_;
-  VLOG(1) << "initial values: " << PetscUtility::getStringVector(displacements);
+  VLOG(1) << "Dirichlet BC: indices: " << this->dirichletIndices_ << ", values: " << dirichletValues_;
+  VLOG(1) << "initial values: " << PetscUtility::getStringVector(solverDisplacementVariable);
 
   if (!useAnalyticJacobian)
   {
      LOG(DEBUG) << "compute analytical jacobian to initialize non-zero structure of matrix";
-     callbackJacobianAnalytic(*snes, displacements, tangentStiffnessMatrix, tangentStiffnessMatrix, this);
+     callbackJacobianAnalytic(*snes, solverDisplacementVariable, tangentStiffnessMatrix, tangentStiffnessMatrix, this);
   }
   
   LOG(DEBUG) << "------------------  start solve  ------------------";
   
-  // solve the system nonlinearFunction(displacements) = externalVirtualEnergy
-  // not sure if externalVirtualEnergy and displacements have to be different vectors from the ones used in the provided functions
-  ierr = SNESSolve(*snes, externalVirtualEnergy, displacements); CHKERRV(ierr);
+  // solve the system nonlinearFunction(displacements) = 0
+  // not sure if displacements has to be a different vector from the one used in the provided functions
+  ierr = SNESSolve(*snes, NULL, solverDisplacementVariable); CHKERRV(ierr);
   
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
@@ -320,8 +410,18 @@ solve()
     << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", " 
     << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
   
+  // potentially expand solution vector
+  if (this->data_.computeWithReducedVectors())
+  {
+    expandVector(solverDisplacementVariable, this->data_.displacements().values());
+  }
+  else 
+  {
+    assert(solverDisplacementVariable == this->data_.displacements().values());
+  }
+    
   // update geometry field from displacements, w = alpha*x+y
-  VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), displacements);
+  VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.displacements().values());
 }
   
 };

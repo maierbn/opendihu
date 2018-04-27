@@ -12,5 +12,12 @@
 typedef PetscInt node_no_t;        // type to hold value of node no or number of nodes
 typedef node_no_t element_no_t;       // type to hold value of element no or number of elements
 typedef node_no_t dof_no_t;           // type to hold value of dof no or number of dofs
-typedef std::array<double,2> Vec2;    // 2D vector, note that the type of the second template argument is std::size_t
-typedef std::array<double,3> Vec3;    // 3D vector to store position of a node
+
+template<int D>
+using VecD = std::array<double,D>;     // vector with D entries, actually the type of the 2nd template to std::array is of type std::size_t
+
+typedef VecD<2> Vec2;    // 2D vector
+typedef VecD<3> Vec3;    // 3D vector to store position of a node
+
+template<int D>
+using Tensor2 = std::array<std::array<double,D>,D>;  // two-point tensor of dimension DxD, storage is as vector of column vectors, i.e. column-major

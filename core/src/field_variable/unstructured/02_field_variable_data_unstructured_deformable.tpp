@@ -737,11 +737,11 @@ initializeFromMappings(std::string name, bool isGeometryField,
   
 template<int D, typename BasisFunctionType, int nComponents>
 int FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-getNumberScaleFactors(element_no_t globalElementNo) const
+getNumberScaleFactors(element_no_t elementGlobalNo) const
 {
   
   //! return the node numbers and scale factors of the element
-  return elementToNodeMapping_->getElement(globalElementNo).scaleFactors.size();
+  return elementToNodeMapping_->getElement(elementGlobalNo).scaleFactors.size();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

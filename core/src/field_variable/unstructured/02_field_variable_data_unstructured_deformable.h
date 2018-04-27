@@ -81,7 +81,7 @@ public:
   Vec &values();
   
   //! get the number of scale factors
-  int getNumberScaleFactors(element_no_t globalElementNo) const;
+  int getNumberScaleFactors(element_no_t elementGlobalNo) const;
   
   //! write a exelem file header to a stream, for a particular element
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);

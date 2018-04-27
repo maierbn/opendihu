@@ -14,7 +14,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const 
 {
   EvaluationsType evaluations;
   
-  double s = MathUtility::norm(jacobian[0]);
+  double s = MathUtility::norm<3>(jacobian[0]);
   double integralFactor = 1. / s;
   double diffusionTensor = data.diffusionTensor()[0];
   
@@ -51,13 +51,13 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const 
   MathUtility::Matrix<2,2> diffusionTensor = data.diffusionTensor();
   VLOG(1) << "diffusionTensor: " << diffusionTensor;
   
-  double l1 = MathUtility::length(zeta1);
-  double lh = MathUtility::length(zetah);
+  double l1 = MathUtility::length<3>(zeta1);
+  double lh = MathUtility::length<3>(zetah);
   double beta = acos((zeta1[0]*zetah[0] + zeta1[1]*zetah[1] + zeta1[2]*zetah[2]) / (l1 * lh));
   double alpha = MathUtility::sqr(MathUtility::PI) / (4.*beta);
   
   Vec3 zeta2 = cos(alpha) * zeta1 + sin(alpha) * zetah;
-  double l2 = MathUtility::length(zeta2);
+  double l2 = MathUtility::length<3>(zeta2);
   double l1squared = MathUtility::sqr(l1);
   double l2squared = MathUtility::sqr(l2);
   

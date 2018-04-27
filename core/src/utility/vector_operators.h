@@ -19,6 +19,10 @@ std::array<double,nComponents> operator+(std::array<double,nComponents> vector1,
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vector1, std::array<double,nComponents> vector2);
 
+//! vector multiply operation
+template<std::size_t nComponents>
+std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vector1, double lambda);
+
 //! scalar*vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(double lambda, std::array<double,nComponents> vector);
@@ -30,6 +34,10 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
+
+//! matrix-vector multiplication, note that there is a matrix class with also matrix-vector multiplication. It stores matrices in row-major order, here column-major order is assumed
+template<std::size_t M, std::size_t N>
+std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector);
 
 //! output array content to stream
 template<typename T, std::size_t N>

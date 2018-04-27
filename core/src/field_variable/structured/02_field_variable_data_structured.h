@@ -105,7 +105,7 @@ public:
   virtual std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const {return nullptr;}
   
   //! get the number of scale factors
-  virtual int getNumberScaleFactors(element_no_t globalElementNo) const {return 0;}
+  virtual int getNumberScaleFactors(element_no_t elementGlobalNo) const {return 0;}
   
   
 protected:

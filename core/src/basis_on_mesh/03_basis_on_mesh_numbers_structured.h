@@ -7,6 +7,7 @@
 
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
 #include "mesh/type_traits.h"
+#include "mesh/face_t.h"
 
 namespace BasisOnMesh
 {
@@ -64,6 +65,7 @@ public:
   
   //! get all dofs of a specific node, as array
   void getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode()> &dofGlobalNos) const;
+  
 };
 
 /** class to compute global dof and node no.s, partial specialization for structured mesh, D=3
@@ -87,6 +89,7 @@ public:
   
   //! get all dofs of a specific node, as array
   void getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode()> &dofGlobalNos) const;
+  
 };
 
 

@@ -73,7 +73,7 @@ public:
   virtual std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const = 0;
   
   //! get the number of scale factors
-  virtual int getNumberScaleFactors(element_no_t globalElementNo) const = 0;
+  virtual int getNumberScaleFactors(element_no_t elementGlobalNo) const = 0;
   
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   virtual bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2) = 0;

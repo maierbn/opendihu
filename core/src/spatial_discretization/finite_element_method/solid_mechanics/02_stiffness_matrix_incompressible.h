@@ -122,8 +122,11 @@ public:
   //! copy all values that are not constrained by dirichlet BC nor are z-displacements for 2D problems from the input to the output vector
   void reduceVector(Vec &input, Vec &output);
   
-  //! reverse operation to reduceVector
+  //! reverse operation to reduceVector, adds values of Dirichlet BC
   void expandVector(Vec &input, Vec &output);
+  
+  //! This transforms a 2D mesh input vector to a 3D mesh output vector by inserting 0's. It can only be called for 2D problems.
+  void expandVectorTo3D(Vec &input, Vec &output);
   
   //! compute and return the appropriate analytical stiffness matrix
   void computeAnalyticalStiffnessMatrix(Mat &solverStiffnessMatrix);

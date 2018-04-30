@@ -31,7 +31,7 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   // get pointer to mesh object
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
-  const int D = BasisOnMeshType::dim();  // = 3
+  const int D = BasisOnMeshType::dim();  // = 2 or 3
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int nElements = mesh->nElements();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
@@ -98,12 +98,12 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   { 
    
-    // get geometry field of reference configuration
+    // get geometry field of reference configuration, the geometry field is always 3D, also in 2D problems
     std::array<Vec3,nDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
     
     // get displacement field
-    std::array<Vec3,nDofsPerElement> displacementValues;
+    std::array<VecD<D>,nDofsPerElement> displacementValues;
     this->data_.displacements().getElementValues(elementNo, displacementValues);
     
     // loop over integration points (e.g. gauss points) for displacement field
@@ -269,7 +269,7 @@ setStiffnessMatrix(Mat stiffnessMatrix)
             // integrate value and set entry in stiffness matrix
             double integratedValue = integratedValues(i,j);
             
-            // Compute indices in stiffness matrix. For each dof there are D=3 values for the 3 displacement components. 
+            // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components. 
             // Therefore the nDofsPerElement number is not the number of unknows.
             dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
             dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
@@ -286,8 +286,8 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   }  // elementNo
   
   // because this is used in nonlinear solver context, assembly has to be called here, not via data->finalAssembly
-  MatAssemblyBegin(tangentStiffnessMatrix,MAT_FINAL_ASSEMBLY);
-  MatAssemblyEnd(tangentStiffnessMatrix,MAT_FINAL_ASSEMBLY);
+  ierr = MatAssemblyBegin(tangentStiffnessMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(tangentStiffnessMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   
   if (!tangentStiffnessMatrixInitialized_)
   {
@@ -295,13 +295,13 @@ setStiffnessMatrix(Mat stiffnessMatrix)
     VLOG(3) << "number dirichletIndices: " << dirichletIndices_.size();
     
     // zero rows and columns for which Dirichlet BC is set 
-    MatZeroRowsColumns(tangentStiffnessMatrix, dirichletIndices_.size(), dirichletIndices_.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE);
+    ierr = MatZeroRowsColumns(tangentStiffnessMatrix, dirichletIndices_.size(), dirichletIndices_.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE); CHKERRV(ierr);
   
     VLOG(3) << "tangent stiffness matrix after zero rows columns: " << PetscUtility::getStringMatrix(tangentStiffnessMatrix);
     
     // set option that all insert/add operations to new nonzero locations will be discarded. This keeps the nonzero structure forever.
     // (The diagonal entries will be set to different values, but that doesn't matter because the Dirichlet values for updates are 0 and thus independent of the diagonal scaling (d*Δx=0 -> Δx=0 independent of d))
-    MatSetOption(tangentStiffnessMatrix, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+    ierr = MatSetOption(tangentStiffnessMatrix, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE); CHKERRV(ierr);
     
     tangentStiffnessMatrixInitialized_ = true;
   }
@@ -387,11 +387,11 @@ computeInternalVirtualWork(Vec &resultVec)
   // get pointer to mesh object
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
-  const int D = BasisOnMeshType::dim();  // = 3
+  const int D = BasisOnMeshType::dim();  // = 2 or 3
   //const int nDofs = mesh->nDofs();
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int nElements = mesh->nElements();
-  const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
+  const int nUnknowsPerElement = nDofsPerElement*D;    // D directions for displacements per dof
   
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
@@ -413,21 +413,15 @@ computeInternalVirtualWork(Vec &resultVec)
   //const PetscScalar *result;
   //VecGetArray(resultVec, &result);
   
-  // log file for PK2 stress
-  std::ofstream pk2file("pk2.txt", std::ios::out | std::ios::binary);
-  if (!pk2file.is_open())
-    LOG(FATAL) << "could not open pk2.txt";
-  pk2file << "#PK2 stress, xi" << std::endl;
-  
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   { 
-    // get geometry field of reference configuration
+    // get geometry field of reference configuration, note the dimension of the vecs is always 3 also for 2D problems
     std::array<Vec3,nDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
     
     // get displacement field
-    std::array<Vec3,nDofsPerElement> displacementValues;
+    std::array<VecD<D>,nDofsPerElement> displacementValues;
     this->data_.displacements().getElementValues(elementNo, displacementValues);
     
     // loop over integration points (e.g. gauss points) for displacement field
@@ -510,8 +504,6 @@ computeInternalVirtualWork(Vec &resultVec)
           << ", F12,F13,F23: " << deformationGradient[1][0] << "," << deformationGradient[2][0] << "," << deformationGradient[2][1]
           << ", J: " << deformationGradientDeterminant << ", p: " << artificialPressure;
       
-      pk2file << PK2Stress << " " << xi << std::endl;
-      
       if (VLOG_IS_ON(2))
       {
         Tensor2<D> greenLangrangeStrain = this->computeGreenLagrangeStrain(rightCauchyGreen);
@@ -567,8 +559,6 @@ computeInternalVirtualWork(Vec &resultVec)
       }  // L
     }  // function evaluations
     
-    pk2file.close();
-    
     // integrate all values for result vector entries at once
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
     
@@ -587,9 +577,9 @@ computeInternalVirtualWork(Vec &resultVec)
         // integrate value and set entry in stiffness matrix
         double integratedValue = integratedValues[i];
         
-        // Compute indices in stiffness matrix. For each dof there are 3 values for the 3 displacement components, even if D=2
+        // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[aDof]*3 + aComponent;
+        dof_no_t resultVectorIndex = dofNo[aDof]*D + aComponent;
         
         //VLOG(2) << "  result vector "<<aDof<<","<<aComponent<<" = " <<i<<", dof " << dofNo[aDof];
         //VLOG(2) << "      vector index "<<resultVectorIndex<<", integrated value: "<<integratedValue;
@@ -626,7 +616,7 @@ computeExternalVirtualWork(Vec &resultVec)
   // get pointer to mesh object
   std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
   
-  const int D = BasisOnMeshType::dim();  // = 3
+  const int D = BasisOnMeshType::dim();  // = 2 or 3
   //const int nDofs = mesh->nDofs();
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   //const int nElements = mesh->nElements();
@@ -707,9 +697,9 @@ computeExternalVirtualWork(Vec &resultVec)
         // get integrated value
         double integratedValue = integratedValues[i];
         
-        // Compute indices in result vector. For each dof there are 3 values for the 3 displacement components, even for D=2. 
+        // Compute indices in result vector. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*3 + dofComponent;
+        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
         
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         
@@ -725,7 +715,7 @@ computeExternalVirtualWork(Vec &resultVec)
     int elementNo = iter->first;
     VecD<D> forceVector = iter->second;
     
-    // get geometry field of reference configuration
+    // get geometry field of reference configuration, this is always 3D
     std::array<Vec3,nDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
     
@@ -775,9 +765,9 @@ computeExternalVirtualWork(Vec &resultVec)
         // get integrated value
         double integratedValue = integratedValues[i];
         
-        // Compute indices in result vector. For each dof there are 3 values for the 3 displacement components, even for D=2.
+        // Compute indices in result vector. For each dof there are D values for the D displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*3 + dofComponent;
+        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
         
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         
@@ -862,9 +852,9 @@ computeExternalVirtualWork(Vec &resultVec)
         
         LOG(DEBUG) << "  dof " << dofIndex << ", component " << dofComponent << " integrated value: " << integratedValue;
         
-        // Compute indices in result vector. For each dof there are 3 values for the 3 displacement components, even for D=2.
+        // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*3 + dofComponent;
+        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
         
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         
@@ -884,12 +874,12 @@ computeExternalVirtualWork(Vec &resultVec)
     */
     element_no_t elementNo = iter->elementGlobalNo;
     
-    // get geometry field of reference configuration
+    // get geometry field of reference configuration, this is always 3D also for 2D problems
     std::array<Vec3,nDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
     
     // get displacement field
-    std::array<Vec3,nDofsPerElement> displacementValues;
+    std::array<VecD<D>,nDofsPerElement> displacementValues;
     this->data_.displacements().getElementValues(elementNo, displacementValues);
     
     // loop over integration points (e.g. gauss points)
@@ -974,9 +964,9 @@ computeExternalVirtualWork(Vec &resultVec)
         // get integrated value
         double integratedValue = integratedValues[i];
         
-        // Compute indices in result vector. For each dof there are 3 values for the 3 displacement components, even for D=2.
+        // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*3 + dofComponent;
+        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
         
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         
@@ -1406,14 +1396,8 @@ void FiniteElementMethodStiffnessMatrix<
 reduceVector(Vec &input, Vec &output)
 {
   // compute number of reduced dofs
-  const int nDofs = this->data_.mesh()->nDofs() * 3;
-  int nDofsReduced = nDofs - this->dirichletValues_.size();
-  
-  // for 2D problems fix 3rd displacement values to 0
-  if (BasisOnMeshType::dim() == 2)
-  {
-    nDofsReduced -= this->data_.mesh()->nDofs();
-  }
+  const int D = BasisOnMeshType::dim();
+  const int nDofs = this->data_.mesh()->nDofs() * D;
   
   const double *inputData;
   double *outputData;
@@ -1432,19 +1416,12 @@ reduceVector(Vec &input, Vec &output)
       continue;
     }
     
-    // for 2D problems exclude every 3rd entry that corresponds to z-displacements
-    if (BasisOnMeshType::dim() == 2 && currentDofNo % 3 == 2)
-    {
-      continue;
-    }
-    
     outputData[reducedIndex++] = inputData[currentDofNo];
   }
   
   VecRestoreArrayRead(input, &inputData);
   VecRestoreArray(output, &outputData);
 }
-
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<
@@ -1458,14 +1435,8 @@ void FiniteElementMethodStiffnessMatrix<
 expandVector(Vec &input, Vec &output)
 {
   // compute number of reduced dofs
-  const int nDofs = this->data_.mesh()->nDofs() * 3;
-  int nDofsReduced = nDofs - this->dirichletValues_.size();
-  
-  // for 2D problems fix 3rd displacement values to 0
-  if (BasisOnMeshType::dim() == 2)
-  {
-    nDofsReduced -= this->data_.mesh()->nDofs();
-  }
+  const int D = BasisOnMeshType::dim();
+  const int nDofs = this->data_.mesh()->nDofs() * D;
   
   const double *inputData;
   double *outputData;
@@ -1488,14 +1459,44 @@ expandVector(Vec &input, Vec &output)
       continue;
     }
     
-    // for 2D problems exclude every 3rd entry that corresponds to z-displacements
-    if (BasisOnMeshType::dim() == 2 && currentDofNo % 3 == 2)
+    outputData[currentDofNo] = inputData[reducedIndex++];
+  }
+  
+  VecRestoreArrayRead(input, &inputData);
+  VecRestoreArray(output, &outputData);
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodStiffnessMatrix<
+  BasisOnMeshType,
+  QuadratureType,
+  Term,
+  typename BasisOnMeshType::Mesh,
+  Equation::isIncompressible<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+>::
+expandVectorTo3D(Vec &input, Vec &output)
+{
+  // compute number of reduced dofs
+  assert(BasisOnMeshType::dim() == 2);
+  const int nDofs = this->data_.mesh()->nDofs() * 3;
+  
+  const double *inputData;
+  double *outputData;
+  VecGetArrayRead(input, &inputData);
+  VecGetArray(output, &outputData);
+  
+  dof_no_t reducedIndex = 0;
+  for (dof_no_t currentDofNo = 0; currentDofNo < nDofs; currentDofNo++)
+  {
+    if (currentDofNo % 3 == 2)
     {
       outputData[currentDofNo] = 0.0;
-      continue;
     }
-    
-    outputData[currentDofNo] = inputData[reducedIndex++];
+    else 
+    {
+      outputData[currentDofNo] = inputData[reducedIndex++];
+    }
   }
   
   VecRestoreArrayRead(input, &inputData);
@@ -1545,22 +1546,6 @@ applyDirichletBoundaryConditionsInDisplacements()
     // set entries of Dirichlet BCs to specified values
     ierr = VecSetValues(this->data_.displacements().values(), dirichletIndices_.size(), dirichletIndices_.data(), dirichletValues_.data(), INSERT_VALUES); CHKERRV(ierr);
     
-    // for 2D problems fix 3rd displacement values to 0
-    if (BasisOnMeshType::dim() == 2)
-    {
-      const int nDofs = this->data_.mesh()->nDofs() * 3;
-      std::vector<int> indices;
-      std::vector<double> zeros(nDofs, 0.0);
-      
-      indices.reserve(nDofs);
-      for (int i = 2; i < nDofs; i += 3)
-      {
-        indices.push_back(i);
-      }
-      VLOG(1) << "(indices: " << indices << ")";
-      ierr = VecSetValues(this->data_.displacements().values(), indices.size(), indices.data(), zeros.data(), INSERT_VALUES); CHKERRV(ierr);  
-    }
-    
     VLOG(1) << "after applying Dirichlet BC displacements u:" << PetscUtility::getStringVector(this->data_.displacements().values());
   }
 }
@@ -1582,17 +1567,6 @@ applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix)
     // zero rows and columns for which Dirichlet BC is set 
     PetscErrorCode ierr;
     ierr = MatZeroRowsColumns(matrix, dirichletIndices_.size(), dirichletIndices_.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE); CHKERRV(ierr);
-  
-    // for 2D problems clear also every 3rd entry which corresponds to z displacements
-    if (BasisOnMeshType::dim() == 2)
-    {
-      std::vector<int> indices(this->data_.mesh()->nDofs());
-      for (dof_no_t i = 0; i < this->data_.mesh()->nDofs(); i++)
-      {
-        indices[i] = i*3 + 2;
-      }
-      ierr = MatZeroRowsColumns(matrix, this->data_.mesh()->nDofs(), indices.data(), 1.0, PETSC_IGNORE, PETSC_IGNORE); CHKERRV(ierr);
-    }
   }
 }
   
@@ -1607,11 +1581,51 @@ void FiniteElementMethodStiffnessMatrix<
 >::
 reduceMatrix(Mat &input, Mat &output)
 {
-  // TODO
-  //std::vector<int> 
- 
-  //ierr = ISCreateGeneral(PETSC_COMM_WORLD,PetscInt n,const PetscInt idx[],PetscCopyMode mode,IS *is)
-  //ierr = MatGetSubMatrix(input, isrow, iscol, MAT_REUSE_MATRIX, &output); CHKERRV(ierr);
+  // compute number of reduced dofs
+  const int D = BasisOnMeshType::dim();
+  const int nDofs = this->data_.mesh()->nDofs() * D;
+  int nDofsReduced = nDofs - this->dirichletValues_.size();
+  
+  std::vector<int> notConstraintIndices;
+  notConstraintIndices.reserve(nDofsReduced);
+  
+  std::vector<dof_no_t>::const_iterator dirichletIndicesIter = dirichletIndices_.begin();
+  
+  for (dof_no_t currentDofNo = 0; currentDofNo < nDofs; currentDofNo++)
+  {
+    // exclude variables for which Dirichlet BC are set
+    if (currentDofNo == *dirichletIndicesIter)
+    {
+      dirichletIndicesIter++;
+      continue;
+    }
+    
+    notConstraintIndices.push_back(currentDofNo);
+  }
+  
+  // create Petsc IS object of the rows and columns to keep
+  IS isrow;
+  PetscErrorCode ierr;
+  ierr = ISCreateGeneral(PETSC_COMM_WORLD, nDofsReduced, notConstraintIndices.data(), PETSC_COPY_VALUES, &isrow); CHKERRV(ierr);
+  
+  VLOG(1) << "non-reduced tangent stiffness matrix: " << PetscUtility::getStringMatrix(input);
+  VLOG(1) << "rows to extract: " << notConstraintIndices << " target matrix object: " << output;
+  
+  // extract reduced matrix to output
+  if (output == PETSC_NULL)
+  {
+    VLOG(1) << "MatGetSubMatrix MAT_INITIAL_MATRIX";
+    ierr = MatGetSubMatrix(input, isrow, isrow, MAT_INITIAL_MATRIX, &output); CHKERRV(ierr);
+    VLOG(1) << "output: " << output;
+  }
+  else
+  {
+    VLOG(1) << "MatGetSubMatrix MAT_REUSE_MATRIX";
+    ierr = MatGetSubMatrix(input, isrow, isrow, MAT_REUSE_MATRIX, &output); CHKERRV(ierr);
+    VLOG(1) << "output: " << output;
+  }
+  
+  VLOG(1) << "reduced tangent stiffness matrix: " << PetscUtility::getStringMatrix(output);
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>

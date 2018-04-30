@@ -79,6 +79,8 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
     object->setDisplacements(x);
   }
   
+  LOG(DEBUG) << "tangentStiffnessMatrix jac: " << jac << ", b: " << b;
+  
   // compute the tangent stiffness matrix
   object->computeAnalyticalStiffnessMatrix(jac);
   
@@ -331,6 +333,8 @@ solve()
     residual = this->data_.residualReduced();
     solverDisplacementVariable = this->data_.displacementsReduced();
     tangentStiffnessMatrix = this->data_.tangentStiffnessMatrixReduced();
+    
+    LOG(DEBUG) << "tangentStiffnessMatrix: " << tangentStiffnessMatrix;
   }
   
   // create nonlinear solver PETSc context (snes)
@@ -339,6 +343,30 @@ solve()
   std::shared_ptr<KSP> ksp = nonlinearSolver->ksp();
   
   assert(snes != nullptr);
+  
+  // zero initial values
+  ierr = VecSet(solverDisplacementVariable, 0.0); CHKERRV(ierr);
+  
+  debug();
+  
+  // set prescribed Dirchlet BC displacements values
+  applyDirichletBoundaryConditionsInDisplacements();
+  
+  VLOG(1) << "Dirichlet BC: indices: " << this->dirichletIndices_ << ", values: " << dirichletValues_;
+  VLOG(1) << "initial values: " << PetscUtility::getStringVector(solverDisplacementVariable);
+
+  if (!useAnalyticJacobian || (useAnalyticJacobian && this->data_.computeWithReducedVectors()))
+  {
+     LOG(DEBUG) << "compute analytical jacobian to initialize non-zero structure of matrix";
+     
+     // set the displacement variables to the initial values
+     setDisplacements(solverDisplacementVariable);
+     
+     // compute tangent stiffness matrix for the first time. This constructs and initialized a Petsc Mat in tangentStiffnessMatrix which will be used for all further computeJacobianAnalytic calls
+     computeAnalyticalStiffnessMatrix(tangentStiffnessMatrix);
+     
+     LOG(DEBUG) << "done, now object is " << tangentStiffnessMatrix;
+  }
   
   typedef FiniteElementMethodStiffnessMatrix<
     BasisOnMeshType,
@@ -361,7 +389,7 @@ solve()
   if (useAnalyticJacobian)
   {
     ierr = SNESSetJacobian(*snes, tangentStiffnessMatrix, tangentStiffnessMatrix, callbackJacobianAnalytic, this); CHKERRV(ierr);
-    LOG(DEBUG) << "Use analytical jacobian";
+    LOG(DEBUG) << "Use analytical jacobian: " << tangentStiffnessMatrix;
   }
   else 
   {
@@ -373,23 +401,6 @@ solve()
   // set monitor function  
   ierr = SNESMonitorSet(*snes, callbackMonitorFunction, this, NULL); CHKERRV(ierr);
 
-  // zero initial values
-  ierr = VecSet(solverDisplacementVariable, 0.0); CHKERRV(ierr);
-  
-  debug();
-  
-  // set prescribed Dirchlet BC displacements values
-  applyDirichletBoundaryConditionsInDisplacements();
-  
-  VLOG(1) << "Dirichlet BC: indices: " << this->dirichletIndices_ << ", values: " << dirichletValues_;
-  VLOG(1) << "initial values: " << PetscUtility::getStringVector(solverDisplacementVariable);
-
-  if (!useAnalyticJacobian)
-  {
-     LOG(DEBUG) << "compute analytical jacobian to initialize non-zero structure of matrix";
-     callbackJacobianAnalytic(*snes, solverDisplacementVariable, tangentStiffnessMatrix, tangentStiffnessMatrix, this);
-  }
-  
   LOG(DEBUG) << "------------------  start solve  ------------------";
   
   // solve the system nonlinearFunction(displacements) = 0
@@ -420,8 +431,21 @@ solve()
     assert(solverDisplacementVariable == this->data_.displacements().values());
   }
     
-  // update geometry field from displacements, w = alpha*x+y
-  VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.displacements().values());
-}
+  // update geometry field from displacements
+  if (BasisOnMeshType::dim() == 2)  // 2D problem
+  {
+    // expand 2D vector to 3D vector fullIncrement
+    expandVectorTo3D(this->data_.displacements().values(), this->data_.fullIncrement());
+      
+    // w = alpha*x+y  
+    VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.fullIncrement());
+  }
+  else  // 3D problem
+  {
+    // w = alpha*x+y  
+    VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.displacements().values());
+  }
   
+}
+
 };

@@ -12,7 +12,7 @@ namespace SpatialDiscretization
 
 template<typename BasisOnMeshType, typename Term>
 Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+computeDeformationGradientParameterSpace(const std::array<VecD<BasisOnMeshType::dim()>,BasisOnMeshType::nDofsPerElement()> &displacement,
                                          const std::array<double, BasisOnMeshType::dim()> xi)
 {
  
@@ -45,13 +45,13 @@ computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::
 
 template<typename BasisOnMeshType, typename Term>
 Tensor2<BasisOnMeshType::dim()> SolidMechanicsUtility<BasisOnMeshType, Term>:: 
-computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+computeDeformationGradient(const std::array<VecD<BasisOnMeshType::dim()>,BasisOnMeshType::nDofsPerElement()> &displacement,
                            const Tensor2<BasisOnMeshType::dim()> &inverseJacobianMaterial,
                            const std::array<double, BasisOnMeshType::dim()> xi
                           )
 {
   // compute the deformation gradient x_i,j = d_ij + u_i,j
-  // where j is dimensionColumn and i is component of the used Vec3's
+  // where j is dimensionColumn and i is component of the used VecD's
   
  
   VLOG(3) << "compute deformation gradient Fij, displacements: " << displacement;
@@ -123,7 +123,7 @@ computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElemen
       
       // multiply dphi/dxi with dxi/dX to obtain dphi/dX
       VLOG(3) << "   displ_M: " << displacement[dofIndex];
-      du_dX += dphi_dX * MathUtility::transformToD<D,3>(displacement[dofIndex]);   // vector-valued addition
+      du_dX += dphi_dX * displacement[dofIndex];   // vector-valued addition
     }
     VLOG(3) << " du_dXj: " << du_dX;
     

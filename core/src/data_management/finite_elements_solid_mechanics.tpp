@@ -28,7 +28,7 @@ using FiniteElementsSolidMechanics = FiniteElements<
  
 template<typename BasisOnMeshType,typename Term>
 FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
+FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context), computeWithReducedVectors_(true)
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
   //PythonUtility::printDict(this->context_.getPythonConfig());
@@ -86,29 +86,37 @@ template<typename BasisOnMeshType,typename Term>
 dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 nUnknowns()
 {
-  return this->mesh_->nNodes() * 3;  // 3 components for displacements
+  return this->mesh_->nNodes() * BasisOnMeshType::dim();  // D components for displacements
 }
 
 template<typename BasisOnMeshType,typename Term>
 void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 createPetscObjects()
 {
+  const int D = BasisOnMeshType::dim();
+ 
   // dimension of the tangent stiffness matrix
-  dof_no_t n = this->mesh_->nDofs()*3;
+  dof_no_t n = this->mesh_->nDofs()*D;
   
   LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, dimension of tangent stiffness matrix: "<<n<<"x"<<n<<"";
   
-  this->residual_ = this->mesh_->template createFieldVariable<3>("residual");
-  this->externalVirtualWork_ = this->mesh_->template createFieldVariable<3>("externalVirtualWork");
-  this->internalVirtualWork_ = this->mesh_->template createFieldVariable<3>("internalVirtualWork");
-  this->increment_ = this->mesh_->template createFieldVariable<3>("increment");
-  this->displacements_ = this->mesh_->template createFieldVariable<3>("displacements");
+  this->residual_ = this->mesh_->template createFieldVariable<D>("residual");
+  this->externalVirtualWork_ = this->mesh_->template createFieldVariable<D>("externalVirtualWork");
+  this->internalVirtualWork_ = this->mesh_->template createFieldVariable<D>("internalVirtualWork");
+  this->increment_ = this->mesh_->template createFieldVariable<D>("increment");
+  this->displacements_ = this->mesh_->template createFieldVariable<D>("displacements");
   this->geometryReference_ = this->mesh_->template createFieldVariable<3>("geometryReference");
   
   // set geometryReference to be the same as the initial geometry field
   this->geometryReference_->setValues(this->mesh_->geometryField());
   
+  // create a 3D vector
   PetscErrorCode ierr;
+  if (BasisOnMeshType::dim() == 2)
+  {
+    ierr = VecDuplicate(this->mesh_->geometryField().values(), &fullIncrement_); CHKERRV(ierr);
+  }
+  
   // create PETSc matrix object
   
   // PETSc MatCreateAIJ parameters
@@ -122,30 +130,20 @@ createPetscObjects()
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
   
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
+  ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE, PETSC_DECIDE, n, n); CHKERRV(ierr);
+  ierr = MatSetFromOptions(this->tangentStiffnessMatrix_); CHKERRV(ierr);
+
+
+  // dense matrix
+  //ierr = MatSetUp(this->tangentStiffnessMatrix_); CHKERRV(ierr);
+  
   // sparse matrix
-  if (true)
-  {
-    ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
-    ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE, PETSC_DECIDE, n, n); CHKERRV(ierr);
-    ierr = MatSetFromOptions(this->tangentStiffnessMatrix_); CHKERRV(ierr);
-
-
-    //ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n, 
-    //                  diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
-    ierr = MatMPIAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatSeqAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
-  }
+  ierr = MatMPIAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+  ierr = MatSeqAIJSetPreallocation(this->tangentStiffnessMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+  
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
   ierr = MatSetOption(this->tangentStiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
-  
-  // dense matrix
-  if(false)
-  {
-    ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_);  CHKERRV(ierr);
-    ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE,PETSC_DECIDE, n, n);  CHKERRV(ierr);
-    ierr = MatSetFromOptions(this->tangentStiffnessMatrix_); CHKERRV(ierr);
-    ierr = MatSetUp(this->tangentStiffnessMatrix_); CHKERRV(ierr);
-  }
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -158,11 +156,13 @@ finalAssembly()
   
   ierr = MatAssemblyEnd(this->tangentStiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   
+  /*
   if (computeWithReducedVectors_)
   {
     ierr = MatAssemblyBegin(this->tangentStiffnessMatrixReduced_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
     ierr = MatAssemblyEnd(this->tangentStiffnessMatrixReduced_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   }
+  */
   
   LOG(DEBUG) << "finalAssembly";
 }
@@ -182,7 +182,7 @@ tangentStiffnessMatrixReduced()
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 residual()
 {
   return *this->residual_;
@@ -203,28 +203,28 @@ geometryReference()
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 displacements()
 {
   return *this->displacements_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 rightHandSide()
 {
   return *this->externalVirtualWork_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 externalVirtualWork()
 {
   return *this->externalVirtualWork_;
 }
 
 template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 internalVirtualWork()
 {
   return *this->internalVirtualWork_;
@@ -371,6 +371,13 @@ residualReduced()
 }
 
 template<typename BasisOnMeshType,typename Term>
+Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+fullIncrement()
+{
+  return fullIncrement_;
+}
+
+template<typename BasisOnMeshType,typename Term>
 void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 initializeReducedVariables(int nDofsReduced)
 {
@@ -395,6 +402,11 @@ initializeReducedVariables(int nDofsReduced)
     ierr = VecSetFromOptions(this->rhsReduced_);  CHKERRV(ierr);
     ierr = VecSetFromOptions(this->residualReduced_);  CHKERRV(ierr);
     
+    // set tangentStiffnessMatrixReduced_ to NULL, it is initialized the first time it is reduced from the full matrix using MatGetSubMatrix
+    this->tangentStiffnessMatrixReduced_ = PETSC_NULL;
+    
+    /*
+      
     // initialize reduced tangent stiffness matrix
     int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
     int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
@@ -412,6 +424,7 @@ initializeReducedVariables(int nDofsReduced)
   
     // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
     ierr = MatSetOption(this->tangentStiffnessMatrixReduced_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
+    */
   }
 }
   

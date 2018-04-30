@@ -16,15 +16,14 @@ class SolidMechanicsUtility
 public:
 
 protected:
-  typedef std::array<double, BasisOnMeshType::dim()> VecD;   //< D dimensional vector
-  
+ 
   //! compute the deformation gradient, F = du/dX, from the displacements and jacobian data of an element at point in parameter space xi. Note that the derivative is w.r.t X, i.e. reference configuration and not parameter space.
-  Tensor2<BasisOnMeshType::dim()> computeDeformationGradient(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+  Tensor2<BasisOnMeshType::dim()> computeDeformationGradient(const std::array<VecD<BasisOnMeshType::dim()>,BasisOnMeshType::nDofsPerElement()> &displacement,
                                                                      const Tensor2<BasisOnMeshType::dim()> &inverseJacobianMaterial,
                                                                      const std::array<double, BasisOnMeshType::dim()> xi);
   
   //! compute the deformation gradient w.r.t parameter space, F = du/dxi, at point xi in parameter space. This is not used for FE, because there we need the deformation gradient w.r.t X
-  Tensor2<BasisOnMeshType::dim()> computeDeformationGradientParameterSpace(const std::array<Vec3,BasisOnMeshType::nDofsPerElement()> &displacement,
+  Tensor2<BasisOnMeshType::dim()> computeDeformationGradientParameterSpace(const std::array<VecD<BasisOnMeshType::dim()>,BasisOnMeshType::nDofsPerElement()> &displacement,
                                                                                    const std::array<double, BasisOnMeshType::dim()> xi); 
   //! compute right cauchy green tensor, C
   Tensor2<BasisOnMeshType::dim()> computeRightCauchyGreenTensor(const Tensor2<BasisOnMeshType::dim()> &deformationGradient);

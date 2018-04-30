@@ -13,6 +13,9 @@ template<int D,typename BasisFunctionType,typename Term>
 void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
 writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
+  // TODO: change to data.OutputFieldVariables instead of data.solution
+ 
+ /*
   LOG(TRACE) << "writeNumpySolution RegularFixed, D="<<D;
   
   // solution and rhs vectors in mesh shape
@@ -44,6 +47,7 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   writeToNumpyFile(vectorValues, filenameSolutionShaped, nEntries);
   
   writeMatrices(data, filename);
+  */
 }
 
 template<int D,typename BasisFunctionType,typename Term>
@@ -108,6 +112,9 @@ template<typename DataType>
 void PythonStiffnessMatrixWriter<DataType>::
 writeNumpySolution(DataType &data, std::string filename)
 {
+ // TODO: change to data.OutputFieldVariables instead of data.solution
+ 
+ /*
   // determine file names
   std::stringstream s;
   s << filename << "_solution.npy";
@@ -122,6 +129,7 @@ writeNumpySolution(DataType &data, std::string filename)
   
   // write to a file
   writeToNumpyFile(values, filenameSolution, nEntries);
+  */
 }
 
 };   // namespace

@@ -1,19 +1,24 @@
 # 2D Incompressible Material
 #
-# command arguments: <name> <number elements>
+# command arguments: <analytical jacobian> <name>
 
 import numpy as np
 import scipy.integrate
 import sys
 
 name = ""
+analytical_jacobian = True
 
-if len(sys.argv) > 0:
+print(sys.argv)
+
+if len(sys.argv) > 1:
   if "check_results.py" not in sys.argv[0]:
-    name = sys.argv[0]
+    analytical_jacobian = True if int(sys.argv[0]) == 1 else False
+    name = sys.argv[1]
     
     print("name: \"{}\"".format(name))
-
+    print("analytical jacobian: {}".format(analytical_jacobian))
+    
 nx = 1
 ny = 1
 # [1,1] = 1 element, 4 dofs per element, 4 dofs, 8 unknowns
@@ -58,13 +63,14 @@ config = {
     "relativeTolerance": 1e-15,
     #"rightHandSide": traction,  # surface traction T or body force B, both in material description
     "materialParameters": material_parameters,  # c0, c1, kappa
-    "analyticJacobian": False,   # False = compute Jacobian by finite differences
+    "analyticJacobian": analytical_jacobian,   # False = compute Jacobian by finite differences
+      
+    "OutputWriter" : [
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
+      {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
+    ]
   },
-  "OutputWriter" : [
-    #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-    #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
-    {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
-  ]
 }
 
 # output config in a readable format

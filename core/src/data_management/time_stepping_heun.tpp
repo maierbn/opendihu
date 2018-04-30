@@ -36,17 +36,20 @@ TimeSteppingHeun<BasisOnMeshType,nComponents>::
 
 template<typename BasisOnMeshType,int nComponents>
 void TimeSteppingHeun<BasisOnMeshType,nComponents>::
-createPetscObjects() : TimeStepping::createPetscObjects()
-{
+createPetscObjects()
+{ 
+  // initialize solution and increment variable by parental method
+  TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects();
+
   LOG(DEBUG)<<"TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
-  this->intermediate_increment_ = this->mesh_->template createFieldVariable<nComponents>("intermediate_increment");
+  this->intermediateIncrement_ = this->mesh_->template createFieldVariable<nComponents>("intermediateIncrement");
 }
 
 template<typename BasisOnMeshType,int nComponents>
 FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeSteppingHeun<BasisOnMeshType,nComponents>:: // hier unsicher ob "&TimeSteppingHeun" oder "&TimeStepping".
-intermediate_increment()
+intermediateIncrement()
 {
-  return *this->intermediate_increment_;
+  return *this->intermediateIncrement_;
 }
 
 
@@ -60,9 +63,9 @@ print() // use override in stead of extending the parents' print output.This way
   VLOG(4)<<"======================";
   
   int nEntries;
-  VecGetSize(this->intermediate_increment_->values(), &nEntries);
-  VLOG(4)<<"intermediate_increment ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->intermediate_increment_->values());
+  VecGetSize(this->intermediateIncrement_->values(), &nEntries);
+  VLOG(4)<<"intermediateIncrement ("<<nEntries<<" entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->intermediateIncrement_->values());
   VLOG(4)<<"======================";
   
   VecGetSize(this->increment_->values(), &nEntries);

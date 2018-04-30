@@ -12,6 +12,7 @@ template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) : 
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "Heun")
 {
+  this->data_ = std::make_shared <Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
   this->outputWriterManager_.initialize(this->specificSettings_);

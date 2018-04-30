@@ -12,7 +12,6 @@ TimeSteppingSchemeOde<DiscretizableInTimeType>::
 TimeSteppingSchemeOde(DihuContext context, const std::string name) : 
   TimeSteppingScheme(context), discretizableInTime_(context[name])
 {
-  std::make_shared <Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()>>(context);
 }
 
 template<typename DiscretizableInTimeType>

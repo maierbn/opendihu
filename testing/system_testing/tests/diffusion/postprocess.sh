@@ -22,7 +22,7 @@ for name in \
   "2d_structured_regular_fixed_quadratic" \
   "2d_structured_regular_fixed_hermite" \
   "2d_structured_deformable_linear" \
-  "2d_structured_deformable_linear" \
+  "2d_structured_deformable_quadratic" \
   "2d_structured_deformable_hermite" \
   "2d_unstructured_deformable_linear" \
   "2d_unstructured_deformable_quadratic" \

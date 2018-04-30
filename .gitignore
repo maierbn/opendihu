@@ -21,3 +21,4 @@ build_release
 *.synctex.gz
 *.toc
 *[conflicted*
+*/results/*

@@ -54,7 +54,7 @@ public:
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
   
-private:
+protected:
  
   //! initializes the vectors with size
   virtual void createPetscObjects();

@@ -54,7 +54,7 @@ intermediateIncrement()
 
 
 template<typename BasisOnMeshType,int nComponents>
-void TimeStepping<BasisOnMeshType,nComponents>::
+void TimeSteppingHeun<BasisOnMeshType,nComponents>::
 print() // use override in stead of extending the parents' print output.This way "solution" is still in the end. 
 {
   if (!VLOG_IS_ON(4))

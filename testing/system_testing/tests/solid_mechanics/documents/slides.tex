@@ -1,0 +1,87 @@
+%===============================================================================
+%===============================================================================
+%
+\clearpage
+%
+%
+%
+%======================================================================
+
+\begin{frame}
+\section{Solid Mechanics}
+%
+We assume an incompressible Neo-Hookean material with strain energy function
+%
+\begin{equation}\label{eq:material}
+  \begin{array}{lll}
+    \Psi(I_1) = c_1\,(I_1 - d),
+  \end{array}
+\end{equation}
+%
+where $d \in \{2,3\}$ is the dimensionality of the problem.
+
+\end{frame}
+
+%======================================================================
+
+\begin{frame}
+\subsection{2D Experiment}
+%
+The used parameters are
+\begin{equation*}
+  \begin{array}{lll}
+    c_1 = 1.0, \quad L_x = 1.0, L_y = 1.0, t_\text{max} = 0.5
+  \end{array}
+\end{equation*}
+The discretization parameters are
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{l|l}
+      \textbf{Parameter} & \textbf{Value}\\
+      \hline
+      Number of elements & 1\\
+    \end{tabular}
+  \end{center}
+  \caption{discretization parameters}
+  \label{tab:table_solid_2d}
+\end{table}
+
+\begin{figure}%
+  \centering%
+  \def\svgwidth{0.8\textwidth}%
+  \input{../../tests/solid_mechanics/documents/images/uniaxial_extension_2d.pdf_tex}%
+  \caption{2D uniaxial extension}%
+  \label{fig:uniaxial_extension_2d}%
+\end{figure}%
+
+\end{frame}
+%======================================================================
+
+% path to mp4 files must begin with tests/
+% path to other files (like images) must begin with ../../tests/
+% the final pdf only shows the movies if it is located under opendihu/testing/system_testing/
+
+\begin{frame}
+  \frametitle{Analytical Jacobian}
+  \begin{figure}[h!]
+    \centering    
+    \includegraphics[width=0.5\textwidth]{../../tests/solid_mechanics/results/mooney_rivlin_incompressible_penalty2d_analytical_jacobian.pdf}
+    \caption{\lstinline{mooney_rivlin_incompressible_penalty2d_analytical_jacobian}}
+  \end{figure} 
+  \showlog{../../tests/solid_mechanics/results/log_recent_mooney_rivlin_incompressible_penalty2d_analytical_jacobian.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}
+  \frametitle{Numerical (Finite-Differences) Jacobian}
+  \begin{figure}[h!]
+    \centering    
+    \includegraphics[width=0.5\textwidth]{../../tests/solid_mechanics/results/mooney_rivlin_incompressible_penalty2d_numerical_jacobian.pdf}
+    \caption{\lstinline{mooney_rivlin_incompressible_penalty2d_numerical_jacobian}}
+  \end{figure}
+  \showlog{../../tests/solid_mechanics/results/log_recent_mooney_rivlin_incompressible_penalty2d_numerical_jacobian.txt}
+\end{frame}
+%
+%===============================================================================
+%

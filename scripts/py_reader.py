@@ -83,3 +83,15 @@ def load_data(filenames):
     data.append(dict_from_file)
   return data
 
+
+def get_field_variable_names(data):
+  """
+    get the names of the field variables contained in data
+    :param data: a single dict containing the data
+  """
+  
+  result = []
+  for field_variable in data[u'data']:
+    result.append(field_variable['name'])
+  return result
+  

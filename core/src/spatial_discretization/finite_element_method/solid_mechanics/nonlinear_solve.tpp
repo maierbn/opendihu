@@ -262,10 +262,10 @@ debug()
     LOG(DEBUG) << "solution p value: " << optimalP;
     
     std::vector<double> knownValues = {
-     0.0, 0.0, 0.0, 
-     (lambdaValue-1.0)*lx, 0.0, 0.0,
-     0.0, (1./lambdaValue - 1.0)*ly, 0.0, 
-     (lambdaValue-1.0)*lx, (1./lambdaValue - 1.0)*ly, 0.0
+     0.0, 0.0, 
+     (lambdaValue-1.0)*lx, 0.0,
+     0.0, (1./lambdaValue - 1.0)*ly, 
+     (lambdaValue-1.0)*lx, (1./lambdaValue - 1.0)*ly
     };
     PetscUtility::setVector(knownValues, displacements);
     

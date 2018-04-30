@@ -150,7 +150,7 @@ if dimension == 1:
     while "/" in name:
       name = name[name.find("/")+1:]
       
-    f.write("{} [{}]: {}\n".format(datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'),name,message))
+    f.write("{}: {}\n".format(datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'),message))
   
   # prepare animation
   fig = plt.figure()
@@ -285,7 +285,7 @@ if dimension == 2:
       while "/" in name:
         name = name[name.find("/")+1:]
         
-      f.write("{} [{}]: {}\n".format(datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'),name,message))
+      f.write("{}: {}\n".format(datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'),message))
     
   # prepare animation
   fig = plt.figure()

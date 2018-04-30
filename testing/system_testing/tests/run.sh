@@ -1,10 +1,11 @@
 #!/bin/bash
 
-workdir=$(pwd)
+basedir=$(pwd)
 
 # for all tests
 for name in \
-"diffusion"
+"diffusion" \
+"solid_mechanics"
 do
 
 echo ""
@@ -12,17 +13,17 @@ echo $name
 echo "=================="
 
 # change directory to test directory
-cd $workdir/$name
+cd $basedir/$name
 
 # compile
-../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE
+../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 # run tests and postprocessing
 . run_tests.sh
 . postprocess.sh
 
-# recomple documents
-cd $workdir/../document
-make all
+# recompile documents
+cd $basedir/../document
+make
 
 done

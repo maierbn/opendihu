@@ -1,0 +1,73 @@
+%% Creator: Inkscape inkscape 0.91, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'uniaxial_extension.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{278.45090088bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.51994285)%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{uniaxial_extension.pdf}}%
+    \put(0.18362959,0.48161113){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{ref}$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{uniaxial_extension.pdf}}%
+    \put(0.23994176,0.11222875){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_x$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{uniaxial_extension.pdf}}%
+    \put(-0.00197521,0.30907831){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_z$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{uniaxial_extension.pdf}}%
+    \put(0.05160609,0.4727865){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$L_z$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{uniaxial_extension.pdf}}%
+    \put(0.91658741,0.44065272){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lb]{\smash{\textbf{t}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{uniaxial_extension.pdf}}%
+    \put(0.86772185,0.27478668){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{A}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{uniaxial_extension.pdf}}%
+    \put(0.58115596,0.21907896){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\Omega_\text{current}$}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{uniaxial_extension.pdf}}%
+    \put(0.13228868,0.00197521){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$x$}}}}%
+    \put(0.03101409,0.0766742){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$z$}}}}%
+    \put(0.12263452,0.0766742){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$y$}}}}%
+    %\put(0,0){\includegraphics[width=\unitlength,page=9]{uniaxial_extension.pdf}}%
+    %%
+  \end{picture}%
+\endgroup%

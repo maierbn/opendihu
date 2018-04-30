@@ -63,9 +63,10 @@
 %\usepackage[all]{hypcap}
 %\usepackage{cite}           % Literatur
 \usepackage{graphicx}       % Bilder in Tabellen
+\usepackage{import}
 %\usepackage{float}          % eigene Float-Umgebungen, H-Option, um Bilder an der aktuellen Stelle anzuzeigen
 %\usepackage{caption}
-%\usepackage{subcaption,array}
+\usepackage{subcaption,array}
 %%\usepackage{subcaption}
 %
 %\restylefloat{figure}       % Bilder an der Stelle, wo sie eingebunden werden
@@ -117,6 +118,11 @@
   keepspaces,
   gobble=2,    % remove 2 characters at begin of each line
   mathescape    % wandle $$ in latex um
+}
+
+\definecolor{lightyellow}{HTML}{DDDDFF}
+\newcommand{\showlog}[1]{%
+  \lstinputlisting[breaklines,basicstyle=\tiny,backgroundcolor=\color{yellow}]{#1}%
 }
 
 % Versuche stärker, Abbildungen dort einzubinden, wo sie definiert wurden

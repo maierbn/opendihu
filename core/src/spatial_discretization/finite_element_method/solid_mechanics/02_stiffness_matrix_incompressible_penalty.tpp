@@ -1410,10 +1410,13 @@ reduceVector(Vec &input, Vec &output)
   for (dof_no_t currentDofNo = 0; currentDofNo < nDofs; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
-    if (currentDofNo == *dirichletIndicesIter)
+    if (dirichletIndicesIter != dirichletIndices_.end())
     {
-      dirichletIndicesIter++;
-      continue;
+      if (currentDofNo == *dirichletIndicesIter)
+      {
+        dirichletIndicesIter++;
+        continue;
+      }
     }
     
     outputData[reducedIndex++] = inputData[currentDofNo];
@@ -1450,13 +1453,16 @@ expandVector(Vec &input, Vec &output)
   for (dof_no_t currentDofNo = 0; currentDofNo < nDofs; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
-    if (currentDofNo == *dirichletIndicesIter)
+    if (dirichletIndicesIter != dirichletIndices_.end())
     {
-      outputData[currentDofNo] = *dirichletValuesIter;
-      dirichletIndicesIter++;
-      dirichletValuesIter++;
-      
-      continue;
+      if (currentDofNo == *dirichletIndicesIter)
+      {
+        outputData[currentDofNo] = *dirichletValuesIter;
+        dirichletIndicesIter++;
+        dirichletValuesIter++;
+        
+        continue;
+      }
     }
     
     outputData[currentDofNo] = inputData[reducedIndex++];
@@ -1594,10 +1600,13 @@ reduceMatrix(Mat &input, Mat &output)
   for (dof_no_t currentDofNo = 0; currentDofNo < nDofs; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
-    if (currentDofNo == *dirichletIndicesIter)
+    if (dirichletIndicesIter != dirichletIndices_.end())
     {
-      dirichletIndicesIter++;
-      continue;
+      if (currentDofNo == *dirichletIndicesIter)
+      {
+        dirichletIndicesIter++;
+        continue;
+      }
     }
     
     notConstraintIndices.push_back(currentDofNo);

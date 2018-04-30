@@ -37,7 +37,7 @@ public:
   FieldVariableType &increment();
  
   //! print all stored data to stdout
-  void print();
+  virtual void print();
   
   //! return the number of degrees of freedom per mesh node
   static constexpr int getNDofsPerNode();
@@ -57,10 +57,12 @@ public:
 private:
  
   //! initializes the vectors with size
-  void createPetscObjects();
+  virtual void createPetscObjects();
   
   std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
+  //std::shared_ptr<FieldVariableType> intermediate_increment_;
+  
 };
 
 } // namespace Data

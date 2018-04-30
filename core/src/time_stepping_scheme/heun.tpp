@@ -1,4 +1,4 @@
-#include "time_stepping_scheme/explicit_euler.h"
+#include "time_stepping_scheme/heun.h"
 
 #include <Python.h>
 
@@ -9,22 +9,26 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTime>
-ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) : 
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
+Heun<DiscretizableInTime>::Heun(DihuContext context) : 
+  TimeSteppingSchemeOde<DiscretizableInTime>(context, "Heun")
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ExplicitEuler");
+  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
   this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
+void Heun<DiscretizableInTime>::advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
+  
+  // additional storage needed for delta u* = f(u*): do this with petsc!
+  //std::vector<double> delta_u_star(this->data_->nUnknowns());
+  
  
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
+  LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
   
   // loop over time steps
@@ -36,13 +40,19 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     
     //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     
-    // advance computed value
-    // compute next delta_u = f(u)
+    // advance solution value to compute u* first
+    // compute next delta_u = f(u_{t})
     this->discretizableInTime_.evaluateTimesteppingRightHandSide(
       this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
     
-    // integrate, y += dt * delta_u
+    // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values 
     VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
+    
+    // now, advance solution value to compute u_{t+1}
+    //this->discretizableInTime_.evaluateTimesteppingRightHandSide(
+    //  this->data_->solution().values(), delta_u_star, timeStepNo + 1, currentTime + timeStepWidth);                  // @ Benni: ist das richtig mit "timeStepNo + 1" und "currentTime + timeStepWidth"?
+    
+    // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
     
     // advance simulation time
     timeStepNo++;
@@ -57,7 +67,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::run()
+void Heun<DiscretizableInTime>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }

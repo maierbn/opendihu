@@ -10,8 +10,9 @@ namespace TimeSteppingScheme
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOde<DiscretizableInTimeType>::
 TimeSteppingSchemeOde(DihuContext context, const std::string name) : 
-  TimeSteppingScheme(context), data_(context), discretizableInTime_(context[name])
+  TimeSteppingScheme(context), discretizableInTime_(context[name])
 {
+  std::make_shared <Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()>>(context);
 }
 
 template<typename DiscretizableInTimeType>
@@ -25,8 +26,8 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 setInitialValues()
 {
-  dof_no_t nUnknowns = data_.nUnknowns();
-  Vec &solution = data_.solution().values();
+  dof_no_t nUnknowns = data_->nUnknowns();
+  Vec &solution = data_->solution().values();
  
   // initialize with 0
   PetscErrorCode ierr;
@@ -52,7 +53,7 @@ template<typename DiscretizableInTimeType>
 Vec &TimeSteppingSchemeOde<DiscretizableInTimeType>::
 solution()
 {
-  return data_.solution().values();
+  return data_->solution().values();
 }
 
 template<typename DiscretizableInTimeType>
@@ -66,20 +67,20 @@ initialize()
   discretizableInTime_.initialize();
   
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-  data_.setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
-  data_.initialize();
+  data_->setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
+  data_->initialize();
   
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
   
   // set initial values from settings
   
-  Vec &solution = data_.solution().values();
+  Vec &solution = data_->solution().values();
   
   if (!discretizableInTime_.setInitialValues(solution))
   {
     this->setInitialValues();
   }
-  data_.print();
+  data_->print();
 }
 
 template<typename DiscretizableInTimeType>

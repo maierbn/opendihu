@@ -1,7 +1,7 @@
 #!/bin/bash
 
 variant="debug"
-CHECK_RESULTS=false
+CHECK_RESULTS=true
 mkdir -p results
 
 # for all testcases

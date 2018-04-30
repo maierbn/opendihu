@@ -17,6 +17,7 @@ cd $basedir/$name
 
 # compile
 ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE
 
 # run tests and postprocessing
 . run_tests.sh

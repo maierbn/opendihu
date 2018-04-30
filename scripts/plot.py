@@ -199,6 +199,11 @@ if dimension == 2:
       x_positions = py_reader.get_values(data[0], "geometry", "x")
       y_positions = py_reader.get_values(data[0], "geometry", "y")
       
+      # for hermite basis functions only take every 2nd value
+      if data[0]["basisFunction"] == "Hermite":
+        x_positions = x_positions[::2]
+        y_positions = y_positions[::2]
+      
       X = np.reshape(x_positions, nEntries)
       Y = np.reshape(y_positions, nEntries)
       
@@ -222,6 +227,10 @@ if dimension == 2:
       
       # display data
       solution_shaped = py_reader.get_values(data[i], "solution", "0")
+      
+      if data[0]["basisFunction"] == "Hermite":
+        solution_shaped = solution_shaped[::2]
+      
       try:
         Z = np.reshape(solution_shaped, nEntries)
       except:

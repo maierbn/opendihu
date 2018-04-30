@@ -21,7 +21,9 @@ class TimeSteppingHeun : public TimeStepping<BasisOnMeshType,nComponents>
 {
 public:
 
-  //! constructor
+  typedef FieldVariable::FieldVariable<BasisOnMeshType,nComponents> FieldVariableType;
+  
+//! constructor
   TimeSteppingHeun(DihuContext context);
   
   //! destructur

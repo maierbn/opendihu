@@ -18,7 +18,7 @@ namespace Data
 
 template<typename BasisOnMeshType,int nComponents>
 TimeSteppingHeun<BasisOnMeshType,nComponents>::
-TimeSteppingHeun(DihuContext context) : TimeStepping(context)
+TimeSteppingHeun(DihuContext context) : TimeStepping<BasisOnMeshType,nComponents>::TimeStepping(context)
 {
 }
 

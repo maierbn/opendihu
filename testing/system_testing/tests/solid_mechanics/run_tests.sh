@@ -4,6 +4,7 @@ echo "running example $(pwd)"
 
 workdir=$(pwd)
 variant="debug"
+variant="release"
 
 # change to build directory
 mkdir -p build_${variant}

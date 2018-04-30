@@ -1,6 +1,7 @@
 #!/bin/bash
 
 variant="debug"
+variant="release"
 CHECK_RESULTS=true
 mkdir -p results
 

@@ -2,6 +2,7 @@
 
 # set to debug or release
 variant="debug"
+variant="release"
 mkdir -p results
 
 # for all testcases

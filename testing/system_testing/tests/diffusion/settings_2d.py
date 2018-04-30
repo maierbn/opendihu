@@ -29,7 +29,7 @@ end_time = 0.5
 c = 0.2     # prefactor in equation
 
 if "hermite" in name:
-  end_time = 0.1
+  end_time = 0.05
 
 # set node positions for unstructured mesh
 n_nodes_x = nx+1

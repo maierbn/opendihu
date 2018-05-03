@@ -32,6 +32,9 @@ public:
   //! return a reference to the intermediate increment vector, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariableType &intermediateIncrement();
   
+  // ! return a reference to the intermediate solution vector, the PETSc Vec can be obtained via fieldVariable.values()
+  // FieldVariableType &intermediateSolution(); // don't need this anymore
+  
   //! print all stored data to stdout
   void print() override;
     
@@ -40,8 +43,8 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
   
-  std::shared_ptr<FieldVariableType> intermediateIncrement_; ///< the additional vector for delta u*,
-  
+  std::shared_ptr<FieldVariableType> intermediateIncrement_; ///< the additional vector for delta u*
+  // std::shared_ptr<FieldVariableType> intermediateSolution_; // / < the additional vector for u* // don't need this anymore
 };
 
 } // namespace Data

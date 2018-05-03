@@ -24,11 +24,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
-  
-  // additional storage needed for delta u* = f(u*): do this with petsc!
-  //std::vector<double> delta_u_star(this->data_->nUnknowns());
-  
- 
+   
   LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
   
@@ -42,7 +38,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     
     // advance solution value to compute u* first
-    // compute next delta_u = f(u_{t})
+    // compute  delta_u = f(u_{t})
+    // we call f(u_{t}) the "increment"
     this->discretizableInTime_.evaluateTimesteppingRightHandSide(
       this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
     
@@ -50,10 +47,18 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
     
     // now, advance solution value to compute u_{t+1}
-    //this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-    //  this->data_->solution().values(), delta_u_star, timeStepNo + 1, currentTime + timeStepWidth);                  // @ Benni: ist das richtig mit "timeStepNo + 1" und "currentTime + timeStepWidth"?
+    // compute  delta_u* = f(u*)
+    // we call f(u*) the "intermediateIncrement"
+    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
+      this->data_->solution().values(), this->data_->intermediateIncrement(), timeStepNo + 1, currentTime + timeStepWidth);
     
     // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
+    // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
+    //
+    // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
+    VecAXPY(this->data_->intermediateIncrement().values(),-1.0,this->data_->increment().values());
+    // now compute overall step as described above (#)
+    VecAXPY(this->data_->solution().values(), 0.5*timeStepWidth, this->data_->intermediateIncrement());
     
     // advance simulation time
     timeStepNo++;

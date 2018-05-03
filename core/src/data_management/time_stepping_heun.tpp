@@ -38,17 +38,10 @@ template<typename BasisOnMeshType,int nComponents>
 void TimeSteppingHeun<BasisOnMeshType,nComponents>::
 createPetscObjects()
 { 
-  //LOG(DEBUG)<<"TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
-  // initialize solution and increment variable by parental method
   TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects();
-  //LOG(DEBUG)<<"TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
-  //assert(this->mesh_);
-  //this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
-  //this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
-
+  
   LOG(DEBUG)<<"TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
   this->intermediateIncrement_ = this->mesh_->template createFieldVariable<nComponents>("intermediateIncrement");
-  // this->intermediateSolution_ = this->mesh_->template createFieldVariable<nComponents>("intermediateSolution");
 }
 
 template<typename BasisOnMeshType,int nComponents>

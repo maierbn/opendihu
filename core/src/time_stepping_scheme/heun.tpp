@@ -1,7 +1,7 @@
 #include "time_stepping_scheme/heun.h"
 
 #include <Python.h>
-
+#include <memory>
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 
@@ -27,6 +27,10 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
    
   LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
+    
+  // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
+  std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>> dataHeun 
+    = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(this->data_); 
   
   // loop over time steps
   double currentTime = this->startTime_;
@@ -50,15 +54,15 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // compute  delta_u* = f(u*)
     // we call f(u*) the "intermediateIncrement"
     this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_->solution().values(), this->data_->intermediateIncrement(), timeStepNo + 1, currentTime + timeStepWidth);
+      this->data_->solution().values(), dataHeun->intermediateIncrement().values(), timeStepNo + 1, currentTime + timeStepWidth);
     
     // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
     // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
-    VecAXPY(this->data_->intermediateIncrement().values(),-1.0,this->data_->increment().values());
+    VecAXPY( dataHeun->intermediateIncrement().values(),-1.0,this->data_->increment().values());
     // now compute overall step as described above (#)
-    VecAXPY(this->data_->solution().values(), 0.5*timeStepWidth, this->data_->intermediateIncrement());
+    VecAXPY(this->data_->solution().values(), 0.5*timeStepWidth,  dataHeun->intermediateIncrement().values());
     
     // advance simulation time
     timeStepNo++;

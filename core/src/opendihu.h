@@ -22,6 +22,7 @@
 
 #include "time_stepping_scheme/crank_nicholson.h"
 #include "time_stepping_scheme/explicit_euler.h"
+#include "time_stepping_scheme/heun.h"
 
 #include "model_order_reduction/pod.h"
 

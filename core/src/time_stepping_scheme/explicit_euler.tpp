@@ -12,6 +12,7 @@ template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) : 
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
 {
+  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ExplicitEuler");
   this->outputWriterManager_.initialize(this->specificSettings_);
@@ -34,25 +35,25 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
     
-    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_.solution().values());
+    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_.solution().values(), this->data_.increment().values(), timeStepNo, currentTime);
+      this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
     
     // integrate, y += dt * delta_u
-    VecAXPY(this->data_.solution().values(), timeStepWidth, this->data_.increment().values());
+    VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
     
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_.solution().values());
+    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     // write current output values
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
     
-    //this->data_.print();
+    //this->data_->print();
   }
 }
 

@@ -129,7 +129,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   std::array<int,nDofsPerElement*nComponents> indices;
   std::array<double,nDofsPerElement*nComponents> result;
   
-  VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
+  //VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
   
   // prepare lookup indices for PETSc vector values_
   int j=0;
@@ -143,7 +143,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   
   VecGetValues(this->values_, nDofsPerElement*nComponents, indices.data(), result.data());
   
-  VLOG(2) << " indices: " << indices << ", retrieved values: " << result;
+  //VLOG(2) << " indices: " << indices << ", retrieved values: " << result;
   
   // copy result to output values
   for (int dofIndex=0; dofIndex<nDofsPerElement; dofIndex++)
@@ -151,7 +151,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
     for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
     {
       values[dofIndex][componentIndex] = result[dofIndex*nComponents+componentIndex];
-      VLOG(2) << "getElementValues element " << elementNo << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
+      //VLOG(2) << "getElementValues element " << elementNo << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
     }
   }
 }

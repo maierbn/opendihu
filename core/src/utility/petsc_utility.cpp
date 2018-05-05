@@ -161,6 +161,8 @@ std::string PetscUtility::getStringVector(const Vec& vector)
   int nEntries;
   VecGetSize(vector, &nEntries);
   
+  LOG(DEBUG) << " getStringVector: " << nEntries;
+  
   const double zeroTolerance = 1e-15;
   
   std::stringstream s;

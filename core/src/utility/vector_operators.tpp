@@ -115,6 +115,20 @@ std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix,
   return result;
 }
 
+template<typename T, std::size_t N>
+bool operator<(const std::array<T,N> &vector, double value)
+{
+  for (int i = 0; i < N; i++)
+  {
+    if (vector[i] < value)
+    {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 //! output array content to stream
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)

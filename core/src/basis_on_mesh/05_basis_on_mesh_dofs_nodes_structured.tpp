@@ -7,6 +7,7 @@
 #include "easylogging++.h"
 #include "field_variable/field_variable.h"
 #include "utility/petsc_utility.h"
+#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
 
 namespace BasisOnMesh
 {
@@ -141,7 +142,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
       }
     }   
   }
-  else
+  else   // there was no "nodePositions" given in config, use physicalExtent instead
   {
     // if node positions are not given in settings but physicalExtent, fill from that
     std::array<double, D> physicalExtent, meshWidth;
@@ -149,7 +150,8 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
     
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtent[dimNo] / this->nElementsPerCoordinateDirection(dimNo);
+      meshWidth[dimNo] = physicalExtent[dimNo] / 
+        (this->nElementsPerCoordinateDirection(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
     

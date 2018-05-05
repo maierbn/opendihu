@@ -66,7 +66,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
   dof_no_t localY = dof_no_t(dofIndex / BasisFunctionType::nDofsPerBasis());
   
-  VLOG(2) << "  dof " << elementNo << ":" << dofIndex << ", element: ("<<elementX<<","<<elementY<<"), dofsPerRow="<<dofsPerRow<<", local: ("<<localX<<","<<localY<<")";
+  VLOG(4) << "  dof " << elementNo << ":" << dofIndex << ", element: ("<<elementX<<","<<elementY<<"), dofsPerRow="<<dofsPerRow<<", local: ("<<localX<<","<<localY<<")";
   
   return dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
     + averageNDofsPerElement1D * elementX + localX;

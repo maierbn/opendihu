@@ -4,35 +4,70 @@
 
 import numpy as np
 import scipy.integrate
-import sys
+import sys,os
 
 name = ""
-analytical_jacobian = True
-
-print(sys.argv)
+analytic_jacobian = True
+numeric_jacobian = True
 
 if len(sys.argv) > 1:
-  if "check_results.py" not in sys.argv[0]:
-    analytical_jacobian = True if int(sys.argv[0]) == 1 else False
-    name = sys.argv[1]
+  if "check_results.py" in sys.argv[0]:
+    del sys.argv[0]
+      
+if len(sys.argv) > 1:
+  if int(sys.argv[0]) == 0:
+    numeric_jacobian = True
+    analytic_jacobian = False
+    print("numeric jacobian")
+  elif int(sys.argv[0]) == 1:
+    numeric_jacobian = False
+    analytic_jacobian = True
+    print("analytic jacobian")
+  else:
+    numeric_jacobian = True
+    analytic_jacobian = True
+    print("numeric + analytic jacobian")
     
-    print("name: \"{}\"".format(name))
-    print("analytical jacobian: {}".format(analytical_jacobian))
+  name = os.path.basename(sys.argv[1])
+  print("name: \"{}\"".format(name))
     
 nx = 1
 ny = 1
 # [1,1] = 1 element, 4 dofs per element, 4 dofs, 8 unknowns
 
 # dimensions: lx, ly
-lx = 1.0
-ly = 1.0
-tmax = 0.5
+if "scenario_1" in name:
+  lx = 1.0
+  ly = 1.0
+  tmax = 0.5
+    
+  dirichletBC = {
+    0: 0.0, 1: 0.0,
+    4: 0.0,
+  } 
+  
+elif "scenario_2" in name:
+  lx = 1.5
+  ly = 0.6
+  tmax = 2.2  
+    
+  dirichletBC = {
+    0: 0.0, 1: 0.0,
+    4: 0.0,
+  } 
+
+elif "scenario_3" in name:
+  lx = 1.5
+  ly = 0.6
+  tmax = 2.2  
+    
+  dirichletBC = {
+    0: 0.5, 1: 0.8,
+    4: 0.5,
+  } 
+
 that = 0.5
 
-dirichletBC = {
-  0: 0.0, 1: 0.0,
-  4: 0.0,
-} 
 
 material_parameters = [1.0, 0.0, 100.0]  # c0, c1, kappa
 # kappa = 0 means disable incompressibility and volume effects
@@ -63,7 +98,9 @@ config = {
     "relativeTolerance": 1e-15,
     #"rightHandSide": traction,  # surface traction T or body force B, both in material description
     "materialParameters": material_parameters,  # c0, c1, kappa
-    "analyticJacobian": analytical_jacobian,   # False = compute Jacobian by finite differences
+    "analyticJacobian": analytic_jacobian,
+    "numericJacobian": numeric_jacobian,
+    "logfile": "residual_norm.txt",
       
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},

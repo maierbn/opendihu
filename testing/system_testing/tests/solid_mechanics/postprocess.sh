@@ -2,15 +2,23 @@
 
 # set to debug or release
 variant="debug"
-variant="release"
+#variant="release"
 mkdir -p results
+
+
+  #"mooney_rivlin_incompressible_penalty2d_numeric_jacobian_scenario_1" \
+  #"mooney_rivlin_incompressible_penalty2d_analytic_jacobian_scenario_1" \
+  #"mooney_rivlin_incompressible_penalty2d_numeric_jacobian_scenario_2" \
+  #"mooney_rivlin_incompressible_penalty2d_analytic_jacobian_scenario_2" \
+  #"mooney_rivlin_incompressible_penalty2d_numeric_jacobian_scenario_3" \
+  #"mooney_rivlin_incompressible_penalty2d_analytic_jacobian_scenario_3"
+  #"mooney_rivlin_incompressible_mixed_condensation" \
+  #"mooney_rivlin_incompressible_mixed"
 
 # for all testcases
 for name in \
-  "mooney_rivlin_incompressible_penalty2d_numerical_jacobian" \
-  "mooney_rivlin_incompressible_penalty2d_analytical_jacobian"
-  #"mooney_rivlin_incompressible_mixed_condensation" \
-  #"mooney_rivlin_incompressible_mixed"
+  "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_2" \
+  "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_2" \
 do
 
 echo "check ${name}"

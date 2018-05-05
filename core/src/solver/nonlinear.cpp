@@ -24,6 +24,19 @@ Nonlinear::Nonlinear(PyObject *specificSettings) : Solver(specificSettings)
   // set solver type
   ierr = KSPSetType(*ksp_, KSPGMRES); CHKERRV(ierr);
   
+  // set options from command line as specified by PETSc
+  KSPSetFromOptions(*ksp_);
+  
+  // extract preconditioner context
+  PC pc;
+  ierr = KSPGetPC (*ksp_, &pc); CHKERRV(ierr);
+  
+  // set preconditioner type
+  ierr = PCSetType (pc, PCLU); CHKERRV(ierr);
+  
+  // set options from command line as specified by PETSc
+  PCSetFromOptions(pc);
+  
   //                             relative tol,       absolute tol,  diverg tol.,   max_iterations
   ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
   

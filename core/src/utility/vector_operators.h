@@ -39,6 +39,10 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector1,
 template<std::size_t M, std::size_t N>
 std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector);
 
+//! comparison operator with double value, true if any of the components fulfills the conditions " < value"
+template<typename T, std::size_t N>
+bool operator<(const std::array<T,N> &vector, double value);
+
 //! output array content to stream
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector);

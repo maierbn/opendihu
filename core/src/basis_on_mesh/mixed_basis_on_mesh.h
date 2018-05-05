@@ -21,7 +21,7 @@ public:
   typedef LowOrderBasisOnMeshType LowOrderBasisOnMesh;
   typedef HighOrderBasisOnMeshType HighOrderBasisOnMesh;
   
-  // dimension
+  // dimension, which is the same for the LowOrderBasisOnMeshType and the HighOrderBasisOnMeshType
   static constexpr int dim();
   
   //! contructor

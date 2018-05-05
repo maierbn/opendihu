@@ -385,7 +385,7 @@ if dimension == 2:
       
     # create meshes for current and reference configuration
     polygons_current = []
-    polygons_current = create_mesh(x_positions_current, y_positions_current, nEntries, fill=False, edgecolor='black', linewidth=1, label="current configuration")
+    polygons_current = create_mesh(x_positions_current, y_positions_current, nEntries, fill=False, edgecolor=(0.2, 0.2, 0.8), linewidth=3, label="current configuration")
     polygons_reference = []
     polygons_reference = create_mesh(x_positions_reference, y_positions_reference, nEntries, fill=False, edgecolor=(0.8,0.8,0.8), linewidth=3, label="reference configuration")
     
@@ -399,9 +399,9 @@ if dimension == 2:
       print "max_x: ", max_x
       print "max_y: ", max_y
 
-    # create plot with 10% margins
-    margin_x = abs(max_x - min_x) * 0.1
-    margin_y = abs(max_y - min_y) * 0.1
+    # create plot with 30% margins
+    margin_x = abs(max_x - min_x) * 0.3
+    margin_y = abs(max_y - min_y) * 0.3
     ax = fig.add_subplot(111, xlim=(min_x-margin_x, max_x+margin_x), ylim=(min_y-margin_y, max_y+margin_y))
     
     ax.set_xlabel('x')
@@ -411,10 +411,19 @@ if dimension == 2:
     for polygon in polygons_reference + polygons_current:
       plt.gca().add_patch(polygon)
       
-    # add legend
-    ax.legend(loc='center')
+    ax.set_aspect('equal','datalim')
+
+    # add legend, every legend entry (current configuration or reference configuration) only once
+    handles, labels = ax.get_legend_handles_labels()
+    new_handles = []
+    new_labels = []
+    for (handle,label) in zip(handles,labels):
+      if label not in new_labels:
+        new_handles.append(handle)
+        new_labels.append(label)
+    ax.legend(new_handles, new_labels, loc='best')
     
-    
+    # show plot window or write figure
     if show_plot:
       plt.show()
     else:

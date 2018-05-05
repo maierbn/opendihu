@@ -121,6 +121,13 @@ mesh()
 }
   
 template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+Data::FiniteElements<BasisOnMeshType,Term> &FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+data()
+{
+  return data_;
+}
+  
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 initialize()
 {

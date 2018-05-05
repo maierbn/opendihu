@@ -22,6 +22,7 @@ public:
   
   typedef MeshType Mesh;
   typedef BasisFunctionType BasisFunction;
+  typedef BasisOnMesh<MeshType,BasisFunctionType> HighOrderBasisOnMesh;
   
   //! return an array of all dof nos. of the element  
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 

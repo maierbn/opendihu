@@ -3,7 +3,8 @@
 #include <vector>
 
 #include "spatial_discretization/finite_element_method/00_base.h"
-#include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.h"
+#include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_boundary_conditions.h"
+#include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_common.h"
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/type_traits.h"
@@ -26,7 +27,8 @@ BasisOnMesh::Mixed<
   HighOrderBasisOnMeshType
 >;
 
-/** specialisation for incompressible solid mechanics, mixed formulation with static condensation
+/** u-p Mixed formulation with static condensation of the pressure.
+ * Specialisation for incompressible solid mechanics, mixed formulation with static condensation
  */
 template<typename HighOrderBasisOnMeshType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
@@ -50,7 +52,9 @@ public:
 
 };
 
-/** specialisation for incompressible solid mechanics, mixed formulation without static condensation
+/** u-p Mixed formulation 
+ * Specialisation for incompressible solid mechanics, mixed formulation without static condensation.
+ * The solverSolutionVariable contains the D components of displacements based on HighOrderBasisOnMeshType, then 1 component of pressure based on LowOrderBasisOnMeshType.
  */
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
@@ -60,20 +64,46 @@ class FiniteElementMethodStiffnessMatrix<
   std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
 > :
-  public FiniteElementMethodBase<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, MixedQuadratureType, Term>,
-  public SolidMechanicsUtility<HighOrderBasisOnMeshType, Term>
+  public SolidMechanicsCommon<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, HighOrderBasisOnMeshType, MixedQuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<BasisOnMeshType, MixedQuadratureType, Term>
 {
 public:
   typedef BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType> MixedBasisOnMesh;
  
   // use constructor of base class
-  using FiniteElementMethodBase<MixedBasisOnMesh, MixedQuadratureType, Term>::FiniteElementMethodBase;
+  using SolidMechanicsCommon<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, HighOrderBasisOnMeshType, MixedQuadratureType, Term>::SolidMechanicsCommon;
   
   //! assemble the stiffness matrix
-  void setStiffnessMatrix();
+  void setStiffnessMatrix(Mat stiffnessMatrix);
+  
+  //! set the internal displacements and pressure variables as copy of the given values
+  void setFromSolverVariableSolution(Vec &solverSolutionVariable);
+  
+  //! evaluate the nonlinear function that is going to be solved with the Newton scheme
+  void evaluateNonlinearFunction(Vec &result);
+  
+protected:
+  
+  //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
+  const int nUnknowns();
+  
+  //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
+  void preparePressureInterpolation(element_no_t elementNo) override;
+  
+  //! get the pressure in the current element (set previously by preparePressureInterpolation), interpolated for mixed formulation, by constitutive equation from J for penalty formulation
+  double getPressure(double deformationGradientDeterminant, VecD<HighOrderBasisOnMeshType::dim()> xi, double &pressureTilde) override;
+  
+  //! compute the D_δp Π_L = integral (J-1)*δp dV, store at position in result after displacements
+  void computeIncompressibilityConstraint(Vec &result);
+  
+  //! get the index offset for the pressure part in the solverSolutionVariable, this is equal to the number of displacements unknown, either reduced or not, depending on this->data_.computeWithReducedVectors()
+  const dof_no_t getPressureDofOffset();
+  
+  
+  std::array<double,LowOrderBasisOnMeshType::nDofsPerElement()> pressureValuesCurrentElement_;  ///< the pressure values of the current element, to be used for interpolating the pressure. They are set by preparePressureInterpolation and used by getPressure
 };
 
-/** specialisation for incompressible solid mechanics, not mixed formulation, i.e. penalty formulation,
+/** Penalty 
+ * Specialisation for incompressible solid mechanics, not mixed formulation, i.e. penalty formulation,
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
@@ -84,107 +114,31 @@ class FiniteElementMethodStiffnessMatrix<
   Equation::isIncompressible<Term>,
   BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 > :
-  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>,
-  public SolidMechanicsUtility<BasisOnMeshType, Term>
+  public SolidMechanicsCommon<BasisOnMeshType, BasisOnMeshType, QuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
+  using SolidMechanicsCommon<BasisOnMeshType, BasisOnMeshType, QuadratureType, Term>::SolidMechanicsCommon;
   
   //! assemble the stiffness matrix
   void setStiffnessMatrix(Mat stiffnessMatrix);
-  void setStiffnessMatrix(){setStiffnessMatrix(PETSC_NULL);}
-  
-  //! return the tangent stiffness matrix, called from a PETSc SNES callback
-  Mat &tangentStiffnessMatrix();
-  
-  //! return the virtual external energy which is constant
-  Vec &rightHandSide();
-  
-  //! return the displacements values
-  Vec &displacements();
   
   //! set the internal displacement variable as copy of the given values
-  void setDisplacements(Vec &solverDisplacementVariable);
+  void setFromSolverVariableSolution(Vec &solverSolutionVariable);
   
-  //! compute the value of dW_int - dW_ext
-  void computeInternalMinusExternalVirtualWork(Vec &result);
-  
-  //! set entries in displacements to Dirichlet BC values
-  void applyDirichletBoundaryConditionsInDisplacements();
-  
-  //! set entries in f to the entry in rhs for which Dirichlet BC are set
-  void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f);
-  
-  //! set rows and columns in stiffness matrix to 0 for which boundary conditions are specified
-  void applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix);
-  
-  //! copy all values that are not constrained by dirichlet BC nor are z-displacements for 2D problems from the input to the output vector
-  void reduceVector(Vec &input, Vec &output);
-  
-  //! reverse operation to reduceVector, adds values of Dirichlet BC
-  void expandVector(Vec &input, Vec &output);
-  
-  //! This transforms a 2D mesh input vector to a 3D mesh output vector by inserting 0's. It can only be called for 2D problems.
-  void expandVectorTo3D(Vec &input, Vec &output);
-  
-  //! compute and return the appropriate analytical stiffness matrix
-  void computeAnalyticalStiffnessMatrix(Mat &solverStiffnessMatrix);
-  
-  //! initialize everything, set rhs and compute tangent stiffness matrix
-  virtual void initialize();
-  
-  //! print boundary conditions
-  void printBoundaryConditions();  
+  //! evaluate the nonlinear function that is going to be solved with the Newton scheme
+  void evaluateNonlinearFunction(Vec &result);
   
 protected:
-  //! solve nonlinear system
-  virtual void solve() override;
   
-  //! debugging method
-  void debug();
+  //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
+  const int nUnknowns();
   
-  //! initialize Dirichlet boundary conditions
-  void initializeBoundaryConditions();
+  //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
+  void preparePressureInterpolation(element_no_t elementNo) override;
   
-  //! read material parameters from config and set the values for static expressions within SEMT
-  void initializeMaterialParameters();
-  
-  //! compute the internal virtual work term, dW_int
-  void computeInternalVirtualWork(Vec &result);
-  
-  //! get the extern virtual work term, dW_ext. It is computed if it depends on displacements, otherwise the stored value is returned.
-  void getExternalVirtualWork(Vec &result);
-  
-  //! compute the extern virtual work term, dW_ext.  
-  void computeExternalVirtualWork(Vec &result);
-  
-  //! extract the submatrix that only contains entries for dofs that are not constraint by Dirichlet BCs
-  void reduceMatrix(Mat &input, Mat &output);
-  
-  std::vector<dof_no_t> dirichletIndices_;  ///< the indices of unknowns (not dofs) for which the displacement is fixed
-  std::vector<double> dirichletValues_;     ///< the to dirichletIndices corresponding fixed values for the displacement
-  std::vector<double> zeros_;           ///< a vector of 0s, number of dirichlet values
-  
-  //TODO split into boundary conditions class
-  struct TractionBoundaryCondition
-  {
-    element_no_t elementGlobalNo;
-    
-    Mesh::face_t face;
-    std::vector<std::pair<dof_no_t, VecD<BasisOnMeshType::dim()>>> dofVectors;  //<element-local dof no, value>
-    
-    // parse values from python config, e.g. {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-    TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<BasisOnMeshType> mesh);
-  };
-  
-  std::vector<TractionBoundaryCondition> tractionReferenceConfiguration_;   //< tractions for elements
-  std::vector<TractionBoundaryCondition> tractionCurrentConfiguration_;
-  
-  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceReferenceConfiguration_;  //< <element global no, vector>
-  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceCurrentConfiguration_;    //< <element global no, vector>
-  
-  bool tangentStiffnessMatrixInitialized_ = false;   ///< if the tangentStiffnessMatrix has been set 
+  //! get the pressure in the current element (set previously by preparePressureInterpolation), interpolated for mixed formulation, by constitutive equation from J for penalty formulation
+  double getPressure(double deformationGradientDeterminant, VecD<BasisOnMeshType::dim()> xi, double &pressureTilde) override;
 };
 
 };  // namespace
@@ -192,4 +146,3 @@ protected:
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible_mixed.tpp"
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible_mixed_condensation.tpp"
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible_penalty.tpp"
-#include "spatial_discretization/finite_element_method/solid_mechanics/nonlinear_solve.tpp"

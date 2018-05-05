@@ -19,16 +19,9 @@ namespace Data
 {
 
 template<typename BasisOnMeshType,typename Term>
-using FiniteElementsSolidMechanics = FiniteElements<
-  BasisOnMeshType,
-  Term,
-  Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
->;
- 
-template<typename BasisOnMeshType,typename Term>
 FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context), computeWithReducedVectors_(true)
+FiniteElementsSolidMechanics(DihuContext context) : 
+  Data<BasisOnMeshType>(context), computeWithReducedVectors_(true)  // true: works for analytic and numeric Jacobian in nonlinear solver, false: works only for analyitc Jacobian
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
   //PythonUtility::printDict(this->context_.getPythonConfig());
@@ -36,7 +29,7 @@ FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context), computeWit
 
 template<typename BasisOnMeshType,typename Term>
 FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-~FiniteElements()
+~FiniteElementsSolidMechanics()
 {
   PetscErrorCode ierr;
   // free PETSc objects
@@ -90,16 +83,19 @@ nUnknowns()
 }
 
 template<typename BasisOnMeshType,typename Term>
+const dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+getTangentStiffnessMatrixNRows()
+{
+  const int D = BasisOnMeshType::dim();
+  return this->mesh_->nDofs() * D;
+}
+
+template<typename BasisOnMeshType,typename Term>
 void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 createPetscObjects()
 {
   const int D = BasisOnMeshType::dim();
  
-  // dimension of the tangent stiffness matrix
-  dof_no_t n = this->mesh_->nDofs()*D;
-  
-  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, dimension of tangent stiffness matrix: "<<n<<"x"<<n<<"";
-  
   this->residual_ = this->mesh_->template createFieldVariable<D>("residual");
   this->externalVirtualWork_ = this->mesh_->template createFieldVariable<D>("externalVirtualWork");
   this->internalVirtualWork_ = this->mesh_->template createFieldVariable<D>("internalVirtualWork");
@@ -119,19 +115,25 @@ createPetscObjects()
   
   // create PETSc matrix object
   
+  // dimension of the tangent stiffness matrix
+  dof_no_t tangentStiffnessMatrixNRows = this->getTangentStiffnessMatrixNRows();
+  
+  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, "
+    << "dimension of tangent stiffness matrix: "<<tangentStiffnessMatrixNRows<<"x"<<tangentStiffnessMatrixNRows<<"";
+  
   // PETSc MatCreateAIJ parameters
   int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
   int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
   
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
-  diagonalNonZeros = std::min(diagonalNonZeros, n);
-  offdiagonalNonZeros = std::min(offdiagonalNonZeros, n);
+  diagonalNonZeros = std::min(diagonalNonZeros, tangentStiffnessMatrixNRows);
+  offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
   
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
   
   ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrix_); CHKERRV(ierr);
-  ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE, PETSC_DECIDE, n, n); CHKERRV(ierr);
+  ierr = MatSetSizes(this->tangentStiffnessMatrix_, PETSC_DECIDE, PETSC_DECIDE, tangentStiffnessMatrixNRows, tangentStiffnessMatrixNRows); CHKERRV(ierr);
   ierr = MatSetFromOptions(this->tangentStiffnessMatrix_); CHKERRV(ierr);
 
 
@@ -176,9 +178,9 @@ tangentStiffnessMatrix()
 
 template<typename BasisOnMeshType,typename Term>
 Mat &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-tangentStiffnessMatrixReduced()
+solverMatrixTangentStiffnessFiniteDifferences()
 {
-  return this->tangentStiffnessMatrixReduced_;
+  return this->solverMatrixTangentStiffnessFiniteDifferences_;
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -348,28 +350,6 @@ computeWithReducedVectors()
   return computeWithReducedVectors_;
 }
   
-
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-displacementsReduced()
-{
-  return displacementsReduced_;
-}
-  
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-rhsReduced()
-{
-  return rhsReduced_;
-}
-
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-residualReduced()
-{
-  return residualReduced_;
-}
-
 template<typename BasisOnMeshType,typename Term>
 Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 fullIncrement()
@@ -378,54 +358,82 @@ fullIncrement()
 }
 
 template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-initializeReducedVariables(int nDofsReduced)
+Mat &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+solverMatrixTangentStiffness()
 {
-  // if the nonlinear solver uses reduced vectors without entries for Dirichlet BCs, setup these vectors
-  if (computeWithReducedVectors_)
-  {
-    PetscErrorCode ierr;
-    ierr = VecCreate(PETSC_COMM_WORLD, &this->displacementsReduced_);  CHKERRV(ierr);
-    ierr = VecCreate(PETSC_COMM_WORLD, &this->rhsReduced_);  CHKERRV(ierr);
-    ierr = VecCreate(PETSC_COMM_WORLD, &this->residualReduced_);  CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) this->displacementsReduced_, "displacementsReduced"); CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) this->rhsReduced_, "rhsReduced"); CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) this->residualReduced_, "residualReduced"); CHKERRV(ierr);
-  
-    // initialize size of vectors
-    ierr = VecSetSizes(this->displacementsReduced_, PETSC_DECIDE, nDofsReduced); CHKERRV(ierr);
-    ierr = VecSetSizes(this->rhsReduced_, PETSC_DECIDE, nDofsReduced); CHKERRV(ierr);
-    ierr = VecSetSizes(this->residualReduced_, PETSC_DECIDE, nDofsReduced); CHKERRV(ierr);
-  
-    // set sparsity type and other options
-    ierr = VecSetFromOptions(this->displacementsReduced_);  CHKERRV(ierr);
-    ierr = VecSetFromOptions(this->rhsReduced_);  CHKERRV(ierr);
-    ierr = VecSetFromOptions(this->residualReduced_);  CHKERRV(ierr);
-    
-    // set tangentStiffnessMatrixReduced_ to NULL, it is initialized the first time it is reduced from the full matrix using MatGetSubMatrix
-    this->tangentStiffnessMatrixReduced_ = PETSC_NULL;
-    
-    /*
-      
-    // initialize reduced tangent stiffness matrix
-    int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-    int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
-    
-    getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
-    diagonalNonZeros = std::min(diagonalNonZeros, nDofsReduced);
-    offdiagonalNonZeros = std::min(offdiagonalNonZeros, nDofsReduced);
-    
-    ierr = MatCreate(PETSC_COMM_WORLD, &this->tangentStiffnessMatrixReduced_); CHKERRV(ierr);
-    ierr = MatSetSizes(this->tangentStiffnessMatrixReduced_, PETSC_DECIDE, PETSC_DECIDE, nDofsReduced, nDofsReduced); CHKERRV(ierr);
-    ierr = MatSetFromOptions(this->tangentStiffnessMatrixReduced_); CHKERRV(ierr);
+  return solverMatrixTangentStiffness_;
+}
 
-    ierr = MatMPIAIJSetPreallocation(this->tangentStiffnessMatrixReduced_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatSeqAIJSetPreallocation(this->tangentStiffnessMatrixReduced_, diagonalNonZeros, NULL); CHKERRV(ierr);
+template<typename BasisOnMeshType,typename Term>
+Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+solverVariableSolution()
+{
+  return solverVariableSolution_;
+}
+
+template<typename BasisOnMeshType,typename Term>
+Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+solverVariableResidual()
+{
+  return solverVariableResidual_;
+}
+
+template<typename BasisOnMeshType,typename Term>
+Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+internalVirtualWorkReduced()
+{
+  return internalVirtualWorkReduced_;
+}
+
+template<typename BasisOnMeshType,typename Term>
+void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+initializeSolverVariables(int nDofs)
+{
+  const int D = BasisOnMeshType::dim();
+  const int nDofsDisplacementsReduced = this->mesh_->nDofs() * D;
+ 
+  LOG(DEBUG) << "initializeSolverVariables with nDofs=" << nDofs << ", nDofsDisplacementsReduced=" << nDofsDisplacementsReduced;
   
-    // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
-    ierr = MatSetOption(this->tangentStiffnessMatrixReduced_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
-    */
-  }
+  PetscErrorCode ierr;
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->solverVariableSolution_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->solverVariableResidual_);  CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &this->internalVirtualWorkReduced_);  CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->solverVariableSolution_, "solverVariableSolution"); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->solverVariableResidual_, "solverVariableResidual"); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->internalVirtualWorkReduced_, "internalVirtualWorkReduced"); CHKERRV(ierr);
+
+  // initialize size of vectors
+  ierr = VecSetSizes(this->solverVariableSolution_, PETSC_DECIDE, nDofs); CHKERRV(ierr);
+  ierr = VecSetSizes(this->solverVariableResidual_, PETSC_DECIDE, nDofs); CHKERRV(ierr);
+  ierr = VecSetSizes(this->internalVirtualWorkReduced_, PETSC_DECIDE, nDofsDisplacementsReduced); CHKERRV(ierr);
+
+  // set sparsity type and other options
+  ierr = VecSetFromOptions(this->solverVariableSolution_);  CHKERRV(ierr);
+  ierr = VecSetFromOptions(this->solverVariableResidual_);  CHKERRV(ierr);
+  ierr = VecSetFromOptions(this->internalVirtualWorkReduced_);  CHKERRV(ierr);
+  
+  // set tangentStiffnessMatrixReduced_ to NULL, it is initialized the first time it is reduced from the full matrix using MatGetSubMatrix
+  this->solverMatrixTangentStiffness_ = PETSC_NULL;
+  
+  /*
+  // initialize reduced tangent stiffness matrix
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  diagonalNonZeros = std::min(diagonalNonZeros, nDofs);
+  offdiagonalNonZeros = std::min(offdiagonalNonZeros, nDofs);
+  
+  ierr = MatCreate(PETSC_COMM_WORLD, &this->solverMatrixTangentStiffness_); CHKERRV(ierr);
+  ierr = MatSetSizes(this->solverMatrixTangentStiffness_, PETSC_DECIDE, PETSC_DECIDE, nDofs, nDofs); CHKERRV(ierr);
+  ierr = MatSetFromOptions(this->solverMatrixTangentStiffness_); CHKERRV(ierr);
+
+  ierr = MatMPIAIJSetPreallocation(this->solverMatrixTangentStiffness_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+  ierr = MatSeqAIJSetPreallocation(this->solverMatrixTangentStiffness_, diagonalNonZeros, NULL); CHKERRV(ierr);
+
+  // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
+  ierr = MatSetOption(this->solverMatrixTangentStiffness_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
+  */
 }
   
 } // namespace Data

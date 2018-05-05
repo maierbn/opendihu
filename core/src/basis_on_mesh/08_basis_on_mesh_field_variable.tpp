@@ -77,7 +77,7 @@ std::array<double,nComponents> BasisOnMeshFieldVariable<MeshType,BasisFunctionTy
 interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                  std::array<double,MeshType::dim()> xi) const
 {
-  std::array<double,nComponents> result;
+  std::array<double,nComponents> result({0.0});
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
@@ -85,6 +85,19 @@ interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshF
   return result;
 }
 
+template<typename MeshType, typename BasisFunctionType>
+double BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+interpolateValueInElement(std::array<double,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                 std::array<double,MeshType::dim()> xi) const
+{
+  double result = 0;
+  for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
+  {
+    result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
+  }
+  return result;
+}
+  
 template<typename MeshType, typename BasisFunctionType>
 Vec3 BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 getNormal(Mesh::face_t face, std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi)

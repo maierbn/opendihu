@@ -352,6 +352,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
       
       // total stress is sum of volumetric and isochoric part
       pK2Stress[j][i] = sVol + sIso;
+      //VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
       
       //if (i == j)
       //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i]; 
@@ -594,7 +595,8 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
   // II_ijkl = delta_ik*delta_jl (p.23)
   // (P^T)_ijkl = P_klij
   
-#if 0
+  
+#if 0  // debugging output
   //check symmetry of right Cauchy-Green tensor
   bool cIsSymmetric = true;
   for (int a=0; a<3; a++)

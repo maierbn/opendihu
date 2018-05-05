@@ -42,7 +42,7 @@ public:
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
   
-  //! get mesh width of the given coordinate direction
+  //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
   
   //! return number of nodes
@@ -59,7 +59,7 @@ protected:
   //! create the geometry field from meshWidth_
   void setupGeometryField();
   
-  double meshWidth_;   ///< uniform mesh width, this is a copy of the value which is stored in this->geometryField_
+  double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
 }; 
 
 /** Partial specialization for StructuredDeformable mesh

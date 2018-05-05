@@ -24,6 +24,9 @@ public:
   //! get the stored mesh
   std::shared_ptr<Mesh::Mesh> mesh();
   
+  //! get the data object
+  Data::FiniteElements<BasisOnMeshType,Term> &data();
+  
   friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
  

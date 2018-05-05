@@ -40,6 +40,10 @@ public:
   template <int nComponents>
   std::array<double,nComponents> interpolateValueInElement(std::array<std::array<double,nComponents>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                                                   std::array<double,MeshType::dim()> xi) const;
+                                 
+  //! interpolate the value within an element at the given xi position using the basis functions
+  double interpolateValueInElement(std::array<double,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                                   std::array<double,MeshType::dim()> xi) const;
                                     
   //! compute the normal in world space, normal to face at xi, use the given geometry values, that can by obtained by fieldVariable->getElementValues(elementNo, geometryValues) or mesh->getElementGeometry(elementNo, geometryValues)
   Vec3 getNormal(Mesh::face_t face, std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);

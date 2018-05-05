@@ -74,29 +74,130 @@ if dimension == 2:
   x_displacements = py_reader.get_values(data[0], "displacements", "0")
   y_displacements = py_reader.get_values(data[0], "displacements", "1")
       
-  # compare to reference solution
+    
+  if "mooney_rivlin_incompressible_penalty2d_numeric_jacobian" in solution_files[0] \
+    or "mooney_rivlin_incompressible_penalty2d_analytic_jacobian" in solution_files[0]:
+    import settings_2d
+    
+    from sympy import *
+    from sympy.abc import *
+    c0, lambdaValue,tmax,that,lz,ly = symbols('c0,lambdaValue,tmax,that,lz,ly',positive=True)
+    
+    # (2D) total load constant (traction in reference configuration),  direct solution
+    term_direct = solve(2*c0*lambdaValue**4 - tmax/ly*lambdaValue**3 - 2*c0, lambdaValue, simplify=True, positive=True)[3]
+
+    lx_settings = settings_2d.config["FiniteElementMethod"]["physicalExtent"][0]
+    ly_settings = settings_2d.config["FiniteElementMethod"]["physicalExtent"][1]
+    c0_settings = settings_2d.config["FiniteElementMethod"]["materialParameters"][0]
+    c1_settings = settings_2d.config["FiniteElementMethod"]["materialParameters"][1]
+    kappa_settings = settings_2d.config["FiniteElementMethod"]["materialParameters"][2]
+    tmax_settings = settings_2d.tmax
+    dirichlet_bc_settings = settings_2d.config["FiniteElementMethod"]["dirichletBoundaryCondition"]
+    
+    refconf_volume = lx_settings * ly_settings
+    
+    analytic_lambda = float(term_direct.subs([(ly,ly_settings), (c0,c0_settings), (tmax,tmax_settings)]).evalf())
+    #analytic_lambda = 1.06887593136852
+    print "analytic lambda: ",analytic_lambda
+    
+    # compose reference solution, linear element
+    reference_solution = [
+      np.array([dirichlet_bc_settings[0], dirichlet_bc_settings[1]]),
+      np.array([analytic_lambda*lx_settings, dirichlet_bc_settings[1]]),
+      np.array([dirichlet_bc_settings[4], 1./analytic_lambda*ly_settings]),
+      np.array([analytic_lambda*lx_settings, 1./analytic_lambda*ly_settings]),
+    ]
+      
+    # calculate volume of reference solution
+    p = -reference_solution[0] + reference_solution[3]  # diagonals of quadrilateral
+    q = -reference_solution[1] + reference_solution[2]
+    reference_volume = 0.5*abs(p[0]*q[1] - p[1]*q[0])   # 2D cross product
+    
+      
+  elif "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_1" in solution_files[0] \
+    or "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_1" in solution_files[0]:
+    import settings_mixed_2d as settings_2d
+    
+    from sympy import *
+    from sympy.abc import *
+    c0, lambdaValue,tmax,that,lz,ly = symbols('c0,lambdaValue,tmax,that,lz,ly',positive=True)
+    
+    # (2D) total load constant (traction in reference configuration),  direct solution
+    term_direct = solve(2*c0*lambdaValue**4 - tmax/ly*lambdaValue**3 - 2*c0, lambdaValue, simplify=True, positive=True)[3]
+
+    lx_settings = settings_2d.config["FiniteElementMethod"]["physicalExtent"][0]
+    ly_settings = settings_2d.config["FiniteElementMethod"]["physicalExtent"][1]
+    c0_settings = settings_2d.config["FiniteElementMethod"]["materialParameters"][0]
+    c1_settings = settings_2d.config["FiniteElementMethod"]["materialParameters"][1]
+    tmax_settings = settings_2d.tmax
+    dirichlet_bc_settings = settings_2d.config["FiniteElementMethod"]["dirichletBoundaryCondition"]
+    
+    refconf_volume = lx_settings * ly_settings
+    
+    analytic_lambda = float(term_direct.subs([(ly,ly_settings), (c0,c0_settings), (tmax,tmax_settings)]).evalf())
+    #analytic_lambda = 1.06887593136852
+    print "analytic lambda: ",analytic_lambda
+    
+    # compose reference solution, quadratic element
+    reference_solution = [
+      # bottom row
+      np.array([0.0,                             0.0]), 
+      np.array([0.5*analytic_lambda*lx_settings, 0.0]),
+      np.array([1.0*analytic_lambda*lx_settings, 0.0]),
+      # center row
+      np.array([0.0,                             0.5/analytic_lambda*ly_settings]), 
+      np.array([0.5*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings]),
+      np.array([1.0*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings]),
+      # top row
+      np.array([0.0,                             1.0/analytic_lambda*ly_settings]), 
+      np.array([0.5*analytic_lambda*lx_settings, 1.0/analytic_lambda*ly_settings]),
+      np.array([1.0*analytic_lambda*lx_settings, 1.0/analytic_lambda*ly_settings]),
+    ]
+      
+    # calculate volume of reference solution
+    p = -reference_solution[0] + reference_solution[8]  # diagonals of quadrilateral
+    q = -reference_solution[2] + reference_solution[6]
+    reference_volume = 0.5*abs(p[0]*q[1] - p[1]*q[0])   # 2D cross product
+    
+      
+  # compare simulation solution to reference solution
   error_absolute_timestep = []
   error_relative_timestep = []
+    
+  #reference_solution = [
+  #  np.array([0.0, 0.0]),
+  #  np.array([1.0703, 0.0]),
+  #  np.array([0.0, 0.9368]),
+  #  np.array([1.0703, 0.9368]),
+  #]
   
-  reference_solution = [
-    np.array([0.0, 0.0]),
-    np.array([1.0703, 0.0]),
-    np.array([0.0, 0.9368]),
-    np.array([1.0703, 0.9368]),
-  ]
+  simulation_solution = [np.array([x,y]) for (x,y) in zip(x_positions_current, y_positions_current)]
+  
+  # calculate volume of simulation solution
+  if data[0]["basisOrder"] == 1:    # linear geometry
+    p = -simulation_solution[0] + simulation_solution[3]  # diagonals of quadrilateral
+    q = -simulation_solution[1] + simulation_solution[2]
+    solution_volume = 0.5*abs(p[0]*q[1] - p[1]*q[0])   # 2D cross product
+  
+  elif data[0]["basisOrder"] == 2:   # quadratic geometry
+    p = -simulation_solution[0] + simulation_solution[8]  # diagonals of quadrilateral
+    q = -simulation_solution[2] + simulation_solution[6]
+    solution_volume = 0.5*abs(p[0]*q[1] - p[1]*q[0])   # 2D cross product
+  
+  print "  volume reference config: ", refconf_volume
+  print "  volume reference solution: ", reference_volume
+  print "  volume simulated solution: ", solution_volume
   
   error_list = []
-  for (x,y,point_reference_solution) in zip(x_positions_current, y_positions_current, reference_solution):
-    
-    # get current node positions
-    point_solution = np.array([x,y])
-    
+  # loop over points
+  for (point_simulation_solution,point_reference_solution) in zip(simulation_solution, reference_solution):
+        
     # compute difference and error
-    difference = point_solution - point_reference_solution
+    difference = point_simulation_solution - point_reference_solution
     error_absolute = np.linalg.norm(difference)
     error_list.append(error_absolute)
     
-    #print "point_solution: {}, point_reference_solution: {}, difference: {}, error: {}".format(point_solution, point_reference_solution, difference, error_absolute)
+    print "  point_simulation_solution: {}, point_reference_solution: {}, difference: {}, error: {}".format(point_simulation_solution, point_reference_solution, difference, error_absolute)
     
   error_absolute_mean = np.mean(error_list)
   error_absolute_median = np.median(error_list)
@@ -110,6 +211,8 @@ if dimension == 2:
   
   message += "error mean/median absolute: {:.2e} / {:.2e}".\
     format(error_absolute_mean, error_absolute_median)
+  
+  message += ", volume ref.conf., cur.conf.ana., cur.conf.sim: {}, {}, {}".format(refconf_volume, reference_volume, solution_volume)
   
   # print message and write to log file
   print(message)

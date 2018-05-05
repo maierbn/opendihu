@@ -14,31 +14,25 @@
 namespace Data
 {
  
+/** Common base class for solid mechanics finite elements, 1.) penalty formulation, 2.) mixed formulation
+ */
 template<typename BasisOnMeshType,typename Term>
-class FiniteElements<
-  BasisOnMeshType,
-  Term,
-  Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
-> : 
+class FiniteElementsSolidMechanics : 
   public Data<BasisOnMeshType>
 {
 public:
  
   //! constructor
-  FiniteElements(DihuContext context);
+  FiniteElementsSolidMechanics(DihuContext context);
   
   //! destructor
-  ~FiniteElements();
+  ~FiniteElementsSolidMechanics();
  
   //! initialize the object, create all stored data
   virtual void initialize() override;
   
   //! return reference to a stiffness matrix
   Mat &tangentStiffnessMatrix();
-  
-  //! return reference to the reduced tangent stiffness matrix
-  Mat &tangentStiffnessMatrixReduced();
   
   //! return reference to the residual field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &residual();
@@ -65,17 +59,23 @@ public:
   //! alias for externalVirtualWork, needed such that rhs setting functionality works
   FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &rightHandSide();
   
-  //! vector to be used for reduced computation, for displacements
-  Vec &displacementsReduced();
-  
-  //! vector to be used for reduced computation, for rhs
-  Vec &rhsReduced();
-  
-  //! vector to be used for reduced computation, for residual in SNES
-  Vec &residualReduced();
-  
   //! 3D vector to be used in 2D problems for adding to actual geometry which is also 3D
   Vec &fullIncrement();
+  
+  //! get a reference to the tangent stiffness matrix as it is used for the nonlinear solver 
+  Mat &solverMatrixTangentStiffness();   
+  
+  //! get a reference to the tangent stiffness matrix that is used for the finite difference approximation of the stiffness matrix if analytic jacobian is used
+  Mat &solverMatrixTangentStiffnessFiniteDifferences();   
+  
+  //! get a reference to the residual vector as it is used for the nonlinear solver
+  Vec &solverVariableResidual();
+  
+  //! get a reference to the solution vector as it is used for the nonlinear solver
+  Vec &solverVariableSolution();
+  
+  //! get a reference to the reduced virtual work vector that contains entries of virtual work for indices that have no Dirichlet BC
+  Vec &internalVirtualWorkReduced();
   
   //! perform the final assembly of petsc
   void finalAssembly();
@@ -110,16 +110,16 @@ public:
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
   
-  //! return reference to a stiffness matrix
+  //! return reference to a stiffness matrix. This method is usually called for solving the linear system, but in this case we have an nonlinear system that does not retrieve the stiffness matrix
   Mat &stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
 
   //! return the value of computeWithReducedVectors. If the vector of unknowns only contains the real degrees of freedom and not the variables with Dirichlet BCs. This is maybe slower because copying of data is required, but the system to solve is smaller
   bool computeWithReducedVectors();
   
-  //! initialize the reduced size variables
-  void initializeReducedVariables(dof_no_t nDofsReduced);
+  //! initialize the solver variables, solverMatrixTangentStiffness_, solverVariableSolution_ and solverVariableResidual_. @param nDofs the number of unknowns in the solver, i.e. reduced by Dirichlet BC 
+  void initializeSolverVariables(dof_no_t nDofs);
    
-private:
+protected:
  
   //! initializes the vector and stiffness matrix with size
   void createPetscObjects();
@@ -127,9 +127,12 @@ private:
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
-  Mat tangentStiffnessMatrix_;     ///< the tangent stiffness matrix used as jacobian in the nonlinear solver
+  //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
+  virtual const dof_no_t getTangentStiffnessMatrixNRows();
+  
+  Mat tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
+  Mat solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_
   Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-  Mat tangentStiffnessMatrixReduced_;   ///< the tangent stiffness matrix without entries for Dirichlet BC
   
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> residual_;           ///< the residual vector, needed in the solution process by PETSc
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> increment_;           ///< the increments vector
@@ -139,16 +142,34 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> externalVirtualWork_;        //< the external virtual work vector δW_ext
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> internalVirtualWork_;        //< the internal virtual work vector δW_int
   
-  Vec displacementsReduced_;   ///< if computeWithReducedVectors_ this vector is used to store the reduced displacements vector that does contain the same is displacements_ but without values for Dirichlet BCs
-  Vec rhsReduced_;  ///<  if computeWithReducedVectors_ this vector is used to store the values for the rhs (δW_int - δW_ext) without values that have Dirichlet BCs
-  Vec residualReduced_; ///< if computeWithReducedVectors_ this vector is used to store a reduced version of the residual for the nonlinear solver
   Vec fullIncrement_;   ///< only for 2D problems this vec is a 3D vector that is filled from the 2D displacements vector and afterwards added to the geometry values.
+  
+  Mat solverMatrixTangentStiffness_;    ///< the tangent stiffness matrix used as jacobian in the nonlinear solver, in reduced form if we use reduce quantities (displacements without Dirichlet BC)
+  Vec solverVariableResidual_;  ///< this vector is used to store a reduced version of the residual for the nonlinear solver
+  Vec solverVariableSolution_;  ///< this vector is used to store the reduced displacements vector that does contain the same as displacements_ but without values for Dirichlet BCs
+  Vec internalVirtualWorkReduced_;  ///< reduced vector for the internal virtual work
   
   bool externalVirtualWorkIsConstant_;   //< if the external virtual energy does not depend on deformation and thus is constant
   
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
   const bool computeWithReducedVectors_;    ///< if the vector of unknowns only contains the real degrees of freedom and not the variables with Dirichlet BCs. This is maybe slower because copying of data is required, but the system to solve is smaller.
 
+};
+
+/** inherit everything from FiniteElementsSolidMechanics
+ */
+template<typename BasisOnMeshType,typename Term>
+class FiniteElements<
+  BasisOnMeshType,
+  Term,
+  Equation::isSolidMechanics<Term>,
+  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+> : 
+  public FiniteElementsSolidMechanics<BasisOnMeshType,Term>
+{
+public:
+  //! inherit constructor
+  using FiniteElementsSolidMechanics<BasisOnMeshType,Term>::FiniteElementsSolidMechanics;
 };
 
 }  // namespace

@@ -3,10 +3,10 @@
 #include "utility/petsc_utility.h"
 
 //! vector difference
-template<std::size_t nComponents>
-std::array<double,nComponents> operator-(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator-(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
-  std::array<double,nComponents> result;
+  std::array<T,nComponents> result;
   
   #pragma simd
   for (int i = 0; i < nComponents; i++)
@@ -111,6 +111,20 @@ std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix,
     {
       result[i] += matrix[j][i] * vector[j];
     }
+  }
+  return result;
+}
+
+//! component-wise division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
+{
+  std::array<T,nComponents> result;
+  
+  #pragma simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = vector1[i] / vector2[i];
   }
   return result;
 }

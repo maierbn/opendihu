@@ -44,7 +44,7 @@ transferRhsToWeakForm()
   
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-  EvaluationsArrayType evaluationsArray;
+  EvaluationsArrayType evaluationsArray{};
   
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
   LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
@@ -152,7 +152,7 @@ setMassMatrix()
     
     // setup arrays used for integration
     std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-    EvaluationsArrayType evaluationsArray;
+    EvaluationsArrayType evaluationsArray{};
     
     LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
     LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";

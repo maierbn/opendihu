@@ -25,6 +25,12 @@ initialize(PyObject *settings)
   else
   {
     LOG(DEBUG) << "diffusionTensor not found";   
+    /*
+    // create identity matrix as default values
+    this->diffusionTensor_ = std::array<double, D*D>({0});
+    for (int i=0; i<D; i++)
+      this->diffusionTensor_[i*D] = 1.0;
+    */
   }
 }
 

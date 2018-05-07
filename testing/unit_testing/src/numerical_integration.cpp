@@ -274,7 +274,20 @@ config = {
   computation7.run(); 
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized7);
+  /*
+  // Gauss integration order 64
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<64>,
+    Equation::Static::Laplace
+  > equationDiscretized64(settings2);
   
+  Computation computation64(settings2, equationDiscretized64);
+  computation64.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized64);
+  */
 }
 
 };

@@ -7,9 +7,9 @@
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.
  */
 
-//! vector difference
-template<std::size_t nComponents>
-std::array<double,nComponents> operator-(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2);
+//! arbitrary type difference
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator-(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);
 
 //! vector addition
 template<std::size_t nComponents>
@@ -34,6 +34,10 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
+
+//! component-wise division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);
 
 //! matrix-vector multiplication, note that there is a matrix class with also matrix-vector multiplication. It stores matrices in row-major order, here column-major order is assumed
 template<std::size_t M, std::size_t N>

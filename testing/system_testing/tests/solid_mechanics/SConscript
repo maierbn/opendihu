@@ -15,6 +15,7 @@ testcases = [
 ]
 
 testcases = ["mooney_rivlin_incompressible_penalty2d", "mooney_rivlin_incompressible_mixed2d", "mooney_rivlin_incompressible_mixed3d"]
+testcases = ["mooney_rivlin_incompressible_mixed2d"]
 
 for testcase in testcases:
   env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

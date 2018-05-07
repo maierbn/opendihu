@@ -14,7 +14,7 @@
 
 namespace SpatialDiscretization
 {
-  
+  /*
 TEST(OutputTest, UnstructuredDeformable)
 {
   std::string pythonConfig = R"(
@@ -185,8 +185,7 @@ config = {
   assertFileMatchesContent("out_txt.py", referenceOutput2, referenceOutput4);
   assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
-
-// segfault, python memory problem in RegularFixed
+*/
 
 TEST(OutputTest, RegularFixed)
 {

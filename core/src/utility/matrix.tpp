@@ -21,12 +21,12 @@ Matrix<nRows,nColumns>::
 Matrix(const std::array<double, nRows*nColumns> &&rhs) : std::array<double, nRows*nColumns>(rhs)
 {
 }
-
+/*
 template<int nRows, int nColumns>
 Matrix<nRows,nColumns>::
 Matrix(double value) : std::array<double, nRows*nColumns>({value})
 {
-}
+}*/
 
 //! return a reference to the entry (rowIndex,columnIndex)
 template<int nRows, int nColumns>

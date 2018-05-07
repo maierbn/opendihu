@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 
 #include "control/runnable.h"

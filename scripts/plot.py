@@ -60,7 +60,6 @@ solution_py_files = sorted(solution_py_files)
 
 print "{} files".format(len(solution_py_files))
 print solution_py_files[0:min(10,len(solution_py_files))]
-print solution_py_files
 
 data = py_reader.load_data(solution_py_files)
 
@@ -392,8 +391,8 @@ if dimension == 2:
           print nEntries
         
         # loop over elements
-        for ely in range(nEntries[1]-1):
-          for elx in range(nEntries[0]-1):
+        for ely in range(nEntries[0]-1):
+          for elx in range(nEntries[1]-1):
             point0 = np.array([X[ely][elx], Y[ely][elx]])
             point1 = np.array([X[ely][elx+1], Y[ely][elx+1]])
             point2 = np.array([X[ely+1][elx], Y[ely+1][elx]])
@@ -456,15 +455,18 @@ if dimension == 2:
       animate(0)
       plt.savefig("fig.pdf")
       
+      if show_plot:
+        plt.show()
+      
     else:  # create animation
       
       anim = animation.FuncAnimation(fig, animate, init_func=init,
                  frames=len(data), interval=interval, blit=False)
-
-      anim.save("anim.mp4")
-      plt.savefig("fig.pdf")
-      
-    if show_plot:
-      plt.show()
+        
+      if show_plot:
+        plt.show()
+      else:
+        anim.save("anim.mp4")
+        plt.savefig("fig.pdf")
       
 sys.exit(0)

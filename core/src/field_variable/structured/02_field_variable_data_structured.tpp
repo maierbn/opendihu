@@ -97,7 +97,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->nEntries_ = fieldVariable.nDofs() * nComponents;
   
   LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
-   << ", components: " << nComponents << ", nEntries: " << this->nEntries_;
+   << ", components: " << nComponents << ", Vec nEntries: " << this->nEntries_;
   
   assert(this->nEntries_ != 0);
    

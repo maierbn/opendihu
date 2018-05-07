@@ -8,6 +8,10 @@
 #include "semt/Semt.h"
 #include "semt/Shortcuts.h"
 
+#ifdef QUADRATURE_TEST
+#include "quadrature/gauss.h"
+#endif
+
 namespace SpatialDiscretization
 {
 
@@ -54,7 +58,23 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   
   // setup arrays used for integration
   std::array<VecD<D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-  EvaluationsArrayType evaluationsArray;
+  EvaluationsArrayType evaluationsArray{};
+  
+#ifdef QUADRATURE_TEST
+  
+  typedef EXACT_QUADRATURE QuadratureExactType;
+  typedef Quadrature::TensorProduct<D,QuadratureExactType> QuadratureExactDD;
+  
+  // define type to hold evaluations of integrand
+  typedef std::array<
+            EvaluationsType,
+            QuadratureExactDD::numberEvaluations()
+          > EvaluationsExactArrayType;     // evaluations[nGP^D](nUnknows p,nUnknows u)
+  
+  // setup arrays used for integration
+  std::array<VecD<D>, QuadratureExactDD::numberEvaluations()> samplingPointsExact = QuadratureExactDD::samplingPoints();
+  EvaluationsExactArrayType evaluationsExactArray{};
+#endif
   
   PetscErrorCode ierr;
   const int pressureDofOffset = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofs()*D;
@@ -91,6 +111,11 @@ setStiffnessMatrix(Mat stiffnessMatrix)
   // loop over elements 
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   {
+
+#ifdef QUADRATURE_TEST   
+    Control::PerformanceMeasurement::start("stiffnessMatrixPressure");
+#endif
+   
     // get geometry field of reference configuration, note the dimension of the vecs is always 3 also for 2D problems
     std::array<Vec3,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference().getElementValues(elementNo, geometryReferenceValues);
@@ -149,6 +174,60 @@ setStiffnessMatrix(Mat stiffnessMatrix)
     
     // integrate all values for result vector entries at once
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    
+#ifdef QUADRATURE_TEST   
+    Control::PerformanceMeasurement::stop("stiffnessMatrixPressure");
+#endif
+   
+#ifdef QUADRATURE_TEST
+    
+    // loop over integration points (e.g. gauss points) for displacement field
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPointsExact.size(); samplingPointIndex++)
+    {
+      // get parameter values of current sampling point
+      VecD<D> xi = samplingPointsExact[samplingPointIndex];
+      
+      // compute the 3xD jacobian of the parameter space to world space mapping
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderBasisOnMeshType::computeJacobian(geometryReferenceValues, xi));
+      double jacobianDeterminant;
+      Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
+      // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
+      // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
+      
+      // F
+      Tensor2<D> deformationGradient = this->computeDeformationGradient(displacementValues, inverseJacobianMaterial, xi);
+      double deformationGradientDeterminant = MathUtility::computeDeterminant<D>(deformationGradient);  // J
+      
+      std::array<VecD<D>,nDisplacementsDofsPerElement> gradPhi = meshU->getGradPhi(xi);
+      // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
+      // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
+      
+      // loop basis functions and evaluate integrand at xi
+      for (int dofIndexL = 0; dofIndexL < nPressureDofsPerElement; dofIndexL++)           // index over pressure dofs in element, L in derivation
+      {
+        const double psiL = meshP->phi(dofIndexL, xi);
+        
+        for (int dofIndexM = 0; dofIndexM < nDisplacementsDofsPerElement; dofIndexM++)           // index over displacement dofs in element, M in derivation
+        {
+          for (int componentIndex = 0; componentIndex < D; componentIndex++)     // index over the component of the dof, a in derivation
+          {
+            const double dphiM_da = gradPhi[dofIndexM][componentIndex];   // note that dphi^M_a = dphi^M, i.e. dphi^M_{b,a} = dphi^M_{c,a} = dphi^M_{,a}
+           
+            const double integrand = deformationGradientDeterminant * psiL * dphiM_da;
+     
+            // store integrand in evaluations array
+            evaluationsExactArray[samplingPointIndex](dofIndexL,dofIndexM*D + componentIndex) = integrand;  
+          }
+        }  // a
+      }  // L
+    }  // function evaluations
+    
+    // integrate all values for result vector entries at once
+    EvaluationsType integratedValuesExact = QuadratureExactDD::computeIntegral(evaluationsExactArray);
+    
+    Control::PerformanceMeasurement::measureError("stiffnessMatrixPressure", (integratedValues - integratedValuesExact)/integratedValuesExact);
+    
+#endif
     
     // get indices of element-local dofs
     std::array<dof_no_t,nDisplacementsDofsPerElement> dofNoU = meshU->getElementDofNos(elementNo);
@@ -333,7 +412,7 @@ computeIncompressibilityConstraint(Vec &result)
   
   // setup arrays used for integration
   std::array<VecD<D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-  EvaluationsArrayType evaluationsArray;
+  EvaluationsArrayType evaluationsArray{};
   
   // get memory from PETSc where to store result
   double *resultData;

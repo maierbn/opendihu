@@ -13,54 +13,62 @@ namespace SpatialDiscretization
 template<int D>
 void checkSymmetry(const Tensor2<D> &rightCauchyGreen, std::string name)
 {
-  bool isSymmetric = true;
-  const double errorTolerance = 1e-14;
-  for (int a=0; a<D; a++)
+  if (VLOG_IS_ON(1))
   {
-    for (int b=0; b<D; b++)
+   
+    bool isSymmetric = true;
+    const double errorTolerance = 1e-14;
+    for (int a=0; a<D; a++)
     {
-      if (fabs(rightCauchyGreen[a][b] - rightCauchyGreen[b][a]) > errorTolerance)
+      for (int b=0; b<D; b++)
       {
-        LOG(ERROR) << name << "["<<a<<"]["<<b<<"] != " << name << "["<<b<<"]["<<a<<"] ("<<rightCauchyGreen[a][b]<<" != "<<rightCauchyGreen[b][a]<<") - symmetry violated"<<std::endl;
-        isSymmetric = false;
+        if (fabs(rightCauchyGreen[a][b] - rightCauchyGreen[b][a]) > errorTolerance)
+        {
+          LOG(ERROR) << name << "["<<a<<"]["<<b<<"] != " << name << "["<<b<<"]["<<a<<"] ("<<rightCauchyGreen[a][b]<<" != "<<rightCauchyGreen[b][a]<<") - symmetry violated"<<std::endl;
+          isSymmetric = false;
+        }
       }
     }
+    if (isSymmetric)
+      VLOG(2) << name << " is symmetric";
   }
-  if (isSymmetric)
-    VLOG(2) << name << " is symmetric";
 }
 
 template<int D>
 void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inverseRightCauchyGreen, std::string name)
 {
-  bool inverseCorrect = true;
-  double errorTolerance = 1e-12;
-  for (int a=0; a<D; a++)
+ 
+  if (VLOG_IS_ON(1))
   {
-    for (int b=0; b<D; b++)
+    bool inverseCorrect = true;
+    double errorTolerance = 1e-12;
+    for (int a=0; a<D; a++)
     {
-      double matrixProduct = 0.0;
-      for (int k=0; k<D; k++)
+      for (int b=0; b<D; b++)
       {
-        matrixProduct += rightCauchyGreen[k][a] * inverseRightCauchyGreen[b][k];
-      }
-      double delta_ab = (a == b? 1.0 : 0.0);
-      
-      if (fabs(delta_ab - matrixProduct) > errorTolerance)
-      {
-        LOG(ERROR) << name << " or " << name <<"^{-1} is wrong: " << matrixProduct << " should be " << delta_ab;
-        inverseCorrect = false;
+        double matrixProduct = 0.0;
+        for (int k=0; k<D; k++)
+        {
+          matrixProduct += rightCauchyGreen[k][a] * inverseRightCauchyGreen[b][k];
+        }
+        double delta_ab = (a == b? 1.0 : 0.0);
+        
+        if (fabs(delta_ab - matrixProduct) > errorTolerance)
+        {
+          LOG(ERROR) << name << " or " << name <<"^{-1} is wrong: " << matrixProduct << " should be " << delta_ab;
+          inverseCorrect = false;
+        }
       }
     }
-  }
-  
-  if (inverseCorrect)
-  {
-    VLOG(2) << name << " corresponds to " << name <<"^{-1}";
-  }
-  else
-  {
-    LOG(DEBUG) << name << ": " << rightCauchyGreen << std::endl << ", inv: " << inverseRightCauchyGreen << std::endl;
+    
+    if (inverseCorrect)
+    {
+      VLOG(2) << name << " corresponds to " << name <<"^{-1}";
+    }
+    else
+    {
+      LOG(DEBUG) << name << ": " << rightCauchyGreen << std::endl << ", inv: " << inverseRightCauchyGreen << std::endl;
+    }
   }
 }
 

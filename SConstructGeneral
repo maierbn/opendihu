@@ -152,7 +152,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   

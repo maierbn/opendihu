@@ -80,7 +80,8 @@ void PerformanceMeasurement::log(std::string logFileName)
   else
   {
     Measurement &measurement = measurements_["stiffnessMatrixDisplacements"];
-    file << measurement.totalDuration / measurement.nTimeSpans << ";"
+    quadraturePrecisionFile << "duration;error;number time spans;number error measurements" << std::endl
+     << measurement.totalDuration / measurement.nTimeSpans << ";"
      << measurement.totalError / measurement.nErrors << ";"
      << measurement.nTimeSpans << ";"
      << measurement.nErrors << std::endl;

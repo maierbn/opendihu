@@ -114,8 +114,8 @@ if dimension == 2:
     reference_volume = 0.5*abs(p[0]*q[1] - p[1]*q[0])   # 2D cross product
     
       
-  elif "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_1" in solution_files[0] \
-    or "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_1" in solution_files[0]:
+  elif "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario" in solution_files[0] \
+    or "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario" in solution_files[0]:
     import settings_mixed_2d as settings_2d
     
     from sympy import *

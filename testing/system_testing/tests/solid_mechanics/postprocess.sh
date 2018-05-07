@@ -17,8 +17,10 @@ mkdir -p results
 
 # for all testcases
 for name in \
+  "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_1" \
+  "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_1" \
   "mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_2" \
-  "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_2" \
+  "mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_2"
 do
 
 echo "check ${name}"

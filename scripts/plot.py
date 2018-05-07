@@ -54,8 +54,13 @@ solution_files = list(np.extract(map(solution_condition, files), files))
 solution_shaped_files = list(np.extract(map(solution_shaped_condition, files), files))
 solution_py_files = list(np.extract(map(solution_py_condition, files), files))
 
+
+# sort files by number in file name
+solution_py_files = sorted(solution_py_files)
+
 print "{} files".format(len(solution_py_files))
 print solution_py_files[0:min(10,len(solution_py_files))]
+print solution_py_files
 
 data = py_reader.load_data(solution_py_files)
 
@@ -325,71 +330,7 @@ if dimension == 2:
     min_y = min(min_y_current, min_y_reference)
     max_x = max(max_x_current, max_x_reference)
     max_y = max(max_y_current, max_y_reference)
-    
-    # create mesh / polygons
-    polygons = []
-    if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "StructuredDeformable":
-      
-      if debug:
-        print "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"])
-      
-      if data[0]["basisFunction"] == "Lagrange":
-        nEntries = dimension * [0]
-        for i in range(dimension):
-          nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
-          
-      elif data[0]["basisFunction"] == "Hermite":
-        nEntries = dimension * [0]
-        for i in range(dimension):
-          nEntries[i] = data[0]["nElements"][i] + 1
-      
-      nEntries = nEntries[::-1]   # reverse list
-    
-    def create_mesh(x_positions, y_positions, nEntries, **kwargs):
-      """ create Polygon objects (quads) that can be plotted """
-      polygons = []
-      
-      X = np.reshape(list(x_positions), nEntries)
-      Y = np.reshape(list(y_positions), nEntries)
-      
-      if debug:
-        print "nEntries: ", nEntries
-        print "x_positions: ", x_positions
-        print "X: ",X
-        print "y_positions: ", y_positions
-        print "Y: ",Y
-        print nEntries
-      
-      # loop over elements
-      for ely in range(nEntries[1]-1):
-        for elx in range(nEntries[0]-1):
-          point0 = np.array([X[ely][elx], Y[ely][elx]])
-          point1 = np.array([X[ely][elx+1], Y[ely][elx+1]])
-          point2 = np.array([X[ely+1][elx], Y[ely+1][elx]])
-          point3 = np.array([X[ely+1][elx+1], Y[ely+1][elx+1]])
-          
-          if debug:
-            print "polygon (0,1,2,3) = ({},{},{},{})".format(point0, point1, point2, point3)
-      
-          polygon = Polygon([point0, point1, point3, point2], **kwargs)  # dummy data for xs,ys
-          polygons.append(polygon)
-          
-      return polygons
-    
-    # parse values of reference and current configuration
-    x_positions_current = py_reader.get_values(data[0], "geometry", "x")
-    y_positions_current = py_reader.get_values(data[0], "geometry", "y")
-    
-    x_positions_reference = py_reader.get_values(data[0], "geometryReference", "0")
-    y_positions_reference = py_reader.get_values(data[0], "geometryReference", "1")
-      
-    # create meshes for current and reference configuration
-    polygons_current = []
-    polygons_current = create_mesh(x_positions_current, y_positions_current, nEntries, fill=False, edgecolor=(0.2, 0.2, 0.8), linewidth=3, label="current configuration")
-    polygons_reference = []
-    polygons_reference = create_mesh(x_positions_reference, y_positions_reference, nEntries, fill=False, edgecolor=(0.8,0.8,0.8), linewidth=3, label="reference configuration")
-    
-      
+  
     # prepare plot
     fig = plt.figure()
 
@@ -403,30 +344,127 @@ if dimension == 2:
     margin_x = abs(max_x - min_x) * 0.3
     margin_y = abs(max_y - min_y) * 0.3
     ax = fig.add_subplot(111, xlim=(min_x-margin_x, max_x+margin_x), ylim=(min_y-margin_y, max_y+margin_y))
+    text = plt.figtext(0.15,0.85,"timestep",size=20)
     
     ax.set_xlabel('x')
     ax.set_ylabel('y')
+  
+    def init():
+      pass
+        
+    def animate(frame_no):
+      ax.clear()
     
-    # add all polygons to axis
-    for polygon in polygons_reference + polygons_current:
-      plt.gca().add_patch(polygon)
+      dataset = data[frame_no]
       
-    ax.set_aspect('equal','datalim')
+      # create mesh / polygons
+      polygons = []
+      if dataset["meshType"] == "StructuredRegularFixed" or dataset["meshType"] == "StructuredDeformable":
+        
+        if debug:
+          print "basisfunction: [{}], basisOrder: [{}]".format(dataset["basisFunction"], dataset["basisOrder"])
+        
+        if dataset["basisFunction"] == "Lagrange":
+          nEntries = dimension * [0]
+          for i in range(dimension):
+            nEntries[i] = dataset["basisOrder"] * dataset["nElements"][i] + 1
+            
+        elif dataset["basisFunction"] == "Hermite":
+          nEntries = dimension * [0]
+          for i in range(dimension):
+            nEntries[i] = dataset["nElements"][i] + 1
+        
+        nEntries = nEntries[::-1]   # reverse list
+      
+      def create_mesh(x_positions, y_positions, nEntries, **kwargs):
+        """ create Polygon objects (quads) that can be plotted """
+        polygons = []
+        
+        X = np.reshape(list(x_positions), nEntries)
+        Y = np.reshape(list(y_positions), nEntries)
+        
+        if debug:
+          print "nEntries: ", nEntries
+          print "x_positions: ", x_positions
+          print "X: ",X
+          print "y_positions: ", y_positions
+          print "Y: ",Y
+          print nEntries
+        
+        # loop over elements
+        for ely in range(nEntries[1]-1):
+          for elx in range(nEntries[0]-1):
+            point0 = np.array([X[ely][elx], Y[ely][elx]])
+            point1 = np.array([X[ely][elx+1], Y[ely][elx+1]])
+            point2 = np.array([X[ely+1][elx], Y[ely+1][elx]])
+            point3 = np.array([X[ely+1][elx+1], Y[ely+1][elx+1]])
+            
+            if debug:
+              print "polygon (0,1,2,3) = ({},{},{},{})".format(point0, point1, point2, point3)
+        
+            polygon = Polygon([point0, point1, point3, point2], **kwargs)  # dummy data for xs,ys
+            polygons.append(polygon)
+            
+        return polygons
+      
+      # parse values of reference and current configuration
+      x_positions_current = py_reader.get_values(dataset, "geometry", "x")
+      y_positions_current = py_reader.get_values(dataset, "geometry", "y")
+      
+      x_positions_reference = py_reader.get_values(dataset, "geometryReference", "0")
+      y_positions_reference = py_reader.get_values(dataset, "geometryReference", "1")
+        
+      # create meshes for current and reference configuration
+      polygons_current = []
+      polygons_current = create_mesh(x_positions_current, y_positions_current, nEntries, fill=False, edgecolor=(0.2, 0.2, 0.8), linewidth=3, label="current configuration")
+      polygons_reference = []
+      polygons_reference = create_mesh(x_positions_reference, y_positions_reference, nEntries, fill=False, edgecolor=(0.8,0.8,0.8), linewidth=3, label="reference configuration")
+      
+      
+      # add all polygons to axis
+      for polygon in polygons_reference + polygons_current:
+        ax.add_patch(polygon)
+        
+      ax.set_aspect('equal','datalim')
 
-    # add legend, every legend entry (current configuration or reference configuration) only once
-    handles, labels = ax.get_legend_handles_labels()
-    new_handles = []
-    new_labels = []
-    for (handle,label) in zip(handles,labels):
-      if label not in new_labels:
-        new_handles.append(handle)
-        new_labels.append(label)
-    ax.legend(new_handles, new_labels, loc='best')
+      # add legend, every legend entry (current configuration or reference configuration) only once
+      handles, labels = ax.get_legend_handles_labels()
+      new_handles = []
+      new_labels = []
+      for (handle,label) in zip(handles,labels):
+        if label not in new_labels:
+          new_handles.append(handle)
+          new_labels.append(label)
+      ax.legend(new_handles, new_labels, loc='best')
+      
+     
+      # display timestep
+      if 'timeStepNo' in dataset:
+        timestep = dataset['timeStepNo']
+        max_timestep = data[-1]['timeStepNo']
+      if 'currentTime' in dataset:
+        current_time = dataset['currentTime']
+        
+      t = "{}. timestep {}/{}, t = {}".format(frame_no, timestep, max_timestep, current_time)
+      text.set_text(t)
+      #text = plt.figtext(0.15, 0.85, t, size=20)
     
-    # show plot window or write figure
+    interval = 5000.0 / len(data)
+          
+    if len(data) == 1:
+      init()
+      animate(0)
+      plt.savefig("fig.pdf")
+      
+    else:  # create animation
+      
+      anim = animation.FuncAnimation(fig, animate, init_func=init,
+                 frames=len(data), interval=interval, blit=False)
+
+      anim.save("anim.mp4")
+      plt.savefig("fig.pdf")
+      
     if show_plot:
       plt.show()
-    else:
-      plt.savefig("fig.pdf")
       
 sys.exit(0)

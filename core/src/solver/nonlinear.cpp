@@ -32,7 +32,7 @@ Nonlinear::Nonlinear(PyObject *specificSettings) : Solver(specificSettings)
   ierr = KSPGetPC (*ksp_, &pc); CHKERRV(ierr);
   
   // set preconditioner type
-  ierr = PCSetType (pc, PCLU); CHKERRV(ierr);
+  ierr = PCSetType (pc, PCSOR); CHKERRV(ierr);
   
   // set options from command line as specified by PETSc
   PCSetFromOptions(pc);

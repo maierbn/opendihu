@@ -24,6 +24,13 @@ MPI_DIR="/usr/lib/openmpi"
 import os
 if os.environ.get("MPI_HOME") is not None:
   MPI_DIR = os.environ.get("MPI_HOME")
+  
+# for Travis CI build MPI ourselves
+if os.environ.get("HOSTNAME") is not None:
+  hostname = os.environ.get("HOSTNAME")
+  if "travis-job" in hostname:
+    MPI_DIR=None
+    MPI_DOWNLOAD=True
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True

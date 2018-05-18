@@ -37,6 +37,7 @@ else:
   print "could not get hostname!"
   del MPI_DIR
   MPI_DOWNLOAD=True
+  print os.environ
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True

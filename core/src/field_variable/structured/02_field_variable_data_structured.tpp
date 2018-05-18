@@ -9,68 +9,68 @@
 
 namespace FieldVariable
 {
- 
+
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured() : 
+FieldVariableDataStructured() :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
 }
-  
+
 //! contructor as data copy with a different name (component names are the same)
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name) : 
+FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name) :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
   std::vector<std::string> componentNames(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), componentNames.begin());
-   
+
   initializeFromFieldVariable(rhs, name, componentNames);
-  
+
   // copy entries in values vector
   VecCopy(rhs.values(), this->values_);
 }
-  
+
 //! constructor with mesh, name and components
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) : 
+FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   this->name_ = name;
   this->isGeometryField_ = false;
   this->mesh_ = mesh;
-  
+
   std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
-  
+
   // assign component names
   assert(nComponents == componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
-  
+
   this->nEntries_ = mesh->nDofs() * nComponents;
-  
+
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
    << ", components: " << nComponents << ", nEntries: " << this->nEntries_;
-  
+
   assert(this->nEntries_ != 0);
-   
+
   // create a new values vector for the new field variable
-  
+
   // create vector
   PetscErrorCode ierr;
   // initialize PETSc vector object
   ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
   ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-  
+
   // initialize size of vector
   ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-  
+
   // set sparsity type and other options
   ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
 }
- 
+
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 ~FieldVariableDataStructured()
@@ -80,7 +80,7 @@ FieldVariableDataStructured<BasisOnMeshType,nComponents>::
     //PetscErrorCode ierr = VecDestroy(&this->values_); CHKERRV(ierr);
   }
 }
- 
+
 template<typename BasisOnMeshType, int nComponents>
 template<typename FieldVariableType>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
@@ -89,33 +89,33 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->name_ = name;
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
-  
+
   // copy component names
   assert(nComponents == (int)componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
   this->nEntries_ = fieldVariable.nDofs() * nComponents;
-  
-  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_ 
+
+  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_
    << ", components: " << nComponents << ", Vec nEntries: " << this->nEntries_;
-  
+
   assert(this->nEntries_ != 0);
-   
+
   // create a new values vector for the new field variable
-  
+
   // create vector
   PetscErrorCode ierr;
   // initialize PETSc vector object
   ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
   ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-  
+
   // initialize size of vector
   ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-  
+
   // set sparsity type and other options
   ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
 }
-  
+
 template<typename BasisOnMeshType, int nComponents>
 std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 nElementsPerCoordinateDirection() const
@@ -151,11 +151,11 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<eleme
 {
   this->name_ = name;
   this->isGeometryField_ = isGeometryField;
-  
+
   // copy component names
   assert(nComponents == (int)componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
-  
+
   nEntries_ = nEntries;
   values_ = values;
 }
@@ -166,14 +166,14 @@ void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // output first line of header
-  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
+  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
-    
+
   // output headers of components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     std::string name = this->componentNames_[componentNo];
-   
+
     // compose basis representation string, e.g. "l.Lagrange*l.Lagrange"
     std::stringstream basisFunction;
     switch(BasisOnMeshType::BasisFunction::getBasisOrder())
@@ -191,10 +191,10 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
       break;
     }
     basisFunction << BasisOnMeshType::BasisFunction::getBasisFunctionString();
-    
+
     stream << " " << name << ".   " << StringUtility::multiply<BasisOnMeshType::dim()>(basisFunction.str())
       << ", no modify, standard node based." << std::endl;
-    
+
     // loop over nodes of a representative element
     for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nNodesPerElement(); nodeIndex++)
     {
@@ -228,15 +228,15 @@ outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &val
    1.  Value index= 3, #Derivatives= 0
 */
   // output first line of header
-  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field") 
+  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
-    
+
   // output headers of components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     std::string name = this->componentNames_[componentNo];
     stream << "  " << name << ".  Value index=" << valueIndex+1 << ", #Derivatives= 0" << std::endl;
-    
+
     valueIndex += BasisOnMeshType::nDofsPerNode();
   }
 }
@@ -246,14 +246,14 @@ template<typename BasisOnMeshType, int nComponents>
 bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
-  return true;   // structured meshes do not have exfile representations 
+  return true;   // structured meshes do not have exfile representations
 }
 
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 output(std::ostream &stream) const
 {
-  stream << "\"" << this->name_ << "\", nEntries: " << nEntries_ 
+  stream << "\"" << this->name_ << "\", nEntries: " << nEntries_
     << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
     << "  components:" << std::endl;
   for (auto &componentName : this->componentNames_)

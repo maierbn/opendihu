@@ -6,13 +6,13 @@ namespace OperatorSplitting
 {
 
 template<typename TimeStepping1, typename TimeStepping2>
-class Strang : 
+class Strang :
   public OperatorSplitting<TimeStepping1, TimeStepping2>
 {
 public:
   //! constructor
   Strang(DihuContext context);
-  
+
   //! advance time stepping by span
   void advanceTimeSpan();
 };

@@ -13,9 +13,9 @@
 
 namespace Data
 {
-  
+
 template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::Data(DihuContext context) : 
+Data<BasisOnMeshType>::Data(DihuContext context) :
   context_(context)
 {
 }

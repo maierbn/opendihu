@@ -6,7 +6,7 @@ namespace BasisOnMesh
 {
 /*
 template<int D,typename BasisFunctionType>
-std::shared_ptr<typename BasisOnMeshGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableBaseType> 
+std::shared_ptr<typename BasisOnMeshGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableBaseType>
 BasisOnMeshGeometry<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 fieldVariable(std::string name)
 {
@@ -15,5 +15,5 @@ fieldVariable(std::string name)
   else
     return nullptr;
 }*/
-  
+
 };  // namespace

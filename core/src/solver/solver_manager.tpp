@@ -35,16 +35,16 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to solver with solverName \""<<solverName<<"\" but no such solver was defined.";      
+      LOG(ERROR) << "Config contains reference to solver with solverName \""<<solverName<<"\" but no such solver was defined.";
     }
   }
   else
   {
     VLOG(1) << "Config does not contain solverName.";
   }
-  
+
   // check if there is a matching solver already stored
-  // loop over all stored solvers 
+  // loop over all stored solvers
   for(auto &solver: solvers_)
   {
     // check if type matches
@@ -58,8 +58,8 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
       }
     }
   }
-  
-  
+
+
   // create new solver, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
@@ -67,8 +67,8 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings);
 
   solvers_[anonymousName.str()] = solver;
-  
+
   return solver;
 }
-  
-};   // namespace 
+
+};   // namespace

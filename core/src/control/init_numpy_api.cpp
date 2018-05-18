@@ -5,12 +5,12 @@
 //! function that initializes numpy before execution of any code
 void initNumpy()
 {
-  
-#ifdef HAVE_NUMPYC 
+
+#ifdef HAVE_NUMPYC
   if (_import_array() < 0)
   {
-    PyErr_Print(); 
-    PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");  
+    PyErr_Print();
+    PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
   }
 #endif
 

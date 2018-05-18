@@ -7,9 +7,9 @@
 
 namespace FieldVariable
 {
-  
+
 using namespace StringUtility;
-  
+
 void ElementToNodeMapping::setNumberElements(element_no_t nElements)
 {
   elements_.resize(nElements);
@@ -21,7 +21,7 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
   int elementNo = 0;
   bool nodesFollow = false;
   bool scaleFactorsFollow = false;
-  
+
   int pos = 0;
   while(pos < (int)content.size())
   {
@@ -32,44 +32,44 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
       pos = content.size();
     else
       pos = posNewline+1;
-    
+
     //VLOG(2) << "   line [" << StringUtility::replace(line,"\r","") << "],pos: " << pos << ", size: " << content.size();
-    
+
     if (line.find("Element:") != std::string::npos)
     {
       elementNo = getNumberAfterString(line,"Element:")-1;
       VLOG(2) << "   elementNo=" << elementNo;
     }
-    
+
     if (line.find("Nodes:") != std::string::npos)
     {
       nodesFollow = true;
       continue;
     }
-    
+
     if (line.find("Scale factors:") != std::string::npos)
     {
       scaleFactorsFollow = true;
       continue;
     }
-    
+
     if (line.find("#Scale factor sets") != std::string::npos)
     {
       scaleFactorsFollow = false;
       continue;
     }
-    
+
     if (nodesFollow)
     {
       trim(line);
       VLOG(2) << "parse line with nodes: [" << line << "]";
-      
+
       while(!line.empty())
       {
         node_no_t nodeGlobalNo = atoi(line.c_str())-1;
         //VLOG(2) << "       node: " << nodeGlobalNo;
         elements_[elementNo].nodeGlobalNo.push_back(nodeGlobalNo);
-        
+
         // proceed to next number
         if (line.find(" ") != std::string::npos)
         {
@@ -80,7 +80,7 @@ void ElementToNodeMapping::parseElementFromExelemFile(std::string content)
       }
       nodesFollow = false;
     }
-    
+
     if (scaleFactorsFollow)
     {
       trim(line);
@@ -110,24 +110,24 @@ ElementToNodeMapping::Element& ElementToNodeMapping::getElement(element_no_t ele
 void ElementToNodeMapping::outputElementExelem(std::ostream &file, element_no_t elementGlobalNo)
 {
   assert(elementGlobalNo < (int)elements_.size());
-  
-  file << " Element: " << elementGlobalNo+1 << " 0 0" << std::endl 
+
+  file << " Element: " << elementGlobalNo+1 << " 0 0" << std::endl
     << " Nodes:" << std::endl;
-    
+
   // output global node numbers
   for (unsigned int nodeNo = 0; nodeNo < elements_[elementGlobalNo].nodeGlobalNo.size(); nodeNo++)
   {
     file << " " << elements_[elementGlobalNo].nodeGlobalNo[nodeNo]+1;
   }
   file << std::endl;
-  
+
   // output scale factors
   if (!elements_[elementGlobalNo].scaleFactors.empty())
   {
     file << " Scale factors:" << std::endl;
-    
+
     StringUtility::outputValuesBlock(file, elements_[elementGlobalNo].scaleFactors.begin(), elements_[elementGlobalNo].scaleFactors.end(), 5);
   }
 }
-  
+
 };

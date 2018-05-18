@@ -16,7 +16,7 @@ class FiniteElementMethodStiffnessMatrix :
 public:
   // use constructor of base class
   using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
-  
+
 protected:
   //! set entries in stiffness matrix
   void setStiffnessMatrix(){LOG(FATAL)<<"FiniteElementMethodStiffnessMatrix inheritance is wrong!";}
@@ -28,9 +28,9 @@ protected:
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
   BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>,
-  QuadratureType, 
-  Term, 
-  Mesh::StructuredRegularFixedOfDimension<1ul>, 
+  QuadratureType,
+  Term,
+  Mesh::StructuredRegularFixedOfDimension<1ul>,
   Equation::hasLaplaceOperator<Term>,
   BasisFunction::LagrangeOfOrder<1>
 > :
@@ -39,7 +39,7 @@ class FiniteElementMethodStiffnessMatrix<
 public:
   //! use constructor of base class
   using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
-  
+
 protected:
   //! set entries in stiffness matrix
   void setStiffnessMatrix();
@@ -49,9 +49,9 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, 
-  QuadratureType, 
-  Term, 
+  BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>,
+  QuadratureType,
+  Term,
   Mesh::StructuredRegularFixedOfDimension<2ul>,
   Equation::hasLaplaceOperator<Term>,
   BasisFunction::LagrangeOfOrder<1>
@@ -61,7 +61,7 @@ class FiniteElementMethodStiffnessMatrix<
 public:
   //! use constructor of base class
   using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
-  
+
 protected:
   //! set entries in stiffness matrix
   void setStiffnessMatrix();
@@ -83,7 +83,7 @@ class FiniteElementMethodStiffnessMatrix<
 public:
   //! use constructor of base class
   using FiniteElementMethodBase<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::FiniteElementMethodBase;
-  
+
 protected:
   //! set entries in stiffness matrix
   void setStiffnessMatrix();
@@ -104,12 +104,12 @@ class FiniteElementMethodStiffnessMatrix<
 {
 public:
   // use constructor of base class
-  using AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::AssembleStiffnessMatrix;  
+  using AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::AssembleStiffnessMatrix;
 };
 
 
 
- 
+
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix_stencils.tpp"

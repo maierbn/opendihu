@@ -16,19 +16,19 @@ template<typename MeshType,typename BasisFunctionType>
 class BasisOnMesh : public BasisOnMeshFieldVariable<MeshType,BasisFunctionType>
 {
 public:
-   
+
   //! inherit constructor
   using BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::BasisOnMeshFieldVariable;
-  
+
   typedef MeshType Mesh;
   typedef BasisFunctionType BasisFunction;
   typedef BasisOnMesh<MeshType,BasisFunctionType> HighOrderBasisOnMesh;
-  
-  //! return an array of all dof nos. of the element  
-  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> 
+
+  //! return an array of all dof nos. of the element
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
   getElementDofNos(element_no_t elementNo) const;
-  
-  //! set a vector of all dof nos. of the element  
+
+  //! set a vector of all dof nos. of the element
   void getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 };
 
@@ -39,30 +39,30 @@ class BasisOnMesh<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder
   public BasisOnMeshFieldVariable<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
 {
 public:
-   
+
   //! inherit constructor
   using BasisOnMeshFieldVariable<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::BasisOnMeshFieldVariable;
-  
+
   typedef MeshType Mesh;
   typedef BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order> BasisFunction;
-  
-  //! return an array of all dof nos. of the element  
-  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunction>::nDofsPerElement()> 
+
+  //! return an array of all dof nos. of the element
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunction>::nDofsPerElement()>
   getElementDofNos(element_no_t elementNo) const;
-  
-  //! set a vector of all dof nos. of the element  
+
+  //! set a vector of all dof nos. of the element
   void getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
-  
+
   // the following methods are there for compatibility with the interface
   //! (unused method) initialize
   void initialize(){}
-  
+
   //! (unused method) return number of nodes, 0 for this mesh
   node_no_t nNodes() const {return 0;}
-  
+
   //! (unused method) fill a vector with positions of the nodes, consecutive (x,y,z) values
   void getNodePositions(std::vector<double> &nodePositions) const {}
-  
+
   //! (unused method) return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_no_t dofNo) const {return Vec3();}
 };

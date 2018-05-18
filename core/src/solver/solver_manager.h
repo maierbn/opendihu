@@ -6,7 +6,7 @@
 #include "control/dihu_context.h"
 #include "solver/solver.h"
 
-namespace Solver 
+namespace Solver
 {
 
 /**
@@ -20,21 +20,21 @@ class Manager
 public:
   //! constructor
   Manager(PyObject *specificSettings);
-  
+
   //! return previously created solver or create on the fly
   template<typename SolverType>
   std::shared_ptr<SolverType> solver(PyObject *settings);
-  
+
   //! check if a solver with the given name is stored
   bool hasSolver(std::string solverName);
-  
+
 private:
   //! store settings for all solvers that are specified in specificSettings_
   void storePreconfiguredSolvers();
- 
+
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   int numberAnonymousSolvers_;     ///< how many inline solvers without a given name in the python config are contained in solvers_. These have a key "anonymous<no>"
-  
+
   std::map<std::string, PyObject *> solverConfiguration_;         ///< the python dicts for the solvers that were defined under "Solvers"
   std::map<std::string, std::shared_ptr<Solver>> solvers_;    ///< the solvers with their string key
 };

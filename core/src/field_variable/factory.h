@@ -11,16 +11,16 @@ namespace FieldVariable
   */
 template<typename BasisOnMeshType>
 class Factory
-{ 
+{
 public:
-  //! create a new empty FieldVariable object with the specified number of components. 
+  //! create a new empty FieldVariable object with the specified number of components.
   template <typename ...Args>
   static std::shared_ptr<FieldVariableBase<BasisOnMeshType>> makeShared(const int nComponents, Args && ...args);
 
   //! create a field variable as copy of fieldVariable, with the give components
   template<typename FieldVariableType>
   static std::shared_ptr<FieldVariableBase<BasisOnMeshType>> createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
-  
+
 };
 
 };  // namespace

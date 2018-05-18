@@ -49,7 +49,7 @@ template<int D, int order>
 std::string CompletePolynomialOfDimensionAndOrder<D,order>::
 getBasisFunctionString()
 {
-  return std::string("CompletePolynomial"); 
+  return std::string("CompletePolynomial");
 }
 
 };  // namespace

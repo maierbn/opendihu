@@ -10,7 +10,7 @@ class BasisFunction
 {
 public:
   virtual ~BasisFunction() {}
-  
+
   static const bool isMixed = false;  ///< if this is a mixed formulation comprising a higher order and a lower order basis function
 private:
 };

@@ -22,20 +22,20 @@ namespace OutputWriter
 
 template<typename DataType>
 void Exfile::write(DataType& data, int timeStepNo, double currentTime)
-{ 
+{
   LOG(TRACE) << "Exfile::write";
- 
+
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
     return;
   }
-  
+
   LOG(DEBUG) << "output exfile";
-  
+
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
-  
+
   // exelem file
   // determine file name
   std::stringstream s;
@@ -45,9 +45,9 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   // open file
   std::ofstream file = openFile(filenameExelem);
   ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
-    outputExelem(file, data.getOutputFieldVariables()); 
+    outputExelem(file, data.getOutputFieldVariables());
   file.close();
-  
+
   // exnode file
   s.str("");
   s<<filename_<<".exnode";
@@ -56,12 +56,12 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   // open file
   file = openFile(filenameExnode);
   ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
-    outputExnode(file, data.getOutputFieldVariables()); 
+    outputExnode(file, data.getOutputFieldVariables());
   file.close();
-  
-  // store created filename 
+
+  // store created filename
   filenames_.push_back(filename_);
-  
+
   // output visualization file
   outputComFile();
 }

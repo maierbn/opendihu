@@ -19,7 +19,7 @@ BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
   BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(specificSettings)
 {
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
- 
+
   this->noGeometryField_ = noGeometryField;
   std::vector<double> nodePositions;
   if (!this->noGeometryField_)
@@ -35,10 +35,10 @@ BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions) :
   BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
 {
   this->noGeometryField_ = false;
-  
+
   std::vector<double> sequentialNodePositions;   // node positions in a scalar vector, as needed by setGeometryField
   sequentialNodePositions.reserve(nodePositions.size() * D);
-  
+
   for (Vec3 &vector : nodePositions)
   {
     for (int i = 0; i < 3; i++)
@@ -46,7 +46,7 @@ BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions) :
   }
   this->setGeometryField(sequentialNodePositions);
 }
-  
+
 
 // read in config nodes
 template<int D,typename BasisFunctionType>
@@ -55,15 +55,15 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
 {
   // compute number of nodes
   node_no_t nNodes = this->nNodes();
-  
+
   const int vectorSize = nNodes*3;
   nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
-  
+
   // fill initial position from settings
   if (PythonUtility::hasKey(specificSettings, "nodePositions"))
   {
     bool nodesStoredAsLists = false;
-    
+
     // check if the node positions are stored as list, e.g. [[x,y,z], [x,y,z],...]
     PyObject *nodePositionsListPy = PythonUtility::getOptionPyObject(specificSettings, "nodePositions");
     if (PyList_Check(nodePositionsListPy))
@@ -77,9 +77,9 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
         }
       }
     }
-      
+
     LOG(DEBUG) << "nodePositions: " << nodePositionsListPy << ", nodesStoredAsLists=" << nodesStoredAsLists;
-      
+
     if (nodesStoredAsLists)
     {
       node_no_t nNodesInList = PyList_Size(nodePositionsListPy);
@@ -97,13 +97,13 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
             PyObject *pointComponentPy = PyList_GetItem(itemNodePositionPy, (Py_ssize_t)i);
             nodePositions[3*nodeNo + i] = PythonUtility::convertFromPython<double>(pointComponentPy, 0.0);
           }
-          
+
           // set the rest of the values that were not specified to 0.0, e.g. z=0.0
           for (; i < 3; i++)
           {
             nodePositions[3*nodeNo + i] = 0.0;
           }
-          
+
           LOG(DEBUG) << "(1) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
         }
         else
@@ -113,44 +113,44 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
           nodePositions[3*nodeNo + 0] = value;
           nodePositions[3*nodeNo + 1] = 0.0;
           nodePositions[3*nodeNo + 2] = 0.0;
-          
+
           LOG(DEBUG) << "(2) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
         }
       }
-      
+
       if (nodeNo < nNodes)
       {
         LOG(WARNING) << "Expected " << nNodes << " nodes, nodePositions contains only " << nodeNo << " nodes (" << nNodes - nodeNo << " missing).";
       }
-      
+
       // fill rest of values with 0,0,0
       for (; nodeNo < nNodes; nodeNo++)
       {
         nodePositions[3*nodeNo + 0] = 0.0;
         nodePositions[3*nodeNo + 1] = 0.0;
         nodePositions[3*nodeNo + 2] = 0.0;
-        
+
         LOG(DEBUG) << "(3) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
       }
     }
     else
     {
       // nodes are stored as contiguous array, e.g. [x,y,z,x,y,z] or [x,y,x,y,x,y,...]
-     
+
       int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
-      
+
       int inputVectorSize = nNodes * nodeDimension;
       PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, nodePositions);
-      
+
       LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
 
-      // transform vector from (x,y) or (x) entries to (x,y,z) 
+      // transform vector from (x,y) or (x) entries to (x,y,z)
       if (nodeDimension < 3)
       {
         nodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
         for(int i=nNodes-1; i>=0; i--)
         {
-          
+
           if (nodeDimension == 2)
             nodePositions[i*3+1] = nodePositions[i*nodeDimension+1];
           else
@@ -159,25 +159,25 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
           nodePositions[i*3+2] = 0;
         }
       }
-    }   
+    }
   }
   else   // there was no "nodePositions" given in config, use physicalExtent instead
   {
     // if node positions are not given in settings but physicalExtent, fill from that
     std::array<double, D> physicalExtent, meshWidth;
     physicalExtent = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtent", 1.0, PythonUtility::Positive);
-    
+
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtent[dimNo] / 
+      meshWidth[dimNo] = physicalExtent[dimNo] /
         (this->nElementsPerCoordinateDirection(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
-    
+
     std::array<double, 3> position{0.,0.,0.};
-    
+
     LOG(DEBUG) << "nNodes: " << nNodes << ", vectorSize: " << vectorSize;
-    
+
     for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       switch(D)
@@ -188,17 +188,17 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
         position[1] = meshWidth[1] * (int(nodeNo / this->nNodes(0)) % this->nNodes(1));
       case 1:
         position[0] = meshWidth[0] * (nodeNo % this->nNodes(0));
-        
+
         break;
       }
-      
-      
+
+
       // store the position values in nodePositions
       for (int i=0; i<3; i++)
         nodePositions[nodeNo*3 + i] = position[i];
     }
   }
-  
+
 }
 
 // create geometry field from config nodes
@@ -207,26 +207,26 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 setGeometryField(std::vector<double> &nodePositions)
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField";
- 
+
   // compute number of dofs
   dof_no_t nDofs = this->nDofs();
-  
+
   // create petsc vector that contains the node positions
   Vec values;
   PetscErrorCode ierr;
   ierr = VecCreate(PETSC_COMM_WORLD, &values);  CHKERRV(ierr);
   ierr = PetscObjectSetName((PetscObject) values, "geometry"); CHKERRV(ierr);
-  
+
   // initialize size of vector
   const int vectorSize = nDofs * 3;   // dofs always contain 3 entries for every entry (x,y,z)
   ierr = VecSetSizes(values, PETSC_DECIDE, vectorSize); CHKERRV(ierr);
-  
+
   // set sparsity type and other options
   ierr = VecSetFromOptions(values);  CHKERRV(ierr);
-  
+
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
   std::vector<double> geometryValues(vectorSize, 0.0);
-  
+
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;
   // loop over nodes
@@ -238,7 +238,7 @@ setGeometryField(std::vector<double> &nodePositions)
     geometryValues[geometryValuesIndex+2] = nodePositions[nodePositionsIndex+2];
     geometryValuesIndex += 3;
     nodePositionsIndex += 3;
-    
+
     // set entries to 0 for rest of dofs at this node
     for (int dofIndex = 1; dofIndex < this->nDofsPerNode(); dofIndex++)
     {
@@ -248,15 +248,15 @@ setGeometryField(std::vector<double> &nodePositions)
       geometryValuesIndex += 3;
     }
   }
-  
+
   LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues;
-  
+
   PetscUtility::setVector(geometryValues, values);
-  
+
   // finish parallel assembly
   ierr = VecAssemblyBegin(values); CHKERRV(ierr);
   ierr = VecAssemblyEnd(values); CHKERRV(ierr);
-  
+
   bool isGeometryField = true;   // if the field is a geometry field
   // set geometry field
   this->geometryField_ = std::make_unique<GeometryFieldType>();
@@ -295,12 +295,12 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
- 
+
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
-   
+
     node_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
-    
+
     int index = nodeGlobalNo*3;
     Vec3 position = this->geometryField_->getValue(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];

@@ -61,8 +61,8 @@ createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std:
   {
     LOG(ERROR) << "Could not create field variable with nComponents=" << nComponents;
   }
-  
+
   return nullptr;
 }
-  
+
 };  // namespace

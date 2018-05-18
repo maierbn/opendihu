@@ -8,7 +8,7 @@
 
 namespace BasisOnMesh
 {
-  
+
 
 // specialization: Jacobian for 1D linear Lagrange basis
 template<typename MeshType>
@@ -40,7 +40,7 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
   double xi1 = xi[0];
   double xi2 = xi[1];
   double xi3 = xi[2];
-  
+
   Vec3 jacobianColumn0 =
     (1-xi2) * (1-xi3) * (node[1]-node[0])
     + xi2 * (1-xi3) * (node[3]-node[2])
@@ -52,13 +52,13 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
     + xi1 * (1-xi3) * (node[3]-node[1])
     + (1-xi1) * xi3 * (node[6]-node[4])
     + xi1 * xi3 * (node[7]-node[5]);
-  
+
   Vec3 jacobianColumn2 =
     (1-xi1) * (1-xi2) * (node[4]-node[0])
     + xi1 * (1-xi2) * (node[5]-node[1])
     + (1-xi1) * xi2 * (node[6]-node[2])
     + xi1 * xi2 * (node[7]-node[3]);
-    
+
   return std::array<Vec3,3>({jacobianColumn0, jacobianColumn1, jacobianColumn2});
 }
 /*
@@ -73,7 +73,7 @@ computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction
     {
       double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
       jacobian[dimNo] += coefficient * geometryField[dofIndex];
-      VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex] 
+      VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex]
        << " -> " << jacobian[dimNo];
     }
   }

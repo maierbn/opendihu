@@ -16,7 +16,7 @@ nNodes() const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
-  
+
   return this->geometryField_->nNodes();
 }
 
@@ -33,9 +33,9 @@ getNodePositions(std::vector<double> &nodes) const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
-  
+
   nodes.resize(this->nNodes()*3);
- 
+
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
     node_no_t nodeFirstDofGlobalNo = this->geometryField_->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];

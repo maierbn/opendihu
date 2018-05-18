@@ -13,25 +13,25 @@ template<int order=1>
 class LagrangeOfOrder : public BasisFunction
 {
 public:
-  
+
   //! number of degrees of freedom of this basis
   static constexpr int nDofsPerBasis();
-  
+
   //! number of degrees of freedom associated with a node in world space
   static constexpr int nDofsPerNode();
-  
+
   //! evaluate the 1D basis function corresponding to element-local dof i at xi, interval for xi is [0,1]
   static double phi(int i, double xi);
-  
+
   //! evaluate the first derivative of the 1D basis function corresponding to element-local dof i at xi, interval for xi is [0,1]
   static double dphi_dxi(int i, double xi);
- 
+
   //! return the basis order value as used in python files and callbacks, e.g. 2
   static constexpr int getBasisOrder();
-  
+
   //! return a basis function type string as used in python files and callbacks, e.g. "Lagrange"
   static std::string getBasisFunctionString();
-  
+
   static constexpr bool isNodalBased = true;  //< specify that this basis function is nodal based
 private:
 };

@@ -5,7 +5,7 @@ namespace Mesh
 
 Mesh::Mesh(PyObject *specificSettings)
 {
-  
+
 }
 
 }

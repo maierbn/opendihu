@@ -17,13 +17,13 @@ class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfD
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
-  //! inherited constructor 
+
+  //! inherited constructor
   using FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableData;
-  
+
   //! avoid name hiding of "setValues" method
   using FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::setValues;
-  
+
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs);
 };

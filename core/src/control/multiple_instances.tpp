@@ -5,12 +5,12 @@ namespace Control
 
 template<class TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
-MultipleInstances(DihuContext context) : 
+MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"])
 {
   // extract the number of instances
   nInstances_ = PythonUtility::getOptionInt(context_.getPythonConfig(), "nInstances", 1, PythonUtility::Positive);
-  
+
   // create all instances
   for (int i = 0; i < nInstances_; i++)
   {

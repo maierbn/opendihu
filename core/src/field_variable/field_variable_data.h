@@ -4,12 +4,12 @@
 
 namespace FieldVariable
 {
- 
+
 template<typename BasisOnMeshType,int nComponents>
 class FieldVariableData
 {
 public:
- 
+
 };
- 
-}; // namespace 
+
+}; // namespace

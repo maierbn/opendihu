@@ -8,7 +8,7 @@ template<>
 double LagrangeOfOrder<1>::
 dphi_dxi(int i, double xi)
 {
-  if (i==0) 
+  if (i==0)
     return -1;
   return 1;
 }
@@ -42,7 +42,7 @@ phi(int i, double xi)
   // phi0(xi) = 2*xi^2 -3*xi + 1
   // phi1(xi) = -4*xi^2 + 4*xi
   // phi2(xi) = 2*xi^2 - xi
-  
+
   if (i==0)
     return 2*xi*xi - 3*xi + 1;
   else if (i==1)

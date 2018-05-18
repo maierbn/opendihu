@@ -17,7 +17,7 @@
 
 namespace SpatialDiscretization
 {
- 
+
 /** inherited class that has additional Term template parameter
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term, typename = BasisFunctionType>
@@ -38,7 +38,7 @@ public:
   //! use constructor of base class
   using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
     ::FiniteElementMethodStiffnessMatrix;
- 
+
 protected:
   //! initialize rhs vector to 0
   void setRightHandSide();
@@ -57,7 +57,7 @@ public:
   using FiniteElementMethodRhs<BasisOnMesh::Mixed<
     BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
     BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodRhs;
-    
+
 protected:
   void setRightHandSide(){}
 };
@@ -72,7 +72,7 @@ class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equ
 public:
   //! use constructor of base class
   using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodRhs;
-  
+
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
@@ -85,7 +85,7 @@ class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equ
 public:
   //! use constructor of base class
   using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
-  
+
 };
 
 }  // namespace

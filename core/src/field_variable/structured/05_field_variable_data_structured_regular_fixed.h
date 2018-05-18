@@ -17,13 +17,13 @@ class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfD
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
-  //! inherited constructor 
+
+  //! inherited constructor
   using FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
- 
+
   //! set the meshWidth
   void setMeshWidth(double meshWidth);
-  
+
   //! get the mesh width
   double meshWidth() const;
 

@@ -2,7 +2,7 @@
 
 namespace BasisFunction
 {
-  
+
 template<int order>
 constexpr int LagrangeOfOrder<order>::
 nDofsPerNode()
@@ -39,7 +39,7 @@ template<int order>
 std::string LagrangeOfOrder<order>::
 getBasisFunctionString()
 {
-  return std::string("Lagrange"); 
+  return std::string("Lagrange");
 }
 
 };  // namespace

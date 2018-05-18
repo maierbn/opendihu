@@ -10,7 +10,7 @@ namespace StringUtility
 int getNumberAfterString(std::string line, std::string key)
 {
   std::string value = line.substr(line.find(key)+key.length());
-  
+
   // remove leading white space and '=' signs
   while(isspace(value[0]) || value[0] == '=')
     value = value.substr(1);
@@ -32,7 +32,7 @@ void trim(std::string &str)
 {
   // remove whitespace at the beginning
   str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](char c){return !std::isspace(c);}));
-  
+
   // remove whitespace at the end
   str.erase(std::find_if(str.rbegin(), str.rend(),
              [](char c){ return !std::isspace(c); }).base(),

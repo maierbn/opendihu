@@ -15,7 +15,7 @@ void checkSymmetry(const Tensor2<D> &rightCauchyGreen, std::string name)
 {
   if (VLOG_IS_ON(1))
   {
-   
+
     bool isSymmetric = true;
     const double errorTolerance = 1e-14;
     for (int a=0; a<D; a++)
@@ -37,7 +37,7 @@ void checkSymmetry(const Tensor2<D> &rightCauchyGreen, std::string name)
 template<int D>
 void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inverseRightCauchyGreen, std::string name)
 {
- 
+
   if (VLOG_IS_ON(1))
   {
     bool inverseCorrect = true;
@@ -52,7 +52,7 @@ void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inver
           matrixProduct += rightCauchyGreen[k][a] * inverseRightCauchyGreen[b][k];
         }
         double delta_ab = (a == b? 1.0 : 0.0);
-        
+
         if (fabs(delta_ab - matrixProduct) > errorTolerance)
         {
           LOG(ERROR) << name << " or " << name <<"^{-1} is wrong: " << matrixProduct << " should be " << delta_ab;
@@ -60,7 +60,7 @@ void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inver
         }
       }
     }
-    
+
     if (inverseCorrect)
     {
       VLOG(2) << name << " corresponds to " << name <<"^{-1}";

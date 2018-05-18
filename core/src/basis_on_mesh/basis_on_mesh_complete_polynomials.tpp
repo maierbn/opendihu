@@ -14,10 +14,10 @@ getElementDofNos(element_no_t elementNo) const
 {
   const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
   std::array<dof_no_t,nDofsPerElement> dof;
-  
+
   // fill array with increasing values, starting with elementNo*nDofsPerElement
   std::iota(dof.begin(), dof.end(), elementNo*nDofsPerElement);
-  
+
   return dof;
 }
 
@@ -27,7 +27,7 @@ getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) co
 {
   const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
   globalDofNos.resize(nDofsPerElement);
-  
+
   // fill array with increasing values, starting with elementNo*nDofsPerElement
   std::iota(globalDofNos.begin(), globalDofNos.end(), elementNo*nDofsPerElement);
 }

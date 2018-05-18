@@ -17,7 +17,7 @@
 
 namespace Data
 {
- 
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
 FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 pressure()
@@ -30,9 +30,9 @@ template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,type
 typename FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::OutputFieldVariables FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 getOutputFieldVariables()
 {
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> actualGeometryField 
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> actualGeometryField
     = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField());
-  
+
   return OutputFieldVariables(
     this->geometryReference_,
     actualGeometryField,
@@ -42,16 +42,16 @@ getOutputFieldVariables()
     this->externalVirtualWork_
   );
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh)
 {
   mixedMesh_ = mixedMesh;
-  
+
   // store high order mesh as mesh_
   this->mesh_ = mixedMesh_->highOrderBasisOnMesh();
-} 
+}
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
 std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
@@ -66,11 +66,11 @@ initialize()
 {
   // call initialize of parent class
   FiniteElementsSolidMechanics<HighOrderBasisOnMeshType,Term>::initialize();
- 
+
   LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
   initializeFieldVariables();
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
 void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 initializeFieldVariables()
@@ -78,7 +78,7 @@ initializeFieldVariables()
   std::vector<std::string> unnamedSingleComponent({"0"});
   this->pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
 const dof_no_t FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
 getTangentStiffnessMatrixNRows()

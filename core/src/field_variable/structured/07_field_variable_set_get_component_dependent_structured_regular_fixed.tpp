@@ -17,25 +17,25 @@ getValue(node_no_t dofGlobalNo)
   {
     std::array<PetscInt,nComponents> indices;
     std::array<double,nComponents> result;
-    
+
     // prepare lookup indices for PETSc vector values_
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       indices[componentNo] = dofGlobalNo*nComponents + componentNo;
     }
-      
+
     VecGetValues(this->values_, nComponents, indices.data(), result.data());
     return result;
   }
-  
+
   // if this is a geometry field compute the information
   const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
   const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
-  
+
   int nodeNo = int(dofGlobalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofGlobalNo % nDofsPerNode);
-  
+
   std::array<double,nComponents> value;
   if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
   {
@@ -43,14 +43,14 @@ getValue(node_no_t dofGlobalNo)
     value[1] = 0;
     value[2] = 0;
   }
-  else 
+  else
   {
     // x direction
     value[0] = (nodeNo % nNodesInXDirection) * this->meshWidth_;
-    
+
     // y direction
     value[1] = (int(nodeNo / nNodesInXDirection) % nNodesInYDirection) * this->meshWidth_;
-    
+
     // z direction
     value[2] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_;
   }

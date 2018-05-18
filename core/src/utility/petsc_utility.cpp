@@ -22,14 +22,14 @@ void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matr
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
-  
+
   std::vector<int> rowIndices(nRows);
   std::iota(rowIndices.begin(), rowIndices.end(), 0);
   std::vector<int> columnIndices(nColumns);
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
   matrixValues.resize(nRows*nColumns);
   LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " entries for the " << nRows << "x" << nColumns << " matrix";
-  
+
   // get values in row-major format
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
@@ -38,11 +38,11 @@ void PetscUtility::getVectorEntries(const Vec &vector, std::vector<double> &vect
 {
   int nEntries;
   VecGetSize(vector, &nEntries);
-  
+
   std::vector<int> indices(nEntries);
   std::iota(indices.begin(), indices.end(), 0);
   vectorValues.resize(nEntries);
-  
+
   VecGetValues(vector, nEntries, indices.data(), vectorValues.data());
 }
 
@@ -51,10 +51,10 @@ void PetscUtility::setVector(const std::vector<double> &vectorValues, Vec& vecto
   std::vector<int> indices(vectorValues.size());
   std::iota(indices.begin(), indices.end(), 0);
   VecSetValues(vector, vectorValues.size(), indices.data(), vectorValues.data(), INSERT_VALUES);
-  
+
   VecAssemblyBegin(vector);
   VecAssemblyEnd(vector);
-  
+
   int size;
   VecGetSize(vector, &size);
 }
@@ -64,15 +64,15 @@ void PetscUtility::createVector(Vec& vector, int nEntries, std::string name)
   PetscErrorCode ierr;
   // create PETSc vector object
   ierr = VecCreate(PETSC_COMM_WORLD, &vector);  CHKERRV(ierr);
-  
+
   if (name != "")
   {
     ierr = PetscObjectSetName((PetscObject)vector, name.c_str()); CHKERRV(ierr);
   }
-  
+
   // initialize size of vector
   ierr = VecSetSizes(vector, PETSC_DECIDE, nEntries); CHKERRV(ierr);
-  
+
   // set sparsity type and other options
   ierr = VecSetFromOptions(vector);  CHKERRV(ierr);
 }
@@ -83,14 +83,14 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
   char *cName;
   PetscObjectGetName((PetscObject)vector, (const char **)&cName);
   name = cName;
-  
+
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
-  
+
   std::vector<double> matrixValues, vectorValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);
   PetscUtility::getVectorEntries(vector, vectorValues);
-  
+
   std::stringstream s;
   s<<std::endl<<"    ";
   for (int j=0; j<nColumns; j++)
@@ -113,7 +113,7 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
     s<<std::endl;
   }
   s<<std::endl;
-  
+
   return s.str();
 }
 
@@ -121,12 +121,12 @@ std::string PetscUtility::getStringMatrix(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
-  
+
   std::vector<double> matrixValues, vectorValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);
-  
+
   const double zeroTolerance = 1e-15;
-  
+
   std::stringstream s;
   s<<std::endl<<"    ";
   for (int j=0; j<nColumns; j++)
@@ -149,7 +149,7 @@ std::string PetscUtility::getStringMatrix(const Mat& matrix)
     s<<std::endl;
   }
   s<<std::endl;
-  
+
   return s.str();
 }
 
@@ -157,20 +157,20 @@ std::string PetscUtility::getStringVector(const Vec& vector)
 {
   std::vector<double> vectorValues;
   PetscUtility::getVectorEntries(vector, vectorValues);
-  
+
   int nEntries;
   VecGetSize(vector, &nEntries);
-  
+
   LOG(DEBUG) << " getStringVector: " << nEntries;
-  
+
   const double zeroTolerance = 1e-15;
-  
+
   std::stringstream s;
   for (int i=0; i<nEntries; i++)
   {
     s << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
   }
-  
+
   return s.str();
 }
 
@@ -178,7 +178,7 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetSize(matrix, &nRows, &nColumns);
-  
+
   std::vector<double> matrixValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);
 
@@ -190,7 +190,7 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
       s<<"|";
     else if (j%2 == 0)
       s<<".";
-    else 
+    else
       s<<" ";
   }
   s<<std::endl;
@@ -212,8 +212,8 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
 
 std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 {
-  
-  
+
+
   // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPGetConvergedReason.html
   switch(convergedReason)
   {
@@ -252,26 +252,26 @@ std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason conv
 
   case KSP_DIVERGED_BREAKDOWN_BICG:
     return ANSI_COLOR_RED "KSP_DIVERGED_BREAKDOWN_BICG" ANSI_COLOR_RESET ": Initial residual is orthogonal to preconditioned initial residual. Try a different preconditioner, or a different initial Level.";
-      
+
   case KSP_DIVERGED_NULL:
     return ANSI_COLOR_RED "KSP_DIVERGED_NULL" ANSI_COLOR_RESET;
-      
+
   case KSP_DIVERGED_NONSYMMETRIC:
     return ANSI_COLOR_RED "KSP_DIVERGED_NONSYMMETRIC" ANSI_COLOR_RESET;
-      
+
   case KSP_DIVERGED_INDEFINITE_PC:
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_PC" ANSI_COLOR_RESET;
-      
+
   case KSP_DIVERGED_INDEFINITE_MAT:
     return ANSI_COLOR_RED "KSP_DIVERGED_INDEFINITE_MAT" ANSI_COLOR_RESET;
-      
+
   case KSP_DIVERGED_PCSETUP_FAILED:
     return ANSI_COLOR_RED "KSP_DIVERGED_PCSETUP_FAILED" ANSI_COLOR_RESET;
-    
+
   default:
     break;
   }
-  
+
   std::stringstream s;
   if (convergedReason < 0)
     s << "divergence, ";
@@ -283,7 +283,7 @@ std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason conv
 
 std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason convergedReason)
 {
-  
+
   // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/SNES/SNESConvergedReason.html#SNESConvergedReason
   switch(convergedReason)
   {
@@ -322,17 +322,17 @@ std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason 
 
   case SNES_DIVERGED_INNER:
     return ANSI_COLOR_RED "SNES_DIVERGED_INNER" ANSI_COLOR_RESET ": inner solve failed";
-      
+
   case SNES_DIVERGED_LOCAL_MIN:
     return ANSI_COLOR_RED "SNES_DIVERGED_LOCAL_MIN" ANSI_COLOR_RESET ": || J^T b || is small, implies converged to local minimum of F()";
-      
+
   case SNES_CONVERGED_ITERATING:
     return "SNES_CONVERGED_ITERATING";
-      
+
   default:
     break;
   }
-  
+
   std::stringstream s;
   if (convergedReason < 0)
     s << "divergence, ";

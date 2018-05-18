@@ -2,7 +2,7 @@
 
 namespace Control
 {
-  
+
 template<typename T>
 void PerformanceMeasurement::measureError(std::string name, T differenceVector)
 {

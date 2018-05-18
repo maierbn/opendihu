@@ -20,7 +20,7 @@ getElementNodeNos(element_no_t elementNo) const
   }
   return nodes;
 }
- 
+
 template<typename MeshType,int D,int order>
 dof_no_t BasisOnMeshNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
 nDofs() const

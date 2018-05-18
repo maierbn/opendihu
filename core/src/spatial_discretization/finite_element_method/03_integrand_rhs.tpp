@@ -12,7 +12,7 @@ EvaluationsType IntegrandRightHandSide<D,EvaluationsType,BasisOnMeshType,Term,Eq
 evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D> xi)
 {
   EvaluationsType evaluations;
-  
+
   // get the factor in the integral that arises from the change in integration domain from world to coordinate space
   double integrationFactor = MathUtility::computeIntegrationFactor<D>(jacobian);
 
@@ -26,7 +26,7 @@ evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D>
       evaluations(i,j) = integrand;
     }
   }
-  
+
   return evaluations;
 };
 

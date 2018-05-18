@@ -5,7 +5,7 @@
 
 namespace Quadrature
 {
-  
+
 // 1 Gauss point
 template<>
 std::array<double, 1> Gauss<1>::

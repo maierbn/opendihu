@@ -6,7 +6,7 @@ template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator-(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
 {
   MathUtility::Matrix<nRows,nColumns> result;
-  
+
   #pragma simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
@@ -20,7 +20,7 @@ template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator+(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
 {
   MathUtility::Matrix<nRows,nColumns> result;
-  
+
   #pragma simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
@@ -46,7 +46,7 @@ template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator*(double lambda, const MathUtility::Matrix<nRows,nColumns> matrix)
 {
   MathUtility::Matrix<nRows,nColumns> result;
-  
+
   #pragma simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
@@ -60,7 +60,7 @@ template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns> matrix, double lambda)
 {
   MathUtility::Matrix<nRows,nColumns> result;
-  
+
   #pragma simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
@@ -74,7 +74,7 @@ template<int nRows, int nColumns>
 MathUtility::Matrix<nRows,nColumns> operator*(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
 {
   MathUtility::Matrix<nRows,nColumns> result;
-  
+
   #pragma simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
@@ -99,7 +99,7 @@ std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumn
     {
       stream << ";  ";
     }
-    else 
+    else
     {
       stream << ",";
     }

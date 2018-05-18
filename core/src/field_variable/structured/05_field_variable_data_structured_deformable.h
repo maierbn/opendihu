@@ -8,7 +8,7 @@
 
 namespace BasisOnMesh
 {
- 
+
 };
 
 namespace FieldVariable
@@ -22,10 +22,10 @@ class FieldVariableData<::BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfD
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
-  //! inherited constructor 
+
+  //! inherited constructor
   using FieldVariableSetGetComponent<::BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
-  
+
 };
 
 };  // namespace

@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <numeric>
 
-namespace MathUtility 
+namespace MathUtility
 {
-  
+
 template<int nRows, int nColumns>
 Matrix<nRows,nColumns>::
 Matrix(const std::array<double, nRows*nColumns> &rhs) : std::array<double, nRows*nColumns>(rhs)
@@ -37,7 +37,7 @@ operator()(int rowIndex, int columnIndex)
   assert(rowIndex < nRows);
   assert(columnIndex >= 0);
   assert(columnIndex < nColumns);
-  
+
   //return operator[](columnIndex*nRows + rowIndex);   // column-major
   return this->operator[](rowIndex*nColumns + columnIndex);   // row-major
 }
@@ -50,10 +50,10 @@ setPetscMatrix(Mat &mat)
   // prepare index arrays for MatSetValues
   std::array<int,nRows> rowIndices;
   std::iota(rowIndices.begin(), rowIndices.end(), 0);
-  
+
   std::array<int,nColumns> columnIndices;
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
-  
+
   // assign values to PETSc data structure
   MatSetValues(mat, nRows, rowIndices.data, nColumns, columnIndices.data(), this->data(), INSERT_VALUES);
 }

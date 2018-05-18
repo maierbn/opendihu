@@ -3,7 +3,7 @@
 
 namespace Mesh
 {
-  
+
 template<>
 element_no_t Structured<1>::nElements() const
 {

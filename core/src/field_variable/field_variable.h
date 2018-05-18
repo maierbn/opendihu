@@ -12,11 +12,11 @@ namespace FieldVariable
 template<typename BasisOnMeshType,int nComponents>
 class FieldVariable :
   public FieldVariableSetGet<BasisOnMeshType,nComponents>
-{ 
+{
 public:
-  //! inherited constructor 
+  //! inherited constructor
   using FieldVariableSetGet<BasisOnMeshType,nComponents>::FieldVariableSetGet;
-  
+
   typedef BasisOnMeshType BasisOnMesh;
 };
 
@@ -25,18 +25,18 @@ public:
  * Scalar field variables can compute a gradient field.
  */
 template<typename BasisOnMeshType>
-class FieldVariable<BasisOnMeshType,1> : 
+class FieldVariable<BasisOnMeshType,1> :
   public FieldVariableSetGet<BasisOnMeshType,1>
 {
 public:
-  //! inherited constructor 
+  //! inherited constructor
   using FieldVariableSetGet<BasisOnMeshType,1>::FieldVariableSetGet;
-  
+
   typedef BasisOnMeshType BasisOnMesh;
- 
+
   //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
   void computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField);
-  
+
 };
 
 // output operator

@@ -23,7 +23,7 @@ setRightHandSide()
 {
   // fill rhs vector with 0
   PetscErrorCode ierr;
-  
+
   Vec &rightHandSide = this->data_.rightHandSide().values();
   ierr = VecZeroEntries(rightHandSide); CHKERRV(ierr);
 }

@@ -4,7 +4,7 @@
 
 namespace MathUtility
 {
- 
+
 template<int D>
 double norm(const VecD<D> node)
 {
@@ -27,7 +27,7 @@ void normalize(VecD<D> &vector)
 template<int D>
 double length(const VecD<D> node)
 {
-  return sqrt(sqr(node[0]) 
+  return sqrt(sqr(node[0])
     + sqr(node[1])
     + sqr(node[2]));
 }

@@ -53,7 +53,7 @@ void NodeToDofMapping::output(std::ostream &stream) const
     stream << "] ";
   }
 }
-  
+
 std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping &rhs)
 {
   rhs.output(stream);

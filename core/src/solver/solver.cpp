@@ -1,11 +1,11 @@
 #include "solver/solver.h"
 
-namespace Solver 
+namespace Solver
 {
-  
+
 Solver::Solver(PyObject *specificSettings) : specificSettings_(specificSettings)
 {
-  
+
 }
 
 bool Solver::configEquals(PyObject* config)

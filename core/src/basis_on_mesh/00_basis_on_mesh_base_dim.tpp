@@ -10,8 +10,8 @@
 
 namespace BasisOnMesh
 {
- 
-// lagrange and hermite polynomials  
+
+// lagrange and hermite polynomials
 template<int D,typename BasisFunctionType>
 constexpr int BasisOnMeshBaseDim<D,BasisFunctionType>::
 nDofsPerElement()
@@ -51,14 +51,14 @@ averageNDofsPerElement()
 }
 
 // -------------------------
-// complete polynomials 
+// complete polynomials
 template<int D,int order>
 constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
 nDofsPerElement()
 {
   return BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>::nDofsPerBasis();
 }
- 
+
 template<int D,int order>
 constexpr int BasisOnMeshBaseDim<D,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
 nNodesPerElement()

@@ -7,7 +7,7 @@
 
   //now, everything is setup, just include the numpy-arrays:
   #include <numpy/arrayobject.h>
-   
+
 #endif  // HAVE_NUMPYC
 
 //! function that initializes numpy before execution of any code

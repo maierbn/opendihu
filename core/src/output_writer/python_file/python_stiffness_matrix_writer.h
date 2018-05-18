@@ -13,15 +13,15 @@ namespace OutputWriter
 
 /**
  * Encapsulates method to write a vector to a numpy file *.npy
- */ 
+ */
 class NumpyFileWriter
 {
 public:
-  
+
   //! write data vector to a numpy file, data layout has shape given by nEntries
   static void writeToNumpyFile(std::vector<double> &data, std::string filename, std::vector<long> &nEntries);
 };
- 
+
 /* fall-back implementation for not RegularFixed meshes or not Finite Elements data
  */
 template<typename DataType>
@@ -41,16 +41,16 @@ class PythonStiffnessMatrixWriter<
 {
 public:
   typedef Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> DataType;
- 
+
   //! write out solution to file filename as numpy array, as 1D data and in correct shape, also write rhs matrix
   static void writeNumpySolution(DataType &data, std::string filename);
- 
+
 private:
   //! write stiffness and rhs matrix
   static void writeMatrices(DataType &data, std::string filename);
 
 };
 
-};   // namespace 
+};   // namespace
 
 #include "output_writer/python_file/python_stiffness_matrix_writer.tpp"

@@ -8,16 +8,16 @@
 
 namespace OutputWriter
 {
- 
+
 template<int D,typename BasisFunctionType,typename Term>
 void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
 writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
   // TODO: change to data.OutputFieldVariables instead of data.solution
- 
+
  /*
   LOG(TRACE) << "writeNumpySolution RegularFixed, D="<<D;
-  
+
   // solution and rhs vectors in mesh shape
 
   // determine file names
@@ -26,26 +26,26 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   s[1] << filename << "_solution_shaped.npy";
   std::string filenameSolution = s[0].str();
   std::string filenameSolutionShaped = s[1].str();
-  
+
   // get data of solution vector
   std::vector<double> vectorValues;
   PetscUtility::getVectorEntries(data.solution().values(), vectorValues);
-  
+
   // determine number of entries in each D
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
     int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
     dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
-  
+
     nEntries[i] = dofsPerRow * 1;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
-  
+
   // write as numpy file
   writeToNumpyFile(vectorValues, filenameSolution, singleEntry);
   writeToNumpyFile(vectorValues, filenameSolutionShaped, nEntries);
-  
+
   writeMatrices(data, filename);
   */
 }
@@ -63,7 +63,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   std::string filenameRhs = s[0].str();
   std::string filenameRhsShaped = s[1].str();
   std::string filenameStiffness = s[2].str();
-  
+
   // get data of rhs vector
   int vectorSize = 0;
   VecGetSize(data.rightHandSide().values(), &vectorSize);
@@ -78,17 +78,17 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   {
     int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
     dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirection(i) + BasisFunctionType::nDofsPerNode());
-  
+
     nEntries[i] = dofsPerRow;
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
-  
+
   VecGetValues(data.rightHandSide().values(), vectorSize, indices.data(), vectorValues.data());
-  
+
   // write as numpy file
   writeToNumpyFile(vectorValues, filenameRhs, singleEntry);
   writeToNumpyFile(vectorValues, filenameRhsShaped, nEntries);
-  
+
   // get stiffness matrix
   int nRows, nColumns;
   MatGetSize(data.stiffnessMatrix(), &nRows, &nColumns);
@@ -97,14 +97,14 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   std::vector<int> columnIndices(nColumns);
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
   std::vector<double> matrixValues(nRows*nColumns);
-  
+
   nEntries = {nRows, nColumns};
-  
+
   MatGetValues(data.stiffnessMatrix(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
-  
+
   // write as numpy file
   writeToNumpyFile(matrixValues, filenameStiffness, nEntries);
-    
+
 }
 
 // implementation for not RegularFixed mesh
@@ -113,20 +113,20 @@ void PythonStiffnessMatrixWriter<DataType>::
 writeNumpySolution(DataType &data, std::string filename)
 {
  // TODO: change to data.OutputFieldVariables instead of data.solution
- 
+
  /*
   // determine file names
   std::stringstream s;
   s << filename << "_solution.npy";
   std::string filenameSolution = s.str();
-  
+
   // get PETSc vector of values
   std::vector<double> values;
   PetscUtility::getVectorEntries(data.solution().values(), values);
-  
+
   // get number of entries
   std::vector<long> nEntries(1, values.size());
-  
+
   // write to a file
   writeToNumpyFile(values, filenameSolution, nEntries);
   */

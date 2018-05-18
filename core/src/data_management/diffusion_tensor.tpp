@@ -16,15 +16,15 @@ initialize(PyObject *settings)
     std::array<double, D*D> defaultValue({0});
     for (int i=0; i<D; i++)
       defaultValue[i*D] = 1.0;
-    
+
     // get diffusion tensor from config as array with D*D entries
-    this->diffusionTensor_ = PythonUtility::template getOptionArray<double, D*D>(settings, "diffusionTensor", defaultValue);  
-    
+    this->diffusionTensor_ = PythonUtility::template getOptionArray<double, D*D>(settings, "diffusionTensor", defaultValue);
+
     LOG(DEBUG) << "diffusionTensor found: " << this->diffusionTensor_;
   }
   else
   {
-    LOG(DEBUG) << "diffusionTensor not found";   
+    LOG(DEBUG) << "diffusionTensor not found";
     /*
     // create identity matrix as default values
     this->diffusionTensor_ = std::array<double, D*D>({0});

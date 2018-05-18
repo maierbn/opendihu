@@ -39,13 +39,13 @@ public:
 
   typedef ::FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;
   typedef BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
+
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   BasisOnMeshDataUnstructured(PyObject *settings, bool noGeometryField=false);
-  
+
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
-  
+
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
@@ -54,38 +54,38 @@ public:
 
   //! write exelem file representation to stream
   void outputExelemFile(std::ostream &file);
-  
+
   //! write exnode file representation to stream
   void outputExnodeFile(std::ostream &file);
-  
+
   //! get the total number of elements, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   element_no_t nElements() const;
-  
+
 protected:
   //! parse a given *.exelem file and prepare fieldVariable_
   void parseExelemFile(std::string exelemFilename);
-  
+
   //! parse a given *.exelem file and fill fieldVariable_ with values
   void parseExnodeFile(std::string exnodeFilename);
-  
+
   //! rename field variables if "remap" is specified in config
   void remapFieldVariables(PyObject *settings);
-  
+
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
-  
+
   //! parse the element and node positions from python settings
   void parseFromSettings(PyObject *settings);
-  
+
   std::map<std::string, std::shared_ptr<FieldVariableBaseType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField_ = nullptr;  ///< the geometry field variable
-  
+
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
-  element_no_t nElements_ = 0;    ///< number of elements in exelem file 
+  element_no_t nElements_ = 0;    ///< number of elements in exelem file
   dof_no_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
   bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
- 
-}; 
+
+};
 
 }  // namespace
 

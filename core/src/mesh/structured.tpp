@@ -12,15 +12,15 @@ Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerCoordinateDir
   MeshOfDimension<D>(NULL), nElementsPerCoordinateDirection_(nElementsPerCoordinateDirection)
 {
 }
-  
+
 template<int D>
 Structured<D>::Structured(PyObject *specificSettings) : MeshOfDimension<D>(specificSettings)
 {
   // get settings values nElements_
   this->nElementsPerCoordinateDirection_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
   LOG(DEBUG) << "set number of elements from settings: " << this->nElementsPerCoordinateDirection_;
-} 
-  
+}
+
 template<int D>
 element_no_t Structured<D>::nElementsPerCoordinateDirection(int dimension) const
 {

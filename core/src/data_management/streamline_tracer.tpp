@@ -13,7 +13,7 @@
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
 
-namespace Data 
+namespace Data
 {
 
 template<typename BasisOnMeshType,typename BaseDataType>
@@ -39,10 +39,10 @@ void StreamlineTracer<BasisOnMeshType,BaseDataType>::
 setBaseData(std::shared_ptr<BaseDataType> baseData)
 {
   baseData_ = baseData;
-  
-  // set mesh 
+
+  // set mesh
   this->setMesh(baseData_->mesh());
-} 
+}
 
 template<typename BasisOnMeshType,typename BaseDataType>
 void StreamlineTracer<BasisOnMeshType,BaseDataType>::
@@ -80,9 +80,9 @@ print()
 {
   if (!VLOG_IS_ON(4))
     return;
-  
+
   VLOG(4)<<"======================";
-  
+
   int nEntries;
   VecGetSize(this->gradient_->values(), &nEntries);
   VLOG(4)<<"increment ("<<nEntries<<" entries):";
@@ -94,7 +94,7 @@ template<typename BasisOnMeshType,typename BaseDataType>
 typename StreamlineTracer<BasisOnMeshType,BaseDataType>::OutputFieldVariables StreamlineTracer<BasisOnMeshType,BaseDataType>::
 getOutputFieldVariables()
 {
-  return std::tuple_cat(baseData_->getOutputFieldVariables(), 
+  return std::tuple_cat(baseData_->getOutputFieldVariables(),
                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>>(gradient_));
 }
 

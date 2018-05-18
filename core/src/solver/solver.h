@@ -14,11 +14,11 @@ public:
   //! construct solver from python settings
   Solver(PyObject *specificSettings);
   virtual ~Solver() {}
-  
+
   //! determine if the own python config object is the same as config
   bool configEquals(PyObject *config);
 protected:
-  
+
   PyObject *specificSettings_;
 };
 

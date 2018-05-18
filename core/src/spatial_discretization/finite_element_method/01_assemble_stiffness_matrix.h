@@ -17,10 +17,10 @@ class AssembleStiffnessMatrix :
 public:
   // use constructor of base class
   using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
-  
+
 protected:
   void setStiffnessMatrix();
-  
+
 };
 
 };  // namespace

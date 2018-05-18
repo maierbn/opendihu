@@ -49,7 +49,7 @@ using isIncompressible = std::enable_if_t<Term::isIncompressible,Term>;
 template<typename BasisFunction, typename Mesh, typename Term>
 using doesNotUseStencils = std::enable_if_t<
   // not linear Lagrange on regular fixed mesh
-  !(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+  !(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value
     && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
         || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
         || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
@@ -62,13 +62,13 @@ using doesNotUseStencils = std::enable_if_t<
 template<typename BasisFunction, typename Mesh, typename Term>
 using doesNotUseStencilsNorSolidMechanics = std::enable_if_t<
   // not linear Lagrange on regular fixed mesh
-  (!(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value  
+  (!(std::is_same<BasisFunction, ::BasisFunction::LagrangeOfOrder<1>>::value
     && (std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<1>>::value
         || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<2>>::value
         || std::is_same<Mesh, ::Mesh::StructuredRegularFixedOfDimension<3>>::value))
   // or has a generalized laplace operator
   || Term::hasGeneralizedLaplaceOperator)
-  
+
   // also not solid mechanics
   && !Term::isSolidMechanics
   ,

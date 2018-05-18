@@ -27,7 +27,7 @@ phi(int dofIndex, std::array<double,3> xi)
 {
   return 1;
 }
-  
+
 // order 0 dphi_dxi
 // 1D
 template<>
@@ -101,7 +101,7 @@ phi(int dofIndex, std::array<double,3> xi)
     return xi[2];
   }
 }
-  
+
 // order 1 dphi_dxi
 // 1D
 template<>
@@ -219,7 +219,7 @@ phi(int dofIndex, std::array<double,3> xi)
     return xi[2]*xi[2];
   }
 }
-  
+
 // order 2 dphi_dxi
 // 1D
 template<>
@@ -279,7 +279,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   case 5:
     switch (derivativeIdx)
     {
-    case 0: 
+    case 0:
       return xi[1];
     case 1:
       return xi[0];
@@ -289,7 +289,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   case 6:
     switch (derivativeIdx)
     {
-    case 0: 
+    case 0:
       return xi[2];
     case 2:
       return xi[0];
@@ -301,7 +301,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   case 8:
     switch (derivativeIdx)
     {
-    case 1: 
+    case 1:
       return xi[2];
     case 2:
       return xi[1];

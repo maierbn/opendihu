@@ -5,13 +5,13 @@
 #include "easylogging++.h"
 #include "mesh/structured_regular_fixed.h"
 
-namespace Mesh 
+namespace Mesh
 {
 
 //! return previously created mesh or create on the fly
 template<typename BasisOnMeshType>
 std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
-{     
+{
   // if mesh was already created earlier
   if (PythonUtility::hasKey(settings, "meshName"))
   {
@@ -35,14 +35,14 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \""<<meshName<<"\" but no such mesh was defined.";      
+      LOG(ERROR) << "Config contains reference to mesh with meshName \""<<meshName<<"\" but no such mesh was defined.";
     }
   }
   else
   {
     LOG(DEBUG) << "Config does not contain meshName.";
   }
-  
+
   // create new mesh, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
@@ -52,9 +52,9 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   mesh->initialize();
 
   meshes_[anonymousName.str()] = mesh;
-  
+
   VLOG(1) << "mesh nNodes: " << mesh->nNodes();
-  
+
   return mesh;
 }
 

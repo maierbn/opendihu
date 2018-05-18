@@ -28,7 +28,7 @@ computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const
   result = *evaluationsIter;
   return result;
 }
-  
+
 // quadrature with 2 Gauss points
 template<>
 template<typename ValueType>
@@ -144,7 +144,7 @@ computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const
   }
   return result;
 }
-  
+
 // integrate with 64 Gauss points
 template<>
 template<typename ValueType>
@@ -224,5 +224,5 @@ computeIntegral(const typename std::array<ValueType, numberEvaluations()>::const
   }
   return result;
 }
-  
+
 };

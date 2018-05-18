@@ -7,10 +7,10 @@
 
 #include "quadrature/integrator.h"
 
-namespace Quadrature 
+namespace Quadrature
 {
 
-template <unsigned int D, typename Quadrature> 
+template <unsigned int D, typename Quadrature>
 class TensorProductBase
 {
 public:
@@ -22,9 +22,9 @@ public:
 template <unsigned int D, typename Quadrature>
 class TensorProduct : public TensorProductBase<D, Quadrature>
 {
-public:  
+public:
 };
-  
+
 // partial specialization for 1D
 template<typename Quadrature>
 class TensorProduct<1,Quadrature> : public TensorProductBase<1,Quadrature>
@@ -33,7 +33,7 @@ public:
   //! compute the integral for a scalar value
   template<typename ValueType>
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<1,Quadrature>::numberEvaluations()> &evaluations);
-  
+
   //! get the sampling points, i.e. points where the function needs to be evaluated
   static std::array<std::array<double,1>, TensorProductBase<1,Quadrature>::numberEvaluations()> samplingPoints();
 };
@@ -46,7 +46,7 @@ public:
   //! compute the integral for a scalar value
   template<typename ValueType>
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::numberEvaluations()> &evaluations);
-  
+
   //! get the sampling points, i.e. points where the function needs to be evaluated
   static std::array<std::array<double,2>, TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints();
 };
@@ -59,7 +59,7 @@ public:
   //! compute the integral for a scalar value
   template<typename ValueType>
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::numberEvaluations()> &evaluations);
-  
+
   //! get the sampling points, i.e. points where the function needs to be evaluated
   static std::array<std::array<double,3>, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
 };

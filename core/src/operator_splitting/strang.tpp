@@ -5,7 +5,7 @@
 
 namespace OperatorSplitting
 {
- 
+
 template<typename TimeStepping1, typename TimeStepping2>
 Strang<TimeStepping1,TimeStepping2>::
 Strang(DihuContext context) :
@@ -20,76 +20,76 @@ advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
- 
+
   LOG(DEBUG) << "  Strang::advanceTimeSpan: timeSpan=[" <<this->startTime_<<","<<this->endTime_<<"]"
     <<", n steps: "<<this->numberTimeSteps_<<", timeStepWidth="<<timeStepWidth;
-  
+
   // loop over time steps
   double currentTime = this->startTime_;
   double midTime = 0.0;
-  
+
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * timeStepWidth;
-    
+
     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
     LOG(DEBUG) << "  Strang: time step "<<timeStepNo<<", t: "<<currentTime;
-    
+
     LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan ["<<currentTime<<", "<<midTime<<"]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, midTime);
-    
-    LOG(DEBUG) << "  Strang: timeStepping1 (first half) advanceTimeSpan"; 
-    
+
+    LOG(DEBUG) << "  Strang: timeStepping1 (first half) advanceTimeSpan";
+
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
-    
-    LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2"; 
+
+    LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(), 
+    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),
       this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution());
-    
+
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) setTimeSpan ["<<currentTime<<", "<<currentTime+timeStepWidth<<"]";
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+timeStepWidth);
-    
+
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) advanceTimeSpan";
     // advance simulation by time span
     this->timeStepping2_.advanceTimeSpan();
-    
-    LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1"; 
+
+    LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(), 
+    this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(),
       this->timeStepping1_.solutionVectorMapping(), this->timeStepping1_.solution());
-    
+
     LOG(DEBUG) << "  Strang: timeStepping1 (second half) setTimeSpan ["<<midTime<<", "<<currentTime+timeStepWidth<<"]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(midTime,currentTime+timeStepWidth);
-    
-    LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan"; 
-    
+
+    LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan";
+
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
-    
+
     /* option 1. (not implemented)
      * no need to transfer data again, since next operator splitting step will start with timeStepping1 (which has the actual data).
-     * 
+     *
      * Then we could skip output of this->timeStepping2_.data(). However, if they are needed in between two operator splitting steps (for example in the 3-scale muscle model)
      * then this->timeStepping2_.data() should have the actualized data.
      */
-    
+
     // option 2. transfer data. (implemented)
-    LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2"; 
+    LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(), 
+    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),
       this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution());
-    
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-    
-    LOG(DEBUG) << "  Strang: write output"; 
+
+    LOG(DEBUG) << "  Strang: write output";
     // write current output values
     if(this->outputData1_)
     {

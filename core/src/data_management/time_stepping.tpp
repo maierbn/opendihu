@@ -13,7 +13,7 @@
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
 
-namespace Data 
+namespace Data
 {
 
 template<typename BasisOnMeshType,int nComponents>
@@ -78,15 +78,15 @@ print()
 {
   if (!VLOG_IS_ON(4))
     return;
-  
+
   VLOG(4)<<"======================";
-  
+
   int nEntries;
   VecGetSize(this->increment_->values(), &nEntries);
   VLOG(4)<<"increment ("<<nEntries<<" entries):";
   VLOG(4)<<PetscUtility::getStringVector(this->increment_->values());
   VLOG(4)<<"======================";
-  
+
   VecGetSize(this->solution_->values(), &nEntries);
   VLOG(4)<<"solution ("<<nEntries<<" entries):";
   VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());

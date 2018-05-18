@@ -7,12 +7,12 @@ namespace BasisOnMesh
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
-Mixed(PyObject *specificSettings) : Mesh::Mesh(specificSettings), 
-  lowOrderBasisOnMesh_(std::make_shared<LowOrderBasisOnMeshType>(specificSettings, true)), 
+Mixed(PyObject *specificSettings) : Mesh::Mesh(specificSettings),
+  lowOrderBasisOnMesh_(std::make_shared<LowOrderBasisOnMeshType>(specificSettings, true)),
   highOrderBasisOnMesh_(std::make_shared<HighOrderBasisOnMeshType>(specificSettings, false))
 {
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 void Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
 initialize()
@@ -34,7 +34,7 @@ dim()
 {
   return HighOrderBasisOnMeshType::Mesh::dim();
 }
-  
+
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 node_no_t Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
 nNodes() const

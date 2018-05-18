@@ -7,7 +7,7 @@ template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator-(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
   std::array<T,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -21,7 +21,7 @@ template<std::size_t nComponents>
 std::array<double,nComponents> operator+(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
 {
   std::array<double,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -71,7 +71,7 @@ template<std::size_t nComponents>
 std::array<double,nComponents> operator*(double lambda, const std::array<double,nComponents> vector)
 {
   std::array<double,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -85,7 +85,7 @@ template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector, double lambda)
 {
   std::array<double,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -99,7 +99,7 @@ template<std::size_t nComponents>
 std::array<double,nComponents> operator*(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
 {
   std::array<double,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -113,7 +113,7 @@ template<std::size_t M, std::size_t N>
 std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector)
 {
   std::array<double,M> result({0.0});
-  
+
   // column index
   for (int j = 0; j < N; j++)
   {
@@ -132,7 +132,7 @@ template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
   std::array<T,nComponents> result;
-  
+
   #pragma simd
   for (int i = 0; i < nComponents; i++)
   {
@@ -151,7 +151,7 @@ bool operator<(const std::array<T,N> &vector, double value)
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -203,8 +203,8 @@ std::ostream &operator<<(std::ostream &stream, const Mat &mat)
 {
   int nRows, nColumns;
   MatGetSize(mat, &nRows, &nColumns);
-  
-  if (nRows*nColumns > 100) 
+
+  if (nRows*nColumns > 100)
   {
     stream << "Mat(" << nRows << "x" << nColumns << ")";
   }
@@ -219,8 +219,8 @@ std::ostream &operator<<(std::ostream &stream, const Vec &vec)
 {
   int nEntries;
   VecGetSize(vec, &nEntries);
-  
-  if (nEntries > 100) 
+
+  if (nEntries > 100)
   {
     stream << "Vec(" << nEntries << ")";
   }

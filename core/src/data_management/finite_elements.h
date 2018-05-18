@@ -14,62 +14,62 @@
 
 namespace Data
 {
- 
+
 template<typename BasisOnMeshType,typename Term,typename = Term,typename = typename BasisOnMeshType::BasisFunction>
-class FiniteElements : 
+class FiniteElements :
   public Data<BasisOnMeshType>,
   public DiffusionTensor<BasisOnMeshType::dim()>
 {
 public:
- 
+
   //! constructor
   FiniteElements(DihuContext context);
-  
+
   //! destructor
   ~FiniteElements();
- 
+
   //! initialize the object, create all stored data
   virtual void initialize() override;
-  
+
   //! return reference to a stiffness matrix
   Mat &stiffnessMatrix();
-  
+
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
-  
+
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &solution();
-  
+
   //! perform the final assembly of petsc
   void finalAssembly();
-  
+
   //! print all stored data to stdout
   void print();
-  
+
   //! if the discretization matrix is already initialized
   bool massMatrixInitialized();
-  
+
   //! create PETSc matrix
   void initializeMassMatrix();
-  
+
   //! return a reference to the discretization matrix
   Mat &massMatrix();
-  
+
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometry
     std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>,  // solution
     std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>   // rhs
   > OutputFieldVariables;
-  
+
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
-  
+
 private:
- 
+
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
- 
+
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
@@ -77,7 +77,7 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
   Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-  
+
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
 
 };
@@ -91,7 +91,7 @@ class FiniteElements<
   Term,
   Equation::isSolidMechanics<Term>,
   BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
-> : 
+> :
   public Data<BasisOnMeshType>
 {
 public:

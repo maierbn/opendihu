@@ -17,11 +17,11 @@ class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedO
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  
-  //! inherited constructor 
+
+  //! inherited constructor
   using FieldVariableSetGetRegularFixed<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetRegularFixed;
   using FieldVariableSetGetRegularFixed<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
- 
+
   //! get a single value from global dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 };
@@ -34,8 +34,8 @@ class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedO
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  
-  //! inherited constructor 
+
+  //! inherited constructor
   using FieldVariableSetGetRegularFixed<BasisOnMeshType,1>::FieldVariableSetGetRegularFixed;
 };
 

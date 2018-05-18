@@ -2,9 +2,9 @@
 
 namespace BasisOnMesh
 {
-  
+
 template<typename MeshType,typename BasisFunctionType>
-std::shared_ptr<typename BasisOnMeshGeometryData<MeshType,BasisFunctionType>::FieldVariableBaseType> 
+std::shared_ptr<typename BasisOnMeshGeometryData<MeshType,BasisFunctionType>::FieldVariableBaseType>
 BasisOnMeshGeometryData<MeshType,BasisFunctionType>::
 fieldVariable(std::string name)
 {

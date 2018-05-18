@@ -2,18 +2,18 @@
 
 namespace Solver
 {
-  
-Manager::Manager(PyObject *specificSettings) : 
+
+Manager::Manager(PyObject *specificSettings) :
   specificSettings_(specificSettings), numberAnonymousSolvers_(0)
 {
   storePreconfiguredSolvers();
 }
-  
+
 bool Manager::hasSolver(std::string solverName)
 {
   return solvers_.find(solverName) != solvers_.end();
 }
-  
+
 void Manager::storePreconfiguredSolvers()
 {
   LOG(TRACE) << "SolverManager::storePreconfiguredSolvers";
@@ -21,17 +21,17 @@ void Manager::storePreconfiguredSolvers()
   {
     if (PythonUtility::hasKey(specificSettings_, "Solvers"))
     {
-      
+
       std::string keyString("Solvers");
-      std::pair<std::string, PyObject *> dictItem 
+      std::pair<std::string, PyObject *> dictItem
         = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
-      
-      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
+
+      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString);
           PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
       {
         std::string key = dictItem.first;
         PyObject *value = dictItem.second;
-            
+
         if (value == NULL)
         {
           LOG(WARNING) << "Could not extract dict for solver \""<<key<<"\".";
@@ -56,5 +56,5 @@ void Manager::storePreconfiguredSolvers()
     }
   }
 }
-  
+
 };   // namespace

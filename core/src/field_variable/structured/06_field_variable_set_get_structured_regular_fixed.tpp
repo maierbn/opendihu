@@ -19,34 +19,34 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
       getValues(componentNo, values, onlyNodalValues);
     return;
   }
-  
+
   // for geometry field compute information
   node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
   node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   node_no_t nNodesInZDirection = this->mesh_->nNodes(2);
-  
+
   const int D = BasisOnMeshType::dim();
   if (D < 2)
     nNodesInYDirection = 1;
   if (D < 3)
     nNodesInZDirection = 1;
-  
+
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
- 
+
   // determine the number of values to be retrived which is half the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->mesh_->nDofs();
   if (onlyNodalValues)
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
       nValues = this->mesh_->nDofs() / 2;
- 
+
   LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nDofs() << ", nValues: " << nValues
     << ", nNodes: " << nNodesInXDirection<<","<<nNodesInYDirection<<","<<nNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
-  
+
   values.resize(nValues);
   std::size_t vectorIndex = 0;
-  
+
   // loop over all nodes
   for (int nodeZ = 0; nodeZ < nNodesInZDirection; nodeZ++)
   {
@@ -69,7 +69,7 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
           assert(vectorIndex < values.size());
           values[vectorIndex++] = nodeZ * this->meshWidth_;
         }
-       
+
         // set derivative of Hermite to 0 for geometry field
         if (!onlyNodalValues)
         {
@@ -96,18 +96,18 @@ getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double
       template getValues<N>(componentNo, dofGlobalNo, values);
     return;
   }
-  
+
   // for geometry field compute information
   const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
   const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  
+
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
     int nodeNo = int(dofGlobalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofGlobalNo[i] % nDofsPerNode);
-    
+
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
       values[i] = 0;
@@ -148,34 +148,34 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
   const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
   const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  
+
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
     int nodeNo = int(dofGlobalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofGlobalNo[i] % nDofsPerNode);
-    
+
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
       values[i][0] = 0;
       values[i][1] = 0;
       values[i][2] = 0;
     }
-    else 
+    else
     {
       // x direction
       values[i][0] = (nodeNo % nNodesInXDirection) * this->meshWidth_;
-      
+
       // y direction
       values[i][1] = (int(nodeNo / nNodesInXDirection) % nNodesInYDirection) * this->meshWidth_;
-      
+
       // z direction
       values[i][2] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_;
     }
   }
 }
-  
-//! for a specific component, get the values corresponding to all element-local dofs 
+
+//! for a specific component, get the values corresponding to all element-local dofs
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
@@ -187,13 +187,13 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Basi
       getElementValues(componentNo, elementNo, values);
     return;
   }
-  
+
   // if this is a geometry field, compute the entries
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  
+
   // get the element-local dofs of the element
   std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
-  
+
   // get the values
   this->getValues<nDofsPerElement>(componentNo, elementDofs, values);
 }
@@ -210,17 +210,17 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
       getElementValues(elementNo, values);
     return;
   }
-  
+
   // for geometry field compute the requested values
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-   
+
   // get the element-local dofs of the element
   std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
-  
+
   // compute the corresponding geometry values
   this->getValues<nDofsPerElement>(elementDofs, values);
 }
- 
+
 //! for a specific component, get a single value from global dof no.
 template<typename BasisOnMeshType, int nComponents>
 double FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
@@ -231,16 +231,16 @@ getValue(int componentNo, node_no_t dofGlobalNo)
     return FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
       getValue(componentNo, dofGlobalNo);
   }
-  
+
   // for geometry field compute information
   const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
   const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  
+
   double value = 0;
   int nodeNo = int(dofGlobalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofGlobalNo % nDofsPerNode);
-  
+
   if (nodeLocalDofIndex == 0)   // if this is not a derivative of Hermite (in which case it would be set to 0)
   {
     if (componentNo == 0)   // x direction

@@ -6,7 +6,7 @@
 
 namespace FieldVariable
 {
- 
+
 
 //! copy the values from another field variable of the same type
 template<int D,typename BasisFunctionType,int nComponents>

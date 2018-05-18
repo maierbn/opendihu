@@ -8,7 +8,7 @@
 namespace Mesh
 {
 
-enum face_t 
+enum face_t
 {
   face0Minus = 0, face0Plus,
   face1Minus, face1Plus,

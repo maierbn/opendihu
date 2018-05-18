@@ -19,11 +19,11 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
   BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(specificSettings)
 {
   this->meshWidth_ = 0;
- 
+
   // get settings values nElements_ and physical Extend
   std::array<double, D> defaultValues;
   defaultValues.fill(1.0);
-  
+
   std::array<double, D> physicalExtent;
   // only get physicalExtent if it is not a 1-node mesh with 0 elements
   if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
@@ -34,8 +34,8 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
   }
   else
     physicalExtent[0] = 1.0;
- 
-  
+
+
   // compute mesh width from physical extent and number of elements in the coordinate directions
   if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
   {
@@ -60,13 +60,13 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
     // 1D 1-node mesh
     this->meshWidth_ = 1.0;
   }
-  
+
   LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerCoordinateDirection_;
   LOG(DEBUG) << "  physicalExtent: " << physicalExtent;
   LOG(DEBUG) << "  meshWidth: " << this->meshWidth_;
-  
+
   LOG(DEBUG) << "   create geometry field ";
-  
+
   setupGeometryField();
 }
 
@@ -78,7 +78,7 @@ BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D
   // compute mesh width from physical extent and number of elements in the coordinate directions
   this->meshWidth_ = 0;
   typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerCoordinateDirection_.begin();
-  for (typename std::array<double, D>::iterator physicalExtentIter = physicalExtent.begin(); physicalExtentIter != physicalExtent.end(); 
+  for (typename std::array<double, D>::iterator physicalExtentIter = physicalExtent.begin(); physicalExtentIter != physicalExtent.end();
        physicalExtentIter++, nElementsIter++)
   {
     double meshWidthCurrentDirection = *physicalExtentIter / *nElementsIter;
@@ -92,7 +92,7 @@ BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D
       LOG(ERROR) << "mesh width: " << this->meshWidth_ << ", other: " << *physicalExtentIter << "/" << *nElementsIter << "=" << meshWidthCurrentDirection;
     }
   }
-  
+
   setupGeometryField();
 }
 
@@ -101,7 +101,7 @@ void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFuncti
 setupGeometryField()
 {
   this->geometryField_ = std::make_unique<GeometryFieldType>();
-  
+
   // setup geometry field
   this->geometryField_->setMeshWidth(this->meshWidth_);
   std::vector<std::string> componentNames{"x","y","z"};
@@ -150,11 +150,11 @@ void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFuncti
 getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nNodes()*3);
- 
+
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
   {
     dof_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
-    
+
     std::size_t index = nodeGlobalNo*3;
     Vec3 position = this->geometryField_->getValue(firstNodeDofGlobalNo);
     nodes[index+0] = position[0];

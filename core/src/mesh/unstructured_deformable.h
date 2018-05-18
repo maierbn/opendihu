@@ -22,11 +22,11 @@ class UnstructuredDeformableOfDimension : public MeshOfDimension<D>, public Defo
 public:
   //! constructor of base class
   using MeshOfDimension<D>::MeshOfDimension;
-  
+
   //! get the total number of elements, this is implemented in basis_on_mesh/03_basis_on_mesh_data_unstructured.h
   //element_no_t nElements() const;
- 
+
 private:
-};  
+};
 
 }  // namespace

@@ -5,12 +5,12 @@
 
 namespace SpatialDiscretization
 {
- 
+
 class DiffusionTensor
 {
 private:
 };
- 
+
 /** partial specialization for generalized laplace operator, dimension 1
  */
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
@@ -21,7 +21,7 @@ public:
                                            const std::array<Vec3,1> &jacobian, const std::array<double,1> xi);
 };
 
- 
+
 /** partial specialization for generalized laplace operator, dimension 2
  */
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>
@@ -32,7 +32,7 @@ public:
                                            const std::array<Vec3,2> &jacobian, const std::array<double,2> xi);
 };
 
- 
+
 /** partial specialization for generalized laplace operator, dimension 3
  */
 template<typename EvaluationsType,typename BasisOnMeshType,typename Term>

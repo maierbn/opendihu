@@ -19,7 +19,7 @@ void FiniteElementMethodStiffnessMatrix<
   Term,
   Mesh::isDeformable<typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
->:: 
+>::
 setStiffnessMatrix()
 {
 }

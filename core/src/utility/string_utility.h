@@ -18,7 +18,7 @@ void trim(std::string &str);
 
 //! output the values separated by spaces, after nValuesPerRow there will be a line break, disabled if -1
 template<typename IterType>
-void outputValuesBlock(std::ostream &stream, IterType valuesBegin, 
+void outputValuesBlock(std::ostream &stream, IterType valuesBegin,
                        IterType valuesEnd, int nValuesPerRow=-1);
 
 //! replace from by to

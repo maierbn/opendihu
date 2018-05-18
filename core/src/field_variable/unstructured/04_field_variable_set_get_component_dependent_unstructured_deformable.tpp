@@ -9,7 +9,7 @@
 
 namespace FieldVariable
 {
-  
+
 using namespace StringUtility;
 
 
@@ -19,15 +19,15 @@ std::array<double,nComponents> FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh
 getValue(node_no_t dofGlobalNo)
 {
   std::array<double,nComponents> resultVector;
-  
+
   // transform global dof no.s to vector indices of first component
   PetscInt valuesVectorIndex = dofGlobalNo*nComponents;
-  
+
   // create indices vector with values {0,1,2,...,nComponents-1}
   std::array<PetscInt,nComponents> indices;
   for(int i=0; i<nComponents; i++)
     indices[i] = valuesVectorIndex + i;
-  
+
   // get values and assign them to result values vector
   VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
   return resultVector;
@@ -60,7 +60,7 @@ void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOf
 setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode)
 {
   VecSetValues(*this->values_, 1, (PetscInt*)&dofGlobalNo, &value, petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
 }
 
 //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
@@ -69,7 +69,7 @@ void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOf
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
 {
   VecSetValues(*this->values_, dofGlobalNos.size(), (PetscInt*)dofGlobalNos.data(), values.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
 }
 
 };  // namespace

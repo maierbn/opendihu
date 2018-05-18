@@ -5,7 +5,7 @@
 
 namespace OperatorSplitting
 {
- 
+
 template<typename TimeStepping1, typename TimeStepping2>
 Godunov<TimeStepping1,TimeStepping2>::
 Godunov(DihuContext context) :
@@ -20,49 +20,49 @@ advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
- 
+
   LOG(DEBUG) << "  Godunov::advanceTimeSpan: timeSpan=[" <<this->startTime_<<","<<this->endTime_<<"]"
     <<", n steps: "<<this->numberTimeSteps_<<", timeStepWidth="<<timeStepWidth;
-  
+
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
     LOG(DEBUG) << "  Godunov: time step "<<timeStepNo<<", t: "<<currentTime;
-    
+
     LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan ["<<currentTime<<", "<<currentTime+timeStepWidth<<"]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, currentTime+timeStepWidth);
-    
-    LOG(DEBUG) << "  Godunov: timeStepping1 advanceTimeSpan"; 
-    
+
+    LOG(DEBUG) << "  Godunov: timeStepping1 advanceTimeSpan";
+
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
-    
-    LOG(DEBUG) << "  Godunov: transfer timeStepping1 -> timeStepping2"; 
+
+    LOG(DEBUG) << "  Godunov: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(), 
+    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),
       this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution());
-    
+
     LOG(DEBUG) << "  Godunov: timeStepping2 setTimeSpan ["<<currentTime<<", "<<currentTime+timeStepWidth<<"]";
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+timeStepWidth);
-    
+
     LOG(DEBUG) << "  Godunov: timeStepping2 advanceTimeSpan";
     // advance simulation by time span
     this->timeStepping2_.advanceTimeSpan();
-    
-    LOG(DEBUG) << "  Godunov: transfer timeStepping2 -> timeStepping1"; 
+
+    LOG(DEBUG) << "  Godunov: transfer timeStepping2 -> timeStepping1";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(), 
+    this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(),
       this->timeStepping1_.solutionVectorMapping(), this->timeStepping1_.solution());
-    
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-    
-    LOG(DEBUG) << "  Godunov: write output"; 
+
+    LOG(DEBUG) << "  Godunov: write output";
     // write current output values
     if(this->outputData1_)
     {

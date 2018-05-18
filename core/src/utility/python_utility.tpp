@@ -8,14 +8,14 @@
 #include <algorithm>
 #include <array>
 
-#include "control/use_numpy.h" 
+#include "control/use_numpy.h"
 #include "utility/vector_operators.h"
 
 template<typename Key, typename Value>
 std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString)
 {
   std::pair<Key, Value> firstEntry;
- 
+
   if (settings)
   {
     // check if input dictionary contains the key
@@ -23,7 +23,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
     if(PyDict_Contains((PyObject *)settings, key))
     {
       //PythonUtility::printDict((PyObject *)settings);
-      
+
       PyObject *dict = PyDict_GetItem((PyObject *)settings, key);
       if (PyDict_Check(dict))
       {
@@ -31,16 +31,16 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
         Py_CLEAR(itemList);
         itemList = PyDict_Items(dict);
         itemListIndex = 0;
-        
+
         if (PyList_Check(itemList))
         {
-          
+
           if (itemListIndex < PyList_Size(itemList))
           {
             PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
             PyObject *tuple_key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
             PyObject *tuple_value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
-            
+
             firstEntry = std::pair<Key, Value>(convertFromPython<Key>(tuple_key), convertFromPython<Value>(tuple_value));
             return firstEntry;
           }
@@ -60,7 +60,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
       LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
     }
   }
-  
+
   return firstEntry;
 }
 
@@ -68,15 +68,15 @@ template<typename Key, typename Value>
 void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyString, std::pair<Key, Value> &nextPair)
 {
   itemListIndex++;
-  
+
   if (itemListIndex < PyList_Size(itemList))
   {
     PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
     PyObject *key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
     PyObject *value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
-    
+
     nextPair = std::pair<Key, Value>(convertFromPython<Key>(key), convertFromPython<Value>(value));
-    
+
   }
 }
 
@@ -94,11 +94,11 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
       if (PyList_Check(list))
       {
         listIndex = 0;
-        
+
         if (listIndex < PyList_Size(list))
         {
           PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
-          
+
           Py_CLEAR(key);
           return convertFromPython<Value>(item);
         }
@@ -114,10 +114,10 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
     {
       LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
     }
-  
+
     Py_CLEAR(key);
   }
-  
+
   return Value();
 }
 
@@ -125,11 +125,11 @@ template<typename Value>
 void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyString, Value &value)
 {
   listIndex++;
-  
+
   if (listIndex < PyList_Size(list))
   {
     PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
-    
+
     value = convertFromPython<Value>(item);
   }
 }
@@ -138,18 +138,18 @@ template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue)
 {
   initNumpy();
-  
+
   std::array<ValueType, D> result;
   if (PyList_Check(object))
   {
     int i = 0;
     int iEnd = std::min((int)PyList_Size(object), D);
-    
+
     for(;i < iEnd; i++)
     {
       result[i] = PythonUtility::convertFromPython<ValueType>(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
     }
-    
+
     // fill rest of values with default values
     for(;i < D; i++)
     {
@@ -158,18 +158,18 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
     return result;
   }
   /*
-#ifdef HAVE_NUMPYC  
+#ifdef HAVE_NUMPYC
   else if (PyArray_Check(object))
   {
     LOG(DEBUG) << "object is a pyarray ";
-   
+
     const PyArrayObject *arrayObject = (PyArrayObject*)object;
-   
+
     int nElementsInNumpyArray = PyArray_Size(object);
     int nElementsToCopy = std::min(D, nElementsInNumpyArray);
-   
+
     int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-    
+
     if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
     {
       PyArray_DescrFromType(typenumber)->f->copyswapn(
@@ -180,7 +180,7 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
       LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
       nElementsToCopy = 0;
     }
-    
+
     // fill rest of values with default values
     for(int i = nElementsToCopy; i < D; i++)
     {
@@ -188,15 +188,15 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
     }
     LOG(DEBUG) << "converted to " << D << " entries: " << result;
   }
-#endif   
+#endif
 */
   else
   {
     ValueType valueDouble = PythonUtility::convertFromPython<ValueType>(object, defaultValue[0]);
-    
+
     result[0] = valueDouble;
     std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
-    
+
     return result;
   }
   return defaultValue;
@@ -221,7 +221,7 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
 template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       ValueType defaultValue, ValidityCriterion validityCriterion)
-{ 
+{
   std::array<ValueType,(int)D> defaultValueArray = {};
   defaultValueArray.fill(defaultValue);
   return getOptionArray<ValueType,D>(settings, keyString, defaultValueArray, validityCriterion);
@@ -230,11 +230,11 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
 template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::string keyString,
                                                       std::array<ValueType, D> defaultValue, ValidityCriterion validityCriterion)
-{ 
+{
   std::array<ValueType, D> result = defaultValue;
- 
+
   if (settings)
-  { 
+  {
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -246,14 +246,14 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     else
     {
       LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
-  
+
       Py_CLEAR(key);
       return defaultValue;
     }
-  
+
     Py_CLEAR(key);
   }
-  
+
   switch(validityCriterion)
   {
     case PythonUtility::Positive:
@@ -264,7 +264,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
          LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not positive). Using default value "
            <<defaultValue[i]<<".";
          result[i] = defaultValue[i];
-       } 
+       }
       }
     case PythonUtility::NonNegative:
       for (int i=0; i<D; i++)
@@ -274,9 +274,9 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
          LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not non-negative). Using default value "
            <<defaultValue[i]<<".";
          result[i] = defaultValue[i];
-       } 
+       }
       }
-      
+
     break;
     case PythonUtility::Between1And3:
       for (int i=0; i<D; i++)
@@ -286,14 +286,14 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
          LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not between 1 and 3). Using default value "
            <<defaultValue[i]<<".";
          result[i] = defaultValue[i];
-       } 
+       }
       }
-      
+
     break;
     case PythonUtility::None:
       break;
   };
-  
+
   return result;
 }
 

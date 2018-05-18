@@ -10,20 +10,20 @@
 
 namespace OutputWriter
 {
-  
-  
+
+
 void Manager::initialize(PyObject *settings)
 {
   outputWriter_.clear();
-  
+
   VLOG(1) << "initializeOutputWriter, settings=" << settings;
   //PythonUtility::printDict(settings);
-  
+
   if (PythonUtility::hasKey(settings, "OutputWriter"))
   {
     // get the first value from the list
     PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(settings, "OutputWriter");
-  
+
     // loop over other values
     for (;
         !PythonUtility::getOptionListEnd(settings, "OutputWriter");
@@ -41,7 +41,7 @@ void Manager::initialize(PyObject *settings)
 
 void Manager::createOutputWriterFromSettings(PyObject *settings)
 {
-  
+
   if (PythonUtility::hasKey(settings, "format"))
   {
     // depending on type string create different OutputWriter object
@@ -64,7 +64,7 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
     }
     else
     {
-      LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". " 
+      LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". "
         << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
     }
   }

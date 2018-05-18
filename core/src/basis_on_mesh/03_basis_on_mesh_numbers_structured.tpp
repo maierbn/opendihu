@@ -16,7 +16,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0,1 2,3
-  // averageNDofsPerElement: 
+  // averageNDofsPerElement:
   // 1         2            2
   return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNDofsPerElement() * elementNo + dofIndex;
 }
@@ -57,7 +57,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   // 2         3          4
   // averageNDofsPerElement:
   // 1         4          2
-  
+
   const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
   dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
@@ -65,10 +65,10 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   element_no_t elementY = element_no_t(elementNo / nElements[0]);
   dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
   dof_no_t localY = dof_no_t(dofIndex / BasisFunctionType::nDofsPerBasis());
-  
+
   VLOG(4) << "  dof " << elementNo << ":" << dofIndex << ", element: ("<<elementX<<","<<elementY<<"), dofsPerRow="<<dofsPerRow<<", local: ("<<localX<<","<<localY<<")";
-  
-  return dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
+
+  return dofsPerRow * (elementY * averageNDofsPerElement1D + localY)
     + averageNDofsPerElement1D * elementX + localX;
 }
 
@@ -108,21 +108,21 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   // 2         3          4
   // averageNDofsPerElement:
   // 1         4          2
- 
+
   const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
   dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
   dof_no_t dofsPerPlane = (averageNDofsPerElement1D * nElements[1] + BasisFunctionType::nDofsPerNode()) * dofsPerRow;
-  
+
   element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
   element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
   element_no_t elementX = elementNo % nElements[0];
   dof_no_t localZ = dof_no_t(dofIndex / MathUtility::sqr(BasisFunctionType::nDofsPerBasis()));
   dof_no_t localY = dof_no_t((dofIndex % MathUtility::sqr(BasisFunctionType::nDofsPerBasis())) / BasisFunctionType::nDofsPerBasis());
   dof_no_t localX = dofIndex % BasisFunctionType::nDofsPerBasis();
-  
+
   return dofsPerPlane * (elementZ * averageNDofsPerElement1D + localZ)
-    + dofsPerRow * (elementY * averageNDofsPerElement1D + localY) 
+    + dofsPerRow * (elementY * averageNDofsPerElement1D + localY)
     + averageNDofsPerElement1D * elementX + localX;
 }
 
@@ -156,7 +156,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // L linear  L quadratic  H cubic
   // 0 1       0 1 2        0 1
-  // averageNDofsPerElement: 
+  // averageNDofsPerElement:
   // 1         2            2
   // nDofsPerBasis:
   // 2         3            4
@@ -178,9 +178,9 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   // 0 1       0 1 2      0 1
   // nNodesPerElement:
   // 4         9          4
-  
+
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  
+
   const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
@@ -189,8 +189,8 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   element_no_t elementY = element_no_t(elementNo / nElements[0]);
   dof_no_t localX = nodeIndex % nNodesPerElement1D;
   dof_no_t localY = dof_no_t(nodeIndex / nNodesPerElement1D);
-  
-  return nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
+
+  return nodesPerRow * (elementY * averageNNodesPerElement1D + localY)
     + averageNNodesPerElement1D * elementX + localX;
 }
 
@@ -200,22 +200,22 @@ node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDi
 getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
-  
+
   const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
   node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
   node_no_t nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow;
-  
+
   element_no_t elementZ = element_no_t(elementNo / (nElements[0] * nElements[1]));
   element_no_t elementY = element_no_t((elementNo % (nElements[0] * nElements[1])) / nElements[0]);
   element_no_t elementX = elementNo % nElements[0];
   dof_no_t localZ = dof_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
   dof_no_t localY = dof_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
   dof_no_t localX = nodeIndex % nNodesPerElement1D;
-  
+
   return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
-    + nodesPerRow * (elementY * averageNNodesPerElement1D + localY) 
+    + nodesPerRow * (elementY * averageNNodesPerElement1D + localY)
     + averageNNodesPerElement1D * elementX + localX;
 }
 

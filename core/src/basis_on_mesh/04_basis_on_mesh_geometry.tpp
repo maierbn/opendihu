@@ -12,20 +12,20 @@ initialize()
   // pass a shared "this" pointer to the geometryField
   if (this->noGeometryField_)
     return;
-  
+
   // retrieve "this" pointer
-  std::shared_ptr<BasisOnMeshGeometry<MeshType,BasisFunctionType>> ptr 
+  std::shared_ptr<BasisOnMeshGeometry<MeshType,BasisFunctionType>> ptr
     = this->shared_from_this();
-  
+
   assert(ptr != nullptr);
-  
+
   // convert to downwards pointer of most derived class "BasisOnMesh"
-  std::shared_ptr<BasisOnMesh<MeshType,BasisFunctionType>> self 
+  std::shared_ptr<BasisOnMesh<MeshType,BasisFunctionType>> self
     = std::static_pointer_cast<BasisOnMesh<MeshType,BasisFunctionType>>(ptr);
-  
+
   assert(self != nullptr);
   assert(this->geometryField_ != nullptr);
-  
+
   // set pointer in geometry field
   this->geometryField_->setMesh(self);
 }
@@ -36,10 +36,10 @@ getGeometry(node_no_t dofGlobalNo) const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
-  
+
   return this->geometryField_->template getValue(dofGlobalNo);
-}  
-  
+}
+
 //! return an array containing all geometry entries for an element
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 void BasisOnMeshGeometry<MeshType,BasisFunctionType,DummyForTraits>::
@@ -47,7 +47,7 @@ getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<M
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
-  
+
   this->geometryField_->getElementValues(elementNo, values);
 }
 
@@ -66,8 +66,8 @@ geometryField()
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
-  
+
   return *this->geometryField_;
 }
-  
+
 };  // namespace

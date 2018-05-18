@@ -7,7 +7,7 @@
 
 namespace OutputWriter
 {
-  
+
 template<typename DataType>
 void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime) const
 {
@@ -36,5 +36,5 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     }
   }
 }
-  
+
 };   // namespace

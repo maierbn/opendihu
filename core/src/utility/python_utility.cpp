@@ -20,7 +20,7 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
 {
   if(object == NULL)
     return defaultValue;
-  
+
   if (PyLong_Check(object))
   {
     long valueLong = PyLong_AsLong(object);
@@ -29,12 +29,12 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
   else if (PyFloat_Check(object))
   {
     double valueDouble = PyFloat_AsDouble(object);
-      
-    if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0 
+
+    if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
     {
       LOG(WARNING) << "convertFromPython: object is no int: " << object;
     }
-    
+
     return int(valueDouble);
   }
   else if (PyUnicode_Check(object))
@@ -54,7 +54,7 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
 {
   if(object == NULL)
     return defaultValue;
-  
+
   if (PyLong_Check(object))
   {
     long valueLong = PyLong_AsLong(object);
@@ -63,12 +63,12 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
   else if (PyFloat_Check(object))
   {
     double valueDouble = PyFloat_AsDouble(object);
-      
-    if (double(std::size_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0 
+
+    if (double(std::size_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
     {
       LOG(WARNING) << "convertFromPython: object is no std::size_t: " << object;
     }
-    
+
     return std::size_t(valueDouble);
   }
   else if (PyUnicode_Check(object))
@@ -87,14 +87,14 @@ template<>
 double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
 {
   initNumpy();
-  
+
   if(object == NULL)
     return defaultValue;
-  
+
   if (PyFloat_Check(object))
   {
     double valueDouble = PyFloat_AsDouble(object);
-      
+
     return valueDouble;
   }
   else if (PyLong_Check(object))
@@ -108,14 +108,14 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
     return atof(valueString.c_str());
   }
   /*
-#ifdef HAVE_NUMPYC  
+#ifdef HAVE_NUMPYC
   else if (PyArray_Check(object))
   {
     //if (object->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
-      
+
     LOG(WARNING) << "convertFromPython: object is a numpy array: " << object;
   }
-#endif 
+#endif
 */
   else
   {
@@ -129,7 +129,7 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
 {
   if(object == NULL)
     return defaultValue;
-  
+
   if (PyUnicode_Check(object))
   {
     std::string valueString = pyUnicodeToString(object);
@@ -165,7 +165,7 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
 {
   if(object == NULL)
     return defaultValue;
-  
+
   if (PyBool_Check(object))
   {
     if (object == Py_True)
@@ -181,14 +181,14 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
   }
   else if (PyUnicode_Check(object))
   {
-    std::string valueString = pyUnicodeToString(object); 
+    std::string valueString = pyUnicodeToString(object);
     std::transform(valueString.begin(), valueString.end(), valueString.begin(), ::tolower);
-    if (valueString.find("true") != std::string::npos || valueString.find("1") != std::string::npos 
+    if (valueString.find("true") != std::string::npos || valueString.find("1") != std::string::npos
       || valueString.find("yes") != std::string::npos || valueString.find("on") != std::string::npos)
     {
       return true;
     }
-    else if (valueString.find("false") != std::string::npos || valueString.find("0") != std::string::npos 
+    else if (valueString.find("false") != std::string::npos || valueString.find("0") != std::string::npos
       || valueString.find("no") != std::string::npos || valueString.find("off") != std::string::npos)
     {
       return false;
@@ -254,7 +254,7 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   {
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    
+
     if(PyDict_Contains((PyObject *)settings, key))
     {
       Py_CLEAR(key);
@@ -290,13 +290,13 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
 double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, double defaultValue, ValidityCriterion validityCriterion)
 {
   double result = defaultValue;
-  
+
   if (!settings)
   {
     LOG(DEBUG)<<"PyObject *settings is NULL.";
     return result;
   }
-  
+
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -308,16 +308,16 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
       LOG(DEBUG)<<"list with "<<listNEntries<<" entries"<<std::endl;
-      
+
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
       {
         // extract first entry
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
-        
+
         // convert to double
         result = convertFromPython<double>(listEntry, defaultValue);
-                        
+
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
@@ -334,7 +334,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     {
       // convert to double or take default value
       result = convertFromPython<double>(value, defaultValue);
-      
+
       //LOG(DEBUG)<<"PythonUtility::getOptionDouble: Value for key \""<<keyString<<"\" found: "<<result<<".";
     }
   }
@@ -342,7 +342,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   {
     LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
-  
+
   switch(validityCriterion)
   {
   case Positive:
@@ -378,7 +378,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   case None:
     break;
   };
-  
+
   Py_CLEAR(key);
   return result;
 }
@@ -386,14 +386,14 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
 int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString, int defaultValue, ValidityCriterion validityCriterion)
 {
   int result = defaultValue;
-  
+
   if (!settings)
     return result;
-  
+
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
-  { 
+  {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     if (PyList_Check(value))
@@ -401,16 +401,16 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
       LOG(DEBUG)<<"list with "<<listNEntries<<" entries"<<std::endl;
-      
+
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
       {
         // extract first entry
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
-      
+
         // convert to int
         result = convertFromPython<int>(listEntry, defaultValue);
-                                        
+
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
@@ -433,7 +433,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   {
     LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
-    
+
   switch(validityCriterion)
   {
     case Positive:
@@ -469,7 +469,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     case None:
       break;
   };
-  
+
   Py_CLEAR(key);
   return result;
 }
@@ -477,14 +477,14 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
 bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyString, bool defaultValue)
 {
   int result = defaultValue;
-  
+
   if (!settings)
     return result;
-  
+
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
-  { 
+  {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
     if (PyList_Check(value))
@@ -492,16 +492,16 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
       LOG(DEBUG)<<"list with "<<listNEntries<<" entries"<<std::endl;
-      
+
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
       {
         // extract first entry
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
-      
+
         // convert to bool
         result = convertFromPython<bool>(listEntry, defaultValue);
-                                        
+
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
@@ -531,17 +531,17 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
 std::string PythonUtility::getOptionString(const PyObject *settings, std::string keyString, std::string defaultValue)
 {
   std::string result = defaultValue;
-  
+
   if (!settings)
     return result;
-  
+
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
-  { 
+  {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-    
+
     // convert to std::string or try default value
     result = convertFromPython<std::string>(value, defaultValue);
   }
@@ -549,7 +549,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
   {
     LOG(WARNING)<<"Key \""<<keyString<<"\" not found in dict in config file.";
   }
-  
+
   Py_CLEAR(key);
   return result;
 }
@@ -557,14 +557,14 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
 PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string keyString)
 {
   PyObject *result = NULL;
-  
+
   if (!settings)
     return result;
-  
+
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
-  { 
+  {
     // extract the value of the key and check its type
     PyObject *function = PyDict_GetItem((PyObject *)settings, key);
     if (PyFunction_Check(function))
@@ -596,10 +596,10 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
 {
   if (!object)
     return "NULL";
-  
+
   std::stringstream line;
   line << std::string(first_indent, ' ');
-              
+
   if (PyUnicode_CheckExact(object))
   {
     std::string objectString = pyUnicodeToString(object);
@@ -632,16 +632,16 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
     for (int index = 0; index < size; index++)
     {
       PyObject *item = PyList_GetItem(object, (Py_ssize_t)index);
-      
+
       line << getString(item, indent+2, 0) << (index < size-1? ", " : "]");
     }
   }
   else if(PyDict_CheckExact(object))
-  { 
+  {
     // iterate over top level key-value pairs
     PyObject *key, *value;
     Py_ssize_t pos = 0;
-    
+
     line << "{";
     bool first = true;
     while (PyDict_Next(object, &pos, &key, &value))
@@ -649,9 +649,9 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
       if (!first)
         line << ",";
       first = false;
-      
+
       line << std::endl << std::string(indent+2, ' ');
-      
+
       if (PyUnicode_Check(key))
       {
         std::string keyString = pyUnicodeToString(key);
@@ -662,11 +662,11 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
         std::string keyString = std::to_string(PyLong_AsLong(key));
         line << keyString<<": ";
       }
-      else  
+      else
       {
         line << "(key is of unknown type): ";
       }
-      
+
       line << getString(value, indent+2, 0);
     }
     line << std::endl << std::string(indent, ' ') << "}";
@@ -675,7 +675,7 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
   {
     line << "<unknown type>";
   }
-  
+
   return line.str();
 }
 
@@ -686,13 +686,13 @@ void PythonUtility::printDict(PyObject *dict)
     VLOG(1) << "dict is NULL!";
     return;
   }
-  
+
   if (!PyDict_Check(dict))
   {
     VLOG(1) << "Object is not a dict!";
     return;
   }
-  
+
   VLOG(1) << getString(dict);
 }
 
@@ -713,28 +713,28 @@ bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keySt
 void PythonUtility::getOptionVector(const PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
 {
   values.resize(nEntries);
-  
+
   if (settings)
   {
-    
+
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
-    { 
+    {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
       if (PyList_Check(value))
       {
         // it is a list
-      
+
         // get the first value from the list
         double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
-        int i = 0; 
-      
+        int i = 0;
+
         // loop over other values
         for (;
             !PythonUtility::getOptionListEnd(settings, keyString)
-            && i < nEntries; 
+            && i < nEntries;
             PythonUtility::getOptionListNext<double>(settings, keyString, value), i++)
         {
           values[i] = value;
@@ -742,16 +742,16 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
       }
       else if (PyDict_Check(value))
       {
-        std::pair<int, double> dictItem 
+        std::pair<int, double> dictItem
           = PythonUtility::getOptionDictBegin<int, double>(settings, keyString);
-        
+
         // loop over Dirichlet boundary conditions
-        for (; !PythonUtility::getOptionDictEnd(settings, keyString); 
+        for (; !PythonUtility::getOptionDictEnd(settings, keyString);
             PythonUtility::getOptionDictNext<int, double>(settings, keyString, dictItem))
         {
           int index = dictItem.first;
           double value = dictItem.second;
-          
+
           if (index >= 0 && index < nEntries)
           {
             values[index] = value;
@@ -762,7 +762,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
           }
         }
       }
-      else 
+      else
       {
         double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
         std::fill(values.begin(), values.end(), value);
@@ -793,7 +793,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
   for (unsigned int i=0; i<data.size(); i++)
   {
     PyObject *item = PyLong_FromLong(data[i]);
-    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item 
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference
 }
@@ -803,7 +803,7 @@ PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data
   PyObject *result = PyList_New((Py_ssize_t)nEntries);
   for (unsigned int i=0; i<nEntries; i++)
   {
-    PyObject *item = PyFloat_FromDouble(data[i]); 
+    PyObject *item = PyFloat_FromDouble(data[i]);
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference
@@ -818,7 +818,7 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
 #else
   std::string result = pyUnicodeToString(object);
 #endif
-  
+
   return result;
 }
 

@@ -12,7 +12,7 @@
 namespace BasisOnMesh
 {
 
-/** Class with general algorithm to compute jacobian from basis functions. 
+/** Class with general algorithm to compute jacobian from basis functions.
  *  Note that this makes no sense for complete polynomials because these are not used to describe geometry.
  */
 template<typename MeshType,typename BasisFunctionType,typename dummy = MeshType>
@@ -22,7 +22,7 @@ class BasisOnMeshJacobian :
 public:
   //! inherit constructor
   using BasisOnMeshFunction<MeshType,BasisFunctionType>::BasisOnMeshFunction;
-  
+
   //! compute the (geometry) jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   static std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
                                                           const std::array<double,MeshType::dim()> xi)
@@ -37,7 +37,7 @@ public:
       {
         double coefficient = BasisOnMeshFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
         jacobian[dimNo] += coefficient * geometryField[dofIndex];
-        VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex] 
+        VLOG(3) << "   col " << dimNo << " dof " << dofIndex << ", coeff: " << coefficient << ", node " << geometryField[dofIndex]
          << " -> " << jacobian[dimNo];
       }
     }
@@ -55,11 +55,11 @@ class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim
 public:
   //! inherit constructor
   using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
-  
+
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   static std::array<Vec3,1> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,1> xi);
-  
+
 };
 
 // partial specialization for linear Lagrange, D=2
@@ -70,11 +70,11 @@ class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim
 public:
   //! inherit constructor
   using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
-  
+
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   static std::array<Vec3,2> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,2> xi);
-  
+
 };
 
 // partial specialization for linear Lagrange, D=3
@@ -85,11 +85,11 @@ class BasisOnMeshJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim
 public:
   //! inherit constructor
   using BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::BasisOnMeshFunction;
-  
+
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   static std::array<Vec3,3> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
                                             const std::array<double,3> xi);
-  
+
 };
 
 }  // namespace

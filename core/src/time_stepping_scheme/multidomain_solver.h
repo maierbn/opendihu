@@ -13,20 +13,20 @@ namespace TimeSteppingScheme
 /** A specialized solver for the multidomain equation, as formulated by Thomas Klotz (2017)
   */
 template<typename DiscretizableInTime>
-class MultidomainSolver : 
+class MultidomainSolver :
   public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
 {
 public:
- 
+
   //! constructor
   MultidomainSolver(DihuContext context);
-  
+
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
-  
+
   //! run the simulation
   void run();
-private: 
+private:
 };
 
 }  // namespace

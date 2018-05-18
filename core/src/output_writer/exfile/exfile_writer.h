@@ -17,10 +17,10 @@ template<typename BasisOnMeshType, typename OutputFieldVariablesType>
 class ExfileWriter
 {
 public:
- 
+
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables);
-  
+
   //! write exnode file to given stream
   static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables);
 };
@@ -32,25 +32,25 @@ class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimens
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
+
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables);
-  
+
   //! write exnode file to given stream
   static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables);
 };
 
 
-// specialization for StructuredDeformable 
+// specialization for StructuredDeformable
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
 class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>, OutputFieldVariablesType>
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  
+
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables);
-  
+
   //! write exnode file to given stream
   static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables);
 };
@@ -62,10 +62,10 @@ class ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimens
 {
 public:
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  
+
   //! write exnode file to given stream
   static void outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables);
-  
+
   //! write exnode file to given stream
   static void outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables);
 };

@@ -24,10 +24,10 @@ public:
 
   //! inherited constructors
   using FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetUnstructured;
- 
+
   //! avoid name hiding of "getValue" in parent classes
   using FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
-  
+
   //! get a single value from global dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
 
@@ -43,21 +43,21 @@ class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableO
 public:
 
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
- 
+
   //! inherited constructors
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::FieldVariableSetGetUnstructured;
- 
+
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getElementValues;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValue;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValue;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValues;
-  
+
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
-  
+
   //! get a single value from global dof no. for all components
   double getValue(node_no_t dofGlobalNo);
-  
+
   //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
   void setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
 

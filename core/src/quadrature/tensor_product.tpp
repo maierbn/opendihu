@@ -1,8 +1,8 @@
 
-namespace Quadrature 
+namespace Quadrature
 {
 
-template<unsigned int D, typename Quadrature> 
+template<unsigned int D, typename Quadrature>
 constexpr int TensorProductBase<D,Quadrature>::
 numberEvaluations()
 {
@@ -30,7 +30,7 @@ samplingPoints()
 {
   std::array<std::array<double,2>,TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints;
   std::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
-  
+
   int samplingPointNo = 0;
   for(int y=0; y<Quadrature::numberEvaluations(); y++)
   {
@@ -49,7 +49,7 @@ samplingPoints()
 {
   std::array<std::array<double,3>,TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints;
   std::array<double, Quadrature::numberEvaluations()> samplingPoints1D = Quadrature::samplingPoints();
-    
+
   int samplingPointNo = 0;
   for(int z=0; z<Quadrature::numberEvaluations(); z++)
   {
@@ -83,9 +83,9 @@ computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::num
   std::array<ValueType, Quadrature::numberEvaluations()> evaluationsY;
   for(int y = 0; y < Quadrature::numberEvaluations(); y++)
   {
-    // index of first evaluation that belongs to the list for the current y 
+    // index of first evaluation that belongs to the list for the current y
     size_t offset = y*Quadrature::numberEvaluations();
-    
+
     evaluationsY[y] = Quadrature::template computeIntegral<ValueType>(evaluations.begin()+offset);
   }
   return Quadrature::computeIntegral(evaluationsY);
@@ -104,9 +104,9 @@ computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::num
     std::array<ValueType, Quadrature::numberEvaluations()> evaluationsY;
     for(int y=0; y<Quadrature::numberEvaluations(); y++)
     {
-      // index of first evaluation that belongs to the list for the current y 
+      // index of first evaluation that belongs to the list for the current y
       size_t offset = y*Quadrature::numberEvaluations() + z*Quadrature::numberEvaluations()*Quadrature::numberEvaluations();
-      
+
       evaluationsY[y] = Quadrature::template computeIntegral<ValueType>(evaluations.begin()+offset);
     }
     evaluationsZ[z] = Quadrature::computeIntegral(evaluationsY);

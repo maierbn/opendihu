@@ -12,7 +12,7 @@
 #include "utility/matrix_operators.h"
 #include "utility/vector_operators.h"
 
-namespace MathUtility 
+namespace MathUtility
 {
 
 //! returns v*v (square)
@@ -45,7 +45,7 @@ void normalize(VecD<D> &vector);
 //! returns the matrix in row major storage order, matrix is symmetric and the determinant of the jacobian
 std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant);
 
-//! computes the determinant of the matrix 
+//! computes the determinant of the matrix
 template<int D>
 double computeDeterminant(const Tensor2<D> &jacobian);
 
@@ -73,7 +73,7 @@ VecD<D> transformToD(const VecD<D2> &vector);
 double applyTransformation(const std::array<double,9> &transformationMatrix, const Vec3 &vector1, const Vec3 &vector2);
 
 //! computes v1^T * T * v2 where T is the symmetric transformation matrix (2D)
-double applyTransformation(const std::array<double,4> &transformationMatrix, const Vec2 &vector1, const Vec2 &vector2);  
+double applyTransformation(const std::array<double,4> &transformationMatrix, const Vec2 &vector1, const Vec2 &vector2);
 
 //! computes the factor J_D that is needed when transforming an integral from world coordinates to parameter space
 template<int D>
@@ -86,7 +86,7 @@ const double PI = 3.14159265358979323846;
 
 //! check if vector b is a subsequence of a, i.e. is contained in a
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos);
- 
+
 }  // namespace
 
 #include "utility/math_utility.tpp"

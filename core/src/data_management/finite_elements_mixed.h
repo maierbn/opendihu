@@ -22,21 +22,21 @@ class FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOn
 {
 public:
 
-  //! inherited constructor 
+  //! inherited constructor
   using FiniteElementsSolidMechanics<HighOrderBasisOnMeshType,Term>::FiniteElementsSolidMechanics;
- 
+
   typedef FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()> HighOrderFieldVariableType;
   typedef FieldVariable::FieldVariable<LowOrderBasisOnMeshType,LowOrderBasisOnMeshType::dim()> LowOrderFieldVariableType;
 
   //! initialize the object, create all stored data
   virtual void initialize() override;
-  
+
   //! return a reference to the pressure field
   FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &pressure();
-  
+
   //! set the mixed mesh
   void setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh);
-  
+
   //! get the mixed mesh, the high order mesh can be retrieved by mesh()
   std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh();
 
@@ -49,22 +49,22 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()>>,   // residual
     std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,HighOrderBasisOnMeshType::dim()>>   // externalVirtualWork
   > OutputFieldVariables;
-  
+
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
-  
+
 protected:
- 
-  //! initialize the geometryReference field variable from the geometry field 
+
+  //! initialize the geometryReference field variable from the geometry field
   void initializeFieldVariables();
-  
+
   //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
   const dof_no_t getTangentStiffnessMatrixNRows() override;
-  
+
   std::shared_ptr<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>> pressure_;   //< the pressure field of the mixed formulation
-  
+
   std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh_;   ///< the BasisOnMesh object of Type BasisOnMesh::Mixed
- 
+
 };
 }  // namespace
 

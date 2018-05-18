@@ -20,7 +20,7 @@ class BasisOnMeshGeometryData :
 public:
   //! inherit constructor
   using BasisOnMeshNumbers<MeshType,BasisFunctionType>::BasisOnMeshNumbers;
-  
+
   typedef FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
   typedef FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
@@ -42,11 +42,11 @@ class BasisOnMeshGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFu
   public BasisOnMeshDataUnstructured<D,BasisFunctionType>
 {
 public:
-  //! inherited constructor 
+  //! inherited constructor
   using BasisOnMeshDataUnstructured<D,BasisFunctionType>::BasisOnMeshDataUnstructured;
-  
+
   typedef FieldVariable::FieldVariableBase<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
-  
+
   //! return a field variable with given name, returns field variables that were present in parsed exfiles
   std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name)
   {
@@ -56,7 +56,7 @@ public:
       return nullptr;
   }
 
-}; 
+};
 
 /** base class for all meshes, not complete polynomials as basis functions
  */
@@ -68,21 +68,21 @@ class BasisOnMeshGeometry :
 public:
   //! inherit constructor
   using BasisOnMeshGeometryData<MeshType,BasisFunctionType>::BasisOnMeshGeometryData;
-  
+
   typedef FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! this assigns the geometry field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
   void initialize();
-  
+
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_no_t dofGlobalNo) const;
-  
+
   //! get all geometry entries for an element
   void getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values);
-  
+
   //! return the internal geometry field variable
   GeometryFieldType &geometryField();
-  
+
   //! if the geometry field is set
   bool hasGeometryField();
 
@@ -102,10 +102,10 @@ public:
   /* TODO: remove
   //! return the global dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
-  
+
   //! return the global node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
-  
+
   //! get all dofs of a specific node
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
   */

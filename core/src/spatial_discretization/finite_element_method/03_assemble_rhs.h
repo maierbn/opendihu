@@ -20,11 +20,11 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
-  
+
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
   void setMassMatrix();
 };
- 
+
 /**
  * Partial specialization for solid mechanics, mixed formulation
  */
@@ -39,7 +39,7 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm(){}
-  
+
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
   void setMassMatrix(){}
 };

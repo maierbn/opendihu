@@ -4,9 +4,9 @@
 
 namespace FieldVariable
 {
- 
+
 template<typename BasisOnMeshType,int nComponents>
 class FieldVariableSetGet
 {};
- 
-}; // namespace 
+
+}; // namespace

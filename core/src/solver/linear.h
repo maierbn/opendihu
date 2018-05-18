@@ -17,12 +17,12 @@ class Linear : public Solver
 public:
   //! construct solver from python settings
   Linear(PyObject *specificSettings);
-  
+
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();
-  
+
 protected:
- 
+
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;    ///< relative solver tolerance
 };

@@ -6,9 +6,9 @@ namespace Mesh
 {
 
 face_t parseFace(std::string str)
-{ 
+{
   std::string faceNames[6] = {"0-", "0+", "1-", "1+", "2-", "2+"};
-  
+
   for (int i = 0; i < 6; i++)
   {
     if (str == faceNames[i])
@@ -16,7 +16,7 @@ face_t parseFace(std::string str)
       return face_t(i);
     }
   }
-  
+
   LOG(ERROR) << "Could not parse face \"" << str << "\", possible values are: \"0-\", \"0+\", \"1-\", \"1+\", \"2-\", \"2+\"";
   return face_t::face0Minus;
 }
@@ -64,7 +64,7 @@ Vec2 getNormal<2>(face_t face)
 Vec3 getXiOnFace(face_t face, std::array<double,2> xiSurface)
 {
   Vec3 xi;
-  
+
   // xiSurface is 2D, coordinates on the face to integrate
   // set value of xi with 3D coordinates
   switch(face)
@@ -94,7 +94,7 @@ Vec3 getXiOnFace(face_t face, std::array<double,2> xiSurface)
 Vec2 getXiOnFace(face_t face, std::array<double,1> xiSurface)
 {
   Vec2 xi;
-  
+
   // xiSurface is 2D, coordinates on the face to integrate
   // set value of xi with 3D coordinates
   switch(face)

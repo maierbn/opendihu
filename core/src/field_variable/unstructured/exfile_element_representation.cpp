@@ -12,16 +12,16 @@ namespace FieldVariable
 {
 
 using namespace StringUtility;
-  
+
 void ExfileElementRepresentation::parseFromExelemFile(std::string content)
 {
   VLOG(1) << "ExfileElementRepresentation::parseFromExelemFile(" << content << ")";
-  
+
   int nNodes = 0;
   int nodeNo = 0;
   int nValues = 0;
   std::stringstream nodeNoStr;
-  
+
   size_t pos = 0;
   while(pos < content.size())
   {
@@ -32,10 +32,10 @@ void ExfileElementRepresentation::parseFromExelemFile(std::string content)
       pos = content.size();
     else
       pos = posNewline+1;
-   
-    
+
+
     //VLOG(1) << " line [" << line << "]";
-    
+
     if (line.find("#Nodes=") != std::string::npos)
     {
       nNodes = getNumberAfterString(line, "#Nodes=");
@@ -53,7 +53,7 @@ void ExfileElementRepresentation::parseFromExelemFile(std::string content)
           VLOG(1) << " nValues: " << nValues;
         node_[nodeNo].valueIndices.resize(nValues);
         node_[nodeNo].scaleFactorIndices.resize(nValues);
-        
+
         // prepare next block
         nodeNo++;
         nodeNoStr.str("");
@@ -95,14 +95,14 @@ bool ExfileElementRepresentation::operator==(const ExfileElementRepresentation& 
   //VLOG(1) << "    exfileElementRepresentation sizes: " << node_.size() << ", " << rhs.node_.size();
   if (node_.size() != rhs.node_.size())
     return false;
-  
+
   for (size_t i=0; i<node_.size(); i++)
   {
     if (node_[i].valueIndices.size() != rhs.node_[i].valueIndices.size())
       return false;
     if (node_[i].scaleFactorIndices.size() != rhs.node_[i].scaleFactorIndices.size())
       return false;
-    
+
     for (size_t j=0; j<node_[i].valueIndices.size(); j++)
     {
       if (node_[i].valueIndices[j] != rhs.node_[i].valueIndices[j])
@@ -130,14 +130,14 @@ void ExfileElementRepresentation::outputHeaderExelem(std::ostream &file)
   {
     file << "   " << no << ". #Values=" << iter->valueIndices.size() << std::endl
       << "     Value indices:";
-    
+
     for (unsigned int i=0; i<iter->valueIndices.size(); i++)
     {
       file << " " << iter->valueIndices[i]+1;
     }
     file << std::endl
       << "     Scale factor indices:";
-    
+
     unsigned int i=0;
     for (; i<iter->scaleFactorIndices.size(); i++)
     {
@@ -167,7 +167,7 @@ void ExfileElementRepresentation::output(std::ostream &stream) const
 std::ostream &operator<<(std::ostream &stream, const ExfileElementRepresentation &rhs)
 {
   rhs.output(stream);
-  return stream; 
+  return stream;
 }
 
 };

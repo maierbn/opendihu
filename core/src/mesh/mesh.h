@@ -21,12 +21,12 @@ public:
   virtual int dimension() const = 0;
   virtual node_no_t nNodes() const = 0;
 protected:
-  
+
 };
 
 /** dummy mesh to signal that no mesh was specified (meshManager will instead create a mesh with a single element)
  */
-class None : public Mesh 
+class None : public Mesh
 {
 public:
   using Mesh::Mesh;
@@ -46,13 +46,13 @@ public:
   //! construct mesh from python settings
   MeshOfDimension(PyObject *specificSettings);
   virtual ~MeshOfDimension() {}
-  
+
   //! return the dimension/template argument D as method. This is also accessible from the base class.
-  int dimension() const; 
-  
+  int dimension() const;
+
   //! return the template argument D (the dimension) as constexpr
   static constexpr int dim();
-  
+
   //! get the number of nodes of this mesh
   virtual node_no_t nNodes() const = 0;
 private:

@@ -13,7 +13,7 @@ class IntegrandRightHandSide
 {
 public:
 };
- 
+
 /** partial specialization for equations that have a rhs
  */
 template<int D,typename EvaluationsType,typename BasisOnMeshType,typename Term>
@@ -23,7 +23,7 @@ public:
   static EvaluationsType evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D> xi);
 };
 
- 
+
 
 };  // namespace
 

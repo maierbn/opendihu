@@ -4,8 +4,8 @@
 
 namespace TimeSteppingScheme
 {
-  
-TimeSteppingScheme::TimeSteppingScheme(DihuContext context) : 
+
+TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
   context_(context)
 {
   specificSettings_ = NULL;   // needs to be set by deriving class
@@ -27,7 +27,7 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
 {
   startTime_ = startTime;
   endTime_ = endTime;
-  
+
   if(isTimeStepWidthSignificant_)
   {
     setTimeStepWidth(timeStepWidth_);
@@ -42,25 +42,25 @@ void TimeSteppingScheme::initialize()
   endTime_ = 1.0;
   if (PythonUtility::hasKey(specificSettings_, "endTime"))
     endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
-  
+
   LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime="<<endTime_;
-  
+
   if (PythonUtility::hasKey(specificSettings_, "timeStepWidth"))
   {
     timeStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive);
     setTimeStepWidth(timeStepWidth_);
-    
+
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth="
       <<PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive)
       <<", compute numberTimeSteps="<<numberTimeSteps_;
-    
+
     if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
     {
       numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
       isTimeStepWidthSignificant_ = false;
       LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
     }
-    else 
+    else
     {
       isTimeStepWidthSignificant_ = true;
     }
@@ -70,7 +70,7 @@ void TimeSteppingScheme::initialize()
     numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps_="<<numberTimeSteps_;
   }
-  
+
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << (endTime_ - startTime_) / numberTimeSteps_;
 }

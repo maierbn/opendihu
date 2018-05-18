@@ -26,7 +26,7 @@ struct GeneralizedPoisson : public Static
   static constexpr bool hasLaplaceOperator = false;            ///< Equations that include Δu
   static constexpr bool hasGeneralizedLaplaceOperator = true;  ///< Equations that include ∇•(A∇u)
   static constexpr bool hasRhs = true;                         ///< Equations that can have a non-zero rhs (Lu = f)
-  static constexpr bool isSolidMechanics = false;              ///< Equations of solid mechanics 
+  static constexpr bool isSolidMechanics = false;              ///< Equations of solid mechanics
 };
 
 }  // namespace

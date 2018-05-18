@@ -10,7 +10,7 @@
 
 namespace BasisOnMesh
 {
- 
+
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMesh;
 
@@ -28,10 +28,10 @@ class BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunct
   public BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>
 {
 public:
- 
+
   //! constructor from python settings
   BasisOnMeshDofsNodes(PyObject *specificSettings);
-    
+
   //! construct from element numbers and physical extent
   BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
 
@@ -39,26 +39,26 @@ public:
 
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
-  
+
   //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
-  
+
   //! return number of nodes
   node_no_t nNodes() const;
-  
+
   //! return number of nodes in specified coordinate direction
   node_no_t nNodes(int dimension) const;
-  
+
   //! return number of dofs
   dof_no_t nDofs() const;
-  
+
 protected:
-  
+
   //! create the geometry field from meshWidth_
   void setupGeometryField();
-  
+
   double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
-}; 
+};
 
 /** Partial specialization for StructuredDeformable mesh
  */
@@ -72,26 +72,26 @@ public:
 
   //! constructor from node positions
   BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions);
-  
+
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
-  
+
   //! return number of nodes
   node_no_t nNodes() const;
-  
+
   //! return number of nodes in specified coordinate direction
   node_no_t nNodes(int dimension) const;
-  
+
   //! return number of dofs
   dof_no_t nDofs() const;
-  
+
 protected:
- 
+
   //! parse the node from python config into a vector
   void parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &nodePositions);
-  
+
   //! set the geometry field by the node positions in a vector
   void setGeometryField(std::vector<double> &nodePositions);
 };
@@ -105,16 +105,16 @@ class BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunct
 public:
   //! inherit constructor
   using BasisOnMeshGeometry<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry;
-  
+
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
-  
+
   //! return number of nodes
   node_no_t nNodes() const;
-  
+
   //! return number of dofs
   dof_no_t nDofs() const;
-}; 
+};
 
 }  // namespace
 

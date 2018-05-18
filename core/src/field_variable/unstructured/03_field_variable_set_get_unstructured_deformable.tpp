@@ -9,7 +9,7 @@
 
 namespace FieldVariable
 {
-  
+
 using namespace StringUtility;
 
 //! get values from their global dof no.s for all components, this eventually does not get all values if there are multiple versions
@@ -19,17 +19,17 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<double,nComponents> resultVector;
-  
+
   // transform global dof no.s to vector indices of first component
   for (int valueIndex = 0; valueIndex < N; valueIndex++)
   {
     int valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
-    
+
     // create indices vector with values {0,1,2,...,nComponents-1}
     std::array<int,nComponents> indices;
     for(int i=0; i<nComponents; i++)
       indices[i] = valuesVectorIndex + i;
-    
+
     // get values and assign them to result values vector
     VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
     values[valueIndex] = resultVector;
@@ -67,7 +67,7 @@ double FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValue(int componentNo, node_no_t dofGlobalNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  return this->component_[componentNo].getValue(dofGlobalNo); 
+  return this->component_[componentNo].getValue(dofGlobalNo);
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
@@ -84,20 +84,20 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  
+
   const std::vector<dof_no_t> &dofGlobalNo = this->elementToDofMapping_->getElementDofs(elementNo);
   std::array<double,nComponents> resultVector;
-  
+
   // transform global dof no.s to vector indices of first component
   for (int valueIndex = 0; valueIndex < nDofsPerElement; valueIndex++)
   {
     dof_no_t valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
-    
+
     // create indices vector with values {0,1,2,...,nComponents-1}
     std::array<PetscInt,nComponents> indices;
     for(int i=0; i<nComponents; i++)
       indices[i] = valuesVectorIndex + i;
-    
+
     // get values and assign them to result values vector
     VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
     values[valueIndex] = resultVector;
@@ -120,8 +120,8 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, Inse
   const int nValues = values.size();
 
   VecSetValues(*this->values_, nValues, (const int *) dofGlobalNos.data(), values.data(), petscInsertMode);
-  
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
 }
 
 //! set value for all dofs
@@ -138,23 +138,23 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
   std::array<int,nComponents> indices;
-  
+
   // loop over dof numbers
   int i=0;
   for (std::vector<dof_no_t>::iterator iter = dofGlobalNos.begin(); iter != dofGlobalNos.end(); iter++, i++)
-  {  
+  {
     dof_no_t dofGlobalNo = *iter;
-    
+
     // prepare lookup indices for PETSc vector values_
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       indices[componentNo] = dofGlobalNo*nComponents + componentNo;
     }
-    
+
     VecSetValues(*this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
   }
-  
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
 }
 
 //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
@@ -163,15 +163,15 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
   std::array<int,nComponents> indices;
-  
+
   // prepare lookup indices for PETSc vector values_
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     indices[componentNo] = dofGlobalNo*nComponents + componentNo;
   }
-  
+
   VecSetValues(*this->values_, nComponents, indices.data(), value.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called 
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
 }
 
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
@@ -179,7 +179,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 flushSetValues()
 {
-  VecAssemblyBegin(*this->values_); 
+  VecAssemblyBegin(*this->values_);
   VecAssemblyEnd(*this->values_);
 }
 

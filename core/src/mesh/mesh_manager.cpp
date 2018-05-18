@@ -4,7 +4,7 @@
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
-namespace Mesh 
+namespace Mesh
 {
 
 Manager::Manager(PyObject *specificSettings) :
@@ -22,16 +22,16 @@ void Manager::storePreconfiguredMeshes()
     std::string keyString("Meshes");
     if (PythonUtility::hasKey(specificSettings_, "Meshes"))
     {
-      
-      std::pair<std::string, PyObject *> dictItem 
+
+      std::pair<std::string, PyObject *> dictItem
         = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
-      
-      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString); 
+
+      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString);
           PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
       {
         std::string key = dictItem.first;
         PyObject *value = dictItem.second;
-            
+
         if (value == NULL)
         {
           LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
@@ -61,7 +61,7 @@ bool Manager::hasMesh(std::string meshName)
 {
   LOG(DEBUG) << "hasMesh("<<meshName<<")";
   LOG(DEBUG) << "meshes size: " << meshes_.size();
-  
+
   return meshes_.find(meshName) != meshes_.end();
 }
 
@@ -74,7 +74,7 @@ mesh<None>(PyObject *settings)
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
     LOG(DEBUG) << "Config contains meshName \""<<meshName<<"\".";
-    
+
     if (hasMesh(meshName))
     {
       return meshes_[meshName];
@@ -93,39 +93,39 @@ mesh<None>(PyObject *settings)
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \""<<meshName<<"\" but no such mesh was defined.";      
+      LOG(ERROR) << "Config contains reference to mesh with meshName \""<<meshName<<"\" but no such mesh was defined.";
     }
   }
   else
   {
     LOG(DEBUG) << "Config does not contain meshName.";
   }
-  
+
   // if nElements was specified, create standard regularFixed mesh
   if (PythonUtility::hasKey(settings, "nElements"))
   {
     // create new mesh, store as anonymous object
     std::stringstream anonymousName;
     anonymousName << "anonymous" << numberAnonymousMeshes_++;
-    
+
     // set type to be 1D regular fixed mesh with linear lagrange basis
     typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
-    
+
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
     mesh->initialize();
-    
+
     meshes_[anonymousName.str()] = mesh;
     return mesh;
   }
-  
-  // nElements was not specified, create and return anonymous standard regular mesh with 1 node, don't store it 
+
+  // nElements was not specified, create and return anonymous standard regular mesh with 1 node, don't store it
   std::array<element_no_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
-  
+
   typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
-  
+
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
   mesh->initialize();
   return mesh;

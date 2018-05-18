@@ -1,9 +1,17 @@
 language: cpp
 script: scons
 compiler: gcc
+
+sudo: required
+before_install:
+- sudo apt-get install gfortran
+- sudo apt-get install tree
+
 before_install:
   - env
+
 after_failure:
+  - tree -L 4 dependencies
   - cat config.log
 cache:
   directories:

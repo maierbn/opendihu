@@ -1,5 +1,5 @@
 language: cpp
-script: scons
+script: scons; cat config.log
 compiler: gcc
 before_install:
   - env

@@ -2,16 +2,25 @@ language: cpp
 script: scons
 compiler: gcc
 
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5.4
+      
 sudo: required
 
 before_install:
   - sudo apt-get install gfortran
   - sudo apt-get install tree
+  
   - env
 
 after_failure:
   - tree -L 4 dependencies
   - cat config.log
+  
 cache:
   directories:
     - dependencies

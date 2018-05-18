@@ -258,6 +258,7 @@ With the definition of the finite element Laplace operator  transformation matri
     ∇_\bfx\phi_i(\bfx)\cdot ∇_\bfx\phi_j(\bfx) = ∇_{\bfxi} \phi_i(\bfxi) \cdot T_\Phi(\bfxi) ∇_{\bfxi} \phi_j(\bfxi).
   \end{array}
 \end{equation*}
+The inverse transpose $M_\Phi(\bfxi) := T_\Phi(\bfxi)^{-\top} = J_\Phi(\bfxi)^{\top}J_\Phi(\bfxi)$ is called the metric tensor of the mapping $\Phi$.
 
 \textbf{2D case.}
 In two dimensions we consider the 2D manifold embedded in $\R^3$ with the mapping $\Phi: [0,1]^2 \to \Omega \subset \R^3$. At a fixed point $\bfp \in \Omega$ with $\Phi(\bfxi_p) = \bfp$ we first determine the tangent vectors $\bfzeta_1(\bfxi_p), \bfzeta_2(\bfxi_z)$. The first tangent vector is defined to lie on the $\xi_1$ coordinate direction, the second vector is then constructed to be orthogonal to the first. To define the tangent vector $\bfzeta_1$ we use a curve in parameter space:
@@ -2713,15 +2714,15 @@ From the penalty parameter $p = c_1\,(\lambda^2-\lambda^{-2})$ we can compute th
 
 \textbf{Direct solution using pressure from equilibrium}
 
-Analytical approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
-\begin{equation*}
+Analytical approach (p.224). Assuming Incompressibility ($I_3 = 1$), Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
+\begin{equation}\label{eq:analytical_app}
   \begin{array}{lll}
     \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
      &= -p\bfC^{-1} + 2\,c_1\,\bfI =
       \matt{-p\,\lambda^{-2} + 2\,c_1 & 0\\[2mm] 
      0 & -p\,\lambda^2 + 2\,c_1 }
   \end{array}
-\end{equation*}
+\end{equation}
 From equilibrium we get
 \begin{equation*}
   \begin{array}{lll}
@@ -2811,7 +2812,110 @@ From principle of virtual work we should get the correct stress.
 \end{equation*}
 Note: we do not get any further information from the principle of virtual work further than the equilibrium conditions. This is because the stress was preserved as variable and not replaced by the constitutive equations, that relate them to strain and stretch $\lambda$. 
 
+%------------------------------------------------------------------------------------------------
+\subsection{2D uniaxial extension with constant total load, 2 elements}
 
+\bild{uniaxial_extension_2d_2elements}{0.8\textwidth}{Uniaxial extension example with two quadratic elements, mixed formulation}
+
+This is the same example as before, now considering a discretization with 2 linear-quadratic elements.
+
+Computation of $δW_\text{int}$ for a virtual displacement at node $\mathcal{B}$, $\delta u_a(\bfX) = δu_a^\mathcal{B} \phi^\mathcal{B} (\bfX)$. We have
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{B}\,\left(F_{aB}\,\p{\phi^\mathcal{B}}{X_A} + F_{aA}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V,
+  \end{array}
+\end{equation*}
+The ansatz function $\phi^\mathcal{B}$ and their derivatives are given by:
+\begin{equation*}
+  \begin{array}{lll}
+    \phi^\mathcal{B}(\bfX) = \left(1 - \left|\dfrac{2\,X_1}{L_x} - 1\right|\right)\dfrac{L_y - X_2}{L_y} \quad = 
+    \begin{cases}
+      \dfrac{2\,X_1}{L_x} \dfrac{L_y - X_2}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
+      \left(2-\dfrac{2\,X_1}{L_x}\right) \dfrac{L_y - X_2}{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
+    \end{cases}\\[4mm]
+    %
+    \p{\phi^\mathcal{B}}{X_1} = 
+    \begin{cases} 
+      \dfrac2{L_x}\dfrac{L_y - X_2}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
+      -\dfrac2{L_x}\dfrac{L_y - X_2}{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
+    \end{cases}\\[12mm]
+    %
+    \p{\phi^\mathcal{B}}{X_2} =
+    \begin{cases}
+      -\dfrac{2\,X_1}{L_x} \dfrac{1}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
+      -\left(2-\dfrac{2\,X_1}{L_x}\right) \dfrac1{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
+    \end{cases}\\[4mm]
+  \end{array}
+\end{equation*}
+For $\delta\bfu(\bfX) = (\phi^\mathcal{B}(\bfX), 0)^\top$, i.e. $δ u_1^\mathcal{B} = 1, δu_2^\mathcal{B} = 0$ we compute the virtual internal energy. The deformation gradient, $F$, is constant over the domain, therefore $F_{11} = \lambda$.
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{B}}{X_A} + F_{1A}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V 
+    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{B}}{X_1} + F_{11} \p{\phi^\mathcal{B}}{X_1} \right) \,\d V\\[4mm]
+    &= S_{11}\,\lambda \ds\int_{\Omega} \p{\phi^\mathcal{B}}{X_1} \,\d V
+    = S_{11}\,\lambda\, \left(\ds\int\limits_{X_1=0}^{L_x/2} \ds\int\limits_{X_2=0}^{L_y} \p{\phi^\mathcal{B}}{X_1} \,\d X_2\,\d X_1 + \ds\int\limits_{X_1=L_x/2}^{L_x} \ds\int\limits_{X_2=0}^{L_y} \p{\phi^\mathcal{B}}{X_1} \,\d X_2\,\d X_1 \right)\\[4mm]
+    &= S_{11}\,\lambda\, \left(\ds\int\limits_{X_1=0}^{L_x/2} \ds\int\limits_{X_2=0}^{L_y} \dfrac2{L_x}\dfrac{L_y - X_2}{L_y} \,\d X_2\,\d X_1 
+      + \ds\int\limits_{X_1=L_x/2}^{L_x} \ds\int\limits_{X_2=0}^{L_y} -\dfrac2{L_x}\dfrac{L_y - X_2}{L_y} \,\d X_2\,\d X_1 \right)\\[4mm]
+    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac2{L_x}\dfrac{L_y^2 - L_y^2/2}{L_y} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac2{L_x}\dfrac{L_y^2 - L_y^2/2}{L_y} \,\d X_1 \right)\\[4mm]
+    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac2{L_x}\dfrac{L_y}{2} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac2{L_x}\dfrac{L_y}{2} \,\d X_1 \right)\\[4mm]
+    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac{L_y}{L_x} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac{L_y}{L_x} \,\d X_1 \right)\\[4mm]
+    &=  S_{11}\, \lambda \left( \dfrac{L_y}{2}   -\dfrac{L_y}{2} \right) = 0 \quad \checkmark
+  \end{array}
+\end{equation*}
+For $\delta\bfu(\bfX) = (0,\phi^\mathcal{B}(\bfX))^\top$, i.e. $δ u_1^\mathcal{B} = 0, δu_2^\mathcal{B} = 1$ we get:
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{2B}\,\p{\phi^\mathcal{B}}{X_A} + F_{2A}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V 
+    = 0 \qquad \text{because } S_{ij} = 0 \quad \forall\, (i,j) \neq (1,1), \quad F_{21} = 0
+  \end{array}
+\end{equation*}
+
+Problem: $S_{22} \neq 0$ in code
+
+
+From the analytical approach \cref{eq:analytical_app} (p.224) we have:
+\begin{equation*}
+  \begin{array}{lll}
+    p = \dfrac{2\,c_1}{λ^2},\qquad \bfS = \matt{-p\,\lambda^{-2} + 2\,c_1 & 0\\[2mm] 
+     0 & -p\,\lambda^2 + 2\,c_1}, \quad \text{i.e.}\\[4mm]
+    \bfS = \matt{2\,c_1\,(1-λ^{-4}) & 0 \\[2mm]
+     0 & 0}
+  \end{array}
+\end{equation*}
+The solution from mixed formulation gives, using $J=1$, $\Psi = c_1\,(I_1 - 2)$:
+\begin{equation*}
+  \begin{array}{lll}
+    \bar{\bfC} = J^{-1}\,\bfC = \bfC = \matt{λ^2 & 0 \\[2mm] 0 & λ^{-2}}, \quad \bfC^{-1} = \matt{λ^{-2} & 0 \\[2mm] 0 & λ^2}\\[4mm]
+    \bar{γ}_1 = 2\,\p{\Psi_\text{iso}(\bar{I}_1)}{\bar{I}_1} = 2\,c_1, \qquad \bar{γ}_2 = 0\\[4mm]
+    \bar{\bfS} = \bar{γ}_1\,\bfI + \bar{γ}_2\,\bar{\bfC} = \matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1}.\\[4mm]
+    \bfS_\text{iso} = J^{-2/2}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac12 \bfC^{-1}\,(\bfC : \bar{\bfS}) = \matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1} - \dfrac12 \,\matt{λ^{-2} & 0 \\[2mm] 0 & λ^2}\left(2\,c_1\,λ^2 + 2\,c_1\,λ^{-2}\right) \\[8mm]
+    \qquad =\matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1} - \dfrac12\matt{2\,c_1 + 2\,c_1\,λ^{-4} & 0 \\[2mm] 0& 2\,c_1\,λ^4 + 2\,c_1}\\[8mm]
+    \qquad = \matt{c_1\,(1 - λ^{-4}) & 0 \\[2mm]
+    0 & c_1\,(1 - λ^4)}
+  \end{array}
+\end{equation*}
+From $S_{22} \overset{!}{=} 0$ we get $p = c_1\,(λ^2 - λ^{-2})$. Then,
+\begin{equation*}
+  \begin{array}{lll}
+    \bfS_\text{vol} = J\,p\,\bfC^{-1} = \matt{c_1\,(1 - \lambda^{-4}) & 0 \\[2mm] 0 & c_1\,(λ^4 - 1)}
+    \\[8mm]
+    \bfS = \bfS_\text{vol} + \bfS_\text{iso} = \matt{2\,c_1\,(1 - λ^{-4}) & 0 \\[2mm]
+    0 & 0}
+  \end{array}
+\end{equation*}
+Transformation in current configaration yields the Cauchy stress, $\bfsigma$,
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma = J^{-1} \bfF\bfS\,\bfF^\top 
+    = \matt{λ & 0 \\[2mm] 0 & λ^{-1}} 
+    \matt{2\,c_1\,(1 - λ^{-4}) & 0 \\[2mm]
+    0 & 0} 
+    \matt{λ & 0 \\[2mm] 0 & λ^{-1}} 
+    = \matt{2\,c_1\,(λ^2 - λ^{-2}) & 0 \\[2mm]
+    0 & 0}\\[4mm]
+    \Rightarrow \quad p = -\dfrac12 \tr \bfsigma = -c_1\,(λ^2 - λ^{-2})
+  \end{array}
+\end{equation*}
 \newpage
 %%------------------------------------------------------------------------------------------------
 \section{Quadrature}

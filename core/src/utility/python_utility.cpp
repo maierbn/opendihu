@@ -8,6 +8,8 @@
 #include <Python.h>
 #include "easylogging++.h"
 
+#include "control/use_numpy.h"
+
 PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
 PyObject *PythonUtility::list = NULL;
@@ -84,6 +86,8 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
 template<>
 double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
 {
+  initNumpy();
+  
   if(object == NULL)
     return defaultValue;
   
@@ -103,6 +107,16 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
     std::string valueString = pyUnicodeToString(object);
     return atof(valueString.c_str());
   }
+  /*
+#ifdef HAVE_NUMPYC  
+  else if (PyArray_Check(object))
+  {
+    //if (object->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
+      
+    LOG(WARNING) << "convertFromPython: object is a numpy array: " << object;
+  }
+#endif 
+*/
   else
   {
     LOG(WARNING) << "convertFromPython: object is no double: " << object;
@@ -233,8 +247,6 @@ std::array<double,3> PythonUtility::convertFromPython(PyObject *object)
 {
   return convertFromPython<double,3>(object);
 }
-
-
 
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {

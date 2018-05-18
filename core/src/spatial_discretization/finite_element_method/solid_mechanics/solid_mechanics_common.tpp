@@ -272,7 +272,7 @@ setStiffnessMatrixEntriesForDisplacements(Mat tangentStiffnessMatrix)
                 }
               }
               
-              //LOG(DEBUG) << "(L,a),(M,b)=(" << aDof << ","<<aComponent<<"),("<<bDof<<","<<bComponent<<"), (i,j)=("<<i<<","<<j<<"), integrand=" << integrand;
+              VLOG(2) << "    (L,a),(M,b)=(" << aDof << ","<<aComponent<<"),("<<bDof<<","<<bComponent<<"), (i,j)=("<<i<<","<<j<<"), integrand=" << integrand;
               
               // store integrand in evaluations array
               evaluationsArray[samplingPointIndex](i,j) = integrand * fabs(jacobianDeterminant);
@@ -1102,6 +1102,8 @@ computeInternalVirtualWork(Vec &resultVec)
             }  // B, bInternal
           }  // A, aInternal
           
+          VLOG(2) << "   (L,a)=(" << aDof << "," << aComponent << "), integrand: " << integrand; 
+          
           // store integrand in evaluations array
           evaluationsArray[samplingPointIndex][i] = integrand;
           
@@ -1231,6 +1233,8 @@ computeInternalVirtualWork(Vec &resultVec)
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
     
+    VLOG(2) << "  element " << elementNo << " has dofs " << dofNo;
+    
     // add entries in result vector
     // loop over indices of unknows (aDof,aComponent)
     for (int aDof = 0; aDof < nDofsPerElement; aDof++)
@@ -1247,8 +1251,8 @@ computeInternalVirtualWork(Vec &resultVec)
         // Therefore the nDofsPerElement number is not the number of unknows.
         dof_no_t resultVectorIndex = dofNo[aDof]*D + aComponent;
         
-        //VLOG(2) << "  result vector "<<aDof<<","<<aComponent<<" = " <<i<<", dof " << dofNo[aDof];
-        //VLOG(2) << "      vector index "<<resultVectorIndex<<", integrated value: "<<integratedValue;
+        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofNo[aDof];
+        VLOG(2) << "      vector index (unknown no): "<<resultVectorIndex<<", integrated value: "<<integratedValue;
             
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         

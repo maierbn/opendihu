@@ -74,7 +74,8 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables)
 {
   const int D = BasisOnMeshType::dim();
   stream << " Group name: Region" << std::endl
-    << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
+    << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl
+    << " #Scale factor sets=0" << std::endl;
   
   const int nNodesPerElement = BasisOnMeshType::nNodesPerElement();   
   const element_no_t nElements = std::get<0>(fieldVariables)->mesh()->nElements();

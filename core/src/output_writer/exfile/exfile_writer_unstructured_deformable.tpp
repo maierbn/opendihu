@@ -94,7 +94,11 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables)
     {    
       int nScaleFactors = std::get<0>(fieldVariables)->getNumberScaleFactors(currentElementGlobalNo);
       
-      if (nScaleFactors != 0)
+      if (nScaleFactors == 0)
+      {
+        stream << " #Scale factor sets=0" << std::endl;
+      }
+      else
       {
         stream << " #Scale factor sets=1" << std::endl;
         stream << " " << BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();

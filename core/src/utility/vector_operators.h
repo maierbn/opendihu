@@ -23,6 +23,10 @@ std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vecto
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vector1, double lambda);
 
+//! vector division operation
+template<std::size_t nComponents>
+std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vector1, double lambda);
+
 //! scalar*vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(double lambda, std::array<double,nComponents> vector);

@@ -29,9 +29,7 @@ class BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunct
 {
 public:
  
-  //! inherit constructor
-  //using BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry;
-  //! constructor
+  //! constructor from python settings
   BasisOnMeshDofsNodes(PyObject *specificSettings);
     
   //! construct from element numbers and physical extent
@@ -69,9 +67,12 @@ class BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctio
   public BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>
 {
 public:
-  //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
+  //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField=false);
 
+  //! constructor from node positions
+  BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions);
+  
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives

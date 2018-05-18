@@ -23,6 +23,10 @@ public:
   
 private:
  
+  //! output a cmgui "visualization.com" file that references the exfiles and can be used by Cmgui
+  void outputComFile();
+  
+  std::vector<std::string> filenames_;   ///< the filenames without suffix of all previously output exelem files
 };
 
 };  // namespace

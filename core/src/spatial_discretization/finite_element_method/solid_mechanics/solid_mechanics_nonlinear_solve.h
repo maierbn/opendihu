@@ -48,6 +48,9 @@ protected:
   //! write output of current state
   virtual void writeOutput() = 0;
   
+  //! compute the nonlinear function
+  virtual void evaluateNonlinearFunction(Vec &result) = 0;
+  
 };
 
 };  // namespace

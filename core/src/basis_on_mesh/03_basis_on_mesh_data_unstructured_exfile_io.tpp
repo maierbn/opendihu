@@ -498,7 +498,11 @@ outputExelemFile(std::ostream &file)
   {
     int nScaleFactors = fieldVariable_.begin()->second->getNumberScaleFactors(currentElementGlobalNo);
     
-    if (nScaleFactors != 0)
+    if (nScaleFactors == 0)
+    {
+      file << " #Scale factor sets=0" << std::endl;
+    }
+    else
     {
       file << " #Scale factor sets=1" << std::endl;
       file << " " << BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();

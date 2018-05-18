@@ -38,15 +38,10 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables, int timeStepNo, doubl
   // build python object for data  
   PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
 
-  LOG(DEBUG) << "get mesh";
-  
   std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh = std::get<0>(fieldVariables)->mesh();
   
   std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
   int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
-  
-  LOG(DEBUG) << pyData << " build data";
-  LOG(DEBUG) << "PythonUnStructuredDeformable";
   
   // build python dict that will contain all information and data
   PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s O, s i, s d}", "meshType", "UnstructuredDeformable",
@@ -56,7 +51,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables, int timeStepNo, doubl
                                  "data", pyData, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
   
-  LOG(DEBUG) << data << " done";
+  //LOG(DEBUG) << data << " done";
   
   return data;
 } 

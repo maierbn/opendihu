@@ -127,7 +127,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const 
     s << std::endl;
   }
   VLOG(3) << s.str(); 
-#endif          
+#endif
   
   std::array<Vec3,BasisOnMeshType::nDofsPerElement()> gradPhi = data.mesh()->getGradPhi(xi);
   

@@ -54,6 +54,18 @@ std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vecto
   return vector1;
 }
 
+//! vector division operation
+template<std::size_t nComponents>
+std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vector1, double lambda)
+{
+  #pragma simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    vector1[i] /= lambda;
+  }
+  return vector1;
+}
+
 //! scalar*vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(double lambda, const std::array<double,nComponents> vector)

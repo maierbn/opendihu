@@ -8,7 +8,7 @@
 
 namespace Quadrature
 {
-
+ 
 /** Implements Gauss quadrature with NumberGaussPoints. It is capable of exactly integrating polynomials of degree 2*NumberGaussPoints-1.
   */
 template<unsigned int NumberGaussPoints>

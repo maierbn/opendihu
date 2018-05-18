@@ -18,6 +18,7 @@
 #include "solver/solver_manager.h"
 
 #include "easylogging++.h"
+#include "control/use_numpy.h"
 
 //INITIALIZE_EASYLOGGINGPP
 

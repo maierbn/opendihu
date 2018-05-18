@@ -2,8 +2,8 @@
 
 #include "data_management/finite_elements.h"
 
-#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
-#define EXACT_QUADRATURE Quadrature::Gauss<7>
+//#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
+//#define EXACT_QUADRATURE Quadrature::Gauss<7>
 
 namespace SpatialDiscretization
 {
@@ -18,6 +18,9 @@ class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 public:
   FiniteElementMethodBase(DihuContext context);
   
+  typedef ::Data::FiniteElements<BasisOnMeshType,Term> Data;
+  typedef BasisOnMeshType BasisOnMesh;
+  
   // perform computation
   void run();
   
@@ -28,7 +31,7 @@ public:
   std::shared_ptr<Mesh::Mesh> mesh();
   
   //! get the data object
-  Data::FiniteElements<BasisOnMeshType,Term> &data();
+  Data &data();
   
   friend class StiffnessMatrixTester;    ///< a class used for testing 
 protected:
@@ -49,7 +52,7 @@ protected:
   virtual void manipulateWeakRhs(){}
   
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  Data::FiniteElements<BasisOnMeshType,Term> data_;     ///< data object that holds all PETSc vectors and matrices
+  Data data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 };

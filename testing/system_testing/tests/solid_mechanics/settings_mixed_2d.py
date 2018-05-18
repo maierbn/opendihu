@@ -1,6 +1,8 @@
 # 2D Incompressible Material
 #
 # command arguments: <analytical jacobian> <name>
+#
+# sdd && ./mooney_rivlin_incompressible_mixed2d ../settings_mixed_2d.py 2 mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_3
 
 import numpy as np
 import scipy.integrate
@@ -36,7 +38,7 @@ ny = 1
 # [1,1] = 1 element, 9 dofs per element, 9 dofs, 18 unknowns
 
 # dimensions: lx, ly
-if "scenario_1" in name:
+if "scenario_1" in name:      # 1 element, unit cube
   lx = 1.0
   ly = 1.0
   tmax = 0.5
@@ -51,7 +53,7 @@ if "scenario_1" in name:
     {"element": 0, "face": "0+", "constantValue": tmax/ly}   # face can be one of "0+", "0-", "1+", "1-", "2+", "2-". dofValues are the element-local node/dof numbers (e.g. 0-26 for 3D quadratic Lagrange elements), the entries are vectors of dimension D with respect to the local element coordinate system
   ]
   
-elif "scenario_2" in name:
+elif "scenario_2" in name:    # 1 element, extended
   lx = 1.5
   ly = 0.6
   tmax = 2.2  
@@ -66,7 +68,24 @@ elif "scenario_2" in name:
     {"element": 0, "face": "0+", "constantValue": tmax/ly}   # face can be one of "0+", "0-", "1+", "1-", "2+", "2-". dofValues are the element-local node/dof numbers (e.g. 0-26 for 3D quadratic Lagrange elements), the entries are vectors of dimension D with respect to the local element coordinate system
   ]
 
-elif "scenario_3" in name:
+elif "scenario_3" in name:      # 2x1 elements
+  nx = 2
+  ny = 1
+  lx = 1.5
+  ly = 0.6
+  tmax = 2.2  
+    
+  dirichletBC = {
+    0: 0.0, 1: 0.0,
+    10: 0.0,
+    20: 0.0
+  } 
+
+  traction = [
+    {"element": 1, "face": "0+", "constantValue": tmax/ly},
+  ]
+
+elif "scenario_4" in name:      # 2x2 elements
   nx = 2
   ny = 2
   lx = 1.5
@@ -123,7 +142,7 @@ config = {
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
       #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
-      {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
+      {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 1, "binary":False, "onlyNodalValues":True},
     ],
     "outputIntermediateSteps": True
   },

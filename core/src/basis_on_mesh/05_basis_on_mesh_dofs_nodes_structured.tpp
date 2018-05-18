@@ -29,6 +29,25 @@ BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
   }
 }
 
+template<int D,typename BasisFunctionType>
+BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions) :
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
+{
+  this->noGeometryField_ = false;
+  
+  std::vector<double> sequentialNodePositions;   // node positions in a scalar vector, as needed by setGeometryField
+  sequentialNodePositions.reserve(nodePositions.size() * D);
+  
+  for (Vec3 &vector : nodePositions)
+  {
+    for (int i = 0; i < 3; i++)
+      sequentialNodePositions.push_back(vector[i]);
+  }
+  this->setGeometryField(sequentialNodePositions);
+}
+  
+
 // read in config nodes
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
@@ -179,8 +198,6 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
         nodePositions[nodeNo*3 + i] = position[i];
     }
   }
-  
-  // set number of elements 
   
 }
 

@@ -1,11 +1,15 @@
+
+#include <Python.h>
+#include "easylogging++.h"
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <array>
 
-#include <Python.h>
-#include "easylogging++.h"
+#include "control/use_numpy.h" 
+#include "utility/vector_operators.h"
 
 template<typename Key, typename Value>
 std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings, std::string keyString)
@@ -133,6 +137,8 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
 template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue)
 {
+  initNumpy();
+  
   std::array<ValueType, D> result;
   if (PyList_Check(object))
   {
@@ -151,6 +157,39 @@ std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std:
     }
     return result;
   }
+  /*
+#ifdef HAVE_NUMPYC  
+  else if (PyArray_Check(object))
+  {
+    LOG(DEBUG) << "object is a pyarray ";
+   
+    const PyArrayObject *arrayObject = (PyArrayObject*)object;
+   
+    int nElementsInNumpyArray = PyArray_Size(object);
+    int nElementsToCopy = std::min(D, nElementsInNumpyArray);
+   
+    int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
+    
+    if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
+    {
+      PyArray_DescrFromType(typenumber)->f->copyswapn(
+       result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
+    }
+    else
+    {
+      LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
+      nElementsToCopy = 0;
+    }
+    
+    // fill rest of values with default values
+    for(int i = nElementsToCopy; i < D; i++)
+    {
+      result[i] = defaultValue[i];
+    }
+    LOG(DEBUG) << "converted to " << D << " entries: " << result;
+  }
+#endif   
+*/
   else
   {
     ValueType valueDouble = PythonUtility::convertFromPython<ValueType>(object, defaultValue[0]);

@@ -119,11 +119,15 @@ void ElementToNodeMapping::outputElementExelem(std::ostream &file, element_no_t 
   {
     file << " " << elements_[elementGlobalNo].nodeGlobalNo[nodeNo]+1;
   }
-  file << std::endl 
-    << " Scale factors:" << std::endl;
-    
+  file << std::endl;
+  
   // output scale factors
-  StringUtility::outputValuesBlock(file, elements_[elementGlobalNo].scaleFactors.begin(), elements_[elementGlobalNo].scaleFactors.end(), 5);
+  if (!elements_[elementGlobalNo].scaleFactors.empty())
+  {
+    file << " Scale factors:" << std::endl;
+    
+    StringUtility::outputValuesBlock(file, elements_[elementGlobalNo].scaleFactors.begin(), elements_[elementGlobalNo].scaleFactors.end(), 5);
+  }
 }
   
 };

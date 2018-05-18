@@ -248,6 +248,7 @@ debug()
     
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nUnknowns);
     }
+    
   }
   else if(BasisOnMeshType::dim() == 2)
   {
@@ -308,13 +309,14 @@ debug()
   //applyDirichletBoundaryConditionsInDisplacements(this->data_.computeWithReducedVectors());
 #endif
 
-#if 1   // 2x2 elements
+#if 1   // 1x2 elements
    double analytic_lambda = 1.96511022361548;
    double lx_settings = 1.5;
    double ly_settings = 0.6;
    const double c0 = SEMT::Parameter<0>::get_value();
    
-   double analyticPressure = 2*c0 / analytic_lambda;
+   double analyticPressure = c0 * (MathUtility::sqr(analytic_lambda) - 1./MathUtility::sqr(analytic_lambda));
+   //double analyticPressure = 2*c0 / MathUtility::sqr(analytic_lambda);
    
    VLOG(1) << "analyticPressure: " << analyticPressure;
    
@@ -325,23 +327,11 @@ debug()
      0.75*analytic_lambda*lx_settings, 0.0,
      1.00*analytic_lambda*lx_settings, 0.0,
      
-     0.00,                             0.25/analytic_lambda*ly_settings, 
-     0.25*analytic_lambda*lx_settings, 0.25/analytic_lambda*ly_settings,
-     0.50*analytic_lambda*lx_settings, 0.25/analytic_lambda*ly_settings,
-     0.70*analytic_lambda*lx_settings, 0.25/analytic_lambda*ly_settings,
-     1.00*analytic_lambda*lx_settings, 0.25/analytic_lambda*ly_settings,
-     
      0.00,                             0.5/analytic_lambda*ly_settings, 
      0.25*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings,
      0.50*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings,
      0.70*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings,
      1.00*analytic_lambda*lx_settings, 0.5/analytic_lambda*ly_settings,
-     
-     0.00,                             0.75/analytic_lambda*ly_settings,
-     0.25*analytic_lambda*lx_settings, 0.75/analytic_lambda*ly_settings,
-     0.50*analytic_lambda*lx_settings, 0.75/analytic_lambda*ly_settings,
-     0.70*analytic_lambda*lx_settings, 0.75/analytic_lambda*ly_settings,
-     1.00*analytic_lambda*lx_settings, 0.75/analytic_lambda*ly_settings,
      
      0.00,                             1.00/analytic_lambda*ly_settings,
      0.25*analytic_lambda*lx_settings, 1.00/analytic_lambda*ly_settings,
@@ -349,7 +339,6 @@ debug()
      0.70*analytic_lambda*lx_settings, 1.00/analytic_lambda*ly_settings,
      1.00*analytic_lambda*lx_settings, 1.00/analytic_lambda*ly_settings,
      
-     analyticPressure, analyticPressure, analyticPressure,
      analyticPressure, analyticPressure, analyticPressure,
      analyticPressure, analyticPressure, analyticPressure
    };
@@ -379,6 +368,14 @@ debug()
      
      PetscUtility::setVector(reducedVector, this->data_.solverVariableSolution());
      this->setFromSolverVariableSolution(this->data_.solverVariableSolution());
+     
+       
+     Vec solverVariableResidual = this->data_.solverVariableResidual();
+      
+      
+     this->evaluateNonlinearFunction(solverVariableResidual);
+     
+     exit(0);
    }
 #endif
   }
@@ -448,7 +445,7 @@ solve()
   // zero initial values
   ierr = VecSet(solverVariableSolution, 0.0); CHKERRV(ierr);
   
-  //debug();
+  debug();
   
   // set prescribed Dirchlet BC displacements values
   this->applyDirichletBoundaryConditionsInDisplacements(this->data_);

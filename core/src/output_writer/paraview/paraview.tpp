@@ -56,6 +56,8 @@ void Paraview::writeSolutionDim(DataType &data)
 template <typename Mesh, typename DataType>
 void Paraview::writeRectilinearGrid(DataType& data)
 {
+ //TODO: remove dependency on solution
+ /*
   // determine file name
   std::stringstream s;
   s<<filename_<<".vtr";
@@ -187,6 +189,7 @@ void Paraview::writeRectilinearGrid(DataType& data)
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</RectilinearGrid>" << std::endl
     << "</VTKFile>"<<std::endl;
+    */
 }
 
 template <int D, typename DataType>

@@ -25,6 +25,7 @@
 #include "time_stepping_scheme/heun.h"
 
 #include "model_order_reduction/pod.h"
+#include "postprocessing/streamline_tracer.h"
 
 #include "cellml/cellml_adapter.h"
 

@@ -44,7 +44,6 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
 
   // open file
   std::ofstream file = openFile(filenameExelem);
-  //TODO: instead of data.fieldVariables() pass field variables and static information about number of components to writer
   ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
     outputExelem(file, data.getOutputFieldVariables()); 
   file.close();
@@ -59,6 +58,12 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
     outputExnode(file, data.getOutputFieldVariables()); 
   file.close();
+  
+  // store created filename 
+  filenames_.push_back(filename_);
+  
+  // output visualization file
+  outputComFile();
 }
 
 };

@@ -137,4 +137,20 @@ getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType:
   return getNormal(face, geometryValues, xi);
 }
 
+template<typename MeshType, typename BasisFunctionType>
+bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi)
+{
+  return false;
+}
+
+
+template<typename MeshType, typename BasisFunctionType>
+bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi)
+{
+  // transform point to parameter space
+  return false;
+}
+
 };  // namespace

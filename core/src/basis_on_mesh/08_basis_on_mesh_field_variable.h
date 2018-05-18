@@ -50,6 +50,12 @@ public:
   
   //! compute the normal in world space, normal to face at xi
   Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
+  
+  //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise
+  bool findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi);
+  
+  //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi);
 };
 
 }  // namespace

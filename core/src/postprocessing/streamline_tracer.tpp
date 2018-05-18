@@ -71,25 +71,29 @@ traceStreamlines()
   // compute a gradient field from the solution
   problem_.data().solution().computeGradientField(data_.gradient());
   
-  //const int nDofsPerElement = problem_.data().mesh()->nDofsPerElement();
-  //std::vector<Vec3> nodePositions;
-  /*
+  const int nDofsPerElement = DiscretizableInTimeType::BasisOnMesh::nDofsPerElement();
+  std::vector<Vec3> nodePositions;
+  
   // loop over seed points
   #pragma omp parallel for
   for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
   {
-    
     // get starting point
     Vec3 currentPoint = seedPositions_[seedPointNo];
     nodePositions.push_back(currentPoint);
    
     // find out element 
-    std::array<double,3> xi;
+    std::array<double,(unsigned long int)3> xi;
     element_no_t elementNo;
     std::array<Vec3,nDofsPerElement> elementalGradientValues;
     
     // find out initial element no and xi value
-    problem_.data().mesh()->findPosition(currentPoint, elementNo, xi);
+    bool positionFound = problem_.data().mesh()->findPosition(currentPoint, elementNo, xi);
+    if (!positionFound)
+    {
+      LOG(ERROR) << "Seed point " << currentPoint << " is outside of domain.";
+      continue;
+    }
     
     // get gradient values for element 
     data_.gradient().getElementValues(elementNo, elementalGradientValues);
@@ -109,14 +113,15 @@ traceStreamlines()
         }
       }
       
+      
       // get value of gradient 
-      Vec3 gradient = data_.gradient().interpolateValueInElement(elementalGradientValues, xi);
+      Vec3 gradient = problem_.data().mesh()->template interpolateValueInElement<3>(elementalGradientValues, xi);
       
       // integrate streamline
       currentPoint = currentPoint + gradient*lineStepWidth_;
       nodePositions.push_back(currentPoint);
     }
-  }*/
+  }
 }
  
 };

@@ -124,7 +124,7 @@ Note that again Lagrange functions of first order appear, but this is part of th
   \end{array}
 \end{equation}
 The node numbering and coordinate frames are defined by \cref{fig:element2}.
-The Jacobians of $\Phi$ for the 1D and 2D case are as follows:
+The Jacobians of $\Phi$, ${J_\Phi = \d \bfx/\d \bfxi}$ for the 1D and 2D case are given by:
 \begin{equation*}
   \begin{array}{lll}
     \text{1D:}\quad &J_\Phi(\xi_1) = \Phi'(\xi_1) = \bfx^2-\bfx^1\\[4mm]
@@ -150,7 +150,28 @@ The Jacobians of $\Phi$ for the 1D and 2D case are as follows:
     
   \end{array}
 \end{equation*}
+In order to invert the mappings $\Phi$ from parameter to world space, we proceed:
+\begin{equation*}
+  \begin{array}{lll}
+    \text{1D:}\quad &\bfx^p_i = \bfx_i^1 + \xi_1\,(\bfx^2_i - \bfx^1_i), \quad \forall i \in \{1,2,3\}\\[4mm]
+    & \Rightarrow \quad \xi_1 = (\bfx^p_i - \bfx^1_1) / (\bfx^2_i - \bfx^1_i) \quad \forall i \in \{1,2,3\}\\[4mm]
+    \text{2D:}\quad & 
+  \end{array}
+\end{equation*}
 
+The point in world space, $\bfx^{p}$ is computed by the sum over shape functions, $\phi^{L}$ and control points of the element, $\bfx^{L}$.
+\begin{equation*}
+  \begin{array}{lll}
+    \bfx^{p}_i(\bfxi) = \Phi_i(\bfxi) = \ds\sum\limits_{L} \phi^{L}_i(\bfxi)\,\bfx^{L} \\[4mm]
+    \bfx^{p} = \bfM(\bfxi)\,\bfx,
+  \end{array}
+\end{equation*}
+where $\bfM(\bfxi)$ is a $n \times d$ matrix with $n$ nodes and dimension $d$ and the entries 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfM_{iL}(\bfxi) =  \phi^{L}_i(\bfxi)
+  \end{array}
+\end{equation*}
 
 
 Starting from \eqref{eq:laplace_discretized} we now plug in the Lagrange ansatz functions for $\phi$. Then the respective functions only have to be integrated over the elements where they are defined.

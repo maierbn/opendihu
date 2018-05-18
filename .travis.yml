@@ -3,11 +3,10 @@ script: scons
 compiler: gcc
 
 sudo: required
-before_install:
-- sudo apt-get install gfortran
-- sudo apt-get install tree
 
 before_install:
+  - sudo apt-get install gfortran
+  - sudo apt-get install tree
   - env
 
 after_failure:

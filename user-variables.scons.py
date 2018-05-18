@@ -26,18 +26,10 @@ if os.environ.get("MPI_HOME") is not None:
   MPI_DIR = os.environ.get("MPI_HOME")
   
 # for Travis CI build MPI ourselves
-if os.environ.get("HOSTNAME") is not None:
-  hostname = os.environ.get("HOSTNAME")
-  print "hostname: ",hostname
-  if "travis-job" in hostname:
-    print "del MPI_DIR"
-    del MPI_DIR
-    MPI_DOWNLOAD=True
-else:
-  print "could not get hostname!"
+if os.environ.get("TRAVIS") is not None:
+  print "Travis CI detected, del MPI_DIR"
   del MPI_DIR
   MPI_DOWNLOAD=True
-  print os.environ
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True

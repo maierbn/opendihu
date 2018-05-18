@@ -99,7 +99,15 @@ int main(int argc, char* argv[]) {
           self.number_output_lines = 18788
         
           self.libs = ["openblas"]
-          self.headers = ["lapacke.h"]
+          self.headers = ["cblas.h"]
+          self.check_text = r'''
+#include <stdlib.h>
+#include <stdio.h>
+#include <cblas.h>
+int main(int argc, char* argv[]) {
+   return EXIT_SUCCESS;
+}
+'''
 
     def check(self, ctx):
         env = ctx.env

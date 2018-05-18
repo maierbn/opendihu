@@ -12,6 +12,6 @@ before_install:
 after_failure:
   - tree -L 4 dependencies
   - cat config.log
-cache:
-  directories:
-    - dependencies
+#cache:
+#  directories:
+#    - dependencies

@@ -1,4 +1,3 @@
-BUILD_TYPE = 'debug'
 MPI_DIR = '/usr/lib/openmpi'
 LAPACK_DOWNLOAD = True
 PETSC_DOWNLOAD = True

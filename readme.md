@@ -7,7 +7,7 @@ The working title of this software framework is "opendihu" - from the project na
 This branch is for evaluation of different quadrature schemes for solid mechanics problems.
 
 # Installation
-Linux is required with python2.7.
+Linux is required with python2.7, gcc version 5 or higher, gfortran (only needed when LAPACK is build)
 
 * Find out in which path on your system MPI is installed. A directory that contains a `lib` and an `include` subdirectory is needed. Often is is named like `/usr/lib/openmpi` or `/usr/lib/mpich`. 
 * Set this path in `user-variables.scons.py` at line 20. You can also set paths for other packages, if they are already installed. This would reduce build time, it is, however, not required.

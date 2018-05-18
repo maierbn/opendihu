@@ -28,13 +28,18 @@ if os.environ.get("MPI_HOME") is not None:
 # for Travis CI build MPI ourselves
 if os.environ.get("HOSTNAME") is not None:
   hostname = os.environ.get("HOSTNAME")
+  print "hostname: ",hostname
   if "travis-job" in hostname:
-    MPI_DIR=None
+    print "del MPI_DIR"
+    del MPI_DIR
     MPI_DOWNLOAD=True
+else:
+  print "could not get hostname!"
+  del MPI_DIR
+  MPI_DOWNLOAD=True
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
-#LAPACK_REDOWNLOAD=True      # force download, even if the files are already present
 
 # PETSc
 PETSC_DOWNLOAD=True

@@ -1,8 +1,11 @@
 language: cpp
-script: scons; cat config.log
+script: scons
 compiler: gcc
 before_install:
   - env
+after_failure:
+  - tree -L 4 dependencies/
+  - cat config.log
 cache:
   directories:
     - dependencies

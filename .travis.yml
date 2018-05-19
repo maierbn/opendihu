@@ -14,8 +14,8 @@ sudo: required
 
 before_install:
   - sudo apt-get install tree
-  - sudo apt-get install gcc
-  - sudo apt-get install gfortran
+  - sudo apt-get install gcc-5
+  - sudo apt-get install gfortran-5
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5
   - export CC=gcc-5
   - export CXX=g++-5

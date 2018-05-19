@@ -30,8 +30,6 @@ if os.environ.get("TRAVIS") is not None:
   print "Travis CI detected, del MPI_DIR"
   del MPI_DIR
   MPI_DOWNLOAD=True
-  LAPACK_REBUILD=True
-  LAPACK_REDOWNLOAD=True
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True

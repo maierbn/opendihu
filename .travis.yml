@@ -21,7 +21,6 @@ before_install:
   - export CXX=g++-5
   - export FC=gfortran-5
   - sudo update-alternatives --config gcc
-  - sudo update-alternatives --config g++
   - gcc --version
   - g++ --version
   - gfortran --version

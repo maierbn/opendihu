@@ -186,7 +186,7 @@ config = {
   assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
 */
-
+/*
 TEST(OutputTest, RegularFixed)
 {
   std::string pythonConfig = R"(
@@ -240,6 +240,6 @@ config = {
   assertFileMatchesContent("out_txt.py", referenceOutput2);
   assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
-
+*/
 };
 

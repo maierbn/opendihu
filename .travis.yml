@@ -1,5 +1,5 @@
 language: cpp
-script: CC=gcc-5 CXX=g++-5 FC=gfortran-5 scons
+script: scons
 compiler: g++-5
 
 addons:
@@ -14,7 +14,8 @@ sudo: required
 
 before_install:
   - sudo apt-get install tree
-  - env
+  - sudo apt-get install gcc
+  - sudo apt-get install gfortran
   - export CC=gcc-5
   - export CXX=g++-5
   - export FC=gfortran-5

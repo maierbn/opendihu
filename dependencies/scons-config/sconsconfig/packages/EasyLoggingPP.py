@@ -42,11 +42,13 @@ class EasyLoggingPP(Package):
         
         # Setup the build handler.
         self.set_build_handler([
-            'rm README.txt',
+            'rm -f README.txt',
             'mkdir -p  ${PREFIX}/include',
             'mkdir -p  ${PREFIX}/src',
-            'mv ${SOURCE_DIR}/easylogging++.h ${PREFIX}/include',
-            'mv ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src',
+            'cp ${SOURCE_DIR}/easylogging++.h ${PREFIX}/include',
+            'cp ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src',
+            'sed -i \'1906i      m_modules.insert(std::make_pair(ss.str(), level));\' ${PREFIX}/src/easylogging++.cc',
+            'sed -i \'1907i      addSuffix(ss, ".tpp", ".hh");\' ${PREFIX}/src/easylogging++.cc',
             'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -o ${PREFIX}/src/easylogging++.o',
         ])
         self.build_flags = '-std=c++14'

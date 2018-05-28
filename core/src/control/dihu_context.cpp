@@ -455,6 +455,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
+  el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
 }
 
 DihuContext::~DihuContext()

@@ -33,6 +33,9 @@ public:
   template<int N>
   void getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
 
+  //! for a specific component, get values from their global dof no.s, as vector
+/*new*/  void getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
+
   //! get values from their global dof no.s for all components
   template<int N>
   void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values);

@@ -180,6 +180,13 @@ eliminateScaleFactors()
 }
 
 template<int D,typename BasisFunctionType>
+std::shared_ptr<FieldVariable::ElementToNodeMapping> BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+elementToNodeMapping()
+{
+  return elementToNodeMapping_;
+}
+
+template<int D,typename BasisFunctionType>
 element_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 nElements() const
 {

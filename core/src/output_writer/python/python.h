@@ -50,7 +50,7 @@ public:
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
-                                     int timeStepNo, double currentTime, bool onlyNodalValues);
+                                     std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
 // specialization for StructuredDeformable
@@ -63,7 +63,7 @@ public:
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
-                                     int timeStepNo, double currentTime, bool onlyNodalValues);
+                                     std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
 // specialization for UnstructuredDeformable
@@ -76,7 +76,7 @@ public:
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
-                                     int timeStepNo, double currentTime, bool onlyNodalValues);
+                                     std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
 };  // namespace

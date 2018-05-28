@@ -36,18 +36,21 @@ for i,node_position in enumerate(node_positions):
   if z < min_z + 1:
     print("bottom node {}".format(node_position))
     bc[i] = 0.0
+    
+  if 45 < z < 52:
     seed_points.append(node_position)
     
   if z > max_z - 1:  
     print("top node {}".format(node_position))
     bc[i] = 1.0
 
-
+#seed_points = [seed_points[4]]
+#seed_points = [[70.0, 150.0, 122.]]
 
 config = {
   "StreamlineTracer" : {
     "seedPoints": seed_points,
-    "lineStepWidth": 1e-2,
+    "lineStepWidth": 1e-1,
     "FiniteElementMethod" : {
       "nodePositions": node_positions,
       "elements": config_from_file["elements"],

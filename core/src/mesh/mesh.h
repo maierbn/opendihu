@@ -18,10 +18,20 @@ public:
   //! construct mesh from python settings
   Mesh(PyObject *specificSettings);
   virtual ~Mesh() {}
+  
+  //! dimensionality of the mesh
   virtual int dimension() const = 0;
+  
+  //! number of nodes in the mesh
   virtual node_no_t nNodes() const = 0;
+  
+  //! set the name of the mesh
+  void setMeshName(std::string meshName);
+  
+  //! get the name of the mesh
+  std::string meshName();
 protected:
-
+  std::string meshName_;  ///< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
 };
 
 /** dummy mesh to signal that no mesh was specified (meshManager will instead create a mesh with a single element)

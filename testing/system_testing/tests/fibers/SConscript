@@ -8,7 +8,7 @@
 Import('env')     # import Environment object from calling SConstruct
 
 testcases = [
-  "laplace3d",
+  "laplace3d","laplace3d_hermite"
 ]
 
 for testcase in testcases:

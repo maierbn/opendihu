@@ -10,9 +10,9 @@ if not env['no_tests']:
   src_files = Glob('src/*.cpp')
 
   #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
-  #src_files = ['src/output.cpp', 'src/main.cpp', 'src/utility.cpp']
+  #src_files = ['src/unstructured_deformable.cpp', 'src/output.cpp', 'src/main.cpp', 'src/utility.cpp']
   #print ""
-  #print "WARNING: only compiling ",src_files
+  #print "WARNING: only compiling tests ",src_files
 
   program = env.Program('run_tests', source=src_files)
   #Depends(test, program)

@@ -39,7 +39,7 @@ BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions) :
   std::vector<double> sequentialNodePositions;   // node positions in a scalar vector, as needed by setGeometryField
   sequentialNodePositions.reserve(nodePositions.size() * D);
 
-  for (Vec3 &vector : nodePositions)
+  for (const Vec3 &vector : nodePositions)
   {
     for (int i = 0; i < 3; i++)
       sequentialNodePositions.push_back(vector[i]);

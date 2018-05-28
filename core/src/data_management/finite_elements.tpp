@@ -202,6 +202,7 @@ print()
   VLOG(4)<<"solution ("<<nEntries<<" entries):";
   VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
   VLOG(4)<<"======================";
+  
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>

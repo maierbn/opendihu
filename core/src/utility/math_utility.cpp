@@ -45,6 +45,25 @@ double distance<2>(const Vec2 node1, const Vec2 node2)
     + sqr(node1[1]-node2[1]));
 }
 
+template<>
+double normSquared<1>(const VecD<1> node)
+{
+  return sqr(node[0]);
+}
+
+template<>
+double normSquared<2>(const VecD<2> node)
+{
+  return sqr(node[0]) + sqr(node[1]);
+}
+
+template<>
+double normSquared<3>(const VecD<3> node)
+{
+  return sqr(node[0]) + sqr(node[1]) + sqr(node[2]);
+}
+
+
 std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant)
 {
   // rename input values
@@ -409,6 +428,21 @@ template<>
 VecD<2> transformToD<2,3>(const VecD<3> &vector)
 {
   return VecD<2>({vector[0], vector[1]});
+}
+
+//! compute 3D cross product
+Vec3 cross(const Vec3 &vector1, const Vec3 &vector2)
+{
+  return Vec3{
+    vector1[1]*vector2[2] - vector1[2]*vector2[1], 
+    vector1[2]*vector2[0] - vector1[0]*vector2[2], 
+    vector1[0]*vector2[1] - vector1[1]*vector2[0]};
+}
+
+//! compute dot product
+double dot(const Vec3 &vector1, const Vec3 &vector2)
+{
+  return vector1[0]*vector2[0] + vector1[1]*vector2[1] + vector1[2]*vector2[2];
 }
 
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos)

@@ -4,7 +4,7 @@
 
 #include <array>
 #include "control/types.h"
-#include "basis_on_mesh/08_basis_on_mesh_field_variable.h"
+#include "basis_on_mesh/09_basis_on_mesh_xi.h"
 #include "mesh/mesh.h"
 
 namespace BasisOnMesh
@@ -13,12 +13,12 @@ namespace BasisOnMesh
 /** BasisOnMesh derives from the mesh and adds functionality to get dof and node numbers, phi and gradient.
  */
 template<typename MeshType,typename BasisFunctionType>
-class BasisOnMesh : public BasisOnMeshFieldVariable<MeshType,BasisFunctionType>
+class BasisOnMesh : public BasisOnMeshXi<MeshType,BasisFunctionType>
 {
 public:
 
   //! inherit constructor
-  using BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::BasisOnMeshFieldVariable;
+  using BasisOnMeshXi<MeshType,BasisFunctionType>::BasisOnMeshXi;
 
   typedef MeshType Mesh;
   typedef BasisFunctionType BasisFunction;
@@ -36,12 +36,12 @@ public:
  */
 template<typename MeshType,int D,int order>
 class BasisOnMesh<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>> :
-  public BasisOnMeshFieldVariable<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
+  public BasisOnMeshXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
 {
 public:
 
   //! inherit constructor
-  using BasisOnMeshFieldVariable<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::BasisOnMeshFieldVariable;
+  using BasisOnMeshXi<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::BasisOnMeshXi;
 
   typedef MeshType Mesh;
   typedef BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order> BasisFunction;

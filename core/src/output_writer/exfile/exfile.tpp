@@ -16,6 +16,8 @@
 #include "mesh/mesh.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "output_writer/exfile/exfile_writer.h"
+#include "output_writer/exfile/loop_output_exelem.h"
+#include "output_writer/exfile/loop_output_exnode.h"
 
 namespace OutputWriter
 {
@@ -31,37 +33,57 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
-  LOG(DEBUG) << "output exfile";
-
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
 
-  // exelem file
-  // determine file name
-  std::stringstream s;
-  s<<filename_<<".exelem";
-  std::string filenameExelem = s.str();
+  // collect all available meshes
+  std::set<std::string> meshNames;
+  LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+  
+  LOG(DEBUG) << "collected meshNames: ";
+  for (std::string meshName : meshNames)
+  {
+    LOG(DEBUG) << "  " << meshName;
+  }
+  
+  // loop over meshes and create a exelem/exnode pair for each
+  for (std::string meshName : meshNames)
+  {
+    // setup name of files
+    std::stringstream filenameStart;
+    if (meshNames.size() == 1)
+      filenameStart << filename_;
+    else
+      filenameStart << filename_ << "_" << meshName;
+   
+    // exelem file
+    // determine file name
+    std::stringstream s;
+    s << filenameStart.str() << ".exelem";
+    std::string filenameExelem = s.str();
 
-  // open file
-  std::ofstream file = openFile(filenameExelem);
-  ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
-    outputExelem(file, data.getOutputFieldVariables());
-  file.close();
+    // open file
+    std::ofstream file = openFile(filenameExelem);
+    // output the exelem file for all field variables that are defined on the specified meshName
+    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), meshName, file);
+    file.close();
 
-  // exnode file
-  s.str("");
-  s<<filename_<<".exnode";
-  std::string filenameExnode = s.str();
+    // exnode file
+    s.str("");
+    s << filenameStart.str() << ".exnode";
+    std::string filenameExnode = s.str();
 
-  // open file
-  file = openFile(filenameExnode);
-  ExfileWriter<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
-    outputExnode(file, data.getOutputFieldVariables());
-  file.close();
+    // open file
+    file = openFile(filenameExnode);
+    // output the exnode file for all field variables that are defined on the specified meshName
+    ExfileLoopOverTuple::loopOutputExnode(data.getOutputFieldVariables(), meshName, file);
+    file.close();
 
-  // store created filename
-  filenames_.push_back(filename_);
-
+    // store created filename
+    filenames_.push_back(filenameStart.str());
+  }
+  
+  
   // output visualization file
   outputComFile();
 }

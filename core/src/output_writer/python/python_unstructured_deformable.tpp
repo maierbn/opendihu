@@ -11,7 +11,8 @@ namespace OutputWriter
 
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
 PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
-buildPyDataObject(OutputFieldVariablesType fieldVariables, int timeStepNo, double currentTime, bool onlyNodalValues)
+buildPyDataObject(OutputFieldVariablesType fieldVariables, 
+                  std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   // build python dict containing all information
   // data = {
@@ -36,9 +37,12 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables, int timeStepNo, doubl
   LOG(DEBUG) << "build pyData, " << std::tuple_size<OutputFieldVariablesType>::value;
 
   // build python object for data
-  PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, onlyNodalValues);
+  std::shared_ptr<Mesh::Mesh> meshBase;
+  PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
 
-  std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh = std::get<0>(fieldVariables)->mesh();
+  // cast mesh to its real type
+  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(meshBase);
 
   std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
   int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();

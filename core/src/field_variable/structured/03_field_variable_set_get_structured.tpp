@@ -14,6 +14,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   const dof_no_t nDofs = this->mesh_->nDofs();
 
   // set stride to 2 if Hermite, else to 1
@@ -46,6 +48,8 @@ template<int N>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   // store the array indices for values_ array in dofGlobalNo
   for (int i=0; i<N; i++)
   {
@@ -60,15 +64,21 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   // store the array indices for values_ array in dofGlobalNo
   const int nValues = dofGlobalNo.size();
   for (int i=0; i<nValues; i++)
   {
     dofGlobalNo[i] = dofGlobalNo[i]*nComponents + componentNo;
+    
+    assert(dofGlobalNo[i] >= 0 && dofGlobalNo[i] < this->nEntries_);
   }
 
   std::size_t previousSize = values.size();
   values.resize(previousSize+nValues);
+  VLOG(3) << "FieldVariable::getValues VecGetValues(Vec@" << this->values_ << "," << nValues << "," << (PetscInt *)dofGlobalNo.data() << "," << values.data()+previousSize << "," << previousSize << ")";
+  
   VecGetValues(this->values_, nValues, (PetscInt *)dofGlobalNo.data(), values.data()+previousSize);
 }
 
@@ -108,6 +118,9 @@ void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo,
                  std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   std::array<PetscInt,nDofsPerElement> indices;
@@ -125,6 +138,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   std::array<int,nDofsPerElement*nComponents> indices;
   std::array<double,nDofsPerElement*nComponents> result;
@@ -161,6 +176,8 @@ template<typename BasisOnMeshType, int nComponents>
 double FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getValue(int componentNo, node_no_t dofGlobalNo)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   PetscInt index = dofGlobalNo*nComponents + componentNo;
 
   double result;

@@ -58,6 +58,9 @@ public:
   //! write exnode file representation to stream
   void outputExnodeFile(std::ostream &file);
 
+  //! get the elementToNodeMapping
+  std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
+  
   //! get the total number of elements, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   element_no_t nElements() const;
 

@@ -22,40 +22,57 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
     return;
   }
 
-  // build python dict containing all information
-  // data = {
-  //   "meshType" : "RegularFixed",
-  //   "dimension": dim,
-  //   "nElements" : [x,y,z],
-  //   "data" : [
-  //      {"name" : "fieldVariableName",
-  //       "components" : [
-  //           {"name" : "componentName", "values": data},
-  //       ]
-  //      },
-  //   ]
-  //   "timeStepNo" : timeStepNo,
-  //   "currentTime" : currentTime
-  // }
+  // collect all available meshes
+  std::set<std::string> meshNames;
+  LoopOverTuple::loopCollectMeshNames<OutputFieldVariablesType>(fieldVariables, meshNames);
 
-  // build python object for data
-  PyObject *data = Python<BasisOnMeshType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, timeStepNo, currentTime, onlyNodalValues);
+  PyObject *pyDataList = PyList_New((Py_ssize_t)meshNames.size());
+  
+  int meshIndex = 0;
+  // loop over meshes and create an output file for each
+  for (std::set<std::string>::iterator iter = meshNames.begin(); iter != meshNames.end(); iter++, meshIndex++)
+  {
+    std::string meshName = *iter;
+    
+    // build python dict containing all information
+    // data = {
+    //   "meshType" : "RegularFixed",
+    //   "dimension": dim,
+    //   "nElements" : [x,y,z],
+    //   "data" : [
+    //      {"name" : "fieldVariableName",
+    //       "components" : [
+    //           {"name" : "componentName", "values": data},
+    //       ]
+    //      },
+    //   ]
+    //   "timeStepNo" : timeStepNo,
+    //   "currentTime" : currentTime
+    // }
+
+    // build python object for data
+    PyObject *pyData = Python<BasisOnMeshType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
+    
+    // set entry in list
+    PyList_SetItem(pyDataList, (Py_ssize_t)meshIndex, pyData);    // steals reference to pyData
+  }
+  
   //old signature: def callback(data, shape, nEntries, dimension, timeStepNo, currentTime)
   //PyObject *arglist = Py_BuildValue("(O,O,i,i,i,d)", dataList, nEntriesList, data.size(), nEntries.size(), timeStepNo_, currentTime_);
 
-  //new signature def callback(data)
-  PyObject *arglist = Py_BuildValue("(O)", data);
+  //new signature def callback([data0,data1,...])
+  PyObject *pyArglist = Py_BuildValue("(O)", pyDataList);
 
   // call callback function
-  PyObject *returnValue = PyObject_CallObject(callback, arglist);
+  PyObject *pyReturnValue = PyObject_CallObject(callback, pyArglist);
 
   // if there was an error while executing the function, print the error message
-  if (returnValue == NULL)
+  if (pyReturnValue == NULL)
     PyErr_Print();
 
   // decrement reference counters for python objects
-  Py_DECREF(returnValue);
-  Py_DECREF(arglist);
+  Py_DECREF(pyReturnValue);
+  Py_DECREF(pyArglist);
 }
 
 };

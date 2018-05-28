@@ -29,6 +29,14 @@ using isDeformable = std::enable_if_t<
   MeshType
 >;
 
+// deformable meshes with given dimension
+template<int D,typename MeshType>
+using isDeformableWithDim = std::enable_if_t<
+  std::is_same<MeshType, StructuredDeformableOfDimension<D>>::value
+  || std::is_same<MeshType, UnstructuredDeformableOfDimension<D>>::value
+  ,
+  MeshType
+>;
 
 template<int D,typename MeshType>
 using isDim = std::enable_if_t<

@@ -37,13 +37,14 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
 
 
   // compute mesh width from physical extent and number of elements in the coordinate directions
+  // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
   {
     auto nElementsIter = this->nElementsPerCoordinateDirection_.begin();
     auto physicalExtentIter = physicalExtent.begin();
     for (; physicalExtentIter != physicalExtent.end(); nElementsIter++, physicalExtentIter++)
     {
-      double meshWidthCurrentDirection = *physicalExtentIter / *nElementsIter;
+      double meshWidthCurrentDirection = *physicalExtentIter / (*nElementsIter * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement());
       if (this->meshWidth_ == 0)
       {
         this->meshWidth_ = meshWidthCurrentDirection;
@@ -76,12 +77,13 @@ BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D
   BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(nullptr)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
+  // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   this->meshWidth_ = 0;
   typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerCoordinateDirection_.begin();
   for (typename std::array<double, D>::iterator physicalExtentIter = physicalExtent.begin(); physicalExtentIter != physicalExtent.end();
        physicalExtentIter++, nElementsIter++)
   {
-    double meshWidthCurrentDirection = *physicalExtentIter / *nElementsIter;
+    double meshWidthCurrentDirection = *physicalExtentIter / (*nElementsIter * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement());
     if (this->meshWidth_ == 0)
     {
       this->meshWidth_ = meshWidthCurrentDirection;
@@ -110,6 +112,8 @@ setupGeometryField()
   dof_no_t nDofs = this->nDofs();
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+  
+  VLOG(2) << "   setup geometry field: " << this->geometryField_->values() << " with " << nEntries << " entries";
 }
 
 

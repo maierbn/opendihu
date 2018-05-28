@@ -21,6 +21,8 @@ template<typename MeshType, typename BasisFunctionType, typename QuadratureType,
 void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>>::
 setRightHandSide()
 {
+  LOG(DEBUG) << "fill rhs with 0";
+ 
   // fill rhs vector with 0
   PetscErrorCode ierr;
 

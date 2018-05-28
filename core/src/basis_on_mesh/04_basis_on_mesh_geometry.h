@@ -26,9 +26,6 @@ public:
 
   //! return a field variable with given name, this is not implemented for structured meshes since there are no extra stored field variables, only for unstructured meshes is in implemented and then stores field variables that were present in parsed exfiles.
   std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
-  /*{
-    return nullptr;
-  }*/
 
 protected:
   std::unique_ptr<GeometryFieldType> geometryField_;     ///< the geometry field variable

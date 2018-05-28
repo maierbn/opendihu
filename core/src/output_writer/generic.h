@@ -5,6 +5,7 @@
 
 #include "control/types.h"
 #include "data_management/data.h"
+#include "output_writer/loop_collect_mesh_names.h"
 
 namespace OutputWriter
 {
@@ -20,7 +21,7 @@ public:
 
 protected:
 
-  // check if output should be written in this timestep and prepare filename, i.e. set filename_ from config
+  //! check if output should be written in this timestep and prepare filename, i.e. set filename_ from config
   template<typename DataType>
   bool prepareWrite(DataType &data, int timeStepNo = -1, double currentTime = 0.0);
 

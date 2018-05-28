@@ -87,6 +87,9 @@ mesh<None>(PyObject *settings)
       typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
       std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
       mesh->initialize();
+      
+      // store mesh
+      mesh->setMeshName(meshName);
       meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";
       return std::static_pointer_cast<Mesh>(meshes_[meshName]);
@@ -113,8 +116,9 @@ mesh<None>(PyObject *settings)
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
 
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
+    mesh->setMeshName(anonymousName.str());
     mesh->initialize();
-
+    
     meshes_[anonymousName.str()] = mesh;
     return mesh;
   }
@@ -127,6 +131,7 @@ mesh<None>(PyObject *settings)
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
 
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
+  mesh->setMeshName(std::string("anonymous"));
   mesh->initialize();
   return mesh;
 }

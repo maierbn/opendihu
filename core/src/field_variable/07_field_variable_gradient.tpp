@@ -56,46 +56,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
 
-      std::array<double,D> gradPhiWorldSpace{0.0};
-
-      // loop over dofs in element that contribute to the gradient at dofIndex
-      for (int dofIndex2 = 0; dofIndex2 < nDofsPerElement; dofIndex2++)
-      {
-        // get gradient at dof
-        std::array<double,D> gradPhiParameterSpace = this->mesh_->gradPhi(dofIndex2, xi);
-
-        VLOG(2) << "  dofIndex2=" << dofIndex2 << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
-
-
-        std::array<double,D> gradPhiWorldSpaceDofIndex2{0.0};
-
-        // transform grad from parameter space to world space
-        for (int direction = 0; direction < D; direction++)
-        {
-          VLOG(2) << "   component " << direction;
-          for (int k = 0; k < D; k++)
-          {
-            // jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
-            // inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
-
-            const double dphiDofIndex2_dxik = gradPhiParameterSpace[k];   // dphi_dofIndex/dxi_k
-            const double dxik_dXdirection = inverseJacobianParameterSpace[direction][k];  // dxi_k/dX_direction
-
-
-            VLOG(2) << "     += " << dphiDofIndex2_dxik << " * " << dxik_dXdirection;
-
-            gradPhiWorldSpaceDofIndex2[direction] += dphiDofIndex2_dxik * dxik_dXdirection;
-          }
-        }
-
-        VLOG(2) << "  gradPhiWorldSpaceDofIndex2: " << gradPhiWorldSpaceDofIndex2 << " multiply with solution value at dof " << dofIndex2 << ", " << solutionValues[dofIndex2];
-
-        VLOG(2) << " sum contributions from the other ansatz functions at this dof: " << gradPhiWorldSpace;
-
-        gradPhiWorldSpace += gradPhiWorldSpaceDofIndex2 * solutionValues[dofIndex2];
-
-        VLOG(2) << "                                                             -> " << gradPhiWorldSpace;
-      }  // dofIndex2
+      std::array<double,D> gradPhiWorldSpace = this->mesh_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
 
       dof_no_t dofNo = elementDofs[dofIndex];
 

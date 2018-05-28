@@ -12,8 +12,9 @@ namespace Mesh
 
 /**
  * A regular mesh with given number of elements in each coordinate direction. The elements
- * have a all the same length/quadratic/cubic size (=mesh width), however the value of the mesh width is not part of this class,
- * but stored by the geometry field.
+ * have a all the same length/quadratic/cubic size. The meshWidth is defined as the distance between nodes. 
+ * For quadratic elements with interior nodes the mesh width is not the same as the length of the element.
+ * The value of the mesh width is not part of this class, but stored by the geometry field.
  * This mesh cannot deform, i.e. it cannot be used for structural mechanics with deformations.
  */
 template<int D>
@@ -24,7 +25,8 @@ public:
   using Structured<D>::Structured;
 
   //! get mesh width
-  virtual double meshWidth() const = 0;  // defined in field_variable/structured/05_field_variable_data_structured_regular_fixed.h
+  virtual double meshWidth() const = 0;  // defined in field_variable/structured/05_field_variable_data_structured_regular_fixed.h. 
+  // The mesh width is the distance between nodes, not necessarily the element length.
 
 private:
 

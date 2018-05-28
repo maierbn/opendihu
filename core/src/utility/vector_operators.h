@@ -11,6 +11,10 @@
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator-(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);
 
+//! vector unary minus
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1);
+
 //! vector addition
 template<std::size_t nComponents>
 std::array<double,nComponents> operator+(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2);

@@ -41,6 +41,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   this->component_[componentNo].getValues(values, onlyNodalValues);
 }
 
@@ -50,6 +52,8 @@ template<int N>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   this->component_[componentNo].template getValues<N>(dofGlobalNo, values);
 }
 
@@ -58,6 +62,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   this->component_[componentNo].getValues(dofGlobalNo, values);
 }
 
@@ -75,6 +81,9 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
   this->component_[componentNo].getElementValues(elementNo, values);
 }
 
@@ -83,6 +92,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   const std::vector<dof_no_t> &dofGlobalNo = this->elementToDofMapping_->getElementDofs(elementNo);

@@ -33,6 +33,10 @@ double length(const VecD<D> node);
 template<int D>
 double norm(const VecD<D> node);
 
+//! compute the squared norm of the vector
+template<int D>
+double normSquared(const VecD<D> node);
+
 //! return the normalized vector
 template<int D>
 VecD<D> normalized(VecD<D> &vector);
@@ -78,6 +82,12 @@ double applyTransformation(const std::array<double,4> &transformationMatrix, con
 //! computes the factor J_D that is needed when transforming an integral from world coordinates to parameter space
 template<int D>
 double computeIntegrationFactor(const std::array<Vec3,D> &jacobian);
+
+//! compute 3D cross product
+Vec3 cross(const Vec3 &vector1, const Vec3 &vector2);
+
+//! compute dot product
+double dot(const Vec3 &vector1, const Vec3 &vector2);
 
 //! return a values of the Levi-Civita permutation symbol
 int permutation(int i, int j, int k);

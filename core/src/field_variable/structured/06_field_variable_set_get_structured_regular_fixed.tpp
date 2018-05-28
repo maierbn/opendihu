@@ -15,6 +15,7 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
+    VLOG(3) << "getValues(componentNo=" << componentNo << "): field variable is not a geometry field, retrieve stored values";
     FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
       getValues(componentNo, values, onlyNodalValues);
     return;
@@ -125,6 +126,56 @@ getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double
       else  // z direction
       {
         values[i] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_;
+      }
+    }
+  }
+}
+//! for a specific component, get values from their global dof no.s, as vector
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
+{
+  // if this is not a geometry field get the stored values
+  if (!this->isGeometryField_)
+  {
+    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+      template getValues(componentNo, dofGlobalNo, values);
+    return;
+  }
+
+  // for geometry field compute information
+  const node_no_t nNodesInXDirection = this->mesh_->nNodes(0);
+  const node_no_t nNodesInYDirection = this->mesh_->nNodes(1);
+  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+
+  // resize result vector
+  const int nValues = dofGlobalNo.size();
+  std::size_t previousSize = values.size();
+  values.resize(previousSize+nValues);
+  
+  // loop over entries in values to be filled
+  for (int i=0; i<nValues; i++)
+  {
+    int nodeNo = int(dofGlobalNo[i] / nDofsPerNode);
+    int nodeLocalDofIndex = int(dofGlobalNo[i] % nDofsPerNode);
+
+    if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
+    {
+      values[previousSize+i] = 0;
+    }
+    else
+    {
+      if (componentNo == 0)   // x direction
+      {
+        values[previousSize+i] = (nodeNo % nNodesInXDirection) * this->meshWidth_;
+      }
+      else if (componentNo == 1)   // y direction
+      {
+        values[previousSize+i] = (int(nodeNo / nNodesInXDirection) % nNodesInYDirection) * this->meshWidth_;
+      }
+      else  // z direction
+      {
+        values[previousSize+i] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_;
       }
     }
   }

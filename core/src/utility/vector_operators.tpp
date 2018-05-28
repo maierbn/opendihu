@@ -16,6 +16,20 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> vector1, con
   return result;
 }
 
+//! vector unary minus
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1)
+{
+  std::array<T,nComponents> result;
+
+  #pragma simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = -vector1[i];
+  }
+  return result;
+}
+
 //! vector addition
 template<std::size_t nComponents>
 std::array<double,nComponents> operator+(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)

@@ -30,6 +30,11 @@ public:
   //! check if a mesh with the given name is stored
   bool hasMesh(std::string meshName);
 
+  //! create a mesh not from python config but directly by calling an appropriate construtor. 
+  //! With this e.g. meshes from node positions can be created.
+  template<typename BasisOnMeshType, typename ...Args>
+  std::shared_ptr<Mesh> createMesh(std::string name, Args && ...args);
+  
   friend class NodePositionsTester;    ///< a class used for testing
 
 private:

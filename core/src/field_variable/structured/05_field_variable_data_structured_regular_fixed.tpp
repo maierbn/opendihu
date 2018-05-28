@@ -18,6 +18,7 @@ template<int D, typename BasisFunctionType, int nComponents>
 double FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::
 meshWidth() const
 {
+  // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   return this->meshWidth_;
 }
 

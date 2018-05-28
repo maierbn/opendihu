@@ -58,6 +58,15 @@ createFieldVariable(std::string name)
   return fieldVariable;
 }
 
+//! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
+template<typename MeshType, typename BasisFunctionType>
+int BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+getNumberScaleFactors(element_no_t elementGlobalNo)
+{
+  assert(this->geometryField_);
+  return this->geometryField_->getNumberScaleFactors(elementGlobalNo);
+}
+  
 template<typename MeshType, typename BasisFunctionType>
 std::array<std::array<double,MeshType::dim()>,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 getGradPhi(std::array<double,MeshType::dim()> xi) const
@@ -97,6 +106,60 @@ interpolateValueInElement(std::array<double,BasisOnMeshFunction<MeshType,BasisFu
   }
   return result;
 }
+
+template<typename MeshType, typename BasisFunctionType>
+std::array<double,MeshType::dim()> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+interpolateGradientInElement(std::array<double,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
+                             Tensor2<MeshType::dim()> inverseJacobianParameterSpace, std::array<double,MeshType::dim()> xi) const
+{
+  const int D = MeshType::dim();
+  const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
+
+  std::array<double,D> gradPhiWorldSpace{0.0};
+
+  // loop over dofs in element that contribute to the gradient at dofIndex
+  for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+  {
+    // get gradient at dof
+    std::array<double,D> gradPhiParameterSpace = this->gradPhi(dofIndex, xi);
+
+    VLOG(2) << "  dofIndex2=" << dofIndex << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
+
+
+    std::array<double,D> gradPhiWorldSpaceDofIndex2{0.0};
+
+    // transform grad from parameter space to world space
+    for (int direction = 0; direction < D; direction++)
+    {
+      VLOG(2) << "   component " << direction;
+      for (int k = 0; k < D; k++)
+      {
+        // jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
+        // inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
+
+        const double dphiDofIndex2_dxik = gradPhiParameterSpace[k];   // dphi_dofIndex/dxi_k
+        const double dxik_dXdirection = inverseJacobianParameterSpace[direction][k];  // dxi_k/dX_direction
+
+
+        VLOG(2) << "     += " << dphiDofIndex2_dxik << " * " << dxik_dXdirection;
+
+        gradPhiWorldSpaceDofIndex2[direction] += dphiDofIndex2_dxik * dxik_dXdirection;
+      }
+    }
+
+    VLOG(2) << "  gradPhiWorldSpaceDofIndex2: " << gradPhiWorldSpaceDofIndex2 
+      << " multiply with solution value at dof " << dofIndex << ", " << elementalDofValues[dofIndex];
+
+    VLOG(2) << " sum contributions from the other ansatz functions at this dof: " << gradPhiWorldSpace;
+
+    gradPhiWorldSpace += gradPhiWorldSpaceDofIndex2 * elementalDofValues[dofIndex];
+
+    VLOG(2) << "                                                             -> " << gradPhiWorldSpace;
+  }  // dofIndex
+
+  return gradPhiWorldSpace;
+}
+
 
 template<typename MeshType, typename BasisFunctionType>
 Vec3 BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
@@ -141,16 +204,63 @@ template<typename MeshType, typename BasisFunctionType>
 bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi)
 {
+  const element_no_t nElements = this->nElements();
+ 
+  // set starting no to 0 if it was not given and is thus arbitrarily initialized
+  if (elementNo < 0 || elementNo >= nElements)
+    elementNo = 0;
+  
+  // look in every element, starting at elementNo-2
+  element_no_t elementNoStart = (elementNo - 2 + nElements) % nElements;
+  element_no_t elementNoEnd = (elementNo - 3 + nElements) % nElements;
+  
+  VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements;
+  
+  for (element_no_t currentElementNo = elementNoStart; currentElementNo != elementNoEnd; currentElementNo++)
+  {
+    if (currentElementNo == nElements)
+    {
+      currentElementNo = 0;
+      if (elementNoEnd == currentElementNo)
+        break;
+    }
+   
+    
+    if (this->pointIsInElement(point, currentElementNo, xi))
+    {
+      elementNo = currentElementNo;
+      return true;
+    }
+  }
   return false;
 }
 
+template<typename MeshType, typename BasisFunctionType>
+Tensor2<MeshType::dim()> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+getInverseJacobian(std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, element_no_t elementNo, std::array<double,MeshType::dim()> xi)
+{
+  // define constants
+  const int D = MeshType::dim();
+
+  // compute the 3xD jacobian of the parameter space to world space mapping
+  Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi));
+  double jacobianDeterminant;
+  Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
+
+  return inverseJacobianParameterSpace;
+}
 
 template<typename MeshType, typename BasisFunctionType>
-bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi)
+Tensor2<MeshType::dim()> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+getInverseJacobian(element_no_t elementNo, std::array<double,MeshType::dim()> xi)
 {
-  // transform point to parameter space
-  return false;
+  const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
+  
+  // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+  std::array<Vec3,nDofsPerElement> geometryValues;
+  this->mesh_->getElementGeometry(elementNo, geometryValues);
+
+  return getInverseJacobian(geometryValues, elementNo, xi);
 }
 
 };  // namespace

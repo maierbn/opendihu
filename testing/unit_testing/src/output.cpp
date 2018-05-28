@@ -14,7 +14,7 @@
 
 namespace SpatialDiscretization
 {
-  /*
+  
 TEST(OutputTest, UnstructuredDeformable)
 {
   std::string pythonConfig = R"(
@@ -23,12 +23,12 @@ n=4
 
 def callback(config):
   with open("result_callback","w") as f:
-    f.write(str(config))
+    f.write(str(config[0]))
     
-  import numpy as np
-  a = np.load("out_binary_solution.npy")
-  with open("result_binary","w") as f:
-    f.write(str(a))
+  #import numpy as np
+  #a = np.load("out_binary_solution.npy")
+  #with open("result_binary","w") as f:
+  #  f.write(str(a))
 
 config = {
   "disablePrinting": False,
@@ -65,13 +65,13 @@ config = {
   std::string referenceOutput2 = "{\"meshType\": \"UnstructuredDeformable\", \"dimension\": 2, \"nElements\": 4, \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 0.0, 1.0, 2.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.9999999999999998, 0.9999999999999991, 0.9999999999999991, 0.9999999999999988, 0.9999999999999988, 0.9999999999999988, 0.9999999999999988, 0.9999999999999988, 0.9999999999999989]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput3 = "{'meshType': 'UnstructuredDeformable', 'dimension': 2, 'nElements': 4, 'basisFunction': 'Lagrange', 'basisOrder': 1, 'onlyNodalValues': True, 'data': [{'name': 'geometry', 'components': [{'name': 'x', 'values': [0.0, 1.0, 0.0, 1.0, 2.0, 2.0, 0.0, 1.0, 2.0]}, {'name': 'y', 'values': [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 2.0, 2.0, 2.0]}, {'name': 'z', 'values': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {'name': 'solution', 'components': [{'name': '0', 'values': [0.9999999999999998, 0.9999999999999987, 0.9999999999999988, 0.9999999999999987, 0.9999999999999987, 0.9999999999999989, 0.9999999999999987, 0.9999999999999986, 0.9999999999999986]}]}, {'name': 'rhs', 'components': [{'name': '0', 'values': [1.0, -0.16666666666666669, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0, 0.0]}]}], 'timeStepNo': -1, 'currentTime': 0.0}";
   std::string referenceOutput4 = "{\"meshType\": \"UnstructuredDeformable\", \"dimension\": 2, \"nElements\": 4, \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 0.0, 1.0, 2.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.9999999999999998, 0.9999999999999987, 0.9999999999999988, 0.9999999999999987, 0.9999999999999987, 0.9999999999999989, 0.9999999999999987, 0.9999999999999986, 0.9999999999999986]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
-  std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
+  //std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
   
   assertFileMatchesContent("result_callback", referenceOutput, referenceOutput3);
   assertFileMatchesContent("out_txt.py", referenceOutput2, referenceOutput4);
-  assertFileMatchesContent("result_binary", referenceOutputSolution);
+  //assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
- 
+
 TEST(OutputTest, StructuredDeformable)
 {
   std::string pythonConfig = R"(
@@ -80,13 +80,13 @@ TEST(OutputTest, StructuredDeformable)
 def callback(config):
   print("config=",config)
   with open("result_callback","w") as f:
-    f.write(str(config))
+    f.write(str(config[0]))
     
-  import numpy as np
-  a = np.load("out_binary_solution.npy")
-  print("binary=",a)
-  with open("result_binary","w") as f:
-    f.write(str(a))
+  #import numpy as np
+  #a = np.load("out_binary_solution.npy")
+  #print("binary=",a)
+  #with open("result_binary","w") as f:
+  #  f.write(str(a))
 
 config = {
   "disablePrinting": False,
@@ -122,11 +122,11 @@ config = {
   std::string referenceOutput2 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElements\": [2, 2], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0, 0.999999999999999, 0.9999999999999987, 0.9999999999999991, 0.9999999999999988, 0.9999999999999987, 0.9999999999999984, 0.9999999999999984, 0.9999999999999989]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput3 = "{'meshType': 'StructuredDeformable', 'dimension': 2, 'nElements': [2, 2], 'basisFunction': 'Lagrange', 'basisOrder': 1, 'onlyNodalValues': True, 'data': [{'name': 'geometry', 'components': [{'name': 'x', 'values': [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {'name': 'y', 'values': [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {'name': 'z', 'values': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {'name': 'solution', 'components': [{'name': '0', 'values': [1.0, 0.9999999999999962, 0.9999999999999958, 0.9999999999999964, 0.9999999999999961, 0.9999999999999958, 0.9999999999999957, 0.9999999999999956, 0.9999999999999958]}]}, {'name': 'rhs', 'components': [{'name': '0', 'values': [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], 'timeStepNo': -1, 'currentTime': 0.0}";
   std::string referenceOutput4 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElements\": [2, 2], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0, 0.9999999999999962, 0.9999999999999958, 0.9999999999999964, 0.9999999999999961, 0.9999999999999958, 0.9999999999999957, 0.9999999999999956, 0.9999999999999958]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
-  std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
+  //std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
   
   assertFileMatchesContent("result_callback", referenceOutput, referenceOutput3);
   assertFileMatchesContent("out_txt.py", referenceOutput2, referenceOutput4);
-  assertFileMatchesContent("result_binary", referenceOutputSolution);
+  //assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
 
 TEST(OutputTest, StructuredDeformable2)
@@ -137,13 +137,13 @@ TEST(OutputTest, StructuredDeformable2)
 def callback(config):
   print("config=",config)
   with open("result_callback","w") as f:
-    f.write(str(config))
+    f.write(str(config[0]))
     
-  import numpy as np
-  a = np.load("out_binary_solution.npy")
-  print("binary=",a)
-  with open("result_binary","w") as f:
-    f.write(str(a))
+  #import numpy as np
+  #a = np.load("out_binary_solution.npy")
+  #print("binary=",a)
+  #with open("result_binary","w") as f:
+  #  f.write(str(a))
 
 config = {
   "disablePrinting": False,
@@ -179,14 +179,14 @@ config = {
   std::string referenceOutput2 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElements\": [2, 2], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0, 0.999999999999999, 0.9999999999999987, 0.9999999999999991, 0.9999999999999988, 0.9999999999999987, 0.9999999999999984, 0.9999999999999984, 0.9999999999999989]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput3 = "{'meshType': 'StructuredDeformable', 'dimension': 2, 'nElements': [2, 2], 'basisFunction': 'Lagrange', 'basisOrder': 1, 'onlyNodalValues': True, 'data': [{'name': 'geometry', 'components': [{'name': 'x', 'values': [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {'name': 'y', 'values': [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {'name': 'z', 'values': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {'name': 'solution', 'components': [{'name': '0', 'values': [1.0, 0.9999999999999962, 0.9999999999999958, 0.9999999999999964, 0.9999999999999961, 0.9999999999999958, 0.9999999999999957, 0.9999999999999956, 0.9999999999999958]}]}, {'name': 'rhs', 'components': [{'name': '0', 'values': [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], 'timeStepNo': -1, 'currentTime': 0.0}";
   std::string referenceOutput4 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElements\": [2, 2], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0, 0.9999999999999962, 0.9999999999999958, 0.9999999999999964, 0.9999999999999961, 0.9999999999999958, 0.9999999999999957, 0.9999999999999956, 0.9999999999999958]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -0.16666666666666669, 0.0, -0.16666666666666669, -0.33333333333333337, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
-  std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
+  //std::string referenceOutputSolution = "[1. 1. 1. 1. 1. 1. 1. 1. 1.]";
   
   assertFileMatchesContent("result_callback", referenceOutput, referenceOutput3);
   assertFileMatchesContent("out_txt.py", referenceOutput2, referenceOutput4);
-  assertFileMatchesContent("result_binary", referenceOutputSolution);
+  //assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
-*/
-/*
+
+
 TEST(OutputTest, RegularFixed)
 {
   std::string pythonConfig = R"(
@@ -195,13 +195,13 @@ TEST(OutputTest, RegularFixed)
 def callback(config):
   print("config=",config)
   with open("result_callback","w") as f:
-    f.write(str(config))
+    f.write(str(config[0]))
     
-  import numpy as np
-  a = np.load("out_binary_solution.npy")
-  print("binary=",a)
-  with open("result_binary","w") as f:
-    f.write(str(a))
+  #import numpy as np
+  #a = np.load("out_binary_solution.npy")
+  #print("binary=",a)
+  #with open("result_binary","w") as f:
+  #  f.write(str(a))
 
 config = {
   "disablePrinting": False,
@@ -240,6 +240,6 @@ config = {
   assertFileMatchesContent("out_txt.py", referenceOutput2);
   assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
-*/
+
 };
 

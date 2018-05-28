@@ -18,7 +18,7 @@ namespace Data
 
 template<typename BasisOnMeshType,typename BaseDataType>
 StreamlineTracer<BasisOnMeshType,BaseDataType>::
-StreamlineTracer(DihuContext context) : Data<BasisOnMeshType>(context)
+StreamlineTracer(DihuContext context) : Data<BasisOnMeshType>(context), fibreNo_(0)
 {
 }
 
@@ -51,6 +51,28 @@ createPetscObjects()
   LOG(DEBUG)<<"StreamlineTracer<BasisOnMeshType,BaseDataType>::createPetscObjects()"<<std::endl;
   assert(this->mesh_);
   this->gradient_ = this->mesh_->template createFieldVariable<3>("gradient");
+}
+
+template<typename BasisOnMeshType,typename BaseDataType>
+void StreamlineTracer<BasisOnMeshType,BaseDataType>::
+createFibreMesh(const std::vector<Vec3> &nodePositions)
+{
+  std::shared_ptr<MeshFibre> meshPtr; 
+ 
+  // create name for fibre mesh 
+  std::stringstream name;
+  name << "Fibre" << fibreNo_;
+  fibreNo_++;
+  
+  // create mesh by meshManager
+  meshPtr = std::static_pointer_cast<MeshFibre>(
+     this->context_.meshManager()->template createMesh<MeshFibre>(name.str(), nodePositions));
+  
+  // get geometry field 
+  std::shared_ptr<FieldVariableFibreGeometry> geometryField = std::make_shared<FieldVariableFibreGeometry>(meshPtr->geometryField());
+  
+  // add geometry field
+  this->fibreGeometry_.push_back(geometryField);
 }
 
 template<typename BasisOnMeshType,typename BaseDataType>
@@ -95,7 +117,9 @@ typename StreamlineTracer<BasisOnMeshType,BaseDataType>::OutputFieldVariables St
 getOutputFieldVariables()
 {
   return std::tuple_cat(baseData_->getOutputFieldVariables(),
-                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>>(gradient_));
+                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>>(gradient_),
+                        std::tuple<std::vector<std::shared_ptr<FieldVariableFibreGeometry>>>(fibreGeometry_)
+                       );
 }
 
 

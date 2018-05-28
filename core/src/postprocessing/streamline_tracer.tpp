@@ -71,23 +71,39 @@ traceStreamlines()
   // compute a gradient field from the solution
   problem_.data().solution().computeGradientField(data_.gradient());
 
+#define USE_GRADIENT_FIELD
+  
+#ifndef USE_GRADIENT_FIELD
+  const int D = DiscretizableInTimeType::BasisOnMesh::dim();
+#endif
+  
   const int nDofsPerElement = DiscretizableInTimeType::BasisOnMesh::nDofsPerElement();
-  std::vector<Vec3> nodePositions;
+  std::vector<std::vector<Vec3>> nodePositions(seedPositions_.size());
+  const int nSeedPoints = seedPositions_.size();
 
+  LOG(DEBUG) << "trace streamline, seedPositions: " << seedPositions_;
+  
   // loop over seed points
-  #pragma omp parallel for
-  for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
+  //#pragma omp parallel for shared(nodePositions)
+  for (int seedPointNo = 0; seedPointNo < nSeedPoints; seedPointNo++)
   {
+    LOG(DEBUG) << " seed point " << seedPointNo;
+   
     // get starting point
     Vec3 currentPoint = seedPositions_[seedPointNo];
-    nodePositions.push_back(currentPoint);
+    nodePositions[seedPointNo].push_back(currentPoint);
 
-    // find out element
     std::array<double,(unsigned long int)3> xi;
-    element_no_t elementNo;
+    element_no_t elementNo = 0;
+    
+#ifdef USE_GRADIENT_FIELD    
     std::array<Vec3,nDofsPerElement> elementalGradientValues;
+#else    
+    std::array<double,nDofsPerElement> elementalSolutionValues;
+    std::array<Vec3,nDofsPerElement> geometryValues;
+#endif
 
-    // find out initial element no and xi value
+    // find out initial element no and xi value where the current Point lies
     bool positionFound = problem_.data().mesh()->findPosition(currentPoint, elementNo, xi);
     if (!positionFound)
     {
@@ -96,31 +112,85 @@ traceStreamlines()
     }
 
     // get gradient values for element
+#ifdef USE_GRADIENT_FIELD    
     data_.gradient().getElementValues(elementNo, elementalGradientValues);
+#else    
+    problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
 
-    for(;;)
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
+#endif
+    
+    VLOG(2) << "streamline starts in element " << elementNo;
+        
+    // loop over length of streamline
+    for(int iterationNo = 0; iterationNo <= 1000000; iterationNo++)
     {
-
       // check if element_no is still valid
       if (!problem_.data().mesh()->pointIsInElement(currentPoint, elementNo, xi))
       {
         bool positionFound = problem_.data().mesh()->findPosition(currentPoint, elementNo, xi);
 
-        // if no position was found the streamline exists the domain
+        // if no position was found, the streamline exits the domain
         if (!positionFound)
         {
+          VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
           break;
         }
+            
+        // get gradient values for element
+#ifdef USE_GRADIENT_FIELD          
+        data_.gradient().getElementValues(elementNo, elementalGradientValues);
+#else
+        problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
+            
+        // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+        problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
+#endif
+        
+        VLOG(2) << "streamline enters element " << elementNo;
       }
 
-
       // get value of gradient
-      Vec3 gradient = problem_.data().mesh()->template interpolateValueInElement<3>(elementalGradientValues, xi);
 
+#ifdef USE_GRADIENT_FIELD          
+      Vec3 gradient = problem_.data().mesh()->template interpolateValueInElement<3>(elementalGradientValues, xi);
+#else
+      Tensor2<D> inverseJacobian = problem_.data().mesh()->getInverseJacobian(geometryValues, elementNo, xi);
+      Vec3 gradient = problem_.data().mesh()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+#endif
       // integrate streamline
-      currentPoint = currentPoint + gradient*lineStepWidth_;
-      nodePositions.push_back(currentPoint);
+      
+      VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient) << ", lineStepWidth: " << lineStepWidth_;
+      currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_;
+      
+      VLOG(2) << "              to " << currentPoint;
+      
+      nodePositions[seedPointNo].push_back(currentPoint);
+      
     }
+  }
+  
+  // create 1D meshes of streamline from collected node positions
+  std::ofstream file("streamlines.csv");
+  if (!file.is_open())
+    LOG(WARNING) << "Could not open streamlines.csv for writing";
+  
+  for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
+  {
+    for (std::vector<Vec3>::const_iterator iter = nodePositions[seedPointNo].begin(); iter != nodePositions[seedPointNo].end(); iter++)
+    {
+      Vec3 point = *iter;
+      file << point[0] << ";" << point[1] << ";" << point[2] << ";";
+    }
+    file << "\n";
+  }
+  file.close();
+  
+  // create new meshes, one for each streamline 
+  for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
+  {
+    this->data_.createFibreMesh(nodePositions[seedPointNo]);
   }
 }
 

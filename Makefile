@@ -19,7 +19,7 @@ clean:
 	rm .sconsign.dblite	
 
 system_testing:
-	cd testing/system_testing && $(MAKE) default
+	cd testing/system_testing && ./run.sh
 
 solid_mechanics:
 	cd testing/system_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
@@ -29,3 +29,12 @@ multiple_fibers:
 
 streamline_tracer:
 	cd testing/system_testing/tests/fibers && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+diffusion:
+	cd testing/system_testing/tests/diffusion &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+quadrature:
+	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+fibers:
+	cd testing/system_testing/tests/fibres &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

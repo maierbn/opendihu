@@ -31,10 +31,14 @@ BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions) :
+BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
   BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
 {
+  LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, from " << nodePositions.size() << " nodePositions";
+ 
   this->noGeometryField_ = false;
+  this->nElementsPerCoordinateDirection_ = nElementsPerCoordinateDirection;
+  LOG(DEBUG) << "set number of elements per coordinate direction: " << this->nElementsPerCoordinateDirection_;
 
   std::vector<double> sequentialNodePositions;   // node positions in a scalar vector, as needed by setGeometryField
   sequentialNodePositions.reserve(nodePositions.size() * D);
@@ -78,7 +82,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
       }
     }
 
-    LOG(DEBUG) << "nodePositions: " << nodePositionsListPy << ", nodesStoredAsLists=" << nodesStoredAsLists;
+    VLOG(1) << "nodePositions: " << nodePositionsListPy << ", nodesStoredAsLists=" << nodesStoredAsLists;
 
     if (nodesStoredAsLists)
     {
@@ -104,7 +108,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
             nodePositions[3*nodeNo + i] = 0.0;
           }
 
-          LOG(DEBUG) << "(1) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+          VLOG(2) << "(1) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
         }
         else
         {
@@ -114,7 +118,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
           nodePositions[3*nodeNo + 1] = 0.0;
           nodePositions[3*nodeNo + 2] = 0.0;
 
-          LOG(DEBUG) << "(2) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+          VLOG(2) << "(2) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
         }
       }
 
@@ -130,7 +134,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
         nodePositions[3*nodeNo + 1] = 0.0;
         nodePositions[3*nodeNo + 2] = 0.0;
 
-        LOG(DEBUG) << "(3) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
+        VLOG(2) << "(3) set node " << nodeNo << "[" << nodePositions[3*nodeNo + 0] << "," << nodePositions[3*nodeNo + 1] << "," << nodePositions[3*nodeNo + 2] << "]";
       }
     }
     else
@@ -206,7 +210,7 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 setGeometryField(std::vector<double> &nodePositions)
 {
-  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField";
+  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << nodePositions.size();
 
   // compute number of dofs
   dof_no_t nDofs = this->nDofs();
@@ -249,7 +253,7 @@ setGeometryField(std::vector<double> &nodePositions)
     }
   }
 
-  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues;
+  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
 
   PetscUtility::setVector(geometryValues, values);
 

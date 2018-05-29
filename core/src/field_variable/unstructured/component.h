@@ -62,6 +62,9 @@ public:
 
   //! return the number of elements
   element_no_t nElements() const;
+  
+  //! return the name of the component
+  std::string name() const;
 
   //! return the exfileBasisFunctionSpecification
   std::string exfileBasisFunctionSpecification() const;

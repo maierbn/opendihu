@@ -25,6 +25,9 @@ public:
   //! number of nodes in the mesh
   virtual node_no_t nNodes() const = 0;
   
+  //! number of elements in the mesh
+  virtual element_no_t nElements() const = 0;
+  
   //! set the name of the mesh
   void setMeshName(std::string meshName);
   
@@ -40,9 +43,17 @@ class None : public Mesh
 {
 public:
   using Mesh::Mesh;
+  //! dimensionality of the mesh
   int dimension() const {return 0;}
-  node_no_t nNodes() const {return 0;}
   static constexpr int dim() {return 0;}
+  
+  //! number of nodes in the mesh
+  node_no_t nNodes() const {return 0;}
+  
+  //! number of elements in the mesh
+  element_no_t nElements() const {return 0;}
+  
+  //! initialization method
   void initialize(){}
 };
 
@@ -65,7 +76,9 @@ public:
 
   //! get the number of nodes of this mesh
   virtual node_no_t nNodes() const = 0;
-private:
+  
+  //! number of elements in the mesh
+  virtual element_no_t nElements() const = 0;
 };
 
 }  // namespace

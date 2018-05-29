@@ -14,7 +14,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
              std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh, 
              int nFieldVariablesOfMesh)
 {
-  stream << " Group name: Region" << std::endl
+  stream << " Group name: " << meshName << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
 
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();
@@ -49,7 +49,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
       }
 
       stream << " #Nodes=" << nNodesPerElement << std::endl
-        << " #Fields=" << std::tuple_size<OutputFieldVariablesType>::value << std::endl;
+        << " #Fields=" << nFieldVariablesOfMesh << std::endl;
 
       // loop over field variables and output headers
       int fieldVariableIndex = 0;
@@ -69,7 +69,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
              int nFieldVariablesOfMesh
             )
 {
-  stream << " Group name: Region" << std::endl;
+  stream << " Group name: " << meshName << std::endl;
 
   bool outputHeader = true;
   const node_no_t nNodes = mesh->nNodes();
@@ -87,7 +87,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     // output header
     if (outputHeader)
     {
-      stream << " #Fields=" << std::tuple_size<OutputFieldVariablesType>::value << std::endl;
+      stream << " #Fields=" << nFieldVariablesOfMesh << std::endl;
       int valueIndex = 0;  // an index that runs over values of components of field variables and corresponds to the index in the values block for a node
 
       // output the exnode file header for the current node

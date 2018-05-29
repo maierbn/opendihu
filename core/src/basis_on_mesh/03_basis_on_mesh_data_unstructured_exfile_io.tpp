@@ -311,6 +311,7 @@ parseFromSettings(PyObject *settings)
 
   // parse node positions
   std::vector<Vec3> nodePositions;
+  bool listWarningIssued = false;    // if the warning about lists was already shown
 
   // get the first node position from the list
   PyObject *pyNodePositions = PythonUtility::getOptionListBegin<PyObject *>(settings, "nodePositions");
@@ -320,6 +321,12 @@ parseFromSettings(PyObject *settings)
       !PythonUtility::getOptionListEnd(settings, "nodePositions");
       PythonUtility::getOptionListNext<PyObject *>(settings, "nodePositions", pyNodePositions))
   {
+    if (!PythonUtility::isTypeList(pyNodePositions) && !listWarningIssued)
+    {
+      listWarningIssued = true;
+      LOG(WARNING) << "\"nodePositions\" is not a list of lists.";
+    }
+   
     Vec3 nodePosition = PythonUtility::convertFromPython<Vec3>(pyNodePositions);
     VLOG(1) << "node position " << nodePosition;
     nodePositions.push_back(nodePosition);
@@ -370,7 +377,7 @@ parseFromSettings(PyObject *settings)
 
   this->nElements_ = elements.size();
 
-  LOG(DEBUG) << nodePositions.size() << " nodes, " << elements.size() << " elements";
+  LOG(DEBUG) << nodePositions.size() << " node positions, " << elements.size() << " elements";
 
   // initialize elementToNodeMapping_
   this->elementToNodeMapping_ = std::make_shared<FieldVariable::ElementToNodeMapping>();
@@ -441,7 +448,7 @@ parseFromSettings(PyObject *settings)
 
   this->nDofs_ = elementToDofMapping->nDofs();
 
-  // create and setup geometric field variable
+  // create and setup geometry field variable
   this->geometryField_ = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>();
 
   this->geometryField_->initializeFromMappings("geometry", true, exfileRepresentation, elementToDofMapping,
@@ -455,7 +462,7 @@ parseFromSettings(PyObject *settings)
   // loop over nodes
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < nodePositions.size(); nodeGlobalNo++)
   {
-    int nVersions = nodeToDofMapping->nVersions(nodeGlobalNo);
+    int nVersions = nodeToDofMapping->nVersions(nodeGlobalNo);  // this fails
 
     VLOG(1) << "node " << nodeGlobalNo << ", nVersions: " << nVersions;
 
@@ -482,125 +489,6 @@ parseFromSettings(PyObject *settings)
       // set nodal dof values at node
       iter->setNodeValues(nodeGlobalNo, nodeValues.begin());
     }
-  }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-outputExelemFile(std::ostream &file)
-{
-  file << " Group name: Region" << std::endl
-    << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
-
-  bool outputHeader = true;
-
-  for(element_no_t currentElementGlobalNo = 0; currentElementGlobalNo < this->nElements_; currentElementGlobalNo++)
-  {
-    int nScaleFactors = fieldVariable_.begin()->second->getNumberScaleFactors(currentElementGlobalNo);
-
-    if (nScaleFactors == 0)
-    {
-      file << " #Scale factor sets=0" << std::endl;
-    }
-    else
-    {
-      file << " #Scale factor sets=1" << std::endl;
-      file << " " << BasisFunction::getBasisRepresentationString<D,BasisFunctionType>();
-      file << ", #Scale factors=" << nScaleFactors << std::endl;
-    }
-
-    file << " #Nodes=" << BasisOnMeshDataUnstructured<D,BasisFunctionType>::nNodesPerElement() << std::endl
-      << " #Fields=" << fieldVariable_.size() << std::endl;
-
-    // check if a new header is necessary
-    if (currentElementGlobalNo > 0)
-    {
-      outputHeader = false;
-      for (auto &fieldVariable : fieldVariable_)
-      {
-        if (!fieldVariable->second->haveSameExfileRepresentation(currentElementGlobalNo-1, currentElementGlobalNo))
-        {
-          outputHeader = true;
-          break;
-        }
-      }
-    }
-
-    // output header
-    if (outputHeader)
-    {
-      for (auto &fieldVariable : fieldVariable_)
-      {
-        fieldVariable->second->outputHeaderExelem(file, currentElementGlobalNo);
-      }
-    }
-
-    elementToNodeMapping_->outputElementExelem(file, currentElementGlobalNo);
-  }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-outputExnodeFile(std::ostream &file)
-{
-  file << " Group name: Region" << std::endl;
-
-  const int nNodesPerElement = BasisOnMeshDataUnstructured<D,BasisFunctionType>::nNodesPerElement();
-  bool outputHeader = true;
-
-  for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < this->nElements_; currentNodeGlobalNo++)
-  {
-    // check if a new header is necessary
-    if (currentNodeGlobalNo > 0)
-    {
-      outputHeader = false;
-      for (auto &fieldVariable : fieldVariable_)
-      {
-        int previousNumberVersions = fieldVariable->second->nodeToDofMapping()->getNumberVersions(currentNodeGlobalNo-1, nNodesPerElement);
-        int currentNumberVersions = fieldVariable->second->nodeToDofMapping()->getNumberVersions(currentNodeGlobalNo, nNodesPerElement);
-
-        if(previousNumberVersions != currentNumberVersions)
-        {
-          outputHeader = true;
-          break;
-        }
-      }
-    }
-
-    // output header
-    if (outputHeader)
-    {
-      file << " #Fields=" << fieldVariable_.size() << std::endl;
-      int valueIndex = 0;  // an index that runs over values of components of field variables and corresponds to the index in the values block for a node
-      for (auto &fieldVariable : fieldVariable_)
-      {
-        fieldVariable->second->outputHeaderExnode(file, currentNodeGlobalNo, valueIndex);
-      }
-    }
-
-    file << " Node: " << currentNodeGlobalNo << std::endl;
-
-    // collect values of all field variables at the current node
-    // get dofs
-    std::vector<double> valuesAtNode;
-    for (auto &fieldVariable : fieldVariable_)
-    {
-      std::vector<int> dofsAtNode;
-      fieldVariable->second->mesh()->getNodeDofs(currentNodeGlobalNo, dofsAtNode);
-
-      // loop over components
-      for (int componentNo = 0; componentNo <fieldVariable->second.getNComponents(); componentNo++)
-      {
-        // loop over dofs
-        for (dof_no_t dofGlobalNo : dofsAtNode)
-        {
-          double value = fieldVariable->second->getValue(componentNo, dofGlobalNo);
-          valuesAtNode.push_back(value);
-        }
-      }
-    }
-
-    StringUtility::outputValuesBlock(file, valuesAtNode.begin(), valuesAtNode.end(), 8);
   }
 }
 

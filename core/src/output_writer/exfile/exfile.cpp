@@ -53,11 +53,15 @@ void Exfile::outputComFile()
     << "$n = 1;" << std::endl << std::endl
     << "# read files" << std::endl;
 
-  for (std::vector<std::string>::const_iterator iter = filenames_.begin(); iter != filenames_.end(); iter++)
+  
+  node_no_t nodeOffset = 1;
+  element_no_t elementOffset = 1;
+  
+  // loop over stored files with their contained number of nodes and elements
+  for (std::vector<FilenameWithElementAndNodeCount>::const_iterator iter = filenamesWithElementAndNodeCount_.begin(); iter != filenamesWithElementAndNodeCount_.end(); iter++)
   {
-
     // filename without path
-    std::string basename = *iter;
+    std::string basename = iter->filename;
 
     if (basename.rfind("/") != std::string::npos)
     {
@@ -65,12 +69,14 @@ void Exfile::outputComFile()
     }
 
     file << "$fname = \"" << basename << "\"" << std::endl
-      << "$nodefile = $fname . \".exnode\"" << std::endl
-      << "$elemfile = $fname . \".exelem\"" << std::endl
-      << "gfx read nodes node_offset $n $nodefile;" << std::endl
-      << "gfx read elements node_offset $n line_offset $n face_offset $n element_offset $n $elemfile;" << std::endl
+      << "gfx read nodes node_offset " << nodeOffset << " $fname.\".exnode\"" << std::endl
+      << "gfx read elements node_offset " << nodeOffset << " line_offset 1 face_offset 1 element_offset " << elementOffset << " $fname.\".exelem\";" << std::endl << std::endl;
       //<< "gfx modify g_element $group surface;" << std::endl
-      << "$n+=1500;" << std::endl;
+      //<< "$n+=1500;" << std::endl;
+      
+    // increase offsets by number of nodes and elements in the current files
+    nodeOffset += iter->nNodes;
+    elementOffset += iter->nElements;
   }
 
   file << std::endl
@@ -90,6 +96,8 @@ void Exfile::outputComFile()
     << "gfx edit scene" << std::endl << std::endl;
 
   file.close();
+  
+  LOG(INFO) << "File \"" << filenameCom << "\" written.";
 }
 
 };

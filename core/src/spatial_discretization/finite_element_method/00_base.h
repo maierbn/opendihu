@@ -3,7 +3,7 @@
 #include "data_management/finite_elements.h"
 
 //#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
-//#define EXACT_QUADRATURE Quadrature::Gauss<7>
+//#define EXACT_QUADRATURE Quadrature::Gauss<20>
 
 namespace SpatialDiscretization
 {

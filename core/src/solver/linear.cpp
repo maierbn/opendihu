@@ -10,7 +10,8 @@ Linear::Linear(PyObject *specificSettings) :
 {
   // parse options
   relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);
-
+  maxIterations_ = PythonUtility::getOptionDouble(specificSettings, "maxIterations", 10000, PythonUtility::Positive);
+  
   // set up KSP object
   //KSP *ksp;
   ksp_ = std::make_shared<KSP>();
@@ -31,7 +32,7 @@ Linear::Linear(PyObject *specificSettings) :
   ierr = KSPSetType(*ksp_, KSPGMRES); CHKERRV(ierr);
 
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
-  ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT); CHKERRV(ierr);
+  ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
 }
 
 std::shared_ptr<KSP> Linear::ksp()

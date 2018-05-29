@@ -334,6 +334,16 @@ Tensor2<2> computeInverse<2>(const Tensor2<2> &matrix, double &determinant)
 }
 
 template<>
+Tensor2<1> computeInverse<1>(const Tensor2<1> &matrix, double &determinant)
+{
+  determinant = matrix[0][0];
+  
+  Tensor2<1> result;
+  result[0][0] = 1./determinant;
+  return result;
+}
+
+template<>
 Tensor2<3> computeCofactorMatrix<3>(const Tensor2<3> &matrix)
 {
   // matrices are stored column-major
@@ -413,6 +423,12 @@ std::array<std::array<double,3>,3> transformToDxD<3,1>(const std::array<Vec3,1> 
 }
 
 template<>
+std::array<std::array<double,1>,1> transformToDxD<1,1>(const std::array<Vec3,1> &matrix)
+{
+  return std::array<std::array<double,1>,1>({std::array<double,1>({matrix[0][0]})});
+}
+
+template<>
 VecD<3> transformToD<3,3>(const VecD<3> &vector)
 {
   return vector;
@@ -428,6 +444,12 @@ template<>
 VecD<2> transformToD<2,3>(const VecD<3> &vector)
 {
   return VecD<2>({vector[0], vector[1]});
+}
+
+template<>
+VecD<1> transformToD<1,3>(const VecD<3> &vector)
+{
+  return VecD<1>({vector[0]});
 }
 
 //! compute 3D cross product

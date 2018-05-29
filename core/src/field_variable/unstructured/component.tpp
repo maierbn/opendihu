@@ -221,6 +221,12 @@ element_no_t Component<BasisOnMeshType>::nElements() const
 }
 
 template<typename BasisOnMeshType>
+std::string Component<BasisOnMeshType>::name() const
+{
+  return this->name_;
+}
+
+template<typename BasisOnMeshType>
 dof_no_t Component<BasisOnMeshType>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
@@ -348,6 +354,17 @@ outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
   file << " " << name_ << ". " << exfileBasisFunctionSpecification_ << ", no modify, standard node based." << std::endl
     << "   #Nodes=" << BasisOnMeshType::nNodesPerElement() << std::endl;
   exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo)->outputHeaderExelem(file);
+  
+  /*
+  x.   l.Lagrange*l.Lagrange, no modify, standard node based.
+     #Nodes= 4
+     1.  #Values=1
+      Value indices:     1
+      Scale factor indices:    1
+     2.  #Values=1
+      Value indices:     1
+      Scale factor indices:    2
+   */
 }
 
 template<typename BasisOnMeshType>
@@ -369,6 +386,7 @@ outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &value
     << ", #Versions=" << nVersions << std::endl;
 
   valueIndex += BasisOnMeshType::nDofsPerNode() * nVersions;
+  
 }
 
 template<typename BasisOnMeshType>

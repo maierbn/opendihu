@@ -11,7 +11,7 @@ void ExfileWriter<BasisOnMeshType,OutputFieldVariablesType>::
 outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<BasisOnMeshType> mesh, int nFieldVariablesOfMesh)
 {
   const int D = BasisOnMeshType::dim();
-  stream << " Group name: Region" << std::endl
+  stream << " Group name: " << meshName << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl
     << " #Scale factor sets=0" << std::endl;
 
@@ -19,7 +19,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   const element_no_t nElements = mesh->nElements();
 
   stream << " #Nodes=" << nNodesPerElement << std::endl
-    << " #Fields=" << std::tuple_size<OutputFieldVariablesType>::value << std::endl;
+    << " #Fields=" << nFieldVariablesOfMesh << std::endl;
 
   // loop over field variables and output headers
   int fieldVariableIndex = 0;  // counter over field variables
@@ -57,7 +57,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   
   VLOG(2) << "geometry at " << std::get<0>(fieldVariables)->values();
   
-  stream << " Group name: Region" << std::endl
+  stream << " Group name: " << meshName << std::endl
     << " #Fields=" << nFieldVariablesOfMesh << std::endl;
 
   // loop over field variables and output headers

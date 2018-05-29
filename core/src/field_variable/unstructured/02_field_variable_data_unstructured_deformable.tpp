@@ -611,7 +611,7 @@ initializeValuesVector()
   for (auto &component : this->component_)
   {
     this->nEntries_ += component.nDofs();
-    VLOG(1) << "  component " << component << " has " << component.nDofs() << " dofs";
+    VLOG(1) << "  component " << component.name() << " has " << component.nDofs() << " dofs";
   }
   VLOG(1) << "total entries: " << this->nEntries_;
 
@@ -761,6 +761,17 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
   {
     component.outputHeaderExelem(stream, currentElementGlobalNo);
   }
+  /*
+   1) Geometry, coordinate, rectangular cartesian, #Components=2
+     x.   l.Lagrange*l.Lagrange, no modify, standard node based.
+     #Nodes= 4
+     1.  #Values=1
+      Value indices:     1
+      Scale factor indices:    1
+     2.  #Values=1
+      Value indices:     1
+      Scale factor indices:    2
+   */
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

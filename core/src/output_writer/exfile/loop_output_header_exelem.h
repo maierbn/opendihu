@@ -8,6 +8,8 @@
  *  (Because the types inside the tuple are static and fixed at compile-time, a simple for loop c not work here.)
  *  The two functions starting with loop recursively emulate the loop. One method is the break condition and does nothing, the other method does the work and calls the method without loop in the name.
  *  OutputFieldVariablesType is assumed to be of type std::tuple<...>> where the types can be (mixed) std::shared_ptr<FieldVariable> or std::vector<std::shared_ptr<FieldVariable>>.
+ * 
+ * Output the exelem headers of all fieldvariables on the mesh with given meshName by calling outputHeaderExelem on the field variables.
  */
 
 namespace OutputWriter

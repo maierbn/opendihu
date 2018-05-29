@@ -71,7 +71,7 @@ public:
   BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField=false);
 
   //! constructor from node positions
-  BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions);
+  BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 

@@ -82,7 +82,7 @@ applyBoundaryConditions()
     // set rhs entry to prescribed value
     ierr = VecSetValue(rightHandSide, boundaryConditionNodeIndex, boundaryConditionValue, INSERT_VALUES); CHKERRV(ierr);
 
-    LOG(DEBUG) << "  BC node " << boundaryConditionNodeIndex << " value " << boundaryConditionValue;
+    VLOG(1) << "  BC node " << boundaryConditionNodeIndex << " value " << boundaryConditionValue;
 
     // get the column number boundaryConditionNodeIndex of the stiffness matrix. It is needed for updating the rhs.
     std::vector<int> rowIndices((int)nUnknowns);

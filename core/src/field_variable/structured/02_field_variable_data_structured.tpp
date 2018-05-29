@@ -193,13 +193,21 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
     basisFunction << BasisOnMeshType::BasisFunction::getBasisFunctionString();
 
     stream << " " << name << ".   " << StringUtility::multiply<BasisOnMeshType::dim()>(basisFunction.str())
-      << ", no modify, standard node based." << std::endl;
+      << ", no modify, standard node based." << std::endl
+      << "   #Nodes= " << BasisOnMeshType::nNodesPerElement() << std::endl;
 
     // loop over nodes of a representative element
     for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nNodesPerElement(); nodeIndex++)
     {
       stream << "   " << (nodeIndex+1) << ".  #Values=" << BasisOnMeshType::nDofsPerNode() << std::endl
-        << "      Scale factor indices: 0"  << std::endl;
+        << "      Value indices: ";
+      
+      for (int dofIndex = 0; dofIndex <BasisOnMeshType::nDofsPerNode(); dofIndex++)
+      {
+        stream << " " << dofIndex + 1;
+      }
+      
+      stream << "      Scale factor indices: 0"  << std::endl;
     }
   }
   /*

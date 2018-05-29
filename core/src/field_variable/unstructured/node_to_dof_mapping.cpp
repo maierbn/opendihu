@@ -39,6 +39,8 @@ node_no_t NodeToDofMapping::nNodes() const
 
 int NodeToDofMapping::nVersions(node_no_t nodeGlobalNo)
 {
+  VLOG(1) << "  NodeToDofMapping::nVersions node " << nodeGlobalNo << ", max: " << nodeDofInformation_.size();
+  
   assert (nodeGlobalNo < (int)nodeDofInformation_.size());
   return nodeDofInformation_[nodeGlobalNo].elementsOfVersion.size();
 }

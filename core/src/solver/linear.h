@@ -25,6 +25,7 @@ protected:
 
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;    ///< relative solver tolerance
+  long int maxIterations_;     ///< maximum number of iterations
 };
 
 }  // namespace

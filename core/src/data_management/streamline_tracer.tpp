@@ -61,12 +61,16 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
  
   // create name for fibre mesh 
   std::stringstream name;
-  name << "Fibre" << fibreNo_;
+  name << "Fibre" << std::setw(5) << std::setfill('0') << fibreNo_;
   fibreNo_++;
+  
+  // set number of elements. We have 1D linear Lagrange elements, i.e. 2 nodes per element
+  const int nElements = nodePositions.size()-1;
+  std::array<element_no_t,1> nElementsPerCoordinateDirection{nElements}; 
   
   // create mesh by meshManager
   meshPtr = std::static_pointer_cast<MeshFibre>(
-     this->context_.meshManager()->template createMesh<MeshFibre>(name.str(), nodePositions));
+     this->context_.meshManager()->template createMesh<MeshFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection));
   
   // get geometry field 
   std::shared_ptr<FieldVariableFibreGeometry> geometryField = std::make_shared<FieldVariableFibreGeometry>(meshPtr->geometryField());

@@ -26,7 +26,14 @@ private:
   //! output a cmgui "visualization.com" file that references the exfiles and can be used by Cmgui
   void outputComFile();
 
-  std::vector<std::string> filenames_;   ///< the filenames without suffix of all previously output exelem files
+  struct FilenameWithElementAndNodeCount
+  {
+    std::string filename;  ///< the filename 
+    element_no_t nElements;  ///< the number of elements 
+    node_no_t nNodes;   ///< the number of nodes
+  };
+  
+  std::vector<FilenameWithElementAndNodeCount> filenamesWithElementAndNodeCount_;   ///< the filenames without suffix of all previously output exelem files
 };
 
 };  // namespace

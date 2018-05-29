@@ -52,12 +52,6 @@ public:
   //! get all dofs of a specific node, as vector, the array version that is present for structured meshes does not make sense here, because with versions the number of dofs per node is not static.
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
 
-  //! write exelem file representation to stream
-  void outputExelemFile(std::ostream &file);
-
-  //! write exnode file representation to stream
-  void outputExnodeFile(std::ostream &file);
-
   //! get the elementToNodeMapping
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
   

@@ -33,9 +33,6 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
-  typedef typename DataType::BasisOnMesh MeshType;
-  std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
-
   // collect all available meshes
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
@@ -61,11 +58,13 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     std::stringstream s;
     s << filenameStart.str() << ".exelem";
     std::string filenameExelem = s.str();
+    
 
     // open file
     std::ofstream file = openFile(filenameExelem);
     // output the exelem file for all field variables that are defined on the specified meshName
-    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), meshName, file);
+    std::shared_ptr<Mesh::Mesh> mesh = nullptr;
+    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), meshName, file, mesh);
     file.close();
 
     // exnode file
@@ -80,7 +79,11 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     file.close();
 
     // store created filename
-    filenames_.push_back(filenameStart.str());
+    FilenameWithElementAndNodeCount item;
+    item.filename = filenameStart.str();
+    item.nElements = mesh->nElements();
+    item.nNodes = mesh->nNodes();
+    filenamesWithElementAndNodeCount_.push_back(item);
   }
   
   

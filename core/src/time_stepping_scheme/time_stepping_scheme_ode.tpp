@@ -19,7 +19,7 @@ template<typename DiscretizableInTimeType>
 Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
 data()
 {
-  return data_;
+  return *data_;
 }
 
 template<typename DiscretizableInTimeType>

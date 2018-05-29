@@ -28,6 +28,9 @@ public:
 
 protected:
 
+  //! trace the streamline starting from startingPoint in the element initialElementNo, direction is either 1. or -1. depending on the direction
+  void traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points);
+  
   //! trace the streamlines starting from seed points
   void traceStreamlines();
 
@@ -41,6 +44,9 @@ protected:
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  int maxNIterations_;   ///< the maximum number of iterations to trace for a streamline
+  bool useGradientField_;  ///< There are 2 implementations of streamline tracing. The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. // The first one seems more stable, because the gradient is zero and the position of the boundary conditions.
+
 };
 
 };  // namespace

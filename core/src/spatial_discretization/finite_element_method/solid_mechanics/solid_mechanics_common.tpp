@@ -17,6 +17,8 @@
 
 #ifdef QUADRATURE_TEST
 #include "quadrature/gauss.h"
+#include "quadrature/clenshaw_curtis.h"
+#include "quadrature/newton_cotes.h"
 #endif
 
 namespace SpatialDiscretization

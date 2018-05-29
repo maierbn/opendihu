@@ -265,6 +265,18 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   return false;
 }
 
+bool PythonUtility::isTypeList(const PyObject *object)
+{
+  if (object)
+  {
+    if (PyList_Check(object))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString)
 {
   if (settings)

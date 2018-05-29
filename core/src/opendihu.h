@@ -30,4 +30,6 @@
 #include "cellml/cellml_adapter.h"
 
 #include "quadrature/gauss.h"
+#include "quadrature/clenshaw_curtis.h"
+#include "quadrature/newton_cotes.h"
 #include "quadrature/mixed.h"

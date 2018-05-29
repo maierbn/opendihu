@@ -39,6 +39,9 @@ public:
   //! checks if the settings contain the given key, no warning is printed
   static bool hasKey(const PyObject *settings, std::string key);
 
+  //! checks if the object is a python list
+  static bool isTypeList(const PyObject *object);
+
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
   static PyObject *getOptionPyObject(const PyObject *settings, std::string key);
 

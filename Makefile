@@ -33,6 +33,9 @@ streamline_tracer:
 diffusion:
 	cd testing/system_testing/tests/diffusion &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+laplace:
+	cd testing/system_testing/tests/laplace &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
 quadrature:
 	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 

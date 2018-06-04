@@ -77,6 +77,10 @@ public:
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
                                      std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
+private:
+  
+  //! create a list of list where for each element the dofs are listed (if !onlyNodalValues) or the node numbers (if onlyNodalValues)
+  static PyObject *buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalValues);
 };
 
 };  // namespace

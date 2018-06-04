@@ -51,12 +51,34 @@ applyBoundaryConditions()
   LOG(TRACE)<<"applyBoundaryConditions";
 
   dof_no_t nUnknowns = this->data_.nUnknowns();
+  node_no_t nNodes = this->data_.mesh()->nNodes();
 
   Vec &rightHandSide = data_.rightHandSide().values();
   Mat &stiffnessMatrix = data_.stiffnessMatrix();
   PetscErrorCode ierr;
 
   // add Dirichlet boundary conditions
+  // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
+  // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.
+  // For every node there are as many values as dofs, in contiguous order.
+  // Example for 2D Hermite, unstructured grid, 2x2 elements:
+  //
+  // node numbering:
+  //  6_7_8
+  // 3|_4_|5
+  // 0|_1_|2
+  //
+  // dof numbering:
+  //  6_7_8
+  // 2|_3_|5
+  // 0|_1_|4
+  //
+  // To specify du/dn = 0 an the left boundary you would set:
+  // bc[0*2+1] = 0, bc[3*2+1] = 0, bc[6*2+1] = 0
+  //
+  // To specifiy u=0 on the bottom, you would set:
+  // bc[0] = 0, bc[2] = 0, bc[4] = 0
+  
 
   // get the first dirichlet boundary condition from the list
   std::pair<node_no_t, double> boundaryCondition
@@ -66,41 +88,48 @@ applyBoundaryConditions()
   for (; !PythonUtility::getOptionDictEnd(specificSettings_, "DirichletBoundaryCondition");
        PythonUtility::getOptionDictNext<node_no_t, double>(specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
   {
-    node_no_t boundaryConditionNodeIndex = boundaryCondition.first;
+    dof_no_t boundaryConditionIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
 
-    if (boundaryConditionNodeIndex < 0)
+    if (boundaryConditionIndex < 0)
       continue;
 
-    if (boundaryConditionNodeIndex > nUnknowns)
+    node_no_t boundaryConditionNodeNo = boundaryConditionIndex / BasisOnMeshType::nDofsPerNode();
+    int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * BasisOnMeshType::nDofsPerNode();
+    
+    if (boundaryConditionIndex > nUnknowns)
     {
-      LOG(WARNING) << "Boundary condition specified for degree of freedom no. "<<boundaryConditionNodeIndex
-       <<", but scenario has only "<<nUnknowns<<" degrees of freedom.";
+      LOG(WARNING) << "Boundary condition specified for index " << boundaryConditionIndex
+        << " (on node " << boundaryConditionNodeNo << ", index " << boundaryConditionNodalDofIndex << ")"
+        << ", but scenario has only " << nUnknowns << " unknowns, " << nNodes << " nodes";
        continue;
     }
+    
+    dof_no_t boundaryConditionDofNo = this->data_.mesh()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
 
     // set rhs entry to prescribed value
-    ierr = VecSetValue(rightHandSide, boundaryConditionNodeIndex, boundaryConditionValue, INSERT_VALUES); CHKERRV(ierr);
+    ierr = VecSetValue(rightHandSide, boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES); CHKERRV(ierr);
 
-    VLOG(1) << "  BC node " << boundaryConditionNodeIndex << " value " << boundaryConditionValue;
+    VLOG(1) << "  BC node " << boundaryConditionNodeNo << " index " << boundaryConditionIndex 
+      << ", dof " << boundaryConditionDofNo << ", value " << boundaryConditionValue;
 
-    // get the column number boundaryConditionNodeIndex of the stiffness matrix. It is needed for updating the rhs.
+    // get the column number boundaryConditionDofNo of the stiffness matrix. It is needed for updating the rhs.
     std::vector<int> rowIndices((int)nUnknowns);
     std::iota (rowIndices.begin(), rowIndices.end(), 0);    // fill with increasing numbers: 0,1,2,...
-    std::vector<int> columnIndices = {(int)boundaryConditionNodeIndex};
+    std::vector<int> columnIndices = {(int)boundaryConditionDofNo};
 
     std::vector<double> coefficients(nUnknowns);
 
     ierr = MatGetValues(stiffnessMatrix, nUnknowns, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
-    int matrixIndex = (int)boundaryConditionNodeIndex;
+    int matrixIndex = (int)boundaryConditionDofNo;
     ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &matrixIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
 
     // update rhs
     for (node_no_t rowNo = 0; rowNo < nUnknowns; rowNo++)
     {
-      if (rowNo == boundaryConditionNodeIndex)
+      if (rowNo == boundaryConditionDofNo)
        continue;
 
       // update rhs value to be f_new = f_old - m_{ij}*u_{i} where i is the index of the prescribed node,

@@ -239,17 +239,15 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
 {
   const dof_no_t nDofs = this->nDofs();
 
-  // set stride to 2 if Hermite, else to 1
-  const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? 2 : 1);
-
-  // create vector indices for all dofs
+  // set stride to nDofsPerNode if Hermite, else to 1
+  const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
+  
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = nDofs;
-
-  // if Hermite and only values at nodes should be retrieved, the number of values is half the number of dofs
   if (onlyNodalValues)
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
-      nValues = nDofs / 2;
+      nValues = nDofs / BasisOnMeshType::nDofsPerNode();
 
   std::vector<int> indices(nValues,0);
   dof_no_t indexNo = 0;

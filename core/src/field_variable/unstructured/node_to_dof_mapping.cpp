@@ -16,19 +16,28 @@ bool NodeToDofMapping::containsNode(node_no_t nodeGlobalNo) const
 
 NodeToDofMapping::NodeDofInformation& NodeToDofMapping::getNodeDofInformation(node_no_t nodeGlobalNo)
 {
-  //assert (nodeGlobalNo < (int)nodeDofInformation_.size());
+  // this potentially creates the nodeToDof information
+  assert (nodeGlobalNo >= 0);
   return nodeDofInformation_[nodeGlobalNo];
 }
 
 std::vector<dof_no_t> &NodeToDofMapping::getNodeDofs(node_no_t nodeGlobalNo)
 {
-  assert (nodeGlobalNo < (int)nodeDofInformation_.size());
+  assert (nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end());
   return nodeDofInformation_[nodeGlobalNo].dofs;
+}
+
+dof_no_t NodeToDofMapping::getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
+{
+  assert (nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end());
+  assert (dofIndex >= 0);
+  assert (dofIndex < nodeDofInformation_.at(nodeGlobalNo).dofs.size());
+  return nodeDofInformation_.at(nodeGlobalNo).dofs[dofIndex];
 }
 
 std::vector<double> &NodeToDofMapping::getNodeScaleFactors(node_no_t nodeGlobalNo)
 {
-  assert (nodeGlobalNo < (int)nodeDofInformation_.size());
+  assert (nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end());
   return nodeDofInformation_[nodeGlobalNo].scaleFactors;
 }
 
@@ -41,7 +50,7 @@ int NodeToDofMapping::nVersions(node_no_t nodeGlobalNo)
 {
   VLOG(1) << "  NodeToDofMapping::nVersions node " << nodeGlobalNo << ", max: " << nodeDofInformation_.size();
   
-  assert (nodeGlobalNo < (int)nodeDofInformation_.size());
+  assert (nodeDofInformation_.find(nodeGlobalNo) != nodeDofInformation_.end());
   return nodeDofInformation_[nodeGlobalNo].elementsOfVersion.size();
 }
 

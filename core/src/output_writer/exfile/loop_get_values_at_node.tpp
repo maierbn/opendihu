@@ -38,12 +38,12 @@ getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshN
  
   VLOG(1) << "  fieldVariable \"" << currentFieldVariable->name() << "\", "
     << " nodeToDofMapping: " << currentFieldVariable->nodeToDofMapping();
-  VLOG(1) << "  meshName: " << meshName << ", get dofsAtNode for currentNodeGlobalNo: " << currentNodeGlobalNo << ", n components: " << currentFieldVariable->getNComponents();
+  VLOG(1) << "  meshName: " << meshName << ", get dofsAtNode for currentNodeGlobalNo: " << currentNodeGlobalNo << ", n components: " << currentFieldVariable->nComponents();
 
   std::vector<dof_no_t> &dofsAtNode = currentFieldVariable->nodeToDofMapping()->getNodeDofs(currentNodeGlobalNo);
 
   // loop over components
-  for (int componentNo = 0; componentNo < currentFieldVariable->getNComponents(); componentNo++)
+  for (int componentNo = 0; componentNo < currentFieldVariable->nComponents(); componentNo++)
   {
     currentFieldVariable->getValues(componentNo, dofsAtNode, valuesAtNode);
     VLOG(1) << "   Component " << componentNo;

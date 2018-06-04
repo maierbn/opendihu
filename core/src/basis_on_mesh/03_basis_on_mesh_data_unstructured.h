@@ -52,12 +52,16 @@ public:
   //! get all dofs of a specific node, as vector, the array version that is present for structured meshes does not make sense here, because with versions the number of dofs per node is not static.
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
 
+  //! get the dof no of the first dof at the 
+  dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
+  
   //! get the elementToNodeMapping
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
   
   //! get the total number of elements, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   element_no_t nElements() const;
 
+  
 protected:
   //! parse a given *.exelem file and prepare fieldVariable_
   void parseExelemFile(std::string exelemFilename);

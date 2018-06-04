@@ -1,14 +1,14 @@
-#include "output_writer/exfile/loop_count_n_field_variables_of_mesh.h"
+#include "output_writer/loop_count_n_field_variables_of_mesh.h"
 
 #include <cstdlib>
 
 namespace OutputWriter
 {
 
-namespace ExfileLoopOverTuple
+namespace LoopOverTuple
 {
  
- /** Static recursive loop from 0 to number of entries in the tuple
+/** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
 template<typename OutputFieldVariablesType, int i=0>
@@ -55,5 +55,5 @@ countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string me
   return false;  // do not break iteration
 }
 
-};  //namespace ExfileLoopOverTuple
+};  //namespace LoopOverTuple
 };  //namespace OutputWriter

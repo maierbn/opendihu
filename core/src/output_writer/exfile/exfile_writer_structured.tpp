@@ -84,7 +84,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     for (auto &fieldVariableBase : fieldVariables)
     {
       // get all values of the element for the field variable
-      const int nComponents = fieldVariableBase->getNComponents();
+      const int nComponents = fieldVariableBase->nComponents();
       std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,nComponents>> fieldVariable
        = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,nComponents>>(fieldVariableBase);
 

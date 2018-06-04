@@ -91,6 +91,13 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const
 }
 
 template<int D,typename BasisFunctionType>
+dof_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const 
+{
+  return this->geometryField_->nodeToDofMapping()->getNodeDofNo(nodeGlobalNo, dofIndex);
+}
+
+template<int D,typename BasisFunctionType>
 void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 remapFieldVariables(PyObject *settings)
 {

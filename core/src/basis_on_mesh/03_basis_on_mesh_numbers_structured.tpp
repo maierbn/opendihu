@@ -44,6 +44,14 @@ getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<1,Bas
   }
 }
 
+//! get the dof no of the specified dof at the node for 1D
+template<typename MeshType,typename BasisFunctionType>
+dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
+getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
+{
+  return BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
+}
+
 // element-local dofIndex to global dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
@@ -93,6 +101,14 @@ getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<2,Bas
   {
     dofGlobalNos[i] = BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i;
   }
+}
+
+//! get the dof no of the specified dof at the node for 2D
+template<typename MeshType,typename BasisFunctionType>
+dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
+getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
+{
+  return BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
 }
 
 // element-local dofIndex to global dofNo for 3D
@@ -147,6 +163,14 @@ getNodeDofs(node_no_t nodeGlobalNo, std::array<dof_no_t,BasisOnMeshBaseDim<3,Bas
   {
     dofGlobalNos[i] = BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + i;
   }
+}
+
+//! get the dof no of the specified dof at the node for 3D
+template<typename MeshType,typename BasisFunctionType>
+dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
+getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
+{
+  return BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
 }
 
 // element-local nodeIndex to global nodeNo for 1D

@@ -17,11 +17,18 @@ componentName(int componentNo) const
   return componentNames_[componentNo];
 }
 
-template<typename BasisOnMeshType, int nComponents>
-int FieldVariableComponents<BasisOnMeshType,nComponents>::
+template<typename BasisOnMeshType, int nComponentsValue>
+constexpr int FieldVariableComponents<BasisOnMeshType,nComponentsValue>::
+nComponents()
+{
+  return nComponentsValue;
+}
+
+template<typename BasisOnMeshType, int nComponentsValue>
+int FieldVariableComponents<BasisOnMeshType,nComponentsValue>::
 getNComponents() const
 {
-  return nComponents;
+  return nComponentsValue;
 }
 
 template<typename BasisOnMeshType, int nComponents>

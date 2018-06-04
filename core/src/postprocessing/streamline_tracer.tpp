@@ -19,6 +19,7 @@ StreamlineTracer(DihuContext context) :
 
   lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2);
   maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
+  useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField_", false);
    
   // get the first seed position from the list
   PyObject *pySeedPositions = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "seedPoints");
@@ -85,10 +86,12 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
    // The second one is more accurate.
    if (useGradientField_)
    {
+     // use the precomputed gradient field
      data_.gradient().getElementValues(elementNo, elementalGradientValues);
    }
    else 
    {
+     // get the local gradient value at the current position
      problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
 
      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
@@ -119,15 +122,18 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
          break;
        }
            
-       // get gradient values for element
-#ifdef USE_GRADIENT_FIELD          
-       data_.gradient().getElementValues(elementNo, elementalGradientValues);
-#else
-       problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
+       // get values for element that are later needed to compute the gradient
+       if (useGradientField_)      
+       {
+         data_.gradient().getElementValues(elementNo, elementalGradientValues);
+       }
+       else 
+       {
+         problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
            
-       // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-       problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
-#endif
+         // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+         problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
+       }
        
        VLOG(2) << "streamline enters element " << elementNo;
      }
@@ -137,11 +143,15 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
      if (useGradientField_)
      {       
        gradient = problem_.data().mesh()->template interpolateValueInElement<3>(elementalGradientValues, xi);
+       VLOG(2) << "use gradient field";
      }
      else 
      {
+       // compute the gradient value in the current value
        Tensor2<D> inverseJacobian = problem_.data().mesh()->getInverseJacobian(geometryValues, elementNo, xi);
        gradient = problem_.data().mesh()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+       
+       VLOG(2) << "use direct gradient";
      }
      
      // integrate streamline

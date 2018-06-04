@@ -33,10 +33,17 @@ with open('../mesh', 'rb') as f:
   
 # boundary conditions
 bc = {}
-for bottom_node_index in data["bottom_nodes"]:
-  bc[bottom_node_index] = 0.0
-for top_node_index in data["top_nodes"]:
-  bc[top_node_index] = 1.0
+if "hermite" in name:
+  for bottom_node_index in data["bottom_nodes"]:
+    bc[2*bottom_node_index] = 0.0
+  for top_node_index in data["top_nodes"]:
+    bc[2*top_node_index] = 1.0
+else:
+  for bottom_node_index in data["bottom_nodes"]:
+    bc[bottom_node_index] = 0.0
+  for top_node_index in data["top_nodes"]:
+    bc[top_node_index] = 1.0
+
 
 # elements
 if "quadratic" in name:

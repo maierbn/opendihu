@@ -115,6 +115,9 @@ public:
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(std::vector<long> &data);
 
+  //! create a python list out of the int vector
+  static PyObject *convertToPythonList(std::vector<int> &data);
+
   //! create a python list out of the long array
   template<int D>
   static PyObject *convertToPythonList(std::array<long,D> &data);

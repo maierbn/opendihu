@@ -22,7 +22,7 @@ Paraview::Paraview(PyObject *settings) : Generic(settings)
 {
 }
 
-std::string Paraview::encodeBase64(Vec &vector)
+std::string Paraview::encodeBase64(const Vec &vector)
 {
   int vectorSize = 0;
   VecGetSize(vector, &vectorSize);
@@ -35,7 +35,7 @@ std::string Paraview::encodeBase64(Vec &vector)
   return encodeBase64(values);
 }
 
-std::string Paraview::convertToAscii(Vec &vector, bool fixedFormat)
+std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
 {
   std::vector<double> vectorValues;
   PetscUtility::getVectorEntries(vector, vectorValues);
@@ -43,8 +43,11 @@ std::string Paraview::convertToAscii(Vec &vector, bool fixedFormat)
   return convertToAscii(vectorValues, fixedFormat);
 }
 
-std::string Paraview::encodeBase64(std::vector<double> &vector)
+std::string Paraview::encodeBase64(const std::vector<double> &vector)
 {
+  // encode as Paraview Float32
+  assert(sizeof(float) == 4);
+  
   int rawLength = vector.size()*sizeof(float);
   int encodedLength = Base64::EncodedLength(rawLength);
 
@@ -70,7 +73,37 @@ std::string Paraview::encodeBase64(std::vector<double> &vector)
   return std::string(encoded);
 }
 
-std::string Paraview::convertToAscii(std::vector<double> &vector, bool fixedFormat)
+std::string Paraview::encodeBase64(const std::vector<element_no_t> &vector)
+{
+  // encode as Paraview Int32
+  assert(sizeof(element_no_t) == 4);
+  
+  int rawLength = vector.size()*sizeof(element_no_t);
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  char raw[rawLength];
+  for (unsigned int i=0; i<vector.size(); i++)
+  {
+    union {
+      element_no_t integer;
+      char c[4];
+    };
+    integer = vector[i];
+    memcpy(raw+i*sizeof(element_no_t), c, 4);
+  }
+
+  char encoded[encodedLength+1];
+  //Base64::Encode(reinterpret_cast<char *>(vector.data()), rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  if (!success)
+    LOG(WARNING) << "encoding failed";
+
+  encoded[encodedLength] = '\0';
+
+  return std::string(encoded);
+}
+
+std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fixedFormat)
 {
   std::stringstream result;
   for(auto value : vector)
@@ -78,6 +111,23 @@ std::string Paraview::convertToAscii(std::vector<double> &vector, bool fixedForm
     if(fixedFormat)
     {
       result << std::setw(16) << std::scientific << value << " ";
+    }
+    else
+    {
+      result << value << " ";
+    }
+  }
+  return result.str();
+}
+
+std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bool fixedFormat)
+{
+  std::stringstream result;
+  for(auto value : vector)
+  {
+    if(fixedFormat)
+    {
+      result << std::setw(16) << std::scientific << (float)(value) << " ";
     }
     else
     {

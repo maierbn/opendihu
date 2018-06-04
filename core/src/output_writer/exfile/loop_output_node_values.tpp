@@ -56,7 +56,7 @@ outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string mesh
   fieldVariable->mesh()->getNodeDofs(nodeGlobalNo, dofGlobalNos);
 
   // loop over components of the field variable
-  for (int componentNo = 0; componentNo < fieldVariable->getNComponents(); componentNo++)
+  for (int componentNo = 0; componentNo < fieldVariable->nComponents(); componentNo++)
   {
     // get the values of the dofs for the current component
     //std::array<double,nDofsPerNode> values;

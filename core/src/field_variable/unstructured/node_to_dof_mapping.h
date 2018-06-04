@@ -41,6 +41,9 @@ public:
   //! get the dofs of a node
   std::vector<dof_no_t> &getNodeDofs(node_no_t nodeGlobalNo);
 
+  //! get the dof of a node
+  dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
+
   //! get the dofs of a node
   std::vector<double> &getNodeScaleFactors(node_no_t nodeGlobalNo);
 

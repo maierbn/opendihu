@@ -183,30 +183,26 @@ if dimension == 2:
     ax.set_zlabel('Z')
     
     # create mesh
+  
+    if data[0]["basisFunction"] == "Lagrange":
+      n_average_nodes_1D_per_element = data[0]["basisOrder"]
+    
+    elif data[0]["basisFunction"] == "Hermite":
+      n_average_nodes_1D_per_element = 1
+    
     if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed" or data[0]["meshType"] == "StructuredDeformable":
       
       if debug:
         print "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"])
       
-      if data[0]["basisFunction"] == "Lagrange":
-        nEntries = dimension * [0]
-        for i in range(dimension):
-          nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
-          
-      elif data[0]["basisFunction"] == "Hermite":
-        nEntries = dimension * [0]
-        for i in range(dimension):
-          nEntries[i] = data[0]["nElements"][i] + 1
-      
+      nEntries = []
+      for i in range(dimension):
+        nEntries.append(n_average_nodes_1D_per_element * data[0]["nElements"][i] + 1)
+
       nEntries = nEntries[::-1]   # reverse list
       
       x_positions = py_reader.get_values(data[0], "geometry", "x")
       y_positions = py_reader.get_values(data[0], "geometry", "y")
-      
-      # for hermite basis functions only take every 2nd value
-      if data[0]["basisFunction"] == "Hermite":
-        x_positions = x_positions[::2]
-        y_positions = y_positions[::2]
       
       X = np.reshape(x_positions, nEntries)
       Y = np.reshape(y_positions, nEntries)
@@ -221,19 +217,36 @@ if dimension == 2:
       #print "x_positions shape: {}".format(len(x_positions))
       
     elif data[0]["meshType"] == "UnstructuredDeformable":
+      if not data[0]["onlyNodalValues"]:
+        print "Error: onlyNodalValues is False, set to True in OutputWriter config!"
+      
       x_positions = py_reader.get_values(data[0], "geometry", "x")
       y_positions = py_reader.get_values(data[0], "geometry", "y")
       X = x_positions
       Y = y_positions
+      
+      triangles = []
+      for elemental_dofs in data[0]["elementalDofs"]:
+        
+        # for linear Lagrange and Hermite
+        if n_average_nodes_1D_per_element == 1:
+          triangles.append([elemental_dofs[0], elemental_dofs[1], elemental_dofs[3]])
+          triangles.append([elemental_dofs[0], elemental_dofs[3], elemental_dofs[2]])
+        else:  # for quadratic Lagrange
+          triangles.append([elemental_dofs[0], elemental_dofs[1], elemental_dofs[4]])
+          triangles.append([elemental_dofs[0], elemental_dofs[4], elemental_dofs[3]])
+          triangles.append([elemental_dofs[4], elemental_dofs[1], elemental_dofs[2]])
+          triangles.append([elemental_dofs[4], elemental_dofs[2], elemental_dofs[5]])
+          triangles.append([elemental_dofs[4], elemental_dofs[5], elemental_dofs[6]])
+          triangles.append([elemental_dofs[4], elemental_dofs[6], elemental_dofs[7]])
+          triangles.append([elemental_dofs[4], elemental_dofs[6], elemental_dofs[3]])
+          triangles.append([elemental_dofs[4], elemental_dofs[7], elemental_dofs[6]])
     
     def animate(i):
       ax.clear()
       
       # display data
       solution_shaped = py_reader.get_values(data[i], "solution", "0")
-      
-      if data[0]["basisFunction"] == "Hermite":
-        solution_shaped = solution_shaped[::2]
       
       try:
         Z = np.reshape(solution_shaped, nEntries)
@@ -246,7 +259,14 @@ if dimension == 2:
         except:
           pass
       
-      plot = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+      # for unstructured grid use plot_trisurf
+      if data[0]["meshType"] == "UnstructuredDeformable":
+        plot = ax.plot_trisurf(X, Y, triangles, Z, cmap=cm.coolwarm, linewidth=1)
+        
+      # for structured grids use plot_surface
+      else:
+        plot = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+        
       ax.set_zlim(min_value-margin, max_value+margin)
       ax.set_xlabel('X')
       ax.set_ylabel('Y')
@@ -259,7 +279,10 @@ if dimension == 2:
       if 'currentTime' in data[i]:
         current_time = data[i]['currentTime']
         
-      text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
+      if timestep == -1:
+        text.set_text("t = {}".format(current_time))
+      else:
+        text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
       
       return plot,
       

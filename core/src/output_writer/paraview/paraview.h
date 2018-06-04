@@ -21,33 +21,27 @@ public:
   template<typename DataType>
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
-private:
-
-  //! write out solution templated by dimension
-  template <int dimension, typename DataType>
-  void writeSolutionDim(DataType &data);
-
-  //! write serial vtkRectilinearGrid file (structured, suffix *.vtr)
-  template <typename Mesh, typename DataType>
-  void writeRectilinearGrid(DataType& data);
-
-  //! write serial vtkStructuredGrid file (structured, suffix *.vts)
-  template <int dimension, typename DataType>
-  void writeStructuredGrid(DataType& data);
-
-  //! write serial vtkUnstructuredGrid file (unstructured, suffix *.vtu)
-  template <int dimension, typename DataType>
-  void writeUnstructuredGrid(DataType& data);
-
+  //! write the given field variable as VTK <DataArray> element to file
+  template<typename FieldVariableType>
+  static void writeParaviewFieldVariable(FieldVariableType &fieldVariable, std::ofstream &file, bool binaryOutput, bool fixedFormat);
+  
   //! encode a Petsc vector in Base64
-  std::string encodeBase64(Vec &vector);
+  static std::string encodeBase64(const Vec &vector);
 
   //! encode a std::vector as base64
-  std::string encodeBase64(std::vector<double> &vector);
+  static std::string encodeBase64(const std::vector<double> &vector);
+
+  //! encode a std::vector as base64
+  static std::string encodeBase64(const std::vector<element_no_t> &vector);
 
   //! convert to a string with space separated values
-  std::string convertToAscii(Vec &vector, bool humanReadable);
-  std::string convertToAscii(std::vector<double> &vector, bool humanReadable);
+  static std::string convertToAscii(const Vec &vector, bool humanReadable);
+  
+  //! convert to a string with space separated values
+  static std::string convertToAscii(const std::vector<double> &vector, bool humanReadable);
+  
+  //! convert to a string with space separated values
+  static std::string convertToAscii(const std::vector<element_no_t> &vector, bool humanReadable);
 };
 
 };  // namespace

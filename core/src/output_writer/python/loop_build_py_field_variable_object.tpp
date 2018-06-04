@@ -44,9 +44,9 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
   }
  
   VLOG(2) << "field variable \"" << currentFieldVariable->name() << "\"";
-  VLOG(2) << "has "<<currentFieldVariable->getNComponents()<<" components: "<<currentFieldVariable->componentNames();
+  VLOG(2) << "has "<<currentFieldVariable->nComponents()<<" components: "<<currentFieldVariable->componentNames();
 
-  const int nComponents = currentFieldVariable->getNComponents();
+  const int nComponents = currentFieldVariable->nComponents();
   PyObject *pyComponents = PyList_New((Py_ssize_t)nComponents);
 
   // loop over components of field variable

@@ -10,7 +10,7 @@ namespace FieldVariable
 
 /** Base class for a field variable that also stores the component names
  */
-template<typename BasisOnMeshType, int nComponents>
+template<typename BasisOnMeshType, int nComponentsValue>
 class FieldVariableComponents :
   public FieldVariableBase<BasisOnMeshType>
 {
@@ -19,19 +19,23 @@ public:
   using FieldVariableBase<BasisOnMeshType>::FieldVariableBase;
 
   //! get the component names
-  const std::array<std::string,nComponents> &componentNames() const;
+  const std::array<std::string,nComponentsValue> &componentNames() const;
 
   //! get the component Name
   const std::string componentName(int componentNo) const;
 
   //! get the number of components
-  int getNComponents() const;
+  static constexpr int nComponents();
+
+  //! get the number of components
+  virtual int getNComponents() const;
+
 protected:
 
   //! get the componentNo that matches the componentName
   int findComponent(std::string componentName);
 
-  std::array<std::string,nComponents> componentNames_;   ///< names of the components, e.g. "x","y","z"
+  std::array<std::string,nComponentsValue> componentNames_;   ///< names of the components, e.g. "x","y","z"
 };
 
 }; // namespace

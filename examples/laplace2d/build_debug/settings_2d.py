@@ -20,7 +20,7 @@ config = {
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
-      #{"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      {"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},
       {"format": "PythonFile", "filename": "out/p"}
     ]
   },

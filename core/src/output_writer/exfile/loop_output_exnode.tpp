@@ -1,6 +1,6 @@
 #include "output_writer/exfile/loop_output_exnode.h"
 
-#include "output_writer/exfile/loop_count_n_field_variables_of_mesh.h"
+#include "output_writer/loop_count_n_field_variables_of_mesh.h"
 
 #include <cstdlib>
 
@@ -42,7 +42,7 @@ outputExnode(CurrentFieldVariableType currentFieldVariable, const OutputFieldVar
    
     // count number of field variables for the particular mesh
     int nFieldVariablesInMesh = 0;
-    loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
+    LoopOverTuple::loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
     
     // call exfile writer to output all field variables with the meshName
     ExfileWriter<BasisOnMesh, OutputFieldVariablesType>::outputExnode(file, fieldVariables, meshName, currentFieldVariable->mesh(), nFieldVariablesInMesh);

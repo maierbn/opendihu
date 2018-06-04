@@ -13,7 +13,7 @@
 namespace OutputWriter
 {
 
-namespace ExfileLoopOverTuple
+namespace LoopOverTuple
 {
  
  /** Static recursive loop from 0 to number of entries in the tuple
@@ -48,8 +48,8 @@ typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value,
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 
-};  //namespace ExfileLoopOverTuple
+};  //namespace LoopOverTuple
 
 };  //namespace OutputWriter
 
-#include "output_writer/exfile/loop_count_n_field_variables_of_mesh.tpp"
+#include "output_writer/loop_count_n_field_variables_of_mesh.tpp"

@@ -1,0 +1,45 @@
+# This script declares to SCons how to compile the example.
+# It has to be called from a SConstruct file.
+# The 'env' object is passed from there and contains further specification like directory and debug/release flags.
+#
+# Note: If you're creating a new example and copied this file, adjust the desired name of the executable in the 'target' parameter of env.Program.
+
+
+Import('env')     # import Environment object from calling SConstruct
+
+testcases = [
+  "laplace_1d_structured_regular_fixed_linear",
+  "laplace_1d_structured_regular_fixed_quadratic",
+  "laplace_1d_structured_regular_fixed_hermite",
+  "laplace_2d_structured_regular_fixed_linear",
+  "laplace_2d_structured_regular_fixed_quadratic",
+  "laplace_2d_structured_regular_fixed_hermite",
+  "laplace_3d_structured_regular_fixed_linear",
+  "laplace_3d_structured_regular_fixed_quadratic",
+  "laplace_3d_structured_regular_fixed_hermite",
+  
+  "laplace_1d_structured_deformable_linear",
+  "laplace_1d_structured_deformable_quadratic",
+  "laplace_1d_structured_deformable_hermite",
+  "laplace_2d_structured_deformable_linear",
+  "laplace_2d_structured_deformable_quadratic",
+  "laplace_2d_structured_deformable_hermite",
+  "laplace_3d_structured_deformable_linear",
+  "laplace_3d_structured_deformable_quadratic",
+  "laplace_3d_structured_deformable_hermite",
+  
+  "laplace_1d_unstructured_deformable_linear",
+  "laplace_1d_unstructured_deformable_quadratic",
+  "laplace_1d_unstructured_deformable_hermite",
+  "laplace_2d_unstructured_deformable_linear",
+  "laplace_2d_unstructured_deformable_quadratic",
+  "laplace_2d_unstructured_deformable_hermite",
+  "laplace_3d_unstructured_deformable_linear",
+  "laplace_3d_unstructured_deformable_quadratic",
+  "laplace_3d_unstructured_deformable_hermite",
+]
+
+#testcases = ["laplace_2d_unstructured_deformable_quadratic"]
+
+for testcase in testcases:
+  env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

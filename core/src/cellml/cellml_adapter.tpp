@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include <list>
+#include <sstream>
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
@@ -694,15 +695,42 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   VecGetArray(input, &states);    // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
   VecGetArray(output, &rates);
 
-  // get new values for parameters
+  LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances_=" << nInstances_ << ", nStates=" << nStates;
+  
+  // get new values for parameters, call callback function of python config
   if (setParameters_ && timeStepNo % setParametersCallInterval_ == 0)
+  {
+    LOG(DEBUG) << "call setParameters";
     setParameters_((void *)this, nInstances_, timeStepNo, currentTime, parameters_);
+  }
 
   //              this          STATES, RATES, WANTED,                KNOWN
   if(rhsRoutineSimd_)
+  {
+    LOG(DEBUG) << "call simd rhs routine";
+    
+    
+    std::stringstream s;
+    for (int i = 0; i < nStates; i++)
+    {
+      s << states[i] << " ";
+    }
+    LOG(DEBUG) << "  input states: " << s.str();
+    
     rhsRoutineSimd_((void *)this, states, rates, intermediates_.data(), parameters_.data());
+    
+    s.str("");
+    for (int i = 0; i < nStates; i++)
+    {
+      s << rates[i] << " ";
+    }
+    LOG(DEBUG) << "  output rates: " << s.str();
+    LOG(DEBUG) << "  output intermediates: " << intermediates_;
+    LOG(DEBUG) << "  output parameters: " << parameters_;
+    
+  }
 
-  // handle intermediates
+  // handle intermediates, call callback function of python config
   if (handleResult_ && timeStepNo % handleResultCallInterval_ == 0)
   {
     int nStatesInput;

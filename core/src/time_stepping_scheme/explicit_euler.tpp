@@ -35,7 +35,10 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
 
-    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().values());
+    if (timeStepNo < 2)
+    {
+      LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().values());
+    }
 
     // advance computed value
     // compute next delta_u = f(u)
@@ -45,8 +48,11 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     // integrate, y += dt * delta_u
     VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
 
-    LOG_EVERY_N(1000,DEBUG) << "dt=" << timeStepWidth << ", delta_u=" << PetscUtility::getStringVector(this->data_->increment().values())
-      << ", new y=" << PetscUtility::getStringVector(this->data_->solution().values());
+    if (timeStepNo < 2)
+    {
+      LOG(DEBUG) << "dt=" << timeStepWidth << ", delta_u=" << PetscUtility::getStringVector(this->data_->increment().values())
+        << ", new y=" << PetscUtility::getStringVector(this->data_->solution().values());
+    }
     
     // advance simulation time
     timeStepNo++;

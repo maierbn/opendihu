@@ -47,6 +47,7 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
+  // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstances_; i++)
   {
     instances_[i].advanceTimeSpan();
@@ -94,6 +95,7 @@ template<class TimeSteppingScheme>
 bool MultipleInstances<TimeSteppingScheme>::
 knowsMeshType()
 {
+  // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
   assert(nInstances_ > 0);
   return instances_[0].knowsMeshType();
 }
@@ -105,13 +107,5 @@ solution()
   assert(nInstances_ > 0);
   return instances_[0].solution();
 }
-/*
-template<class TimeSteppingScheme>
-SolutionVectorMapping &MultipleInstances<TimeSteppingScheme>::
-solutionVectorMapping()
-{
-  assert(nInstances_ > 0);
-  return instances_[0].solutionVectorMapping();
-}
-*/
+
 };

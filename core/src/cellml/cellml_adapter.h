@@ -98,6 +98,9 @@ private:
   PyObject *pythonSetParametersFunction_;   ///< Python function handle that is called to set parameters to the CellML problem from the python config
   PyObject *pythonHandleResultFunction_;   ///< Python function handle that is called to process results from CellML problem from the python config
 
+  PyObject *pySetParametersFunctionAdditionalParameter_;  ///< an additional python object that will be passed as last argument to the setParameters callback function
+  PyObject *pyHandleResultFunctionAdditionalParameter_;   ///< an additional python object that will be passed as last argument to the handleResult callback function
+  
   std::string sourceFilename_;        ///< the filename of the source file that actually is used for rhs
 
   //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine

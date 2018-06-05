@@ -54,9 +54,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
              std::shared_ptr<BasisOnMeshType> mesh, int nFieldVariablesOfMesh)
 {
   VLOG(2) << "ExfileWriter<Structured>::outputExnode, meshName: " << meshName << ",nFieldVariablesOfMesh:" << nFieldVariablesOfMesh;
-  
-  VLOG(2) << "geometry at " << std::get<0>(fieldVariables)->values();
-  
+    
   stream << " Group name: " << meshName << std::endl
     << " #Fields=" << nFieldVariablesOfMesh << std::endl;
 

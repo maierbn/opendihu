@@ -31,6 +31,7 @@ private:
     std::string filename;  ///< the filename 
     element_no_t nElements;  ///< the number of elements 
     node_no_t nNodes;   ///< the number of nodes
+    std::string meshName;  ///< the mesh name
   };
   
   std::vector<FilenameWithElementAndNodeCount> filenamesWithElementAndNodeCount_;   ///< the filenames without suffix of all previously output exelem files

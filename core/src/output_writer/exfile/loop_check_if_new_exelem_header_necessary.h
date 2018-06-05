@@ -40,10 +40,18 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary);
 
+
+/** Loop body for a tuple element
+ */
+template<typename VectorType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+                                element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary);
+
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 checkIfNewExelemHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary);
 

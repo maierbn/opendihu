@@ -26,7 +26,7 @@ loopGetValuesAtNode(const OutputFieldVariablesType &fieldVariables, std::string 
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
@@ -54,19 +54,32 @@ getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshN
   return false;  // do not break iteration
 }
 
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+getValuesAtNode(TupleType currentFieldVariableTuple, std::string meshName, 
+                element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
+{
+  // call for tuple element
+  loopGetValuesAtNode<TupleType>(currentFieldVariableTuple, meshName, currentNodeGlobalNo, valuesAtNode);
+  
+  return false;  // do not break iteration
+}
+
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName, 
-                     element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
+                element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (getValuesAtNode<typename VectorType::value_type>(currentFieldVariable, meshName, currentNodeGlobalNo, valuesAtNode))
-      return true;
+    if (getValuesAtNode<typename VectorType::value_type>(
+     currentFieldVariable, meshName, currentNodeGlobalNo, valuesAtNode))
+      return true; // break iteration
   }
-  
   return false;  // do not break iteration
 }
 

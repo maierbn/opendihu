@@ -34,6 +34,9 @@ public:
 
   ///! return the top-level python config object
   PyObject *getPythonConfig() const;
+  
+  ///! create a context object, like with the operator[] but with given settings
+  DihuContext createSubContext(PyObject *settings);
 
   ///! return the mesh manager object that contains all meshes
   std::shared_ptr<Mesh::Manager> meshManager() const;

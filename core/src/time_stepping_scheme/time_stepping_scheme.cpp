@@ -6,7 +6,7 @@ namespace TimeSteppingScheme
 {
 
 TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
-  context_(context)
+  context_(context), initialized_(false)
 {
   specificSettings_ = NULL;   // needs to be set by deriving class
   isTimeStepWidthSignificant_ = false;
@@ -37,6 +37,9 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
 
 void TimeSteppingScheme::initialize()
 {
+  if (initialized_)
+    return;
+  
   // initialize time stepping values
   startTime_ = 0.0;
   endTime_ = 1.0;
@@ -73,6 +76,7 @@ void TimeSteppingScheme::initialize()
 
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << (endTime_ - startTime_) / numberTimeSteps_;
+  initialized_ = true;
 }
 
 };  // namespace

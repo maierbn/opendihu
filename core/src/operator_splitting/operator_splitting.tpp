@@ -11,7 +11,7 @@ OperatorSplitting<TimeStepping1, TimeStepping2>::
 OperatorSplitting(DihuContext context, std::string schemeName) :
   ::TimeSteppingScheme::TimeSteppingScheme(context),
   timeStepping1_(context_[schemeName]["Term1"]),
-  timeStepping2_(context_[schemeName]["Term2"])
+  timeStepping2_(context_[schemeName]["Term2"]), initialized_(false)
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
@@ -22,6 +22,8 @@ template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
 initialize()
 {
+  if (initialized_)
+    return;
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   TimeSteppingScheme::initialize();
@@ -48,6 +50,8 @@ initialize()
 
   outputData1_ = PythonUtility::getOptionBool(specificSettings_, "outputData1", true);
   outputData2_ = PythonUtility::getOptionBool(specificSettings_, "outputData2", true);
+  
+  initialized_ = true;
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -74,5 +78,13 @@ knowsMeshType()
 {
   return timeStepping1_.knowsMeshType() && timeStepping2_.knowsMeshType();
 }
+
+template<typename TimeStepping1, typename TimeStepping2>
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::Data &OperatorSplitting<TimeStepping1, TimeStepping2>::
+data()
+{
+  return timeStepping1_.data();
+}
+
 
 };    // namespace

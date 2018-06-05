@@ -45,6 +45,9 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     // integrate, y += dt * delta_u
     VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
 
+    LOG_EVERY_N(1000,DEBUG) << "dt=" << timeStepWidth << ", delta_u=" << PetscUtility::getStringVector(this->data_->increment().values())
+      << ", new y=" << PetscUtility::getStringVector(this->data_->solution().values());
+    
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;

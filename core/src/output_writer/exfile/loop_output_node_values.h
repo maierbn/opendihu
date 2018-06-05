@@ -33,7 +33,6 @@ inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::va
 loopOutputNodeValues(const OutputFieldVariablesType &fieldVariables, std::string meshName,
                                     std::ostream &stream, node_no_t nodeGlobalNo);
 
-
 /** Loop body for a vector element
  */
 template<typename VectorType>
@@ -41,10 +40,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 outputNodeValues(VectorType currentFieldVariableVector, std::string meshName, 
                  std::ostream &stream, node_no_t nodeGlobalNo);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+outputNodeValues(VectorType currentFieldVariableVector, std::string meshName, 
+                 std::ostream &stream, node_no_t nodeGlobalNo);
+
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                  std::ostream &stream, node_no_t nodeGlobalNo);
 

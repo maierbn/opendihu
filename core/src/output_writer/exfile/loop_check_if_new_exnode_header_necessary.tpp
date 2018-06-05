@@ -27,7 +27,7 @@ loopCheckIfNewExnodeHeaderNecessary(const OutputFieldVariablesType &fieldVariabl
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary
 )
@@ -64,6 +64,18 @@ checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::stri
     if (checkIfNewExnodeHeaderNecessary<typename VectorType::value_type>(currentFieldVariable, meshName, currentNodeGlobalNo, newHeaderNecessary))
       return true;
   }
+  return false;  // do not break iteration
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+checkIfNewExnodeHeaderNecessary(TupleType currentFieldVariableTuple, std::string meshName,
+                                element_no_t currentNodeGlobalNo, bool &newHeaderNecessary)
+{
+  // call for tuple element
+  loopCheckIfNewExnodeHeaderNecessary<TupleType>(currentFieldVariableTuple, meshName, currentNodeGlobalNo, newHeaderNecessary);
+  
   return false;  // do not break iteration
 }
 

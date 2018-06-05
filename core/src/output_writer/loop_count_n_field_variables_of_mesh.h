@@ -41,10 +41,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string meshName, 
+                           int &nFieldVariablesOfMesh);
+
  /**  Loop body for a vector element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                            int &nFieldVariablesOfMesh);
 

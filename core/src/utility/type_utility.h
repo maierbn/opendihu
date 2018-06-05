@@ -15,4 +15,12 @@ struct isVector : std::false_type {};
 template<typename Type, typename Allocator>
 struct isVector<std::vector<Type,Allocator>> : std::true_type {};
  
+/** Determine if the type is a tuple
+ */
+template<typename... Types>
+struct isTuple : std::false_type {};
+ 
+template<typename... Types>
+struct isTuple<std::tuple<Types...>> : std::true_type {};
+ 
 };

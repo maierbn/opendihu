@@ -11,7 +11,7 @@ namespace TimeSteppingScheme
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOde<DiscretizableInTimeType>::
 TimeSteppingSchemeOde(DihuContext context, const std::string name) :
-  TimeSteppingScheme(context), discretizableInTime_(context[name])
+  TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
 }
 
@@ -60,6 +60,9 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 initialize()
 {
+  if (initialized_)
+    return;
+ 
   TimeSteppingScheme::initialize();
   LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
 
@@ -81,6 +84,8 @@ initialize()
     this->setInitialValues();
   }
   data_->print();
+  
+  initialized_ = true;
 }
 
 template<typename DiscretizableInTimeType>

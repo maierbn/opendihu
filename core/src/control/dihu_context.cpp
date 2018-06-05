@@ -295,6 +295,20 @@ DihuContext DihuContext::operator[](std::string keyString)
   return dihuContext;
 }
 
+DihuContext DihuContext::createSubContext(PyObject *settings)
+{
+  int argc = 0;
+  char **argv = NULL;
+  DihuContext dihuContext(argc, argv);
+
+  dihuContext.pythonConfig_ = settings;
+  VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
+  Py_XINCREF(dihuContext.pythonConfig_);
+
+  return dihuContext;
+}
+
+
 void DihuContext::loadPythonScriptFromFile(std::string filename)
 {
   // initialize python interpreter

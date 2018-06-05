@@ -27,7 +27,7 @@ loopOutputNodeValues(const OutputFieldVariablesType &fieldVariables, std::string
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::ostream &stream, node_no_t nodeGlobalNo)
 {
@@ -92,6 +92,18 @@ outputNodeValues(VectorType currentFieldVariableVector, std::string meshName,
     if (outputNodeValues<typename VectorType::value_type>(currentFieldVariable, meshName, stream, nodeGlobalNo))
       return true;
   }
+  
+  return false;  // do not break iteration
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+outputNodeValues(TupleType currentFieldVariableTuple, std::string meshName,
+                 std::ostream &stream, node_no_t nodeGlobalNo)
+{
+  // call for tuple element
+  loopOutputNodeValues<TupleType>(currentFieldVariableTuple, meshName, stream, nodeGlobalNo);
   
   return false;  // do not break iteration
 }

@@ -27,7 +27,7 @@ loopBuildPyFieldVariableObject(const OutputFieldVariablesType &fieldVariables, i
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
@@ -93,6 +93,19 @@ buildPyFieldVariableObject(VectorType currentFieldVariableVector, int &fieldVari
     if (buildPyFieldVariableObject<typename VectorType::value_type>(currentFieldVariable, fieldVariableIndex, meshName, pyData, onlyNodalValues, mesh))
       return true;
   }
+  
+  return false;  // do not break iteration
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+buildPyFieldVariableObject(TupleType currentFieldVariableTuple, int &fieldVariableIndex, std::string meshName, 
+                           PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
+{
+  // call for tuple element
+  loopBuildPyFieldVariableObject<TupleType>(currentFieldVariableTuple, fieldVariableIndex, meshName,
+                                            pyData, onlyNodalValues, mesh);
   
   return false;  // do not break iteration
 }

@@ -53,6 +53,7 @@ protected:
   double timeStepWidth_;        ///< a timeStepWidth value that is used to compute the number of time steps
 
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+  bool initialized_;      ///< if initialize() was already called
 };
 
 }  // namespace

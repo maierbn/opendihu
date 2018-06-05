@@ -64,7 +64,7 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     std::ofstream file = openFile(filenameExelem);
     // output the exelem file for all field variables that are defined on the specified meshName
     std::shared_ptr<Mesh::Mesh> mesh = nullptr;
-    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), meshName, file, mesh);
+    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, file, mesh);
     file.close();
 
     // exnode file
@@ -75,7 +75,7 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     // open file
     file = openFile(filenameExnode);
     // output the exnode file for all field variables that are defined on the specified meshName
-    ExfileLoopOverTuple::loopOutputExnode(data.getOutputFieldVariables(), meshName, file);
+    ExfileLoopOverTuple::loopOutputExnode(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, file);
     file.close();
 
     // store created filename
@@ -83,6 +83,7 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     item.filename = filenameStart.str();
     item.nElements = mesh->nElements();
     item.nNodes = mesh->nNodes();
+    item.meshName = meshName;
     filenamesWithElementAndNodeCount_.push_back(item);
   }
   

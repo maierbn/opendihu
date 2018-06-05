@@ -35,9 +35,9 @@ with open('../mesh', 'rb') as f:
 bc = {}
 if "hermite" in name:
   for bottom_node_index in data["bottom_nodes"]:
-    bc[2*bottom_node_index] = 0.0
+    bc[8*bottom_node_index] = 0.0
   for top_node_index in data["top_nodes"]:
-    bc[2*top_node_index] = 1.0
+    bc[8*top_node_index] = 1.0
 else:
   for bottom_node_index in data["bottom_nodes"]:
     bc[bottom_node_index] = 0.0

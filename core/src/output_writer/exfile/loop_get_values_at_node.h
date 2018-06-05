@@ -41,10 +41,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName, 
+                element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
+
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode);
 

@@ -40,10 +40,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 buildPyFieldVariableObject(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+buildPyFieldVariableObject(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+                           PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh);
+
 /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh);
 

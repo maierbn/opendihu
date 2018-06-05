@@ -27,7 +27,7 @@ loopOutputHeaderExnode(const OutputFieldVariablesType &fieldVariables, int &fiel
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 outputHeaderExnode(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex)
 {
@@ -55,6 +55,18 @@ outputHeaderExnode(VectorType currentFieldVariableVector, int &fieldVariableInde
     if (outputHeaderExnode<typename VectorType::value_type>(currentFieldVariable, fieldVariableIndex, meshName, stream, currentNodeGlobalNo, valueIndex))
       return true;
   }
+  return false;  // do not break iteration 
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+outputHeaderExnode(TupleType currentFieldVariableTuple, int &fieldVariableIndex, std::string meshName, 
+                   std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex)
+{
+  // call for tuple element
+  loopOutputHeaderExnode<TupleType>(currentFieldVariableTuple, fieldVariableIndex, meshName, stream, currentNodeGlobalNo, valueIndex);
+  
   return false;  // do not break iteration 
 }
 

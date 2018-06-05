@@ -49,13 +49,13 @@ void Exfile::outputComFile()
     << t->tm_mday << "/" << t->tm_mon+1 << "/" << t->tm_year+1900 << " "
     << std::setfill('0') << std::setw(2) << t->tm_hour << ":" << t->tm_min << ":" << t->tm_sec << std::endl
     << "# run by cmgui " << basename << ".com" << std::endl;
-  file << "$group = \"Region\"" << std::endl
-    << "$n = 1;" << std::endl << std::endl
-    << "# read files" << std::endl;
+  file << "# read files" << std::endl;
 
   
   node_no_t nodeOffset = 1;
   element_no_t elementOffset = 1;
+  
+  std::string lastMeshName;
   
   // loop over stored files with their contained number of nodes and elements
   for (std::vector<FilenameWithElementAndNodeCount>::const_iterator iter = filenamesWithElementAndNodeCount_.begin(); iter != filenamesWithElementAndNodeCount_.end(); iter++)
@@ -77,8 +77,13 @@ void Exfile::outputComFile()
     // increase offsets by number of nodes and elements in the current files
     nodeOffset += iter->nNodes;
     elementOffset += iter->nElements;
+    lastMeshName = iter->meshName;
   }
 
+  file << std::endl
+    << "# set the group name of the mesh which should be output as 3D representation below. This is by default the last loaded dataset." << std::endl
+    << "$group = \"" << lastMeshName << "\"" << std::endl;
+    
   file << std::endl
     << "# create materials" << std::endl
     << "gfx create material muscle_transparent normal_mode ambient 0.4 0.14 0.11 diffuse 0.5 0.12 0.1 emission 0 0 0 specular 0.3 0.5 0.5 alpha 0.25 shininess 0.2" << std::endl << std::endl

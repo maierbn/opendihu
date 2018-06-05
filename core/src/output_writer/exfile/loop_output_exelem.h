@@ -21,9 +21,9 @@ namespace ExfileLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  *  Stopping criterion
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i == std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopOutputExelem(const OutputFieldVariablesType &fieldVariables, std::string meshName,
+loopOutputExelem(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables, std::string meshName,
                  std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh
 )
 {}
@@ -31,11 +31,10 @@ loopOutputExelem(const OutputFieldVariablesType &fieldVariables, std::string mes
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
-loopOutputExelem(const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+loopOutputExelem(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables, std::string meshName, 
                  std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
-
 
 /** Loop body for a vector element
  */
@@ -44,10 +43,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 outputExelem(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType, typename OutputFieldVariablesType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+outputExelem(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+             std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
+
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 outputExelem(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh);
 

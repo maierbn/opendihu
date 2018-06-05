@@ -30,7 +30,7 @@ loopCollectFieldVariablesNames(const OutputFieldVariablesType &fieldVariables, s
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 collectFieldVariablesNames(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
                            std::vector<std::string> &scalars, std::vector<std::string> &vectors)
 {
@@ -61,9 +61,21 @@ collectFieldVariablesNames(VectorType currentFieldVariableVector, const OutputFi
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
     // call function on all vector entries
-    if (output<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshName, scalars, vectors))
+    if (collectFieldVariablesNames<typename VectorType::value_type,OutputFieldVariablesType>(currentFieldVariable, fieldVariables, meshName, scalars, vectors))
       return true; // break iteration
   }
+  return false;  // do not break iteration 
+}
+
+// element i is of tuple type
+template<typename TupleType, typename OutputFieldVariablesType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+collectFieldVariablesNames(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
+                           std::vector<std::string> &scalars, std::vector<std::string> &vectors)
+{
+  // call for tuple element
+  loopCollectFieldVariablesNames<TupleType>(currentFieldVariableTuple, meshName, scalars, vectors);
+ 
   return false;  // do not break iteration 
 }
 

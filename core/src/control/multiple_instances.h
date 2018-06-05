@@ -5,12 +5,13 @@
 
 #include "control/runnable.h"
 #include "control/dihu_context.h"
-#include "data_management/solution_vector_mapping.h"
+#include "data_management/multiple_instances.h"
+#include "output_writer/manager.h"
 
 namespace Control
 {
 
-/** This class hold multiple instances of the template type, e.g. for having multiple fibres, which are each as in example electrophysiology
+/** This class holds multiple instances of the template type, e.g. for having multiple fibres, which are each as in example electrophysiology
   */
 template<class TimeSteppingScheme>
 class MultipleInstances: public Runnable
@@ -35,19 +36,19 @@ public:
   //! returns the Petsc solution vector
   Vec &solution();
 
-  //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
-  SolutionVectorMapping &solutionVectorMapping();
-
   //! run solution process
   void run();
 
 protected:
 
   DihuContext context_; ///< the context object that holds the config for this class
+  PyObject *specificSettings_;    ///< config for this object
+  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+
   int nInstances_; ///< number of instances
-
   std::vector<TimeSteppingScheme> instances_;   ///< the instances of the problem
-
+  
+  Data::MultipleInstances<typename TimeSteppingScheme::BasisOnMesh, TimeSteppingScheme> data_;  ///< the data object
 };
 
 };

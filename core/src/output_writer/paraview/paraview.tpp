@@ -36,7 +36,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
       filenameStart << this->filename_ << "_" << meshName;
    
     // loop over all field variables and output those that are associated with the mesh given by meshName
-    ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
+    ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
   }
 }
 

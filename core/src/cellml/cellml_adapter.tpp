@@ -20,7 +20,8 @@ CellmlAdapter<nStates>::
 CellmlAdapter(DihuContext context) :
   DiscretizableInTime(SolutionVectorMapping(true)),
   context_(context), setParameters_(NULL), handleResult_(NULL),
-  pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL)
+  pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
+  pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL)
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
@@ -524,6 +525,16 @@ initialize()
     };
     LOG(DEBUG) << "registered handleResult function";
   }
+  
+  if (PythonUtility::hasKey(specificSettings_, "setParametersFunctionAdditionalParameter"))
+  {
+    pySetParametersFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(specificSettings_, "setParametersFunctionAdditionalParameter");
+  }
+  
+  if (PythonUtility::hasKey(specificSettings_, "handleResultFunctionAdditionalParameter"))
+  {
+    pyHandleResultFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(specificSettings_, "handleResultFunctionAdditionalParameter");
+  }
 }
 
 template<int nStates>
@@ -535,7 +546,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O)", nInstances, timeStepNo, currentTime, parametersList);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, parametersList, pySetParametersFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message
@@ -567,7 +578,7 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
   LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << nInstances_<<", nStates: " << nStates << ", nIntermediates: " << nIntermediates_;
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*nInstances_, states);
   PyObject *intermediatesList = PythonUtility::convertToPythonList(nIntermediates_*nInstances_, intermediates);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList, pyHandleResultFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonHandleResultFunction_, arglist);
 
   // if there was an error while executing the function, print the error message

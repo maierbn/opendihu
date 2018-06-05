@@ -26,7 +26,7 @@ loopCountNFieldVariablesOfMesh(const OutputFieldVariablesType &fieldVariables, s
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                            int &nFieldVariablesOfMesh)
 {
@@ -52,6 +52,18 @@ countNFieldVariablesOfMesh(VectorType currentFieldVariableVector, std::string me
       return true;
   }
   
+  return false;  // do not break iteration
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+countNFieldVariablesOfMesh(TupleType currentFieldVariableTuple, std::string meshName,
+                           int &nFieldVariablesOfMesh)
+{
+  // call for tuple element
+  loopCountNFieldVariablesOfMesh<TupleType>(currentFieldVariableTuple, meshName, nFieldVariablesOfMesh);
+ 
   return false;  // do not break iteration
 }
 

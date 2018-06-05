@@ -42,10 +42,17 @@ typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 getFirstFieldVariableOfMesh(VectorType currentFieldVariableVector, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 
+/** Loop body for a tuple element
+ */
+template<typename VectorType, typename FieldVariableType>
+typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
+getFirstFieldVariableOfMesh(VectorType currentFieldVariableVector, std::string meshName,
+                                std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
+
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename FieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 getFirstFieldVariableOfMesh(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 std::shared_ptr<FieldVariableType> &firstFieldVariableOfMesh);
 

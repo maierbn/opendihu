@@ -26,7 +26,7 @@ loopCollectMeshNames(const OutputFieldVariablesType &fieldVariables, std::set<st
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::string> &meshNames)
 {
   // get mesh name and insert into meshNames
@@ -48,6 +48,17 @@ collectMeshNames(VectorType currentFieldVariableVector, std::set<std::string> &m
       return true;
   }
   
+  return false;  // do not break iteration
+}
+
+// element i is of tuple type
+template<typename TupleType>
+typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
+collectMeshNames(TupleType currentFieldVariableTuple, std::set<std::string> &meshNames)
+{
+  // call for tuple element
+  loopCollectMeshNames<TupleType>(currentFieldVariableTuple, meshNames);
+ 
   return false;  // do not break iteration
 }
 

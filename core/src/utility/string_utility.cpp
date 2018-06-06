@@ -68,4 +68,13 @@ std::string multiply<3>(std::string str)
   return str+"*"+str+"*"+str;
 }
 
+std::string extractBasename(std::string str)
+{
+  if (str.rfind(".") != std::string::npos)
+  {
+    return str.substr(0, str.rfind("."));
+  }
+  return str;
+}
+
 }; // namespace

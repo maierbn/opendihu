@@ -1,6 +1,8 @@
 #include "postprocessing/streamline_tracer.h"
 
+#include <algorithm>
 #include <petscvec.h>
+
 #include "utility/python_utility.h"
 
 namespace Postprocessing
@@ -17,10 +19,13 @@ StreamlineTracer(DihuContext context) :
   VLOG(2) << "in StreamlineTracer(), specificSettings_: " << specificSettings_;
   outputWriterManager_.initialize(specificSettings_);
 
-  lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2);
+  lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2, PythonUtility::Positive);
+  targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 1e-1, PythonUtility::Positive);
+  discardRelativeLength_ = PythonUtility::getOptionDouble(specificSettings_, "discardRelativeLength", 0.0, PythonUtility::Positive);
   maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
   useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField_", false);
-   
+  csvFilename_ = PythonUtility::getOptionString(specificSettings_, "csvFilename", "");
+  
   // get the first seed position from the list
   PyObject *pySeedPositions = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "seedPoints");
 
@@ -184,8 +189,6 @@ traceStreamlines()
   //#pragma omp parallel for shared(nodePositions)
   for (int seedPointNo = 0; seedPointNo < nSeedPoints; seedPointNo++)
   {
-    LOG(DEBUG) << " seed point " << seedPointNo;
-   
     // get starting point
     Vec3 startingPoint = seedPositions_[seedPointNo];
     nodePositions[seedPointNo].push_back(startingPoint);
@@ -212,23 +215,32 @@ traceStreamlines()
     nodePositions[seedPointNo].insert(nodePositions[seedPointNo].begin(), backwardPoints.rbegin(), backwardPoints.rend());
     nodePositions[seedPointNo].insert(nodePositions[seedPointNo].end(), startingPoint);
     nodePositions[seedPointNo].insert(nodePositions[seedPointNo].end(), forwardPoints.begin(), forwardPoints.end());
+    
+    LOG(DEBUG) << " seed point " << seedPointNo << ", " << nodePositions[seedPointNo].size() << " points";
   }
   
+  // coarsen streamlines and drop too small streamlines
+  postprocessStreamlines(nodePositions);
+ 
   // create 1D meshes of streamline from collected node positions
-  std::ofstream file("streamlines.csv");
-  if (!file.is_open())
-    LOG(WARNING) << "Could not open streamlines.csv for writing";
-  
-  for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
+  if (!csvFilename_.empty())
   {
-    for (std::vector<Vec3>::const_iterator iter = nodePositions[seedPointNo].begin(); iter != nodePositions[seedPointNo].end(); iter++)
+    std::ofstream file(csvFilename_);
+    if (!file.is_open())
+      LOG(WARNING) << "Could not open \"" << csvFilename_ << "\" for writing";
+    
+    for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
     {
-      Vec3 point = *iter;
-      file << point[0] << ";" << point[1] << ";" << point[2] << ";";
+      for (std::vector<Vec3>::const_iterator iter = nodePositions[seedPointNo].begin(); iter != nodePositions[seedPointNo].end(); iter++)
+      {
+        Vec3 point = *iter;
+        file << point[0] << ";" << point[1] << ";" << point[2] << ";";
+      }
+      file << "\n";
     }
-    file << "\n";
+    file.close();
+    LOG(INFO) << "File \"" << csvFilename_ << "\" written.";
   }
-  file.close();
   
   // create new meshes, one for each streamline 
   for (int seedPointNo = 0; seedPointNo != seedPositions_.size(); seedPointNo++)
@@ -237,5 +249,115 @@ traceStreamlines()
     this->data_.createFibreMesh(nodePositions[seedPointNo]);
   }
 }
+
+template<typename DiscretizableInTimeType>
+void StreamlineTracer<DiscretizableInTimeType>::
+postprocessStreamlines(std::vector<std::vector<Vec3>> &nodePositions)
+{
+  if (discardRelativeLength_ != 0.0)
+  {
+   
+    std::vector<double> lengths(nodePositions.size());
+   
+    // compute length of each streamline 
+    int i = 0;
+    // loop over streamlines
+    for (std::vector<std::vector<Vec3>>::iterator streamlinesIter = nodePositions.begin(); streamlinesIter != nodePositions.end(); streamlinesIter++, i++)
+    {
+      lengths[i] = 0.0;
+      
+      Vec3 lastPoint;
+      bool firstPoint = true;
+      int pointNo = 0;
+      
+      // loop over points of streamline
+      for (std::vector<Vec3>::iterator pointsIter = streamlinesIter->begin(); pointsIter != streamlinesIter->end(); pointsIter++, pointNo++)
+      {
+        if (!firstPoint)
+        {
+          lengths[i] += MathUtility::distance<3>(*pointsIter, lastPoint);
+        }
+        firstPoint = false;
+        lastPoint = *pointsIter;
+      }
+    }
+    
+    LOG(DEBUG) << " lengths of streamlines: " << lengths;
+    
+    // sort length
+    std::vector<double> lengthsSorted(lengths);
+    std::sort(lengthsSorted.begin(), lengthsSorted.end());
+    
+    // get median 
+    double medianLength = lengthsSorted[lengthsSorted.size()/2];
+    LOG(INFO) << "The median length of the streamlines is " << medianLength << ".";
+    
+    // clear streamlines that are shorter than discardRelativeLength_
+    // loop over streamlines
+    i = 0;
+    for (std::vector<std::vector<Vec3>>::iterator streamlinesIter = nodePositions.begin(); streamlinesIter != nodePositions.end(); streamlinesIter++, i++)
+    { 
+      if (lengths[i] < discardRelativeLength_*medianLength) 
+      {
+        LOG(INFO) << "Discarding streamline no. " << i << " with length " << lengths[i] << " (Threshold " << discardRelativeLength_*medianLength << ").";
+        streamlinesIter->clear();
+      }
+    }
+    
+    // remove previously cleared streamlines
+    nodePositions.erase(std::remove_if(nodePositions.begin(), nodePositions.end(), [](const std::vector<Vec3> &a)-> bool{return a.empty();}), nodePositions.end());
+  }
+  
+  // resample streamlines
+  if (targetElementLength_ != 0.0 && targetElementLength_ != lineStepWidth_)
+  {
+    // loop over streamlines
+    for (int i = 0; i < nodePositions.size(); i++)
+    {
+      std::vector<Vec3> &currentStreamline = nodePositions[i];
+      
+      if (currentStreamline.empty())
+      {
+        LOG(DEBUG) << "Streamline is empty";
+      }
+      else 
+      {
+        std::vector<Vec3> newStreamline;
+        newStreamline.reserve(int(currentStreamline.size()*targetElementLength_/lineStepWidth_+10));
+        
+        Vec3 lastPoint = currentStreamline.front();
+        // use starting point of streamline
+        newStreamline.push_back(lastPoint);
+        double length = 0.0;
+        bool firstPoint = true;
+        
+        // loop over points of streamline
+        for (std::vector<Vec3>::iterator pointsIter = currentStreamline.begin(); pointsIter != currentStreamline.end(); pointsIter++)
+        {
+          if (!firstPoint)
+          {
+            length += MathUtility::length<3>(*pointsIter - lastPoint);
+            if (length > targetElementLength_)
+            {
+              double alpha = targetElementLength_/length;
+              Vec3 point = (1. - alpha) * lastPoint + alpha * (*pointsIter);
+              
+              newStreamline.push_back(point);
+              
+              lastPoint = point;
+              length = 0.0;
+            }
+          }
+          firstPoint = false;
+        }
+        LOG(DEBUG) << "Resampled streamline from lineStepWidth " << lineStepWidth_ << " to targetElementLength " << targetElementLength_ 
+          << ", now it has " << newStreamline.size() << " points.";
+        nodePositions[i] = newStreamline;
+      }
+    }
+  }
+   
+}
+
 
 };

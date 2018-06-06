@@ -19,6 +19,8 @@
  */
 template <int nStates>
 class CellmlAdapter :
+  //public RhsRoutineHandler<nStates>,  // TODO
+  //public CallbackHandler<nStates>,
   public DiscretizableInTime
 {
 public:

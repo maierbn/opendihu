@@ -78,6 +78,9 @@ config = {
     "maxIterations": 100000,
     "useGradientField": use_gradient_field,
     "lineStepWidth": 1e-1,
+    "targetElementLength": 1./100. * 220./11.,    # length = 1/100 cm (100 per cm), stl length=220, biceps length=11cm
+    "discardRelativeLength": 0.7,
+    "csvFilename": "streamlines.csv",
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
@@ -91,6 +94,8 @@ config = {
     ]
   }
 }
+
+print ("targetElementLength:",1./100. * 220./11.)
 
 # output config in a readable format
 if False:

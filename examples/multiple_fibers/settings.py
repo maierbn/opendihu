@@ -19,6 +19,8 @@ print("prefactor: ",Conductivity/(Am*Cm))
 def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   print("       > called setParameters at ",time_step_no,", time=",current_time, ", n_nodes=", n_nodes, ", p=",parameters[0], ", fibre ",fibre_no)
   
+  return
+  
   center_node = int(n_nodes / 2)
   
   parameters[0] = 0
@@ -90,8 +92,8 @@ def get_instance_config(i):
           
           "CellML" : {
             "sourceFilename": "cellmlcode.cpp",
-            "simdSourceFilename" : "simdcode.cpp",
-            "libraryFilename": "cellml_simd_lib.so",
+            #"simdSourceFilename" : "simdcode.cpp",
+            #"libraryFilename": "cellml_simd_lib_{}.so".format(i),
             #"statesInitialValues": [],
             "setParametersFunction": setParameters,
             "setParametersCallInterval": 1e3,
@@ -138,11 +140,11 @@ config = {
       "physicalExtent": 2e-3,
     },
     "MeshFibre1": {
-      "nElements": 3,
+      "nElements": 2,
       "physicalExtent": 3e-3,
     },
     "MeshFibre2": {
-      "nElements": 4,
+      "nElements": 2,
       "physicalExtent": 4e-3,
     },
   },

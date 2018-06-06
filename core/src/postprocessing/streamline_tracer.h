@@ -33,6 +33,9 @@ protected:
   
   //! trace the streamlines starting from seed points
   void traceStreamlines();
+  
+  //! drop streamlines that are smaller than  discardRelativeLength_*median streamline length and resample to match targetElementLength_
+  void postprocessStreamlines(std::vector<std::vector<Vec3>> &nodePositions);
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   DiscretizableInTimeType problem_;   ///< the DiscretizableInTime object that is managed by this class
@@ -47,6 +50,9 @@ protected:
   int maxNIterations_;   ///< the maximum number of iterations to trace for a streamline
   bool useGradientField_;  ///< There are 2 implementations of streamline tracing. The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. // The first one seems more stable, because the gradient is zero and the position of the boundary conditions.
 
+  double targetElementLength_;   ///< the final length of each element of the traced streamlines. After the streamlines were traced using the fine lineStepWidth_, it gets resampled with this width.
+  double discardRelativeLength_;   ///< a relative length (in [0,1]), at the end streamlines are dropped that are smaller than this relative length times the median fibre length
+  std::string csvFilename_;      ///< a csv output filename to write the node positions of the streamlines to
 };
 
 };  // namespace

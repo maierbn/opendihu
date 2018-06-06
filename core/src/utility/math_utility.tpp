@@ -24,12 +24,4 @@ void normalize(VecD<D> &vector)
   vector *= 1./norm<D>(vector);
 }
 
-template<int D>
-double length(const VecD<D> node)
-{
-  return sqrt(sqr(node[0])
-    + sqr(node[1])
-    + sqr(node[2]));
-}
-
 }; // namespace

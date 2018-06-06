@@ -7,6 +7,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
 #include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"
@@ -64,13 +65,13 @@ template<int nStates>
 bool CellmlAdapter<nStates>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
-  std::string sourceFilename = PythonUtility::getOptionString(specificSettings_, "sourceFilename", "");
+  sourceFilename_ = PythonUtility::getOptionString(specificSettings_, "sourceFilename", "");
 
   // read in source from file
-  std::ifstream sourceFile(sourceFilename.c_str());
+  std::ifstream sourceFile(sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "Could not open source file \""<<sourceFilename<<"\" for reading!";
+    LOG(ERROR) << "Could not open source file \""<<sourceFilename_<<"\" for reading!";
     return false;
   }
   else
@@ -102,7 +103,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
       {
         if (line.find("void OC_CellML_RHS_routine_simd") != std::string::npos)
         {
-          LOG(WARNING) << "The given source file \""<<sourceFilename<<"\" already contains a simd version of the rhs routine. "
+          LOG(WARNING) << "The given source file \""<<sourceFilename_<<"\" already contains a simd version of the rhs routine. "
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
@@ -160,7 +161,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
             if (entry.code == "OC_STATE" && entry.arrayIndex >= nStates)
             {
-              LOG(FATAL) << "CellML code in source file \"" << sourceFilename << "\" "
+              LOG(FATAL) << "CellML code in source file \"" << sourceFilename_ << "\" "
                 << "computes more states than given in the user code as template parameter "
                 << "(template parameter: " << nStates << ", CellML code: at least " << entry.arrayIndex+1 << ").";
             }
@@ -210,7 +211,9 @@ createSimdSourceFile(std::string &simdSourceFilename)
     }
 
     // write out source file
-    simdSourceFilename = "simd_source.c";
+    std::stringstream s;
+    s << StringUtility::extractBasename(sourceFilename_) << "_simd.c";
+    simdSourceFilename = s.str();
     if (PythonUtility::hasKey(specificSettings_, "simdSourceFilename"))
     {
       simdSourceFilename = PythonUtility::getOptionString(specificSettings_, "simdSourceFilename", "");
@@ -316,13 +319,17 @@ initializeRhsRoutine()
   // if simdSourceFilename is set, compile to create dynamic library
   if (simdSourceFilename != "")
   {
-    sourceFilename_ = simdSourceFilename;
-
     // compile source file to a library
     libraryFilename = "lib.so";
     if (PythonUtility::hasKey(specificSettings_, "libraryFilename"))
     {
       libraryFilename = PythonUtility::getOptionString(specificSettings_, "libraryFilename", "lib.so");
+    }
+    else 
+    {
+      std::stringstream s;
+      s << StringUtility::extractBasename(sourceFilename_) << "_" << nInstances_ << ".so";
+      libraryFilename = s.str();
     }
 
     std::stringstream compileCommand;
@@ -570,7 +577,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 template<int nStates>
 void CellmlAdapter<nStates>::
 callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime,
-                                                    double *states, double *intermediates)
+                               double *states, double *intermediates)
 {
   if (pythonHandleResultFunction_ == NULL)
     return;

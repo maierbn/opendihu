@@ -5,8 +5,7 @@
 #include <vector>
 
 #include "time_stepping_scheme/discretizable_in_time.h"
-#include "cellml/01a_rhs_routine_handler.h"
-#include "cellml/01b_callback_handler.h"
+#include "cellml/02_callback_handler.h"
 
 /** The is a class that contains cellml equations and can be used with a time stepping scheme.
  *  The nStates template parameter specifies the number of state variables that should be used with the integrator.
@@ -15,7 +14,6 @@
  */
 template <int nStates>
 class CellmlAdapter :
-  public RhsRoutineHandler<nStates>,
   public CallbackHandler<nStates>,
   public DiscretizableInTime
 {
@@ -43,4 +41,4 @@ private:
 
  };
 
-#include "cellml/02_cellml_adapter.tpp"
+#include "cellml/03_cellml_adapter.tpp"

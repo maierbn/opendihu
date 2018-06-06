@@ -1,4 +1,4 @@
-#include "cellml/02_cellml_adapter.h"
+#include "cellml/03_cellml_adapter.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -17,9 +17,7 @@
 template<int nStates>
 CellmlAdapter<nStates>::
 CellmlAdapter(DihuContext context) :
-  CellmlAdapterBase<nStates>(context), 
   CallbackHandler<nStates>(context),
-  RhsRoutineHandler<nStates>(context),
   DiscretizableInTime(SolutionVectorMapping(true))
 {
   LOG(TRACE) << "CellmlAdapter constructor";
@@ -59,7 +57,7 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   VecGetArray(input, &states);    // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
   VecGetArray(output, &rates);
 
-  LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates=" << nStates;
+  //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates=" << nStates;
   
   // get new values for parameters, call callback function of python config
   if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)

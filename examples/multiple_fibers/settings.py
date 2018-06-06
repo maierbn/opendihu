@@ -140,11 +140,11 @@ config = {
       "physicalExtent": 2e-3,
     },
     "MeshFibre1": {
-      "nElements": 2,
+      "nElements": 3,
       "physicalExtent": 3e-3,
     },
     "MeshFibre2": {
-      "nElements": 2,
+      "nElements": 4,
       "physicalExtent": 4e-3,
     },
   },

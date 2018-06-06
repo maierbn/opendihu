@@ -1,4 +1,4 @@
-#include "cellml/00_cellml_adapter_base.h"
+#include "cellml/01_rhs_routine_handler.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -19,20 +19,13 @@ class CellmlAdapter;
 
 
 template<int nStates>
-RhsRoutineHandler<nStates>::
-RhsRoutineHandler(DihuContext context) :
-  CellmlAdapterBase<nStates>(context)
-{
-}
-
-template<int nStates>
 void RhsRoutineHandler<nStates>::
 initializeRhsRoutine()
 {
   // 1) if simdSourceFilename is given, use that source to compile the library
   // 2) if not 1) but sourceFilename is given, create simdSourceFilename from that and compile library
   // 3) if not 2) but libraryFilename is given, load that library, if it contains simdRhs, use that, if it contains non-simd rhs use that
-  
+
   // try to load or create simd source
   std::string simdSourceFilename;
   if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
@@ -40,7 +33,7 @@ initializeRhsRoutine()
     if (!createSimdSourceFile(simdSourceFilename))
       simdSourceFilename = "";
   }
-  
+
   if (simdSourceFilename == "")
   {
     if(PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
@@ -48,20 +41,24 @@ initializeRhsRoutine()
       simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
     }
   }
-  
+
   std::string libraryFilename;
   // if simdSourceFilename is set, compile to create dynamic library
   if (simdSourceFilename != "")
   {
-    this->sourceFilename_ = simdSourceFilename;
-    
-    // compile source file to a library 
+    // compile source file to a library
     libraryFilename = "lib.so";
     if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
     {
       libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
     }
-    
+    else 
+    {
+      std::stringstream s;
+      s << StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
+      libraryFilename = s.str();
+    }
+
     std::stringstream compileCommand;
     // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
     compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-all=vectorizer_all.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
@@ -77,7 +74,7 @@ initializeRhsRoutine()
     }
 
     // repeat compilation with different GCC vectorizer outputs
-#if 0    
+#if 0
     compileCommand.str("");
     compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-missed=vectorizer_missed.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
     ret = system(compileCommand.str().c_str());
@@ -102,54 +99,54 @@ initializeRhsRoutine()
     }
 #endif
   }
-  
+
   // if library is still not available, look if it was provided
   if (libraryFilename == "")
   {
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
   }
-  
+
   if (libraryFilename == "")
   {
     LOG(FATAL) << "Could not create or locate dynamic library for cellml right hand side routine.";
   }
-  
+
   // load dynamic library
   //
   std::string currentWorkingDirectory = getcwd(NULL,0);
   // append slash if there is none at the end
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
-   
+
   void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
   if (handle)
   {
     // load rhs method
     rhsRoutine_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine");
     rhsRoutineSimd_ = (void (*)(void *,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine_simd");
-   
-    LOG(DEBUG) << "Library \""<<libraryFilename<<"\" loaded. " 
+
+    LOG(DEBUG) << "Library \""<<libraryFilename<<"\" loaded. "
       << "rhsRoutine: " << (rhsRoutine_==NULL? "NULL" : "yes") << ", rhsRoutineSimd: " << (rhsRoutineSimd_==NULL? "NULL" : "yes");
-    
+
     // fail if none of both could be loaded
     if (!rhsRoutine_ && !rhsRoutineSimd_)
     {
       LOG(FATAL) << "Could not load rhs routine from dynamic library \""<<libraryFilename<<"\".";
     }
-    
+
     // if only non-simd version could be loaded, create other from that
     if(!rhsRoutineSimd_)
     {
       LOG(DEBUG) << "Only non-simd rhs routine available";
-      
+
       rhsRoutineSimd_ = [](void *context, double* OC_STATE, double* OC_RATE, double* OC_WANTED, double* OC_KNOWN)
       {
         LOG(DEBUG) << "call rhsRoutine ";
-        
+
         CellmlAdapter<nStates> *cellmlAdapter = (CellmlAdapter<nStates> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
-        
+
         // call the standard rhs routine for every instance of the CellML problem
         for(int instanceNo = 0; instanceNo < nInstances; instanceNo++)
         {
@@ -158,7 +155,7 @@ initializeRhsRoutine()
           std::vector<double> rates(nStates);
           std::vector<double> intermediates(nIntermediates);
           std::vector<double> parameters(nParameters);
-          
+
           // copy the values from the interleaved vectors
           for (int i = 0; i < nStates; i++)
           {
@@ -168,18 +165,18 @@ initializeRhsRoutine()
           {
             parameters[i] = OC_KNOWN[i*nInstances + instanceNo];
           }
-          
+
           // call old rhs routine
           cellmlAdapter->rhsRoutine_(0.0, states.data(), rates.data(), intermediates.data(), parameters.data());
-          
+
           // copy the results back in the big vectors
-          
+
           // copy the values back to the interleaved vectors
           for (int i = 0; i < nStates; i++)
           {
             OC_RATE[i*nInstances + instanceNo] = rates[i];
           }
-          
+
           for (int i = 0; i < nIntermediates; i++)
           {
             OC_WANTED[i*nInstances + instanceNo] = intermediates[i];
@@ -192,20 +189,19 @@ initializeRhsRoutine()
   {
     LOG(FATAL) << "Could not load dynamic library \""<<libraryFilename<<"\". Reason: "<<dlerror();
   }
-    
 }
 
 template<int nStates>
 bool RhsRoutineHandler<nStates>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
-  std::string sourceFilename = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
+  this->sourceFilename_ = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
 
   // read in source from file
-  std::ifstream sourceFile(sourceFilename.c_str());
+  std::ifstream sourceFile(this->sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "Could not open source file \""<<sourceFilename<<"\" for reading!";
+    LOG(ERROR) << "Could not open source file \""<<this->sourceFilename_<<"\" for reading!";
     return false;
   }
   else
@@ -237,7 +233,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
       {
         if (line.find("void OC_CellML_RHS_routine_simd") != std::string::npos)
         {
-          LOG(WARNING) << "The given source file \""<<sourceFilename<<"\" already contains a simd version of the rhs routine. "
+          LOG(WARNING) << "The given source file \""<<this->sourceFilename_<<"\" already contains a simd version of the rhs routine. "
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
@@ -295,7 +291,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
             if (entry.code == "OC_STATE" && entry.arrayIndex >= nStates)
             {
-              LOG(FATAL) << "CellML code in source file \"" << sourceFilename << "\" "
+              LOG(FATAL) << "CellML code in source file \"" << this->sourceFilename_ << "\" "
                 << "computes more states than given in the user code as template parameter "
                 << "(template parameter: " << nStates << ", CellML code: at least " << entry.arrayIndex+1 << ").";
             }
@@ -345,7 +341,9 @@ createSimdSourceFile(std::string &simdSourceFilename)
     }
 
     // write out source file
-    simdSourceFilename = "simd_source.c";
+    std::stringstream s;
+    s << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";
+    simdSourceFilename = s.str();
     if (PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
     {
       simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
@@ -363,5 +361,6 @@ createSimdSourceFile(std::string &simdSourceFilename)
       simdSourceFile.close();
     }
   }
+  
   return true;
 }

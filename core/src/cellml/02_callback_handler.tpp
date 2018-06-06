@@ -1,4 +1,4 @@
-#include "cellml/00_cellml_adapter_base.h"
+#include "cellml/02_callback_handler.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -14,7 +14,7 @@
 template<int nStates>
 CallbackHandler<nStates>::
 CallbackHandler(DihuContext context) :
-  CellmlAdapterBase<nStates>(context),
+  RhsRoutineHandler<nStates>(context),
   setParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL)

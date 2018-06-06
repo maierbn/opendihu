@@ -15,13 +15,12 @@
  */
 template <int nStates>
 class RhsRoutineHandler:
-  virtual public CellmlAdapterBase<nStates>
+  public CellmlAdapterBase<nStates>
 {
 public:
   
   //! constructor
-  RhsRoutineHandler(DihuContext context);
-  //using CellmlAdapterBase<nStates>::CellmlAdapterBase;
+  using CellmlAdapterBase<nStates>::CellmlAdapterBase;
   
 protected:
   //! given a normal cellml source file for rhs routine create a second file for multiple instances. @return: if successful
@@ -35,4 +34,4 @@ protected:
 
 };
 
-#include "cellml/01a_rhs_routine_handler.tpp"
+#include "cellml/01_rhs_routine_handler.tpp"

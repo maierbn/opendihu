@@ -27,7 +27,7 @@
 #include "model_order_reduction/pod.h"
 #include "postprocessing/streamline_tracer.h"
 
-#include "cellml/02_cellml_adapter.h"
+#include "cellml/03_cellml_adapter.h"
 
 #include "quadrature/gauss.h"
 #include "quadrature/clenshaw_curtis.h"

@@ -1,4 +1,4 @@
-
+#pragma once
 
 #include <vector>
 
@@ -8,7 +8,7 @@
 #include "output_writer/manager.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_function/lagrange.h"
-#include "cellml/00_cellml_adapter_base.h"
+#include "cellml/01_rhs_routine_handler.h"
 
 /** The is a class that contains cellml equations and can be used with a time stepping scheme.
  *  The nStates template parameter specifies the number of state variables that should be used with the integrator.
@@ -17,7 +17,7 @@
  */
 template <int nStates>
 class CallbackHandler :
-  virtual public CellmlAdapterBase<nStates>
+  public RhsRoutineHandler<nStates>
 {
 public:
 
@@ -42,7 +42,7 @@ public:
   void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
 
 protected:
-
+ 
   //! construct the python call back functions from config
   virtual void initializeCallbackFunctions();
 
@@ -60,4 +60,4 @@ protected:
 
 };
 
-#include "cellml/01b_callback_handler.tpp"
+#include "cellml/02_callback_handler.tpp"

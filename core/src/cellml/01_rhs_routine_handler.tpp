@@ -55,49 +55,78 @@ initializeRhsRoutine()
     else 
     {
       std::stringstream s;
-      s << StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
+      s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
       libraryFilename = s.str();
     }
 
-    std::stringstream compileCommand;
-    // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
-    compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-all=vectorizer_all.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-    int ret = system(compileCommand.str().c_str());
-    if (ret != 0)
+    bool doCompilation = true;
+    forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
+    if (!forceRecompileRhs_)
     {
-      LOG(ERROR) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
-      libraryFilename = "";
+      // check if the library file already exists
+      std::ifstream file;
+      file.open(libraryFilename);
+      if (file.is_open())
+      {
+        doCompilation = false;
+        file.close();
+      }
     }
-    else
+    
+    if (doCompilation)
     {
-      LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
-    }
+     
+      if (libraryFilename.find("/") != std::string::npos)
+      {
+        std::string path = libraryFilename.substr(0, libraryFilename.find("/"));
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+        
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Could not create path \"" << path << "\".";
+        }
+      }
+     
+      std::stringstream compileCommand;
+      // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
+      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      int ret = system(compileCommand.str().c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+        libraryFilename = "";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+      }
 
-    // repeat compilation with different GCC vectorizer outputs
-#if 0
-    compileCommand.str("");
-    compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-missed=vectorizer_missed.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-    ret = system(compileCommand.str().c_str());
-    if (ret != 0)
-    {
-      LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+      // repeat compilation with different GCC vectorizer outputs
+  #if 0
+      compileCommand.str("");
+      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-missed=vectorizer_missed.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      ret = system(compileCommand.str().c_str());
+      if (ret != 0)
+      {
+        LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+      }
+      compileCommand.str("");
+      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-all=vectorizer_all.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      ret = system(compileCommand.str().c_str());
+      if (ret != 0)
+      {
+        LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+      }
+  #endif
     }
-    else
-    {
-      LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
-    }
-    compileCommand.str("");
-    compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-    ret = system(compileCommand.str().c_str());
-    if (ret != 0)
-    {
-      LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
-    }
-    else
-    {
-      LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
-    }
-#endif
   }
 
   // if library is still not available, look if it was provided

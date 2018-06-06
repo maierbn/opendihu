@@ -39,7 +39,7 @@ MultipleInstances(DihuContext context) :
   
   if (!PythonUtility::getOptionListEnd(specificSettings_, "instances"))
   {
-    LOG(WARNING) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
+    LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
   }
 }
 

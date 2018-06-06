@@ -1,4 +1,4 @@
-# Diffusion 1D
+# Diffusion 2D
 #
 # command arguments: <name> <number elements>
 
@@ -15,7 +15,7 @@ if len(sys.argv) > 1:
     name = sys.argv[0]
     n = int(sys.argv[1])
     nx = int(np.sqrt(n))
-    ny = nx
+    ny = nx+1
     
     print("name: \"{}\", nx,ny: {},{}".format(name, nx, ny))
 

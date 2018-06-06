@@ -191,9 +191,12 @@ setInitialValues(Vec& initialValues)
 
     PetscUtility::setVector(statesAllInstances, initialValues);
 
-    LOG(DEBUG) << "initial values were set as follows: ";
-    for(auto value : statesAllInstances)
-      LOG(DEBUG) << "  " << value;
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "initial values were set as follows: ";
+      for(auto value : statesAllInstances)
+        VLOG(2) << "  " << value;
+    }
     return true;
   }
 

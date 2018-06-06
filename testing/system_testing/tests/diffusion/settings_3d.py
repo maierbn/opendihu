@@ -1,4 +1,4 @@
-# Laplace 3D
+# Diffusion 3D
 #
 # command arguments: <name> <number elements>
 
@@ -6,9 +6,7 @@ import numpy as np
 #import scipy.integrate
 import sys
 
-nx = 3   # number of elements
-ny = 3   
-nz = 3
+n = 5   # number of elements
 name = ""
 
 if len(sys.argv) > 1:
@@ -19,7 +17,26 @@ if len(sys.argv) > 1:
     ny = nx+2
     nz = nx+1
     
-    print("name: \"{}\", nx,ny,nz: {},{},{}".format(name, nx, ny, nz))
+    print("name: \"{}\", n: {}".format(name, n))
+
+nx = 4*n
+ny = 3*n
+nz = 2*n
+
+# function for initial values
+def initial_values_function(x,y,z):
+  if 0.75 < x < 1.25 and 0.75 < y < 1.75 and 0.5 < z < 1.5:
+    return np.sin((x-0.75)/0.5*np.pi) * np.sin((y-0.75)/1.0*np.pi) * np.sin((z-0.5)*np.pi)
+  if 1.5 < x < 3.0 and 1.0 < y < 2.25 and 0.5 < z < 1.5:
+    return np.sin((x-1.5)/1.5*np.pi) * np.sin((y-1.0)/1.25*np.pi) * np.sin((z-0.5)*np.pi)*0.5
+  return 0
+  
+end_time = 0.5
+c = 0.2     # prefactor in equation
+
+if "hermite" in name:
+  end_time = 0.05
+
 
 # boundary conditions
 bc = {}
@@ -146,19 +163,37 @@ elif "quadratic" in name:
         
         elements.append([i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19, i20, i21, i22, i23, i24, i25, i26])
       
+# set initial values
+initial_values = [initial_values_function(x0,x1,x2) for x2 in np.linspace(0,physicalExtent[2],n_nodes_z) for x1 in np.linspace(0,physicalExtent[1],n_nodes_y) for x0 in np.linspace(0,physicalExtent[0],n_nodes_x) ]
+
+#print "initial_values: ",initial_values
+#print "len: ", len(initial_values)
+
+
 config = {
-  "FiniteElementMethod" : {
-    "nElements": [nx, ny, nz],
-    "nodePositions": node_positions,
-    "elements": elements,
-    "physicalExtent": physicalExtent,
-    "DirichletBoundaryCondition": bc,
-    "relativeTolerance": 1e-15,
-    "maxIterations": 500000,
+  "ExplicitEuler" : {
+    "initialValues": initial_values,
+    "numberTimeSteps": 1500,
+    "endTime": end_time,
+    "FiniteElementMethod" : {
+      "nElements": [nx,ny,nz],
+      "nodeDimension": 1,
+      "nodePositions": node_positions,
+      "elements": elements,
+      "physicalExtent": physicalExtent,
+      "relativeTolerance": 1e-15,
+      "prefactor": c
+    },
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+name, "binaryOutput": "false", "fixedFormat": False},
-      {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
-      {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 2, "binary":False, "onlyNodalValues":True},
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
+      {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
     ]
   },
 }
+
+# output config in a readable format
+if False:
+  import pprint 
+  pp = pprint.PrettyPrinter()
+  pp.pprint(config)

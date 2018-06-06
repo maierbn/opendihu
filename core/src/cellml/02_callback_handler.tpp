@@ -59,14 +59,20 @@ initializeCallbackFunctions()
   
   if (PythonUtility::hasKey(this->specificSettings_, "setParametersFunctionAdditionalParameter"))
   {
-    long value = PythonUtility::getOptionInt(this->specificSettings_, "setParametersFunctionAdditionalParameter", 0);
-    LOG(DEBUG) << " set value=" << value;
-    pySetParametersFunctionAdditionalParameter_ = PyLong_FromLong(value);
+    pySetParametersFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(this->specificSettings_, "setParametersFunctionAdditionalParameter");
+  }
+  else 
+  {
+    pySetParametersFunctionAdditionalParameter_ = Py_None;
   }
   
   if (PythonUtility::hasKey(this->specificSettings_, "handleResultFunctionAdditionalParameter"))
   {
     pyHandleResultFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(this->specificSettings_, "handleResultFunctionAdditionalParameter");
+  }
+  else 
+  {
+    pyHandleResultFunctionAdditionalParameter_ = Py_None;
   }
 }
 
@@ -79,7 +85,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O)", nInstances, timeStepNo, currentTime, parametersList);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, parametersList, pySetParametersFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message

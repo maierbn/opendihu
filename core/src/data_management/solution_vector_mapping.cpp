@@ -23,8 +23,9 @@ void SolutionVectorMapping::setScalingFactor(double factor)
 
 void SolutionVectorMapping::transfer(Vec &solution1, SolutionVectorMapping& solutionVectorMapping2, Vec &solution2)
 {
-  LOG(DEBUG) << "solution vector mapping (1): ["<<outputIndexBegin_<<","<<outputIndexEnd_<<"] (2): "
+  VLOG(1) << "solution vector mapping (1): ["<<outputIndexBegin_<<","<<outputIndexEnd_<<"] (2): "
     <<"["<< solutionVectorMapping2.outputIndexBegin_<<","<<solutionVectorMapping2.outputIndexEnd_<<"]";
+    
   if(canProvideInternalContiguousSolutionPointer_
     && solutionVectorMapping2.canProvideInternalContiguousSolutionPointer_)
   {
@@ -33,9 +34,12 @@ void SolutionVectorMapping::transfer(Vec &solution1, SolutionVectorMapping& solu
     const double *data1;
     VecGetArrayRead(solution1, &data1);
 
-    LOG(DEBUG) << "data to be transferred ("<<outputSize_<<" entries): ";
-    for(int i=outputIndexBegin_; i<outputIndexEnd_; i++)
-      LOG(DEBUG) << "   " << data1[i];
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "data to be transferred ("<<outputSize_<<" entries): ";
+      for(int i=outputIndexBegin_; i<outputIndexEnd_; i++)
+        VLOG(1) << "   " << data1[i];
+    }
 
     double *data2;
     VecGetArray(solution2, &data2);
@@ -52,6 +56,22 @@ void SolutionVectorMapping::transfer(Vec &solution1, SolutionVectorMapping& solu
       }
     }
 
+    // determine if there are nans or high values
+    int nNans = 0;
+    int nHighValues = 0;
+    for(int i=0; i<outputSize_; i++)
+    {
+      if (std::isnan(data2[solutionVectorMapping2.outputIndexBegin_+i]))
+        nNans++;
+      else if (fabs(data2[solutionVectorMapping2.outputIndexBegin_+i]) > 1e100)
+        nHighValues++;
+    }
+    
+    if (nNans > 0)
+      LOG(WARNING) << "Solution contains " << nNans << " Nans";
+    if (nHighValues > 0)
+      LOG(WARNING) << "Solution contains " << nHighValues << " high values with absolute value > 1e100";
+    
     VecRestoreArrayRead(solution1, &data1);
     VecRestoreArray(solution2, &data2);
   }

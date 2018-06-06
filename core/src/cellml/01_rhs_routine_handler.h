@@ -32,6 +32,8 @@ protected:
   void (*rhsRoutine_)(double, double *, double *, double *, double *);   ///< function pointer to a rhs function that is passed as dynamic library, computes rates and intermediate values from states. The parameters are: VOI, STATES, RATES, WANTED, KNOWN, (VOI: unclear, what it means)
   void (*rhsRoutineSimd_)(void *context, double *, double *, double *, double *);  ///< same functionality as rhsRoutine, however, can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer
 
+  bool forceRecompileRhs_;   ///< if the rhs code should be compiled even if the shared object library file exists already
+  
 };
 
 #include "cellml/01_rhs_routine_handler.tpp"

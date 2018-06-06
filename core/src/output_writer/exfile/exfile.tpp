@@ -84,6 +84,7 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     item.nElements = mesh->nElements();
     item.nNodes = mesh->nNodes();
     item.meshName = meshName;
+    item.dimensionality = mesh->dimension();
     filenamesWithElementAndNodeCount_.push_back(item);
   }
   

@@ -80,7 +80,7 @@ config = {
     "lineStepWidth": 1e-1,
     "targetElementLength": 1./100. * 220./11.,    # length = 1/100 cm (100 per cm), stl length=220, biceps length=11cm
     "discardRelativeLength": 0.7,
-    "csvFilename": "streamlines.csv",
+    "csvFilename": "{}.csv".format(name),
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

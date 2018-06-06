@@ -22,7 +22,7 @@ Depending on your system you might already have all of that.
 
 # Documentation
 Currently some theory documentation can be found in the `doc/derivations/doc.pdf` document. 
-You can find out about how the framework is instantiated by looking at the examples in the `example` directory and the system tests in the `testing/system_testing/tests` directory. These also run nightly by a IPVS-local jenkins installation.
+You can find out about how the framework is instantiated by looking at the examples in the `example` directory and the system tests in the `testing/system_testing/tests` directory. Where the examples sometimes are out-of-date, the system_tests run regularly and should normally work. 
 
 The following functionality is currently implemented:
 ## Equations
@@ -50,10 +50,13 @@ Supported equation types are currently
   * Exfiles: Every mesh type (not just `UnstructuredDeformableOfDimension<D>`) can be exported to `exelem`, `exnode` files. Also a `com` script is created that loads all generated exfiles (with correct offsets) and can be directly visualized using `cmgui`. However some manual tweaking with the `com` file is sometimes required.
   * Paraview: Files with extensions `*.vtr`, `*.vts` and `*.vtu` can be generated for the three mesh types, respectively. These are the preferable output method for 3D results. Paraview provides extensive tools for manipulation of the visualisation and postprocessing of the results. Only a recent version of Paraview can directly show 1D meshes.
   
+# Tests
+* There are unit tests that run after each compile (you can abort the compilation process after the library was created to skip the unit tests). There are also system tests that run real scenarios for multiple settings and for some compare to analytical solutions. The list of system tests is to be extended, currenty it only includes Laplace and Diffusion examples (but for all combinations of ansatz functions and mesh types). The system tests compile latex slides and a pdf document containing test results and also images and movies of the test runs. It runs nighly on a local jenkins installation.  
+  
 # Bug reporting
 * If you find bugs, you can write me an e-mail, or even better you have a look at it and try to fix them on your own (make an own branch). Currently there are new features being added or internal code structure changes quite frequently, which sometimes introduces new bugs and fixes existing ones. There is some safety from the unit tests and system tests.
 
-# TODO
-* A major development step will be the parallelization using MPI/PETSc. For this the data structures are already somehow prepared, but some effort needs to be put into the dof mappings.
+# Work list
+* A major development step will be the parallelization using MPI/PETSc. For this the data structures are already somehow prepared, but some effort needs to be put into the dof mappings. (shared memory parallelisation using OpenMP is included already at some points)
 * Also the continuum mechanics problem has to be addressed, still. (Probably will be before the parallelisation).
 * The current work is concerned with multiple fibres on a realistic biceps brachii geometry.

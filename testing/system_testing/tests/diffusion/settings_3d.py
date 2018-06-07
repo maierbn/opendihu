@@ -17,11 +17,7 @@ if len(sys.argv) > 1:
     ny = nx+2
     nz = nx+1
     
-    print("name: \"{}\", n: {}".format(name, n))
-
-nx = 4*n
-ny = 3*n
-nz = 2*n
+    print("name: \"{}\", n: {} {} {} ".format(name, nx, ny, nz))
 
 # function for initial values
 def initial_values_function(x,y,z):

@@ -16,7 +16,7 @@ if len(sys.argv) > 1:
     nx = int(np.sqrt(n))
     ny = nx+1
     
-    print("name: \"{}\", n: {}".format(name, n))
+    print("name: \"{}\", n: {}, nx: {}, ny: {}".format(name, n, nx, ny))
 
 # function for initial values
 def initial_values_function(x,y):

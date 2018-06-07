@@ -14,22 +14,47 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58           # membrane capacitance [uF/cm^2]
 
 n_fibers = 5
-fibre_file = "laplace3d_structured_linear"
+
+fibre_file = "../input/laplace3d_structured_linear"
+fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../input/MU_firing_times_real.txt"
 
 print("prefactor: ",Conductivity/(Am*Cm))
 
 def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
-  print("       > called setParameters at ",time_step_no,", time=",current_time, ", n_nodes=", n_nodes, ", p=",parameters[0], ", fibre ",fibre_no)
-    
-  center_node = int(n_nodes / 2)
   
-  if current_time - int(current_time) < 0.1 and current_time < 10:
-    print("parameters len: {}, set I_Stim for node {} to 1200".format(len(parameters),center_node))
-    if center_node > 0:
-      parameters[center_node-1] = 400.
-    parameters[center_node] = 400.
-    if center_node < n_nodes-1:
-      parameters[center_node+1] = 400.
+  # determine motor unit
+  mu_no = fibre_distribution[fibre_no % len(fibre_distribution)]-1
+  
+  # determine if fibre fires now
+  frequency = 10.0 # Hz
+  index = int(current_time * frequency)
+  n_firing_times = np.size(firing_times,0)
+  fibre_gets_stimulated = firing_times[index % n_firing_times, mu_no] == 1
+  
+  print("       > called setParameters at timestep {}, t={}, n_nodes, IStim={}, fibre no {}, MU {}, stimulated: {}".\
+    format(time_step_no, current_time, n_nodes, parameters[0], fibre_no, mu_no, fibre_gets_stimulated))
+    
+  if not fibre_gets_stimulated:
+    return
+    
+  # determine nodes to stimulate (center node, left and right neighbour)
+  innervation_zone_width = 1.  # cm
+  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+  innervation_node = int(n_nodes / 2) + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+  nodes_to_stimulate = innervation_node
+  if innervation_node > 0:
+    nodes_to_stimulate.insert(0, innervation_node-1)
+  if innervation_node < n_nodes-1
+    nodes_to_stimulate.append(innervation_node)
+  
+  # stimulation value
+  stimulation_current = 400.
+  
+  for node_no in nodes_to_stimulate:
+    parameters[node_no] = stimulation_current
+  
+  print("set stimulation for nodes {}".format(nodes_to_stimulate))
     
 fig = plt.figure(1)
 #plt.ion()
@@ -117,7 +142,7 @@ def get_instance_config(i):
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
             "setParametersFunction": setParameters,
-            "setParametersCallInterval": 1e3,
+            "setParametersCallInterval": 1e3,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             #"setParametersFunctionAdditionalParameter": i,
             
             #"handleResultFunction": debug,
@@ -141,7 +166,7 @@ def get_instance_config(i):
           "timeStepWidth": 2e-7,
           "timeStepOutputInterval": 1e4,
           "FiniteElementMethod" : {
-            "relativeTolerance": 1e-15,
+            "relativeTolerance": 1e-10,
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
           },
@@ -152,6 +177,7 @@ def get_instance_config(i):
   return instance_config
     
     
+# create fibre meshes
 meshes = {}
 
 with open(fibre_file, "rb") as f:
@@ -159,7 +185,6 @@ with open(fibre_file, "rb") as f:
     
 nInstances = len(streamlines)
 print("nInstances: {}".format(nInstances))
-
 
 nInstances = 1
     
@@ -169,6 +194,10 @@ for i,streamline in enumerate(streamlines):
     "nodePositions": streamline
   }
     
+# load MU distribution and firing times
+fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
+firing_times = np.genfromtxt(firing_times_file)
+
 config = {
   "disablePrinting": False,
   "disableMatrixPrinting": False,

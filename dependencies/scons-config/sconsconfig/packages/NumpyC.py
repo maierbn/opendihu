@@ -20,7 +20,8 @@ class NumpyC(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://github.com/numpy/numpy/archive/master.zip',
+            #'download_url': 'https://github.com/numpy/numpy/archive/master.zip',
+            'download_url': 'https://files.pythonhosted.org/packages/94/b8/09db804ddf3bb7b50767544ec8e559695b152cedd64830040a0f31d6aeda/numpy-1.14.4.zip',
         }
         defaults.update(kwargs)
         super(NumpyC, self).__init__(**defaults)

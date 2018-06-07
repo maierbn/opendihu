@@ -18,6 +18,10 @@ clean:
 	rm -rf .sconf_temp
 	rm .sconsign.dblite	
 
+purge: clean
+	rm -rf core/build_debug
+	rm -rf core/build_release
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 

@@ -20,6 +20,7 @@ fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_real.txt"
 
 print("prefactor: ",Conductivity/(Am*Cm))
+print("numpy path: ",np.__path__)
 
 def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   
@@ -36,16 +37,17 @@ def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
     format(time_step_no, current_time, n_nodes, parameters[0], fibre_no, mu_no, fibre_gets_stimulated))
     
   if not fibre_gets_stimulated:
-    return
+    pass
+    #return
     
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width = 1.  # cm
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
   innervation_node = int(n_nodes / 2) + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate = innervation_node
+  nodes_to_stimulate = [innervation_node]
   if innervation_node > 0:
     nodes_to_stimulate.insert(0, innervation_node-1)
-  if innervation_node < n_nodes-1
+  if innervation_node < n_nodes-1:
     nodes_to_stimulate.append(innervation_node)
   
   # stimulation value
@@ -55,6 +57,8 @@ def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
     parameters[node_no] = stimulation_current
   
   print("set stimulation for nodes {}".format(nodes_to_stimulate))
+  
+  wait = input("Press any key to continue...")
     
 fig = plt.figure(1)
 #plt.ion()
@@ -142,8 +146,8 @@ def get_instance_config(i):
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
             "setParametersFunction": setParameters,
-            "setParametersCallInterval": 1e3,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-            #"setParametersFunctionAdditionalParameter": i,
+            "setParametersCallInterval": 1,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "setParametersFunctionAdditionalParameter": i,
             
             #"handleResultFunction": debug,
             "handleResultCallInterval": 1,
@@ -171,9 +175,9 @@ def get_instance_config(i):
             "prefactor": Conductivity/(Am*Cm),
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 10, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 10},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 10, "binary":True, "onlyNodalValues":True},
+            {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5},
+            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
           ]
         },
       },
@@ -191,7 +195,7 @@ with open(fibre_file, "rb") as f:
 nInstances = len(streamlines)
 print("nInstances: {}".format(nInstances))
 
-nInstances = 1
+#nInstances = 1
     
 for i,streamline in enumerate(streamlines):
   meshes["MeshFibre{}".format(i)] = {
@@ -213,7 +217,8 @@ config = {
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
       {"format": "ExFile", "filename": "out/multiple_fibres", "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
+      {"format": "PythonFile", "filename": "out/multiple_fibres", "binary":True, "onlyNodalValues":True},
     ]
   }
 }
+    

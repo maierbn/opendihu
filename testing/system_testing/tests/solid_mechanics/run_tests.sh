@@ -21,6 +21,8 @@ rm -rf out
 #./mooney_rivlin_incompressible_penalty2d            ../settings_2d.py  0 mooney_rivlin_incompressible_penalty2d_numeric_jacobian_scenario_3
 #./mooney_rivlin_incompressible_penalty2d            ../settings_2d.py  1 mooney_rivlin_incompressible_penalty2d_analytic_jacobian_scenario_3
 
+# command arguments: <analytical jacobian> <name>
+#  jacobian: 0 = numeric, 1 = analytic, 2 = combined
 ./mooney_rivlin_incompressible_mixed2d            ../settings_mixed_2d.py  0 mooney_rivlin_incompressible_mixed2d_numeric_jacobian_scenario_1
 ./mooney_rivlin_incompressible_mixed2d            ../settings_mixed_2d.py  2 mooney_rivlin_incompressible_mixed2d_analytic_jacobian_scenario_1
 

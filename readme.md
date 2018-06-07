@@ -8,11 +8,11 @@ The working title of this software framework is "opendihu" - from the project na
 Linux is required with python2.7, gcc version 5 or higher, gfortran (only needed when LAPACK is build)
 
 On a blank machine with ubuntu you should install the following. Note that GCC 5 or higher is required.
-```sudo apt-get install git libopenmpi-dev libx11-* python2.7`
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-sudo apt-get install gcc-5 g++-5 gfortran-5
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5```
+    sudo apt-get install git libopenmpi-dev libx11-* python2.7`
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo apt-get install gcc-5 g++-5 gfortran-5
+    sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5```
 Depending on your system you might already have all of that.
 
 * Find out in which path on your system MPI is installed. A directory that contains a `lib` and an `include` subdirectory is needed. Often is is named like `/usr/lib/openmpi` or `/usr/lib/mpich`. 

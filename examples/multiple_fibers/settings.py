@@ -25,7 +25,7 @@ print("numpy path: ",np.__path__)
 def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   
   # determine motor unit
-  mu_no = fibre_distribution[fibre_no % len(fibre_distribution)]-1
+  mu_no = int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
   
   # determine if fibre fires now
   frequency = 10.0 # Hz
@@ -33,13 +33,6 @@ def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   n_firing_times = np.size(firing_times,0)
   fibre_gets_stimulated = firing_times[index % n_firing_times, mu_no] == 1
   
-  print("       > called setParameters at timestep {}, t={}, n_nodes, IStim={}, fibre no {}, MU {}, stimulated: {}".\
-    format(time_step_no, current_time, n_nodes, parameters[0], fibre_no, mu_no, fibre_gets_stimulated))
-    
-  if not fibre_gets_stimulated:
-    pass
-    #return
-    
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width = 1.  # cm
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -48,17 +41,24 @@ def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   if innervation_node > 0:
     nodes_to_stimulate.insert(0, innervation_node-1)
   if innervation_node < n_nodes-1:
-    nodes_to_stimulate.append(innervation_node)
+    nodes_to_stimulate.append(innervation_node+1)
   
   # stimulation value
-  stimulation_current = 400.
+  if fibre_gets_stimulated:
+    stimulation_current = 400.
+  else:
+    stimulation_current = 0.
   
   for node_no in nodes_to_stimulate:
     parameters[node_no] = stimulation_current
+
+  print("       setParameters at timestep {}, t={}, n_nodes={}, IStim={}, fibre no {}, MU {}, stimulated: {}".\
+    format(time_step_no, current_time, n_nodes, parameters[0], fibre_no, mu_no, fibre_gets_stimulated))
+    
+ 
+  print("       set stimulation for nodes {}".format(nodes_to_stimulate))
   
-  print("set stimulation for nodes {}".format(nodes_to_stimulate))
-  
-  wait = input("Press any key to continue...")
+  #wait = input("Press any key to continue...")
     
 fig = plt.figure(1)
 #plt.ion()
@@ -146,7 +146,7 @@ def get_instance_config(i):
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
             "setParametersFunction": setParameters,
-            "setParametersCallInterval": 1,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "setParametersCallInterval": 1e3,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             "setParametersFunctionAdditionalParameter": i,
             
             #"handleResultFunction": debug,

@@ -1,5 +1,5 @@
 # Electrophysiology debug
-endTime = 10.0
+endTime = 100.0
 
 import numpy as np
 import matplotlib 
@@ -127,7 +127,7 @@ def get_instance_config(i):
       "timeStepWidth": 1e-3,
       "endTime": endTime,
       "outputData1": False,
-      "outputData2": False,
+      "outputData2": True,
 
       "Term1": {      # CellML
         "ExplicitEuler" : {
@@ -170,6 +170,11 @@ def get_instance_config(i):
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
           },
+          "OutputWriter" : [
+            {"format": "Paraview", "outputInterval": 10, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 10},
+            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 10, "binary":True, "onlyNodalValues":True},
+          ]
         },
       },
     }
@@ -208,7 +213,7 @@ config = {
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
       {"format": "ExFile", "filename": "out/multiple_fibres", "outputInterval": 1},
-      #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
+      {"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
     ]
   }
 }

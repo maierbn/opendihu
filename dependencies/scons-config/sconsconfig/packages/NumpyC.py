@@ -59,7 +59,7 @@ class NumpyC(Package):
         # Numpy is installed in the directory tree of python, under lib/python3.6/site-packages
         # The headers and libraries are also positioned there and then linked from the numpyc/install directory.
 
-        self.number_output_lines = 2960
+        self.number_output_lines = 4570
         
     def check(self, ctx):
         env = ctx.env

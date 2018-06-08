@@ -99,7 +99,7 @@ run()
   for (int i = 0; i < nInstances_; i++)
   {
     if (omp_get_thread_num() == 0)
-      LOG(INFO) << "running with " << omp_get_num_threads() << " OpenMP threads";
+      LOG(INFO) << "running " << nInstances_ << " instances with " << omp_get_num_threads() << " OpenMP threads";
     
     instances_[i].run();
   }

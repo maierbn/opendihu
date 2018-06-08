@@ -1,5 +1,7 @@
 #include "control/multiple_instances.h"
 
+#include <omp.h>
+
 #include "data_management/multiple_instances.h"
 
 namespace Control
@@ -13,34 +15,45 @@ MultipleInstances(DihuContext context) :
   specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(specificSettings_);
   
+  //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
+  
   // extract the number of instances
   nInstances_ = PythonUtility::getOptionInt(specificSettings_, "nInstances", 1, PythonUtility::Positive);
    
+  // parse all instance configs 
+  std::vector<PyObject *> instanceConfigs;
+  
   // get the config for the firsetInstancesDatast instance from the list
   PyObject *instanceConfig = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "instances");
 
-  // loop over other entries of list
-  
-  // create all instances
-  for (int i = 0; i < nInstances_; i++)
+  int i = 0;
+  for(;
+      !PythonUtility::getOptionListEnd(specificSettings_, "instances") && i < nInstances_; 
+      PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "instances", instanceConfig), i++)
   {
-    if (PythonUtility::getOptionListEnd(specificSettings_, "instances"))
-    {
-      LOG(ERROR) << "Could only create " << i << " instances from the given instances config python list, but nInstances = " << nInstances_;
-      nInstances_ = i;
-      break;
-    }
-   
-    instances_.emplace_back(context_.createSubContext(instanceConfig));
-    
-    // extract config for next instance
-    PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "instances", instanceConfig);
+    instanceConfigs.push_back(instanceConfig);
+    VLOG(1) << "i = " << i << ", instanceConfig = " << instanceConfig;
   }
-  
+    
+  if (i < nInstances_)
+  {
+    LOG(ERROR) << "Could only create " << i << " instances from the given instances config python list, but nInstances = " << nInstances_;
+  }
+    
   if (!PythonUtility::getOptionListEnd(specificSettings_, "instances"))
   {
     LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
   }
+   
+  // create all instances
+  for (PyObject *instanceConfig: instanceConfigs)
+  {
+    VLOG(1) << "create sub context";
+    instances_.emplace_back(context_.createSubContext(instanceConfig));
+    
+  }
+  
+  
 }
 
 template<class TimeSteppingScheme>
@@ -85,6 +98,9 @@ run()
   #pragma omp parallel for
   for (int i = 0; i < nInstances_; i++)
   {
+    if (omp_get_thread_num() == 0)
+      LOG(INFO) << "running with " << omp_get_num_threads() << " OpenMP threads";
+    
     instances_[i].run();
   }
   

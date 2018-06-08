@@ -7,6 +7,9 @@ import numpy as np
 import sys
 
 n = 5   # number of elements
+nx = 0
+ny = 0
+nz = 0
 name = ""
 
 if len(sys.argv) > 1:
@@ -33,6 +36,10 @@ c = 0.2     # prefactor in equation
 if "hermite" in name:
   end_time = 0.05
 
+
+n_nodes_x = 0   # this needs to be defined such that check_results.py works
+n_nodes_y = 0  
+n_nodes_z = 0  
 
 # boundary conditions
 bc = {}

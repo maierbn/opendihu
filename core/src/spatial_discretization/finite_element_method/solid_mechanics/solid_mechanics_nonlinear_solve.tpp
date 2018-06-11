@@ -445,7 +445,7 @@ solve()
   // zero initial values
   ierr = VecSet(solverVariableSolution, 0.0); CHKERRV(ierr);
 
-  //debug();
+  debug();
 
   // set prescribed Dirchlet BC displacements values
   this->applyDirichletBoundaryConditionsInDisplacements(this->data_);

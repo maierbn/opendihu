@@ -95,6 +95,7 @@ run()
 {
   initialize();
  
+  // TODO init without threads
   #pragma omp parallel for
   for (int i = 0; i < nInstances_; i++)
   {

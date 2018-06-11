@@ -67,8 +67,8 @@ vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], varia
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
-                      '(Shortcuts: ''d'',''r'')', 'release', allowed_values=('debug', 'release'), ignorecase = 2, 
-                      map={'d':'debug', 'r':'release'}))
+                      '(Shortcuts: ''d'',''r'',''rd''=''dr'')', 'release', allowed_values=('debug', 'release', 'releasewithdebuginfo'), ignorecase = 2, 
+                      map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo'}))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
     
@@ -156,6 +156,13 @@ if env["BUILD_TYPE"] == "debug":
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
+elif env["BUILD_TYPE"] == "releasewithdebuginfo":
+  # release with debug info build
+  variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
+  env.MergeFlags('-O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
+  env.Prepend(LIBS = ['opendihu'])
+
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build

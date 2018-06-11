@@ -69,7 +69,8 @@ class SciPy(Package):
     def __init__(self, **kwargs):
         defaults = {
             #'download_url': 'https://github.com/scipy/scipy/archive/master.zip'
-            'download_url': 'https://github.com/scipy/scipy/archive/v1.1.0.tar.gz'
+            #'download_url': 'https://github.com/scipy/scipy/archive/v1.1.0.tar.gz'
+            'download_url': 'https://github.com/scipy/scipy/releases/download/v1.1.0/scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl'
         }
         defaults.update(kwargs)
         super(SciPy, self).__init__(**defaults)
@@ -95,6 +96,10 @@ class SciPy(Package):
              cd ${SOURCE_DIR} && \
              ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py build && \
              ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
+        ])
+        
+        self.set_build_handler([
+          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl'
         ])
         
         # Scipy is installed in the directory tree of python, under lib/python3.6/site-packages. It does not create any .h or .a files.

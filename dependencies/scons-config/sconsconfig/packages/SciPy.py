@@ -85,21 +85,23 @@ class SciPy(Package):
         self.static = False
         
         # Setup the build handler.
-        self.set_build_handler([
-            'cd ${SOURCE_DIR} && echo "[openblas]" > site.cfg',
-            'cd ${SOURCE_DIR} && echo "libraries = openblas" >> site.cfg',
-            'cd ${SOURCE_DIR} && echo "library_dirs = ${DEPENDENCIES_DIR}/lapack/install/lib" >> site.cfg',
-            'cd ${SOURCE_DIR} && echo "include_dirs = ${DEPENDENCIES_DIR}/lapack/install/include" >> site.cfg',
-            'cd ${SOURCE_DIR} && echo "runtime_library_dirs = ${DEPENDENCIES_DIR}/lapack/install/lib" >> site.cfg',
-            '$export PYTHONPATH=$PYTHONPATH:${DEPENDENCIES_DIR}/python/install/lib/$(basename $(find ${DEPENDENCIES_DIR}/python/install/lib/ -maxdepth 1 -type d -name "python*"))/site-packages/ && \
-             export PATH=${DEPENDENCIES_DIR}/cython/install/bin:$PATH && \
-             cd ${SOURCE_DIR} && \
-             ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py build && \
-             ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
-        ])
+        # build from source
+        #self.set_build_handler([
+        #    'cd ${SOURCE_DIR} && echo "[openblas]" > site.cfg',
+        #    'cd ${SOURCE_DIR} && echo "libraries = openblas" >> site.cfg',
+        #    'cd ${SOURCE_DIR} && echo "library_dirs = ${DEPENDENCIES_DIR}/lapack/install/lib" >> site.cfg',
+        #    'cd ${SOURCE_DIR} && echo "include_dirs = ${DEPENDENCIES_DIR}/lapack/install/include" >> site.cfg',
+        #    'cd ${SOURCE_DIR} && echo "runtime_library_dirs = ${DEPENDENCIES_DIR}/lapack/install/lib" >> site.cfg',
+        #    '$export PYTHONPATH=$PYTHONPATH:${DEPENDENCIES_DIR}/python/install/lib/$(basename $(find ${DEPENDENCIES_DIR}/python/install/lib/ -maxdepth 1 -type d -name "python*"))/site-packages/ && \
+        #     export PATH=${DEPENDENCIES_DIR}/cython/install/bin:$PATH && \
+        #     cd ${SOURCE_DIR} && \
+        #     ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py build && \
+        #     ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
+        #])
         
+        # build from wheel
         self.set_build_handler([
-          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl'
+          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
         ])
         
         # Scipy is installed in the directory tree of python, under lib/python3.6/site-packages. It does not create any .h or .a files.

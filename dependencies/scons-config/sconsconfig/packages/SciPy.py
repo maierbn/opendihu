@@ -68,7 +68,8 @@ class SciPy(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://github.com/scipy/scipy/archive/master.zip'
+            #'download_url': 'https://github.com/scipy/scipy/archive/master.zip'
+            'download_url': 'https://github.com/scipy/scipy/archive/v1.1.0.tar.gz'
         }
         defaults.update(kwargs)
         super(SciPy, self).__init__(**defaults)

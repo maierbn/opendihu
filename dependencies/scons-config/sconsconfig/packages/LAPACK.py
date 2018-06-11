@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
           # use OpenBLAS
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && make && make install PREFIX=${PREFIX} USE_OPENMP=1',
+            'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
           ])
           self.number_output_lines = 18788
         

@@ -63,7 +63,18 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)
   {
     LOG(DEBUG) << "call setParameters";
+    
+    // start critical section for python interpreter (only one thread)
+    //Py_BEGIN_ALLOW_THREADS
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    
     this->setParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
+    
+    
+    /* Release the thread. No Python API allowed beyond this point. */
+    PyGILState_Release(gstate);
+    //Py_END_ALLOW_THREADS
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
@@ -79,7 +90,18 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
     VecGetSize(input, &nStatesInput);
 
     LOG(DEBUG) << "call handleResult with in total " << nStatesInput << " states, " << this->intermediates_.size() << " intermediates";
+    
+    // start critical section for python interpreter (only one thread)
+    //Py_BEGIN_ALLOW_THREADS
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+    
     this->handleResult_((void *)this, this->nInstances_, timeStepNo, currentTime, states, this->intermediates_.data());
+    
+    
+    /* Release the thread. No Python API allowed beyond this point. */
+    PyGILState_Release(gstate);
+    //Py_END_ALLOW_THREADS
   }
 
   //PetscUtility::setVector(rates_, output);

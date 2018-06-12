@@ -15,7 +15,7 @@ class Cython(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://pypi.python.org/packages/98/bb/cd2be435e28ee1206151793a528028e3dc9a787fe525049efb73637f52bb/Cython-0.27.2.tar.gz',
+            'download_url': 'https://files.pythonhosted.org/packages/b3/ae/971d3b936a7ad10e65cb7672356cff156000c5132cf406cb0f4d7a980fd3/Cython-0.28.3.tar.gz'
         }
         defaults.update(kwargs)
         super(Cython, self).__init__(**defaults)

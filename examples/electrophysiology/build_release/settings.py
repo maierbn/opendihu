@@ -16,7 +16,7 @@ Cm = 0.58           # membrane capacitance [uF/cm^2]
 
 print("prefactor: ",Conductivity/(Am*Cm))
 
-def setParameters(n_instances, time_step_no, current_time, parameters):
+def setParameters(n_instances, time_step_no, current_time, parameters, fibre_no):
   #print "       > called at ",time_step_no,", time=",current_time, ", n_instances=", n_instances, ", p=",parameters[0]
   
   center_node = int(n_instances / 2)
@@ -41,7 +41,7 @@ def setParameters(n_instances, time_step_no, current_time, parameters):
 fig = plt.figure(1)
 #plt.ion()
 
-def handleResult(nInstances, timeStepNo, currentTime, states, intermediates):
+def handleResult(nInstances, timeStepNo, currentTime, states, intermediates, fibre_no):
   #print "handleResult: time step {}, t={}, nInstances: {}, n entries states: {}".format(timeStepNo, currentTime, nInstances, len(states))
   #print "states:", states[0:nInstances]
   

@@ -11,7 +11,7 @@ import numpy as np
 import csv
 import collections
 import copy
-from sets import Set
+# from sets import Set # sets included in python3
 import os
 import time
 import pickle
@@ -50,21 +50,21 @@ solution_condition = lambda filename: "solution.npy" in filename
 solution_shaped_condition = lambda filename: "solution_shaped.npy" in filename
 solution_py_condition = lambda filename: ".py" in filename
 
-solution_files = list(np.extract(map(solution_condition, files), files))
-solution_shaped_files = list(np.extract(map(solution_shaped_condition, files), files))
-solution_py_files = list(np.extract(map(solution_py_condition, files), files))
+solution_files = list(np.extract(np.array(list(map(solution_condition, files))), files))              # map to array doesn't work in python3 anymore. must first convert to list. --Aaron
+solution_shaped_files = list(np.extract(np.array(list(map(solution_shaped_condition, files))), files))
+solution_py_files = list(np.extract(np.array(list(map(solution_py_condition, files))), files))
 
 
 # sort files by number in file name
 solution_py_files = sorted(solution_py_files)
 
-print "{} files".format(len(solution_py_files))
-print solution_py_files[0:min(10,len(solution_py_files))]
+print( "{} files".format(len(solution_py_files)))
+print( solution_py_files[0:min(10,len(solution_py_files))])
 
 data = py_reader.load_data(solution_py_files)
 
 if len(data) == 0:
-  print "no data found."
+  print( "no data found.")
   sys.exit(0)
 
 dimension = data[0]['dimension']
@@ -76,7 +76,7 @@ if dimension == 1:
   min_value, max_value = py_reader.get_min_max(data, "solution", "0")
   min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
   
-  print "value range: [{}, {}]".format(min_value, max_value)
+  print( "value range: [{}, {}]".format(min_value, max_value))
   
   # prepare plot
   fig = plt.figure()
@@ -168,7 +168,7 @@ if dimension == 2:
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     
-    print "value range: [{}, {}]".format(min_value, max_value)
+    print( "value range: [{}, {}]".format(min_value, max_value))
     
     # prepare plot
     fig = plt.figure()
@@ -176,7 +176,7 @@ if dimension == 2:
     margin = abs(max_value - min_value) * 0.1
     ax = fig.add_subplot(111, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
     
-    surface = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+    # surface = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1) # needed? error with python3
     text = plt.figtext(0.15,0.85,"timestep",size=20)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -193,7 +193,7 @@ if dimension == 2:
     if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed" or data[0]["meshType"] == "StructuredDeformable":
       
       if debug:
-        print "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"])
+        print( "basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"]))
       
       nEntries = []
       for i in range(dimension):
@@ -208,17 +208,17 @@ if dimension == 2:
       Y = np.reshape(y_positions, nEntries)
       
       if debug:
-        print "nEntries: ", nEntries
-        print "x_positions: ", x_positions
-        print "X: ",X
-        print "y_positions: ", y_positions
-        print "Y: ",Y
+        print( "nEntries: ", nEntries)
+        print( "x_positions: ", x_positions)
+        print( "X: ",X)
+        print( "y_positions: ", y_positions)
+        print( "Y: ",Y)
       
       #print "x_positions shape: {}".format(len(x_positions))
       
     elif data[0]["meshType"] == "UnstructuredDeformable":
       if not data[0]["onlyNodalValues"]:
-        print "Error: onlyNodalValues is False, set to True in OutputWriter config!"
+        print( "Error: onlyNodalValues is False, set to True in OutputWriter config!")
       
       x_positions = py_reader.get_values(data[0], "geometry", "x")
       y_positions = py_reader.get_values(data[0], "geometry", "y")
@@ -255,7 +255,7 @@ if dimension == 2:
       
       if debug:
         try:
-          print "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape)
+          print( "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape))
         except:
           pass
       
@@ -340,7 +340,7 @@ if dimension == 2:
       pp = pprint.PrettyPrinter()
       pp.pprint(data[0])
     
-      print "field_variable_names: ", field_variable_names
+      print( "field_variable_names: ", field_variable_names)
     
     min_x_current, max_x_current = py_reader.get_min_max(data, "geometry", "x")
     min_y_current, max_y_current = py_reader.get_min_max(data, "geometry", "y")
@@ -357,10 +357,10 @@ if dimension == 2:
     fig = plt.figure()
 
     if debug:
-      print "min_x: ", min_x
-      print "min_y: ", min_y
-      print "max_x: ", max_x
-      print "max_y: ", max_y
+      print( "min_x: ", min_x)
+      print( "min_y: ", min_y)
+      print( "max_x: ", max_x)
+      print( "max_y: ", max_y)
 
     # create plot with 30% margins
     margin_x = abs(max_x - min_x) * 0.3
@@ -384,7 +384,7 @@ if dimension == 2:
       if dataset["meshType"] == "StructuredRegularFixed" or dataset["meshType"] == "StructuredDeformable":
         
         if debug:
-          print "basisfunction: [{}], basisOrder: [{}]".format(dataset["basisFunction"], dataset["basisOrder"])
+          print( "basisfunction: [{}], basisOrder: [{}]".format(dataset["basisFunction"], dataset["basisOrder"]))
         
         if dataset["basisFunction"] == "Lagrange":
           nEntries = dimension * [0]
@@ -406,12 +406,12 @@ if dimension == 2:
         Y = np.reshape(list(y_positions), nEntries)
         
         if debug:
-          print "nEntries: ", nEntries
-          print "x_positions: ", x_positions
-          print "X: ",X
-          print "y_positions: ", y_positions
-          print "Y: ",Y
-          print nEntries
+          print( "nEntries: ", nEntries)
+          print( "x_positions: ", x_positions)
+          print( "X: ",X)
+          print( "y_positions: ", y_positions)
+          print( "Y: ",Y)
+          print( nEntries)
         
         # loop over elements
         for ely in range(nEntries[0]-1):
@@ -422,7 +422,7 @@ if dimension == 2:
             point3 = np.array([X[ely+1][elx+1], Y[ely+1][elx+1]])
             
             if debug:
-              print "polygon (0,1,2,3) = ({},{},{},{})".format(point0, point1, point2, point3)
+              print( "polygon (0,1,2,3) = ({},{},{},{})".format(point0, point1, point2, point3))
         
             polygon = Polygon([point0, point1, point3, point2], **kwargs)  # dummy data for xs,ys
             polygons.append(polygon)

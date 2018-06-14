@@ -43,7 +43,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   s << filenameBase_;
   if (timeStepNo != -1)
   {
-    s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
+    s << "_" << std::setw(10) << std::setfill('0') << timeStepNo;
   }
   filename_ = s.str();
   return true;

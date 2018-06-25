@@ -185,7 +185,7 @@ def get_instance_config(i):
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "sphereSize": "2*2*2"},
             {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
           ]
         },

@@ -51,6 +51,8 @@ void Exfile::outputComFile()
     << "# run by cmgui " << basename << ".com" << std::endl << std::endl;
   file << "# read files" << std::endl;
 
+  std::string sphereSize = PythonUtility::getOptionString(this->specificSettings_, "sphereSize", "0.005*0.005*0.01");
+  
   std::string lastMeshName;
   int lastDimensionality = 3;
   
@@ -112,7 +114,7 @@ void Exfile::outputComFile()
     file << std::endl
       << "##### 1D mesh #####" << std::endl
       << "# add spheres representation" << std::endl
-      << "gfx modify g_element $group points domain_mesh1d coordinate geometry glyph sphere size \"0.005*0.005*0.01\" select_on material default data solution" << std::endl << std::endl;
+      << "gfx modify g_element $group points domain_mesh1d coordinate geometry glyph sphere size \"" << sphereSize << "\" select_on material default data solution" << std::endl << std::endl;
   }
   
   file << "# add axes" << std::endl

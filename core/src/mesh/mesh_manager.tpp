@@ -30,8 +30,11 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // get mesh configuration that was parsed earlier
       PyObject *meshConfiguration = meshConfiguration_.at(meshName);
       
+      // create partitioning
+      Partition::MeshPartition partition = this->partitionManager_->createPartition();
+      
       // create new mesh and initialize
-      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(meshConfiguration);
+      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, meshConfiguration);
       mesh->setMeshName(meshName);
       mesh->initialize();
       
@@ -57,8 +60,11 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<anonymousName.str()<<"\".";
   
+  // create partitioning
+  Partition::MeshPartition partition = this->partitionManager_->createPartition();
+  
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(settings);
+  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, settings);
   mesh->setMeshName(anonymousName.str());
   mesh->initialize();
 
@@ -82,8 +88,11 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   // create new mesh
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<name<<"\".";
   
+  // create partitioning
+  Partition::MeshPartition partition = this->partitionManager_->createPartition();
+  
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(std::forward<Args>(args)...);
+  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, std::forward<Args>(args)...);
   mesh->initialize();
   mesh->setMeshName(name);
   meshes_[name] = mesh;

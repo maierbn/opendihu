@@ -8,10 +8,15 @@ namespace Mesh
 {
 
 Manager::Manager(PyObject *specificSettings) :
-  specificSettings_(specificSettings), numberAnonymousMeshes_(0)
+  partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
+}
+
+void Manager::setPartitionManager(std::shared_ptr partitionManager)
+{
+  partitionManager_ = partitionManager;
 }
 
 void Manager::storePreconfiguredMeshes()
@@ -85,7 +90,11 @@ mesh<None>(PyObject *settings)
       LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
       typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(meshConfiguration_[meshName]);
+      
+      // create partitioning
+      Partition::MeshPartition partition = this->partitionManager_->createPartition();
+      
+      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(partition, meshConfiguration_[meshName]);
       mesh->initialize();
       
       // store mesh
@@ -115,7 +124,10 @@ mesh<None>(PyObject *settings)
     typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
 
-    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(settings);
+    // create partitioning
+    Partition::MeshPartition partition = this->partitionManager_->createPartition();
+      
+    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(partition, settings);
     mesh->setMeshName(anonymousName.str());
     mesh->initialize();
     

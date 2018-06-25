@@ -45,8 +45,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
@@ -98,8 +97,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1,    0,    0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -150,8 +148,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(121, 0.0);
   std::array<double, 2> stencil = {-1.0, 1.0};
@@ -207,8 +204,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(121, 0.0);
   std::array<double, 2> stencil = {-1.0, 1.0};
@@ -275,8 +271,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -326,8 +321,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(625, 0.0);
   
@@ -405,8 +399,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(625, 0.0);
   
@@ -484,8 +477,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(15625, 0.0);
   
@@ -631,8 +624,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  
+  equationDiscretized.run();
   
   std::vector<double> referenceMatrix(15625, 0.0);
   
@@ -791,8 +784,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,

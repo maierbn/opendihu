@@ -341,5 +341,3 @@ std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason 
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
-
-

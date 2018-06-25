@@ -49,8 +49,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
@@ -101,8 +101,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1,    0,    0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -153,8 +153,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(121, 0.0);
   std::array<double, 2> stencil = {-1.0, 1.0};
@@ -221,8 +221,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -272,8 +272,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(625, 0.0);
   
@@ -351,8 +351,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
 
   std::vector<double> referenceMatrix(15625, 0.0);
   
@@ -514,9 +514,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized1(settings1);
   
-  Computation computation1(settings1, equationDiscretized1);
-  computation1.run();
-  
+  equationDiscretized1.run();
   
   DihuContext settings2(argc, argv, pythonConfig2);
   FiniteElementMethod<
@@ -526,8 +524,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings2);
   
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
 }
@@ -558,8 +555,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
@@ -568,8 +565,7 @@ config = {
     Equation::Dynamic::IsotropicDiffusion
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,8,3,4,5,6,7,8,9,10,11
@@ -605,8 +601,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<1>,
@@ -615,8 +611,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,8,3,4,5,6,7,8,9,10,11
@@ -652,8 +647,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<2>,
@@ -662,8 +657,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,2,3,4,5,6,7,8,9,10,11,12
@@ -699,8 +693,8 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<2>,
@@ -709,8 +703,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,2,3,4,5,6,7,8,9,10,11,12
@@ -747,8 +740,8 @@ config = {
   > equationDiscretized(settings);
   
   std::cout<<"Note: This should print an error message about mesh being non-uniform.";
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredRegularFixedOfDimension<3>,
@@ -757,8 +750,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
@@ -796,8 +788,8 @@ config = {
   > equationDiscretized(settings);
   
   std::cout<<"Note: This should print an error message about mesh being non-uniform.";
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<3>,
@@ -806,8 +798,7 @@ config = {
     Equation::Static::Poisson
   > equationDiscretized2(settings);
   
-  Computation computation2(settings, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
 
   std::vector<double> initialRhs = {
     1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,

@@ -7,6 +7,7 @@
 #include "control/dihu_context.h"
 #include "data_management/multiple_instances.h"
 #include "output_writer/manager.h"
+#include "partition/partition.h"
 
 namespace Control
 {
@@ -47,6 +48,8 @@ protected:
 
   int nInstances_; ///< number of instances
   std::vector<TimeSteppingScheme> instances_;   ///< the instances of the problem
+  
+  std::shared_ptr<Partition::MeshPartition> partition_;   ///< partitioning object that stores which instances are computed locally
   
   Data::MultipleInstances<typename TimeSteppingScheme::BasisOnMesh, TimeSteppingScheme> data_;  ///< the data object
 };

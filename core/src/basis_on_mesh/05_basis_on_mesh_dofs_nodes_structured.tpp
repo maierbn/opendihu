@@ -217,17 +217,10 @@ setGeometryField(std::vector<double> &nodePositions)
 
   // create petsc vector that contains the node positions
   Vec values;
-  PetscErrorCode ierr;
-  ierr = VecCreate(PETSC_COMM_WORLD, &values);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) values, "geometry"); CHKERRV(ierr);
-
-  // initialize size of vector
   const int vectorSize = nDofs * 3;   // dofs always contain 3 entries for every entry (x,y,z)
-  ierr = VecSetSizes(values, PETSC_DECIDE, vectorSize); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(values);  CHKERRV(ierr);
-
+  
+  PetscUtility::createVector(values, vectorSize, "geometry", this->mesh_->partition());
+  
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
   std::vector<double> geometryValues(vectorSize, 0.0);
 
@@ -258,6 +251,7 @@ setGeometryField(std::vector<double> &nodePositions)
   PetscUtility::setVector(geometryValues, values);
 
   // finish parallel assembly
+  PetscErrorCode ierr;
   ierr = VecAssemblyBegin(values); CHKERRV(ierr);
   ierr = VecAssemblyEnd(values); CHKERRV(ierr);
 

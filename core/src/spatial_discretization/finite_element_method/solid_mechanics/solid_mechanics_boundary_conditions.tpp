@@ -323,12 +323,11 @@ applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMesh
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix, Data::FiniteElements<BasisOnMeshType,Term> &data)
+applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> matrix, Data::FiniteElements<BasisOnMeshType,Term> &data)
 {
   // if the nonlinear solver should work with not reduced vectors
   if (!data.computeWithReducedVectors())
   {
-
     VLOG(1) << "stiffness matrix before MatZeroRowsColumns: " << PetscUtility::getStringMatrix(matrix);
 
     // zero rows and columns for which Dirichlet BC is set
@@ -435,7 +434,7 @@ expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D)
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-reduceMatrix(Mat &input, Mat &output, const int nUnknownsFull)
+reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nUnknownsFull)
 {
   // compute number of reduced dofs
   int nUnknownsReduced = nUnknownsFull - this->dirichletValues_.size();

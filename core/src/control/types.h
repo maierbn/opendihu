@@ -21,3 +21,5 @@ typedef VecD<3> Vec3;    // 3D vector to store position of a node
 
 template<int D>
 using Tensor2 = std::array<std::array<double,D>,D>;  // two-point tensor of dimension DxD, storage is as vector of column vectors, i.e. column-major
+
+typedef unsigned long long global_no_t;   // type for global numbers

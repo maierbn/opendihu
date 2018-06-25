@@ -54,6 +54,9 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
 
   LOG(DEBUG) << "PythonStructuredDeformable";
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // build python dict that will contain all information and data
   PyObject *data = Py_BuildValue("{s s, s i, s O, s s, s i, s O, s O, s i, s d}", "meshType", "StructuredDeformable",
                                  "dimension", D, "nElements", pyNElements,

@@ -2,6 +2,7 @@
 
 #include <Python.h>  // this has to be the first included header
 #include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
+#include <omp.h>
 
 #include <fstream>
 #include <iostream>
@@ -19,11 +20,14 @@
 
 #include "easylogging++.h"
 #include "control/use_numpy.h"
+#include "utility/mpi_utility.h"
 
 //INITIALIZE_EASYLOGGINGPP
 
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
-std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
+//std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
+std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
+std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
 
 bool DihuContext::initialized_ = false;
 
@@ -42,11 +46,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
 
   if (!initialized_)
   {
-    // load configuration from file if it exits
-    initializeLogging(argc, argv);
-
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
+
+    // load configuration from file if it exits
+    initializeLogging(argc, argv);
 
     // configure PETSc to abort on errorm
     PetscOptionsSetValue(NULL, "-on_error_abort", "");
@@ -141,6 +145,12 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
     // initialize python
     VLOG(4) << "Py_Initialize()";
     Py_Initialize();
+    
+    VLOG(4) << "PyEval_InitThreads()";
+    PyEval_InitThreads();
+    
+    //VLOG(4) << "PyEval_ReleaseLock()";
+    //PyEval_ReleaseLock();
 
     VLOG(4) << "Py_SetStandardStreamEncoding()";
     Py_SetStandardStreamEncoding(NULL, NULL);
@@ -225,17 +235,27 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
 #endif
     initialized_ = true;
   }
-  // if this is the first constructed DihuContext object, create global objects mesh manager and solver manager
+  
+  // if this is the first constructed DihuContext object, create global objects partition manager, mesh manager and solver manager
+  if (!partitionManager_)
+  {
+    VLOG(2) << "create partitionManager_";
+    partitionManager_ = std::make_shared<Partition::Manager>();
+  }
+
   if (!meshManager_)
   {
     VLOG(2) << "create meshManager_";
     meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
+    meshManager_->setPartitionManager(partitionManager_);
   }
-
-  if (!solverManager_)
+  
+  if (solverManagerForThread_.empty())
   {
-    VLOG(2) << "create solverManager_";
-    solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
+    VLOG(2) << "create solverManagerForThread_";
+    // create solver manager for thread 0
+    solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
+    solverManagerForThread_[1] = std::make_shared<Solver::Manager>(pythonConfig_);
   }
 }
 
@@ -244,12 +264,18 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : D
   loadPythonScript(pythonSettings);
   PythonUtility::printDict(pythonConfig_);
 
+  partitionManager_ = nullptr;
+  partitionManager_ = std::make_shared<Partition::Manager>();
+  
   VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;
   meshManager_ = std::make_shared<Mesh::Manager>(pythonConfig_);
-  solverManager_ = nullptr;
-  solverManager_ = std::make_shared<Solver::Manager>(pythonConfig_);
-
+  meshManager_->setPartitionManager(partitionManager_);
+  
+  // create solver manager for thread 0
+  solverManagerForThread_.clear();
+  solverManagerForThread_[0] = std::make_shared<Solver::Manager>(pythonConfig_);
+  
 }
 
 PyObject* DihuContext::getPythonConfig() const
@@ -264,9 +290,31 @@ std::shared_ptr<Mesh::Manager> DihuContext::meshManager() const
   return meshManager_;
 }
 
+std::shared_ptr<Partition::Manager> DihuContext::partitionManager() const
+{
+  return partitionManager_;
+}
+
 std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 {
-  return solverManager_;
+  // get number of omp threads
+  //int nThreads = omp_get_num_threads();
+  int threadId = omp_get_thread_num();
+  
+  if (solverManagerForThread_.find(threadId) == solverManagerForThread_.end())
+  {
+    LOG(INFO) << "create solver manager for thread " << threadId;
+    // create solver manager
+    solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
+    
+    LOG(INFO) << "(done)";
+  }
+  else 
+  {
+    LOG(INFO) << "solver manager for thread " << threadId << " exists";
+  }
+  
+  return solverManagerForThread_[threadId];
 }
 
 DihuContext DihuContext::operator[](std::string keyString)
@@ -440,24 +488,37 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf;
   conf.setToDefault();
 
-  conf.setGlobally(el::ConfigurationType::Format, "INFO : %msg");
-  conf.setGlobally(el::ConfigurationType::Filename, "/tmp/logs/my.log");
+  int nRanks;
+  int rankNo;
+  MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  
+  std::string prefix;
+  if (nRanks > 1)
+  {
+    std::stringstream s;
+    s << rankNo << "/" << nRanks << " ";
+    prefix = s.str();
+  }
+  
+  conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
+  conf.setGlobally(el::ConfigurationType::Filename, "/tmp/logs/opendihu.log");
   conf.setGlobally(el::ConfigurationType::Enabled, "true");
   conf.setGlobally(el::ConfigurationType::ToFile, "true");
   conf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");
 
   // set format of outputs
-  conf.set(el::Level::Debug, el::ConfigurationType::Format, "DEBUG: %msg");
-  conf.set(el::Level::Trace, el::ConfigurationType::Format, "TRACE: %msg");
-  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "VERB%vlevel: %msg" ANSI_COLOR_RESET);
+  conf.set(el::Level::Debug, el::ConfigurationType::Format, prefix+"DEBUG: %msg");
+  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg");
+  conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "" + prefix+"VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format,
-           "WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
+           prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
 
   conf.set(el::Level::Error, el::ConfigurationType::Format,
-           "ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);
+           prefix+"ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);
 
   conf.set(el::Level::Fatal, el::ConfigurationType::Format,
-           std::string(ANSI_COLOR_MAGENTA)+"FATAL: %loc %func: \n"+separator
+           std::string(ANSI_COLOR_MAGENTA)+prefix+"FATAL: %loc %func: \n"+separator
            +"\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
 
   //el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);

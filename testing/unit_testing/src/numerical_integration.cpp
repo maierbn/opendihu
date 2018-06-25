@@ -45,8 +45,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
   
-  Computation computation(settings1, equationDiscretized1);
-  computation.run();
+  equationDiscretized1.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
@@ -100,8 +99,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
   
-  Computation computation1(settings1, equationDiscretized1);
-  computation1.run();
+  equationDiscretized1.run();
 
   DihuContext settings2(argc, argv, pythonConfig);
   
@@ -113,8 +111,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
 }
@@ -153,8 +150,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
   
-  Computation computation1(settings1, equationDiscretized1);
-  computation1.run();
+  equationDiscretized1.run();
 
   DihuContext settings2(argc, argv, pythonConfig);
   
@@ -166,8 +162,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
 }
@@ -205,8 +200,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
   
-  Computation computation1(settings1, equationDiscretized1);
-  computation1.run();
+  equationDiscretized1.run();
 
   DihuContext settings2(argc, argv, pythonConfig);
   
@@ -218,8 +212,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized3(settings2);
   
-  Computation computation3(settings2, equationDiscretized3);
-  computation3.run(); 
+  equationDiscretized3.run(); 
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized3);
   
@@ -231,8 +224,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized4(settings2);
   
-  Computation computation4(settings2, equationDiscretized4);
-  computation4.run(); 
+  equationDiscretized4.run(); 
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized4);
   
@@ -244,8 +236,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized5(settings2);
   
-  Computation computation5(settings2, equationDiscretized5);
-  computation5.run(); 
+  equationDiscretized5.run(); 
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized5);
   
@@ -257,8 +248,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized6(settings2);
   
-  Computation computation6(settings2, equationDiscretized6);
-  computation6.run(); 
+  equationDiscretized6.run(); 
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized6);
   
@@ -270,8 +260,71 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized7(settings2);
   
-  Computation computation7(settings2, equationDiscretized7);
-  computation7.run(); 
+  equationDiscretized7.run(); 
+  
+  // Gauss integration order 8
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<8>,
+    Equation::Static::Laplace
+  > equationDiscretized8(settings2);
+  
+  equationDiscretized8.run(); 
+  
+  // Gauss integration order 10
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<10>,
+    Equation::Static::Laplace
+  > equationDiscretized10(settings2);
+  
+  equationDiscretized10.run(); 
+  
+  // Gauss integration order 12
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<12>,
+    Equation::Static::Laplace
+  > equationDiscretized12(settings2);
+  
+  equationDiscretized12.run(); 
+  
+
+  // Gauss integration order 16
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<16>,
+    Equation::Static::Laplace
+  > equationDiscretized16(settings2);
+  
+  equationDiscretized16.run(); 
+  
+
+  // Gauss integration order 20
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<20>,
+    Equation::Static::Laplace
+  > equationDiscretized20(settings2);
+  
+  equationDiscretized20.run(); 
+  
+
+  // Gauss integration order 24
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<24>,
+    Equation::Static::Laplace
+  > equationDiscretized24(settings2);
+  
+  equationDiscretized24.run(); 
+  
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized7);
   /*
@@ -288,6 +341,208 @@ config = {
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized64);
   */
+}
+
+TEST(NumericalIntegrationTest, NewtonCotesIntegrationHigherOrderWorks)
+{
+  std::string pythonConfig = R"(
+# Laplace 3D
+n = 2
+    
+# boundary conditions
+bc = {}
+bc[0] = 1.0
+bc[n] = 0.0
+
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": False,
+  "FiniteElementMethod" : {
+    "prefactor": 12,
+    "nElements": [n,n,n],
+    "physicalExtent": [2.0,2.0,2.0],
+    #"DirichletBoundaryCondition": bc,
+    "relativeTolerance": 1e-15,
+  }
+}
+)";
+
+  DihuContext settings1(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::None,
+    Equation::Static::Laplace
+  > equationDiscretized1(settings1);
+  
+  equationDiscretized1.run();
+
+  DihuContext settings2(argc, argv, pythonConfig);
+  
+  // NewtonCotes integration order 3
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<3>,
+    Equation::Static::Laplace
+  > equationDiscretized3(settings2);
+  
+  equationDiscretized3.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized3);
+  
+  // NewtonCotes integration order 4
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<4>,
+    Equation::Static::Laplace
+  > equationDiscretized4(settings2);
+  
+  equationDiscretized4.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized4);
+  
+  // NewtonCotes integration order 5
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<5>,
+    Equation::Static::Laplace
+  > equationDiscretized5(settings2);
+  
+  equationDiscretized5.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized5);
+  
+  // NewtonCotes integration order 6
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<6>,
+    Equation::Static::Laplace
+  > equationDiscretized6(settings2);
+  
+  equationDiscretized6.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized6);
+  
+  // NewtonCotes integration order 7
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<7>,
+    Equation::Static::Laplace
+  > equationDiscretized7(settings2);
+  
+  equationDiscretized7.run(); 
+  
+  // NewtonCotes integration order 8
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::NewtonCotes<8>,
+    Equation::Static::Laplace
+  > equationDiscretized8(settings2);
+  
+  equationDiscretized8.run(); 
+}
+
+TEST(NumericalIntegrationTest, ClenshawCurtisIntegrationHigherOrderWorks)
+{
+  std::string pythonConfig = R"(
+# Laplace 3D
+n = 2
+    
+# boundary conditions
+bc = {}
+bc[0] = 1.0
+bc[n] = 0.0
+
+config = {
+  "disablePrinting": False,
+  "disableMatrixPrinting": False,
+  "FiniteElementMethod" : {
+    "prefactor": 12,
+    "nElements": [n,n,n],
+    "physicalExtent": [2.0,2.0,2.0],
+    #"DirichletBoundaryCondition": bc,
+    "relativeTolerance": 1e-15,
+  }
+}
+)";
+
+  DihuContext settings1(argc, argv, pythonConfig);
+  
+  FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::None,
+    Equation::Static::Laplace
+  > equationDiscretized1(settings1);
+  
+  equationDiscretized1.run();
+
+  DihuContext settings2(argc, argv, pythonConfig);
+  
+  // ClenshawCurtis integration order 3
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::ClenshawCurtis<3>,
+    Equation::Static::Laplace
+  > equationDiscretized3(settings2);
+  
+  equationDiscretized3.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized3);
+  
+  // ClenshawCurtis integration order 4
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::ClenshawCurtis<4>,
+    Equation::Static::Laplace
+  > equationDiscretized4(settings2);
+  
+  equationDiscretized4.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized4);
+  
+  // ClenshawCurtis integration order 5
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::ClenshawCurtis<5>,
+    Equation::Static::Laplace
+  > equationDiscretized5(settings2);
+  
+  equationDiscretized5.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized5);
+  
+  // ClenshawCurtis integration order 6
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::ClenshawCurtis<6>,
+    Equation::Static::Laplace
+  > equationDiscretized6(settings2);
+  
+  equationDiscretized6.run(); 
+  
+  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized6);
+  
+  // ClenshawCurtis integration order 7
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<3>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::ClenshawCurtis<7>,
+    Equation::Static::Laplace
+  > equationDiscretized7(settings2);
+  
+  equationDiscretized7.run(); 
 }
 
 };

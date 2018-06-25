@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  TimeSteppingScheme::ExplicitEuler<
+  TimeSteppingScheme::Heun<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<2>,
       BasisFunction::LagrangeOfOrder<1>,

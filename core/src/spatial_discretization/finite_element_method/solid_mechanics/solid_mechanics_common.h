@@ -25,7 +25,7 @@ public:
   void setStiffnessMatrix();
 
   //! return the tangent stiffness matrix, called from a PETSc SNES callback
-  Mat &tangentStiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix();
 
   //! return the virtual external energy which is constant
   Vec &rightHandSide();
@@ -37,7 +37,7 @@ public:
   void computeInternalMinusExternalVirtualWork(Vec &result);
 
   //! compute and return the appropriate analytical stiffness matrix
-  void computeAnalyticStiffnessMatrix(Mat &solverStiffnessMatrix);
+  void computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix);
 
   //! write the current state as output
   void writeOutput();
@@ -45,11 +45,11 @@ public:
 protected:
 
   //! compute the tangent stiffnes matrix into the given matrix (implemented by inherited class)
-  virtual void setStiffnessMatrix(Mat stiffnessMatrix) = 0;
+  virtual void setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix) = 0;
 
   //! set all entries in the given stiffness matrix for the analytic jacobian only with displacements. This corresponds to the full matrix in penalty formulation and to the upper left block in mixed formulation.
   //! do not call final assembly or anything
-  void setStiffnessMatrixEntriesForDisplacements(Mat stiffnessMatrix);
+  void setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix);
 
   //! compute the extern virtual work term, dW_ext.
   void computeExternalVirtualWork(Vec &result);

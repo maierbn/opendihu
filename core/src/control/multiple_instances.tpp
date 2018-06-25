@@ -1,8 +1,11 @@
 #include "control/multiple_instances.h"
 
 #include <omp.h>
+#include <sstream>
 
 #include "data_management/multiple_instances.h"
+#include "partition/partition_manager.h"
+#include "utility/mpi_utility.h"
 
 namespace Control
 {
@@ -38,21 +41,37 @@ MultipleInstances(DihuContext context) :
   if (i < nInstances_)
   {
     LOG(ERROR) << "Could only create " << i << " instances from the given instances config python list, but nInstances = " << nInstances_;
+    nInstances_ = i;
   }
     
   if (!PythonUtility::getOptionListEnd(specificSettings_, "instances"))
   {
     LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
   }
-   
+  
+  VLOG(1) << "MultipleInstances constructor, create Partitioning for " << nInstances_ << " instances";
+  
+  MPIUtility::gdbParallelDebuggingBarrier();
+  
+  // initialize distribution of instances to processes
+  partition_ = context_.partitionManager()->createPartitioning(nInstances_);
+  
+  // create a rank subset that contains just the current rank. The locally computed instances are all computed by this single-element rank subset.
+  Partition::RankSubset rankSubset(context_.partitionManager()->rankNo());
+  
+  // determine range of locally computed instances
+  
   // create all instances
-  for (PyObject *instanceConfig: instanceConfigs)
+  for (int instanceConfigNo = partition_->begin(); instanceConfigNo < partition_->end(); instanceConfigNo++)
   {
+    PyObject *instanceConfig = instanceConfigs[instanceConfigNo];
+   
+    // store the rank subset containing only the own rank for the mesh of the current instance
+    this->context_.partitionManager().setRankSubsetForNextCreatedMesh(rankSubset);
+    
     VLOG(1) << "create sub context";
     instances_.emplace_back(context_.createSubContext(instanceConfig));
-    
   }
-  
   
 }
 
@@ -61,7 +80,7 @@ void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
-  for (int i = 0; i < nInstances_; i++)
+  for (int i = 0; i < partition_->localSize(); i++)
   {
     instances_[i].advanceTimeSpan();
   }
@@ -71,7 +90,7 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 setTimeSpan(double startTime, double endTime)
 {
-  for (int i = 0; i < nInstances_; i++)
+  for (int i = 0; i < partition_->localSize(); i++)
   {
     instances_[i].setTimeSpan(startTime, endTime);
   }
@@ -81,7 +100,7 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
-  for (int i = 0; i < nInstances_; i++)
+  for (int i = 0; i < partition_->localSize(); i++)
   {
     instances_[i].initialize();
   }
@@ -95,13 +114,17 @@ run()
 {
   initialize();
  
-  // TODO init without threads
-  #pragma omp parallel for
-  for (int i = 0; i < nInstances_; i++)
+  //#pragma omp parallel for // does not work with the python interpreter
+  for (int i = 0; i < partition_->localSize(); i++)
   {
     if (omp_get_thread_num() == 0)
-      LOG(INFO) << "running " << nInstances_ << " instances with " << omp_get_num_threads() << " OpenMP threads";
+    {
+      std::stringstream msg;
+      msg << omp_get_thread_num() << ": running " << partition_->localSize() << " instances with " << omp_get_num_threads() << " OpenMP threads";
+      LOG(INFO) << msg.str();
+    }
     
+    //instances_[i].reset();
     instances_[i].run();
   }
   

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "data_management/finite_elements.h"
+#include "partition/rank_subset.h"
 
 //#define QUADRATURE_TEST    ///< if evaluation of quadrature accuracy takes place
 //#define EXACT_QUADRATURE Quadrature::Gauss<20>
@@ -27,6 +28,9 @@ public:
   //! initialize for use as laplace or poisson equation, not for timestepping
   virtual void initialize();
 
+  //! set the subset of ranks that will compute the work
+  void setRankSubset(Partition::RankSubset rankSubset);
+  
   //! get the stored mesh
   std::shared_ptr<Mesh::Mesh> mesh();
 

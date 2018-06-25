@@ -11,6 +11,7 @@
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
+#include "partition/partitioned_petsc_mat.h"
 
 namespace Data
 {
@@ -32,7 +33,7 @@ public:
   virtual void initialize() override;
 
   //! return reference to a stiffness matrix
-  Mat &stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix();
 
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
@@ -53,7 +54,7 @@ public:
   void initializeMassMatrix();
 
   //! return a reference to the discretization matrix
-  Mat &massMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -73,10 +74,10 @@ private:
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
-  Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat> stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  PartitionedPetscMat<BasisOnMeshType> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
 
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
 

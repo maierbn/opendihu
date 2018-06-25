@@ -9,6 +9,7 @@
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
 #include "control/dihu_context.h"
+#include "partition/rank_subset.h"
 
 namespace Data
 {
@@ -32,6 +33,9 @@ public:
   //! initialize, generate petsc objects, this has to be called after setMesh
   virtual void initialize();
 
+  //! set the subset of ranks that will compute the work
+  virtual void setRankSubset(Partition::RankSubset rankSubset);
+  
   //! get the stored mesh
   const std::shared_ptr<BasisOnMeshType> mesh() const;
 
@@ -44,8 +48,10 @@ protected:
   virtual void createPetscObjects() = 0;
 
   const DihuContext context_;     ///< the context object with python config of the class that uses this data object
-  std::shared_ptr<BasisOnMeshType> mesh_;
+  std::shared_ptr<BasisOnMeshType> mesh_; ///< the mesh on which the data in this object is defined
 
+  std::shared_ptr<Partition::RankSubset> rankSubset_;  ///< a subset of MPI ranks that will operate on the data of this object
+  
   bool initialized_ = false;
 };
 

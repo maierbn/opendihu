@@ -145,7 +145,7 @@ def get_instance_config(i):
             #"libraryFilename": "cellml_simd_lib_{}.so".format(i),
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
-            "setParametersFunction": setParameters,
+            #"setParametersFunction": setParameters,
             "setParametersCallInterval": 1e3,          # setParameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             "setParametersFunctionAdditionalParameter": i,
             
@@ -170,14 +170,14 @@ def get_instance_config(i):
           "timeStepWidth": 2e-7,
           "timeStepOutputInterval": 1e4,
           "FiniteElementMethod" : {
-            "relativeTolerance": 1e-10,
+            "solverName": "linearSolver",
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
+            #{"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5},
+            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
           ]
         },
       },
@@ -195,7 +195,7 @@ with open(fibre_file, "rb") as f:
 nInstances = len(streamlines)
 print("nInstances: {}".format(nInstances))
 
-#nInstances = 1
+nInstances = 2
     
 for i,streamline in enumerate(streamlines):
   meshes["MeshFibre{}".format(i)] = {
@@ -208,16 +208,19 @@ fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
 config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": False,
   "Meshes": meshes,
+  "Solvers": {
+    "linearSolver": {
+      "relativeTolerance": 1e-10,
+    }
+  },
   "MultipleInstances": {
     "nInstances": nInstances,
     "instances": [get_instance_config(i) for i in range(nInstances)],
     "OutputWriter" : [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "ExFile", "filename": "out/multiple_fibres", "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/multiple_fibres", "binary":True, "onlyNodalValues":True},
+      #{"format": "ExFile", "filename": "out/multiple_fibres", "outputInterval": 1},
+      #{"format": "PythonFile", "filename": "out/multiple_fibres", "binary":True, "onlyNodalValues":True},
     ]
   }
 }

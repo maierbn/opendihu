@@ -13,6 +13,7 @@
 #include "field_variable/unstructured/node_to_dof_mapping.h"
 #include "field_variable/field_variable_data.h"
 #include "field_variable/unstructured/component.h"
+#include "partition/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
@@ -142,6 +143,10 @@ public:
 
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
   virtual void flushSetValues() = 0;
+  
+  //! return the internal partitioned petsc vec
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec();
+  
 protected:
 
   //! create the element to dof mapping at each component
@@ -159,7 +164,7 @@ protected:
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components
   std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      ///< mapping from element-local node indices to global node numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       ///< the node to dof mapping of all components, this is the same for all components
-  std::shared_ptr<Vec> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
 };  // namespace

@@ -73,7 +73,7 @@ public:
   using SolidMechanicsCommon<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, HighOrderBasisOnMeshType, MixedQuadratureType, Term>::SolidMechanicsCommon;
 
   //! assemble the stiffness matrix
-  void setStiffnessMatrix(Mat stiffnessMatrix);
+  void setStiffnessMatrix(PartitionedPetscMat<BasisOnMeshType> stiffnessMatrix);
 
   //! set the internal displacements and pressure variables as copy of the given values
   void setFromSolverVariableSolution(Vec &solverSolutionVariable);
@@ -121,7 +121,7 @@ public:
   using SolidMechanicsCommon<BasisOnMeshType, BasisOnMeshType, QuadratureType, Term>::SolidMechanicsCommon;
 
   //! assemble the stiffness matrix
-  void setStiffnessMatrix(Mat stiffnessMatrix);
+  void setStiffnessMatrix(PartitionedPetscMat<BasisOnMeshType> stiffnessMatrix);
 
   //! set the internal displacement variable as copy of the given values
   void setFromSolverVariableSolution(Vec &solverSolutionVariable);

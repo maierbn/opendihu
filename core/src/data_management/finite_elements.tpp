@@ -32,10 +32,10 @@ FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 {
   PetscErrorCode ierr;
   // free PETSc objects
-  if (this->initialized_)
-  {
-    ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
-  }
+  //if (this->initialized_)
+  //{
+    //ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
+  //}
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -84,8 +84,12 @@ createPetscObjects()
 
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
 
-  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
-  this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
+  // create partitioning
+  Partition::MeshPartition meshPartition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
+  
+  // create field variables on local partition
+  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs", partition);
+  this->solution_ = this->mesh_->template createFieldVariable<1>("solution", partition);
 
   PetscErrorCode ierr;
   // create PETSc matrix object
@@ -99,43 +103,20 @@ createPetscObjects()
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
 
-  // sparse matrix
-  if (true)
-  {
-    ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n,
-                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->stiffnessMatrix_); CHKERRV(ierr);
-    ierr = MatMPIAIJSetPreallocation(this->stiffnessMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-  }
-  // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
-  //MatSetOption(this->stiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
-
-  // dense matrix
-  if (false)
-  {
-    ierr = MatCreate(PETSC_COMM_WORLD, &this->stiffnessMatrix_);  CHKERRV(ierr);
-    ierr = MatSetSizes(this->stiffnessMatrix_, PETSC_DECIDE,PETSC_DECIDE, n, n);  CHKERRV(ierr);
-    ierr = MatSetFromOptions(this->stiffnessMatrix_); CHKERRV(ierr);
-    ierr = MatSetUp(this->stiffnessMatrix_); CHKERRV(ierr);
-  }
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(meshPartition, n, diagonalNonZeros, offdiagonalNonZeros);
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 finalAssembly()
 {
-  PetscErrorCode ierr;
-  // communicate portions to the right processors before using the matrix and vector in computations
-  ierr = VecAssemblyBegin(this->rhs_->values()); CHKERRV(ierr);
-  ierr = MatAssemblyBegin(this->stiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
-  ierr = VecAssemblyEnd(this->rhs_->values()); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(this->stiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
+  this->stiffnessMatrix_->assembly(MAT_FINAL_ASSEMBLY);
+  
   LOG(DEBUG) << "finalAssembly";
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
@@ -156,7 +137,7 @@ solution()
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrix()
 {
   return this->massMatrix_;
@@ -171,14 +152,14 @@ print()
 
   VLOG(4)<<"======================";
   int nRows, nColumns;
-  MatGetSize(this->stiffnessMatrix_, &nRows, &nColumns);
+  MatGetSize(this->stiffnessMatrix_->values(), &nRows, &nColumns);
   VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
 
-  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_, this->rhs_->values());
+  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_->values(), this->rhs_->values());
   VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
 
   MatInfo info;
-  MatGetInfo(this->stiffnessMatrix_, MAT_LOCAL, &info);
+  MatGetInfo(this->stiffnessMatrix_->values(), MAT_LOCAL, &info);
 
   VLOG(4)<<"Matrix info: "<<std::endl
     <<"block_size: "<<info.block_size<<std::endl
@@ -228,11 +209,10 @@ initializeMassMatrix()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  PetscErrorCode ierr;
-  ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, nEntries, nEntries,
-                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->massMatrix_); CHKERRV(ierr);
-  ierr = MatMPIAIJSetPreallocation(this->massMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-
+  std::shared_ptr<Partition::MeshPartition> partition = this->data_.partition();
+  const int nComponents = 1;
+  this->massMatrix = PartitionedPetscMat(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
+  
   this->massMatrixInitialized_ = true;
 }
 

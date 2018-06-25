@@ -41,6 +41,12 @@ public:
 
   //! initialize discretizableInTime
   void initialize();
+  
+  //! set the subset of ranks that will compute the work
+  void setRankSubset(Partition::RankSubset rankSubset);
+  
+  //! reset state such that new initialization becomes necessary
+  virtual void reset();
 
   //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();

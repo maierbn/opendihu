@@ -7,8 +7,12 @@ namespace BasisOnMesh
 
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 void BasisOnMeshGeometry<MeshType,BasisFunctionType,DummyForTraits>::
-initialize()
+initialize(std::shared_ptr<Partition::Manager> partitionManager)
 {
+ 
+  // create partition and redistribute elements if necessary
+  partition(partitionManager);
+ 
   // pass a shared "this" pointer to the geometryField
   if (this->noGeometryField_)
     return;
@@ -28,6 +32,7 @@ initialize()
 
   // set pointer in geometry field
   this->geometryField_->setMesh(self);
+  
 }
 
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>

@@ -10,9 +10,11 @@ src_files = Glob('src/*/*.cpp') + Glob('src/*.cpp') + Glob('src/*/*/*.cpp') + Gl
 # define include directory for header files
 env.Append(CPPPATH = 'src')
   
-# depending on the variable BUILD_TYPE either build with debug or release settings
+# depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings
 if env["BUILD_TYPE"] == "debug":    # will build debug version
   target = 'opendihud'
+elif env["BUILD_TYPE"] == "releasewithdebuginfo":    # will build releasewithdebuginfo version
+  target = 'opendihurd'
 else:
   target = 'opendihu'       # will build release version
 

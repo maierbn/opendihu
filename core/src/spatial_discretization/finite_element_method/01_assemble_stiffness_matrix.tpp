@@ -35,7 +35,7 @@ setStiffnessMatrix()
 
   // initialize variables
   PetscErrorCode ierr;
-  Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
 

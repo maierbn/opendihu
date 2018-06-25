@@ -26,9 +26,9 @@ void FiniteElementMethodStiffnessMatrix<
   Equation::isIncompressible<Term>,
   BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
-setStiffnessMatrix(Mat stiffnessMatrix)
+setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix)
 {
-  Mat &tangentStiffnessMatrix = (stiffnessMatrix == PETSC_NULL ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
 
   // set all non-zero entries
   this->setStiffnessMatrixEntriesForDisplacements(tangentStiffnessMatrix);

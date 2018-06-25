@@ -47,6 +47,9 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
   int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *pyElementalDofs = Python<BasisOnMeshType,OutputFieldVariablesType>::
     buildPyElementalDofsObject(meshBase, onlyNodalValues);
   

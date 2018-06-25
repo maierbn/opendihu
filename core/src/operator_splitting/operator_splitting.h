@@ -4,6 +4,7 @@
 #include "output_writer/manager.h"
 #include "control/runnable.h"
 #include "data_management/time_stepping.h"
+#include "partition/rank_subset.h"
 
 namespace OperatorSplitting
 {
@@ -31,8 +32,14 @@ public:
   //! return whether the object has a specified mesh type or if it is independent of any mesh type
   bool knowsMeshType();
 
+  //! set the subset of ranks that will compute the work
+  void setRankSubset(Partition::RankSubset rankSubset);
+  
   //! initialize data
   void initialize();
+
+  //! reset state such that new initialization becomes necessary
+  virtual void reset();
 
   //! return the data object
   Data &data();

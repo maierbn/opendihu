@@ -32,7 +32,7 @@ public:
   virtual void initialize() override;
 
   //! return reference to a stiffness matrix
-  Mat &tangentStiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix();
 
   //! return reference to the residual field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &residual();
@@ -63,10 +63,10 @@ public:
   Vec &fullIncrement();
 
   //! get a reference to the tangent stiffness matrix as it is used for the nonlinear solver
-  Mat &solverMatrixTangentStiffness();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverMatrixTangentStiffness();
 
   //! get a reference to the tangent stiffness matrix that is used for the finite difference approximation of the stiffness matrix if analytic jacobian is used
-  Mat &solverMatrixTangentStiffnessFiniteDifferences();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverMatrixTangentStiffnessFiniteDifferences();
 
   //! get a reference to the residual vector as it is used for the nonlinear solver
   Vec &solverVariableResidual();
@@ -93,7 +93,7 @@ public:
   bool &externalVirtualWorkIsConstant();
 
   //! return a reference to the discretization matrix
-  Mat &massMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
 
   //! get the number of unknows in the solution variable which is 3*nNodes
   virtual dof_no_t nUnknowns();
@@ -111,7 +111,7 @@ public:
   OutputFieldVariables getOutputFieldVariables();
 
   //! return reference to a stiffness matrix. This method is usually called for solving the linear system, but in this case we have an nonlinear system that does not retrieve the stiffness matrix
-  Mat &stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
 
   //! return the value of computeWithReducedVectors. If the vector of unknowns only contains the real degrees of freedom and not the variables with Dirichlet BCs. This is maybe slower because copying of data is required, but the system to solve is smaller
   bool computeWithReducedVectors();
@@ -130,9 +130,9 @@ protected:
   //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
   virtual const dof_no_t getTangentStiffnessMatrixNRows();
 
-  Mat tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
-  Mat solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_
-  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  PartitionedPetscMat<BasisOnMeshType> tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
+  PartitionedPetscMat<BasisOnMeshType> solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_
+  PartitionedPetscMat<BasisOnMeshType> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
 
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> residual_;           ///< the residual vector, needed in the solution process by PETSc
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> increment_;           ///< the increments vector
@@ -144,7 +144,7 @@ protected:
 
   Vec fullIncrement_;   ///< only for 2D problems this vec is a 3D vector that is filled from the 2D displacements vector and afterwards added to the geometry values.
 
-  Mat solverMatrixTangentStiffness_;    ///< the tangent stiffness matrix used as jacobian in the nonlinear solver, in reduced form if we use reduce quantities (displacements without Dirichlet BC)
+  PartitionedPetscMat<BasisOnMeshType> solverMatrixTangentStiffness_;    ///< the tangent stiffness matrix used as jacobian in the nonlinear solver, in reduced form if we use reduce quantities (displacements without Dirichlet BC)
   Vec solverVariableResidual_;  ///< this vector is used to store a reduced version of the residual for the nonlinear solver
   Vec solverVariableSolution_;  ///< this vector is used to store the reduced displacements vector that does contain the same as displacements_ but without values for Dirichlet BCs
   Vec internalVirtualWorkReduced_;  ///< reduced vector for the internal virtual work

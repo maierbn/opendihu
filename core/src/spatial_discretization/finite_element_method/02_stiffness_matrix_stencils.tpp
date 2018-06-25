@@ -52,7 +52,7 @@ setStiffnessMatrix()
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
   PetscErrorCode ierr;
 
-  Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // stencil values
   // stencil in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
@@ -123,7 +123,7 @@ setStiffnessMatrix()
   //                            [1  1   1]
 
   PetscErrorCode ierr;
-  Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   const int center = 1;
   const double stencilCenter[3][3] = {
@@ -386,7 +386,7 @@ setStiffnessMatrix()
   };
 
   PetscErrorCode ierr;
-  Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
     return z*nNodes0*nNodes1 + y*nNodes0 + x;

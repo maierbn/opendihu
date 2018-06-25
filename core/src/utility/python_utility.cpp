@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <mutex>          // std::mutex, std::unique_lock, std::defer_lock
+#include <omp.h>
 
 #include <Python.h>
 #include "easylogging++.h"
@@ -21,6 +23,9 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
   if(object == NULL)
     return defaultValue;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (PyLong_Check(object))
   {
     long valueLong = PyLong_AsLong(object);
@@ -55,6 +60,9 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
   if(object == NULL)
     return defaultValue;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (PyLong_Check(object))
   {
     long valueLong = PyLong_AsLong(object);
@@ -86,10 +94,13 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
 template<>
 double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
 {
-  initNumpy();
-
   if(object == NULL)
     return defaultValue;
+
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
+  initNumpy();
 
   if (PyFloat_Check(object))
   {
@@ -130,6 +141,9 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
   if(object == NULL)
     return defaultValue;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (PyUnicode_Check(object))
   {
     std::string valueString = pyUnicodeToString(object);
@@ -166,6 +180,9 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
   if(object == NULL)
     return defaultValue;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (PyBool_Check(object))
   {
     if (object == Py_True)
@@ -252,6 +269,9 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
   {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+  
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
 
@@ -269,6 +289,9 @@ bool PythonUtility::isTypeList(const PyObject *object)
 {
   if (object)
   {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+  
     if (PyList_Check(object))
     {
       return true;
@@ -281,6 +304,9 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
 {
   if (settings)
   {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+    
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -309,6 +335,9 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     return result;
   }
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -402,6 +431,9 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   if (!settings)
     return result;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -493,6 +525,9 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   if (!settings)
     return result;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -547,6 +582,9 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
   if (!settings)
     return result;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -573,6 +611,9 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
   if (!settings)
     return result;
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
   if(PyDict_Contains((PyObject *)settings, key))
@@ -612,6 +653,9 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
   std::stringstream line;
   line << std::string(first_indent, ' ');
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (PyUnicode_CheckExact(object))
   {
     std::string objectString = pyUnicodeToString(object);
@@ -699,6 +743,9 @@ void PythonUtility::printDict(PyObject *dict)
     return;
   }
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   if (!PyDict_Check(dict))
   {
     VLOG(1) << "Object is not a dict!";
@@ -712,6 +759,10 @@ bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keySt
 {
   if (!itemList)
     return true;
+  
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   return itemListIndex >= PyList_Size(itemList);
 }
 
@@ -719,6 +770,10 @@ bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keySt
 {
   if (!list)
     return true;
+  
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   return listIndex >= PyList_Size(list);
 }
 
@@ -728,7 +783,9 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
 
   if (settings)
   {
-
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+  
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -790,6 +847,9 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
 
 PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
@@ -801,6 +861,9 @@ PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 
 PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 {
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
@@ -812,6 +875,9 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 
 PyObject *PythonUtility::convertToPythonList(std::vector<int> &data)
 {
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
@@ -823,6 +889,9 @@ PyObject *PythonUtility::convertToPythonList(std::vector<int> &data)
 
 PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data)
 {
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *result = PyList_New((Py_ssize_t)nEntries);
   for (unsigned int i=0; i<nEntries; i++)
   {
@@ -834,6 +903,9 @@ PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data
 
 std::string PythonUtility::pyUnicodeToString(PyObject* object)
 {
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
 #if PY_MAJOR_VERSION >= 3
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
   std::string result = PyBytes_AsString(asciiString);
@@ -843,6 +915,80 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
 #endif
 
   return result;
+}
+
+
+// python GIL handling is only needed for multi-threading. It does not work properly with openmp.
+//int PythonUtility::GlobalInterpreterLock::nGILS_ = 0;
+/*std::recursive_mutex PythonUtility::GlobalInterpreterLock::mutex_;
+std::unique_lock<std::recursive_mutex> PythonUtility::GlobalInterpreterLock::lock_(
+  PythonUtility::GlobalInterpreterLock::mutex_, std::defer_lock);
+*/
+/*
+omp_nest_lock_t PythonUtility::GlobalInterpreterLock::lock_;
+bool PythonUtility::GlobalInterpreterLock::lockInitialized_ = false;
+std::map<int, int> PythonUtility::GlobalInterpreterLock::nGilsThreads_;
+*/
+PythonUtility::GlobalInterpreterLock::GlobalInterpreterLock()
+{
+  // start critical section for python interpreter
+  // store GlobalInterpreterLock state
+  //nGILS_++;
+  //LOG(INFO) << omp_get_thread_num()<<": nGILS: " << nGILS_;
+  //lock_.lock();
+  /*if (nGilsThreads_.find(omp_get_thread_num()) == nGilsThreads_.end())
+  {
+    nGilsThreads_[omp_get_thread_num()] = 0;
+  }
+  
+  nGilsThreads_[omp_get_thread_num()]++;
+  
+  if (!lockInitialized_)
+  {
+    omp_init_nest_lock(&lock_);
+    lockInitialized_ = true;
+  }
+  
+  omp_set_nest_lock(&lock_);
+  */
+  //if (nGilsThreads_[omp_get_thread_num()] == 1)
+  
+#if 0  
+  LOG(INFO) << "[" << omp_get_thread_num()<<"/" << omp_get_thread_num() << "] (wait for GIL)";
+  gstate_ = PyGILState_Ensure();
+  
+  LOG(INFO) << "[" << omp_get_thread_num()<<"/" << omp_get_thread_num() << "] (acquired)";
+#endif  
+  
+  //mainThreadState_ = PyEval_SaveThread();
+
+  //Py_BEGIN_ALLOW_THREADS
+  //LOG(DEBUG) << "PyGILState_Ensure";
+}
+
+PythonUtility::GlobalInterpreterLock::~GlobalInterpreterLock()
+{
+ /* 
+  nGilsThreads_[omp_get_thread_num()]--;
+  
+  // Release the thread. No Python API allowed beyond this point.
+  if (nGilsThreads_[omp_get_thread_num()] == 0)
+  {*/
+#if 0 
+  PyGILState_Release(gstate_);
+#endif
+  /*}
+  nGILS_--;
+  //lock_.unlock();
+  
+  omp_unset_nest_lock(&lock_);
+  
+  //LOG(INFO) << omp_get_thread_num()<<": nGILS: " << nGILS_ << "(released)";
+  
+  //PyEval_RestoreThread(mainThreadState_); 
+  //Py_END_ALLOW_THREADS
+  //LOG(DEBUG) << "PyGILState_Release";
+  */
 }
 
 std::ostream &operator<<(std::ostream &stream, PyObject *object)

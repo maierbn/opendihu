@@ -58,6 +58,24 @@ solution()
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+setRankSubset(Partition::RankSubset rankSubset)
+{
+  data_->setRankSubset(rankSubset);
+  discretizableInTime_.setRankSubset(rankSubset);
+} 
+ 
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+reset()
+{
+  TimeSteppingScheme::reset();
+  discretizableInTime_.reset();
+  
+  initialized_ = false;
+}
+
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 initialize()
 {
   if (initialized_)

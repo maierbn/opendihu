@@ -35,6 +35,11 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
   }
 }
 
+void TimeSteppingScheme::reset()
+{
+  initialized_ = false;
+}
+
 void TimeSteppingScheme::initialize()
 {
   if (initialized_)

@@ -9,7 +9,7 @@ Linux is required with python2.7, gcc version 5 or higher, gfortran (only needed
 
 On a blank machine with ubuntu you should install the following. Note that GCC 5 or higher is required.
 ```
-  sudo apt-get install git libopenmpi-dev libx11-* python2.7
+  sudo apt-get install git libopenmpi-dev libx11-* python2.7 zlib1g-dev
   sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   sudo apt-get update
   sudo apt-get install gcc-5 g++-5 gfortran-5

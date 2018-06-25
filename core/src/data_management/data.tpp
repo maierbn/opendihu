@@ -15,30 +15,35 @@ namespace Data
 {
 
 template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::Data(DihuContext context) :
-  context_(context)
+Data<BasisOnMeshType>::
+Data(DihuContext context) :
+  context_(context), rankSubset_(nullptr)
 {
 }
 
 template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::~Data()
+Data<BasisOnMeshType>::
+~Data()
 {
 }
 
 template<typename BasisOnMeshType>
-dof_no_t Data<BasisOnMeshType>::nUnknowns()
+dof_no_t Data<BasisOnMeshType>::
+nUnknowns()
 {
   return this->mesh_->nDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
 template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::setMesh(std::shared_ptr<BasisOnMeshType> mesh)
+void Data<BasisOnMeshType>::
+setMesh(std::shared_ptr<BasisOnMeshType> mesh)
 {
   this->mesh_ = mesh;
 }
 
 template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::initialize()
+void Data<BasisOnMeshType>::
+initialize()
 {
   if (!this->initialized_)
   {
@@ -52,7 +57,15 @@ void Data<BasisOnMeshType>::initialize()
 }
 
 template<typename BasisOnMeshType>
-const std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::mesh() const
+void Data<BasisOnMeshType>::
+setRankSubset(Partition::RankSubset rankSubset)
+{
+  rankSubset_ = std::make_shared<Partition::RankSubset>(rankSubset);
+}
+  
+template<typename BasisOnMeshType>
+const std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::
+mesh() const
 {
   return this->mesh_;
 }

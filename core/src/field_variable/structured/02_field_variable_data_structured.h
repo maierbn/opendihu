@@ -107,7 +107,9 @@ public:
   //! get the number of scale factors
   virtual int getNumberScaleFactors(element_no_t elementGlobalNo) const {return 0;}
 
-
+  //! return the internal partitioned petsc vec
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec();
+  
 protected:
 
   //! get the number of entries of the internal values_ Vector
@@ -116,7 +118,7 @@ protected:
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::size_t nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
 
-  Vec values_ = PETSC_NULL;          ///< Petsc vector containing the values, the values for the components are stored contiguous, e.g. (comp1val1, comp2val1, comp3val1, comp1val2, comp2val2, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
+  std::shared<PartitionedPetscVec<BasisOnMeshType>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored contiguous, e.g. (comp1val1, comp2val1, comp3val1, comp1val2, comp2val2, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 
 };  // namespace

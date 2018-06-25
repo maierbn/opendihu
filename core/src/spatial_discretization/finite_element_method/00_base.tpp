@@ -54,7 +54,7 @@ applyBoundaryConditions()
   node_no_t nNodes = this->data_.mesh()->nNodes();
 
   Vec &rightHandSide = data_.rightHandSide().values();
-  Mat &stiffnessMatrix = data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
   PetscErrorCode ierr;
 
   // add Dirichlet boundary conditions
@@ -158,6 +158,13 @@ data()
 
 template<typename BasisOnMeshType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+setRankSubset(Partition::RankSubset rankSubset)
+{
+  data_.setRankSubset(rankSubset);
+}
+ 
+template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 initialize()
 {
   data_.initialize();
@@ -190,7 +197,7 @@ solve()
 
   PetscErrorCode ierr;
 
-  Mat &stiffnessMatrix = data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
 
   // create linear solver context
   std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);

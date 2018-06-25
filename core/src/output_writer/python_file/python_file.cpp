@@ -16,7 +16,8 @@ PythonFile::PythonFile(PyObject *settings) : Generic(settings)
 
 PyObject *PythonFile::openPythonFileStream(std::string filename, std::string writeFlag)
 {
-
+  //Note, this method already is called inside a critical section for the GIL
+  
 #if PY_MAJOR_VERSION >= 3
   //FILE *fileC = fopen(filename.c_str(), "w");
   //int fileDescriptorC = fileno(fileC);

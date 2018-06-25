@@ -4,6 +4,7 @@
 
 #include "mesh/mesh.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
+#include "partition/rank_subset.h"
 
 namespace SpatialDiscretization
 {
@@ -27,6 +28,12 @@ public:
   //! initialize for use with timestepping
   void initialize() override;
 
+  //! reset state such that new initialization becomes necessary
+  void reset();
+  
+  //! set the subset of ranks that will compute the work
+  void setRankSubset(Partition::RankSubset rankSubset);
+  
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
 
@@ -36,6 +43,7 @@ public:
   typedef BasisOnMeshType BasisOnMesh;   ///< the BasisOnMesh type needed for time stepping scheme
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
+
 protected:
 
   //! do nothing, needed for initialize of base class that is overridden anyway
@@ -45,7 +53,13 @@ protected:
   void recoverRightHandSideStrongForm(Vec &result);
 
   //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
-  void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
+  void checkDimensions(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix, Vec &rhs);
+
+  //! initialize the linear solver and ksp context, this is done the first time recoverRightHandSideStrongForm is called
+  void initializeLinearSolver();
+  
+  std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for inverting the mass matrix
+  std::shared_ptr<KSP> ksp_;   ///< the linear solver context
 };
 
 };  // namespace

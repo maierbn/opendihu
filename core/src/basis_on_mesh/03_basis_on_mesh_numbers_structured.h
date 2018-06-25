@@ -12,16 +12,18 @@
 namespace BasisOnMesh
 {
 
-/** base class to compute global dof and node no.s.
+/** Base class to compute local dof and node no.s.
  * This is only possible for structured meshes because unstructured meshes store the information about
  * numbering explicitly.
+ * The numberings refer to the stored information on this rank and is, thus, a local numbering.
+ * It does not distinguish between ghost and interior nodes, also the ghost nodes are treated the same as every other stored node.
  */
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=MeshType>
 class BasisOnMeshNumbers
 {};
 
 
-/** class to compute global dof and node no.s, partial specialization for structured mesh, D=1
+/** class to compute local dof and node no.s, partial specialization for structured mesh, D=1
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> :
@@ -31,10 +33,10 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
 
-  //! return the global dof number of element-local dof dofIndex of element elementNo
+  //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element elementNo
+  //! return the local node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
@@ -47,7 +49,7 @@ public:
   dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
 };
 
-/** class to compute global dof and node no.s, partial specialization for structured mesh, D=2
+/** class to compute local dof and node no.s, partial specialization for structured mesh, D=2
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> :
@@ -57,10 +59,10 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
 
-  //! return the global dof number of element-local dof dofIndex of element elementNo
+  //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element elementNo
+  //! return the local node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
@@ -73,7 +75,7 @@ public:
   dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
 };
 
-/** class to compute global dof and node no.s, partial specialization for structured mesh, D=3
+/** class to compute local dof and node no.s, partial specialization for structured mesh, D=3
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> :
@@ -83,10 +85,10 @@ public:
   //! inherit constructor
   using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
 
-  //! return the global dof number of element-local dof dofIndex of element elementNo
+  //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element elementNo
+  //! return the local node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector

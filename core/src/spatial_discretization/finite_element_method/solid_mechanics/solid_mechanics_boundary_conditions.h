@@ -26,7 +26,7 @@ public:
   void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements<BasisOnMeshType,Term> &data);
 
   //! set rows and columns in stiffness matrix to 0 for which boundary conditions are specified
-  void applyDirichletBoundaryConditionsInStiffnessMatrix(Mat &matrix, Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> matrix, Data::FiniteElements<BasisOnMeshType,Term> &data);
 
   //! This transforms a 2D mesh input vector to a 3D mesh output vector by inserting 0's. It can only be called for 2D problems.
   void expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D);
@@ -34,7 +34,7 @@ public:
 protected:
 
   //! extract the submatrix that only contains entries for dofs that are not constraint by Dirichlet BCs
-  void reduceMatrix(Mat &input, Mat &output, const int nUnknowns);
+  void reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nUnknowns);
 
   //! initialize Dirichlet boundary conditions
   void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data);

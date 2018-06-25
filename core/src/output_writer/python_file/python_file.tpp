@@ -48,6 +48,9 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
     LOG(DEBUG) << "filename is [" << filename << "]";
     
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+   
     // build python object for data
     PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
       buildPyDataObject(data.getOutputFieldVariables(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);

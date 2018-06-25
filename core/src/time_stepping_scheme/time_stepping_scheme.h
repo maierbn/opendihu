@@ -31,6 +31,9 @@ public:
   ///! initialize time span from specificSettings_
   void initialize();
 
+  //! reset state such that new initialization becomes necessary
+  virtual void reset();
+
   ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
   virtual bool knowsMeshType() = 0;
 

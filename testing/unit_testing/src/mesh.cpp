@@ -44,8 +44,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   std::vector<double> referenceNodePositions = {
     0,0,0,  1,0,0,  2,0,0,
@@ -83,8 +83,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
   
   Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
 }
@@ -120,8 +119,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   std::vector<double> referenceNodePositions = {
     0,0,0,  1,0,0,  2,0,0,
@@ -159,8 +158,7 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
   
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+  equationDiscretized2.run();
   
   Mesh::NodePositionsTester::compareNodePositions(settings2, "testMesh", referenceNodePositions);
 }
@@ -191,8 +189,8 @@ config = {
     Equation::Static::Laplace
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+   
+  equationDiscretized.run();
   
   std::vector<double> referenceNodePositions = {
     0,0,0,  1,0,0,  2,0,0,
@@ -224,9 +222,8 @@ config = {
     Quadrature::Gauss<2>,
     Equation::Static::Laplace
   > equationDiscretized2(settings2);
-  
-  Computation computation2(settings2, equationDiscretized2);
-  computation2.run();
+   
+  equationDiscretized2.run();
   
   Mesh::NodePositionsTester::compareNodePositions(settings2, "anonymous0", referenceNodePositions);
   

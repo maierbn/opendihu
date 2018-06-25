@@ -131,7 +131,7 @@ setMassMatrix()
 
     // initialize variables
     PetscErrorCode ierr;
-    Mat &massMatrix = this->data_.massMatrix();
+    std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
 

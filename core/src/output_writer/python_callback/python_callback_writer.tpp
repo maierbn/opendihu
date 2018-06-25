@@ -26,6 +26,9 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<OutputFieldVariablesType>(fieldVariables, meshNames);
 
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
   PyObject *pyDataList = PyList_New((Py_ssize_t)meshNames.size());
   
   int meshIndex = 0;

@@ -25,6 +25,9 @@ public:
   //! initialize callback functions and rhs
   void initialize();
   
+  //! reset state such that new initialization becomes necessary
+  void reset();
+
   //! evaluate rhs
   void evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
@@ -34,6 +37,9 @@ public:
   //! return the mesh
   std::shared_ptr<Mesh::Mesh> mesh();
 
+  //! set the subset of ranks that will compute the work
+  void setRankSubset(Partition::RankSubset rankSubset);
+  
   //! set initial values and return true or don't do anything and return false
   bool setInitialValues(Vec &initialValues);
   

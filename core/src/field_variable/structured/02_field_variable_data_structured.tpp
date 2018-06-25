@@ -30,7 +30,8 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   initializeFromFieldVariable(rhs, name, componentNames);
 
   // copy entries in values vector
-  VecCopy(rhs.values(), this->values_);
+  this->values_ = std::make_shared<PartitionedPetscVec>(rhs.partitionedPetscVec());
+  //VecCopy(rhs.values(), this->values_);
 }
 
 //! constructor with mesh, name and components
@@ -59,16 +60,7 @@ FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string n
   // create a new values vector for the new field variable
 
   // create vector
-  PetscErrorCode ierr;
-  // initialize PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-
-  // initialize size of vector
-  ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
+  PetscUtility::createVector(this->values, this->nEntries_, this->name_, this->mesh_->partition());
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -104,16 +96,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   // create a new values vector for the new field variable
 
   // create vector
-  PetscErrorCode ierr;
-  // initialize PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) this->values_, this->name_.c_str()); CHKERRV(ierr);
-
-  // initialize size of vector
-  ierr = VecSetSizes(this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(this->values_);  CHKERRV(ierr);
+  PetscUtility::createVector(this->values, this->nEntries_, this->name_, this->mesh_->partition());
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -141,7 +124,7 @@ template<typename BasisOnMeshType, int nComponents>
 Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 values()
 {
-  return this->values_;
+  return this->values_->values();
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -275,6 +258,12 @@ template<typename BasisOnMeshType, int nComponents>
 bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::isGeometryField() const
 {
   return isGeometryField_;
+}
+
+template<typename BasisOnMeshType, int nComponents>
+std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec()
+{
+  return values_;
 }
 
 };

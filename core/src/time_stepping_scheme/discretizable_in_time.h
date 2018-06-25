@@ -27,6 +27,9 @@ public:
   //! set initial values and return true or don't do anything and return false
   virtual bool setInitialValues(Vec &initialValues);
 
+  //! set the subset of ranks that will compute the work
+  virtual void setRankSubset(Partition::RankSubset rankSubset) = 0;
+  
   //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
   SolutionVectorMapping &solutionVectorMapping();
 

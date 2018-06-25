@@ -40,7 +40,7 @@ protected:
   virtual void setFromSolverVariableSolution(Vec &solverSolutionVariable) = 0;
 
   //! compute and return the appropriate analytical stiffness matrix
-  virtual void computeAnalyticStiffnessMatrix(Mat &solverStiffnessMatrix) = 0;
+  virtual void computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix) = 0;
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
   virtual const int nUnknowns() = 0;

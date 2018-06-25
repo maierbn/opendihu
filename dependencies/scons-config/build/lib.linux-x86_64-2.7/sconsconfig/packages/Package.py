@@ -488,9 +488,32 @@ class Package(object):
         tf.extractall(unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
-        sys.stdout.write('failed.\n')
-        ctx.Log("Failed to extract file\n")
-        return False
+        try:
+          
+          filename_base = os.path.splitext(filename)[0]
+          
+          if ".tar" in filename_base:
+            filename_base = os.path.splitext(filename_base)[0]
+          
+          cmd = "pwd && ls -al && tar -xf "+filename+" && ls -al"
+          ctx.Log("tar package failed, trying to use system tar\n")
+          ctx.Log(cmd+"\n")
+          
+          # Make a file to log stdout from the commands.
+          stdout_log = open('stdout.log', 'w')
+          subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+          
+          ctx.Log(stdout_log)
+          try:
+            os.rename(filename_base, unpack_dir)
+          except Exception, e:
+            ctx.Log("tar succeeded but failed to rename {} to {}: {}".format(filename_base, unpack_dir, str(e)))
+          
+        except Exception, e:
+          shutil.rmtree(unpack_dir, True)          
+          sys.stdout.write('failed. '+str(e)+'\n')
+          ctx.Log("Failed to extract file\n")
+          return False
 
     # If there is a patch, try to patch code.
     patch = os.path.join(utils.get_data_prefix(), 'patches', self.name.lower() + '.patch')

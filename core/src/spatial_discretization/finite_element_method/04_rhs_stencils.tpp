@@ -1053,7 +1053,7 @@ setMassMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
 
-    Mat &massMatrix = this->data_.massMatrix();
+    std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak
@@ -1117,7 +1117,7 @@ setMassMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
 
-    Mat &massMatrix = this->data_.massMatrix();
+    std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak
@@ -1317,7 +1317,7 @@ setMassMatrix()
     // rhs *= stencil * elementLength
     PetscErrorCode ierr;
 
-    Mat &massMatrix = this->data_.massMatrix();
+    std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak

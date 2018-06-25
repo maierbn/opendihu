@@ -28,7 +28,10 @@ advanceTimeSpan()
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    std::stringstream threadNumberMessage;
+    threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
+    
+    LOG(INFO) << threadNumberMessage.str() << ": Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
     LOG(DEBUG) << "  Godunov: time step "<<timeStepNo<<", t: "<<currentTime;
 
     LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan ["<<currentTime<<", "<<currentTime+timeStepWidth<<"]";
@@ -39,7 +42,8 @@ advanceTimeSpan()
 
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
-
+    
+    
     LOG(DEBUG) << "  Godunov: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
     this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),

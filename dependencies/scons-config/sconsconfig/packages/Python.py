@@ -11,8 +11,9 @@ class Python(Package):
           #'download_url': 'https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tgz',
           #'download_url': 'https://www.python.org/ftp/python/2.7.12/Python-2.7.12.tgz',
           #'download_url': 'https://www.python.org/ftp/python/3.4.6/Python-3.4.6.tgz'
-          'download_url': 'https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz'
           #'download_url': 'https://www.python.org/ftp/python/3.5.3/Python-3.5.3.tgz'
+          'download_url': 'https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz'
+          #'download_url': 'https://github.com/stackless-dev/stackless/archive/3.6-slp.zip'  # stackless-python
             
         }
         defaults.update(kwargs)
@@ -55,26 +56,46 @@ class Python(Package):
           #print("gcc has --enable-plugin, compile python with optimizations")
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} \
+            'cd ${SOURCE_DIR} && chmod +x ./configure && ./configure --enable-shared --enable-optimizations --prefix=${PREFIX} \
               LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
               CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
               && make && make install',
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
+          # cd /store/software/opendihu/dependencies/python/src && chmod +x ./configure && ./configure --enable-shared --prefix=/store/software/opendihu/dependencies/python/install               LDFLAGS="-Wl,--rpath=/store/software/opendihu/dependencies/python/install/lib -L/store/software/opendihu/dependencies/bzip2/install/lib"               CFLAGS="-I/store/software/opendihu/dependencies/bzip2/install/include"
           self.number_output_lines = 9468
         else:       
           print("gcc has no --enable-plugin, compile python without optimizations")
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && ./configure --enable-shared --prefix=${PREFIX} \
+            'cd ${SOURCE_DIR} && chmod +x ./configure && ./configure --enable-shared --prefix=${PREFIX} \
               LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
               CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
               && make && make install',
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
+          
           self.number_output_lines = 7082
+
+
+        # build stackless-python
+        if False:
+          self.set_build_handler([
+            'mkdir -p ${PREFIX}',
+            'cd ${SOURCE_DIR} && chmod +x ./configure && ./configure --enable-shared --prefix=${PREFIX} \
+              LDFLAGS="-Wl,--rpath=${PREFIX}/lib -L${DEPENDENCIES_DIR}/bzip2/install/lib" \
+              CFLAGS="-I${DEPENDENCIES_DIR}/bzip2/install/include" \
+              \
+              && export l1=$(grep "CC=" Makefile -n | head -n 1 | cut -d: -f1) \
+              && export l2=$(grep "CXX=" Makefile -n | head -n 1 | cut -d: -f1) \
+              && sed -i "$l1s/.*/CC=		gcc -pthread -fPIC/" Makefile \
+              && sed -i "$l2s/.*/CXX=		g++ -pthread -fPIC/" Makefile \
+              && make && make install',
+            '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
+            'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
+          ])
 
     def check(self, ctx):
         env = ctx.env

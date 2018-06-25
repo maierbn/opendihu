@@ -19,8 +19,8 @@ int main(int argc, char *argv[])
   
   problem.run();
   
-  /*Computation computation(settings, equationDiscretized);
-  computation.run();*/
+  /* 
+  equationDiscretized.run();*/
   
   return EXIT_SUCCESS;
 }

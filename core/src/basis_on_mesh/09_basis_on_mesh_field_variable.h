@@ -59,7 +59,7 @@ public:
   //! compute the normal in world space, normal to face at xi
   Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
 
-  //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 09_basis_on_mesh_xi.h
+  //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 10_basis_on_mesh_xi.h
   virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi) = 0;
 
   //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
@@ -83,4 +83,4 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/08_basis_on_mesh_field_variable.tpp"
+#include "basis_on_mesh/09_basis_on_mesh_field_variable.tpp"

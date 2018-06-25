@@ -24,7 +24,7 @@ public:
   typedef FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
   typedef FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
-  //! return a field variable with given name, this is not implemented for structured meshes since there are no extra stored field variables, only for unstructured meshes is in implemented and then stores field variables that were present in parsed exfiles.
+  //! return a field variable with given name, this is not implemented for structured meshes since there are no extra stored field variables, only for unstructured meshes is it implemented and then stores field variables that were present in parsed exfiles.
   std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
 
 protected:
@@ -82,31 +82,7 @@ public:
 
   //! if the geometry field is set
   bool hasGeometryField();
-
 };
-
-/** partial specialization for structured mesh and complete polynomials
- */
-/*
-template<typename MeshType,int order>
-class BasisOnMeshGeometry<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>,Mesh::isDeformable<MeshType>> :
-  public BasisOnMeshFunction<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
-{
-public:
-  //! inherit constructor
-  using BasisOnMeshFunction<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::BasisOnMeshJacobian;
-  */
-  /* TODO: remove
-  //! return the global dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
-
-  //! return the global node number of element-local node nodeIndex of element elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
-
-  //! get all dofs of a specific node
-  void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
-  */
-//};
 
 }  // namespace
 

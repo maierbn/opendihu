@@ -5,6 +5,7 @@
 #include <list>
 #include <memory>
 #include <map>
+#include "partition/partition_manager.h"
 
 //#include <output_writer/generic.h>
 //#include <data_management/data.h>
@@ -44,6 +45,9 @@ public:
   ///! return the solver manager object that contains all solvers
   std::shared_ptr<Solver::Manager> solverManager() const;
 
+  ///! return the partition manager object that creates partitionings
+  std::shared_ptr<Partition::Manager> partitionManager() const;
+
   ///! destructor
   ~DihuContext();
 
@@ -60,6 +64,10 @@ private:
   PyObject *pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
 
   static std::shared_ptr<Mesh::Manager> meshManager_;   ///< object that saves all meshes that are used
-  static std::shared_ptr<Solver::Manager> solverManager_; ///< object that saves all solver configurations that are used
+//  static std::shared_ptr<Solver::Manager> solverManager_; ///< object that saves all solver configurations that are used
+  static std::map<int, std::shared_ptr<Solver::Manager>> solverManagerForThread_;  ///< object that saves all solver configurations that are used, different for each thread
+
+  static std::shared_ptr<Partition::Manager> partitionManager_;  ///< partition manager object that creates and manages partitionings
+  
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
 };

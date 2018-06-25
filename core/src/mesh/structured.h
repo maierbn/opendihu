@@ -33,7 +33,7 @@ public:
   element_no_t nElements() const;
 
 protected:
-  std::array<element_no_t, D> nElementsPerCoordinateDirection_;    ///< the number of elements in each coordinate direction
+  std::array<element_no_t, D> nElementsPerCoordinateDirection_;    ///< the number of stored elements in each coordinate direction (i.e. the locally computed portion)
 };
 
 };    // namespace

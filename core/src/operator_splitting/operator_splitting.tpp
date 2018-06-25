@@ -20,6 +20,15 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 
 template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
+reset()
+{
+  initialized_ = false;
+  timeStepping1_.reset();
+  timeStepping2_.reset();
+}
+
+template<typename TimeStepping1, typename TimeStepping2>
+void OperatorSplitting<TimeStepping1, TimeStepping2>::
 initialize()
 {
   if (initialized_)
@@ -61,6 +70,15 @@ solution()
   return timeStepping1_.solution();
 }
 
+template<typename TimeStepping1, typename TimeStepping2>
+void OperatorSplitting<TimeStepping1, TimeStepping2>::
+setRankSubset(Partition::RankSubset rankSubset)
+{
+  timeStepping1_.setRankSubset(rankSubset);
+  timeStepping2_.setRankSubset(rankSubset);
+}
+
+  
 template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
 run()

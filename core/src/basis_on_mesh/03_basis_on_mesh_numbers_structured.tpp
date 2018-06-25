@@ -9,7 +9,9 @@
 namespace BasisOnMesh
 {
 
-// element-local dofIndex to global dofNo for 1D
+// These numberings run over the whole locally stored information, i.e. there is no distinguising between ghost and interior nodes here.
+ 
+// element-local dofIndex to local dofNo for 1D
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
@@ -52,7 +54,7 @@ getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
   return BasisOnMeshBaseDim<1,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
 }
 
-// element-local dofIndex to global dofNo for 2D
+// element-local dofIndex to local dofNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
@@ -111,7 +113,7 @@ getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
   return BasisOnMeshBaseDim<2,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
 }
 
-// element-local dofIndex to global dofNo for 3D
+// element-local dofIndex to local dofNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getDofNo(element_no_t elementNo, int dofIndex) const
@@ -173,7 +175,7 @@ getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const
   return BasisOnMeshBaseDim<3,BasisFunctionType>::nDofsPerNode() * nodeGlobalNo + dofIndex;
 }
 
-// element-local nodeIndex to global nodeNo for 1D
+// element-local nodeIndex to local nodeNo for 1D
 template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
@@ -191,7 +193,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNo + nodeIndex;
 }
 
-// element-local nodeIndex to global nodeNo for 2D
+// element-local nodeIndex to local nodeNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const
@@ -218,7 +220,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     + averageNNodesPerElement1D * elementX + localX;
 }
 
-// element-local nodeIndex to global nodeNo for 3D
+// element-local nodeIndex to local nodeNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
 getNodeNo(element_no_t elementNo, int nodeIndex) const

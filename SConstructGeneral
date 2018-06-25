@@ -147,8 +147,8 @@ except: pass
 Progress(progress_function, interval=env["node_count_interval"])
 
 # -----------------------------------------------
-# depending on the variable BUILD_TYPE either build with debug or release settings and link corresponding version of core
-if env["BUILD_TYPE"] == "debug":
+# depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
+if env["BUILD_TYPE"] == "debug" or env["BUILD_TYPE"] == "releasewithdebuginfo":
   
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
@@ -159,9 +159,9 @@ if env["BUILD_TYPE"] == "debug":
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
-  env.Prepend(LIBS = ['opendihu'])
+  env.Prepend(LIBS = ['opendihurd'])
 
 else:
   # release build

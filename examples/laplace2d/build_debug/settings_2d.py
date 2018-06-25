@@ -17,11 +17,14 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [n, m],
     "physicalExtent": [1.0, 1.0],
+    "outputInterval": 1.0,
+    "prefactor": 1,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
+    "maxIterations": 10000,
     "OutputWriter" : [
-      {"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out/p"}
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues":True},
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
     ]
   },
 }

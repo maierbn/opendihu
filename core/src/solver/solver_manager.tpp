@@ -2,6 +2,7 @@
 
 #include <Python.h> // this header has to be included first
 
+#include <omp.h>
 #include <memory>
 #include <iostream>
 #include "easylogging++.h"
@@ -14,12 +15,21 @@ namespace Solver
 template<typename SolverType>
 std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
 {
+ LOG(INFO) << omp_get_thread_num() << ": Manager::solver";
+ 
   // if solver has already been created earlier
   if (PythonUtility::hasKey(settings, "solverName"))
   {
+    LOG(INFO) << omp_get_thread_num() << ": Manager::solver - hasKey";
+ 
     std::string solverName = PythonUtility::getOptionString(settings, "solverName", "");
+    
+    LOG(INFO) << omp_get_thread_num() << ": solverName=" << solverName;
+    
     if (hasSolver(solverName))
     {
+     
+      LOG(INFO) << omp_get_thread_num() << ": Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
       VLOG(1) << "Solver with solverName \""<<solverName<<"\" requested and found, type is "<<typeid(solvers_[solverName]).name();
       return std::static_pointer_cast<SolverType>(solvers_[solverName]);
     }
@@ -40,6 +50,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
   }
   else
   {
+    LOG(INFO) << omp_get_thread_num() << ": Manager::solver - !hasKey";
     VLOG(1) << "Config does not contain solverName.";
   }
 
@@ -53,6 +64,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
       // check if config is the  same
       if (solver.second->configEquals(settings))
       {
+        LOG(INFO) << omp_get_thread_num() << ": Solver \"" << solver.first << "\" matches settings.";
         VLOG(1) << "Solver \"" << solver.first << "\" matches settings.";
         return std::static_pointer_cast<SolverType>(solver.second);
       }
@@ -63,6 +75,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
   // create new solver, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
+  LOG(INFO) << omp_get_thread_num() << ": Create new solver with type "<<typeid(SolverType).name()<<" and name \""<<anonymousName.str()<<"\".";
   LOG(DEBUG) << "Create new solver with type "<<typeid(SolverType).name()<<" and name \""<<anonymousName.str()<<"\".";
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings);
 

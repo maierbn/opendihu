@@ -6,6 +6,9 @@
 #include "control/dihu_context.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 
+namespace Partition{
+class Manager;
+};
 namespace Mesh
 {
 class NodePositionsTester;
@@ -23,6 +26,9 @@ public:
   //! constructor
   Manager(PyObject *specificSettings);
 
+  //! store the pointer to the partition manager
+  void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
+  
   //! return previously created mesh or create on the fly
   template<typename BasisOnMeshType=None>
   std::shared_ptr<Mesh> mesh(PyObject *settings);
@@ -41,6 +47,8 @@ private:
   //! store settings for all meshes that are specified in specificSettings_
   void storePreconfiguredMeshes();
 
+  std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
+  
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 

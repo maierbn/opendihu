@@ -1,7 +1,6 @@
 // This file includes all header files that may be needed from an example
 
 #include "control/dihu_context.h"
-#include "control/computation.h"
 #include "control/multiple_instances.h"
 
 #include "basis_function/lagrange.h"

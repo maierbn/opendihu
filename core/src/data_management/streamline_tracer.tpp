@@ -50,7 +50,12 @@ createPetscObjects()
 {
   LOG(DEBUG)<<"StreamlineTracer<BasisOnMeshType,BaseDataType>::createPetscObjects()"<<std::endl;
   assert(this->mesh_);
-  this->gradient_ = this->mesh_->template createFieldVariable<3>("gradient");
+  
+  // create partitioning
+  Partition::MeshPartition partition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
+  
+  // create field variables on local partition
+  this->gradient_ = this->mesh_->template createFieldVariable<3>("gradient", partition);
 }
 
 template<typename BasisOnMeshType,typename BaseDataType>

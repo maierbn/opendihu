@@ -1,6 +1,7 @@
 #include "time_stepping_scheme/explicit_euler.h"
 
 #include <Python.h>  // has to be the first included header
+#include <omp.h>
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
@@ -33,7 +34,11 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    {
+      std::stringstream threadNumberMessage;
+      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
+      LOG(INFO) << threadNumberMessage.str() << ": Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    }
 
     // advance computed value
     // compute next delta_u = f(u)
@@ -49,7 +54,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    //this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
     //this->data_->print();
   }

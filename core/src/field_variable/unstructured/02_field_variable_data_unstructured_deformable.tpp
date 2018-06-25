@@ -597,7 +597,7 @@ template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 values()
 {
-  return *this->values_;
+  return this->values_->values();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
@@ -615,20 +615,11 @@ initializeValuesVector()
   }
   VLOG(1) << "total entries: " << this->nEntries_;
 
-  // create vector
+  // create Petsc vector
   this->values_ = std::make_shared<Vec>();
 
-  PetscErrorCode ierr;
-  // initialize PETSc vector object
-  ierr = VecCreate(PETSC_COMM_WORLD, &*this->values_);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) *this->values_, this->name_.c_str()); CHKERRV(ierr);
-
-  // initialize size of vector
-  ierr = VecSetSizes(*this->values_, PETSC_DECIDE, this->nEntries_); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(*this->values_);  CHKERRV(ierr);
-
+  PetscUtility::createVector(*this->values_, this->nEntries_, this->name_, this->mesh_->partition());
+  
   // set vector for all components
   for (auto &component : this->component_)
   {
@@ -885,6 +876,13 @@ output(std::ostream &stream) const
     << "  nodeToDofMapping: " << std::endl
     << *nodeToDofMapping_ << std::endl;
   */
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+std::shared_ptr<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+partitionedPetscVec()
+{
+  return values_; 
 }
 
 };  // namespace

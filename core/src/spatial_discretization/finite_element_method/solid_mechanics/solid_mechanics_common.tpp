@@ -35,7 +35,7 @@ setStiffnessMatrix()
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
 void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,MixedQuadratureType,Term>::
-setStiffnessMatrixEntriesForDisplacements(Mat tangentStiffnessMatrix)
+setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix)
 {
   typedef typename BasisOnMeshType::HighOrderBasisOnMesh BasisOnMesh;
 
@@ -467,7 +467,7 @@ setStiffnessMatrixEntriesForDisplacements(Mat tangentStiffnessMatrix)
 }
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-Mat &SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
 tangentStiffnessMatrix()
 {
   return this->data_.tangentStiffnessMatrix();
@@ -1392,7 +1392,7 @@ computeWithReducedVectors()
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
 void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
-computeAnalyticStiffnessMatrix(Mat &solverStiffnessMatrix)
+computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix)
 {
   if (this->data_.computeWithReducedVectors())
   {

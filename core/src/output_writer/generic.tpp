@@ -19,7 +19,6 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
     LOG(FATAL) << "Mesh is not set!";
   }
 
-
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
   int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
@@ -27,9 +26,14 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
 
+  LOG(DEBUG) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
+  
   // if no output should be written, because of interval, return false
   if (oldWriteCallCount % outputInterval != 0)
+  {
+    LOG(DEBUG) << " do not write";
     return false;
+  }
 
   // determine filename base
   if (filenameBase_.empty()
@@ -43,8 +47,11 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   s << filenameBase_;
   if (timeStepNo != -1)
   {
-    s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
+    //s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
+    s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file 
   }
+  outputFileNo_++;
+  
   filename_ = s.str();
   return true;
 }

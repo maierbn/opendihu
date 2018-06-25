@@ -71,7 +71,7 @@ void Exfile::outputComFile()
 
     file << "$fname = \"" << basename << "\"" << std::endl
       << "gfx read nodes node_offset " << nodeOffset << " $fname.\".exnode\"" << std::endl
-      << "gfx read elements node_offset " << nodeOffset << " line_offset 1 face_offset 1 element_offset " << elementOffset << " $fname.\".exelem\";" << std::endl << std::endl;
+      << "gfx read elements node_offset " << nodeOffset << " line_offset 1 face_offset 1 element_offset " << elementOffset << " $fname.\".exelem\"" << std::endl << std::endl;
       //<< "gfx modify g_element $group surface;" << std::endl
       //<< "$n+=1500;" << std::endl;
       
@@ -104,11 +104,11 @@ void Exfile::outputComFile()
     file << std::endl
       << "##### 1D mesh #####" << std::endl
       << "# add spheres representation" << std::endl
-      << "gfx modify g_element $group point glyph sphere general size \"0.01*0.01*0.01\" select_on material default data solution" << std::endl << std::endl;
+      << "gfx modify g_element $group points domain_mesh1d coordinate geometry glyph sphere size \"0.005*0.005*0.01\" select_on material default data solution" << std::endl << std::endl;
   }
   
   file << "# add axes" << std::endl
-    << "gfx modify g_element \"/\" point glyph axes_xyz general size \"50*50*50\" select_on material blue selected_material default" << std::endl << std::endl
+    << "gfx modify g_element \"/\" points domain_point glyph axes_xyz size \"50*50*50\" select_on material silver selected_material default" << std::endl << std::endl
     << "# open Graphics Window" << std::endl
     << "gfx cre win" << std::endl << std::endl
     << "# open Scene Editor" << std::endl

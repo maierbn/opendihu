@@ -11,10 +11,8 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
       
   # define the source files
-  src_files = Split(
-  """
-    multiple_fibres.cpp
-  """)
+  #src_files = ["multiple_fibres.cpp", "single_fibres.cpp"]
 
   # create the main executable
-  env.Program(target = 'multiple_fibres', source = src_files)
+  #env.Program(target = 'multiple_fibres', source = src_files)
+  env.Program(target = 'single_fibre', source = ["single_fibre.cpp"])

@@ -51,37 +51,45 @@ void Exfile::outputComFile()
     << "# run by cmgui " << basename << ".com" << std::endl << std::endl;
   file << "# read files" << std::endl;
 
-  
-  node_no_t nodeOffset = 1;
-  element_no_t elementOffset = 1;
-  
   std::string lastMeshName;
   int lastDimensionality = 3;
   
-  // loop over stored files with their contained number of nodes and elements
-  for (std::vector<FilenameWithElementAndNodeCount>::const_iterator iter = filenamesWithElementAndNodeCount_.begin(); iter != filenamesWithElementAndNodeCount_.end(); iter++)
+  // loop over times of stored files
+  for (std::map<double,std::vector<FilenameWithElementAndNodeCount>>::iterator iter = filenamesWithElementAndNodeCount_.begin(); iter != filenamesWithElementAndNodeCount_.end(); iter++)
   {
-    // filename without path
-    std::string basename = iter->filename;
-
-    if (basename.rfind("/") != std::string::npos)
-    {
-      basename = basename.substr(basename.rfind("/")+1);
-    }
-
-    file << "$fname = \"" << basename << "\"" << std::endl
-      << "gfx read nodes node_offset " << nodeOffset << " $fname.\".exnode\"" << std::endl
-      << "gfx read elements node_offset " << nodeOffset << " line_offset 1 face_offset 1 element_offset " << elementOffset << " $fname.\".exelem\"" << std::endl << std::endl;
-      //<< "gfx modify g_element $group surface;" << std::endl
-      //<< "$n+=1500;" << std::endl;
+    double currentTime = iter->first;
+    std::vector<FilenameWithElementAndNodeCount> &files = iter->second;
       
-    // increase offsets by number of nodes and elements in the current files
-    nodeOffset += iter->nNodes;
-    elementOffset += iter->nElements;
-    lastMeshName = iter->meshName;
-    lastDimensionality = iter->dimensionality;
-  }
+    node_no_t nodeOffset = 1;
+    element_no_t elementOffset = 1;
+    
+    int timeNo = 1;
+    
+    // loop over stored files with their contained number of nodes and elements
+    for (std::vector<FilenameWithElementAndNodeCount>::iterator iter2 = files.begin(); iter2 != files.end(); iter2++)
+    {
+      // filename without path
+      std::string basename = iter2->filename;
 
+      if (basename.rfind("/") != std::string::npos)
+      {
+        basename = basename.substr(basename.rfind("/")+1);
+      }
+
+      file << "$fname = \"" << basename << "\"" << std::endl
+        << "gfx read nodes node_offset " << nodeOffset << " time " << currentTime << " $fname.\".exnode\"" << std::endl
+        << "gfx read elements node_offset " << nodeOffset << " line_offset 1 face_offset 1 element_offset " << elementOffset << " $fname.\".exelem\"" << std::endl << std::endl;
+        //<< "gfx modify g_element $group surface;" << std::endl
+        //<< "$n+=1500;" << std::endl;
+        
+      // increase offsets by number of nodes and elements in the current files
+      nodeOffset += iter2->nNodes;
+      elementOffset += iter2->nElements;
+      lastMeshName = iter2->meshName;
+      lastDimensionality = iter2->dimensionality;
+      timeNo++;
+    }
+  }
   file << std::endl
     << "# set the group name of the mesh which should be output below. This is by default the last loaded dataset." << std::endl
     << "$group = \"" << lastMeshName << "\"" << std::endl;

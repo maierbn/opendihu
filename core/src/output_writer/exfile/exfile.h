@@ -35,7 +35,7 @@ private:
     int dimensionality;   ///< the dimensionality of the mesh, i.e. 1, 2 or 3
   };
   
-  std::vector<FilenameWithElementAndNodeCount> filenamesWithElementAndNodeCount_;   ///< the filenames without suffix of all previously output exelem files
+  std::map<double,std::vector<FilenameWithElementAndNodeCount>> filenamesWithElementAndNodeCount_;   ///< for a given simulation time the filenames without suffix of all previously output exelem files
 };
 
 };  // namespace

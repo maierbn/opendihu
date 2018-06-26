@@ -51,6 +51,7 @@ protected:
   bool useGradientField_;  ///< There are 2 implementations of streamline tracing. The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. // The first one seems more stable, because the gradient is zero and the position of the boundary conditions.
 
   double targetElementLength_;   ///< the final length of each element of the traced streamlines. After the streamlines were traced using the fine lineStepWidth_, it gets resampled with this width.
+  double targetLength_;           ///< the final length of the longest streamline, 0 means disabled
   double discardRelativeLength_;   ///< a relative length (in [0,1]), at the end streamlines are dropped that are smaller than this relative length times the median fibre length
   std::string csvFilename_;      ///< a csv output filename to write the node positions of the streamlines to
 };

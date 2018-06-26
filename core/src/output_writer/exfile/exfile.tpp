@@ -25,14 +25,14 @@ namespace OutputWriter
 template<typename DataType>
 void Exfile::write(DataType& data, int timeStepNo, double currentTime)
 {
-  LOG(TRACE) << "Exfile::write";
-
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
     return;
   }
-
+ 
+  LOG(TRACE) << "Exfile::write";
+  
   // collect all available meshes
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);

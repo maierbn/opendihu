@@ -27,13 +27,14 @@ for filename in filenames:
   collected_lines = []
   last_lines_started = False
   last_lines = []
+  invalid_dataset = False
   
   print "file \"{}\"".format(filename)
   with open(filename, 'rb') as f:
     for line in f.readlines():
       
       if "$fname =" in line:
-        if files_started:
+        if files_started and not invalid_dataset:
             
           # add entry for current_time
           if current_time not in parsed_files:
@@ -43,24 +44,33 @@ for filename in filenames:
         collected_lines = []
           
         files_started = True
+        invalid_dataset = False
         
         exfile_base = line[line.find("\"")+1:-2]
     
         # determine number of nodes
-        with open(exfile_base+".exnode","rb") as exnode_f:
-          for line2 in exnode_f.readlines():
-            if "Node: " in line2:
-              node_no = int(line2[7:])
-        n_nodes = node_no
+        try:
+          with open(exfile_base+".exnode","rb") as exnode_f:
+            for line2 in exnode_f.readlines():
+              if "Node: " in line2:
+                node_no = int(line2[7:])
+          n_nodes = node_no
+        except:
+          invalid_dataset = True
+          continue
         #print("n nodes: {}".format(n_nodes))
         
         # determine number of elements
-        with open(exfile_base+".exelem","rb") as exelem_f:
-          for line2 in exelem_f.readlines():
-            if "Element: " in line2:
-              substr = line2[21:]
-              element_no = int(substr[:substr.find(" ")])
-        n_elements = element_no
+        try:
+          with open(exfile_base+".exelem","rb") as exelem_f:
+            for line2 in exelem_f.readlines():
+              if "Element: " in line2:
+                substr = line2[21:]
+                element_no = int(substr[:substr.find(" ")])
+          n_elements = element_no
+        except:
+          invalid_dataset = True
+          continue
         #print("n elements: {}".format(n_elements))
       
       if " time " in line:

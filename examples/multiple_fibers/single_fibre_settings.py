@@ -185,9 +185,9 @@ def get_instance_config(i):
             "prefactor": Conductivity/(Am*Cm),
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
+            {"format": "Paraview", "outputInterval": 1e4, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e4, "sphereSize": "0.02*0.02*0.02"},
+            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e4, "binary":True, "onlyNodalValues":True},
           ]
         },
       },

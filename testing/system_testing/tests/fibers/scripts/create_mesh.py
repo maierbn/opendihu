@@ -20,6 +20,7 @@ import sys, os
 import numpy as np
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
+from matplotlib import collections, patches
 import struct
 import stl
 from stl import mesh
@@ -886,6 +887,14 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   # create triangles of new grid points mesh
   grid_point_indices_world_space = []
   
+  patches_parametric = []
+  patches_world = []
+  parametric_points = []
+  min_x = 100000
+  min_y = 100000
+  max_x = -100000
+  max_y = -100000
+  
   # loop over grid points in parametric space
   for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
     phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
@@ -951,6 +960,20 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       grid_triangles_world_space.append([p0,p1,p3])
       grid_triangles_world_space.append([p0,p3,p2])
       
+      quadrilateral = np.zeros((4,2))
+      quadrilateral[0] = p0[0:2]
+      quadrilateral[1] = p1[0:2]
+      quadrilateral[2] = p3[0:2]
+      quadrilateral[3] = p2[0:2]
+      
+      min_x = min(min_x, min(quadrilateral[:,0]))
+      min_y = min(min_y, min(quadrilateral[:,1]))
+      max_x = max(max_x, max(quadrilateral[:,0]))
+      max_y = max(max_y, max(quadrilateral[:,1]))
+      #print "world: ",quadrilateral
+      polygon = patches.Polygon(quadrilateral, True)
+      patches_world.append(polygon)
+      
       offset = np.array([x_offset, y_offset])
       p0 = np.concatenate([grid_points_parametric_space[j*n_grid_points_x+i]*scale+offset,np.array([z_value])])
       p1 = np.concatenate([grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]*scale+offset,np.array([z_value])])
@@ -959,6 +982,20 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       
       grid_triangles_parametric_space.append([p0,p1,p3])
       grid_triangles_parametric_space.append([p0,p3,p2])
+      
+      quadrilateral = np.zeros((4,2))
+      quadrilateral[0] = grid_points_parametric_space[j*n_grid_points_x+i]
+      quadrilateral[1] = grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]
+      quadrilateral[2] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+      quadrilateral[3] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+i]
+      parametric_points.append(quadrilateral[0])
+      parametric_points.append(quadrilateral[1])
+      parametric_points.append(quadrilateral[2])
+      parametric_points.append(quadrilateral[3])
+      #print "parametric: ",quadrilateral
+      polygon = patches.Polygon(quadrilateral, True)
+      patches_parametric.append(polygon)
+      
 
   # plot laplace solutions
   x = np.reshape(points[:,0], (-1))
@@ -998,7 +1035,39 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   ax[1,1].set_title('new grid in world space')
   ax[1,1].set_aspect('equal')
   
-  plt.savefig("out/harmonic_map_{}.png".format(loop_no))
+  plt.savefig("out/loop_{}_harmonic_map.png".format(loop_no))
+  if show_plot:
+    plt.show()
+  plt.close()
+  
+  # plot quadrilaterals
+  # parametric space
+  fig, ax = plt.subplots()
+    
+  p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
+  ax.add_collection(p)
+  ax.plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
+  ax.set_xlim(-1.1,1.1)
+  ax.set_ylim(-1.1,1.1)
+  plt.axis('equal')
+  
+  plt.savefig("out/loop_{}_parametric_mesh.png".format(loop_no));
+  if show_plot:
+    plt.show()
+  plt.close()
+  
+  # world space
+  fig, ax = plt.subplots()
+    
+  p = collections.PatchCollection(patches_world,edgecolors="k",facecolors="white")
+  ax.add_collection(p)
+  #ax.plot(xw,yw, 'ko',markersize=10)
+  ax.plot(xw,yw, 'ko')
+  ax.set_xlim(min_x,max_x)
+  ax.set_ylim(min_y,max_y)
+  plt.axis('equal')
+  
+  plt.savefig("out/loop_{}_world_mesh.png".format(loop_no));
   if show_plot:
     plt.show()
   plt.close()

@@ -17,7 +17,8 @@ Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58           # membrane capacitance [uF/cm^2]
 
-fibre_file = "../input/laplace3d_structured_quadratic"
+#fibre_file = "../input/laplace3d_structured_quadratic"
+fibre_file = "../input/laplace3d_structured_linear"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_real.txt"
 
@@ -137,7 +138,7 @@ def get_instance_config(i):
   instance_config = {
     "GodunovSplitting": {
       #"numberTimeSteps": 1,
-      "timeStepWidth": 1e-3,
+      "timeStepWidth": 1e-1,
       "endTime": endTime,
       "outputData1": False,
       "outputData2": True,
@@ -185,7 +186,7 @@ def get_instance_config(i):
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "sphereSize": "2*2*2"},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
             {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1e5, "binary":True, "onlyNodalValues":True},
           ]
         },

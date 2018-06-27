@@ -17,7 +17,7 @@ Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58           # membrane capacitance [uF/cm^2]
 
-fibre_file = "../input/laplace3d_structured_linear"
+fibre_file = "../input/laplace3d_structured_quadratic"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_real.txt"
 
@@ -176,7 +176,7 @@ def get_instance_config(i):
         "ExplicitEuler" : {
           #"initialValues": [2,2,4,5,2,2],
           #"numberTimeSteps": 1,
-          "timeStepWidth": 2e-7,
+          "timeStepWidth": 1e-5,
           "timeStepOutputInterval": 1e4,
           "FiniteElementMethod" : {
             "relativeTolerance": 1e-10,
@@ -222,8 +222,8 @@ config = {
   "instances": [get_instance_config(i) for i in range(nInstances)],
   "OutputWriter" : [
     #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-    {"format": "ExFile", "filename": "out/single_fibre_"+str(i), "outputInterval": 1},
-    {"format": "PythonFile", "filename": "out/single_fibre"+str(i), "binary":True, "onlyNodalValues":True},
+    #{"format": "ExFile", "filename": "out/single_fibre_"+str(i), "outputInterval": 1},
+    #{"format": "PythonFile", "filename": "out/single_fibre"+str(i), "binary":True, "onlyNodalValues":True},
   ]
 }
 

@@ -1,4 +1,4 @@
-#include "basis_on_mesh/03_basis_on_mesh_data_unstructured.h"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured.h"
 
 #include <cmath>
 #include <array>
@@ -20,8 +20,8 @@ using namespace StringUtility;
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-BasisOnMeshDataUnstructured(PyObject *settings, bool noGeometryField) :
-  BasisOnMeshJacobian<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshJacobian(settings),
+BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PyObject *settings, bool noGeometryField) :
+  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshPartition(partitionManager),
   noGeometryField_(noGeometryField)
 {
   LOG(TRACE) << "BasisOnMeshDataUnstructured constructor";

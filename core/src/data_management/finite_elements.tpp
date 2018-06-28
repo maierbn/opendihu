@@ -88,8 +88,8 @@ createPetscObjects()
   Partition::MeshPartition meshPartition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
   
   // create field variables on local partition
-  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs", partition);
-  this->solution_ = this->mesh_->template createFieldVariable<1>("solution", partition);
+  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
+  this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
 
   PetscErrorCode ierr;
   // create PETSc matrix object

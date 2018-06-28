@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "basis_on_mesh/07_basis_on_mesh_nodes.h"
+#include "basis_on_mesh/08_basis_on_mesh_nodes.h"
 
 namespace BasisOnMesh
 {

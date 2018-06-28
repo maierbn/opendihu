@@ -7,11 +7,14 @@
 namespace Mesh
 {
 
+/*
+* TODO: remove
 template<int D>
 Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerCoordinateDirection) :
   MeshOfDimension<D>(NULL), nElementsPerCoordinateDirection_(nElementsPerCoordinateDirection)
 {
 }
+*/
 
 template<int D>
 Structured<D>::Structured(PyObject *specificSettings) : MeshOfDimension<D>(specificSettings)

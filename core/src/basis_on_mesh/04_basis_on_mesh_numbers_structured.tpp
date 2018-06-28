@@ -1,4 +1,4 @@
-#include "basis_on_mesh/03_basis_on_mesh_numbers_structured.h"
+#include "basis_on_mesh/04_basis_on_mesh_numbers_structured.h"
 
 #include <Python.h>  // has to be the first included header
 #include <cmath>

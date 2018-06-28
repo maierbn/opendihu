@@ -4,7 +4,7 @@
 
 #include <array>
 #include "control/types.h"
-#include "basis_on_mesh/06_basis_on_mesh_faces.h"
+#include "basis_on_mesh/07_basis_on_mesh_faces.h"
 #include "mesh/mesh.h"
 
 namespace BasisOnMesh
@@ -45,4 +45,4 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/07_basis_on_mesh_nodes.tpp"
+#include "basis_on_mesh/08_basis_on_mesh_nodes.tpp"

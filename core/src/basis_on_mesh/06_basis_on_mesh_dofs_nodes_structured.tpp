@@ -1,4 +1,4 @@
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes.h"
 
 #include <Python.h>  // has to be the first included header
 #include <cmath>
@@ -15,7 +15,7 @@ namespace BasisOnMesh
 // constructor
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
+BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField) :
   BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(specificSettings)
 {
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
@@ -31,7 +31,7 @@ BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField) :
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
+BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
   BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
 {
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, from " << nodePositions.size() << " nodePositions";

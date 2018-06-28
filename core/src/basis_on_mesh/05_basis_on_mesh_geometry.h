@@ -5,8 +5,8 @@
 #include <array>
 #include "control/types.h"
 
-#include "basis_on_mesh/03_basis_on_mesh_numbers_structured.h"
-#include "basis_on_mesh/03_basis_on_mesh_data_unstructured.h"
+#include "basis_on_mesh/04_basis_on_mesh_numbers_structured.h"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured.h"
 
 namespace BasisOnMesh
 {
@@ -86,6 +86,6 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/04_basis_on_mesh_geometry.tpp"
-#include "basis_on_mesh/04_basis_on_mesh_geometry_structured.tpp"
-#include "basis_on_mesh/04_basis_on_mesh_geometry_unstructured.tpp"
+#include "basis_on_mesh/05_basis_on_mesh_geometry.tpp"
+#include "basis_on_mesh/05_basis_on_mesh_geometry_structured.tpp"
+#include "basis_on_mesh/05_basis_on_mesh_geometry_unstructured.tpp"

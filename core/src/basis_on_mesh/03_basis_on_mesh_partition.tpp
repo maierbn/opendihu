@@ -1,4 +1,4 @@
-#include "basis_on_mesh/08_basis_on_mesh_partition.h"
+#include "basis_on_mesh/03_basis_on_mesh_partition.h"
 
 #include <cmath>
 #include <array>
@@ -8,22 +8,20 @@
 
 namespace BasisOnMesh
 {
-
 template<typename MeshType,typename BasisFunctionType>
-void BasisOnMeshPartition<MeshType,BasisFunctionType>::
-initialize(std::shared_ptr<Partition::Manager> partitionManager)
+BasisOnMeshPartition<MeshType,BasisFunctionType>:: 
+BasisOnMeshPartition(std::shared_ptr<Partition::Manager> partitionManager) : 
+  partitionManager_(partitionManager)
 {
-  setupPartitioning();
-  BasisOnMeshGeometry<MeshType,BasisFunctionType>::initialize();
 }
-
-
+ 
 template<typename MeshType,typename BasisFunctionType>
 void BasisOnMeshPartition<MeshType,BasisFunctionType>::
-setupPartitioning(std::shared_ptr<Partition::Manager> partitionManager)
+initialize()
 {
   // create partitioning
-  partition_ = partitionManager->createPartitioning(this->nElements());
+  assert(partitionManager_ != nullptr);
+  partition_ = partitionManager_->createPartitioning(this->nElements());
 }
 
 template<typename MeshType,typename BasisFunctionTypes>
@@ -32,4 +30,6 @@ partition()
 {
   return partition_;
 }
+
+
 };  // namespace

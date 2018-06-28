@@ -5,7 +5,7 @@
 #include <array>
 #include "control/types.h"
 
-#include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
+#include "basis_on_mesh/03_basis_on_mesh_partition.h"
 #include "mesh/type_traits.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
 #include "field_variable/00_field_variable_base.h"
@@ -33,7 +33,7 @@ class BasisOnMesh;
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDataUnstructured :
-  public BasisOnMeshJacobian<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
 {
 public:
 
@@ -41,7 +41,7 @@ public:
   typedef BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
 
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
-  BasisOnMeshDataUnstructured(PyObject *settings, bool noGeometryField=false);
+  BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PyObject *settings, bool noGeometryField=false);
 
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
@@ -90,5 +90,5 @@ protected:
 
 }  // namespace
 
-#include "basis_on_mesh/03_basis_on_mesh_data_unstructured.tpp"
-#include "basis_on_mesh/03_basis_on_mesh_data_unstructured_exfile_io.tpp"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured.tpp"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured_exfile_io.tpp"

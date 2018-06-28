@@ -17,8 +17,9 @@ template<int D>
 class Structured : public MeshOfDimension<D>
 {
 public:
+ // TODO: constructor not needed? remove
   //! constructor from number of elements in coordinate directions
-  Structured(std::array<element_no_t, D> &nElements);
+  //Structured(std::array<element_no_t, D> &nElements);
 
   //! constructor from python settings
   Structured(PyObject *specificSettings);

@@ -1,4 +1,4 @@
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes.h"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes.h"
 
 #include <Python.h>  // has to be the first included header
 #include "easylogging++.h"
@@ -15,7 +15,7 @@ namespace BasisOnMesh
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-BasisOnMeshDofsNodes(PyObject *specificSettings) :
+BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) :
   BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(specificSettings)
 {
   this->meshWidth_ = 0;
@@ -68,12 +68,14 @@ BasisOnMeshDofsNodes(PyObject *specificSettings) :
 
   LOG(DEBUG) << "   create geometry field ";
 
+  // TODO: setupGeometryField needs the meshPartition of this Mesh, is this available already in the constructor?
+  // meshPartition is only stored inside mesh, mesh is created by initialize, i.e. move setup from constructor to initialize!
   setupGeometryField();
 }
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
+BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
   BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(nullptr)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
@@ -108,7 +110,7 @@ setupGeometryField()
   this->geometryField_->setMeshWidth(this->meshWidth_);
   std::vector<std::string> componentNames{"x","y","z"};
   bool isGeometryField = true;
-  Vec values;
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> values;
   dof_no_t nDofs = this->nDofs();
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
   this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);

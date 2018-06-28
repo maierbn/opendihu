@@ -5,7 +5,7 @@
 #include <array>
 #include "control/types.h"
 
-#include "basis_on_mesh/04_basis_on_mesh_geometry.h"
+#include "basis_on_mesh/05_basis_on_mesh_geometry.h"
 #include "mesh/type_traits.h"
 
 namespace BasisOnMesh
@@ -30,10 +30,10 @@ class BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunct
 public:
 
   //! constructor from python settings
-  BasisOnMeshDofsNodes(PyObject *specificSettings);
+  BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
 
   //! construct from element numbers and physical extent
-  BasisOnMeshDofsNodes(std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+  BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
@@ -53,6 +53,8 @@ public:
   dof_no_t nDofs() const;
 
 protected:
+ 
+  virtual setPartititon();
 
   //! create the geometry field from meshWidth_
   void setupGeometryField();
@@ -68,10 +70,10 @@ class BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctio
 {
 public:
   //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
-  BasisOnMeshDofsNodes(PyObject *specificSettings, bool noGeometryField=false);
+  BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField=false);
 
   //! constructor from node positions
-  BasisOnMeshDofsNodes(const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
+  BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
@@ -118,6 +120,6 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes_regular.tpp"
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes_structured.tpp"
-#include "basis_on_mesh/05_basis_on_mesh_dofs_nodes_unstructured.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_regular.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_structured.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_unstructured.tpp"

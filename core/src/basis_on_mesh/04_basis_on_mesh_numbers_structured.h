@@ -5,7 +5,7 @@
 #include <array>
 #include "control/types.h"
 
-#include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
+#include "basis_on_mesh/03_basis_on_mesh_partition.h"
 #include "mesh/type_traits.h"
 #include "mesh/face_t.h"
 
@@ -27,11 +27,11 @@ class BasisOnMeshNumbers
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> :
-  public BasisOnMeshJacobian<MeshType,BasisFunctionType>
+  public BasisOnMeshPartition<MeshType,BasisFunctionType>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
+  using BasisOnMeshPartition<MeshType,BasisFunctionType>::BasisOnMeshPartition;
 
   //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
@@ -53,11 +53,11 @@ public:
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> :
-  public BasisOnMeshJacobian<MeshType,BasisFunctionType>
+  public BasisOnMeshPartition<MeshType,BasisFunctionType>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
+  using BasisOnMeshPartition<MeshType,BasisFunctionType>::BasisOnMeshPartition;
 
   //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
@@ -79,11 +79,11 @@ public:
  */
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> :
-  public BasisOnMeshJacobian<MeshType,BasisFunctionType>
+  public BasisOnMeshPartition<MeshType,BasisFunctionType>
 {
 public:
   //! inherit constructor
-  using BasisOnMeshJacobian<MeshType,BasisFunctionType>::BasisOnMeshJacobian;
+  using BasisOnMeshPartition<MeshType,BasisFunctionType>::BasisOnMeshPartition;
 
   //! return the local dof number of element-local dof dofIndex of element elementNo
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
@@ -104,4 +104,4 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/03_basis_on_mesh_numbers_structured.tpp"
+#include "basis_on_mesh/04_basis_on_mesh_numbers_structured.tpp"

@@ -135,6 +135,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
     
 def get_instance_config(i):
   
+  bc = {0: -80.25667, -1: -80.25667}
   instance_config = {
     "GodunovSplitting": {
       #"numberTimeSteps": 1,
@@ -183,6 +184,7 @@ def get_instance_config(i):
             "relativeTolerance": 1e-10,
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
+            "DirichletBoundaryCondition": bc,
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1e4, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},

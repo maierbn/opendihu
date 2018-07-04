@@ -91,6 +91,11 @@ applyBoundaryConditions()
     dof_no_t boundaryConditionIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
 
+    if (boundaryConditionIndex == -1)
+    {
+      boundaryConditionIndex = nUnknowns-1;
+    }
+    
     if (boundaryConditionIndex < 0)
       continue;
 

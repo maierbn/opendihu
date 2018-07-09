@@ -965,6 +965,20 @@ Solving for $u^{(t+1)}$ yields:
     u^{(t+1)} = u^{(t)} - dt \,\bfM^{-1}\bfK\bfu.
   \end{array}
 \end{equation*}
+When using an explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfu^{(t+1)} = \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}.
+  \end{array}
+\end{equation*}
+With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t+1)}\\[4mm]
+     &= (I + dt\,\bfM^{-1}\bfK)^{-1}\,\bfu^{(t)}
+  \end{array}
+\end{equation*}
+
 \subsection{Analytical Solution}
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
 \begin{equation*}

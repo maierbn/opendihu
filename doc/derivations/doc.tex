@@ -953,18 +953,22 @@ Substituting into \eqref{eq:diffusion_derivation1} yields:
     \Leftrightarrow\quad & -\s{i=1}{N} u^{(t)}_i \ds\int_Ω ∇\phi_i \cdot ∇\phi_j\,\d\bfx = \dfrac{1}{dt}\s{i=1}{N}(u_i^{(t+1)} - u_i^{(t)})\ds\int_Ω \phi_i \cdot \phi_j\,\d\bfx\qquad \text{for }j = 1,\dots, N.
   \end{array}
 \end{equation*}
-In Matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$, and the vectors of the degrees of freedom for time $t$, $u^{t}$, we get:
+We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$. For the explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu = \dfrac1{dt} \bfM\Big(u^{(t+1)} - u^{(t)}\Big).
+    -\bfK\bfu^{(t)} = \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} = \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}.
   \end{array}
 \end{equation*}
-Solving for $u^{(t+1)}$ yields:
+With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    u^{(t+1)} = u^{(t)} - dt \,\bfM^{-1}\bfK\bfu.
+    -\bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t+1)}\\[4mm]
+     &= (I + dt\,\bfM^{-1}\bfK)^{-1}\,\bfu^{(t)}
   \end{array}
 \end{equation*}
+
 \subsection{Analytical Solution}
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
 \begin{equation*}

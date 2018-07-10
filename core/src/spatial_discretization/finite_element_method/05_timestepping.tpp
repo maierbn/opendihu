@@ -109,6 +109,7 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
+  // this method computes output = M^{-1}*K*input
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
   Vec &rhs = this->data_.rightHandSide().values();
 

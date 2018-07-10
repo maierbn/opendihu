@@ -956,8 +956,9 @@ Substituting into \eqref{eq:diffusion_derivation1} yields:
 We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$. For the explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu^{(t)} = \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
-    \bfu^{(t+1)} = \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}.
+    -\bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}\\[4mm]
+                 &= \Big(\bfI - dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}.
   \end{array}
 \end{equation*}
 With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 

@@ -203,12 +203,12 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
   return nodeToDofMapping;
 }
 
-dof_no_t ElementToDofMapping::nDofs() const
+dof_no_t ElementToDofMapping::nLocalDofs() const
 {
   return nDofs_;
 }
 
-element_no_t ElementToDofMapping::nElements() const
+element_no_t ElementToDofMapping::nLocalElements() const
 {
   return elementDofs_.size();
 }

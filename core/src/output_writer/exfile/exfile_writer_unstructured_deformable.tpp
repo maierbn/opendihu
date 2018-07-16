@@ -18,7 +18,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
 
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();
-  const element_no_t nElements = mesh->nElements();
+  const element_no_t nElements = mesh->nLocalElements();
 
   bool outputHeader = true;
 
@@ -72,7 +72,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   stream << " Group name: " << meshName << std::endl;
 
   bool outputHeader = true;
-  const node_no_t nNodes = mesh->nNodes();
+  const node_no_t nNodes = mesh->nLocalNodes();
 
   // loop over all nodes
   for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)

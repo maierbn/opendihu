@@ -35,13 +35,13 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->mesh_->nDofs();
+  dof_no_t nValues = this->mesh_->nLocalDofs();
   if (onlyNodalValues)
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
-      nValues = this->mesh_->nDofs() / BasisOnMeshType::nDofsPerNode();
+      nValues = this->mesh_->nLocalDofs() / BasisOnMeshType::nDofsPerNode();
 
-  LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nDofs() << ", nValues: " << nValues
+  LOG(DEBUG) << "getValues, n dofs: " << this->mesh_->nLocalDofs() << ", nValues: " << nValues
     << ", nNodes: " << nNodesInXDirection<<","<<nNodesInYDirection<<","<<nNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 

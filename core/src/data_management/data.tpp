@@ -31,7 +31,7 @@ template<typename BasisOnMeshType>
 dof_no_t Data<BasisOnMeshType>::
 nUnknowns()
 {
-  return this->mesh_->nDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->mesh_->nLocalDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
 template<typename BasisOnMeshType>

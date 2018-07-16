@@ -29,7 +29,7 @@ public:
   //! number of ranks in a coordinate direction
   int nRanks(int coordinateDirection);
   
-  //! number of entries in the current partition
+  //! number of entries in the current partition (this usually refers to the elements)
   element_no_t localSize();
   
   //! number of entries in the given coordinate direction in the current partition
@@ -55,6 +55,10 @@ public:
   
   //! get an AO object
   AO &applicationOrdering();
+  
+  //! from a vector of global numbers remove all that are non-local
+  template <typename T>
+  void extractLocalNumbers(std::vector<T> &vector);
   
 protected:
  

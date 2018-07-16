@@ -5,21 +5,21 @@ namespace Mesh
 {
 
 template<>
-element_no_t Structured<1>::nElements() const
+element_no_t Structured<1>::nLocalElements() const
 {
-  return nElementsPerCoordinateDirection_[0];
+  return nElementsPerCoordinateDirectionLocal_[0];
 }
 
 template<>
-element_no_t Structured<2>::nElements() const
+element_no_t Structured<2>::nLocalElements() const
 {
-  return nElementsPerCoordinateDirection_[0]*nElementsPerCoordinateDirection_[1];
+  return nElementsPerCoordinateDirectionLocal_[0]*nElementsPerCoordinateDirectionLocal_[1];
 }
 
 template<>
-element_no_t Structured<3>::nElements() const
+element_no_t Structured<3>::nLocalElements() const
 {
-  return nElementsPerCoordinateDirection_[0]*nElementsPerCoordinateDirection_[1]*nElementsPerCoordinateDirection_[2];
+  return nElementsPerCoordinateDirectionLocal_[0]*nElementsPerCoordinateDirectionLocal_[1]*nElementsPerCoordinateDirectionLocal_[2];
 }
 
 

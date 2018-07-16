@@ -1,14 +1,15 @@
 
 
 # settings
-n_rings=43   # this has to be odd for quadratic elements
+#n_rings=43   # this has to be odd for quadratic elements
+n_rings=3
 min_z=40
 max_z=260
 
-triangulation_type=2  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom (1 is best)
-parametric_space_shape=3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
-n_points_x=10   # has to be even for quadratic elements
-#n_points_x=4
+triangulation_type=2  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom with CoG, 3 = custom with minimized distance
+parametric_space_shape=4   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = unit circle with optimized positions
+#n_points_x=10   # has to be even for quadratic elements
+n_points_x=4
 
 
 
@@ -20,7 +21,7 @@ cp $input_file out/mesh_00.stl    # cp input file
 
 # cut surface mesh at specified z positions and create rings from it. Write result to `rings_created`, debugging output to out/mesh_01.stl (takes <1min)
 # usage: ./create_rings.py <input file> [<n rings> [<min z> <max z>]]
-#./create_rings.py $input_file $n_rings $min_z $max_z    
+./create_rings.py $input_file $n_rings $min_z $max_z    
 
 # extract existing rings from surface mesh   (this is the alternative to create_rings.py)   Write result to `rings_extracted`
 #./extract_rings.py ../biceps.stl     

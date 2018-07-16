@@ -209,13 +209,13 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
 }
 
 template<typename BasisOnMeshType>
-dof_no_t Component<BasisOnMeshType>::nDofs() const
+dof_no_t Component<BasisOnMeshType>::nLocalDofs() const
 {
-  return this->elementToDofMapping_->nDofs();
+  return this->elementToDofMapping_->nLocalDofs();
 }
 
 template<typename BasisOnMeshType>
-element_no_t Component<BasisOnMeshType>::nElements() const
+element_no_t Component<BasisOnMeshType>::nLocalElements() const
 {
   return this->nElements_;
 }
@@ -237,7 +237,7 @@ template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
 getValues(std::vector<double> &values, bool onlyNodalValues)
 {
-  const dof_no_t nDofs = this->nDofs();
+  const dof_no_t nDofs = this->nLocalDofs();
 
   // set stride to nDofsPerNode if Hermite, else to 1
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);

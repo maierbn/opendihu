@@ -43,12 +43,12 @@ public:
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
 
   //! get the number of elements per coordinate direction
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection() const;
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionLocal() const;
 
-  //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header
+  //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header. For parallel program execution this writes headers for the local exelem files on every rank.
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 
-  //! write a exelem file header to a stream, for a particular node
+  //! write a exelem file header to a stream, for a particular node, TODO: local to globalFor parallel program execution this writes headers for the local exnodes files on every rank.
   void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
@@ -65,7 +65,7 @@ public:
   void output(std::ostream &stream) const;
 
   //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
@@ -80,7 +80,7 @@ public:
   //! parse single element from exelem file
   virtual void parseElementFromExelemFile(std::string content){}
 
-  //! read in values frorm exnode file
+  //! read in values from exnode file
   virtual void parseFromExnodeFile(std::string content){}
 
   //! resize internal representation variable to number of elements

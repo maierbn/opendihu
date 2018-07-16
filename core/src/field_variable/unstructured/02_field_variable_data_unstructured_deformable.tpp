@@ -178,7 +178,7 @@ setNumberElements(element_no_t nElements)
 
 template<int D, typename BasisFunctionType, int nComponents>
 element_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nElements() const
+nLocalElements() const
 {
   return this->nElements_;
 }
@@ -610,8 +610,8 @@ initializeValuesVector()
   // loop over components
   for (auto &component : this->component_)
   {
-    this->nEntries_ += component.nDofs();
-    VLOG(1) << "  component " << component.name() << " has " << component.nDofs() << " dofs";
+    this->nEntries_ += component.nLocalDofs();
+    VLOG(1) << "  component " << component.name() << " has " << component.nLocalDofs() << " dofs";
   }
   VLOG(1) << "total entries: " << this->nEntries_;
 
@@ -636,16 +636,16 @@ nEntries() const
 
 template<int D, typename BasisFunctionType, int nComponents>
 dof_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nDofs() const
+nLocalDofs() const
 {
   return this->nEntries_ / nComponents;
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
 node_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nNodes() const
+nLocalNodes() const
 {
-  return nodeToDofMapping_->nNodes();
+  return nodeToDofMapping_->nLocalNodes();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
@@ -681,7 +681,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->exfileNo_ = 0;
   this->nEntries_ = 0;
   this->isGeometryField_ = false;
-  this->nElements_ = fieldVariable.nElements();
+  this->nElements_ = fieldVariable.nLocalElements();
   this->exfileRepresentation_ = fieldVariable.exfileRepresentation();
   this->elementToDofMapping_ = fieldVariable.elementToDofMapping();
   this->elementToNodeMapping_ = fieldVariable.elementToNodeMapping();
@@ -706,7 +706,7 @@ initializeFromMappings(std::string name, bool isGeometryField,
   this->exfileNo_ = 0;
   this->nEntries_ = 0;
   this->isGeometryField_ = isGeometryField;
-  this->nElements_ = elementToDofMapping->nElements();
+  this->nElements_ = elementToDofMapping->nLocalElements();
 
   // remove duplicate exfile representations
   exfileRepresentation->unifyExfileElementRepresentations();
@@ -723,7 +723,7 @@ initializeFromMappings(std::string name, bool isGeometryField,
   initializeComponents(componentNames, exfileBasisRepresentation);
 
 
-  LOG(DEBUG) << "FieldVariable nDofs: " << this->nDofs();
+  LOG(DEBUG) << "FieldVariable nDofs: " << this->nLocalDofs();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

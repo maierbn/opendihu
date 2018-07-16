@@ -55,13 +55,13 @@ public:
                               std::vector<std::string> componentNames);
 
   //! get the number of elements
-  element_no_t nElements() const;
+  element_no_t nLocalElements() const;
 
   //! get the number of nodes
-  node_no_t nNodes() const;
+  node_no_t nLocalNodes() const;
 
   //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;
@@ -81,7 +81,7 @@ public:
   //! get the internal values vector
   Vec &values();
 
-  //! get the number of scale factors
+  //! get the number of scale factors, TODO: local no
   int getNumberScaleFactors(element_no_t elementGlobalNo) const;
 
   //! write a exelem file header to a stream, for a particular element

@@ -16,7 +16,7 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
-  const dof_no_t nDofs = this->mesh_->nDofs();
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
   // set stride to nDofsPerNode if Hermite, else to 1
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
@@ -118,7 +118,7 @@ void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo,
                  std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   assert(componentNo >= 0 && componentNo < nComponents);
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
@@ -138,7 +138,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   std::array<int,nDofsPerElement*nComponents> indices;

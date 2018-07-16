@@ -16,7 +16,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     << " #Scale factor sets=0" << std::endl;
 
   const int nNodesPerElement = BasisOnMeshType::nNodesPerElement();
-  const element_no_t nElements = mesh->nElements();
+  const element_no_t nElements = mesh->nLocalElements();
 
   stream << " #Nodes=" << nNodesPerElement << std::endl
     << " #Fields=" << nFieldVariablesOfMesh << std::endl;
@@ -71,7 +71,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   //}
 
   // loop over nodes and output values
-  const int nNodes = mesh->nNodes();
+  const int nNodes = mesh->nLocalNodes();
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < nNodes; nodeGlobalNo++)
   {
     stream << " Node: " << nodeGlobalNo << std::endl;

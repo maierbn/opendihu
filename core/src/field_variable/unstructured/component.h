@@ -58,10 +58,10 @@ public:
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
   //! return the total number of dofs for this component
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 
   //! return the number of elements
-  element_no_t nElements() const;
+  element_no_t nLocalElements() const;
   
   //! return the name of the component
   std::string name() const;

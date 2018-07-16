@@ -26,7 +26,7 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
 
   std::array<double, D> physicalExtent;
   // only get physicalExtent if it is not a 1-node mesh with 0 elements
-  if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
+  if (D > 1 || this->nElementsPerCoordinateDirectionLocal_[0] != 0)
   {
     if (PythonUtility::hasKey(specificSettings, "physicalExtend"))
       LOG(ERROR) << "You misspelled \"physicalExtent\" as \"physicalExtend\"!";
@@ -38,9 +38,9 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
 
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
-  if (D > 1 || this->nElementsPerCoordinateDirection_[0] != 0)
+  if (D > 1 || this->nElementsPerCoordinateDirectionLocal_[0] != 0)
   {
-    auto nElementsIter = this->nElementsPerCoordinateDirection_.begin();
+    auto nElementsIter = this->nElementsPerCoordinateDirectionLocal_.begin();
     auto physicalExtentIter = physicalExtent.begin();
     for (; physicalExtentIter != physicalExtent.end(); nElementsIter++, physicalExtentIter++)
     {
@@ -62,7 +62,7 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
     this->meshWidth_ = 1.0;
   }
 
-  LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerCoordinateDirection_;
+  LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerCoordinateDirectionLocal_;
   LOG(DEBUG) << "  physicalExtent: " << physicalExtent;
   LOG(DEBUG) << "  meshWidth: " << this->meshWidth_;
 
@@ -81,7 +81,7 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   this->meshWidth_ = 0;
-  typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerCoordinateDirection_.begin();
+  typename std::array<element_no_t, D>::iterator nElementsIter = this->nElementsPerCoordinateDirectionLocal_.begin();
   for (typename std::array<double, D>::iterator physicalExtentIter = physicalExtent.begin(); physicalExtentIter != physicalExtent.end();
        physicalExtentIter++, nElementsIter++)
   {
@@ -111,9 +111,9 @@ setupGeometryField()
   std::vector<std::string> componentNames{"x","y","z"};
   bool isGeometryField = true;
   std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> values;
-  dof_no_t nDofs = this->nDofs();
+  dof_no_t nDofs = this->nLocalDofs();
   std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
-  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirectionLocal_, nEntries, isGeometryField, values);
   
   VLOG(2) << "   setup geometry field: " << this->geometryField_->values() << " with " << nEntries << " entries";
 }
@@ -121,7 +121,7 @@ setupGeometryField()
 
 template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nNodes() const
+nLocalNodes() const
 {
   int result = 1;
   for (int i=0; i<D; i++)
@@ -131,17 +131,17 @@ nNodes() const
 
 template<int D,typename BasisFunctionType>
 dof_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nDofs() const
+nLocalDofs() const
 {
-  return nNodes() * this->nDofsPerNode();
+  return nLocalNodes() * this->nDofsPerNode();
 }
 
 template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nNodes(int dimension) const
+nLocalNodes(int dimension) const
 {
-  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerCoordinateDirection(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
-  return this->nElementsPerCoordinateDirection(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerCoordinateDirectionLocal(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
+  return this->nElementsPerCoordinateDirectionLocal(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>
@@ -155,9 +155,9 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 getNodePositions(std::vector<double> &nodes) const
 {
-  nodes.resize(this->nNodes()*3);
+  nodes.resize(this->nLocalNodes()*3);
 
-  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nLocalNodes(); nodeGlobalNo++)
   {
     dof_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
 

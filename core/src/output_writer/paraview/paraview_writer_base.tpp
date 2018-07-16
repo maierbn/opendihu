@@ -76,9 +76,9 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
   {
-    extent[i] = mesh->nElementsPerCoordinateDirection(i) + mBasisOnMeshBaseDim<Mesh::dim(),Mesh::BasisFunction>::averageNNodesPerElement();
+    extent[i] = mesh->nElementsPerCoordinateDirectionLocal(i) + mBasisOnMeshBaseDim<Mesh::dim(),Mesh::BasisFunction>::averageNNodesPerElement();
   }
-    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirectionLocal(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
 
   // coordinates of grid
   std::vector<double> coordinates[3];
@@ -86,7 +86,7 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
   for (; dimensionNo<mesh->dimension(); dimensionNo++)
   {
     double meshWidth = mesh->meshWidth();
-    double nElements = mesh->nElementsPerCoordinateDirection(dimensionNo);
+    double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
 
     LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;
 
@@ -215,7 +215,7 @@ void ParaviewWriter::writeStructuredGrid(DataType& data)
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
-    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirectionLocal(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
 
   // points
   std::vector<double> points;
@@ -304,7 +304,7 @@ void ParaviewWriter::writeUnstructuredGrid(DataType& data)
   // extent
   std::vector<int> extent = {0,0,0};   // number of nodes in x, y and z direction
   for (int i=0; i<mesh->dimension(); i++)
-    extent[i] = mesh->nElementsPerCoordinateDirection(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
+    extent[i] = mesh->nElementsPerCoordinateDirectionLocal(i) + 1 - 1;   // nDOFS = nElements+1, value-1 because indices start with 0
 
   // points
   std::vector<double> points;

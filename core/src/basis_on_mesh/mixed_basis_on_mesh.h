@@ -34,7 +34,7 @@ public:
   int dimension() const;
 
   //! number of nodes of the mesh (high order version)
-  node_no_t nNodes() const;
+  node_no_t nLocalNodes() const;
 
   //! return the low order basisOnMesh object
   std::shared_ptr<LowOrderBasisOnMeshType> lowOrderBasisOnMesh();

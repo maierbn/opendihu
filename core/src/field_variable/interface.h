@@ -48,7 +48,7 @@ struct Interface
   //virtual std::array<std::string, nComponents> componentNames() const = 0;
 
   //! get the number of elements
-  //virtual element_no_t nElements() const = 0;
+  //virtual element_no_t nLocalElements() const = 0;
 
   //! for a specific component, get all values
   //template<int N>

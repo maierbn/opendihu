@@ -70,7 +70,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 
   meshes_[anonymousName.str()] = mesh;
 
-  VLOG(1) << "mesh nNodes: " << mesh->nNodes();
+  VLOG(1) << "mesh nNodes: " << mesh->nLocalNodes();
 
   return mesh;
 }
@@ -97,7 +97,7 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   mesh->setMeshName(name);
   meshes_[name] = mesh;
 
-  VLOG(1) << "mesh nNodes: " << mesh->nNodes();
+  VLOG(1) << "mesh nNodes: " << mesh->nLocalNodes();
 
   return mesh;
 }

@@ -23,10 +23,10 @@ public:
   virtual int dimension() const = 0;
   
   //! number of nodes in the mesh
-  virtual node_no_t nNodes() const = 0;
+  virtual node_no_t nLocalNodes() const = 0;
   
   //! number of elements in the mesh
-  virtual element_no_t nElements() const = 0;
+  virtual element_no_t nLocalElements() const = 0;
   
   //! set the name of the mesh
   void setMeshName(std::string meshName);
@@ -48,10 +48,10 @@ public:
   static constexpr int dim() {return 0;}
   
   //! number of nodes in the mesh
-  node_no_t nNodes() const {return 0;}
+  node_no_t nLocalNodes() const {return 0;}
   
   //! number of elements in the mesh
-  element_no_t nElements() const {return 0;}
+  element_no_t nLocalElements() const {return 0;}
   
   //! initialization method
   void initialize(){}
@@ -75,10 +75,10 @@ public:
   static constexpr int dim();
 
   //! get the number of nodes of this mesh
-  virtual node_no_t nNodes() const = 0;
+  virtual node_no_t nLocalNodes() const = 0;
   
   //! number of elements in the mesh
-  virtual element_no_t nElements() const = 0;
+  virtual element_no_t nLocalElements() const = 0;
 };
 
 }  // namespace

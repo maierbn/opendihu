@@ -244,7 +244,7 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nUnknowns = this->data_.mesh()->nDofs() * D;
+      const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nUnknowns);
     }
@@ -300,7 +300,7 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nUnknowns = this->data_.mesh()->nDofs() * D;
+      const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nUnknowns);
     }
@@ -565,7 +565,7 @@ updateGeometryActual()
   // update geometry field from displacements
   if (BasisOnMeshType::dim() == 2)  // 2D problem
   {
-    const int nUnknowns3D = this->data_.mesh()->nDofs() * 3;
+    const int nUnknowns3D = this->data_.mesh()->nLocalDofs() * 3;
 
     // expand 2D vector to 3D vector fullIncrement
     this->expandVectorTo3D(this->data_.displacements().values(), this->data_.fullIncrement(), nUnknowns3D);

@@ -80,7 +80,7 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
-  dof_no_t n = this->mesh_->nDofs();
+  dof_no_t n = this->mesh_->nLocalDofs();
 
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
 

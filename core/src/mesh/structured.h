@@ -25,16 +25,16 @@ public:
   Structured(PyObject *specificSettings);
 
   //! get number of elements in a given coordinate direction
-  element_no_t nElementsPerCoordinateDirection(int dimension) const;
+  element_no_t nElementsPerCoordinateDirectionLocal(int dimension) const;
 
   //! get the array with all numbers of elements per coordinate direction
-  std::array<element_no_t, D> nElementsPerCoordinateDirection() const;
+  std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal() const;
 
   //! get the total number of elements
-  element_no_t nElements() const;
+  element_no_t nLocalElements() const;
 
 protected:
-  std::array<element_no_t, D> nElementsPerCoordinateDirection_;    ///< the number of stored elements in each coordinate direction (i.e. the locally computed portion)
+  std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal_;    ///< the number of stored elements in each coordinate direction (the locally computed portion)
 };
 
 };    // namespace

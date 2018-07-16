@@ -260,7 +260,7 @@ parseExelemFile(std::string exelemFilename)
   if (!this->fieldVariable_.empty())
   {
     std::shared_ptr<FieldVariable::ElementToDofMapping> elementToDofMapping = this->fieldVariable_.begin()->second->elementToDofMapping();
-    this->nDofs_ = elementToDofMapping->nDofs();
+    this->nDofs_ = elementToDofMapping->nLocalDofs();
   }
   VLOG(1) << "nDofs: " << this->nDofs_;
 
@@ -446,7 +446,7 @@ parseFromSettings(PyObject *settings)
 
   VLOG(1) << "nodeToDofMapping: " << *nodeToDofMapping;
 
-  this->nDofs_ = elementToDofMapping->nDofs();
+  this->nDofs_ = elementToDofMapping->nLocalDofs();
 
   // create and setup geometry field variable
   this->geometryField_ = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>();

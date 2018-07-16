@@ -44,11 +44,11 @@ setStiffnessMatrix()
   std::shared_ptr<LowOrderBasisOnMesh> basisOnMeshP = this->data_.mixedMesh()->lowOrderBasisOnMesh();
 
   const int D = BasisOnMeshType::dim();
-  //const int nDofsU = basisOnMeshU->nDofs();
-  //const int nDofsP = basisOnMeshP->nDofs();
+  //const int nDofsU = basisOnMeshU->nLocalDofs();
+  //const int nDofsP = basisOnMeshP->nLocalDofs();
   const int nDofsUPerElement = HighOrderBasisOnMesh::nDofsPerElement();
   const int nDofsPPerElement = LowOrderBasisOnMesh::nDofsPerElement();
-  const int nElements = basisOnMeshU->nElements();
+  const int nElements = basisOnMeshU->nLocalElements();
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::HighOrderQuadrature> QuadratureU;

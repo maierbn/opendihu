@@ -53,7 +53,7 @@ getElementGeometry(element_no_t elementNo, std::array<Vec3, BasisOnMeshBaseDim<M
   // assert that geometry field variable is set
   assert (this->geometryField_);
   assert (elementNo >= 0);
-  assert (elementNo < this->nElements());
+  assert (elementNo < this->nLocalElements());
 
   this->geometryField_->getElementValues(elementNo, values);
 }

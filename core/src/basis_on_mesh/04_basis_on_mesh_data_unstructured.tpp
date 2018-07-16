@@ -195,7 +195,7 @@ elementToNodeMapping()
 
 template<int D,typename BasisFunctionType>
 element_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-nElements() const
+nLocalElements() const
 {
   return this->nElements_;
 }

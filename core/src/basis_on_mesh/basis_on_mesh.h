@@ -58,7 +58,7 @@ public:
   void initialize(){}
 
   //! (unused method) return number of nodes, 0 for this mesh
-  node_no_t nNodes() const {return 0;}
+  node_no_t nLocalNodes() const {return 0;}
 
   //! (unused method) fill a vector with positions of the nodes, consecutive (x,y,z) values
   void getNodePositions(std::vector<double> &nodePositions) const {}

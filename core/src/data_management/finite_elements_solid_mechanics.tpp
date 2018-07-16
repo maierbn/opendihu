@@ -79,7 +79,7 @@ template<typename BasisOnMeshType,typename Term>
 dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 nUnknowns()
 {
-  return this->mesh_->nNodes() * BasisOnMeshType::dim();  // D components for displacements
+  return this->mesh_->nLocalNodes() * BasisOnMeshType::dim();  // D components for displacements
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -87,7 +87,7 @@ const dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 getTangentStiffnessMatrixNRows()
 {
   const int D = BasisOnMeshType::dim();
-  return this->mesh_->nDofs() * D;
+  return this->mesh_->nLocalDofs() * D;
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -380,7 +380,7 @@ void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 initializeSolverVariables(int nDofs)
 {
   const int D = BasisOnMeshType::dim();
-  const int nDofsDisplacementsReduced = this->mesh_->nDofs() * D;
+  const int nDofsDisplacementsReduced = this->mesh_->nLocalDofs() * D;
 
   LOG(DEBUG) << "initializeSolverVariables with nDofs=" << nDofs << ", nDofsDisplacementsReduced=" << nDofsDisplacementsReduced;
 

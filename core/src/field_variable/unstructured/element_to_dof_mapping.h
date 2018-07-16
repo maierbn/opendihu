@@ -34,10 +34,10 @@ public:
   const std::vector<dof_no_t> &getElementDofs(element_no_t elementGlobalNo) const;
 
   //! return the number of dofs
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 
   //! return the number of elements
-  element_no_t nElements() const;
+  element_no_t nLocalElements() const;
 
   //! comparison operator
   bool operator==(const ElementToDofMapping &rhs);

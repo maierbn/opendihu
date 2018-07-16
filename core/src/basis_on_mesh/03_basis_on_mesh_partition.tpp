@@ -24,7 +24,7 @@ initialize()
  
   // create partitioning
   assert(partitionManager_ != nullptr);
-  partition_ = partitionManager_->createPartitioning(this->nElements());
+  partition_ = partitionManager_->createPartitioning(this->nLocalElements());
 }
 
 template<typename MeshType,typename BasisFunctionTypes>

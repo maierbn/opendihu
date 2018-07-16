@@ -204,7 +204,7 @@ template<typename MeshType, typename BasisFunctionType>
 bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi)
 {
-  const element_no_t nElements = this->nElements();
+  const element_no_t nElements = this->nLocalElements();
  
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNo < 0 || elementNo >= nElements)

@@ -71,7 +71,7 @@ setFromSolverVariableSolution(Vec &solverSolutionVariable)
   if (this->data_.computeWithReducedVectors())
   {
     const int D = BasisOnMeshType::dim();
-    const int nUnknownsOutputVector = this->data_.mesh()->nDofs() * D;
+    const int nUnknownsOutputVector = this->data_.mesh()->nLocalDofs() * D;
 
     this->expandVector(solverSolutionVariable, this->data_.displacements().values(), nUnknownsOutputVector);
   }
@@ -138,7 +138,7 @@ const int FiniteElementMethodStiffnessMatrix<
 nUnknowns()
 {
   const int D = BasisOnMeshType::dim();
-  const int nUnknowns = this->data_.mesh()->nDofs() * D;
+  const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
   return nUnknowns;
 }
 

@@ -51,7 +51,7 @@ applyBoundaryConditions()
   LOG(TRACE)<<"applyBoundaryConditions";
 
   dof_no_t nUnknowns = this->data_.nUnknowns();
-  node_no_t nNodes = this->data_.mesh()->nNodes();
+  node_no_t nNodes = this->data_.mesh()->nLocalNodes();
 
   Vec &rightHandSide = data_.rightHandSide().values();
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();

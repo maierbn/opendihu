@@ -26,7 +26,7 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
   dof_no_t nUnknowns = this->data_.nUnknowns();
@@ -90,8 +90,8 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
   double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
@@ -316,9 +316,9 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
-  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(2);
+  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
+  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(2);
   node_no_t nNodes0 = nElements0 + 1;
   node_no_t nNodes1 = nElements1 + 1;
   node_no_t nNodes2 = nElements2 + 1;
@@ -1042,7 +1042,7 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 1D";
 
     // get settings values
-    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElements();
+    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
     double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
     dof_no_t nUnknowns = this->data_.nUnknowns();
@@ -1103,8 +1103,8 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 2D";
 
     // get settings values
-    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
-    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
+    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
+    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
     node_no_t nNodes0 = nElements0 + 1;
     node_no_t nNodes1 = nElements1 + 1;
     double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
@@ -1302,9 +1302,9 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 3D";
 
     // get settings values
-    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(0);
-    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(1);
-    element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirection(2);
+    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
+    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
+    element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(2);
     node_no_t nNodes0 = nElements0 + 1;
     node_no_t nNodes1 = nElements1 + 1;
     node_no_t nNodes2 = nElements2 + 1;

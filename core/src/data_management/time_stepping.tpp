@@ -68,7 +68,7 @@ template<typename BasisOnMeshType,int nComponents>
 dof_no_t TimeStepping<BasisOnMeshType,nComponents>::
 nUnknowns()
 {
-  return this->mesh_->nNodes() * nComponents;
+  return this->mesh_->nLocalNodes() * nComponents;
 }
 
 template<typename BasisOnMeshType,int nComponents>

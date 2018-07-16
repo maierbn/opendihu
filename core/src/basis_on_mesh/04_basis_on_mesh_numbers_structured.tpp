@@ -68,7 +68,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   // averageNDofsPerElement:
   // 1         4          2
 
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionLocal_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
   dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
   element_no_t elementX = element_no_t(elementNo % nElements[0]);
@@ -127,7 +127,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   // averageNDofsPerElement:
   // 1         4          2
 
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionLocal_;
   int averageNDofsPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
   dof_no_t dofsPerRow = (averageNDofsPerElement1D * nElements[0] + BasisFunctionType::nDofsPerNode());
   dof_no_t dofsPerPlane = (averageNDofsPerElement1D * nElements[1] + BasisFunctionType::nDofsPerNode()) * dofsPerRow;
@@ -207,7 +207,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
 
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionLocal_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
   node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);
@@ -227,7 +227,7 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 {
   // since this implementation is for structured meshes only, the number of elements in each coordinate direction is given
 
-  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirection_;
+  const std::array<element_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionLocal_;
   int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
   node_no_t nodesPerRow = (averageNNodesPerElement1D * nElements[0] + 1);

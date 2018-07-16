@@ -19,6 +19,8 @@ class BasisOnMesh;
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshDofsNodes
 {
+protected:
+const char*& LOG(WARNING arg1);
 };
 
 /** Partial specialization for RegularFixed mesh
@@ -44,13 +46,13 @@ public:
   double meshWidth() const;
 
   //! return number of nodes
-  node_no_t nNodes() const;
+  node_no_t nLocalNodes() const;
 
   //! return number of nodes in specified coordinate direction
-  node_no_t nNodes(int dimension) const;
+  node_no_t nLocalNodes(int dimension) const;
 
-  //! return number of dofs
-  dof_no_t nDofs() const;
+  //! return local number of dofs
+  dof_no_t nLocalDofs() const;
 
 protected:
  
@@ -81,13 +83,13 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
 
   //! return number of nodes
-  node_no_t nNodes() const;
+  node_no_t nLocalNodes() const;
 
   //! return number of nodes in specified coordinate direction
-  node_no_t nNodes(int dimension) const;
+  node_no_t nLocalNodes(int dimension) const;
 
   //! return number of dofs
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 
 protected:
 
@@ -96,6 +98,9 @@ protected:
 
   //! set the geometry field by the node positions in a vector
   void setGeometryField(std::vector<double> &nodePositions);
+  
+  //! parse node and element information from settings and create geometry field
+  void setupMesh();
 };
 
 /** Partial specialization for UnstructuredDeformable mesh
@@ -112,10 +117,10 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
 
   //! return number of nodes
-  node_no_t nNodes() const;
+  node_no_t nLocalNodes() const;
 
   //! return number of dofs
-  dof_no_t nDofs() const;
+  dof_no_t nLocalDofs() const;
 };
 
 }  // namespace

@@ -43,7 +43,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(meshBase);
 
   // prepare number of elements in the dimensions
-  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = mesh->nElementsPerCoordinateDirection();
+  std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirection = mesh->nElementsPerCoordinateDirectionLocal();
   std::array<long, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionArray;
 
   std::copy(nElementsPerCoordinateDirection.begin(), nElementsPerCoordinateDirection.end(), nElementsPerCoordinateDirectionArray.begin());

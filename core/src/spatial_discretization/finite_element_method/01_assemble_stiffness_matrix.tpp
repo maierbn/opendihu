@@ -42,7 +42,7 @@ setStiffnessMatrix()
   // initialize values to zero
   int cntr = 1;
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     auto dof = mesh->getElementDofNos(elementNo);
 
@@ -71,7 +71,7 @@ setStiffnessMatrix()
 
   // fill entries in stiffness matrix
   // loop over elements
-  for (int elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (int elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     // get indices of element-local dofs
     auto dof = mesh->getElementDofNos(elementNo);

@@ -55,7 +55,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   
   // build python dict that will contain all information and data
   PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s O, s O, s i, s d}", "meshType", "UnstructuredDeformable",
-                                 "dimension", D, "nElements", mesh->nElements(),
+                                 "dimension", D, "nElements", mesh->nLocalElements(),
                                  "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder,
                                  "onlyNodalValues", onlyNodalValues ? Py_True: Py_False,
                                  "data", pyData, "elementalDofs", pyElementalDofs, 
@@ -74,10 +74,10 @@ buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalV
   std::shared_ptr<BasisOnMesh> mesh = std::static_pointer_cast<BasisOnMesh>(meshBase);
 
   // create a list of lists for each element the node numbers (if onlyNodalValues) or the dofs
-  PyObject *pyElementalDofs = PyList_New((Py_ssize_t)mesh->nElements());
+  PyObject *pyElementalDofs = PyList_New((Py_ssize_t)mesh->nLocalElements());
   
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     std::vector<node_no_t> dofs;
     

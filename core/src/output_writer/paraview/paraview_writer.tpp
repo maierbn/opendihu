@@ -31,7 +31,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
-    extent[dimensionNo] = mesh->nElementsPerCoordinateDirection(dimensionNo) 
+    extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
       * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   }
 
@@ -41,7 +41,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   for (; dimensionNo < D; dimensionNo++)
   {
     double meshWidth = mesh->meshWidth();
-    double nElements = mesh->nElementsPerCoordinateDirection(dimensionNo);
+    double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
     node_no_t nNodes = extent[dimensionNo] + 1;
     
     LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;
@@ -170,7 +170,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
-    extent[dimensionNo] = mesh->nElementsPerCoordinateDirection(dimensionNo) 
+    extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
       * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   }
   
@@ -255,7 +255,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<UnstructuredGrid> " << std::endl
     << std::string(2, '\t') << "<Piece "
-    << "NumberOfPoints=\"" << mesh->nNodes() << "\" NumberOfCells=\"" << mesh->nElements() << "\">" << std::endl;
+    << "NumberOfPoints=\"" << mesh->nLocalNodes() << "\" NumberOfCells=\"" << mesh->nLocalElements() << "\">" << std::endl;
     
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
@@ -291,10 +291,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   // get the elements point lists
   std::vector<node_no_t> values;
-  values.reserve(mesh->nElements() * BasisOnMesh::averageNNodesPerElement());
+  values.reserve(mesh->nLocalElements() * BasisOnMesh::averageNNodesPerElement());
   
   // loop over elements and collect point numbers of the element
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofNos(elementNo);
     for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
@@ -325,8 +325,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   // offsets 
   values.clear();
-  values.resize(mesh->nElements());
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  values.resize(mesh->nLocalElements());
+  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     values[elementNo] = (elementNo + 1) * BasisOnMesh::nNodesPerElement();
   }
@@ -360,7 +360,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     cellType = 11; // VTK_VOXEL
     break;
   }
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     file << cellType << " ";
   }

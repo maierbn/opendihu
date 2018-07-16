@@ -50,7 +50,7 @@ FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string n
   assert(nComponents == componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
-  this->nEntries_ = mesh->nDofs() * nComponents;
+  this->nEntries_ = mesh->nLocalDofs() * nComponents;
 
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
    << ", components: " << nComponents << ", nEntries: " << this->nEntries_;
@@ -86,7 +86,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   assert(nComponents == (int)componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
-  this->nEntries_ = fieldVariable.nDofs() * nComponents;
+  this->nEntries_ = fieldVariable.nLocalDofs() * nComponents;
 
   LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_
    << ", components: " << nComponents << ", Vec nEntries: " << this->nEntries_;
@@ -101,9 +101,9 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
 
 template<typename BasisOnMeshType, int nComponents>
 std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-nElementsPerCoordinateDirection() const
+nElementsPerCoordinateDirectionLocal() const
 {
-  return this->mesh_->nElementsPerCoordinateDirection();
+  return this->mesh_->nElementsPerCoordinateDirectionLocal();
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -115,7 +115,7 @@ nEntries() const
 
 template<typename BasisOnMeshType, int nComponents>
 dof_no_t FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-nDofs() const
+nLocalDofs() const
 {
   return this->nEntries_ / nComponents;
 }

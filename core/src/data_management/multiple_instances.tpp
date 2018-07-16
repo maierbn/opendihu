@@ -62,7 +62,7 @@ template<typename BasisOnMeshType,typename BaseDataType>
 dof_no_t MultipleInstances<BasisOnMeshType,BaseDataType>::
 nUnknowns()
 {
-  return this->mesh_->nNodes();
+  return this->mesh_->nLocalNodes();
 }
 
 template<typename BasisOnMeshType,typename BaseDataType>

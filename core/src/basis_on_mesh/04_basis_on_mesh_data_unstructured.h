@@ -59,7 +59,7 @@ public:
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
   
   //! get the total number of elements, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
-  element_no_t nElements() const;
+  element_no_t nLocalElements() const;
 
   
 protected:

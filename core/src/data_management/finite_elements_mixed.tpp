@@ -84,7 +84,7 @@ const dof_no_t FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrd
 getTangentStiffnessMatrixNRows()
 {
   const int D = HighOrderBasisOnMeshType::dim();
-  return this->mixedMesh_->highOrderBasisOnMesh()->nDofs() * D + this->mixedMesh_->lowOrderBasisOnMesh()->nDofs();
+  return this->mixedMesh_->highOrderBasisOnMesh()->nLocalDofs() * D + this->mixedMesh_->lowOrderBasisOnMesh()->nLocalDofs();
 }
 
 } // namespace Data

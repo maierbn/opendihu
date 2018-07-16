@@ -12,17 +12,17 @@ namespace BasisOnMesh
 
 template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-nNodes() const
+nLocalNodes() const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->nNodes();
+  return this->geometryField_->nLocalNodes();
 }
 
 template<int D,typename BasisFunctionType>
 dof_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-nDofs() const
+nLocalDofs() const
 {
   return this->nDofs_;
 }
@@ -34,9 +34,10 @@ getNodePositions(std::vector<double> &nodes) const
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  nodes.resize(this->nNodes()*3);
+  nodes.resize(this->nLocalNodes()*3);
 
-  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodes(); nodeGlobalNo++)
+  // TODO local no!
+  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nLocalNodes(); nodeGlobalNo++)
   {
     node_no_t nodeFirstDofGlobalNo = this->geometryField_->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];
     Vec3 position = this->geometryField_->template getValue(nodeFirstDofGlobalNo);

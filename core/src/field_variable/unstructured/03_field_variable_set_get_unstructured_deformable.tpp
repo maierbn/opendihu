@@ -23,6 +23,7 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
   // transform global dof no.s to vector indices of first component
   for (int valueIndex = 0; valueIndex < N; valueIndex++)
   {
+    // TODO: map to global no
     int valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
 
     // create indices vector with values {0,1,2,...,nComponents-1}
@@ -81,7 +82,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   assert(componentNo >= 0 && componentNo < nComponents);
   
   this->component_[componentNo].getElementValues(elementNo, values);
@@ -92,10 +93,11 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
+  // TODO: local to global
   const std::vector<dof_no_t> &dofGlobalNo = this->elementToDofMapping_->getElementDofs(elementNo);
   std::array<double,nComponents> resultVector;
 

@@ -44,7 +44,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nElements();
+  const int nElements = mesh->nLocalElements();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -92,7 +92,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
     int cntr = 1;
     // loop over elements
-    for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
+    for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
     {
       auto dofNo = mesh->getElementDofNos(elementNo);
 
@@ -500,9 +500,9 @@ computeExternalVirtualWork(Vec &resultVec)
   std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nDofs();
+  //const int nDofs = mesh->nLocalDofs();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  //const int nElements = mesh->nElements();
+  //const int nElements = mesh->nLocalElements();
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   typedef Quadrature::TensorProduct<D-1,QuadratureType> QuadratureSurface;
@@ -541,9 +541,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElements())
+    if (elementNo < 0 || elementNo > mesh->nLocalElements())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << mesh->nElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
       continue;
     }
 
@@ -606,9 +606,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElements())
+    if (elementNo < 0 || elementNo > mesh->nLocalElements())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << mesh->nElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
       continue;
     }
 
@@ -684,9 +684,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElements())
+    if (elementNo < 0 || elementNo > mesh->nLocalElements())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << mesh->nElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
       continue;
     }
 
@@ -780,9 +780,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElements())
+    if (elementNo < 0 || elementNo > mesh->nLocalElements())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << mesh->nElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
       continue;
     }
 
@@ -907,9 +907,9 @@ computeInternalVirtualWork(Vec &resultVec)
   std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nDofs();
+  //const int nDofs = mesh->nLocalDofs();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nElements();
+  const int nElements = mesh->nLocalElements();
   const int nUnknowsPerElement = nDofsPerElement*D;    // D directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -1302,7 +1302,7 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
     Vec &wIntReduced = this->data_.internalVirtualWorkReduced();
 
     const int D = BasisOnMeshType::dim();
-    const int nUnknowns = this->data_.mesh()->nDofs() * D;
+    const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
     this->computeInternalVirtualWork(wInt);
     LOG(DEBUG) << "--                           dW_int: " << PetscUtility::getStringVector(wInt);

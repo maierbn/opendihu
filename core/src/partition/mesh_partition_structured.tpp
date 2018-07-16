@@ -175,6 +175,8 @@ endGlobal(int coordinateDirection)
   return beginGlobal_[coordinateDirection] + localSizeWithGhosts_[coordinateDirection];
 }
   
+  globalSize_
+  
 template<int D, typename MeshType, typename BasisFunctionType>
 MPI_Comm MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
 mpiCommunicator()
@@ -189,7 +191,7 @@ global_no_t globalSize()
   element_no_t result = 1;
   for (int i = 0; i < D; i++)
   {
-    localSize *= localSizeWithGhosts_[i];
+    result *= globalSize_[i];
   }
   return result;
 }
@@ -210,6 +212,53 @@ localSizesOnRanks(int coordinateDirection)
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < D);
   return localSizesOnRanks_;
+}
+  
+template <typename T>
+void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
+extractLocalNumbers(std::vector<T> &vector)
+{
+  std::vector<T> result(localSize());
+  global_no_t resultIndex = 0;
+  
+  if (D == 1)
+  {
+    for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+    {
+      result[resultIndex++] = vector[i];
+    }
+  }
+  else if (D == 2)
+  {
+    for (global_no_t j = beginGlobal_[1]; j < localSizeWithGhosts_[1]; j++)
+    {
+      for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+      {
+        result[resultIndex++] = vector[i];
+      }
+    }
+  }
+  else if (D == 3)
+  {
+    for (global_no_t k = beginGlobal_[2]; k < localSizeWithGhosts_[2]; k++)
+    {
+      for (global_no_t j = beginGlobal_[1]; j < localSizeWithGhosts_[1]; j++)
+      {
+        for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+        {
+          result[resultIndex++] = vector[k*globalSize(2)...];
+        }
+      }
+    }
+  }
+  
+   = (global_no_t)x;
+    beginGlobal_[1] = (global_no_t)y;
+    beginGlobal_[2] = (global_no_t)z;
+    localSizeWithGhosts_[0] = (element_no_t)m;
+    localSizeWithGhosts_[1] = (element_no_t)n;
+    localSizeWithGhosts_[2] = (element_no_t)p;
+    
 }
   
 }  // namespace

@@ -30,8 +30,9 @@ protected:
 
   std::string filenameBase_;    ///< beginning of the file name for output file
   std::string filename_;        ///< file name with time step number
-  int writeCallCount_ = 0;           ///< counter of calls to write
-
+  int writeCallCount_ = 0;      ///< counter of calls to write
+  int outputFileNo_ = 0;        ///< counter of calls to write when actually a file was written
+  
   int timeStepNo_;              ///< the current time step no.
   double currentTime_;          ///< the current simulation time
 

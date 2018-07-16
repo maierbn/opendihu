@@ -83,7 +83,7 @@ if dimension == 1:
 
   margin = abs(max_value - min_value) * 0.1
   ax = plt.axes(xlim=(min_x, max_x), ylim=(min_value - margin, max_value + margin))
-  line, = ax.plot([], [], 'o-', lw=2)
+  line, = ax.plot([], [], 'o-', color=(1.0,0.9,0.8), lw=2)
   text = plt.figtext(0.15,0.85,"timestep",size=20)
   ax.set_xlabel('X')
   ax.set_ylabel('Y')
@@ -127,7 +127,7 @@ if dimension == 1:
     
     # create plot with first and last dataset
     # plot first dataset
-    line, = ax.plot([], [], 'o-', color=(0.8,0.8,0.8), lw=2, label="t=0")
+    line, = ax.plot([], [], 'o-', color=(0.8,1.0,0.9), lw=2, label="t=0")
     line0, = animate(0)
     
     # plot last dataset

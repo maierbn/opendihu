@@ -12,13 +12,12 @@ namespace OutputWriter
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "Generic::prepareWrite timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
+  VLOG(1) << "Generic::prepareWrite timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
 
   if (!data.mesh())
   {
     LOG(FATAL) << "Mesh is not set!";
   }
-
 
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
@@ -27,9 +26,14 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   // int oldWriteCallCount = writeCallCount_; // I think this one is not necessary. (Especially with the change underneath.) -- Aaron
   writeCallCount_++;
 
+  VLOG(1) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
+  
   // if no output should be written, because of interval, return false
   if (writeCallCount_ % outputInterval != 0) // I changed the condition to '<--this' from '(oldWriteCallCount % outputInterval != 0)'. Now it is easyer to have data output at regular times. -- Aaron 
+  {
+    VLOG(1) << " do not write";
     return false;
+  }
 
   // determine filename base
   if (filenameBase_.empty()
@@ -43,8 +47,11 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   s << filenameBase_;
   if (timeStepNo != -1)
   {
-    s << "_" << std::setw(10) << std::setfill('0') << timeStepNo;
+    //s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
+    s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file 
   }
+  outputFileNo_++;
+  
   filename_ = s.str();
   return true;
 }

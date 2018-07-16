@@ -42,7 +42,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
       << "   Nodes:" << std::endl;
 
     std::array<dof_no_t,BasisOnMeshType::nNodesPerElement()> elementNodes = mesh->getElementNodeNos(elementGlobalNo);
-    StringUtility::outputValuesBlock(stream, elementNodes.begin(), elementNodes.end());
+    StringUtility::outputValuesBlockAdd1(stream, elementNodes.begin(), elementNodes.end());
   }
 
 }
@@ -74,7 +74,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   const int nNodes = mesh->nNodes();
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < nNodes; nodeGlobalNo++)
   {
-    stream << " Node: " << nodeGlobalNo << std::endl;
+    stream << " Node: " << nodeGlobalNo+1 << std::endl;
 
     ExfileLoopOverTuple::loopOutputNodeValues<OutputFieldVariablesType>(fieldVariables, meshName, stream, nodeGlobalNo);
     /*

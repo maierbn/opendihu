@@ -14,14 +14,14 @@ namespace OutputWriter
 template<typename DataType>
 void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 {
-  LOG(TRACE) << "PythonFile::write ";
-
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
   {
     return;
   }
   
+  LOG(TRACE) << "PythonFile::write ";
+
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
 
@@ -37,6 +37,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     if (meshNames.size() == 1)
       filenameStart << this->filename_;
     else
+     
       filenameStart << this->filename_ << "_" << meshName;
    
     // exelem file

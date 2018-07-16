@@ -78,7 +78,8 @@ config = {
     "maxIterations": 100000,
     "useGradientField": use_gradient_field,
     "lineStepWidth": 1e-1,
-    "targetElementLength": 1./100. * 220./11.,    # length = 1/100 cm (100 per cm), stl length=220, biceps length=11cm
+    "targetElementLength": 1./100.,  # length per element, i.e. distance between nodes, length = 1/100 cm (100 per cm)
+    "targetLength": 15,     # length of longest streamline, all streamlines are equally scaled to fit this value
     "discardRelativeLength": 0.7,
     "csvFilename": "{}.csv".format(name),
     "FiniteElementMethod" : {

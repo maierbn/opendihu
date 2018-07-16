@@ -691,7 +691,7 @@ For the weak solutions $u$ of the problems we do not need to request $\CC^2(\Ome
 
 The Hilbert space $H^1(\Omega)$ is the Sobolev space $\W^{1,2}(\Omega)$ which is defined using weak derivatives. The concept of weak derivatives generalizes the classical derivatives.
 
-Let $u,v\in \Lloc(\Omega)$ and $\alpha \in \N^d_0$ a multi-index. Then $v$ is called \emph{weak derivative} of $u$ of order $\alpha$ iff
+Let $u,v\in \Lloc(\Omega)$ and $\alpha \in \N^d_0$ a multi-index. Then $v$ is called \emph{weak derivative} of $u$ of order $\alpha$ if
 \begin{equation}
   \begin{array}{ll}
     \i{\Omega}{}u(\bfx) \D^\alpha \phi(\bfx) \,\d \bfx = (-1)^{|\alpha|} \i{\Omega}{} v(\bfx)\,\phi(\bfx)\,\d \bfx
@@ -881,7 +881,7 @@ For the remaining integral, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfxi$ node ste
 %
 The Laplace equation $Δu=0$ describes steady-state matter-/heat-/current flow where the computed quantity $u$ designates the potential that induces the flow $\bfF$, which can be modelled as being directed against the potential gradient, $\bfF = -∇u$. In terms of heat transfer this is \emph{Fick's law}. By considering the conservation law of the flowing quantity we assume $∇\cdot \bfF = 0$ which leads directly to the Laplace equation. 
 
-If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -AΔu$ and the resulting equation is called generalized Laplace equation, reading
+If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -A∇u$ and the resulting equation is called generalized Laplace equation, reading
 \begin{equation*}
   \begin{array}{lll}
     ∇\cdot (A ∇u) = 0.
@@ -953,18 +953,23 @@ Substituting into \eqref{eq:diffusion_derivation1} yields:
     \Leftrightarrow\quad & -\s{i=1}{N} u^{(t)}_i \ds\int_Ω ∇\phi_i \cdot ∇\phi_j\,\d\bfx = \dfrac{1}{dt}\s{i=1}{N}(u_i^{(t+1)} - u_i^{(t)})\ds\int_Ω \phi_i \cdot \phi_j\,\d\bfx\qquad \text{for }j = 1,\dots, N.
   \end{array}
 \end{equation*}
-In Matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$, and the vectors of the degrees of freedom for time $t$, $u^{t}$, we get:
+We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$. For the explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu = \dfrac1{dt} \bfM\Big(u^{(t+1)} - u^{(t)}\Big).
+    -\bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}\\[4mm]
+                 &= \Big(\bfI - dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}.
   \end{array}
 \end{equation*}
-Solving for $u^{(t+1)}$ yields:
+With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    u^{(t+1)} = u^{(t)} - dt \,\bfM^{-1}\bfK\bfu.
+    -\bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t+1)}\\[4mm]
+     &= (I + dt\,\bfM^{-1}\bfK)^{-1}\,\bfu^{(t)}
   \end{array}
 \end{equation*}
+
 \subsection{Analytical Solution}
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
 \begin{equation*}

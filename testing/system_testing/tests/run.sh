@@ -5,7 +5,7 @@ basedir=$(pwd)
 # for all tests
 for name in \
 "diffusion" \
-"solid_mechanics" \
+#"solid_mechanics" \
 "fibers"
 do
 

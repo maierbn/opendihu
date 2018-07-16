@@ -20,6 +20,7 @@ import sys, os
 import numpy as np
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
+from matplotlib import collections, patches
 import struct
 import stl
 from stl import mesh
@@ -28,6 +29,8 @@ import scipy
 import scipy.spatial
 import scipy.linalg
 import scipy.integrate
+import scipy.optimize
+import timeit
 
 def triangle_contains_point(triangle, point):
   """ check if a point lies inside a triangle, 2D """
@@ -76,8 +79,168 @@ def triangle_contains_point(triangle, point):
   
   return (condition, xi)
   
+def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
+
+  # transform to world space
+  # find triangle in parametric space which contains grid point
+  xi_point = None
+  triangle_parameteric_space_no = None
+  for (triangle_no,triangle_parametric_space) in enumerate(triangles_parametric_space):
+    (contains_point, xi) = triangle_contains_point(triangle_parametric_space, np.array([x,y]))
+    if contains_point:
+      xi_point = xi
+      triangle_parameteric_space_no = triangle_no
+      break
+      
+  output_xi_msg = False
+  if xi_point is None:
+    for n_tries in range(5):
+      if parametric_space_shape == 0 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit circle
+        phi = np.arctan2(y,x)
+        r = x / np.cos(phi)
+        if (output_xi_msg): print " (x,y) = ({},{}), (phi,r)=({}deg,{})  (check: (x,y)=({},{}))".format(x,y,phi*180./np.pi,r,r*np.cos(phi),r*np.sin(phi))
+        if abs(r) <= 1e-10:
+          r_old = r
+          r = 1e-4*np.sign(r)
+          phi_old = phi
+          phi += 1e-4
+          x_old = x
+          y_old = y
+          x = r*np.cos(phi)
+          y = r*np.sin(phi)
+          if (output_xi_msg): print " [1] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+        
+        elif abs(r) >= 1.0-1e-10:
+          r_old = r
+          r = 0.99*np.sign(r)
+          phi_old = phi
+          phi += 1e-4
+          x_old = x
+          y_old = y
+          x = r*np.cos(phi)
+          y = r*np.sin(phi)
+          if (output_xi_msg): print " [2] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+        
+        elif abs(r) <= 1e-4:
+          r_old = r
+          r = 0.01
+          phi_old = phi
+          phi = 0.0
+          x_old = x
+          y_old = y
+          x = r*np.cos(phi)
+          y = r*np.sin(phi)
+          if (output_xi_msg): print " [4] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+        
+        else:
+          # move point a little
+          r_old = r
+          r = 0.99*r
+          phi_old = phi
+          phi += 1e-4
+          x_old = x
+          y_old = y
+          x = r*np.cos(phi)
+          y = r*np.sin(phi)
+          if (output_xi_msg): print " [3] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+          # try again to find triangle in parametric space which contains grid point
+          xi_point = None
+          triangle_parameteric_space_no = None
+          for (triangle_no,triangle_parametric_space) in enumerate(triangles_parametric_space):
+            (contains_point, xi) = triangle_contains_point(triangle_parametric_space, np.array([x,y]))
+            if contains_point:
+              xi_point = xi
+              triangle_parameteric_space_no = triangle_no
+              break
+      
+          if xi_point is not None:
+            if (output_xi_msg): print " xi = [{},{}] found after {} tries".format(xi[0],xi[1],n_tries+1)
+            break
+    
+  if xi_point is None:
+    
+    print "Error: could not find triangle in parameter space for grid point (x,y) = ({},{}), r={}".format(x,y,r)
+    print ""
+    return None
+    
+  if xi_point is not None:
+      
+    triangle_world_space = triangle_list[triangle_parameteric_space_no]
+    p1 = triangle_world_space[0]
+    p2 = triangle_world_space[1]
+    p3 = triangle_world_space[2]
+    
+    point_world_space = (1 - xi[0] - xi[1])*p1 + xi[0]*p2 + xi[1]*p3
+    return point_world_space
+  
+def compute_mean_distances(grid_points_world_space):
+  
+  # evaluate quality of grid by computing mean distance between neighbouring points
+
+  distances_current_loop = []
+  relative_distances_current_loop = []
+  
+  # loop over grid points in world space
+  for j in range(n_grid_points_y-1):
+    for i in range(n_grid_points_x-1):
+      
+      # p6 p7 p8
+      # p3 p4 p5
+      # p0 p1 p2
+      p4 = grid_points_world_space[j*n_grid_points_x+i]
+        
+      # p0
+      if i > 0 and j > 0:
+        p0 = grid_points_world_space[(j-1)*n_grid_points_x+i-1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p0)))
+            
+      # p1
+      if j > 0:
+        p1 = grid_points_world_space[(j-1)*n_grid_points_x+i]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p1)))
+        
+      # p2
+      if j > 0 and i < n_grid_points_x-1:
+        p2 = grid_points_world_space[(j-1)*n_grid_points_x+i+1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p2)))
+      
+      # p3
+      if i > 0:
+        p3 = grid_points_world_space[j*n_grid_points_x+i-1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p3)))
+      
+      # p5
+      if i < n_grid_points_x-1:
+        p5 = grid_points_world_space[j*n_grid_points_x+i+1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p5)))
+      
+      # p6
+      if i > 0 and j < n_grid_points_y-1:
+        p6 = grid_points_world_space[(j+1)*n_grid_points_x+i-1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p6)))
+      
+      # p7
+      if j < n_grid_points_y-1:
+        p7 = grid_points_world_space[(j+1)*n_grid_points_x+i]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p7)))
+      
+      # p8
+      if i < n_grid_points_x-1 and j < n_grid_points_y-1:
+        p8 = grid_points_world_space[(j+1)*n_grid_points_x+i+1]
+        distances_current_loop.append(np.linalg.norm(np.array(p4) - np.array(p8)))
+  
+      mean_distance_current_loop = np.mean(distances_current_loop)
+      relative_distances_current_loop += [d / mean_distance_current_loop for d in distances_current_loop]
+      #print "distances_current_loop: {}, mean: {}".format(distances_current_loop, mean_distance_current_loop)
+      #print "relative_distances_current_loop: {}".format(relative_distances_current_loop)
+      
+  return distances_current_loop,relative_distances_current_loop
+
+duration = 0
+t_start = timeit.default_timer()
+
 # constant parameters
-triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = custom (1 is best)
+triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
 parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
 max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
 show_plot = False
@@ -185,8 +348,10 @@ grid_triangles_parametric_space = []
 markers_grid_points_parametric_space = []
 markers_grid_points_world_space = []
  
-loop_grid_points = []  # list of grid point, for every slice, only contains loops that are not empty
-  
+loop_grid_points = []  # list of grid point, for every slice, only contains loops that are not empty  
+distances_between_world_mesh_nodes_std = []   # list of distances between neighboring grid points
+relative_distances_between_world_mesh_nodes_std = []   # list of relative distances between neighbouring grid points, relative per slice
+
 debug = False
   
 # sample loop with 4*n_points_x equidistant points
@@ -196,7 +361,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     continue
     
   # for debugging only consider loop_no
-  #if loop_no != 2:
+  #if loop_no != 41:
   #  continue
     
   print ""
@@ -375,9 +540,86 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     point_indices_list = triangulation["triangles"]
     triangle_list = points[point_indices_list]
     
-  elif triangulation_type == 2:
-    # simple custom triangulation
+  elif triangulation_type == 2 or triangulation_type == 3:
+    # 2: simple custom triangulation with triangles around one center point in CoG
+    # 3: custom triangulation with triangles around point for which distance is minimized
+
+    # compute the center point by minimizing the distances to the border points
+    if triangulation_type == 3:
+      
+      # objective function
+      def squared_distance_to_all_points(center_point_x, center_point_y):
+        distance = 0
+        for projected_point in projected_points:
+          distance += ((projected_point[0] - center_point_x)**2 + (projected_point[1] - center_point_y)**2)**-4
+        
+        # add penalty if optimized point is too far from cog
+        distance_to_cog = (center_point_x - center_point[0])**2+(center_point_y - center_point[1])**2
+        
+        distance += distance_to_cog*1e-8   
+        return distance
+      
+      # compute the rotation angle when iterating over all connection vectors between center and border point
+      def rotation_angle(center_point_x, center_point_y):
+        total_angle = 0
+        last_vector = None
+        for projected_point in projected_points:
+          vector = [-center_point_x + projected_point[0], -center_point_y + projected_point[1]]
+          #print "projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector)
+          if last_vector is not None:
+            denominator = np.sqrt(vector[0]**2 + vector[1]**2) * np.sqrt(last_vector[0]**2 + last_vector[1]**2)
+            value = -(vector[0] * last_vector[1] - vector[1] * last_vector[0])/denominator
+            angle = np.arcsin(value)
+            #print "value: ", value, ", angle: ", angle*180./np.pi
+            total_angle += angle
+            
+          last_vector = list(vector)
+          
+        projected_point = projected_points[0,:]
+        vector = [-center_point_x + projected_point[0], -center_point_y + projected_point[1]]
+        #print "first projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector)
+        denominator = np.sqrt(vector[0]**2 + vector[1]**2) * np.sqrt(last_vector[0]**2 + last_vector[1]**2)
+        value = -(vector[0] * last_vector[1] - vector[1] * last_vector[0])/denominator
+        angle = np.arcsin(value)
+        #print "angle: ", angle*180./np.pi
+        total_angle += angle
+            
+        return total_angle
+        
+      #a = rotation_angle(center_point[0], center_point[1])
+      #print "test a=",a*180./np.pi
+      
+      
+      # casadi: sudo pip install casadi
+      from casadi import *
+
+      # Symbols/expressions
+      x = MX.sym('x')
+      y = MX.sym('y')
+      f = squared_distance_to_all_points(x,y)
+
+      nlp = {}                 # NLP declaration
+      nlp['x']= vertcat(x,y) # decision vars
+      nlp['f'] = f             # objective
+      #nlp['g'] = rotation_angle(x,y)             # constraints
+      previous_center_point = [center_point[0], center_point[1]]
+      initial_values = [center_point[0], center_point[1]]
+
+      # Create solver instance
+      F = nlpsol('F','ipopt',nlp);
+
+      # Solve the problem using a guess
+      #result = F(x0=initial_values, ubg=370./180.*np.pi, lbg=350./180.*np.pi)
+      result = F(x0=initial_values)
+      center_point[0] = result['x'][0]
+      center_point[1] = result['x'][1]
+      #print "previous_center_point: ", previous_center_point, ", optimized center point: ", center_point
     
+      a = rotation_angle(center_point[0], center_point[1])
+      #print "resulting rotation_angle: ",a*180./np.pi
+      distance_to_cog = np.sqrt((previous_center_point[0] - center_point[0])**2+(previous_center_point[1] - center_point[1])**2)
+      #print "resulting distance to cog: ", distance_to_cog
+        
     # add center point as new point
     projected_points = np.concatenate([projected_points, np.array([[center_point[0],center_point[1]]])],axis=0)
     
@@ -509,7 +751,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   for original_point_no,original_point in enumerate(original_points):
     
     # get the position in reference space
-    if parametric_space_shape == 0 or parametric_space_shape == 3:  # unit circle
+    if parametric_space_shape == 0 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit circle
       phi = float(original_point_no) / n_original_points * 2 * np.pi
       u_reference = np.cos(phi)
       v_reference = np.sin(phi)
@@ -745,7 +987,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
               
               y = 0.5 + np.tan(phi)*a
         
-      elif parametric_space_shape == 3:    # unit circle with adjusted grid points
+      elif parametric_space_shape == 3 or parametric_space_shape == 4:    # unit circle with adjusted grid points
         
         # get segment
         if (n_grid_points_y%2 == 1 and j != int(n_grid_points_y/2.)) or n_grid_points_y%2 == 0:
@@ -799,92 +1041,105 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
           y = 0.
           
       # transform to world space
-      # find triangle in parametric space which contains grid point
-      xi_point = None
-      triangle_parameteric_space_no = None
-      for (triangle_no,triangle_parametric_space) in enumerate(triangles_parametric_space):
-        (contains_point, xi) = triangle_contains_point(triangle_parametric_space, np.array([x,y]))
-        if contains_point:
-          xi_point = xi
-          triangle_parameteric_space_no = triangle_no
-          break
-          
-      if xi_point is None:
-        for n_tries in range(5):
-          if parametric_space_shape == 0 or parametric_space_shape == 3:  # unit circle
-            phi = np.arctan2(y,x)
-            r = x / np.cos(phi)
-            print " (x,y) = ({},{}), (phi,r)=({}deg,{})  (check: (x,y)=({},{}))".format(x,y,phi*180./np.pi,r,r*np.cos(phi),r*np.sin(phi))
-            if abs(r) <= 1e-10:
-              r_old = r
-              r = 1e-4*np.sign(r)
-              phi_old = phi
-              phi += 1e-4
-              x_old = x
-              y_old = y
-              x = r*np.cos(phi)
-              y = r*np.sin(phi)
-              print " [1] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
-            
-            elif abs(r) >= 1.0-1e-10:
-              r_old = r
-              r = 0.99*np.sign(r)
-              phi_old = phi
-              phi += 1e-4
-              x_old = x
-              y_old = y
-              x = r*np.cos(phi)
-              y = r*np.sin(phi)
-              print " [2] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
-            
-            else:
-              # move point a little
-              r_old = r
-              r = 0.99*r
-              phi_old = phi
-              phi += 1e-4
-              x_old = x
-              y_old = y
-              x = r*np.cos(phi)
-              y = r*np.sin(phi)
-              print " [3] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
-              
-              # try again to find triangle in parametric space which contains grid point
-              xi_point = None
-              triangle_parameteric_space_no = None
-              for (triangle_no,triangle_parametric_space) in enumerate(triangles_parametric_space):
-                (contains_point, xi) = triangle_contains_point(triangle_parametric_space, np.array([x,y]))
-                if contains_point:
-                  xi_point = xi
-                  triangle_parameteric_space_no = triangle_no
-                  break
-          
-              if xi_point is not None:
-                print " xi = [{},{}] found after {} tries".format(xi[0],xi[1],n_tries+1)
-                break
-        
-      if xi_point is None:
-        
-        print "Error: could not find triangle in parameter space for grid point (x,y) = ({},{}), r={}".format(x,y,r)
-        print ""
+      point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list)
+    
+      if point_world_space is None:
         grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
-        
-      if xi_point is not None:
-          
-        triangle_world_space = triangle_list[triangle_parameteric_space_no]
-        p1 = triangle_world_space[0]
-        p2 = triangle_world_space[1]
-        p3 = triangle_world_space[2]
-        
-        point_world_space = (1 - xi[0] - xi[1])*p1 + xi[0]*p2 + xi[1]*p3
+    
+      if point_world_space is not None:
         grid_points_world_space[j*n_grid_points_x+i] = point_world_space
         grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
+    
+  if parametric_space_shape == 4:
+    # move grid points such that mean distance between points in world space gets optimal
+    
+    # objective function
+    def objective(inner_grid_points_parametric):
+          
+      inner_grid_points_parametric = np.reshape(inner_grid_points_parametric, (-1,2))
+      #print "shape of inner_grid_points_parametric: ", inner_grid_points_parametric.shape
       
+      grid_points_world = np.zeros((n_grid_points_y*n_grid_points_x,3))
+        
+      # transform grid points from parametric space to world space
+      for j in range(0,n_grid_points_y):
+        for i in range(0,n_grid_points_x):
+          if i > 0 and i < n_grid_points_x-1 and j > 0 and j < n_grid_points_y-1:
+            
+            p = inner_grid_points_parametric[(j-1)*(n_grid_points_x-2)+(i-1),:]
+            point_world = transform_to_world_space(p[0],p[1],triangles_parametric_space,triangle_list)
+          
+            if point_world is None:
+              grid_points_world[j*n_grid_points_x+i,:] = np.array([0,0,0])
+          
+            if point_world is not None:
+              grid_points_world[j*n_grid_points_x+i,:] = np.array([point_world[0],point_world[1],z_value])
+            
+          else:
+            grid_points_world[j*n_grid_points_x+i,:] = grid_points_world_space[j*n_grid_points_x+i,:]
+          
+      #print "grid_points_world:",grid_points_world
+      
+      distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world)
+      #print "objective, std: {}".format(np.std(relative_distances_current_loop))
+      return np.std(relative_distances_current_loop)
+    
+    
+    # set initial values
+    initial_values = np.zeros(((n_grid_points_y-2)*(n_grid_points_x-2),2))
+    
+    for j in range(0,n_grid_points_y-2):
+      for i in range(0,n_grid_points_x-2):
+        initial_values[j*(n_grid_points_x-2)+i,:] = grid_points_parametric_space[(j+1)*n_grid_points_x+(i+1),:]
+    initial_values = np.reshape(initial_values, (-1,1))
+      
+    #print "initial_values: ",initial_values
+      
+    result = scipy.optimize.minimize(objective, initial_values, method='Nelder-Mead', options={"maxiter":1e4, "disp":True})
+    print result["message"]
+    resulting_parametric_points = result["x"]
+    
+    print "final objective: {}".format(objective(resulting_parametric_points))
+    
+    for j in range(0,n_grid_points_y):
+      for i in range(0,n_grid_points_x):
+        if i > 0 and i < n_grid_points_x-1 and j > 0 and j < n_grid_points_y-1:
+          grid_points_parametric_space[j*n_grid_points_x+i,0] = resulting_parametric_points[2*((j-1)*(n_grid_points_x-2)+(i-1))+0]
+          grid_points_parametric_space[j*n_grid_points_x+i,1] = resulting_parametric_points[2*((j-1)*(n_grid_points_x-2)+(i-1))+1]
+      
+        x = grid_points_parametric_space[j*n_grid_points_x+i,0]
+        y = grid_points_parametric_space[j*n_grid_points_x+i,1]
+      
+        # transform to world space
+        point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list)
+      
+        #print "point_world_space:",point_world_space
+      
+        if point_world_space is None:
+          #print "point_world_space is None"
+          grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
+      
+        if point_world_space is not None:
+          grid_points_world_space[j*n_grid_points_x+i] = point_world_space
+          grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
+    
+
+  #distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world_space)
+  #print "transformed, std: {}".format(np.std(relative_distances_current_loop))
+  
   # store grid points in world space of current loop
   loop_grid_points.append(grid_points_world_space)
       
   # create triangles of new grid points mesh
   grid_point_indices_world_space = []
+  
+  patches_parametric = []
+  patches_world = []
+  parametric_points = []
+  min_x = 100000
+  min_y = 100000
+  max_x = -100000
+  max_y = -100000
   
   # loop over grid points in parametric space
   for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
@@ -933,7 +1188,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
         [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
       ]
 
-      if parametric_space_shape == 1 or parametric_space_shape == 3:  # unit square 
+      if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
         if i == n_grid_points_x-1 or j == n_grid_points_x-1:
           continue
         
@@ -951,6 +1206,20 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       grid_triangles_world_space.append([p0,p1,p3])
       grid_triangles_world_space.append([p0,p3,p2])
       
+      quadrilateral = np.zeros((4,2))
+      quadrilateral[0] = p0[0:2]
+      quadrilateral[1] = p1[0:2]
+      quadrilateral[2] = p3[0:2]
+      quadrilateral[3] = p2[0:2]
+      
+      min_x = min(min_x, min(quadrilateral[:,0]))
+      min_y = min(min_y, min(quadrilateral[:,1]))
+      max_x = max(max_x, max(quadrilateral[:,0]))
+      max_y = max(max_y, max(quadrilateral[:,1]))
+      #print "world: ",quadrilateral
+      polygon = patches.Polygon(quadrilateral, True)
+      patches_world.append(polygon)
+      
       offset = np.array([x_offset, y_offset])
       p0 = np.concatenate([grid_points_parametric_space[j*n_grid_points_x+i]*scale+offset,np.array([z_value])])
       p1 = np.concatenate([grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]*scale+offset,np.array([z_value])])
@@ -959,6 +1228,23 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       
       grid_triangles_parametric_space.append([p0,p1,p3])
       grid_triangles_parametric_space.append([p0,p3,p2])
+      
+      quadrilateral = np.zeros((4,2))
+      quadrilateral[0] = grid_points_parametric_space[j*n_grid_points_x+i]
+      quadrilateral[1] = grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]
+      quadrilateral[2] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+      quadrilateral[3] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+i]
+      parametric_points.append(quadrilateral[0])
+      parametric_points.append(quadrilateral[1])
+      parametric_points.append(quadrilateral[2])
+      parametric_points.append(quadrilateral[3])
+      #print "parametric: ",quadrilateral
+      polygon = patches.Polygon(quadrilateral, True)
+      patches_parametric.append(polygon)
+      
+  t_stop = timeit.default_timer()
+  duration += t_stop - t_start
+
 
   # plot laplace solutions
   x = np.reshape(points[:,0], (-1))
@@ -998,11 +1284,71 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   ax[1,1].set_title('new grid in world space')
   ax[1,1].set_aspect('equal')
   
-  plt.savefig("out/harmonic_map_{}.png".format(loop_no))
+  plt.savefig("out/loop_{:03}_harmonic_map.png".format(loop_no))
   if show_plot:
     plt.show()
   plt.close()
   
+  # plot quadrilaterals
+  # parametric space
+  fig, ax = plt.subplots()
+    
+  p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
+  ax.add_collection(p)
+  ax.plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
+  ax.set_xlim(-1.1,1.1)
+  ax.set_ylim(-1.1,1.1)
+  plt.axis('equal')
+  
+  plt.savefig("out/loop_{:03}_parametric_mesh.png".format(loop_no));
+  if show_plot:
+    plt.show()
+  plt.close()
+  
+  # world space
+  fig, ax = plt.subplots()
+    
+  p = collections.PatchCollection(patches_world,edgecolors="k",facecolors="white")
+  ax.add_collection(p)
+  #ax.plot(xw,yw, 'ko',markersize=10)
+  ax.plot(xw,yw, 'ko')
+  ax.set_xlim(min_x,max_x)
+  ax.set_ylim(min_y,max_y)
+  plt.axis('equal')
+  
+  plt.savefig("out/loop_{:03}_world_mesh.png".format(loop_no));
+  if show_plot:
+    plt.show()
+  plt.close()
+       
+  distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world_space)
+  
+  #print "loop {} has relative_distances_current_loop std {} from values {}".format(loop_no, np.std(relative_distances_current_loop), relative_distances_current_loop)
+  
+  relative_distances_between_world_mesh_nodes_std.append(np.std(relative_distances_current_loop))
+        
+  distances_between_world_mesh_nodes_std.append(np.std(distances_current_loop))
+  
+  t_start = timeit.default_timer()
+  
+# end of loop over rings/loops
+
+standard_deviation_distance_between_world_mesh_nodes = np.mean(distances_between_world_mesh_nodes_std)
+standard_deviation_relative_distance_between_world_mesh_nodes = np.mean(relative_distances_between_world_mesh_nodes_std)
+
+t_stop = timeit.default_timer()
+duration += t_stop - t_start
+
+# save mean distance
+if not os.path.isfile("mesh_quality.csv"):
+  with open("mesh_quality.csv", "wb") as f:
+    f.write("# triangulation_type; parametric_space_shape; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n");
+with open("mesh_quality.csv", "ab") as f:
+  f.write("{};{};{};{};{};{};{};{}\n".\
+  format(triangulation_type, parametric_space_shape, n_grid_points_x, n_grid_points_y, len(loops),\
+    standard_deviation_distance_between_world_mesh_nodes,\
+   standard_deviation_relative_distance_between_world_mesh_nodes,duration));
+
 # create 3D mesh from grid points on slices
 node_positions = []
 nodes = []

@@ -21,6 +21,11 @@ template<typename IterType>
 void outputValuesBlock(std::ostream &stream, IterType valuesBegin,
                        IterType valuesEnd, int nValuesPerRow=-1);
 
+//! output the values separated by spaces, after nValuesPerRow there will be a line break, disabled if -1, add the value 1 to each value
+template<typename IterType>
+void outputValuesBlockAdd1(std::ostream &stream, IterType valuesBegin,
+                       IterType valuesEnd, int nValuesPerRow=-1);
+
 //! replace from by to
 std::string replace(std::string str, const std::string& from, const std::string& to);
 

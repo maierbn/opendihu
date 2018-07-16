@@ -24,11 +24,11 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   currentTime_ = currentTime;
   int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
 
-  int oldWriteCallCount = writeCallCount_;
+  // int oldWriteCallCount = writeCallCount_; // I think this one is not necessary. (Especially with the change underneath.) -- Aaron
   writeCallCount_++;
 
   // if no output should be written, because of interval, return false
-  if (oldWriteCallCount % outputInterval != 0)
+  if (writeCallCount_ % outputInterval != 0) // I changed the condition to '<--this' from '(oldWriteCallCount % outputInterval != 0)'. Now it is easyer to have data output at regular times. -- Aaron 
     return false;
 
   // determine filename base

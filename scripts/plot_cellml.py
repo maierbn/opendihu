@@ -19,6 +19,8 @@ import py_reader    # reader utility for opendihu *.py files
 
 files = ""
 
+plot_name_condition = lambda filename: ".pdf" in filename
+
 show_plot = True
 if len(sys.argv) > 1:
   try:
@@ -26,6 +28,12 @@ if len(sys.argv) > 1:
     files = sys.argv[2:]
   except:
     files = sys.argv[1:]
+  plot_name_lst = list(np.extract(np.array(list(map(plot_name_condition, sys.argv))), sys.argv))
+  if len(plot_name_lst)!=1:
+    plot_name="fig.pdf"
+  else:
+    plot_name=plot_name_lst[0]
+	
 else:
   # get all input data in current directory
   ls = os.listdir(".")
@@ -92,7 +100,8 @@ text = plt.figtext(0.15,0.85,"V_m",size=20)
 ax.set_xlabel('time')
 ax.set_ylabel('V_m')
 line.set_data(time, dataVm)
-plt.savefig("fig.pdf")
+#print("plotname: {} of type {}".format(plot_name, type(plot_name)))
+plt.savefig(plot_name)
     
 if show_plot:
   plt.show()

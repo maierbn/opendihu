@@ -8,27 +8,33 @@ import matplotlib.pyplot as plt
 def setParameters(n_instances, time_step_no, current_time, parameters, *additional_parameters):
   
   center_node = int(n_instances / 2)
-  if current_time - int(current_time) < 0.1:
+  if current_time - int(current_time) < 0.1 and current_time <= 3.1:
     print("set I_Stim for node {} to 400".format(center_node))
     parameters[center_node] = 400.
     
 xdata = []
 gamma_data = []
 vm_data = []
-      
+
+It_value=TBR
+tsw=0.001*pow(2,2-It_value)
+et=0.001#1.0
+opiv=1*pow(2,It_value-2)#10*pow..
+hrciv=opiv
+
 config = {
   "disablePrinting": False,
   "disableMatrixPrinting": False,
   "ExplicitEuler" : {
-    "timeStepWidth": 1e-2,
-    "endTime" : 100.0,
+    "timeStepWidth": tsw,
+    "endTime" : et,#1.0, # 0.1
     "initialValues": [],
-    "timeStepOutputInterval": 2.5e1,
+    "timeStepOutputInterval": 50eTBR, # ignored, see line 31 instead. --aaron
     
     "OutputWriter" : [
       #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
       #{"format": "Paraview", "filename": "out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/cell_e", "outputInterval": 2.5e1, "binary": True}
+      {"format": "PythonFile", "filename": "out/N_TBR/cell", "outputInterval": opiv, "binary": True} #0.01eTBR 
     ],
 
     "CellML" : {
@@ -38,7 +44,7 @@ config = {
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,
        #"handleResultFunction": handleResult,
-      "handleResultCallInterval": 1e4,
+      "handleResultCallInterval": hrciv,
       
       "numberStates": 57,
       "numberIntermediates": 1,   # intermediates=wanted: gamma

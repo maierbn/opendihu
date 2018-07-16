@@ -1,5 +1,6 @@
 import sys, os, multiprocessing
 from Package import Package
+import subprocess
 
 ##
 ##  Handles LAPACK library and also BLAS. There are fortran and C versions for each.
@@ -46,9 +47,15 @@ int main(int argc, char* argv[]) {
         p = multiprocessing.cpu_count()
 
         use_reference_blas = False
+        
+        # check if inside docker container, then we have no cpu features available and must compile with DYNAMIC_ARCH=1 NO_AFFINITY=1
+        cmd = "cat /proc/self/cgroup"
+        output = subprocess.check_output(cmd, shell=True)
+        run_in_docker = False
+        if "docker" in output:
+          run_in_docker = True
+        
         # Setup the build handler.
-        
-        
         if os.environ.get("LIBSCI_BASE_DIR") is not None:
           self.libs = ["sci_cray_mpi_mp"]
           print("Cray environment detected, using \"sci_cray_mpi_mp\" for LAPACK")
@@ -92,11 +99,19 @@ int main(int argc, char* argv[]) {
         
         else:  
           # use OpenBLAS
-          self.set_build_handler([
-            'mkdir -p ${PREFIX}',
-            'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
-          ])
-          self.number_output_lines = 18788
+          if run_in_docker:
+            self.set_build_handler([
+              'mkdir -p ${PREFIX}',
+              'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
+            ])
+            self.number_output_lines = 18788
+            
+          else:                
+            self.set_build_handler([
+              'mkdir -p ${PREFIX}',
+              'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
+            ])
+            self.number_output_lines = 18788
         
           self.libs = ["openblas"]
           self.headers = ["lapacke.h"]

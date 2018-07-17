@@ -51,9 +51,6 @@ int main(int argc, char* argv[]) {
         # check if inside docker container, then we have no cpu features available and must compile with DYNAMIC_ARCH=1 NO_AFFINITY=1
         cmd = "cat /proc/self/cgroup"
         output = subprocess.check_output(cmd, shell=True)
-        
-        print('/proc/self/cgroup: '+output)
-        
         run_in_docker = False
         if "docker" in output:
           run_in_docker = True
@@ -107,7 +104,7 @@ int main(int argc, char* argv[]) {
               'mkdir -p ${PREFIX}',
               'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
             ])
-            self.number_output_lines = 18788
+            self.number_output_lines = 30662
             
           else:                
             self.set_build_handler([

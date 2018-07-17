@@ -95,7 +95,7 @@ class PETSc(Package):
         #    'make test',
         #])
 
-        self.number_output_lines = 1885
+        self.number_output_lines = 1924
         
     def check(self, ctx):
         env = ctx.env

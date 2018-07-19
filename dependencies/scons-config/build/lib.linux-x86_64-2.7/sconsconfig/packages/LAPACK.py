@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
               'mkdir -p ${PREFIX}',
               'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
             ])
-            self.number_output_lines = 18788
+            self.number_output_lines = 30662
             
           else:                
             self.set_build_handler([

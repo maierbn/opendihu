@@ -50,7 +50,7 @@ class Matplotlib(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://pypi.python.org/packages/49/b8/89dbd27f2fb171ce753bb56220d4d4f6dbc5fe32b95d8edc4415782ef07f/matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl'
+            'download_url': 'http://pypi.python.org/packages/49/b8/89dbd27f2fb171ce753bb56220d4d4f6dbc5fe32b95d8edc4415782ef07f/matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl'
         }
         defaults.update(kwargs)
         super(Matplotlib, self).__init__(**defaults)

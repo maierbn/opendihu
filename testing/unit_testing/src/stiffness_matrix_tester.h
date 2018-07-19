@@ -59,7 +59,7 @@ public:
     for(std::pair<int, double> entry : dirichletBC)
     {
       double difference = fabs(solution[entry.first]-entry.second);
-      EXPECT_LE(difference, 1e-14) 
+      EXPECT_LE(difference, 1e-13) 
         << "Dirichlet BC on node " << entry.first << ", value "<<entry.second << " is not met! "
         << "Actual value: "<<solution[entry.first] << ", Difference: " << difference;
     }

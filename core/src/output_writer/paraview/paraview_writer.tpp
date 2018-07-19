@@ -181,6 +181,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
   bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
 
+  // avoid bug in paraview when reading binary encoded (base64) values for 1D meshes
+  if (D == 1 && extent[0] > 1 && binaryOutput)
+     extent[0] -= 1;
+  
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
@@ -209,7 +213,6 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat);
   
-
   file << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl
     << std::string(3, '\t') << "</CellData>" << std::endl

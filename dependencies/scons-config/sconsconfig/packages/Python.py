@@ -62,7 +62,7 @@ class Python(Package):
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
-          self.number_output_lines = 9468
+          self.number_output_lines = 9823
         else:       
           print("gcc has no --enable-plugin, compile python without optimizations")
           self.set_build_handler([

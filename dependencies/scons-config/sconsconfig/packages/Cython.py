@@ -38,7 +38,7 @@ class Cython(Package):
             '$export PATH=${PREFIX}/bin:$PATH'
         ])
 
-        self.number_output_lines = 871
+        self.number_output_lines = 883
         
     def check(self, ctx):
         env = ctx.env

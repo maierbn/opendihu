@@ -956,19 +956,29 @@ Substituting into \eqref{eq:diffusion_derivation1} yields:
 We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$. For the explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
-    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t)}\\[4mm]
-                 &= \Big(\bfI - dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}.
+    \bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} + dt \,\bfM^{-1}\bfK\bfu^{(t)}%\\[4mm]
+                % &= \Big(\bfI - dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}
+                .
   \end{array}
 \end{equation*}
 With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
-    \bfu^{(t+1)} &= \bfu^{(t)} - dt \,\bfM^{-1}\bfK\bfu^{(t+1)}\\[4mm]
-     &= (I + dt\,\bfM^{-1}\bfK)^{-1}\,\bfu^{(t)}
+    \bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+     (I - dt\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}
   \end{array}
 \end{equation*}
+\subsection{Lumped Mass Matrix}
+\begin{equation}
+\left\{
+  \begin{array}{ll}
+	m_{i,j}=0 &i\ne j\\
+	m_{i,i}=\frac{S}{D} m'_{i,i} & i=1,...,n
+  \end{array}
+\end{equation}
+where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m'_{i,j}$ and $D=\sum_{i=1}^{n}m'_{i,i}$.
+
 
 \subsection{Analytical Solution}
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution

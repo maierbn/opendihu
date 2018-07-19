@@ -27,7 +27,10 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
       nValues = nDofs / BasisOnMeshType::nDofsPerNode();
-
+    
+  VLOG(2) << "getValues";
+  VLOG(2) << "componentNumber=" << componentNo << ", nDofs=" << nDofs << ", nValues="<< nValues << ", stride=" << stride << ", nComponents=" << nComponents;
+  
   // store the array indices for values_ array in dofGlobalNo
   std::vector<PetscInt> indices(nValues,0);
   dof_no_t indexNo = 0;
@@ -35,11 +38,17 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   {
     assert(indexNo < nValues);
     indices[indexNo++] = dofGlobalNo*nComponents + componentNo;
+  
+    VLOG(2) << "Indices of " << indexNo-1 << ": " << indices[indexNo-1];
+    
   }
 
   VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
   values.resize(nValues);
   VecGetValues(this->values_, nValues, indices.data(), values.data());
+  
+  VLOG(2) << "Retrieved values: " <<  values;
+  VLOG(2) << "Petsc vector: " << PetscUtility::getStringVector(this->values_);
 }
 
 //! for a specific component, get values from their global dof no.s

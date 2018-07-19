@@ -22,7 +22,13 @@ public:
   static constexpr int nComponents();
 
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
-  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  //void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  
+  //! precomputes the system matrix A=I-M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
+  void preComputeSystemMatrix(double timeStepWidth);
+  
+  //! solves the linear system of equations resulting from the Implicit Euler method time discretization
+  void solveLinearSystem(Vec &input, Vec &output);
 
   //! initialize for use with timestepping
   void initialize() override;
@@ -37,17 +43,22 @@ public:
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:
+  Mat &systemMatrix();
 
   //! do nothing, needed for initialize of base class that is overridden anyway
-  void setRightHandSide(){};
+  //void setRightHandSide(){};
+  
 
   //! Compute from the rhs in weak formulation the rhs vector in strong formulation
-  void recoverRightHandSideStrongForm(Vec &result);
+  //void recoverRightHandSideStrongForm(Vec &result);
 
-  //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
-  void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
+  //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to input
+  //void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
+  void checkDimensions(Mat &systemMatrix, Vec &input);
+private:
+  Mat systemMatrix_;
 };
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/05_timestepping.tpp"
+#include "spatial_discretization/finite_element_method/06_timestepping_implicit.tpp"

@@ -18,10 +18,12 @@ getValue(node_no_t dofGlobalNo)
     std::array<PetscInt,nComponents> indices;
     std::array<double,nComponents> result;
 
+    const dof_no_t nDofs = this->mesh_->nDofs();
+  
     // prepare lookup indices for PETSc vector values_
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      indices[componentNo] = dofGlobalNo*nComponents + componentNo;
+      indices[componentNo] = componentNo*nDofs + dofGlobalNo;
     }
 
     VecGetValues(this->values_, nComponents, indices.data(), result.data());

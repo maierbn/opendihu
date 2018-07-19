@@ -69,7 +69,7 @@ public:
   typedef FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! this assigns the geometry field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
-  void initialize();
+  virtual void initialize();
 
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_no_t dofGlobalNo) const;

@@ -140,7 +140,7 @@ setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
   {
     dof_no_t dofGlobalNo = nodeDofInformation.dofs[dofIndex];
     double value = *valuesBegin;
-    std::size_t vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
+    std::size_t vectorIndex = componentIndex_*nDofs() + dofGlobalNo;
 
     VLOG(2) << " component " << name_ << ", set value: " << value << " at nodeGlobalNo: " << nodeGlobalNo
       << ", componentIndex: " << componentIndex_ << ", nComponents: " << nComponents_
@@ -194,7 +194,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
         values.push_back(value);
 
         dof_no_t dofGlobalNo = nodeDofInformation.dofs[blockIndex];
-        std::size_t vectorIndex = dofGlobalNo*nComponents_ + componentIndex_;
+        std::size_t vectorIndex = componentIndex_*nDofs() + dofGlobalNo;
         VLOG(2) << "  dofGlobalNo = " << dofGlobalNo << ", vectorIndex = " << vectorIndex;
 
         indices.push_back(vectorIndex);
@@ -254,7 +254,7 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
   for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
   {
     assert(indexNo < nValues);
-    indices[indexNo++] = dofGlobalNo*this->nComponents_ + componentIndex_;
+    indices[indexNo++] = componentIndex_*nDofs + dofGlobalNo;
   }
 
   values.resize(nValues);
@@ -265,32 +265,32 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
 template<typename BasisOnMeshType>
 template<int N>
 void Component<BasisOnMeshType>::
-getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values)
+getValues(std::array<dof_no_t,N> dofGlobalNos, std::array<double,N> &values)
 {
   // transform global dof no.s to vector indices
-  for (auto &index : dofGlobalNo)
+  for (auto &index : dofGlobalNos)
   {
-    index = index*nComponents_ + componentIndex_;
+    index = componentIndex_*nDofs() +  index;
   }
 
   assert (values_);
-  VecGetValues(*values_, N, dofGlobalNo.data(), values.data());
+  VecGetValues(*values_, N, dofGlobalNos.data(), values.data());
 }
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
+getValues(std::vector<dof_no_t> dofGlobalNos, std::vector<double> &values)
 {
-  const int nValues = dofGlobalNo.size();
+  const int nValues = dofGlobalNos.size();
 
   // transform global dof no.s to vector indices
-  for (auto &index : dofGlobalNo)
+  for (auto &index : dofGlobalNos)
   {
-    index = index*nComponents_ + componentIndex_;
+    index = componentIndex_*nDofs() + index;
   }
 
  VLOG(1) << "Component getValues, " << nValues << " values, componentIndex=" << componentIndex_
-   << ", nComponents= " << nComponents_ << " indices: " << dofGlobalNo;
+   << ", nComponents= " << nComponents_ << " indices: " << dofGlobalNos;
 
   assert (values_);
 
@@ -298,7 +298,7 @@ getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
   VLOG(1) << "previousSize: " << previousSize;
   values.resize(previousSize+nValues);
   VLOG(1) << "new size: " << values.size();
-  VecGetValues(*values_, nValues, (PetscInt*)dofGlobalNo.data(), values.data()+previousSize);
+  VecGetValues(*values_, nValues, (PetscInt*)dofGlobalNos.data(), values.data()+previousSize);
 
 
   VLOG(1) << "retrieved values: " << values;
@@ -309,7 +309,7 @@ double Component<BasisOnMeshType>::
 getValue(node_no_t dofGlobalNo)
 {
   double value;
-  std::array<int,1> indices{(int)(dofGlobalNo*nComponents_ + componentIndex_)};
+  std::array<int,1> indices{(int)(componentIndex_*nDofs() + dofGlobalNo)};
 
   assert (values_);
   VecGetValues(*values_, 1, indices.data(), &value);
@@ -331,7 +331,7 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
   // transform global dof no.s to vector indices
   for (int dofIndex = 0; dofIndex < BasisOnMeshType::nDofsPerElement(); dofIndex++)
   {
-    indices[dofIndex] = elementDofs[dofIndex] * nComponents_ + componentIndex_;
+    indices[dofIndex] = componentIndex_*nDofs() + elementDofs[dofIndex];
   }
 
   assert (values_);

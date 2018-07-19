@@ -386,7 +386,7 @@ config = {
     Quadrature::Gauss<2>,
     Equation::None
   > problem(settings);
-  
+  problem.initialize();
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(problem.mesh());
   
   {

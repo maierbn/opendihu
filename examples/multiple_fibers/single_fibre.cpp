@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   
   LOG(DEBUG)<<std::string(80, '=');
   
-  OperatorSplitting::Godunov<
+  OperatorSplitting::Strang<
     TimeSteppingScheme::Heun<
       CellmlAdapter<57>
     >,

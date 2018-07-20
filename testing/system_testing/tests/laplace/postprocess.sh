@@ -28,7 +28,7 @@ mv anim.mp4 results/${name}.mp4
 if [ "$CHECK_RESULTS" = true ] ; then
     
   # compare to analytical solution and check if tests pass or fail (also creates an animation file "numerical_analytical.mp4")
-  mv results/log_${name}.txt log.txt
+  mv results/log_${name}.txt log.txt || touch log.txt
   python check_results.py 0 build_${variant}/out/${name}*
   mv log.txt results/log_${name}.txt
 
@@ -36,9 +36,6 @@ if [ "$CHECK_RESULTS" = true ] ; then
   # It appends messages to the end of a file log.txt. 
   # Therefore we mv the named log file for the testcase to log.txt beforehand,
   # let check_results.py append to it and rename it back afterwards.
-
-  # move resulting animation
-  mv numerical_analytical.mp4 results/${name}_numerical_analytical.mp4
 else
   
   echo "$(date '+%d.%m.%Y %H:%M:%S'): test ${name} disabled" >> results/log_${name}.txt

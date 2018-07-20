@@ -94,13 +94,16 @@ public:
 protected:
 
   //! parse the node from python config into a vector
-  void parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &nodePositions);
+  void parseNodePositionsFromSettings(PyObject *specificSettings);
 
-  //! set the geometry field by the node positions in a vector
-  void setGeometryField(std::vector<double> &nodePositions);
+  //! set up the geometry field
+  void initializeGeometryField();
   
-  //! parse node and element information from settings and create geometry field
-  void setupMesh();
+  //! set the values of the geometry field
+  void setGeometryFieldValues();
+  
+  std::vector<double> nodePositions_; //< Node positions to be inserted into geometry field
+ 
 };
 
 /** Partial specialization for UnstructuredDeformable mesh

@@ -21,10 +21,12 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
 
   this->noGeometryField_ = noGeometryField;
-  setupMesh();
+  if (!this->noGeometryField_)
+  { 
+    // create node positions from python config
+    this->parseNodePositionsFromSettings(specificSettings);
+  }
 }
-
-
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
@@ -37,40 +39,42 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const
   this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirection;
   LOG(DEBUG) << "set number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_;
 
-  std::vector<double> sequentialNodePositions;   // node positions in a scalar vector, as needed by setGeometryField
-  sequentialNodePositions.reserve(localNodePositions.size() * D);
+  localNodePositions_.reserve(nodePositions.size() * D);
 
-  for (const Vec3 &vector : localNodePositions)
+  for (const Vec3 &vector : nodePositions)
   {
     for (int i = 0; i < 3; i++)
-      sequentialNodePositions.push_back(vector[i]);
+      localNodePositions_.push_back(vector[i]);
   }
-  this->setGeometryField(sequentialNodePositions);
 }
 
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-setupMesh()
-{
-  // parse node positions and create mesh
-  std::vector<double> localNodePositions;
+initialize()
+{ 
+  // initialize the geometry field without values
+  initializeGeometryField();
+
+  // call initialize from parent class
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::initialize();
+  
   if (!this->noGeometryField_)
   {
-    this->parseNodePositionsFromSettings(specificSettings, localNodePositions);
-    this->setGeometryField(localNodePositions);
+    // set geometry field
+    this->setGeometryFieldValues();
   }
 }
- 
+
 // read in config nodes
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &localNodePositions)
+parseNodePositionsFromSettings(PyObject *specificSettings)
 {
   // compute number of nodes
   node_no_t nNodes = this->nLocalNodes();
 
   const int vectorSize = nNodes*3;
-  localNodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
+  localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
 
   // fill initial position from settings
   if (PythonUtility::hasKey(specificSettings, "nodePositions"))
@@ -108,42 +112,42 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
           for (; i < std::min(3,(int)PyList_Size(itemNodePositionPy)); i++)
           {
             PyObject *pointComponentPy = PyList_GetItem(itemNodePositionPy, (Py_ssize_t)i);
-            localNodePositions[3*nodeNo + i] = PythonUtility::convertFromPython<double>(pointComponentPy, 0.0);
+            localNodePositions_[3*nodeNo + i] = PythonUtility::convertFromPython<double>(pointComponentPy, 0.0);
           }
 
           // set the rest of the values that were not specified to 0.0, e.g. z=0.0
           for (; i < 3; i++)
           {
-            localNodePositions[3*nodeNo + i] = 0.0;
+            localNodePositions_[3*nodeNo + i] = 0.0;
           }
 
-          VLOG(2) << "(1) set node " << nodeNo << "[" << localNodePositions[3*nodeNo + 0] << "," << localNodePositions[3*nodeNo + 1] << "," << localNodePositions[3*nodeNo + 2] << "]";
+          VLOG(2) << "(1) set node " << nodeNo << "[" << localNodePositions_[3*nodeNo + 0] << "," << localNodePositions_[3*nodeNo + 1] << "," << localNodePositions_[3*nodeNo + 2] << "]";
         }
         else
         {
           // if the entry is not a list like [x,y,z] but a single value, assume it is the x value
           double value = PythonUtility::convertFromPython<double>(itemNodePositionPy, 0.0);
-          localNodePositions[3*nodeNo + 0] = value;
-          localNodePositions[3*nodeNo + 1] = 0.0;
-          localNodePositions[3*nodeNo + 2] = 0.0;
+          localNodePositions_[3*nodeNo + 0] = value;
+          localNodePositions_[3*nodeNo + 1] = 0.0;
+          localNodePositions_[3*nodeNo + 2] = 0.0;
 
-          VLOG(2) << "(2) set node " << nodeNo << "[" << localNodePositions[3*nodeNo + 0] << "," << localNodePositions[3*nodeNo + 1] << "," << localNodePositions[3*nodeNo + 2] << "]";
+          VLOG(2) << "(2) set node " << nodeNo << "[" << localNodePositions_[3*nodeNo + 0] << "," << localNodePositions_[3*nodeNo + 1] << "," << localNodePositions_[3*nodeNo + 2] << "]";
         }
       }
 
       if (nodeNo < nNodes)
       {
-        LOG(WARNING) << "Expected " << nNodes << " nodes, localNodePositions contains only " << nodeNo << " nodes (" << nNodes - nodeNo << " missing).";
+        LOG(WARNING) << "Expected " << nNodes << " nodes, localNodePositions_ contains only " << nodeNo << " nodes (" << nNodes - nodeNo << " missing).";
       }
 
       // fill rest of values with 0,0,0
       for (; nodeNo < nNodes; nodeNo++)
       {
-        localNodePositions[3*nodeNo + 0] = 0.0;
-        localNodePositions[3*nodeNo + 1] = 0.0;
-        localNodePositions[3*nodeNo + 2] = 0.0;
+        localNodePositions_[3*nodeNo + 0] = 0.0;
+        localNodePositions_[3*nodeNo + 1] = 0.0;
+        localNodePositions_[3*nodeNo + 2] = 0.0;
 
-        VLOG(2) << "(3) set node " << nodeNo << "[" << localNodePositions[3*nodeNo + 0] << "," << localNodePositions[3*nodeNo + 1] << "," << localNodePositions[3*nodeNo + 2] << "]";
+        VLOG(2) << "(3) set node " << nodeNo << "[" << localNodePositions_[3*nodeNo + 0] << "," << localNodePositions_[3*nodeNo + 1] << "," << localNodePositions_[3*nodeNo + 2] << "]";
       }
     }
     else
@@ -153,23 +157,23 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
       int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
 
       int inputVectorSize = nNodes * nodeDimension;
-      PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, localNodePositions);
+      PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, localNodePositions_);
 
       LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
 
       // transform vector from (x,y) or (x) entries to (x,y,z)
       if (nodeDimension < 3)
       {
-        localNodePositions.resize(vectorSize);   // resize vector and value-initialize to 0
+        localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
         for(int i=nNodes-1; i>=0; i--)
         {
 
           if (nodeDimension == 2)
-            localNodePositions[i*3+1] = localNodePositions[i*nodeDimension+1];
+            localNodePositions_[i*3+1] = localNodePositions_[i*nodeDimension+1];
           else
-            localNodePositions[i*3+1] = 0;
-          localNodePositions[i*3+0] = localNodePositions[i*nodeDimension+0];
-          localNodePositions[i*3+2] = 0;
+            localNodePositions_[i*3+1] = 0;
+          localNodePositions_[i*3+0] = localNodePositions_[i*nodeDimension+0];
+          localNodePositions_[i*3+2] = 0;
         }
       }
     }
@@ -207,74 +211,87 @@ parseNodePositionsFromSettings(PyObject *specificSettings, std::vector<double> &
 
       // store the position values in nodePositions
       for (int i=0; i<3; i++)
-        localNodePositions[nodeNo*3 + i] = position[i];
+        localNodePositions_[nodeNo*3 + i] = position[i];
     }
   }
 
-  // if parsed node positions in vector localNodePositions actually contains global node positions, extract local positions
+  // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
   std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    this->partition_->extractLocalNumbers(localNodePositions);
+    this->partition_->extractLocalNumbers(localNodePositions_);
   }
 }
 
 // create geometry field from config nodes
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-setGeometryField(std::vector<double> &localNodePositions)
+initializeGeometryField()
 {
-  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of localNodePositions vector: " << localNodePositions.size();
+  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, initializeGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
   // compute number of (local) dofs
   dof_no_t nLocalDofs = this->nLocalDofs();
 
-  // create petsc vector that contains the (local) node positions
+  // create petsc vector that contains the node positions
   Vec values;
-  const int vectorSize = nLocalDofs * 3;   // dofs always contain 3 entries for every entry (x,y,z)
-  
-  PetscUtility::createVector(values, vectorSize, "geometry", this->mesh_->partition());
-  
-  // fill geometry vector from localNodePositions, initialize non-node position entries to 0 (for Hermite)
-  std::vector<double> geometryValues(vectorSize, 0.0);
-
-  int geometryValuesIndex = 0;
-  int nodePositionsIndex = 0;
-  // loop over nodes
-  for (node_no_t nodeNo = 0; nodeNo < this->nLocalNodes(); nodeNo++)
-  {
-    // assign node position as first dof of the node
-    geometryValues[geometryValuesIndex+0] = localNodePositions[nodePositionsIndex+0];
-    geometryValues[geometryValuesIndex+1] = localNodePositions[nodePositionsIndex+1];
-    geometryValues[geometryValuesIndex+2] = localNodePositions[nodePositionsIndex+2];
-    geometryValuesIndex += 3;
-    nodePositionsIndex += 3;
-
-    // set entries to 0 for rest of dofs at this node
-    for (int dofIndex = 1; dofIndex < this->nDofsPerNode(); dofIndex++)
-    {
-      geometryValues[geometryValuesIndex+0] = 0;
-      geometryValues[geometryValuesIndex+1] = 0;
-      geometryValues[geometryValuesIndex+2] = 0;
-      geometryValuesIndex += 3;
-    }
-  }
-
-  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
-
-  PetscUtility::setVector(geometryValues, values);
-
-  // finish parallel assembly
   PetscErrorCode ierr;
-  ierr = VecAssemblyBegin(values); CHKERRV(ierr);
-  ierr = VecAssemblyEnd(values); CHKERRV(ierr);
+  ierr = VecCreate(PETSC_COMM_WORLD, &values);  CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) values, "geometry"); CHKERRV(ierr);
+
+  // initialize size of vector
+  const int nEntries = nDofs * 3;   // dofs always contain 3 entries for every entry (x,y,z)
+  ierr = VecSetSizes(values, PETSC_DECIDE, nEntries); CHKERRV(ierr);
+
+  // set sparsity type and other options
+  ierr = VecSetFromOptions(values);  CHKERRV(ierr);
 
   bool isGeometryField = true;   // if the field is a geometry field
   // set geometry field
   this->geometryField_ = std::make_unique<GeometryFieldType>();
   std::vector<std::string> componentNames{"x", "y", "z"};
-  int nEntries = nDofs * 3;   // 3 components (x,y,z) per dof
-  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirectionLocal_, nEntries, isGeometryField, values);
+  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+}
+
+// create geometry field from config nodes
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+setGeometryFieldValues()
+{
+  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
+
+  // compute number of dofs
+  dof_no_t nDofs = this->nDofs();
+
+  // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
+  std::vector<Vec3> geometryValues(nDofs, Vec3{0.0});
+
+  int geometryValuesIndex = 0;
+  int nodePositionsIndex = 0;
+  // loop over nodes
+  for (node_no_t nodeNo = 0; nodeNo < this->nNodes(); nodeNo++)
+  {
+    // assign node position as first dof of the node
+    geometryValues[geometryValuesIndex] 
+      = Vec3{ localNodePositions_[nodePositionsIndex+0], localNodePositions_[nodePositionsIndex+1], localNodePositions_[nodePositionsIndex+2]};
+    geometryValuesIndex++;
+    nodePositionsIndex += 3;
+
+    // set entries to 0 for rest of dofs at this node (versions)
+    for (int dofIndex = 1; dofIndex < this->nDofsPerNode(); dofIndex++)
+    {
+      geometryValuesIndex++;
+    }
+  }
+
+  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
+
+  // set values for node positions as geometry field 
+  std::vector<dof_no_t> dofGlobalNos(nDofs,0);
+  std::iota(dofGlobalNos.begin(),dofGlobalNos.end(),0);
+  this->geometryField_->setValues(dofGlobalNos,geometryValues);
+  this->geometryField_->flushSetValues();
+  
 }
 
 template<int D,typename BasisFunctionType>

@@ -10,7 +10,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
 {
   // initialize gradient field variable to 0
   gradientField.setValues(0.0);
-  gradientField.flushSetValues();
+  gradientField.finishVectorManipulation();
 
   // define constants
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
@@ -71,7 +71,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
     }  // dofIndex
   }  // elementNo
 
-  gradientField.flushSetValues();
+  gradientField.finishVectorManipulation();
 
   // divide by number of summands
   for (dof_no_t localDofNo = 0; localDofNo < nDofs; localDofNo++)
@@ -86,7 +86,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
     gradientField.setValue(localDofNo, value, INSERT_VALUES);
   }
 
-  gradientField.flushSetValues();
+  gradientField.finishVectorManipulation();
 }
 
 };  // namespace

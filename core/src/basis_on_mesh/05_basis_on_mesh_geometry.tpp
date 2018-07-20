@@ -10,8 +10,8 @@ void BasisOnMeshGeometry<MeshType,BasisFunctionType,DummyForTraits>::
 initialize(std::shared_ptr<Partition::Manager> partitionManager)
 {
  
-  // create partition and redistribute elements if necessary
-  partition(partitionManager);
+  // create meshPartition and redistribute elements if necessary
+  BasisOnMeshPartition<MeshType,BasisFunctionType>::initialize();
  
   // pass a shared "this" pointer to the geometryField
   if (this->noGeometryField_)
@@ -30,9 +30,8 @@ initialize(std::shared_ptr<Partition::Manager> partitionManager)
   assert(self != nullptr);
   assert(this->geometryField_ != nullptr);
 
-  // set pointer in geometry field
+  // set pointer in geometry field, because self contains meshPartition, now geometry field can create its internal vector
   this->geometryField_->setMesh(self);
-  
 }
 
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>

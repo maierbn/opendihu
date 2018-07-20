@@ -10,7 +10,7 @@ using namespace StringUtility;
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-initialize(std::shared_ptr<Vec> values, int nComponents, int componentIndex, int nElements)
+initialize(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values, int nComponents, int componentIndex, int nElements)
 {
   values_ = values;
   nComponents_ = nComponents;
@@ -20,7 +20,7 @@ initialize(std::shared_ptr<Vec> values, int nComponents, int componentIndex, int
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-setValuesVector(std::shared_ptr<Vec> values)
+setValuesVector(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values)
 {
   assert(values);
   values_ = values;
@@ -139,14 +139,15 @@ setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
   for(int dofIndex = 0; dofIndex < nodeDofInformation.dofs.size(); dofIndex++, valuesBegin++)
   {
     dof_no_t dofGlobalNo = nodeDofInformation.dofs[dofIndex];
+    //TODO: global to local
     double value = *valuesBegin;
-    std::size_t vectorIndex = componentIndex_*nLocalDofs() + dofGlobalNo;
+    PetscInt vectorIndex = dofGlobalNo;
 
     VLOG(2) << " component " << name_ << ", set value: " << value << " at nodeGlobalNo: " << nodeGlobalNo
       << ", componentIndex: " << componentIndex_ << ", nComponents: " << nComponents_
       << ", dofGlobalNo: " <<dofGlobalNo << " -> set at vectorIndex: " << vectorIndex;
 
-    VecSetValue(*values_, vectorIndex, value, INSERT_VALUES);
+    values_->setValue(componentIndex_, vectorIndex, value, INSERT_VALUES);
   }
 }
 
@@ -156,7 +157,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
 {
   NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
 
-  std::vector<int> indices;
+  std::vector<PetscInt> indices;
   std::vector<double> values;
 
   const unsigned int nVersions = nodeDofInformation.elementsOfVersion.size();
@@ -194,7 +195,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
         values.push_back(value);
 
         dof_no_t dofGlobalNo = nodeDofInformation.dofs[blockIndex];
-        std::size_t vectorIndex = componentIndex_*nLocalDofs() + dofGlobalNo;
+        PetscInt vectorIndex = dofGlobalNo;
         VLOG(2) << "  dofGlobalNo = " << dofGlobalNo << ", vectorIndex = " << vectorIndex;
 
         indices.push_back(vectorIndex);
@@ -205,7 +206,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
   assert (values_);
   VLOG(2) << " set " << indices.size() << " values at indices " << indices;
   VLOG(2) << "                                " << values;
-  VecSetValues(*values_, indices.size(), indices.data(), values.data(), INSERT_VALUES);
+  values_->setValues(componentIndex_, indices.size(), indices.data(), values.data(), INSERT_VALUES);
 }
 
 template<typename BasisOnMeshType>
@@ -251,46 +252,34 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
 
   std::vector<int> indices(nValues,0);
   dof_no_t indexNo = 0;
-  for (dof_no_t dofGlobalNo = 0; dofGlobalNo < nDofs; dofGlobalNo += stride)
+  for (dof_no_t dofLocalNo = 0; dofLocalNo < nDofs; dofLocalNo += stride)
   {
     assert(indexNo < nValues);
-    indices[indexNo++] = componentIndex_*nDofs + dofGlobalNo;
+    indices[indexNo++] = dofLocalNo;
   }
 
   values.resize(nValues);
   assert (values_);
-  VecGetValues(*values_, nValues, indices.data(), values.data());
+  values_->getValues(componentIndex_, nValues, indices.data(), values.data());
 }
 
 template<typename BasisOnMeshType>
 template<int N>
 void Component<BasisOnMeshType>::
-getValues(std::array<dof_no_t,N> dofGlobalNos, std::array<double,N> &values)
+getValues(std::array<dof_no_t,N> dofLocalNos, std::array<double,N> &values)
 {
-  // transform global dof no.s to vector indices
-  for (auto &index : dofGlobalNos)
-  {
-    index = componentIndex_*nLocalDofs() + index;
-  }
-
   assert (values_);
-  VecGetValues(*values_, N, dofGlobalNos.data(), values.data());
+  values_->getValues(componentIndex_, N, dofLocalNos.data(), values.data());
 }
 
 template<typename BasisOnMeshType>
 void Component<BasisOnMeshType>::
-getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
+getValues(std::vector<dof_no_t> dofLocalNos, std::vector<double> &values)
 {
-  const int nValues = dofGlobalNo.size();
-
-  // transform global dof no.s to vector indices
-  for (auto &index : dofGlobalNo)
-  {
-    index = componentIndex_*nLocalDofs() + index;
-  }
+  const int nValues = dofLocalNos.size();
 
  VLOG(1) << "Component getValues, " << nValues << " values, componentIndex=" << componentIndex_
-   << ", nComponents= " << nComponents_ << " indices: " << dofGlobalNo;
+   << ", nComponents= " << nComponents_ << " indices: " << dofLocalNos;
 
   assert (values_);
 
@@ -298,7 +287,7 @@ getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
   VLOG(1) << "previousSize: " << previousSize;
   values.resize(previousSize+nValues);
   VLOG(1) << "new size: " << values.size();
-  VecGetValues(*values_, nValues, (PetscInt*)dofGlobalNo.data(), values.data()+previousSize);
+  values_->getValues(componentIndex_, nValues, (PetscInt*)dofLocalNos.data(), values.data()+previousSize);
 
 
   VLOG(1) << "retrieved values: " << values;
@@ -306,15 +295,15 @@ getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values)
 
 template<typename BasisOnMeshType>
 double Component<BasisOnMeshType>::
-getValue(node_no_t dofGlobalNo)
+getValue(node_no_t dofLocalNo)
 {
   double value;
-  std::array<int,1> indices{(int)(componentIndex_*nLocalDofs() + dofGlobalNo)};
+  std::array<int,1> indices{(int)(dofLocalNo)};
 
   assert (values_);
-  VecGetValues(*values_, 1, indices.data(), &value);
+  values_->getValues(componentIndex_, 1, indices.data(), &value);
 
-  VLOG(2) << "component " << this->name_<<", getValue for dof " << dofGlobalNo
+  VLOG(2) << "component " << this->name_<<", getValue for dof " << dofLocalNo
     << " componentIndex: " << componentIndex_ << ", nComponents: " << nComponents_ << ", vectorIndex: " << indices[0]
     << ", value: " << value;
   return value;
@@ -326,16 +315,8 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
 {
   const std::vector<dof_no_t> &elementDofs = elementToDofMapping_->getElementDofs(elementNo);
 
-  std::array<PetscInt, BasisOnMeshType::nDofsPerElement()> indices;
-
-  // transform global dof no.s to vector indices
-  for (int dofIndex = 0; dofIndex < BasisOnMeshType::nDofsPerElement(); dofIndex++)
-  {
-    indices[dofIndex] = componentIndex_*nDofs() + elementDofs[dofIndex];
-  }
-
   assert (values_);
-  VecGetValues(*values_, BasisOnMeshType::nDofsPerElement(), indices.data(), values.data());
+  values_->getValues(componentIndex_, BasisOnMeshType::nDofsPerElement(), elementDofs.data(), values.data());
 }
 
 template<typename BasisOnMeshType>

@@ -22,8 +22,8 @@ public:
   using FieldVariableSetGetRegularFixed<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetRegularFixed;
   using FieldVariableSetGetRegularFixed<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
 
-  //! get a single value from global dof no. for all components
-  std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
+  //! get a single value from local dof no. for all components
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo);
 };
 
 /** Partial specialization for single component field variable

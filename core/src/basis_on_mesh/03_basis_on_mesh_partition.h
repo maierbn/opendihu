@@ -23,11 +23,11 @@ public:
   void initialize();
 
   //! get the partition
-  Partition::MeshPartition &partition();
+  Partition::MeshPartition &meshPartition();
 
 private:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
-  Partition::MeshPartition partition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
+  Partition::MeshPartition meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
 
 };
 

@@ -24,14 +24,14 @@ initialize()
  
   // create partitioning
   assert(partitionManager_ != nullptr);
-  partition_ = partitionManager_->createPartitioning(this->nLocalElements());
+  meshPartition_ = partitionManager_->createPartitioning(this->nLocalElements());
 }
 
 template<typename MeshType,typename BasisFunctionTypes>
 Partition::MeshPartition &BasisOnMeshPartition<MeshType,BasisFunctionType>::
-partition()
+meshPartition()
 {
-  return partition_;
+  return meshPartition_;
 }
 
 

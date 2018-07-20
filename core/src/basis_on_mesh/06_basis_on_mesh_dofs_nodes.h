@@ -90,7 +90,7 @@ public:
 
   //! return number of dofs
   dof_no_t nLocalDofs() const;
-
+  
 protected:
 
   //! parse the node from python config into a vector

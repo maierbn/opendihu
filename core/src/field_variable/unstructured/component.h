@@ -19,10 +19,10 @@ class Component
 public:
 
   //! initialize values
-  void initialize(std::shared_ptr<Vec> values, int nComponents, int componentIndex, int nElements);
+  void initialize(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values, int nComponents, int componentIndex, int nElements);
 
   //! set the internal values PETSc vector
-  void setValuesVector(std::shared_ptr<Vec> values);
+  void setValuesVector(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values);
 
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
@@ -99,7 +99,7 @@ public:
   void output(std::ostream &stream) const;
 
 private:
-  std::shared_ptr<Vec> values_;    ///< vector of all values, for every components the first value, then the 2nd for all components, etc.
+  std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
   int nComponents_;    ///< number of components for this field variable, important for interpreting values_
   int componentIndex_; ///< index of the current component for this field variable, starts with 0, important for interpreting values_
 

@@ -56,7 +56,9 @@ initialize()
   initializeGeometryField();
 
   // call initialize from parent class
-  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::initialize();
+  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::
+    initialize();
   
   if (!this->noGeometryField_)
   {
@@ -219,7 +221,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
   std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    this->partition_->extractLocalNumbers(localNodePositions_);
+    this->meshPartition_->extractLocalNumbers(localNodePositions_);
   }
 }
 
@@ -229,10 +231,12 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 initializeGeometryField()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, initializeGeometryField, size of nodePositions vector: " << localNodePositions_.size();
-
+/*
   // compute number of (local) dofs
   dof_no_t nLocalDofs = this->nLocalDofs();
 
+  // construct geometry field without Petsc vec
+  
   // create petsc vector that contains the node positions
   Vec values;
   PetscErrorCode ierr;
@@ -247,10 +251,10 @@ initializeGeometryField()
   ierr = VecSetFromOptions(values);  CHKERRV(ierr);
 
   bool isGeometryField = true;   // if the field is a geometry field
+  */
   // set geometry field
   this->geometryField_ = std::make_unique<GeometryFieldType>();
-  std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirection_, nEntries, isGeometryField, values);
+  
 }
 
 // create geometry field from config nodes
@@ -260,8 +264,16 @@ setGeometryFieldValues()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
-  // compute number of dofs
-  dof_no_t nDofs = this->nDofs();
+  // initialize geometry field, this creates the internal DistributedPetscVec
+  std::vector<std::string> componentNames{"x", "y", "z"};
+  this->geometryField_->initialize("geometry", componentNames, 
+                                   this->nElementsPerCoordinateDirection_, nEntries, 
+                                   isGeometryField);
+
+  // set values of geometry field
+  
+  // compute number of (local) dofs
+  dof_no_t nLocalDofs = this->nLocalDofs();
 
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
   std::vector<Vec3> geometryValues(nDofs, Vec3{0.0});
@@ -290,7 +302,7 @@ setGeometryFieldValues()
   std::vector<dof_no_t> dofGlobalNos(nDofs,0);
   std::iota(dofGlobalNos.begin(),dofGlobalNos.end(),0);
   this->geometryField_->setValues(dofGlobalNos,geometryValues);
-  this->geometryField_->flushSetValues();
+  this->geometryField_->finishVectorManipulation();
   
 }
 
@@ -300,7 +312,7 @@ nLocalNodes() const
 {
   int result = 1;
   for (int i=0; i<D; i++)
-    result *= nNodes(i);
+    result *= nLocalNodes(i);
   return result;
 }
 
@@ -308,8 +320,9 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nLocalNodes(int coordinateDirection) const
 {
-  assert(this->partition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
-  return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  assert(this->meshPartition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
+  return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() 
+    + (this->meshPartition_->localPartitionIsAtBorder(coordinateDirection)? 1 : 0);
 }
 
 template<int D,typename BasisFunctionType>

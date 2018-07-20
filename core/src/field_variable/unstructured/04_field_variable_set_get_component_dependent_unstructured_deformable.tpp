@@ -13,22 +13,19 @@ namespace FieldVariable
 using namespace StringUtility;
 
 
-//! get a single value from global dof no. for all components
+//! get a single value from local dof no. for all components
 template<int D, typename BasisFunctionType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-getValue(node_no_t dofGlobalNo)
+getValue(node_no_t dofLocalNo)
 {
   std::array<double,nComponents> resultVector;
 
-  // transform global dof no.s to vector indices of first component
-  std::array<PetscInt,nComponents> indices;
-  for(int componentIndex=0; componentIndex<nComponents; componentIndex++)
+  for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    indices[componentIndex] = componentIndex*this->nLocalDofs() + dofGlobalNo;
+    // get values and assign them to result values vector
+    this->values_->getValues(componentIndex, 1, &dofLocalNo, resultVector.data() + componentIndex);
   }
 
-  // get values and assign them to result values vector
-  VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
   return resultVector;
 }
 
@@ -37,38 +34,43 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
+  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const std::vector<dof_no_t> &elementDofs = this->elementToDofMapping_->getElementDofs(elementNo);
-  VecGetValues(*this->values_, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
+  
+  //VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
+
+  this->values_->getValues(0, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
 }
 
 
-//! get a single value from global dof no. for the single component
+//! get a single value from local dof no. for the single component
 template<int D, typename BasisFunctionType>
 double FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getValue(node_no_t dofGlobalNo)
+getValue(node_no_t dofLocalNo)
 {
   double result;
-  VecGetValues(*this->values_, 1, (PetscInt *)&dofGlobalNo, &result);
+  this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
   return result;
 }
 
-//! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+//! set a single dof (one components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode)
+setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
-  VecSetValues(*this->values_, 1, (PetscInt*)&dofGlobalNo, &value, petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
+  this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
-//! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+//! set values for one components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
+setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  VecSetValues(*this->values_, dofGlobalNos.size(), (PetscInt*)dofGlobalNos.data(), values.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
+  this->values_->setValues(0, dofLocalNos.size(), (PetscInt*)dofLocalNos.data(), values.data(), petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
 };  // namespace

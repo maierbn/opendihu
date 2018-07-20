@@ -38,9 +38,14 @@ public:
   //! destructor
   virtual ~FieldVariableDataStructured();
 
-  //! set all data but the values from a second field variable
+  //! set all data but the values from a second field variable, also create the internal Petsc vector if it does not already exist
   template<typename FieldVariableType>
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
+
+  //! set all the data fields as well as the internal values PETSc vector
+  //! this creates the internal PartitionedPetscVec, therefore the mesh needs to be set because its meshPartition() is needed
+  void initialize(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
+                  std::size_t nEntries, bool isGeometryField);
 
   //! get the number of elements per coordinate direction
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionLocal() const;
@@ -56,10 +61,6 @@ public:
 
   //! get the internal PETSc vector values
   Vec &values();
-
-  //! set all the data fields as well as the internal values PETSc vector
-  void set(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
-           std::size_t nEntries, bool isGeometryField, Vec &values);
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
@@ -118,7 +119,7 @@ protected:
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::size_t nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
 
-  std::shared<PartitionedPetscVec<BasisOnMeshType>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored contiguous, e.g. (comp1val1, comp2val1, comp3val1, comp1val2, comp2val2, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
+  std::shared<PartitionedPetscVec<BasisOnMeshType>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 
 };  // namespace

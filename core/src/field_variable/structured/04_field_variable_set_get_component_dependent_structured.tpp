@@ -20,58 +20,52 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
   // prepare lookup indices for PETSc vector values_
   std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
 
-  VecGetValues(this->values_, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
+  this->values_->getValues(0, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
 }
 
-//! get a single value from global dof no. for the single component
+//! get a single value from local dof no. for the single component
 template<typename BasisOnMeshType>
 double FieldVariableSetGetComponent<BasisOnMeshType,1>::
-getValue(node_no_t dofGlobalNo)
+getValue(node_no_t dofLocalNo)
 {
   double result;
-  VecGetValues(this->values_, 1, (PetscInt *)&dofGlobalNo, &result);
+  this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
   return result;
 }
 
 
-//! get a single value from global dof no. for all components
+//! get a single value from local dof no. for all components
 template<typename BasisOnMeshType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGetComponent<BasisOnMeshType,nComponents>::
-getValue(node_no_t dofGlobalNo)
+getValue(node_no_t dofLocalNo)
 {
-  // get number of dofs
-  assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nLocalDofs();
-
-  std::array<PetscInt,nComponents> indices;
   std::array<double,nComponents> result;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    indices[componentNo] = componentNo*nDofs + dofGlobalNo;
+    this->values_->getValues(componentNo, 1, &dofLocalNo, result.data()+componentNo);
   }
 
-  VecGetValues(this->values_, nComponents, indices.data(), result.data());
   return result;
 }
 
-//! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+//! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode)
+setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
-  VecSetValues(this->values_, 1, (PetscInt*)&dofGlobalNo, &value, petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
+  this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
-//! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+//! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode)
+setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  VecSetValues(this->values_, dofGlobalNos.size(), (PetscInt*)dofGlobalNos.data(), values.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. flushSetValues must be called
+  this->values_->setValues(0, dofLocalNos.size(), (PetscInt*)dofLocalNos.data(), values.data(), petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
 };

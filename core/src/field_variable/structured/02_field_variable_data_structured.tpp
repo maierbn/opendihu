@@ -27,11 +27,11 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   std::vector<std::string> componentNames(rhs.componentNames().size());
   std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), componentNames.begin());
 
-  initializeFromFieldVariable(rhs, name, componentNames);
-
-  // copy entries in values vector
+  // create new distributed petsc vec as copy of rhs values vector
   this->values_ = std::make_shared<PartitionedPetscVec>(rhs.partitionedPetscVec());
-  //VecCopy(rhs.values(), this->values_);
+
+  // initialize internal fields from rhs (values vector is not changed because it already exists)
+  initializeFromFieldVariable(rhs, name, componentNames);
 }
 
 //! constructor with mesh, name and components
@@ -78,25 +78,26 @@ template<typename FieldVariableType>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
+  // copy member variables
   this->name_ = name;
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
+  this->nEntries_ = fieldVariable.nLocalDofs() * nComponents;
 
   // copy component names
   assert(nComponents == (int)componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
-  this->nEntries_ = fieldVariable.nLocalDofs() * nComponents;
-
   LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_
    << ", components: " << nComponents << ", Vec nEntries: " << this->nEntries_;
 
   assert(this->nEntries_ != 0);
-
-  // create a new values vector for the new field variable
-
-  // create vector
-  PetscUtility::createVector(this->values, this->nEntries_, this->name_, this->mesh_->partition());
+  
+  // if there is not yet a values vector, create PartitionedPetscVec
+  if (this->values_ == nullptr)
+  {
+    initializeValuesVector();
+  }
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -129,9 +130,10 @@ values()
 
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-set(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
-    std::size_t nEntries, bool isGeometryField, Vec &values)
+initialize(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
+           std::size_t nEntries, bool isGeometryField)
 {
+  // set member variables from arguments
   this->name_ = name;
   this->isGeometryField_ = isGeometryField;
 
@@ -140,7 +142,12 @@ set(std::string name, std::vector<std::string> &componentNames, std::array<eleme
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
   nEntries_ = nEntries;
-  values_ = values;
+  
+  // if there is not yet a values vector, create PartitionedPetscVec
+  if (this->values_ == nullptr)
+  {
+    initializeValuesVector();
+  }
 }
 
 //! write a exelem file header to a stream, for a particular element

@@ -18,11 +18,11 @@ FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimensi
 FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name) :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
+  // create new distributed petsc vec as copy of rhs values vector
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(rhs.partitionedPetscVec());
+
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
-
-  // copy entries in values vector
-  VecCopy(rhs.values(), this->values_);
 }
 
 // constructor with mesh, name and components
@@ -531,7 +531,7 @@ parseFromExnodeFile(std::string content)
   }
 
   // finialize Petsc vectors
-  this->flushSetValues();
+  this->finishVectorManipulation();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
@@ -615,11 +615,14 @@ initializeValuesVector()
   }
   VLOG(1) << "total entries: " << this->nEntries_;
 
-  // create Petsc vector
-  this->values_ = std::make_shared<Vec>();
+  // create PartitionedPetscVector
+  if (this->values_ == nullptr)
+  {
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(
+      this->mesh_->meshPartition(), this->name_, this->nEntries_
+    );
+  }
 
-  PetscUtility::createVector(*this->values_, this->nEntries_, this->name_, this->mesh_->partition());
-  
   // set vector for all components
   for (auto &component : this->component_)
   {
@@ -677,6 +680,7 @@ template<typename FieldVariableType>
 void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
+  // set member variables
   this->name_ = name;
   this->exfileNo_ = 0;
   this->nEntries_ = 0;

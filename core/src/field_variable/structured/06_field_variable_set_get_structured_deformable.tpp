@@ -13,7 +13,7 @@ template<int D,typename BasisFunctionType,int nComponents>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs)
 {
-  VecCopy(rhs.values_, this->values_);
+  this->values_ = rhs.partitionedPetsVec();
 }
 
 };

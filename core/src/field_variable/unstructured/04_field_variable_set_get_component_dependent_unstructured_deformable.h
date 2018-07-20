@@ -28,8 +28,8 @@ public:
   //! avoid name hiding of "getValue" in parent classes
   using FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
 
-  //! get a single value from global dof no. for all components
-  std::array<double,nComponents> getValue(node_no_t dofGlobalNo);
+  //! get a single value from local dof no. for all components
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo);
 
 
 };
@@ -55,14 +55,14 @@ public:
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
 
-  //! get a single value from global dof no. for all components
-  double getValue(node_no_t dofGlobalNo);
+  //! get a single value from local dof no. for all components
+  double getValue(node_no_t dofLocalNo);
 
-  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  void setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
+  //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+  void setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
 
-  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
-  void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+  void setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
 };
 

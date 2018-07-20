@@ -47,6 +47,9 @@ public:
   //! number of nodes in total, in the given coordinate direction 
   global_no_t globalSize(int coordinateDirection);
   
+  //! get if the local partition touches the right/top/back border
+  bool localPartitionIsAtBorder(coordinateDirection);
+  
   //! get a vector with the local sizes on every rank
   std::vector<element_no_t> &localSizesOnRanks(int coordinateDirection);
   

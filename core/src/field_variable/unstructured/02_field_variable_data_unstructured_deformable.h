@@ -142,7 +142,7 @@ public:
   void output(std::ostream &stream) const;
 
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
-  virtual void flushSetValues() = 0;
+  virtual void finishVectorManipulation() = 0;
   
   //! return the internal partitioned petsc vec
   std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec();

@@ -7,7 +7,7 @@
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
-#include "spatial_discretization/finite_element_method/05_timestepping_explicit.h"
+#include "spatial_discretization/finite_element_method/06_timestepping_implicit.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 #include "basis_function/mixed.h"
@@ -76,15 +76,15 @@ public:
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
- * use inheritage hierarchy until file 05_timestepping.h
+ * use inheritage hierarchy until file 06_timestepping.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :
-  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodTimeSteppingImplicit<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
+  using FiniteElementMethodTimeSteppingImplicit<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeSteppingImplicit;
 
 };
 

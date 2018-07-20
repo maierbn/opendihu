@@ -11,12 +11,12 @@ namespace SpatialDiscretization
 /** class used for timestepping as for diffusion equation
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class FiniteElementMethodTimeStepping :
+class FiniteElementMethodTimeSteppingExplicit :
   public FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>,
   public DiscretizableInTime
 {
 public:
-  FiniteElementMethodTimeStepping(DihuContext context);
+  FiniteElementMethodTimeSteppingExplicit(DihuContext context);
 
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();

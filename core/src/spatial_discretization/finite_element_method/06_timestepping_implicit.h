@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spatial_discretization/finite_element_method/04_rhs.h"
+#include "spatial_discretization/finite_element_method/05_timestepping_explicit.h"
 
 #include "mesh/mesh.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
@@ -11,12 +11,11 @@ namespace SpatialDiscretization
 /** class used for timestepping as for diffusion equation
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class FiniteElementMethodTimeStepping :
-  public FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>,
-  public DiscretizableInTime
+class FiniteElementMethodTimeSteppingImplicit :
+  public FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>
 {
 public:
-  FiniteElementMethodTimeStepping(DihuContext context);
+  FiniteElementMethodTimeSteppingImplicit(DihuContext context);
 
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();

@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/05_timestepping.h"
+#include "spatial_discretization/finite_element_method/06_timestepping_implicit.h"
 
 #include <Python.h>
 #include <iostream>
@@ -20,19 +20,14 @@ namespace SpatialDiscretization
 {
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(DihuContext context)
-  : FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>(context),
-  DiscretizableInTime(SolutionVectorMapping(true))
+FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
+FiniteElementMethodTimeSteppingImplicit(DihuContext context)
+  : FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>(context)
 {
-  // the solutionVectorMapping_ object stores the information which range of values of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splittings. Since there are no internal values
-  // in this FEM, set the range to all values.
-  solutionVectorMapping_.setOutputRange(0, this->data_.mesh()->nNodes());
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 initialize()
 {
   this->data_.initialize();
@@ -48,28 +43,32 @@ initialize()
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+constexpr int FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 nComponents()
 {
   return 1;   // this may be different for structural mechanics
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+Mat &FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 systemMatrix()
 {
   return this->systemMatrix_;
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 preComputeSystemMatrix(double timeStepWidth)
 {
-  Mat &systemMatrix=this.systemMatrix_;
+  Mat &systemMatrix=this->systemMatrix_;
+  Mat &massMatrix=this->data_.massMatrix;
+  Mat &stiffnessMatrix=this->data_.stiffnessMatrix;
+  
+  
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   //Au^(t+1)=u^(t)
@@ -87,7 +86,7 @@ solveLinearSystem(Vec &input, Vec &output)
   
    // non zero initial values
   PetscScalar scalar = .5;
-  ierr = VecSet(result, scalar); CHKERRV(ierr);
+  ierr = VecSet(output, scalar); CHKERRV(ierr);
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
   
   // solve the system
@@ -105,7 +104,7 @@ solveLinearSystem(Vec &input, Vec &output)
 
 /*
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 recoverRightHandSideStrongForm(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
@@ -142,12 +141,12 @@ recoverRightHandSideStrongForm(Vec &result)
 
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 checkDimensions(Mat &systemMatrix, Vec &input)
 {
 #ifndef NDEBUG
   int nRows, nColumns;
-  MatGetSize(stiffnessMatrix, &nRows, &nColumns);
+  MatGetSize(systemMatrix, &nRows, &nColumns);
   int nEntries;
   VecGetSize(input, &nEntries);
   if (nColumns != nEntries)
@@ -160,7 +159,7 @@ checkDimensions(Mat &systemMatrix, Vec &input)
 
 /*
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   // this method computes output = M^{-1}*K*input
@@ -182,14 +181,14 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
 */
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-bool FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+bool FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 knowsMeshType()
 {
   return true;
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeSteppingImplicit<BasisOnMeshType, QuadratureType, Term>::
 mesh()
 {
   return FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::mesh();

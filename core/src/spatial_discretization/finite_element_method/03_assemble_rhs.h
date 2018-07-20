@@ -47,3 +47,4 @@ protected:
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/03_assemble_rhs.tpp"
+#include "spatial_discretization/finite_element_method/03_mass_matrix.tpp"

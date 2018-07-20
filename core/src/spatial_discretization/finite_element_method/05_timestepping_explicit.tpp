@@ -19,8 +19,8 @@ namespace SpatialDiscretization
 {
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(DihuContext context)
+FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
+FiniteElementMethodTimeSteppingExplicit(DihuContext context)
   : FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>(context),
   DiscretizableInTime(SolutionVectorMapping(true))
 {
@@ -31,7 +31,7 @@ FiniteElementMethodTimeStepping(DihuContext context)
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 initialize()
 {
   this->data_.initialize();
@@ -47,14 +47,14 @@ initialize()
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+constexpr int FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 nComponents()
 {
   return 1;   // this may be different for structural mechanics
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 recoverRightHandSideStrongForm(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
@@ -89,7 +89,7 @@ recoverRightHandSideStrongForm(Vec &result)
 
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 checkDimensions(Mat &stiffnessMatrix, Vec &input)
 {
 #ifndef NDEBUG
@@ -106,7 +106,7 @@ checkDimensions(Mat &stiffnessMatrix, Vec &input)
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+void FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   // this method computes output = M^{-1}*K*input
@@ -127,14 +127,14 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-bool FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+bool FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 knowsMeshType()
 {
   return true;
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeSteppingExplicit<BasisOnMeshType, QuadratureType, Term>::
 mesh()
 {
   return FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::mesh();

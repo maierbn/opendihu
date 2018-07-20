@@ -39,13 +39,17 @@ template<typename BasisOnMeshType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGetComponent<BasisOnMeshType,nComponents>::
 getValue(node_no_t dofGlobalNo)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<PetscInt,nComponents> indices;
   std::array<double,nComponents> result;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    indices[componentNo] = dofGlobalNo*nComponents + componentNo;
+    indices[componentNo] = componentNo*nDofs + dofGlobalNo;
   }
 
   VecGetValues(this->values_, nComponents, indices.data(), result.data());

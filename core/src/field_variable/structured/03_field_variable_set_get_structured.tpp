@@ -16,6 +16,8 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
+  // get number of dofs
+  assert(this->mesh_);
   const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
   // set stride to nDofsPerNode if Hermite, else to 1
@@ -31,10 +33,10 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   // store the array indices for values_ array in dofGlobalNo
   std::vector<PetscInt> indices(nValues,0);
   dof_no_t indexNo = 0;
-  for (dof_no_t dofGlobalNo=0; dofGlobalNo<nDofs; dofGlobalNo+=stride)
+  for (dof_no_t dofGlobalNo = 0; dofGlobalNo < nDofs; dofGlobalNo += stride)
   {
     assert(indexNo < nValues);
-    indices[indexNo++] = dofGlobalNo*nComponents + componentNo;
+    indices[indexNo++] = componentNo*nDofs + dofGlobalNo;
   }
 
   VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
@@ -50,10 +52,14 @@ getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   // store the array indices for values_ array in dofGlobalNo
   for (int i=0; i<N; i++)
   {
-    dofGlobalNo[i] = dofGlobalNo[i]*nComponents + componentNo;
+    dofGlobalNo[i] = componentNo*nDofs + dofGlobalNo[i];
   }
 
   VecGetValues(this->values_, N, (PetscInt *)dofGlobalNo.data(), values.data());
@@ -66,11 +72,15 @@ getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   // store the array indices for values_ array in dofGlobalNo
   const int nValues = dofGlobalNo.size();
   for (int i=0; i<nValues; i++)
   {
-    dofGlobalNo[i] = dofGlobalNo[i]*nComponents + componentNo;
+    dofGlobalNo[i] = componentNo*nDofs + dofGlobalNo[i];
     
     assert(dofGlobalNo[i] >= 0 && dofGlobalNo[i] < this->nEntries_);
   }
@@ -87,6 +97,10 @@ template<int N>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<int,N*nComponents> indices;
   std::array<double,N*nComponents> result;
 
@@ -96,7 +110,7 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
   {
     for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
     {
-      indices[j] = dofGlobalNo[i]*nComponents + componentIndex;
+      indices[j] = componentIndex*nDofs + dofGlobalNo[i];
     }
   }
 
@@ -121,13 +135,17 @@ getElementValues(int componentNo, element_no_t elementNo,
   assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   assert(componentNo >= 0 && componentNo < nComponents);
   
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   std::array<PetscInt,nDofsPerElement> indices;
 
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    indices[dofIndex] = this->mesh_->getDofNo(elementNo,dofIndex)*nComponents + componentNo;
+    indices[dofIndex] = componentNo*nDofs + this->mesh_->getDofNo(elementNo,dofIndex);
   }
 
   VecGetValues(this->values_, nDofsPerElement, indices.data(), values.data());
@@ -140,6 +158,10 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 {
   assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   std::array<int,nDofsPerElement*nComponents> indices;
   std::array<double,nDofsPerElement*nComponents> result;
@@ -152,7 +174,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   {
     for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
     {
-      indices[j] = this->mesh_->getDofNo(elementNo,dofIndex)*nComponents + componentIndex;
+      indices[j] = componentIndex*nDofs + this->mesh_->getDofNo(elementNo,dofIndex);
     }
   }
 
@@ -178,7 +200,11 @@ getValue(int componentNo, node_no_t dofGlobalNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
-  PetscInt index = dofGlobalNo*nComponents + componentNo;
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
+  PetscInt index = componentNo*nDofs + dofGlobalNo;
 
   double result;
   VecGetValues(this->values_, 1, &index, &result);
@@ -190,6 +216,10 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<int,nComponents> indices;
 
   // loop over dof numbers
@@ -201,7 +231,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
     // prepare lookup indices for PETSc vector values_
     for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
     {
-      indices[componentIndex] = dofGlobalNo*nComponents + componentIndex;
+      indices[componentIndex] = componentIndex*nDofs + dofGlobalNo;
     }
 
     VecSetValues(this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
@@ -215,12 +245,16 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<int,nComponents> indices;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    indices[componentIndex] = dofGlobalNo*nComponents + componentIndex;
+    indices[componentIndex] = componentIndex*nDofs + dofGlobalNo;
   }
 
   VecSetValues(this->values_, nComponents, indices.data(), value.data(), petscInsertMode);

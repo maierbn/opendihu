@@ -21,12 +21,11 @@ getValue(node_no_t dofGlobalNo)
   std::array<double,nComponents> resultVector;
 
   // transform global dof no.s to vector indices of first component
-  PetscInt valuesVectorIndex = dofGlobalNo*nComponents;
-
-  // create indices vector with values {0,1,2,...,nComponents-1}
   std::array<PetscInt,nComponents> indices;
-  for(int i=0; i<nComponents; i++)
-    indices[i] = valuesVectorIndex + i;
+  for(int componentIndex=0; componentIndex<nComponents; componentIndex++)
+  {
+    indices[componentIndex] = componentIndex*this->nLocalDofs() + dofGlobalNo;
+  }
 
   // get values and assign them to result values vector
   VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());

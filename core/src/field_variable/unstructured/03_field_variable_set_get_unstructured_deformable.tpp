@@ -18,6 +18,10 @@ template<int N>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<double,nComponents> resultVector;
 
   // transform global dof no.s to vector indices of first component
@@ -26,11 +30,13 @@ getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComp
     // TODO: map to global no
     int valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
 
-    // create indices vector with values {0,1,2,...,nComponents-1}
+    // create indices vector
     std::array<int,nComponents> indices;
-    for(int i=0; i<nComponents; i++)
-      indices[i] = valuesVectorIndex + i;
-
+    for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      indices[componentIndex] = componentIndex*nDofs + dofGlobalNo[valueIndex];
+    }
+    
     // get values and assign them to result values vector
     VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
     values[valueIndex] = resultVector;
@@ -95,6 +101,10 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 {
   assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
   
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // TODO: local to global
@@ -106,11 +116,13 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   {
     dof_no_t valuesVectorIndex = dofGlobalNo[valueIndex]*nComponents;
 
-    // create indices vector with values {0,1,2,...,nComponents-1}
+    // create indices vector
     std::array<PetscInt,nComponents> indices;
-    for(int i=0; i<nComponents; i++)
-      indices[i] = valuesVectorIndex + i;
-
+    for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      indices[componentIndex] = componentIndex*nDofs + dofGlobalNo[valueIndex];
+    }
+    
     // get values and assign them to result values vector
     VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());
     values[valueIndex] = resultVector;
@@ -150,6 +162,10 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<int,nComponents> indices;
 
   // loop over dof numbers
@@ -161,7 +177,7 @@ setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nCo
     // prepare lookup indices for PETSc vector values_
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      indices[componentNo] = dofGlobalNo*nComponents + componentNo;
+      indices[componentNo] = componentNo*nDofs + dofGlobalNo;
     }
 
     VecSetValues(*this->values_, nComponents, indices.data(), values[i].data(), petscInsertMode);
@@ -175,12 +191,16 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
+  // get number of dofs
+  assert(this->mesh_);
+  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+
   std::array<int,nComponents> indices;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    indices[componentNo] = dofGlobalNo*nComponents + componentNo;
+    indices[componentNo] = componentNo*nDofs + dofGlobalNo;
   }
 
   VecSetValues(*this->values_, nComponents, indices.data(), value.data(), petscInsertMode);

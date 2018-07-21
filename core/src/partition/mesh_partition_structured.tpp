@@ -223,42 +223,36 @@ extractLocalNumbers(std::vector<T> &vector)
   
   if (D == 1)
   {
-    for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+    assert(vector.size() >= beginGlobal_[0] + localSizeWithGhosts_[0]);
+    for (global_no_t i = beginGlobal_[0]; i < beginGlobal_[0] + localSizeWithGhosts_[0]; i++)
     {
       result[resultIndex++] = vector[i];
     }
   }
   else if (D == 2)
   {
-    for (global_no_t j = beginGlobal_[1]; j < localSizeWithGhosts_[1]; j++)
+    for (global_no_t j = beginGlobal_[1]; j < beginGlobal_[1] + localSizeWithGhosts_[1]; j++)
     {
-      for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+      for (global_no_t i = beginGlobal_[0]; i < beginGlobal_[0] + localSizeWithGhosts_[0]; i++)
       {
-        result[resultIndex++] = vector[i];
+        result[resultIndex++] = vector[j*globalSize(0) + i];
       }
     }
   }
   else if (D == 3)
   {
-    for (global_no_t k = beginGlobal_[2]; k < localSizeWithGhosts_[2]; k++)
+    for (global_no_t k = beginGlobal_[2]; k < beginGlobal_[2] + localSizeWithGhosts_[2]; k++)
     {
-      for (global_no_t j = beginGlobal_[1]; j < localSizeWithGhosts_[1]; j++)
+      for (global_no_t j = beginGlobal_[1]; j < beginGlobal_[1] + localSizeWithGhosts_[1]; j++)
       {
-        for (global_no_t i = beginGlobal_[0]; i < localSizeWithGhosts_[0]; i++)
+        for (global_no_t i = beginGlobal_[0]; i < beginGlobal_[0] + localSizeWithGhosts_[0]; i++)
         {
-          result[resultIndex++] = vector[k*globalSize(2)...];
+          result[resultIndex++] = vector[k*globalSize(1)*globalSize(0) + j*globalSize(0) + i];
         }
       }
     }
   }
   
-   = (global_no_t)x;
-    beginGlobal_[1] = (global_no_t)y;
-    beginGlobal_[2] = (global_no_t)z;
-    localSizeWithGhosts_[0] = (element_no_t)m;
-    localSizeWithGhosts_[1] = (element_no_t)n;
-    localSizeWithGhosts_[2] = (element_no_t)p;
-    
 }
   
 }  // namespace

@@ -111,7 +111,8 @@ initialize()
   
   // create a mesh if there is not yet one assigned
   mesh_ = context_.meshManager()->mesh<>(specificSettings_);
-  LOG(DEBUG) << "Cellml mesh has " << mesh_->nLocalNodes() << " nodes";
+  mesh_->initialize();
+  LOG(DEBUG) << "Cellml mesh has " << mesh_->nLocalNodes() << " local nodes";
 
   //store number of instances
   nInstances_ = mesh_->nLocalNodes();

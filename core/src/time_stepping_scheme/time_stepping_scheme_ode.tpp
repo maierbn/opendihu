@@ -35,7 +35,7 @@ setInitialValues()
 
   // set from settings
   std::vector<double> values;
-  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, values);
+  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, values, 0.0);
 
   //LOG(DEBUG) << "set initial values to " << values;
 

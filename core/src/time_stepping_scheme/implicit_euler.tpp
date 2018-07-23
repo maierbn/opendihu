@@ -56,7 +56,7 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::run()
+void ImplicitEuler<DiscretizableInTime>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }

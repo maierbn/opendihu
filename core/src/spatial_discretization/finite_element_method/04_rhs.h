@@ -65,7 +65,7 @@ public:
   void transferRhsToWeakForm();
 
   //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  void setMassMatrix();
+  //void setMassMatrix();
 };
 
 /** specialisation for RegularFixed not linear Lagrange, and other meshes of any dimension D (do proper integration of rhs)

@@ -11,7 +11,7 @@ namespace SpatialDiscretization
  * What to integrate is given by the class template Term.
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class AssembleStiffnessMatrix :
+class AssembleFiniteElementMatrix :
   public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
 {
 public:
@@ -19,10 +19,15 @@ public:
   using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
 
 protected:
+  //! set entries in mass matrix
   void setStiffnessMatrix();
+  
+  //! set entries in mass matrix
+  void setMassMatrix();
 
 };
 
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/01_assemble_stiffness_matrix.tpp"
+#include "spatial_discretization/finite_element_method/01_assemble_mass_matrix.tpp"

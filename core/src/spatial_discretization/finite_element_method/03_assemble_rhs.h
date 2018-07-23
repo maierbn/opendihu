@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/02_finite_element_matrix.h"
 
 namespace SpatialDiscretization
 {
@@ -11,18 +11,17 @@ namespace SpatialDiscretization
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy= Term>
 class AssembleRightHandSide :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
+  public FiniteElementMethodMatrix<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
-
+  using FiniteElementMethodMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
 
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
-  void setMassMatrix();
+  //void setMassMatrix();
 };
 
 /**
@@ -30,21 +29,19 @@ protected:
  */
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename QuadratureType,typename Term>
 class AssembleRightHandSide<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
+  public FiniteElementMethodMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
-
+  using FiniteElementMethodMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::FiniteElementMethodMatrix;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm(){}
 
   //! set the matrix that transforms a vector of rhs value into a vector that contains the right hand side in discretized form for FEM
-  void setMassMatrix(){}
+  //void setMassMatrix(){}
 };
 
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/03_assemble_rhs.tpp"
-#include "spatial_discretization/finite_element_method/03_mass_matrix.tpp"

@@ -3,11 +3,11 @@
 #include "equation/type_traits.h"
 
 #include "spatial_discretization/spatial_discretization.h"
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/02_finite_element_matrix.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
-#include "spatial_discretization/finite_element_method/06_timestepping_implicit.h"
+#include "spatial_discretization/finite_element_method/05_time_stepping.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 #include "basis_function/mixed.h"
@@ -22,7 +22,7 @@ namespace SpatialDiscretization
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term, typename = BasisFunctionType>
 class FiniteElementMethod :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
 };
@@ -32,12 +32,12 @@ public:
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
-    ::FiniteElementMethodStiffnessMatrix;
+  using FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+    ::FiniteElementMethodMatrix;
 
 protected:
   //! initialize rhs vector to 0
@@ -76,15 +76,15 @@ public:
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
- * use inheritage hierarchy until file 06_timestepping.h
+ * use inheritage hierarchy until file 05_timestepping_explicit.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :
-  public FiniteElementMethodTimeSteppingImplicit<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodTimeSteppingImplicit<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeSteppingImplicit;
+  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
 
 };
 

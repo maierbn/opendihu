@@ -1,4 +1,4 @@
-#include "partition/mesh_partition.h"
+#include "partition/01_mesh_partition.h"
 
 namespace Partition
 {
@@ -6,7 +6,7 @@ namespace Partition
 template<int D, typename MeshType, typename BasisFunctionType>
 MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
 MeshPartition(std::array<node_no_t,D> globalSize, std::shared_ptr<RankSubset> rankSubset) :
-  globalSize_(globalSize), rankSubset_(rankSubset)
+  MeshPartitionBase(rankSubset), globalSize_(globalSize)
 {
   typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
  
@@ -27,7 +27,7 @@ MeshPartition(std::array<node_no_t,D> globalSize, std::shared_ptr<RankSubset> ra
     localSizeWithGhosts_[0] = (element_no_t)m;
     
     // get number of ranks in each coordinate direction
-    nRanks_[0] = rankSubset_->size();
+    nRanks_[0] = this->rankSubset_->size();
     ierr = DMDAGetInfo(dm_, NULL, NULL, NULL, NULL, &nRanks_[0], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
     
     localSizesOnRanks_[0].resize(nRanks_[0]);
@@ -102,6 +102,7 @@ MeshPartition(std::array<node_no_t,D> globalSize, std::shared_ptr<RankSubset> ra
     localSizesOnRanks_[2] = lz;
   }
   
+  this->initializeLocalDofs();
 }
 
 template<int D, typename MeshType, typename BasisFunctionType>
@@ -174,15 +175,6 @@ endGlobal(int coordinateDirection)
   assert(coordinateDirection < D);
   return beginGlobal_[coordinateDirection] + localSizeWithGhosts_[coordinateDirection];
 }
-  
-  globalSize_
-  
-template<int D, typename MeshType, typename BasisFunctionType>
-MPI_Comm MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-mpiCommunicator()
-{
-  return rankSubset_->mpiCommunicator();
-}
 
 template<int D, typename MeshType, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
@@ -253,6 +245,8 @@ extractLocalNumbers(std::vector<T> &vector)
     }
   }
   
+  // store values
+  vector.assign(result.begin(), result.end());
 }
   
 }  // namespace

@@ -22,7 +22,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
-  int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1);
+  int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1, PythonUtility::Positive);
 
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;

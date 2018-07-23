@@ -28,6 +28,9 @@ public:
   //! number of elements in the mesh
   virtual element_no_t nLocalElements() const = 0;
   
+  //! get the meshPartition of this mesh (defined in BasisOnMesh)
+  virtual std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase() = 0;
+  
   //! set the name of the mesh
   void setMeshName(std::string meshName);
   

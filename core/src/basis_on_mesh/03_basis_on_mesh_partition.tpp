@@ -34,5 +34,12 @@ meshPartition()
   return meshPartition_;
 }
 
+template<typename MeshType,typename BasisFunctionTypes>
+std::shared_ptr<Partition::MeshPartitionBase> BasisOnMeshPartition<MeshType,BasisFunctionType>::
+meshPartitionBase()
+{
+  return std::static_pointer_cast<Partition::MeshPartitionBase>(meshPartition_);
+}
+
 
 };  // namespace

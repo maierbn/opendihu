@@ -16,7 +16,8 @@ public:
   Manager(PyObject *settings);
  
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh
-  std::shared_ptr<Partition> createPartitioning(global_no_t globalSize);
+  template<typename BasisOnMesh>
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioning(global_no_t globalSize);
 
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRankSubset);

@@ -24,6 +24,9 @@ public:
 
   //! get the partition
   Partition::MeshPartition &meshPartition();
+  
+  //! get the partition as pointer of type meshPartitionBase, this is in the itnerface in mesh
+  std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase();
 
 private:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions

@@ -26,20 +26,19 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 setInitialValues()
 {
-  dof_no_t nUnknowns = data_->nUnknowns();
-  Vec &solution = data_->solution().values();
+  // set initial values as given in settings, or set to zero if not given
+  std::vector<double> localValues;
+  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, localValues, 0.0);
 
-  // initialize with 0
-  PetscErrorCode ierr;
-  ierr = VecSet(solution, 0.0); CHKERRV(ierr);
-
-  // set from settings
-  std::vector<double> values;
-  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, values, 0.0);
-
+  std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+    std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
+    mesh->meshPartition()->extractLocalNumbers(localValues);
+  }
   //LOG(DEBUG) << "set initial values to " << values;
 
-  PetscUtility::setVector(values, solution);
+  data_->solution().setValues(mesh->meshPartition()->localDofs(), localValues);
 }
 
 template<typename DiscretizableInTimeType>

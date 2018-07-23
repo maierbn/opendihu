@@ -3,8 +3,10 @@
 #include <memory>
 #include <petscdmda.h>
 
+#include "partition/00_mesh_partition_base.h"
 #include "control/types.h"
 #include "partition/rank_subset.h"
+
 
 namespace Partition
 {
@@ -19,7 +21,8 @@ class MeshPartition
 
 /** partial specialization for structured meshes */
 template<int D, typename MeshType, typename BasisFunctionType>
-class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>
+class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>> :
+  public MeshPartitionBase
 {
 public:
  
@@ -53,9 +56,6 @@ public:
   //! get a vector with the local sizes on every rank
   std::vector<element_no_t> &localSizesOnRanks(int coordinateDirection);
   
-  //! get the MPI communicator that is needed for the work portion
-  MPI_Comm mpiCommunicator();
-  
   //! get an AO object
   AO &applicationOrdering();
   
@@ -72,7 +72,6 @@ protected:
   std::array<node_no_t,D> globalSize_;    ///< global size
   std::array<int,D> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
  
-  std::shared_ptr<RankSubset> rankSubset_;  ///< the set of ranks that compute something where this partition is a part of, also holds the MPI communciator
   std::array<std::vector<element_no_t>,D> localSizesOnRanks_;  ///< the local sizes on the ranks
 };
 
@@ -81,11 +80,32 @@ protected:
  *  not implemented yet
  */
 template<int D, typename BasisFunctionType>
-class MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>
+class MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>> : 
+  public MeshPartitionBase
 {
 public:
   
+  //! constructor
+  MeshPartition(element_no_t globalSize, std::shared_ptr<RankSubset> rankSubset);
+  
+  //! number of entries in the current partition (this usually refers to the elements)
+  element_no_t localSize();
+  
+  //! number of nodes in total
+  global_no_t globalSize();
+  
+  //! get an AO object
+  AO &applicationOrdering();
+  
+  //! from a vector of global numbers remove all that are non-local
+  template <typename T>
+  void extractLocalNumbers(std::vector<T> &vector);
+
+protected:
+ 
+  element_no_t globalSize_;   ///< the global size, i.e. number of elements or nodes of the whole problem
+  element_no_t localSize_;   ///< the local size, i.e. the number of elements or nodes on the local rank
 };
 
 }  // namespace
-#include "partition/mesh_partition_structured.tpp"
+#include "partition/01_mesh_partition_structured.tpp"

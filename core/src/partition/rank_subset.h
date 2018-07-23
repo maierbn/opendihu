@@ -19,6 +19,9 @@ public:
   //! constructor that constructs a whole vector of ranks
   RankSubset(std::vector<int> ranks);
  
+  //! constructor that constructs a rank subset with all ranks (MPICommWorld)
+  RankSubset();
+ 
   //! number of ranks in the current rank list
   element_no_t size();
 

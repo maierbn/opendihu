@@ -3,6 +3,20 @@
 namespace Partition 
 {
   
+RankSubset::RankSubset()
+{
+  // create copy MPI_COMM_WORLD
+  MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_);
+ 
+  // get number of ranks
+  int nRanks;
+  MPI_Comm_size(mpiCommunicator_, &nRanks);
+  
+  // create list of all ranks
+  rankNo_.resize(nRanks);
+  std::iota(rankNo_.begin(), rankNo_.end(), 0);
+}
+  
 RankSubset::RankSubset(int singleRank)
 {
   rankNo_.clear();
@@ -36,12 +50,12 @@ RankSubset::RankSubset(std::vector<int> ranks) : rankNo_(ranks)
   MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_);
 }
 
-std::vector< int >::const_iterator RankSubset::begin()
+std::vector<int>::const_iterator RankSubset::begin()
 {
   return rankNo_.cbegin();
 }
 
-std::vector< int >::const_iterator RankSubset::end()
+std::vector<int>::const_iterator RankSubset::end()
 {
   return rankNo_.cend();
 }

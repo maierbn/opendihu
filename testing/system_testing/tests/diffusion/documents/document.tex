@@ -16,7 +16,7 @@ We solve the following scalar equation,
 %
 with homogeneous Neumann boundary conditions,
 %
-\begin{equation}\label{eq:diffusion}
+\begin{equation}\label{eq:diffusion_bc}
   \begin{array}{lll}
     ∇u\cdot \bfn = 0.
   \end{array}
@@ -70,147 +70,187 @@ the solution is
 \subsubsection{Result summary}
 %
 %
-\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log.txt}
+\begin{frame}{movie}
+  \begin{figure}[h!]
+    \centering    
+    \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
+      \includegraphics[width=0.7\textwidth]{no_results.png}%
+    }{../tests/diffusion/results/1d_structured_deformable_hermite.mp4}
+    \caption{\lstinline{1d_structured_deformable_hermite}}
+  \end{figure} 
+\end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_deformable_hermite.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_hermite_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_deformable_hermite_numerical_analytical}}
+    }{../tests/diffusion/results/1d_structured_deformable_linear.mp4}
+    \caption{\lstinline{1d_structured_deformable_linear}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_deformable_linear.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_linear_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_deformable_linear_numerical_analytical}}
+    }{../tests/diffusion/results/1d_structured_deformable_quadratic.mp4}
+    \caption{\lstinline{1d_structured_deformable_quadratic}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_deformable_quadratic.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_quadratic_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_deformable_quadratic_numerical_analytical}}
+    }{../tests/diffusion/results/1d_structured_regular_fixed_hermite.mp4}
+    \caption{\lstinline{1d_structured_regular_fixed_hermite}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_regular_fixed_hermite.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_hermite_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_regular_fixed_hermite_numerical_analytical}}
+    }{../tests/diffusion/results/1d_structured_regular_fixed_linear.mp4}
+    \caption{\lstinline{1d_structured_regular_fixed_linear}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_regular_fixed_linear.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_linear_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_regular_fixed_linear_numerical_analytical}}
+    }{../tests/diffusion/results/1d_structured_regular_fixed_quadratic.mp4}
+    \caption{\lstinline{1d_structured_regular_fixed_quadratic}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_structured_regular_fixed_quadratic.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_quadratic_numerical_analytical.mp4}
-    \caption{\lstinline{1d_structured_regular_fixed_quadratic_numerical_analytical}}
+    }{../tests/diffusion/results/1d_unstructured_deformable_hermite.mp4}
+    \caption{\lstinline{1d_unstructured_deformable_hermite}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_unstructured_deformable_hermite.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_hermite_numerical_analytical.mp4}
-    \caption{\lstinline{1d_unstructured_deformable_hermite_numerical_analytical}}
+    }{../tests/diffusion/results/1d_unstructured_deformable_linear.mp4}
+    \caption{\lstinline{1d_unstructured_deformable_linear}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_unstructured_deformable_linear.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_linear_numerical_analytical.mp4}
-    \caption{\lstinline{1d_unstructured_deformable_linear_numerical_analytical}}
+    }{../tests/diffusion/results/1d_unstructured_deformable_quadratic.mp4}
+    \caption{\lstinline{1d_unstructured_deformable_quadratic}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_1d_unstructured_deformable_quadratic.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_quadratic_numerical_analytical.mp4}
-    \caption{\lstinline{1d_unstructured_deformable_quadratic_numerical_analytical}}
+    }{../tests/diffusion/results/2d_structured_deformable_hermite.mp4}
+    \caption{\lstinline{2d_structured_deformable_hermite}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_2d_structured_deformable_hermite.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_deformable_hermite_numerical_analytical.mp4}
-    \caption{\lstinline{2d_structured_deformable_hermite_numerical_analytical}}
+    }{../tests/diffusion/results/2d_structured_deformable_linear.mp4}
+    \caption{\lstinline{2d_structured_deformable_linear}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_2d_structured_deformable_linear.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_deformable_linear_numerical_analytical.mp4}
-    \caption{\lstinline{2d_structured_deformable_linear_numerical_analytical}}
+    }{../tests/diffusion/results/2d_structured_regular_fixed_linear.mp4}
+    \caption{\lstinline{2d_structured_regular_fixed_linear}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_2d_structured_regular_fixed_linear.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_regular_fixed_linear_numerical_analytical.mp4}
-    \caption{\lstinline{2d_structured_regular_fixed_linear_numerical_analytical}}
+    }{../tests/diffusion/results/2d_structured_regular_fixed_quadratic.mp4}
+    \caption{\lstinline{2d_structured_regular_fixed_quadratic}}
   \end{figure} 
 \end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_2d_structured_regular_fixed_quadratic.txt}
+
 %
 \begin{frame}{movie}
   \begin{figure}[h!]
     \centering    
     \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
       \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_regular_fixed_quadratic_numerical_analytical.mp4}
-    \caption{\lstinline{2d_structured_regular_fixed_quadratic_numerical_analytical}}
+    }{../tests/diffusion/results/2d_unstructured_deformable_linear.mp4}
+    \caption{\lstinline{2d_unstructured_deformable_linear}}
   \end{figure} 
 \end{frame}
-%
-\begin{frame}{movie}
-  \begin{figure}[h!]
-    \centering    
-    \movie[label=show3,width=0.7\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=0.7\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_unstructured_deformable_linear_numerical_analytical.mp4}
-    \caption{\lstinline{2d_unstructured_deformable_linear_numerical_analytical}}
-  \end{figure} 
-\end{frame}
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/diffusion/results/log_recent_2d_unstructured_deformable_linear.txt}
+
 %
 %
 %\begin{figure}[h!]

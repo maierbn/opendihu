@@ -108,6 +108,7 @@ config = {
     "nodePositions": node_positions,
     "elements": elements,
     "physicalExtent": physicalExtent,
+    "prefactor": 0.6,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
     "maxIterations": 500000,

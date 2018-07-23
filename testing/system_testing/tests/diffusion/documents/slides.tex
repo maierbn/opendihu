@@ -5,98 +5,115 @@
 %
 %
 %
-%======================================================================
-
+%%======================================================================
+%
 \begin{frame}
-\section{Diffusion Equation}
-%
-We solve the following scalar equation,
-%
-\begin{equation}\label{eq:diffusion}
-  \begin{array}{lll}
-    u_t(\bfx,t) = c\,Δu(\bfx,t), \qquad \bfx \in \Omega, \quad t \in [0,t_\text{end}],
-  \end{array}
-\end{equation}
-%
-with homogeneous Neumann boundary conditions,
-%
-\begin{equation}\label{eq:diffusion_bc}
-  \begin{array}{lll}
-    ∇u\cdot \bfn = 0.
-  \end{array}
-\end{equation}
-
+  \section{Diffusion Equation}
+  %
+  We solve the following scalar equation,
+  %
+  \begin{equation}\label{eq:diffusion}
+    \begin{array}{lll}
+      u_t(\bfx,t) = c\,Δu(\bfx,t), \qquad \bfx \in \Omega, \quad t \in [0,t_\text{end}],
+    \end{array}
+  \end{equation}
+  %
+  with homogeneous Neumann boundary conditions,
+  %
+  \begin{equation}\label{eq:diffusion_bc}
+    \begin{array}{lll}
+      ∇u\cdot \bfn = 0.
+    \end{array}
+  \end{equation}
 \end{frame}
-
+%
 %======================================================================
-
+%
 \begin{frame}
-\subsection{1D Experiment}
+  \subsection{1D Experiment}
+  %
+  The used parameters are
+  \begin{equation*}
+    \begin{array}{lll}
+      c = 0.6,\qquad \Omega = [0,4], \qquad t_\text{end}=0.5.
+    \end{array}
+  \end{equation*}
+  The discretization parameters are
+  \begin{table}[h!]
+    \begin{center}
+      \begin{tabular}{l|l}
+        \textbf{Parameter} & \textbf{Value}\\
+        \hline
+        Number of elements & 20\\
+        Number of timesteps & 1500\\
+      \end{tabular}
+    \end{center}
+    \caption{discretization parameters}
+    \label{tab:table1}
+  \end{table}
+\end{frame}
 %
-The used parameters are
-\begin{equation*}
-  \begin{array}{lll}
-    c = 0.6,\qquad \Omega = [0,4], \qquad t_\text{end}=0.5.
-  \end{array}
-\end{equation*}
-The discretization parameters are
-\begin{table}[h!]
-  \begin{center}
-    \begin{tabular}{l|l}
-      \textbf{Parameter} & \textbf{Value}\\
-      \hline
-      Number of elements & 20\\
-      Number of timesteps & 1500\\
-    \end{tabular}
-  \end{center}
-  \caption{discretization parameters}
-  \label{tab:table1}
-\end{table}
-
-\end{frame}
-
 %======================================================================
-
+%
 \begin{frame}
-\subsection{2D Experiment}
-
-\subsection{Analytical Solution}
-The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
-\begin{equation*}
-  \begin{array}{lll}
-    H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
-    H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
-  \end{array}
-\end{equation*}
-For $\Omega=\R^d$ and initial condition
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
-  \end{array}
-\end{equation*}
-the solution is
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
-  \end{array}
-\end{equation*}
-
+  \subsection{2D Experiment}\subsection{Analytical Solution}
+  The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
+  \begin{equation*}
+    \begin{array}{lll}
+      H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
+      H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
+    \end{array}
+  \end{equation*}
+  For $\Omega=\R^d$ and initial condition
+  \begin{equation*}
+    \begin{array}{lll}
+      u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
+    \end{array}
+  \end{equation*}
+  the solution is
+  \begin{equation*}
+    \begin{array}{lll}
+      u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
+    \end{array}
+  \end{equation*}
 \end{frame}
-
+%
 %======================================================================
-
-% path to mp4 files must begin with tests/
-% the final pdf only shows the movies if it is located under opendihu/testing/functional_testing/
-
+%
+% OLD (using multimedia package):
+% Path to mp4 files must begin with tests/
+% The final pdf only shows the movies if it is located under opendihu/testing/functional_testing/
+%
+% NEW (using movie15 package): 
+% The paths must be begin with ../../tests, the file is included in the final pdfs
+%
+% Note that there is a warning that says "Package `movie15' is obsolete and superseded by `media9'", but media9 is incompatible with most viewers on linux.
+%
 \begin{frame}
   \frametitle{Results}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_deformable_hermite.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_deformable_hermite.mp4}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.48\textwidth}%
+      \centering%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_hermite.pdf}%
+    \end{subfigure}%
+    \caption{\lstinline{1d_structured_deformable_hermite}}
+  \end{figure} 
+  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_hermite.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+  \vspace*{-0.2cm}
+  \begin{figure}[h!]
+    \begin{subfigure}[t]{0.5\textwidth}%
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_deformable_hermite.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -114,29 +131,10 @@ the solution is
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
     \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_deformable_hermite.mp4}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.48\textwidth}%
-      \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_hermite.pdf}%
-    \end{subfigure}%
-    \caption{\lstinline{1d_structured_deformable_hermite}}
-  \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_hermite.txt}
-\end{frame}
-%
-%======================================================================
-%
-\begin{frame}{}
-  \vspace*{-0.2cm}
-  \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_deformable_linear.mp4}
+    %
+    %  
+    %\animation{../../tests/diffusion/results/1d_structured_deformable_linear.mp4}
+    \animation{../../tests/diffusion/results/1d_structured_deformable_linear.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -153,10 +151,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_deformable_quadratic.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_deformable_quadratic.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -173,10 +169,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_regular_fixed_hermite.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_regular_fixed_hermite.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -193,10 +187,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_regular_fixed_linear.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_regular_fixed_linear.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -213,10 +205,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_structured_regular_fixed_quadratic.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_structured_regular_fixed_quadratic.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -233,10 +223,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_unstructured_deformable_hermite.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_unstructured_deformable_hermite.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -253,10 +241,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_unstructured_deformable_linear.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_unstructured_deformable_linear.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -273,10 +259,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/1d_unstructured_deformable_quadratic.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/1d_unstructured_deformable_quadratic.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -293,10 +277,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/2d_structured_deformable_hermite.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/2d_structured_deformable_hermite.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -313,10 +295,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/2d_structured_deformable_linear.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/2d_structured_deformable_linear.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -333,10 +313,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-      \centering    
-      \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-        \includegraphics[width=\textwidth]{../no_results.png}%
-      }{../../tests/diffusion/results/2d_structured_regular_fixed_linear.mp4}
+      \centering  
+      \animation{../../tests/diffusion/results/2d_structured_regular_fixed_linear.mp4}
     \end{subfigure} 
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -353,10 +331,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/2d_structured_regular_fixed_quadratic.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/2d_structured_regular_fixed_quadratic.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
@@ -373,10 +349,8 @@ the solution is
   \vspace*{-0.2cm}
   \begin{figure}[h!]
     \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{../no_results.png}%
-    }{../../tests/diffusion/results/2d_unstructured_deformable_linear.mp4}
+    \centering
+    \animation{../../tests/diffusion/results/2d_unstructured_deformable_linear.mp4}
     \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%

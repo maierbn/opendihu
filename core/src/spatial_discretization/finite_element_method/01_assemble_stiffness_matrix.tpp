@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/01_assemble_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/01_assemble_finite_element_matrix.h"
 
 #include <Python.h>
 #include <memory>
@@ -14,7 +14,7 @@ namespace SpatialDiscretization
 
 // 1D,2D,3D stiffness matrix of Deformable mesh
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::
+void AssembleFiniteElementMatrix<BasisOnMeshType, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   const int D = BasisOnMeshType::dim();

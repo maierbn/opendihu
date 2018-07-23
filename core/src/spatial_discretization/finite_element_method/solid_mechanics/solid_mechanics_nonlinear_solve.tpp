@@ -466,7 +466,7 @@ solve()
      LOG(DEBUG) << "done, now object is " << solverMatrixTangentStiffness;
   }
 
-  typedef FiniteElementMethodStiffnessMatrix<
+  typedef FiniteElementMethodMatrix<
     BasisOnMeshType,
     QuadratureType,
     Term,

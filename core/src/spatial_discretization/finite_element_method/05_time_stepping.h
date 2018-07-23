@@ -11,18 +11,24 @@ namespace SpatialDiscretization
 /** class used for timestepping as for diffusion equation
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class FiniteElementMethodTimeSteppingExplicit :
+class FiniteElementMethodTimeStepping :
   public FiniteElementMethodBaseRhs<BasisOnMeshType, QuadratureType, Term>,
   public DiscretizableInTime
 {
 public:
-  FiniteElementMethodTimeSteppingExplicit(DihuContext context);
+  FiniteElementMethodTimeStepping(DihuContext context);
 
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();
 
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  
+  //! precomputes the system matrix A=I-M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
+  void preComputeSystemMatrix(double timeStepWidth);
+  
+  //! solves the linear system of equations resulting from the Implicit Euler method time discretization
+  void solveLinearSystem(Vec &input, Vec &output);
 
   //! initialize for use with timestepping
   void initialize() override;
@@ -46,8 +52,16 @@ protected:
 
   //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
   void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
+  
+  Mat &systemMatrix();
+  
+  private:
+    
+  Mat systemMatrix_;
 };
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/05_timestepping_explicit.tpp"
+#include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
+#include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"
+#include "spatial_discretization/finite_element_method/05_time_stepping_implicit.tpp"

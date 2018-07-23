@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/03_assemble_rhs.h"
+#include "spatial_discretization/finite_element_method/01_assemble_finite_element_matrix.h"
 
 #include <Python.h>
 #include <memory>
@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "spatial_discretization/spatial_discretization.h"
+#include "spatial_discretization/finite_element_method/03_integrand_rhs.h"
 //#include "time_stepping_scheme/discretizable_in_time.h"
 #include "control/runnable.h"
 #include "control/dihu_context.h"
@@ -24,13 +25,12 @@
 #include "control/types.h"
 
 
-
 namespace SpatialDiscretization
 {
 
-// 1D,2D,3D rhs discretization matrix, i.e. matrix that transforms rhs values to discretized form, of Deformable mesh
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy>
-void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
+// 1D,2D,3D mass matrix of Deformable mesh
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void AssembleFiniteElementMatrix<BasisOnMeshType, QuadratureType, Term>::
 setMassMatrix()
 {
   // check if matrix discretization matrix exists

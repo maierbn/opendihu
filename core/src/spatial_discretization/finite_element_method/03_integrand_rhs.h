@@ -12,6 +12,7 @@ template<int D,typename EvaluationsType,typename BasisOnMeshType,typename Term,t
 class IntegrandRightHandSide
 {
 public:
+  static EvaluationsType evaluateIntegrand(const std::array<Vec3,D> &jacobian, const std::array<double,D> xi){LOG(FATAL)<<"evaluateIntegrand for Equation without rhs.";};
 };
 
 /** partial specialization for equations that have a rhs

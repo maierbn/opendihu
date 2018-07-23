@@ -5,7 +5,7 @@
 #include "spatial_discretization/finite_element_method/00_base.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_boundary_conditions.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_common.h"
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/02_finite_element_matrix.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/type_traits.h"
 #include "mesh/face_t.h"
@@ -31,7 +31,7 @@ BasisOnMesh::Mixed<
  * Specialisation for incompressible solid mechanics, mixed formulation with static condensation
  */
 template<typename HighOrderBasisOnMeshType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
-class FiniteElementMethodStiffnessMatrix<
+class FiniteElementMethodMatrix<
   MixedBasisOnMeshTemplate<HighOrderBasisOnMeshType, completePolynomialOrder>,
   MixedQuadratureType,
   Term,
@@ -57,7 +57,7 @@ public:
  * The solverSolutionVariable contains the D components of displacements based on HighOrderBasisOnMeshType, then 1 component of pressure based on LowOrderBasisOnMeshType.
  */
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-class FiniteElementMethodStiffnessMatrix<
+class FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -106,7 +106,7 @@ protected:
  * Specialisation for incompressible solid mechanics, not mixed formulation, i.e. penalty formulation,
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-class FiniteElementMethodStiffnessMatrix<
+class FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,

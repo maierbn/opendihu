@@ -16,6 +16,19 @@ using isStructuredWithDim = std::enable_if_t<
   MeshType
 >;
 
+// structured meshes
+template<typename MeshType>
+using isStructured = std::enable_if_t<
+  std::is_same<MeshType, StructuredRegularFixedOfDimension<1>>::value
+  || std::is_same<MeshType, StructuredRegularFixedOfDimension<2>>::value
+  || std::is_same<MeshType, StructuredRegularFixedOfDimension<3>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<1>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<2>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<3>>::value
+  ,
+  MeshType
+>;
+
 // deformable meshes
 template<typename MeshType>
 using isDeformable = std::enable_if_t<

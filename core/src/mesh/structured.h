@@ -35,6 +35,7 @@ public:
 
 protected:
   std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal_;    ///< the number of stored elements in each coordinate direction (the locally computed portion)
+  std::array<global_no_t, D> nElementsPerCoordinateDirectionGlobal_;    ///< the global number of stored elements in each coordinate direction. This variable is set when reading from config the first time.
 };
 
 };    // namespace

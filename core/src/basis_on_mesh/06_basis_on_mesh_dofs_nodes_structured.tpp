@@ -231,27 +231,7 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 initializeGeometryField()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, initializeGeometryField, size of nodePositions vector: " << localNodePositions_.size();
-/*
-  // compute number of (local) dofs
-  dof_no_t nLocalDofs = this->nLocalDofs();
 
-  // construct geometry field without Petsc vec
-  
-  // create petsc vector that contains the node positions
-  Vec values;
-  PetscErrorCode ierr;
-  ierr = VecCreate(PETSC_COMM_WORLD, &values);  CHKERRV(ierr);
-  ierr = PetscObjectSetName((PetscObject) values, "geometry"); CHKERRV(ierr);
-
-  // initialize size of vector
-  const int nEntries = nDofs * 3;   // dofs always contain 3 entries for every entry (x,y,z)
-  ierr = VecSetSizes(values, PETSC_DECIDE, nEntries); CHKERRV(ierr);
-
-  // set sparsity type and other options
-  ierr = VecSetFromOptions(values);  CHKERRV(ierr);
-
-  bool isGeometryField = true;   // if the field is a geometry field
-  */
   // set geometry field
   this->geometryField_ = std::make_unique<GeometryFieldType>();
   

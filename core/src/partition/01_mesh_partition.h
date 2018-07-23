@@ -107,5 +107,38 @@ protected:
   element_no_t localSize_;   ///< the local size, i.e. the number of elements or nodes on the local rank
 };
 
+/** partial specialization for Mesh::None, i.e. for not mesh-related partitions
+ */
+template<>
+class MeshPartition<Mesh::None> :
+  public MeshPartitionBase
+{
+public:
+  
+  //! constructor
+  MeshPartition(element_no_t globalSize, std::shared_ptr<RankSubset> rankSubset);
+  
+  //! number of entries in the current partition (this usually refers to the elements)
+  element_no_t localSize();
+  
+  //! number of nodes in total
+  global_no_t globalSize();
+  
+  //! get an AO object
+  AO &applicationOrdering();
+  
+  //! from a vector of global numbers remove all that are non-local
+  template <typename T>
+  void extractLocalNumbers(std::vector<T> &vector);
+
+protected:
+ 
+  global_no_t globalSize_;   ///< the global size, i.e. number of elements or nodes of the whole problem
+  element_no_t localSize_;   ///< the local size, i.e. the number of elements or nodes on the local rank
+  global_no_t beginGlobal_;  ///< first index of the local portion
+};
+
 }  // namespace
+#include "partition/01_mesh_partition_none.tpp"
 #include "partition/01_mesh_partition_structured.tpp"
+#include "partition/01_mesh_partition_unstructured.tpp"

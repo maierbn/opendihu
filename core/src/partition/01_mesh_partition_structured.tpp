@@ -106,6 +106,57 @@ MeshPartition(std::array<node_no_t,D> globalSize, std::shared_ptr<RankSubset> ra
 }
 
 template<int D, typename MeshType, typename BasisFunctionType>
+MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
+MeshPartition(std::array<node_no_t,D> localSize, std::array<node_no_t,D> globalSize, std::array<int,D> beginGlobal, std::array<int,D> nRanks, std::shared_ptr<RankSubset> rankSubset) :
+  localSizeWithGhosts_(localSize), globalSize_(globalSize), beginGlobal_(beginGlobal), nRanks_(nRanks)
+{
+  // partitioning is already prescribed as every rank knows its own local size
+ 
+  // add ghost layer to localSize
+  for (int i = 0; i < D; i++)
+  {
+    localSizeWithGhosts_[i] += 2;
+    beginGlobal_[i] -= 1;
+    
+    if (beginGlobal_[i] == -1)
+    {
+      beginGlobal_[i] = 0;
+      localSizeWithGhosts_[i]--;
+    }
+    
+    if (beginGlobal_[i] + localSizeWithGhosts_[i] == globalSize_[i])
+    {
+      localSizeWithGhosts_[i]--;
+    }
+  }
+ 
+  // determine localSizesOnRanks_
+  std::array<int,D> ownLocalSize;
+  for (int i = 0; i < D; i++)
+  {
+    ownLocalSize[i] = localSize(i);
+    localSizesOnRanks_[i].resize(rankSubset->size());
+  }
+  MPIUtility::handleReturnValue(MPI_Allgather(&ownLocalSize[0], 1, MPI_INT, 
+                                              localSizesOnRanks_[0].data(), rankSubset->size(), MPI_INT, rankSubset->mpiCommunicator()));
+  
+  if (D >= 2)
+  {
+   MPIUtility::handleReturnValue(MPI_Allgather(&ownLocalSize[1], 1, MPI_INT, 
+                                              localSizesOnRanks_[1].data(), rankSubset->size(), MPI_INT, rankSubset->mpiCommunicator()));
+  
+  }
+  
+  if (D >= 3)
+  {
+   MPIUtility::handleReturnValue(MPI_Allgather(&ownLocalSize[2], 1, MPI_INT, 
+                                              localSizesOnRanks_[1].data(), rankSubset->size(), MPI_INT, rankSubset->mpiCommunicator()));
+  
+  }
+}
+  
+
+template<int D, typename MeshType, typename BasisFunctionType>
 AO &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
 applicationOrdering()
 {
@@ -122,6 +173,15 @@ applicationOrdering()
     ierr = AOView(ao_); CHKERRV(ierr);
   }
   return this->ao_;
+}
+
+//! get the local to global mapping for the current partition
+template<int D, typename MeshType, typename BasisFunctionType>
+ISLocalToGlobalMapping localToGlobalMapping()
+{
+  ISLocalToGlobalMapping localToGlobalMapping;
+  DMGetLocalToGlobalMapping(dm_, &localToGlobalMapping);
+  return localToGlobalMapping;
 }
 
 template<int D, typename MeshType, typename BasisFunctionType>
@@ -197,7 +257,7 @@ global_no_t globalSize(int coordinateDirection)
   return globalSize_[coordinateDirection];
 }
 
-//! get a vector with the local sizes on every rank
+//! get a vector with the local sizes on every rank, this is needed to create the DMDA in PartitionedPetscVec
 std::vector<element_no_t> &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
 localSizesOnRanks(int coordinateDirection)
 {

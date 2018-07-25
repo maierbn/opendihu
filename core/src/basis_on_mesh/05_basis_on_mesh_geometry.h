@@ -82,6 +82,15 @@ public:
 
   //! if the geometry field is set
   bool hasGeometryField();
+
+protected:
+ 
+  //! set up the geometry field
+  virtual void initializeGeometryField() = 0;
+  
+  //! set the values of the geometry field
+  virtual void setGeometryFieldValues() = 0;
+  
 };
 
 }  // namespace

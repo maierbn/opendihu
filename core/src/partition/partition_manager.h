@@ -19,9 +19,14 @@ public:
   template<typename BasisOnMesh>
   std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioning(global_no_t globalSize);
 
-  //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh
+  //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh, from global sizes
   template<int D, typename BasisOnMesh>
-  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructured(std::array<global_no_t,D> globalSize);
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredGlobal(std::array<global_no_t,D> globalSize);
+
+  //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh, from local sizes
+  //! @param nRanks The number of ranks in the coordinate directions.
+  template<int D, typename BasisOnMesh>
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredLocal(std::array<element_no_t,D> localSize, std::array<int,D> nRanks);
 
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRankSubset);

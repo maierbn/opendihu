@@ -8,9 +8,8 @@ namespace BasisOnMesh
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 void BasisOnMeshGeometry<MeshType,BasisFunctionType,DummyForTraits>::
 initialize(std::shared_ptr<Partition::Manager> partitionManager)
-{
- 
-  // create meshPartition and redistribute elements if necessary
+{ 
+  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
   BasisOnMeshPartition<MeshType,BasisFunctionType>::initialize();
  
   // pass a shared "this" pointer to the geometryField

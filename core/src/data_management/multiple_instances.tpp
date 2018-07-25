@@ -60,7 +60,7 @@ createPetscObjects()
 
 template<typename BasisOnMeshType,typename BaseDataType>
 dof_no_t MultipleInstances<BasisOnMeshType,BaseDataType>::
-nUnknowns()
+nLocalUnknowns()
 {
   return this->mesh_->nLocalNodes();
 }

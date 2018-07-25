@@ -11,6 +11,7 @@
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
+#include "partition/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat.h"
 
 namespace Data

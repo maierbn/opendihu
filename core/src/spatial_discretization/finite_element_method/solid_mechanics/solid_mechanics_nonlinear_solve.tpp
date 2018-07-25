@@ -244,9 +244,9 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
+      const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
-      this->reduceVector(displacements, this->data_.solverVariableSolution(), nUnknowns);
+      this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
 
   }
@@ -300,9 +300,9 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
+      const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
-      this->reduceVector(displacements, this->data_.solverVariableSolution(), nUnknowns);
+      this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
   }
   // set prescribed Dirchlet BC displacements values
@@ -345,13 +345,13 @@ debug()
 
    if (this->data_.computeWithReducedVectors())
    {
-     const int nUnknowns = this->nUnknowns();
+     const int nLocalUnknowns = this->nLocalUnknowns();
 
-     std::vector<double> reducedVector(nUnknowns - this->dirichletIndices_.size());
+     std::vector<double> reducedVector(nLocalUnknowns - this->dirichletIndices_.size());
      dof_no_t reducedIndex = 0;
      std::vector<dof_no_t>::const_iterator dirichletIndicesIter = this->dirichletIndices_.begin();
 
-     for (dof_no_t currentDofNo = 0; currentDofNo < nUnknowns; currentDofNo++)
+     for (dof_no_t currentDofNo = 0; currentDofNo < nLocalUnknowns; currentDofNo++)
      {
        // exclude variables for which Dirichlet BC are set
        if (dirichletIndicesIter != this->dirichletIndices_.end())
@@ -565,10 +565,10 @@ updateGeometryActual()
   // update geometry field from displacements
   if (BasisOnMeshType::dim() == 2)  // 2D problem
   {
-    const int nUnknowns3D = this->data_.mesh()->nLocalDofs() * 3;
+    const int nLocalUnknowns3D = this->data_.mesh()->nLocalDofs() * 3;
 
     // expand 2D vector to 3D vector fullIncrement
-    this->expandVectorTo3D(this->data_.displacements().values(), this->data_.fullIncrement(), nUnknowns3D);
+    this->expandVectorTo3D(this->data_.displacements().values(), this->data_.fullIncrement(), nLocalUnknowns3D);
 
     // w = alpha*x+y
     VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.fullIncrement());

@@ -80,7 +80,7 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename B
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data)
+initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data)
 {
   LOG(TRACE)<<"initializeBoundaryConditions";
 
@@ -163,21 +163,21 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nUnk
   for (; !PythonUtility::getOptionDictEnd(specificSettings, "dirichletBoundaryCondition");
        PythonUtility::getOptionDictNext<dof_no_t, double>(specificSettings, "dirichletBoundaryCondition", boundaryCondition))
   {
-    dof_no_t boundaryConditionUnknownsIndex = boundaryCondition.first;
+    dof_no_t boundaryConditionLocalUnknownsIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
 
-    if (boundaryConditionUnknownsIndex < 0)
+    if (boundaryConditionLocalUnknownsIndex < 0)
       continue;
 
-    if (boundaryConditionUnknownsIndex > nUnknowns)
+    if (boundaryConditionLocalUnknownsIndex > nLocalUnknowns)
     {
-      LOG(WARNING) << "Boundary condition specified for degree of freedom no. "<<boundaryConditionUnknownsIndex
-       <<", but scenario has only "<<nUnknowns<<" degrees of freedom.";
+      LOG(WARNING) << "Boundary condition specified for degree of freedom no. "<<boundaryConditionLocalUnknownsIndex
+       <<", but scenario has only "<<nLocalUnknowns<<" degrees of freedom.";
        continue;
     }
 
     // store values
-    dirichletIndices_.push_back(boundaryConditionUnknownsIndex);
+    dirichletIndices_.push_back(boundaryConditionLocalUnknownsIndex);
     dirichletValues_.push_back(boundaryConditionValue);
   }
   zeros_.resize(dirichletValues_.size(), 0.0);
@@ -339,7 +339,7 @@ applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPet
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-reduceVector(Vec &input, Vec &output, const int nUnknownsInputVector)
+reduceVector(Vec &input, Vec &output, const int nLocalUnknownsInputVector)
 {
   const double *inputData;
   double *outputData;
@@ -349,7 +349,7 @@ reduceVector(Vec &input, Vec &output, const int nUnknownsInputVector)
   dof_no_t reducedIndex = 0;
   std::vector<dof_no_t>::const_iterator dirichletIndicesIter = dirichletIndices_.begin();
 
-  for (dof_no_t currentDofNo = 0; currentDofNo < nUnknownsInputVector; currentDofNo++)
+  for (dof_no_t currentDofNo = 0; currentDofNo < nLocalUnknownsInputVector; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
     if (dirichletIndicesIter != dirichletIndices_.end())
@@ -370,7 +370,7 @@ reduceVector(Vec &input, Vec &output, const int nUnknownsInputVector)
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-expandVector(Vec &input, Vec &output, const int nUnknownsOutputVector)
+expandVector(Vec &input, Vec &output, const int nLocalUnknownsOutputVector)
 {
   const double *inputData;
   double *outputData;
@@ -381,7 +381,7 @@ expandVector(Vec &input, Vec &output, const int nUnknownsOutputVector)
   std::vector<dof_no_t>::const_iterator dirichletIndicesIter = dirichletIndices_.begin();
   std::vector<double>::const_iterator dirichletValuesIter = dirichletValues_.begin();
 
-  for (dof_no_t currentDofNo = 0; currentDofNo < nUnknownsOutputVector; currentDofNo++)
+  for (dof_no_t currentDofNo = 0; currentDofNo < nLocalUnknownsOutputVector; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
     if (dirichletIndicesIter != dirichletIndices_.end())
@@ -405,7 +405,7 @@ expandVector(Vec &input, Vec &output, const int nUnknownsOutputVector)
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D)
+expandVectorTo3D(Vec &input, Vec &output, const int nLocalUnknowns3D)
 {
   // compute number of reduced dofs
   assert(BasisOnMeshType::dim() == 2);
@@ -416,7 +416,7 @@ expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D)
   VecGetArray(output, &outputData);
 
   dof_no_t reducedIndex = 0;
-  for (dof_no_t currentDofNo = 0; currentDofNo < nUnknowns3D; currentDofNo++)
+  for (dof_no_t currentDofNo = 0; currentDofNo < nLocalUnknowns3D; currentDofNo++)
   {
     if (currentDofNo % 3 == 2)
     {
@@ -434,17 +434,17 @@ expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D)
 
 template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nUnknownsFull)
+reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nLocalUnknownsFull)
 {
   // compute number of reduced dofs
-  int nUnknownsReduced = nUnknownsFull - this->dirichletValues_.size();
+  int nLocalUnknownsReduced = nLocalUnknownsFull - this->dirichletValues_.size();
 
   std::vector<int> notConstraintIndices;
-  notConstraintIndices.reserve(nUnknownsReduced);
+  notConstraintIndices.reserve(nLocalUnknownsReduced);
 
   std::vector<dof_no_t>::const_iterator dirichletIndicesIter = dirichletIndices_.begin();
 
-  for (dof_no_t currentDofNo = 0; currentDofNo < nUnknownsFull; currentDofNo++)
+  for (dof_no_t currentDofNo = 0; currentDofNo < nLocalUnknownsFull; currentDofNo++)
   {
     // exclude variables for which Dirichlet BC are set
     if (dirichletIndicesIter != dirichletIndices_.end())
@@ -462,7 +462,7 @@ reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::s
   // create Petsc IS object of the rows and columns to keep
   IS isrow;
   PetscErrorCode ierr;
-  ierr = ISCreateGeneral(PETSC_COMM_WORLD, nUnknownsReduced, notConstraintIndices.data(), PETSC_COPY_VALUES, &isrow); CHKERRV(ierr);
+  ierr = ISCreateGeneral(PETSC_COMM_WORLD, nLocalUnknownsReduced, notConstraintIndices.data(), PETSC_COPY_VALUES, &isrow); CHKERRV(ierr);
 
   VLOG(1) << "non-reduced tangent stiffness matrix: " << PetscUtility::getStringMatrix(input);
   VLOG(1) << "rows to extract: " << notConstraintIndices << " target matrix object: " << output;

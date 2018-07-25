@@ -71,9 +71,9 @@ setFromSolverVariableSolution(Vec &solverSolutionVariable)
   if (this->data_.computeWithReducedVectors())
   {
     const int D = BasisOnMeshType::dim();
-    const int nUnknownsOutputVector = this->data_.mesh()->nLocalDofs() * D;
+    const int nLocalUnknownsOutputVector = this->data_.mesh()->nLocalDofs() * D;
 
-    this->expandVector(solverSolutionVariable, this->data_.displacements().values(), nUnknownsOutputVector);
+    this->expandVector(solverSolutionVariable, this->data_.displacements().values(), nLocalUnknownsOutputVector);
   }
   else
   {
@@ -135,11 +135,11 @@ const int FiniteElementMethodStiffnessMatrix<
   Equation::isIncompressible<Term>,
   BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
 >::
-nUnknowns()
+nLocalUnknowns()
 {
   const int D = BasisOnMeshType::dim();
-  const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
-  return nUnknowns;
+  const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
+  return nLocalUnknowns;
 }
 
 };    // namespace

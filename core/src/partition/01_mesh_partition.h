@@ -29,6 +29,10 @@ public:
   //! constructor, determine the decomposition by PETSc
   MeshPartition(std::array<node_no_t,D> globalSize, std::shared_ptr<RankSubset> rankSubset);
  
+  //! constructor from prescribed partition
+  MeshPartition(std::array<node_no_t,D> localSize, std::array<node_no_t,D> globalSize, 
+                std::array<int,D> nRanks, std::shared_ptr<RankSubset> rankSubset);
+  
   //! number of ranks in a coordinate direction
   int nRanks(int coordinateDirection);
   
@@ -56,8 +60,11 @@ public:
   //! get a vector with the local sizes on every rank
   std::vector<element_no_t> &localSizesOnRanks(int coordinateDirection);
   
-  //! get an AO object
+  //! get an AO object TODO: is this needed anywhere? If not, remove
   AO &applicationOrdering();
+  
+  //! get the local to global mapping for the current partition
+  ISLocalToGlobalMapping localToGlobalMapping();
   
   //! from a vector of global numbers remove all that are non-local
   template <typename T>
@@ -67,7 +74,7 @@ protected:
  
   DM dm_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information and cannot be used for real Petsc Vec and Mat objects, because they may have a different number of components.
   
-  std::array<global_no_t,D> beginGlobal_;   ///< global no.s of the lower left front corner of the domain (with ghost nodes)
+  std::array<int,D> beginGlobal_;   ///< global no.s of the lower left front corner of the domain (with ghost nodes)
   std::array<node_no_t,D> localSizeWithGhosts_;     ///< local size in the coordinate directions of the local portion (including ghost nodes)
   std::array<node_no_t,D> globalSize_;    ///< global size
   std::array<int,D> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
@@ -93,6 +100,9 @@ public:
   
   //! number of nodes in total
   global_no_t globalSize();
+  
+  //! get the local to global mapping for the current partition
+  ISLocalToGlobalMapping localToGlobalMapping();
   
   //! get an AO object
   AO &applicationOrdering();
@@ -123,6 +133,9 @@ public:
   
   //! number of nodes in total
   global_no_t globalSize();
+  
+  //! get the local to global mapping for the current partition
+  ISLocalToGlobalMapping localToGlobalMapping();
   
   //! get an AO object
   AO &applicationOrdering();

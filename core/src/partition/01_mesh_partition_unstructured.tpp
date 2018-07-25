@@ -21,6 +21,21 @@ applicationOrdering()
 {
 }
 
+//! get the local to global mapping for the current partition
+template<int D, typename BasisFunctionType>
+ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>::
+localToGlobalMapping()
+{
+  PetscErrorCode ierr;
+  std::vector<PetscInt> globalDofNos(localSize());
+  std::iota(globalDofNos.begin(), globalDofNos.end(), 0);
+  ISLocalToGlobalMapping localToGlobalMapping;
+  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, localSize(), 
+                                      globalDofNos.size(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(ierr);
+
+  return localToGlobalMapping;
+}
+
 //! number of entries in the current partition
 template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::

@@ -66,7 +66,7 @@ increment()
 
 template<typename BasisOnMeshType,int nComponents>
 dof_no_t TimeStepping<BasisOnMeshType,nComponents>::
-nUnknowns()
+nLocalUnknowns()
 {
   return this->mesh_->nLocalNodes() * nComponents;
 }

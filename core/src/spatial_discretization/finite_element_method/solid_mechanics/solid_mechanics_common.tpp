@@ -1302,7 +1302,7 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
     Vec &wIntReduced = this->data_.internalVirtualWorkReduced();
 
     const int D = BasisOnMeshType::dim();
-    const int nUnknowns = this->data_.mesh()->nLocalDofs() * D;
+    const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
 
     this->computeInternalVirtualWork(wInt);
     LOG(DEBUG) << "--                           dW_int: " << PetscUtility::getStringVector(wInt);
@@ -1310,8 +1310,8 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
     this->getExternalVirtualWork(wExt);
 
     // remove entries that correspond to Dirichlet BC
-    this->reduceVector(wInt, wIntReduced, nUnknowns);
-    this->reduceVector(wExt, resultVec, nUnknowns);
+    this->reduceVector(wInt, wIntReduced, nLocalUnknowns);
+    this->reduceVector(wExt, resultVec, nLocalUnknowns);
 
     LOG(DEBUG) << "--                           dW_int: " << PetscUtility::getStringVector(wInt);
     LOG(DEBUG) << "--                           dW_ext: " << PetscUtility::getStringVector(wExt);
@@ -1342,10 +1342,10 @@ initialize()
   this->data_.initialize();
 
   // initialize external virtual energy
-  this->initializeBoundaryConditions(this->data_.externalVirtualWorkIsConstant(), this->data_.nUnknowns(), this->specificSettings_, this->data_);
+  this->initializeBoundaryConditions(this->data_.externalVirtualWorkIsConstant(), this->data_.nLocalUnknowns(), this->specificSettings_, this->data_);
 
-  // nUnknowns gives the number of unknowns including Dirichlet BC values, for mixed formulation number of displacement and pressure unknowns, for penalty formulation only displacements unknowns
-  const int vectorSize = this->nUnknowns() - this->dirichletValues_.size();
+  // nLocalUnknowns gives the number of unknowns including Dirichlet BC values, for mixed formulation number of displacement and pressure unknowns, for penalty formulation only displacements unknowns
+  const int vectorSize = this->nLocalUnknowns() - this->dirichletValues_.size();
 
   // initialize Vecs that are used by nonlinear solver
   this->data_.initializeSolverVariables(vectorSize);
@@ -1397,13 +1397,13 @@ computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshTy
   if (this->data_.computeWithReducedVectors())
   {
     // for mixed formulation sum of number of u and p unknowns
-    const int nUnknownsFull = this->nUnknowns();
+    const int nLocalUnknownsFull = this->nLocalUnknowns();
 
     // Compute new stiffness matrix from current displacements in this->data_.tangentStiffnessMatrix(). This uses the full vectors.
     this->setStiffnessMatrix();
 
     // create new reduced stiffness matrix by copying the non-zero entries
-    this->reduceMatrix(this->data_.tangentStiffnessMatrix(), solverStiffnessMatrix, nUnknownsFull);
+    this->reduceMatrix(this->data_.tangentStiffnessMatrix(), solverStiffnessMatrix, nLocalUnknownsFull);
   }
   else
   {

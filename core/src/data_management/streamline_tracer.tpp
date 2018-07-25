@@ -93,7 +93,7 @@ gradient()
 
 template<typename BasisOnMeshType,typename BaseDataType>
 dof_no_t StreamlineTracer<BasisOnMeshType,BaseDataType>::
-nUnknowns()
+nLocalUnknowns()
 {
   return this->mesh_->nLocalNodes();
 }

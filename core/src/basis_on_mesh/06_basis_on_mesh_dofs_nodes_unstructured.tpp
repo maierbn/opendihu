@@ -48,4 +48,24 @@ getNodePositions(std::vector<double> &nodes) const
   }
 }
 
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+initialize()
+{ 
+  // initialize the geometry field without values and determine the number of elements, this is implemented in 04_basis_on_mesh_data_unstructured.tpp
+  this->initializeGeometryField();
+
+  // call initialize from parent class
+  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::
+    initialize();
+  
+  if (!this->noGeometryField_)
+  {
+    // set values in geometry field
+    this->setGeometryFieldValues();
+  }
+}
+
+
 };  // namespace

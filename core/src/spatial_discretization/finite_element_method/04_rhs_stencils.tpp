@@ -29,7 +29,7 @@ transferRhsToWeakForm()
   element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
-  dof_no_t nUnknowns = this->data_.nUnknowns();
+  dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
 
   LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
@@ -53,7 +53,7 @@ transferRhsToWeakForm()
   PetscUtility::getVectorEntries(rightHandSide, vectorValues);
 
   // loop over all dofs and set values with stencilCenter
-  for (node_no_t dofNo = 1; dofNo < nUnknowns-1; dofNo++)
+  for (node_no_t dofNo = 1; dofNo < nLocalUnknowns-1; dofNo++)
   {
     double value =
       (stencilCenter[center-1]*vectorValues[dofNo-1]
@@ -70,7 +70,7 @@ transferRhsToWeakForm()
     + stencilSide[1]*vectorValues[dofNo+1]) * elementLength;
   ierr = VecSetValue(rightHandSide, 0, value, INSERT_VALUES); CHKERRV(ierr);
 
-  dofNo = nUnknowns-1;
+  dofNo = nLocalUnknowns-1;
   value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo-1]) * elementLength;
@@ -1045,7 +1045,7 @@ setMassMatrix()
     element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
     double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
-    dof_no_t nUnknowns = this->data_.nUnknowns();
+    dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
 
     LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
@@ -1065,7 +1065,7 @@ setMassMatrix()
     const double stencilSide[2] = {1./6.*2, 1./6.*1};
 
     // loop over all dofs and set values in massMatrix with stencilCenter
-    for (node_no_t dofNo = 1; dofNo < nUnknowns-1; dofNo++)
+    for (node_no_t dofNo = 1; dofNo < nLocalUnknowns-1; dofNo++)
     {
       ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
       ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES); CHKERRV(ierr);
@@ -1077,7 +1077,7 @@ setMassMatrix()
     ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     ierr = MatSetValue(massMatrix, dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
 
-    dofNo = nUnknowns-1;
+    dofNo = nLocalUnknowns-1;
     ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
     ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
 

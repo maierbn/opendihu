@@ -492,4 +492,22 @@ parseFromSettings(PyObject *settings)
   }
 }
 
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+initializeGeometryField()
+{
+  // this gets called from initialize in 06_basis_on_mesh_dofs_nodes
+  // it has to determine the number of elements or everything that is needed to create a meshPartition 
+  // (this is done in initialize of 03_basis_on_mesh_partition_unstructured.tpp)
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+setGeometryFieldValues()
+{
+  // this gets called from initialize in 06_basis_on_mesh_dofs_nodes
+  // after the geometry field got their mesh and meshPartition
+ 
+}
+
 };  // namespace

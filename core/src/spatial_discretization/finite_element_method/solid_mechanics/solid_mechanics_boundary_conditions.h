@@ -14,10 +14,10 @@ class SolidMechanicsBoundaryConditions
 public:
 
   //! copy all values that are not constrained by dirichlet BC from the input to the output vector, it is no problem if the output vector is bigger than needed
-  void reduceVector(Vec &input, Vec &output, const int nUnknownsInputVector);
+  void reduceVector(Vec &input, Vec &output, const int nLocalUnknownsInputVector);
 
   //! reverse operation to reduceVector, adds values of Dirichlet BC
-  void expandVector(Vec &input, Vec &output, const int nUnknownsOutputVector);
+  void expandVector(Vec &input, Vec &output, const int nLocalUnknownsOutputVector);
 
   //! set entries in displacements to Dirichlet BC values
   void applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMeshType,Term> &data);
@@ -29,15 +29,15 @@ public:
   void applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> matrix, Data::FiniteElements<BasisOnMeshType,Term> &data);
 
   //! This transforms a 2D mesh input vector to a 3D mesh output vector by inserting 0's. It can only be called for 2D problems.
-  void expandVectorTo3D(Vec &input, Vec &output, const int nUnknowns3D);
+  void expandVectorTo3D(Vec &input, Vec &output, const int nLocalUnknowns3D);
 
 protected:
 
   //! extract the submatrix that only contains entries for dofs that are not constraint by Dirichlet BCs
-  void reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nUnknowns);
+  void reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nLocalUnknowns);
 
   //! initialize Dirichlet boundary conditions
-  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data);
 
   //! print boundary conditions
   void printBoundaryConditions();

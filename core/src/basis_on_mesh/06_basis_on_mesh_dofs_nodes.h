@@ -91,6 +91,9 @@ public:
   //! return number of dofs
   dof_no_t nLocalDofs() const;
   
+  //! initialize geometry
+  virtual void initialize();
+  
 protected:
 
   //! parse the node from python config into a vector
@@ -124,6 +127,10 @@ public:
 
   //! return number of dofs
   dof_no_t nLocalDofs() const;
+  
+  //! initialize geometry
+  virtual void initialize();
+  
 };
 
 }  // namespace

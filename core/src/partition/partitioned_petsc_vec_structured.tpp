@@ -3,7 +3,7 @@
 //! constructor
 template<int D,typename MeshType,typename BasisFunctionType,int nComponents>
 PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructuredWithDim<D,MeshType>>::
-PartitionedPetscVec(MeshPartition &meshPartition, std::string name) :
+PartitionedPetscVec(MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>> &meshPartition, std::string name) :
   meshPartition_(meshPartition)
 {
   typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
@@ -15,14 +15,14 @@ PartitionedPetscVec(MeshPartition &meshPartition, std::string name) :
   if (D == 1)
   {
     int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::nAverageNodesPerElement();
-    ierr = DMDACreate1d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, meshPartition->globalSize(0), 1, ghostLayerWidth, 
+    ierr = DMDACreate1d(meshPartition_.mpiCommunicator(), DM_BOUNDARY_NONE, meshPartition_.globalSize(0), 1, ghostLayerWidth, 
                         meshPartition.localSizesOnRanks(0).data(), dm_); CHKERRV(ierr);
   }
   else if (D == 2)
   {
     int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::nAverageNodesPerElement();
-    ierr = DMDACreate2d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                 meshPartition->globalSize(0), meshPartition->globalSize(1), meshPartition->nRanks(0), meshPartition->nRanks(1),
+    ierr = DMDACreate2d(meshPartition_.mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
+                 meshPartition_.globalSize(0), meshPartition_.globalSize(1), meshPartition_.nRanks(0), meshPartition_.nRanks(1),
                  1, ghostLayerWidth, 
                  meshPartition.localSizesOnRanks(0).data(), meshPartition.localSizesOnRanks(1).data(),
                  dm_); CHKERRV(ierr);
@@ -30,9 +30,9 @@ PartitionedPetscVec(MeshPartition &meshPartition, std::string name) :
   else if (D == 3)
   {
     int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::nAverageNodesPerElement();
-    ierr = DMDACreate2d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                 meshPartition->globalSize(0), meshPartition->globalSize(1), meshPartition->globalSize(2), 
-                 meshPartition->nRanks(0), meshPartition->nRanks(1), meshPartition->nRanks(2),
+    ierr = DMDACreate2d(meshPartition_.mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
+                 meshPartition_.globalSize(0), meshPartition_.globalSize(1), meshPartition_.globalSize(2), 
+                 meshPartition_.nRanks(0), meshPartition_.nRanks(1), meshPartition_.nRanks(2),
                  1, ghostLayerWidth, meshPartition.localSizesOnRanks(0).data(), meshPartition.localSizesOnRanks(1).data(),
                  meshPartition.localSizesOnRanks(2).data(), dm_); CHKERRV(ierr);
   }
@@ -62,11 +62,11 @@ createVector(std::string name)
     if (false)
     {
       // initialize PETSc vector object
-      ierr = VecCreate(rankSubset_->mpiCommunicator(), &localVector[componentNo]); CHKERRV(ierr);
+      ierr = VecCreate(meshPartition_.mpiCommunicator(), &localVector[componentNo]); CHKERRV(ierr);
       ierr = PetscObjectSetName((PetscObject) localVector[componentNo], name.c_str()); CHKERRV(ierr);
 
       // initialize size of vector
-      ierr = VecSetSizes(localVector[componentNo], partition.localSize(), nEntries); CHKERRV(ierr);
+      ierr = VecSetSizes(localVector[componentNo], meshPartition_.localSize(), meshPartition_.globalSize()); CHKERRV(ierr);
 
       // set sparsity type and other options
       ierr = VecSetFromOptions(localVector[componentNo]); CHKERRV(ierr);

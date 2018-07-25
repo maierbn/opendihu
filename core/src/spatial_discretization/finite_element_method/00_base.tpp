@@ -16,6 +16,8 @@
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
+#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
 {
@@ -50,10 +52,10 @@ applyBoundaryConditions()
 
   LOG(TRACE)<<"applyBoundaryConditions";
 
-  dof_no_t nUnknowns = this->data_.nUnknowns();
+  dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
   node_no_t nNodes = this->data_.mesh()->nLocalNodes();
 
-  Vec &rightHandSide = data_.rightHandSide().values();
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
   PetscErrorCode ierr;
 
@@ -91,43 +93,47 @@ applyBoundaryConditions()
     dof_no_t boundaryConditionIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
 
+    // omit negative indices
     if (boundaryConditionIndex < 0)
       continue;
 
+    // translate BC index to nodeNo and dofIndex
     node_no_t boundaryConditionNodeNo = boundaryConditionIndex / BasisOnMeshType::nDofsPerNode();
     int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * BasisOnMeshType::nDofsPerNode();
     
-    if (boundaryConditionIndex > nUnknowns)
+    if (boundaryConditionIndex > nLocalUnknowns)
     {
       LOG(WARNING) << "Boundary condition specified for index " << boundaryConditionIndex
-        << " (on node " << boundaryConditionNodeNo << ", index " << boundaryConditionNodalDofIndex << ")"
-        << ", but scenario has only " << nUnknowns << " unknowns, " << nNodes << " nodes";
+        << " (on local node " << boundaryConditionNodeNo << ", index " << boundaryConditionNodalDofIndex << ")"
+        << ", but scenario has only " << nLocalUnknowns << " local unknowns, " << nNodes << " local nodes";
        continue;
     }
+    
+    //TODO handle if boundary conditions are given as global indices
     
     dof_no_t boundaryConditionDofNo = this->data_.mesh()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
 
     // set rhs entry to prescribed value
-    ierr = VecSetValue(rightHandSide, boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide->setValue(boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES);
 
     VLOG(1) << "  BC node " << boundaryConditionNodeNo << " index " << boundaryConditionIndex 
       << ", dof " << boundaryConditionDofNo << ", value " << boundaryConditionValue;
 
     // get the column number boundaryConditionDofNo of the stiffness matrix. It is needed for updating the rhs.
-    std::vector<int> rowIndices((int)nUnknowns);
+    std::vector<int> rowIndices((int)nLocalUnknowns);
     std::iota (rowIndices.begin(), rowIndices.end(), 0);    // fill with increasing numbers: 0,1,2,...
     std::vector<int> columnIndices = {(int)boundaryConditionDofNo};
 
-    std::vector<double> coefficients(nUnknowns);
+    std::vector<double> coefficients(nLocalUnknowns);
 
-    ierr = MatGetValues(stiffnessMatrix, nUnknowns, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
+    stiffnessMatrix->getValuesGlobalIndexing(nLocalUnknowns, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionDofNo;
-    ierr = MatZeroRowsColumns(stiffnessMatrix, 1, &matrixIndex, 1.0, NULL, NULL);  CHKERRV(ierr);
+    stiffnessMatrix->zeroRowsColums(1, &matrixIndex, 1.0);
 
     // update rhs
-    for (node_no_t rowNo = 0; rowNo < nUnknowns; rowNo++)
+    for (node_no_t rowNo = 0; rowNo < nLocalUnknowns; rowNo++)
     {
       if (rowNo == boundaryConditionDofNo)
        continue;
@@ -135,7 +141,7 @@ applyBoundaryConditions()
       // update rhs value to be f_new = f_old - m_{ij}*u_{i} where i is the index of the prescribed node,
       // m_{ij} is entry of stiffness matrix and u_{i} is the prescribed value
       double rhsSummand = -coefficients[rowNo] * boundaryConditionValue;
-      ierr = VecSetValue(rightHandSide, rowNo, rhsSummand, ADD_VALUES); CHKERRV(ierr);
+      rightHandSide->setValue(rowNo, rhsSummand, ADD_VALUES);
 
       LOG_IF(false,DEBUG) << "  in row " << rowNo << " add " << rhsSummand << " to rhs, coefficient: " << coefficients[rowNo];
     }
@@ -192,26 +198,27 @@ solve()
   // solve k*d=f for d
   LOG(TRACE) << "FiniteElementMethod::solve";
 
+  // if equation was set to none, do not solve the problem (this is for unit tests that don't test for solution)
   if (std::is_same<Term,Equation::None>::value)
    return;
 
-  PetscErrorCode ierr;
-
+  // get stiffness matrix
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
 
-  // create linear solver context
+  // get linear solver context from solver manager
   std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
   std::shared_ptr<KSP> ksp = linearSolver->ksp();
-
   assert(ksp != nullptr);
 
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (*ksp, stiffnessMatrix, stiffnessMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp, stiffnessMatrix.values(), stiffnessMatrix.values()); CHKERRV(ierr);
 
-  // non zero initial values
-  PetscScalar scalar = .5;
+  // non-zero initial values
+#if 0  
+  PetscScalar scalar = 0.5;
   ierr = VecSet(data_.solution().values(), scalar); CHKERRV(ierr);
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
+#endif
 
   // solve the system
   ierr = KSPSolve(*ksp, data_.rightHandSide().values(), data_.solution().values()); CHKERRV(ierr);
@@ -253,7 +260,7 @@ solve()
 
     std::vector<long int> nEntries = {nRows, nColumns};
 
-    MatGetValues(data_.stiffnessMatrix(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+    MatGetValues(data_.stiffnessMatrix().values(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 
     std::vector<double> f(vectorSize);
 

@@ -77,7 +77,7 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 
 template<typename BasisOnMeshType,typename Term>
 dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
-nUnknowns()
+nLocalUnknowns()
 {
   return this->mesh_->nLocalNodes() * BasisOnMeshType::dim();  // D components for displacements
 }

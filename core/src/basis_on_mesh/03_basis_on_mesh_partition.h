@@ -8,10 +8,14 @@
 namespace BasisOnMesh
 {
  
+// forward declaration
+template<typename MeshType, typename BasisFunctionType>
+class BasisOnMesh {};
+ 
 /** This adds functionality to create a partition / domain decomposition
  */
 template<typename MeshType,typename BasisFunctionType>
-class BasisOnMeshPartition :
+class BasisOnMeshPartitionBase :
   public BasisOnMeshJacobian<MeshType,BasisFunctionType>
 {
 public:
@@ -19,9 +23,6 @@ public:
   //! constructor
   BasisOnMeshPartition(std::shared_ptr<Partition::Manager> partitionManager);
   
-  //! initiate the partitoning and then call the downwards initialize
-  void initialize();
-
   //! get the partition
   Partition::MeshPartition &meshPartition();
   
@@ -30,9 +31,37 @@ public:
 
 private:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
-  Partition::MeshPartition meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
+  Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
 
 };
+
+/** specialization for structured meshes 
+ */
+template<typename MeshType,typename BasisFunctionType>
+class BasisOnMeshPartition :
+  public BasisOnMeshPartitionBase<MeshType,BasisFunctionType>
+{
+public:
+  //! use inherited constructor 
+  using BasisOnMeshPartitionBase<MeshType,BasisFunctionType>::BasisOnMeshPartitionBase;
+  
+  //! initiate the partitoning and then call the downwards initialize
+  void initialize();
+
+};
+
+/** partial specialization for unstructured mesh
+ */
+template<int D,typename BasisFunctionType>
+class BasisOnMeshGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> :
+  public BasisOnMeshPartitionBase<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
+{
+public:
+  //! use inherited constructor
+  using BasisOnMeshPartitionBase<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshPartitionBase;
+  
+  //! initiate the partitoning and then call the downwards initialize
+  void initialize();
 
 }  // namespace
 

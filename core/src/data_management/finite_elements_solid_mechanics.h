@@ -96,7 +96,7 @@ public:
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
 
   //! get the number of unknows in the solution variable which is 3*nNodes
-  virtual dof_no_t nUnknowns();
+  virtual dof_no_t nLocalUnknowns();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<

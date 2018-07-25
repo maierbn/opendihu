@@ -100,8 +100,8 @@ transferRhsToWeakForm()
     }  // i
   }  // elementNo
 
-  VecAssemblyBegin(rightHandSide);
-  VecAssemblyEnd(rightHandSide);
+  ierr = VecAssemblyBegin(rightHandSide); CHKERRV(ierr); 
+  ierr = VecAssemblyEnd(rightHandSide); CHKERRV(ierr);
 }
 
 // 1D,2D,3D rhs discretization matrix, i.e. matrix that transforms rhs values to discretized form, of Deformable mesh

@@ -28,7 +28,7 @@ setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
   std::vector<double> localValues;
-  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, localValues, 0.0);
+  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nLocalUnknowns, localValues, 0.0);
 
   std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)

@@ -84,7 +84,7 @@ public:
 protected:
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
-  const int nUnknowns();
+  const int nLocalUnknowns();
 
   //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
   void preparePressureInterpolation(element_no_t elementNo) override;
@@ -132,7 +132,7 @@ public:
 protected:
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
-  const int nUnknowns();
+  const int nLocalUnknowns();
 
   //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
   void preparePressureInterpolation(element_no_t elementNo) override;

@@ -43,7 +43,7 @@ protected:
   virtual void computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix) = 0;
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
-  virtual const int nUnknowns() = 0;
+  virtual const int nLocalUnknowns() = 0;
 
   //! write output of current state
   virtual void writeOutput() = 0;

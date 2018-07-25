@@ -19,9 +19,23 @@ Structured<D>::Structured(std::array<element_no_t, D> &nElementsPerCoordinateDir
 template<int D>
 Structured<D>::Structured(PyObject *specificSettings) : MeshOfDimension<D>(specificSettings)
 {
-  // get settings values nElements_
-  this->nElementsPerCoordinateDirectionLocal_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
-  LOG(DEBUG) << "set number of elements from settings: " << this->nElementsPerCoordinateDirectionLocal_;
+  // get if the mesh information in config specifies local or global domain
+  std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+    // get settings values nElements_
+    this->nElementsPerCoordinateDirectionGlobal_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::Positive);
+    LOG(DEBUG) << "set global number of elements from settings: " << this->nElementsPerCoordinateDirectionGlobal_;
+  }
+  else 
+  {
+    // get settings values nElements_
+    this->nElementsPerCoordinateDirectionLocal_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
+    LOG(DEBUG) << "set local number of elements from settings: " << this->nElementsPerCoordinateDirectionLocal_;
+    
+    this->nRanks_ = PythonUtility::getOptionArray<int, D>(specificSettings, "nRanks", 1, PythonUtility::Positive);
+    LOG(DEBUG) << "set number of ranks in the directions from settings: " << this->nRanks_;
+  }
 }
 
 template<int D>

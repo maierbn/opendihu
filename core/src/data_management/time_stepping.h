@@ -8,6 +8,7 @@
 #include "mesh/mesh.h"
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
+#include "partition/partitioned_petsc_vec.h"
 
 namespace Data
 {
@@ -45,7 +46,7 @@ public:
   static constexpr int getNDofsPerNode();
 
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknowns();
+  virtual dof_no_t nLocalUnknowns();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<

@@ -22,11 +22,11 @@ setRightHandSide()
 {
   LOG(TRACE)<<"setRightHandSide";
 
-  dof_no_t nUnknowns = this->data_.nUnknowns();
+  dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
   Vec &rightHandSide = this->data_.rightHandSide().values();
 
   std::vector<double> values;
-  PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nUnknowns, values);
+  PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nLocalUnknowns, values);
 
 #ifndef NDEBUG
   LOG(DEBUG) << "Read in rhs values from config:";

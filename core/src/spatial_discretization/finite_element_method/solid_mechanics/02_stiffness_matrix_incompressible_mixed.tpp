@@ -327,8 +327,8 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
   if (this->data_.computeWithReducedVectors())
   {
     // store displacements values
-    const int nUnknownsOutputVector = nDisplacementsUnknowns;
-    this->expandVector(solverVariableSolution, this->data_.displacements().values(), nUnknownsOutputVector);
+    const int nLocalUnknownsOutputVector = nDisplacementsUnknowns;
+    this->expandVector(solverVariableSolution, this->data_.displacements().values(), nLocalUnknownsOutputVector);
   }
   else
   {
@@ -555,12 +555,12 @@ const int FiniteElementMethodStiffnessMatrix<
   std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
 >::
-nUnknowns()
+nLocalUnknowns()
 {
   const int D = HighOrderBasisOnMeshType::dim();
-  const int nUnknownsDisplacements = this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs() * D;
-  const int nUnknownsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs();
-  return nUnknownsDisplacements + nUnknownsPressure;
+  const int nLocalUnknownsDisplacements = this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs() * D;
+  const int nLocalUnknownsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs();
+  return nLocalUnknownsDisplacements + nLocalUnknownsPressure;
 }
 
 };    // namespace

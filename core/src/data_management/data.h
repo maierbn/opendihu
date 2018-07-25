@@ -40,7 +40,7 @@ public:
   const std::shared_ptr<BasisOnMeshType> mesh() const;
 
   //! return the total number of unknowns, i.e. degrees of freedom x number of components, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknowns();
+  virtual dof_no_t nLocalUnknowns();
 
 protected:
 

@@ -3,7 +3,8 @@
 //! constructor
 template<int D, typename MeshType, typename BasisFunctionType>
 PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-PartitionedPetscMat(std::shared_ptr<MeshPartition> meshPartition, int nComponents) :
+PartitionedPetscMat(std::shared_ptr<MeshPartition> meshPartition, int nComponents,
+                    int diagonalNonZeros, int offdiagonalNonZeros) :
   meshPartition_(meshPartition), nComponents_(nComponents)
 {
   typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
@@ -33,6 +34,8 @@ PartitionedPetscMat(std::shared_ptr<MeshPartition> meshPartition, int nComponent
                         PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                         nComponents_, ghostLayerWidth, NULL, NULL, NULL, dm_); CHKERRV(ierr);
   }
+  
+  createMatrix(diagonalNonZeros, offdiagonalNonZeros);
 }
 
 //! constructor
@@ -40,7 +43,8 @@ template<int D, typename MeshType, typename BasisFunctionType>
 PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
 PartitionedPetscMat(Mat &matrix) :
   meshPartition_(nullptr), nComponents_(-1), matrix_(matrix)
-{
+{ 
+  //! constructor to simply wrap an existing Mat, as needed in nonlinear solver callback functions for jacobians
 }
 
 //! create a distributed Petsc matrix, according to the given partition
@@ -58,8 +62,10 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
     //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.localSize(), partition.localSize(), n, n,
     //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
 
-    ierr = MatCreate(rankSubset_->mpiCommunicator(), &matrix_); CHKERRV(ierr);
-    ierr = MatSetSizes(matrix_, partition_.localSize(), partition_.localSize(), meshPartition->globalSize(), meshPartition->globalSize()); CHKERRV(ierr);
+    assert(meshPartition_);
+   
+    ierr = MatCreate(meshPartition_->mpiCommunicator(), &matrix_); CHKERRV(ierr);
+    ierr = MatSetSizes(matrix_, meshPartition_->localSize(), meshPartition_->localSize(), meshPartition->globalSize(), meshPartition->globalSize()); CHKERRV(ierr);
     ierr = MatSetFromOptions(matrix_); CHKERRV(ierr);                        
     
     // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
@@ -71,6 +77,8 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
     // sparse matrix
     ierr = MatMPIAIJSetPreallocation(matrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
     ierr = MatSeqAIJSetPreallocation(matrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+    
+    ierr = MatSetLocalToGlobalMapping(matrix_, meshPartition_->localToGlobalMapping(), meshPartition_->localToGlobalMapping()); CHKERRV(ierr);
   }
   else 
   {
@@ -78,62 +86,4 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
     ierr = DMSetMatrixPreallocateOnly(dm_, true); CHKERRV(ierr);  // do not fill zero entries when DMCreateMatrix is called
     ierr = DMCreateMatrix(dm_, &matrix_); CHKERRV(ierr);
   }
-}
-
-template<int D, typename MeshType, typename BasisFunctionType>
-void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-matSetValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
-{
-  // this wraps the standard PETSc MatSetValue on the local matrix
-  PetscErrorCode ierr;
-  
-  ierr = MatSetValuesLocal(matrix_, 1, &row, 1, &col, &value, mode); CHKERRV(ierr);
-}
-
-template<int D, typename MeshType, typename BasisFunctionType>
-void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-matSetValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
-{
-  // this wraps the standard PETSc MatSetValues on the local matrix
-  PetscErrorCode ierr;
-  
-  ierr = MatSetValuesLocal(matrix_, m, idxm, n, idxn, v, addv); CHKERRV(ierr);
-}
-
-template<int D, typename MeshType, typename BasisFunctionType>
-void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-matZeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag)
-{
-  PetscErrorCode ierr;
-  ierr = MatZeroRowsColumnsLocal(matrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
-}
-
-template<int D, typename MeshType, typename BasisFunctionType>
-void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-matAssembly(MatAssemblyType type)
-{
-  // this wraps the standard PETSc assembleBegin/End
-  PetscErrorCode ierr;
-  
-  ierr = MatAssemblyBegin(matrix_, type); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(matrix_, type); CHKERRV(ierr);
-}
-
-template<int D, typename MeshType, typename BasisFunctionType>
-void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-matGetValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[])
-{
-  // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
-  PetscErrorCode ierr;
-  
-  ierr = MatGetValues(matrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
-}
-
-
-//! get a reference to the PETSc matrix
-template<int D, typename MeshType, typename BasisFunctionType>
-Mat &PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructuredWithDim<D,MeshType>>::
-values()
-{
-  return this->matrix_;
 }

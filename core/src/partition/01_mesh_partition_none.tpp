@@ -37,6 +37,21 @@ applicationOrdering()
 {
 }
 
+//! get the local to global mapping for the current partition
+template<int D, typename BasisFunctionType>
+ISLocalToGlobalMapping MeshPartition<Mesh::None>::
+localToGlobalMapping()
+{
+  PetscErrorCode ierr;
+  std::vector<PetscInt> globalDofNos(localSize());
+  std::iota(globalDofNos.begin(), globalDofNos.end(), beginGlobal_);
+  ISLocalToGlobalMapping localToGlobalMapping;
+  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, localSize(), 
+                                      globalDofNos.size(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(ierr);
+
+  return localToGlobalMapping;
+}
+ 
 //! number of entries in the current partition
 template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<Mesh::None>::

@@ -53,11 +53,9 @@ protected:
   //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
   void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
   
-  Mat &systemMatrix();
+  //! inverse of the lumped mass matrix
+  Mat &setInvLumMassMatrix();
   
-  private:
-    
-  Mat systemMatrix_;
 };
 
 };  // namespace

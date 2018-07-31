@@ -39,7 +39,7 @@ public:
 
   // virtual FieldVariableType &intermediateIncrement() = 0;
   
-  //! if the discretization matrix is already initialized
+  //! if the matrix is already initialized
   bool invLumMassMatrixInitialized();
 
   //! print all stored data to stdout

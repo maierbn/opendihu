@@ -10,6 +10,10 @@ TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
 {
   specificSettings_ = NULL;   // needs to be set by deriving class
   isTimeStepWidthSignificant_ = false;
+  
+  // compute timestep width
+  this->timeSpan_ = this->endTime_ - this->startTime_;
+  this->timeStepWidth_ = this->timeSpan_ / this->numberTimeSteps_;
 }
 
 void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)

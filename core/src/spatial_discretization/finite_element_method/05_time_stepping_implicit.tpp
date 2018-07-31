@@ -29,62 +29,73 @@ setInvLumMassMatrix()
   {
     this->data_.initializeInvLumMassMatrix();
    
-  const int D = BasisOnMeshType::dim();
-  LOG(TRACE)<<"inverseLumpedMassMatrix" << D << "D";
+    const int D = BasisOnMeshType::dim();
+    LOG(TRACE)<<"inverseLumpedMassMatrix" << D << "D";
   
   
-  PetscErrorCode ierr;
+    PetscErrorCode ierr;
   
-  Mat &invLumMassMatrix=this->data_.inversedLumpedMassMatrix_;
-  Mat &massMatrix=this->data_.massMatrix; 
-  //for linear and bilinear basis functions
-  Vec &rowSum;  
-  ierr=MatGetRowSum(massMatrix,rowSum);
+    Mat &invLumMassMatrix=this->data_.inversedLumpedMassMatrix_;
+    Mat &massMatrix=this->data_.massMatrix; 
+    //for linear and bilinear basis functions
+    Vec &rowSum;  
+    ierr=MatGetRowSum(massMatrix,rowSum);
   
-  PetscInt rowSum_size;
-  ierr=VecGetSize(rowSum,rowSum_size);
+    PetscInt rowSum_size;
+    ierr=VecGetSize(rowSum,rowSum_size);
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+    const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+    std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
   
-  //for the inverse matrix
-  ierr=VecReciprocal(rowSum);
+    //for the inverse matrix
+    ierr=VecReciprocal(rowSum);
   
-  PetscScalar rowSum_value[rowSum_size];
-  ierr=VecGetArray(rowSum,rowSum_value);
+    PetscScalar rowSum_value[rowSum_size];
+    ierr=VecGetArray(rowSum,rowSum_value);
 
-  // set values
-  int cntr = 1;
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
-  {
-    auto dof = mesh->getElementDofNos(elementNo);
-
-    for (int i=0; i<nDofsPerElement; i++)
+    // set values
+    int cntr = 1;
+    // loop over elements
+    for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
     {
-      for (int j=0; j<nDofsPerElement; j++)
+      auto dof = mesh->getElementDofNos(elementNo);
+
+      for (int i=0; i<nDofsPerElement; i++)
       {
-        VLOG(3) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
-        //LOG(DEBUG) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
-        ierr = MatSetValue(invLumMassMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
+        for (int j=0; j<nDofsPerElement; j++)
+        {
+          VLOG(3) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
+          //LOG(DEBUG) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
+          ierr = MatSetValue(invLumMassMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
+        }
+        VLOG(3) << " lumped massMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
+        //LOG(DEBUG) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
+        ierr = MatSetValue(invLumMassMatrix, dof[i], dof[i], rowSum_value[i], INSERT_VALUES); CHKERRV(ierr);      
       }
-      VLOG(3) << " lumped massMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
-      //LOG(DEBUG) << " inversed lumped massMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
-      ierr = MatSetValue(invLumMassMatrix, dof[i], dof[i], rowSum_value[i], INSERT_VALUES); CHKERRV(ierr);      
     }
-  }
     
-  //For finite element basis greater than 2, to be implemented
-  //PetscScalar diag;
-  //ierr =MatGetTrace(massMatrix,diag);
-  }
+    //For finite element basis greater than 2, to be implemented
+    //PetscScalar diag;
+    //ierr =MatGetTrace(massMatrix,diag);
+    }
+    
+    this->invLumMassMatrixSet_=true;
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+bool FiniteElementMethodTimeStepping<BasisOnMeshType,QuadratureType,Term>::
+invLumMassMatrixSet(){
+  return this->invLumMassMatrixSet_;
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 preComputeSystemMatrix(double timeStepWidth)
 {
+  if(!this->invLumMassMatrixSet())
+    this->setInvLumMassMatrix();
+  
   const int D = BasisOnMeshType::dim();
   LOG(TRACE)<<"preComputeSystemMatrix" << D << "D";
   

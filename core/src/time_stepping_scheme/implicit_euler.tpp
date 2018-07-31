@@ -16,16 +16,16 @@ ImplicitEuler<DiscretizableInTime>::ImplicitEuler(DihuContext context) :
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ImplicitEuler");
   this->outputWriterManager_.initialize(this->specificSettings_);
+  
+  this->discretizableInTime_.setInvLumMassMatrix();
+  this->discretizableInTime_.preComputeSystemMatrix(this->timeStepWidth_);
 }
 
 template<typename DiscretizableInTime>
 void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
-  // compute timestep width
-  double timeSpan = this->endTime_ - this->startTime_;
-  double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
+  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan="<<this->timeSpan_<<", timeStepWidth="<<this->timeStepWidth_
     <<" n steps: "<<this->numberTimeSteps_;
 
   // loop over time steps
@@ -36,16 +36,11 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
 
     // advance computed value
-    // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
-
-    // integrate, y += dt * delta_u
-    VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
+    this->discretizableInTime_.solveLinearSystem(this->solution(), this->solution());
 
     // advance simulation time
     timeStepNo++;
-    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * this->timeSpan_;
 
     //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     // write current output values

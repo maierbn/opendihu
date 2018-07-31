@@ -56,6 +56,12 @@ protected:
   //! inverse of the lumped mass matrix
   Mat &setInvLumMassMatrix();
   
+  //! if the matrix is already initialized
+  bool invLumMassMatrixSet();
+  
+private:
+  bool invLumMassMatrixSet_=false;
+  
 };
 
 };  // namespace

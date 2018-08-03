@@ -46,14 +46,24 @@ public:
   //! print all stored data to stdout
   void print();
 
-  //! if the discretization matrix is already initialized
+  //! if the matrices are already initialized
   bool massMatrixInitialized();
+  bool invLumMassMatrixInitialized();
+  
 
   //! create PETSc matrix
   void initializeMassMatrix();
-
-  //! return a reference to the discretization matrix
-  Mat &massMatrix();
+  //! create the inverse of the lumped mass matrix
+  void initializeInvLumMassMatrix();
+  
+  //! return a reference to the discretization matrix  
+  Mat &massMatrix(); 
+  
+  //! inversed lumped mass matrix
+  Mat &invLumMassMatrix();
+  
+  //! corresponding to the specific time integration. (I-dtM^(-1)K) for the implicit Euler scheme.
+  Mat &systemMatrix();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -69,16 +79,22 @@ private:
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
+  void createPetscObjects_systemMatrix();
 
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   Mat stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
+  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  Mat systemMatrix_;
+  Mat invLumMassMatrix_;
+  
+  bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized  
+  bool invLumMassMatrixInitialized_ = false;
+  
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-  Mat massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-
-  bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
+  
 
 };
 

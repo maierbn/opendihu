@@ -21,8 +21,11 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
+  // compute timestep width
+  double timeSpan = this->endTime_ - this->startTime_;
+  double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<this->timeSpan_<<", timeStepWidth="<<this->timeStepWidth_
+  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
 
   // loop over time steps
@@ -38,11 +41,11 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
       this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
 
     // integrate, y += dt * delta_u
-    VecAXPY(this->data_->solution().values(), this->timeStepWidth_, this->data_->increment().values());
+    VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
 
     // advance simulation time
     timeStepNo++;
-    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * this->timeSpan_;
+    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
     //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().values());
     // write current output values

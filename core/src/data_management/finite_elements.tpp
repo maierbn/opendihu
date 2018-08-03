@@ -117,6 +117,48 @@ createPetscObjects()
     ierr = MatSetFromOptions(this->stiffnessMatrix_); CHKERRV(ierr);
     ierr = MatSetUp(this->stiffnessMatrix_); CHKERRV(ierr);
   }
+  
+  createPetscObjects_systemMatrix();
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+createPetscObjects_systemMatrix()
+{
+  dof_no_t n = this->mesh_->nDofs();
+  
+  LOG(DEBUG)<<"TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects_systemMatrix("<<n<<")";
+  
+  PetscErrorCode ierr;
+  // create PETSc matrix object
+  
+  // PETSc MatCreateAIJ parameters
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  
+  LOG(DEBUG) << "d="<<this->mesh_->dimension()
+  <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
+  
+  // sparse matrix
+  if (true)
+  {
+    ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, n, n,
+                        diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->systemMatrix_); CHKERRV(ierr);
+                        ierr = MatMPIAIJSetPreallocation(this->systemMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+  }
+  // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
+  //MatSetOption(this->stiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
+  
+  // dense matrix
+  if (false)
+  {
+    ierr = MatCreate(PETSC_COMM_WORLD, &this->systemMatrix_);  CHKERRV(ierr);
+    ierr = MatSetSizes(this->systemMatrix_, PETSC_DECIDE,PETSC_DECIDE, n, n);  CHKERRV(ierr);
+    ierr = MatSetFromOptions(this->systemMatrix_); CHKERRV(ierr);
+    ierr = MatSetUp(this->systemMatrix_); CHKERRV(ierr);
+  }
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -142,6 +184,13 @@ stiffnessMatrix()
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+systemMatrix()
+{
+  return this->systemMatrix_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 rightHandSide()
 {
@@ -160,6 +209,13 @@ Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 massMatrix()
 {
   return this->massMatrix_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+invLumMassMatrix()
+{
+  return this->invLumMassMatrix_;
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -213,12 +269,19 @@ massMatrixInitialized()
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+bool FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+invLumMassMatrixInitialized()
+{
+  return this->invLumMassMatrixInitialized_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
   // determine problem size
   int nEntries;
-  VecGetSize(this->rhs_->values(), &nEntries);
+  VecGetSize(this->solution_->values(), &nEntries);
 
   // create PETSc matrix object
 
@@ -234,6 +297,37 @@ initializeMassMatrix()
   ierr = MatMPIAIJSetPreallocation(this->massMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
 
   this->massMatrixInitialized_ = true;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+initializeInvLumMassMatrix()
+{
+  const int D = BasisOnMeshType::dim();
+  LOG(TRACE)<<"initializeInvLumMassMatrix" << D << "D";
+  
+  // determine problem size
+  int nEntries;
+  VecGetSize(this->solution_->values(), &nEntries);
+  LOG(INFO)<<"nEntries " << nEntries;
+  LOG(TRACE)<<"checkpoint";
+  
+  // create PETSc matrix object
+  
+  // PETSc MatCreateAIJ parameters
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  
+  PetscErrorCode ierr;
+  ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, nEntries, nEntries,
+                      diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &this->invLumMassMatrix_); CHKERRV(ierr);
+  ierr = MatMPIAIJSetPreallocation(this->invLumMassMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+                      
+  this->invLumMassMatrixInitialized_ = true;
+  
+  LOG(TRACE)<<"finished";
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>

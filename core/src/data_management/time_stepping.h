@@ -40,7 +40,7 @@ public:
   // virtual FieldVariableType &intermediateIncrement() = 0;
   
   //! if the matrix is already initialized
-  bool invLumMassMatrixInitialized();
+  //bool invLumMassMatrixInitialized();
 
   //! print all stored data to stdout
   virtual void print();
@@ -62,18 +62,8 @@ public:
 
 protected:
 
-  //! initializes the vectors and matrices with size
+  //! initializes the vectors with size
   virtual void createPetscObjects();
-  virtual void createPetscObjects_systemMatrix();
-  
-  //! create the inverse of the lumped mass matrix
- void initializeInvLumMassMatrix();
-  
-  //! inversed lumped mass matrix
-  Mat &invLumMassMatrix();
-  
-  //! corresponding to the specific time integration. (I-dtM^(-1)K) for the implicit Euler scheme.
-  Mat &systemMatrix();
 
   std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
@@ -82,10 +72,6 @@ protected:
 private:
   //! get maximum number of expected non-zeros in the system matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
-  
-  Mat systemMatrix_;
-  Mat invLumMassMatrix_;
-  bool invLumMassMatrixInitialized_ = false;
 
 };
 

@@ -1,14 +1,16 @@
 #include "partition/00_mesh_partition_base.h"
 
+#include <algorithm>
+
 namespace Partition
 {
  
-MeshPartitionBase::MeshPartition(std::shared_ptr<RankSubset> rankSubset) :
+MeshPartitionBase::MeshPartitionBase(std::shared_ptr<RankSubset> rankSubset) :
   rankSubset_(rankSubset)
 {
 }
 
-MeshPartitionBase::~MeshPartition()
+MeshPartitionBase::~MeshPartitionBase()
 {
 }
 

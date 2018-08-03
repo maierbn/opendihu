@@ -3,14 +3,22 @@
 #include <Python.h>  // has to be the first included header
 
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
-#include "partition/partition.h"
+#include "partition/01_mesh_partition.h"
+
+// forward declaration
+namespace Partition 
+{
+class Manager;
+template<typename BasisOnMeshType, typename DummyForTraits>
+class MeshPartition;
+}
 
 namespace BasisOnMesh
 {
  
 // forward declaration
 template<typename MeshType, typename BasisFunctionType>
-class BasisOnMesh {};
+class BasisOnMesh;
  
 /** This adds functionality to create a partition / domain decomposition
  */
@@ -21,17 +29,17 @@ class BasisOnMeshPartitionBase :
 public:
   
   //! constructor
-  BasisOnMeshPartition(std::shared_ptr<Partition::Manager> partitionManager);
+  BasisOnMeshPartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
   
   //! get the partition
-  Partition::MeshPartition &meshPartition();
+  std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition();
   
   //! get the partition as pointer of type meshPartitionBase, this is in the itnerface in mesh
   std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase();
 
-private:
+protected:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
-  Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
+  std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
 
 };
 
@@ -53,7 +61,7 @@ public:
 /** partial specialization for unstructured mesh
  */
 template<int D,typename BasisFunctionType>
-class BasisOnMeshGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> :
+class BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> :
   public BasisOnMeshPartitionBase<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
 {
 public:
@@ -62,7 +70,14 @@ public:
   
   //! initiate the partitoning and then call the downwards initialize
   void initialize();
+  
+  //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
+  virtual global_no_t nGlobalElements() const = 0;
+
+};
 
 }  // namespace
 
-#include "basis_on_mesh/03_basis_on_mesh_partition.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_partition_base.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_partition_structured.tpp"
+#include "basis_on_mesh/03_basis_on_mesh_partition_unstructured.tpp"

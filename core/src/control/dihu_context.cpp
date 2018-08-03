@@ -17,6 +17,7 @@
 #include "output_writer/exfile/exfile.h"
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
+#include "partition/partition_manager.h"
 
 #include "easylogging++.h"
 #include "control/use_numpy.h"
@@ -240,7 +241,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
   if (!partitionManager_)
   {
     VLOG(2) << "create partitionManager_";
-    partitionManager_ = std::make_shared<Partition::Manager>();
+    partitionManager_ = std::make_shared<Partition::Manager>(pythonConfig_);
   }
 
   if (!meshManager_)
@@ -262,10 +263,13 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv, false)
 {
   loadPythonScript(pythonSettings);
-  PythonUtility::printDict(pythonConfig_);
+  if (VLOG_IS_ON(1))
+  {
+    PythonUtility::printDict(pythonConfig_);
+  }
 
   partitionManager_ = nullptr;
-  partitionManager_ = std::make_shared<Partition::Manager>();
+  partitionManager_ = std::make_shared<Partition::Manager>(pythonConfig_);
   
   VLOG(2) << "recreate meshManager";
   meshManager_ = nullptr;

@@ -36,12 +36,11 @@ FiniteElementMethodBase(DihuContext context) :
     PythonUtility::printDict(specificSettings_);
   }
 
+  // Create mesh or retrieve existing mesh from meshManager. This does not yet create meshPartition, it is done later in data_.initialize().
   std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<BasisOnMeshType>(specificSettings_);
+  
+  // store mesh in data
   data_.setMesh(std::static_pointer_cast<BasisOnMeshType>(mesh));
-  if(data_.mesh())
-    LOG(DEBUG) << "FiniteElementMethodBase: mesh is set";
-  else
-    LOG(DEBUG) << "FiniteElementMethodBase: mesh is not set";
 }
 
 template<typename BasisOnMeshType,typename QuadratureType,typename Term>
@@ -57,8 +56,7 @@ applyBoundaryConditions()
 
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
-  PetscErrorCode ierr;
-
+  
   // add Dirichlet boundary conditions
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
   // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.
@@ -114,7 +112,7 @@ applyBoundaryConditions()
     dof_no_t boundaryConditionDofNo = this->data_.mesh()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
 
     // set rhs entry to prescribed value
-    rightHandSide->setValue(boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES);
+    rightHandSide.setValue(boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES);
 
     VLOG(1) << "  BC node " << boundaryConditionNodeNo << " index " << boundaryConditionIndex 
       << ", dof " << boundaryConditionDofNo << ", value " << boundaryConditionValue;
@@ -130,8 +128,8 @@ applyBoundaryConditions()
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionDofNo;
-    stiffnessMatrix->zeroRowsColums(1, &matrixIndex, 1.0);
-
+    stiffnessMatrix->zeroRowsColumns(1, &matrixIndex, 1.0);
+    
     // update rhs
     for (node_no_t rowNo = 0; rowNo < nLocalUnknowns; rowNo++)
     {
@@ -141,7 +139,7 @@ applyBoundaryConditions()
       // update rhs value to be f_new = f_old - m_{ij}*u_{i} where i is the index of the prescribed node,
       // m_{ij} is entry of stiffness matrix and u_{i} is the prescribed value
       double rhsSummand = -coefficients[rowNo] * boundaryConditionValue;
-      rightHandSide->setValue(rowNo, rhsSummand, ADD_VALUES);
+      rightHandSide.setValue(rowNo, rhsSummand, ADD_VALUES);
 
       LOG_IF(false,DEBUG) << "  in row " << rowNo << " add " << rhsSummand << " to rhs, coefficient: " << coefficients[rowNo];
     }
@@ -195,7 +193,7 @@ template<typename BasisOnMeshType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
 solve()
 {
-  // solve k*d=f for d
+  // solve linear system k*d=f for d
   LOG(TRACE) << "FiniteElementMethod::solve";
 
   // if equation was set to none, do not solve the problem (this is for unit tests that don't test for solution)
@@ -211,7 +209,8 @@ solve()
   assert(ksp != nullptr);
 
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (*ksp, stiffnessMatrix.values(), stiffnessMatrix.values()); CHKERRV(ierr);
+  PetscErrorCode ierr;
+  ierr = KSPSetOperators (*ksp, stiffnessMatrix->values(), stiffnessMatrix->values()); CHKERRV(ierr);
 
   // non-zero initial values
 #if 0  
@@ -235,7 +234,7 @@ solve()
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 
   // check if solution is correct
-  if (false)
+#if 0
   {
     // get rhs and solution from PETSc
     int vectorSize = 0;
@@ -285,6 +284,7 @@ solve()
 
     LOG(DEBUG) << "res=" << res;
   }
+#endif  
 }
 
 };

@@ -28,17 +28,24 @@ setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
   std::vector<double> localValues;
-  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nLocalUnknowns, localValues, 0.0);
-
-  std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
+  
+  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-    mesh->meshPartition()->extractLocalNumbers(localValues);
+    const int nGlobalDofs = this->data_->mesh()->nGlobalDofs();
+    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nGlobalDofs, localValues);
+
+    //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
+    this->data_->mesh()->meshPartition()->extractLocalDofs(localValues);
+  }
+  else 
+  {
+    const int nLocalDofs = this->data_->mesh()->nLocalDofs();
+    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nLocalDofs, localValues);
   }
   //LOG(DEBUG) << "set initial values to " << values;
 
-  data_->solution().setValues(mesh->meshPartition()->localDofs(), localValues);
+  data_->solution().setValues(localValues);
 }
 
 template<typename DiscretizableInTimeType>

@@ -12,7 +12,6 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 
-
 namespace SpatialDiscretization
 {
 
@@ -23,22 +22,35 @@ setRightHandSide()
   LOG(TRACE)<<"setRightHandSide";
 
   dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
-  Vec &rightHandSide = this->data_.rightHandSide().values();
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
 
-  std::vector<double> values;
-  PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nLocalUnknowns, values);
+  std::vector<double> localValues;
+  
+  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+    global_no_t nGlobalUnknowns = this->data_.nGlobalUnknowns();
+    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nGlobalUnknowns, localValues);
 
+    std::shared_ptr<Mesh::Mesh> mesh = this->data_.mesh();
+    mesh->meshPartitionBase()->extractLocalDofs(localValues);
+  }
+  else 
+  {
+    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nLocalUnknowns, localValues);
+  }
+  
 #ifndef NDEBUG
-  LOG(DEBUG) << "Read in rhs values from config:";
+  LOG(DEBUG) << "Read in rhs localValues from config:";
   std::stringstream s;
-  for(auto value : values)
+  for(auto value : localValues)
   {
     s << " " << value;
   }
   LOG(DEBUG) << s.str();
 #endif
 
-  PetscUtility::setVector(values, rightHandSide);
+  rightHandSide.setValues(localValues);
 
   // transform the entries from strong form to weak form
   this->transferRhsToWeakForm();
@@ -50,8 +62,8 @@ setRightHandSide()
 #ifndef NDEBUG
   LOG(DEBUG) << "Transferred to weak form:";
   s.str("");
-  PetscUtility::getVectorEntries(rightHandSide, values);
-  for(auto value : values)
+  PetscUtility::getVectorEntries(rightHandSide.values(), localValues);
+  for(auto value : localValues)
   {
     s << " " << value;
   }

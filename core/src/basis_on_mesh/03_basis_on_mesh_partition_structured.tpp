@@ -20,14 +20,16 @@ initialize()
   assert(this->partitionManager_ != nullptr);
   
   // get if the mesh information in config specifies local or global domain
-  std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = (this->nElementsPerCoordinateDirectionGlobal_[0] != 0);
   if (inputMeshIsGlobal)
   {
-    meshPartition_ = partitionManager_->createPartitioningStructuredGlobal(this->nElementsPerCoordinateDirectionGlobal_);
+    this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredGlobal<BasisOnMesh<MeshType,BasisFunctionType>>(
+      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
   }
   else 
   {
-    meshPartition_ = partitionManager_->createPartitioningStructuredLocal(this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
+    this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredLocal<BasisOnMesh<MeshType,BasisFunctionType>>(
+      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
   }
 }
 

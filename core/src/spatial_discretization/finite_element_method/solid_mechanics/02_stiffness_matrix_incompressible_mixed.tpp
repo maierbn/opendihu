@@ -24,10 +24,10 @@ void FiniteElementMethodStiffnessMatrix<
   std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
   Equation::isIncompressible<Term>
 >::
-setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix)
+setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>> stiffnessMatrix)
 {
   // TODO
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
+  std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
 
   LOG(TRACE) << "setStiffnessMatrix";
 

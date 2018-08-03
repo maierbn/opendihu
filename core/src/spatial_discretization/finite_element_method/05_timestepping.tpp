@@ -109,7 +109,7 @@ recoverRightHandSideStrongForm(Vec &result)
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (*ksp_, massMatrix, massMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp_, massMatrix->values(), massMatrix->values()); CHKERRV(ierr);
 
   // non zero initial values
   PetscScalar scalar = .5;
@@ -135,7 +135,7 @@ checkDimensions(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessM
 {
 #ifndef NDEBUG
   int nRows, nColumns;
-  MatGetSize(stiffnessMatrix, &nRows, &nColumns);
+  MatGetSize(stiffnessMatrix->values(), &nRows, &nColumns);
   int nEntries;
   VecGetSize(input, &nEntries);
   if (nColumns != nEntries)
@@ -157,11 +157,12 @@ evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, doubl
   checkDimensions(stiffnessMatrix, input);
 
   // compute rhs = stiffnessMatrix*input
-  MatMult(stiffnessMatrix, input, rhs);
+  MatMult(stiffnessMatrix->values(), input, rhs);
  
   // compute output = massMatrix^{-1}*rhs
   recoverRightHandSideStrongForm(output);
 
+  // output data as specified in outputWriter
   this->data_.print();
   this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 }

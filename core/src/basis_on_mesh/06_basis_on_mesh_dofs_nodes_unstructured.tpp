@@ -27,6 +27,23 @@ nLocalDofs() const
   return this->nDofs_;
 }
 
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+nGlobalNodes() const
+{
+  // parallelism not implemented for unstructured grids
+  return nLocalNodes();
+}
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+nGlobalDofs() const
+{
+  // parallelism not implemented for unstructured grids
+  return nLocalDofs();
+}
+
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 getNodePositions(std::vector<double> &nodes) const
@@ -57,7 +74,7 @@ initialize()
 
   // call initialize from parent class
   // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
-  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::
+  BasisOnMeshGeometry<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::UnstructuredDeformableOfDimension<D>>::
     initialize();
   
   if (!this->noGeometryField_)

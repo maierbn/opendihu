@@ -12,7 +12,7 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "partition/partition.h"
+#include "partition/01_mesh_partition.h"
 
 namespace Data
 {
@@ -42,12 +42,9 @@ createPetscObjects()
   LOG(DEBUG)<<"TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
   assert(this->mesh_);
   
-  // create partitioning
-  Partition::MeshPartition partition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
-  
   // create field variables on local partition
-  this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution", partition);
-  this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment", partition);
+  this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
+  this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
 }
 
 template<typename BasisOnMeshType,int nComponents>

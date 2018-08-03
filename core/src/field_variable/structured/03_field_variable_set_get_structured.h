@@ -43,14 +43,26 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);
 
+  //! get all stored local values
+  void getLocalValues(int componentNo, std::vector<double> &values);
+  
   //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
+  //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+  void setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set value for all dofs
   void setValues(double value);
+
+  //! set values for the all component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+  void setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set value to zero for all dofs
+  void zeroEntries();
 
   //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
   void finishVectorManipulation();

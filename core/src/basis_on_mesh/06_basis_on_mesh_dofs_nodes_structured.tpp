@@ -16,7 +16,7 @@ namespace BasisOnMesh
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField) :
-  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(specificSettings)
+  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
 {
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
 
@@ -39,9 +39,9 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const
   this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirection;
   LOG(DEBUG) << "set number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_;
 
-  localNodePositions_.reserve(nodePositions.size() * D);
+  localNodePositions_.reserve(localNodePositions.size() * D);
 
-  for (const Vec3 &vector : nodePositions)
+  for (const Vec3 &vector : localNodePositions)
   {
     for (int i = 0; i < 3; i++)
       localNodePositions_.push_back(vector[i]);
@@ -73,11 +73,31 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 parseNodePositionsFromSettings(PyObject *specificSettings)
 {
   // compute number of nodes
-  node_no_t nNodes = this->nLocalNodes();
+  node_no_t nLocalNodes = this->nLocalNodes();
+  global_no_t nGlobalNodes = this->nGlobalNodes();
+  global_no_t nNodes;
 
-  const int vectorSize = nNodes*3;
+  // if the given information about the mesh in config is for the global mesh
+  bool inputMeshIsGlobal = PythonUtility::getOptionBool(specificSettings, "inputMeshIsGlobal", true);
+  
+  global_no_t vectorSize;
+  
+  if (inputMeshIsGlobal)
+  {
+    vectorSize = nGlobalNodes*3;
+    nNodes = nGlobalNodes;
+  }
+  else 
+  {
+    vectorSize = nLocalNodes*3;
+    nNodes = nLocalNodes;
+  }
+  
   localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
+  // The vector localNodePositions_ is filled with all available node positions in this method, for inputMeshIsGlobal these are the global values of the global domain.
+  // At the end of this method, non-local entries are removed if inputMeshIsGlobal.
 
+  
   // fill initial position from settings
   if (PythonUtility::hasKey(specificSettings, "nodePositions"))
   {
@@ -158,16 +178,16 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
 
       int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
 
-      int inputVectorSize = nNodes * nodeDimension;
+      int inputVectorSize = nLocalNodes * nodeDimension;
       PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, localNodePositions_);
 
-      LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
+      LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nLocalNodes << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
 
       // transform vector from (x,y) or (x) entries to (x,y,z)
       if (nodeDimension < 3)
       {
         localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
-        for(int i=nNodes-1; i>=0; i--)
+        for(int i=nLocalNodes-1; i>=0; i--)
         {
 
           if (nodeDimension == 2)
@@ -188,40 +208,73 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
 
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
-      meshWidth[dimNo] = physicalExtent[dimNo] /
-        (this->nElementsPerCoordinateDirectionLocal(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
+      // depending on inputMeshIsGlobal interpret physicalExtent as global or local physical extent
+      if (inputMeshIsGlobal)
+      {
+        meshWidth[dimNo] = physicalExtent[dimNo] /
+          (this->nElementsPerCoordinateDirectionGlobal(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
+      }
+      else 
+      {
+        meshWidth[dimNo] = physicalExtent[dimNo] /
+          (this->nElementsPerCoordinateDirectionLocal(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
+      }
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
 
     std::array<double, 3> position{0.,0.,0.};
 
-    LOG(DEBUG) << "nNodes: " << nNodes << ", vectorSize: " << vectorSize;
+    // compute absolute node positions
+    global_no_t nNodesInXDirection = this->nLocalNodes(0);
+    global_no_t nNodesInYDirection = this->nLocalNodes(1);
+    global_no_t nNodesInZDirection = this->nLocalNodes(2);
+    
+    double offsetX = this->meshPartition_->beginNodeGlobal(0);
+    double offsetY = this->meshPartition_->beginNodeGlobal(1);
+    double offsetZ = this->meshPartition_->beginNodeGlobal(2);
+    
+    if (inputMeshIsGlobal)
+    {
+      nNodesInXDirection = this->nGlobalNodes(0);
+      nNodesInYDirection = this->nGlobalNodes(1);
+      nNodesInZDirection = this->nGlobalNodes(2);
+      offsetX = 0;
+      offsetY = 0;
+      offsetZ = 0;
+    }
+    
+    global_no_t nodeX, nodeY, nodeZ;
+    LOG(DEBUG) << "nNodes: " << nNodes << ", global: " << nGlobalNodes << ", local: " << nLocalNodes << ", vectorSize: " << vectorSize;
 
-    for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
+    for (global_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       switch(D)
       {
       case 3:
-        position[2] = meshWidth[2] * (int(nodeNo / (this->nNodes(0)*this->nNodes(1))));
+        nodeZ = global_no_t(nodeNo / (nNodesInXDirection*nNodesInYDirection));
+        position[2] = offsetZ + meshWidth[2] * nodeZ;
       case 2:
-        position[1] = meshWidth[1] * (int(nodeNo / this->nNodes(0)) % this->nNodes(1));
+        nodeY = global_no_t(nodeNo / nNodesInXDirection) % nNodesInYDirection;
+        position[1] = offsetY + meshWidth[1] * nodeY;
       case 1:
-        position[0] = meshWidth[0] * (nodeNo % this->nNodes(0));
+        nodeX = nodeNo % nNodesInXDirection;
+        position[0] = offsetX + meshWidth[0] * nodeX;
 
         break;
       }
 
       // store the position values in nodePositions
-      for (int i=0; i<3; i++)
+      for (int i = 0; i < 3; i++)
+      {
         localNodePositions_[nodeNo*3 + i] = position[i];
+      }
     }
   }
 
   // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
-  std::string inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    this->meshPartition_->extractLocalNumbers(localNodePositions_);
+    this->meshPartition_->extractLocalNodes(localNodePositions_);
   }
 }
 
@@ -232,9 +285,8 @@ initializeGeometryField()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, initializeGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
-  // set geometry field
+  // create empty field variable for geometry field
   this->geometryField_ = std::make_unique<GeometryFieldType>();
-  
 }
 
 // create geometry field from config nodes
@@ -244,28 +296,33 @@ setGeometryFieldValues()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
+  // compute number of (local) dofs
+  dof_no_t nLocalDofs = this->nLocalDofs();
+  const dof_no_t nEntries = nLocalDofs * 3;   // 3 components: x,y,z
+  const bool isGeometryField = true;
+  
   // initialize geometry field, this creates the internal DistributedPetscVec
   std::vector<std::string> componentNames{"x", "y", "z"};
   this->geometryField_->initialize("geometry", componentNames, 
-                                   this->nElementsPerCoordinateDirection_, nEntries, 
-                                   isGeometryField);
+                                   nEntries, isGeometryField);
 
   // set values of geometry field
   
-  // compute number of (local) dofs
-  dof_no_t nLocalDofs = this->nLocalDofs();
-
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
-  std::vector<Vec3> geometryValues(nDofs, Vec3{0.0});
+  std::vector<Vec3> geometryValues(nLocalDofs, Vec3{0.0});
 
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;
   // loop over nodes
-  for (node_no_t nodeNo = 0; nodeNo < this->nNodes(); nodeNo++)
+  for (node_no_t nodeNo = 0; nodeNo < this->nLocalNodes(); nodeNo++)
   {
     // assign node position as first dof of the node
-    geometryValues[geometryValuesIndex] 
-      = Vec3{ localNodePositions_[nodePositionsIndex+0], localNodePositions_[nodePositionsIndex+1], localNodePositions_[nodePositionsIndex+2]};
+    geometryValues[geometryValuesIndex] = Vec3
+    { 
+      localNodePositions_[nodePositionsIndex+0], 
+      localNodePositions_[nodePositionsIndex+1], 
+      localNodePositions_[nodePositionsIndex+2]
+    };
     geometryValuesIndex++;
     nodePositionsIndex += 3;
 
@@ -279,11 +336,8 @@ setGeometryFieldValues()
   LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
 
   // set values for node positions as geometry field 
-  std::vector<dof_no_t> dofGlobalNos(nDofs,0);
-  std::iota(dofGlobalNos.begin(),dofGlobalNos.end(),0);
-  this->geometryField_->setValues(dofGlobalNos,geometryValues);
+  this->geometryField_->setValues(geometryValues);
   this->geometryField_->finishVectorManipulation();
-  
 }
 
 template<int D,typename BasisFunctionType>
@@ -302,7 +356,7 @@ nLocalNodes(int coordinateDirection) const
 {
   assert(this->meshPartition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
   return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() 
-    + (this->meshPartition_->localPartitionIsAtBorder(coordinateDirection)? 1 : 0);
+    + (this->meshPartition_->hasFullNumberOfNodes(coordinateDirection)? 1 : 0);
 }
 
 template<int D,typename BasisFunctionType>
@@ -312,6 +366,31 @@ nLocalDofs() const
   return nLocalNodes() * this->nDofsPerNode();
 }
 
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+nGlobalNodes() const
+{
+  global_no_t result = 1;
+  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
+  {
+    result *= nLocalNodes(coordinateDirection);
+  }
+  return result;
+}
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+nGlobalNodes(int coordinateDirection) const
+{
+  return this->meshPartition_->globalSize(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+}
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+nGlobalDofs() const
+{
+  return nGlobalNodes() * this->nDofsPerNode();
+}
 
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::

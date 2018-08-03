@@ -35,22 +35,20 @@ transferRhsToWeakForm()
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  PetscErrorCode ierr;
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
 
-  Vec &rightHandSide = this->data_.rightHandSide().values();
-
+  // merge local changes on the vector
+  rightHandSide.startVectorManipulation();
+  
   // stencil values
   // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
   const int center = 1;
   const double stencilCenter[3] = {1./6., 4./6., 1./6.};
   const double stencilSide[2] = {2./6., 1./6.};
 
-  // get all values
-  int nEntries;
-  VecGetSize(rightHandSide, &nEntries);
-
+  // get all entries
   std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(rightHandSide, vectorValues);
+  rightHandSide.getLocalValues(vectorValues);
 
   // loop over all dofs and set values with stencilCenter
   for (node_no_t dofNo = 1; dofNo < nLocalUnknowns-1; dofNo++)
@@ -60,7 +58,7 @@ transferRhsToWeakForm()
       + stencilCenter[center]*vectorValues[dofNo]
       + stencilCenter[center+1]*vectorValues[dofNo+1]) * elementLength;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // set values for boundaries with stencilSide
@@ -68,16 +66,16 @@ transferRhsToWeakForm()
   double value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo+1]) * elementLength;
-  ierr = VecSetValue(rightHandSide, 0, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(0, value, INSERT_VALUES);
 
   dofNo = nLocalUnknowns-1;
   value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo-1]) * elementLength;
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
-  VecAssemblyBegin(rightHandSide);
-  VecAssemblyEnd(rightHandSide);
+  // call VecAssemblyBegin, VecAssemblyEnd
+  rightHandSide.finishVectorManipulation();
 }
 
 // 2D rhs
@@ -98,10 +96,11 @@ transferRhsToWeakForm()
   double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double integralFactor = elementLength0*elementLength1;
 
-  PetscErrorCode ierr;
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
 
-  Vec &rightHandSide = this->data_.rightHandSide().values();
-
+  // merge local changes on the vector
+  rightHandSide.startVectorManipulation();
+  
   // stencil values
 
   // stencil for rhs in 2D:      [1  4   1] (element contribution:      [ 2  1])
@@ -128,10 +127,8 @@ transferRhsToWeakForm()
   double value;
 
   // get all values
-  int nEntries;
-  VecGetSize(rightHandSide, &nEntries);
   std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(rightHandSide, vectorValues);
+  rightHandSide.getLocalValues(vectorValues);
 
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
@@ -149,7 +146,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofIndex(x,y), value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofIndex(x,y), value, INSERT_VALUES);
     }
   }
 
@@ -170,7 +167,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // right boundary (x=nNodes0-1)
@@ -189,7 +186,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // bottom boundary (y=0)
@@ -208,7 +205,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // top boundary (y=nNodes1-1)
@@ -227,7 +224,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // corner nodes
@@ -249,7 +246,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // bottom right (x=nNodes0-1, y=0)
   x = nNodes0-1;
@@ -266,7 +263,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top left (x=0, y=nNodes1-1)
   x = 0;
@@ -283,7 +280,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top right (x=nNodes0-1, y=nNodes1-1)
   x = nNodes0-1;
@@ -300,10 +297,10 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
-  VecAssemblyBegin(rightHandSide);
-  VecAssemblyEnd(rightHandSide);
+  // call VecAssemblyBegin, VecAssemblyEnd
+  rightHandSide.finishVectorManipulation();
 }
 
 // 3D rhs
@@ -327,10 +324,11 @@ transferRhsToWeakForm()
   double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
 
-  PetscErrorCode ierr;
+  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
 
-  Vec &rightHandSide = this->data_.rightHandSide().values();
-
+  // merge local changes on the vector
+  rightHandSide.startVectorManipulation();
+  
   // stencil values
 
   // stencil for rhs in 3D: bottom: [1  4   1]   (element contribution:  center:[ 4  2]
@@ -390,10 +388,8 @@ transferRhsToWeakForm()
   double value;
 
   // get all values
-  int nEntries;
-  VecGetSize(rightHandSide, &nEntries);
   std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(rightHandSide, vectorValues);
+  rightHandSide.getLocalValues(vectorValues);
 
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
@@ -416,7 +412,7 @@ transferRhsToWeakForm()
         }
         value *= integralFactor;
 
-        ierr = VecSetValue(rightHandSide, dofIndex(x,y,z), value, INSERT_VALUES); CHKERRV(ierr);
+        rightHandSide.setValue(dofIndex(x,y,z), value, INSERT_VALUES);
       }
     }
   }
@@ -443,7 +439,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -468,7 +464,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -493,7 +489,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -518,7 +514,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -543,7 +539,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -568,7 +564,7 @@ transferRhsToWeakForm()
       }
       value *= integralFactor;
 
-      ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+      rightHandSide.setValue(dofNo, value, INSERT_VALUES);
     }
   }
 
@@ -593,7 +589,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // bottom right (x=nNodes0-1,z=0)
@@ -616,7 +612,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // top left (x=0,z=nNodes2-1)
@@ -639,7 +635,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // top right (x=nNodes0-1,z=nNodes2-1)
@@ -662,7 +658,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // bottom front (y=0,z=0)
@@ -685,7 +681,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // bottom back (y=nNodes1-1,z=0)
@@ -708,7 +704,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // top front (y=0,z=nNodes2-1)
@@ -731,7 +727,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // top back (y=nNodes1-1,z=nNodes2-1)
@@ -754,7 +750,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // left front (x=0,y=0)
@@ -777,7 +773,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // left back (x=0,y=nNodes1-1)
@@ -800,7 +796,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // right front (x=nNodes0-1,y=0)
@@ -823,7 +819,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // right back (x=nNodes0-1,y=nNodes1-1)
@@ -846,7 +842,7 @@ transferRhsToWeakForm()
     }
     value *= integralFactor;
 
-    ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
 
   // corner nodes
@@ -872,7 +868,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // bottom front right (x=nNodes0-1,y=0,z=0)
   x = nNodes0-1;
@@ -893,7 +889,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // bottom back left (x=0,y=nNodes1-1,z=0)
   x = 0;
@@ -914,7 +910,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // bottom back right (x=nNodes0-1,y=nNodes1-1,z=0)
   x = nNodes0-1;
@@ -935,7 +931,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top front left (x=0,y=0,z=nNodes2-1)
   x = 0;
@@ -956,7 +952,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top front right (x=nNodes0-1,y=0,z=nNodes2-1)
   x = nNodes0-1;
@@ -977,7 +973,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top back left (x=0,y=nNodes1-1,z=nNodes2-1)
   x = 0;
@@ -998,7 +994,7 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
   // top back right (x=nNodes0-1,y=nNodes1-1,z=nNodes2-1)
   x = nNodes0-1;
@@ -1019,11 +1015,10 @@ transferRhsToWeakForm()
   }
   value *= integralFactor;
 
-  ierr = VecSetValue(rightHandSide, dofNo, value, INSERT_VALUES); CHKERRV(ierr);
+  rightHandSide.setValue(dofNo, value, INSERT_VALUES);
 
-
-  VecAssemblyBegin(rightHandSide);
-  VecAssemblyEnd(rightHandSide);
+  // call VecAssemblyBegin, VecAssemblyEnd
+  rightHandSide.finishVectorManipulation();
 }
 
 // 1D massMatrix
@@ -1051,8 +1046,6 @@ setMassMatrix()
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
-    PetscErrorCode ierr;
-
     std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
@@ -1067,23 +1060,22 @@ setMassMatrix()
     // loop over all dofs and set values in massMatrix with stencilCenter
     for (node_no_t dofNo = 1; dofNo < nLocalUnknowns-1; dofNo++)
     {
-      ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-      ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES); CHKERRV(ierr);
-      ierr = MatSetValue(massMatrix, dofNo, dofNo+1, stencilCenter[center+1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+      massMatrix->setValue(dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES);
+      massMatrix->setValue(dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES);
+      massMatrix->setValue(dofNo, dofNo+1, stencilCenter[center+1] * elementLength, INSERT_VALUES);
     }
 
     // set values for boundaries with stencilSide
     node_no_t dofNo = 0;
-    ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofNo+1, stencilSide[1] * elementLength, INSERT_VALUES);
 
     dofNo = nLocalUnknowns-1;
-    ierr = MatSetValue(massMatrix, dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofNo-1, stencilSide[1] * elementLength, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofNo,   stencilSide[0] * elementLength, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofNo-1, stencilSide[1] * elementLength, INSERT_VALUES);
 
-    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
+    // call MatAssemblyBegin, MatAssemblyEnd
+    massMatrix->assembly(MAT_FINAL_ASSEMBLY);
   }
 }
 
@@ -1115,8 +1107,6 @@ setMassMatrix()
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
-    PetscErrorCode ierr;
-
     std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
@@ -1159,7 +1149,7 @@ setMassMatrix()
           {
             node_no_t secondDofNo = dofIndex(x+j, y+i);
             double factor = stencilCenter[center+i][center+j] * integralFactor;
-            ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
           }
         }
       }
@@ -1176,11 +1166,11 @@ setMassMatrix()
       {
         node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
 
         secondDofNo = dofIndex(x+1, y+i);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
       }
     }
 
@@ -1194,11 +1184,11 @@ setMassMatrix()
       {
         node_no_t secondDofNo = dofIndex(x, y+i);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
 
         secondDofNo = dofIndex(x-1, y+i);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
       }
     }
 
@@ -1212,11 +1202,11 @@ setMassMatrix()
       {
         node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
 
         secondDofNo = dofIndex(x+i, y+1);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
       }
     }
 
@@ -1230,11 +1220,11 @@ setMassMatrix()
       {
         node_no_t secondDofNo = dofIndex(x+i, y);
         double factor = stencilEdge[0][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
 
         secondDofNo = dofIndex(x+i, y-1);
         factor = stencilEdge[1][center+i] * integralFactor;
-        ierr = MatSetValue(massMatrix, dofNo, secondDofNo, factor, INSERT_VALUES); CHKERRV(ierr);
+        massMatrix->setValue(dofNo, secondDofNo, factor, INSERT_VALUES);
       }
     }
 
@@ -1244,45 +1234,43 @@ setMassMatrix()
     int y = 0;
     node_no_t dofNo = dofIndex(x,y);
 
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x+1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES);
 
     // bottom right
     x = nNodes0-1;
     y = 0;
     dofNo = dofIndex(x,y);
 
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x,y+1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x-1,y+1), stencilCorner[1][1] * integralFactor, INSERT_VALUES);
 
     // top left
     x = 0;
     y = nNodes1-1;
     dofNo = dofIndex(x,y);
 
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x+1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x+1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES);
 
     // top right
     x = nNodes0-1;
     y = nNodes1-1;
     dofNo = dofIndex(x,y);
 
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
-    ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES); CHKERRV(ierr);
+    massMatrix->setValue(dofNo, dofIndex(x,y),     stencilCorner[0][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x-1,y),   stencilCorner[0][1] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x,y-1),   stencilCorner[1][0] * integralFactor, INSERT_VALUES);
+    massMatrix->setValue(dofNo, dofIndex(x-1,y-1), stencilCorner[1][1] * integralFactor, INSERT_VALUES);
 
-
-    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
+    // call MatAssemblyBegin, MatAssemblyEnd
+    massMatrix->assembly(MAT_FINAL_ASSEMBLY);
   }
 }
 
@@ -1315,8 +1303,6 @@ setMassMatrix()
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
-    PetscErrorCode ierr;
-
     std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
     // massMatrix * f_strong = rhs_weak
@@ -1399,7 +1385,7 @@ setMassMatrix()
               {
                 value = stencilCenter[center+i][center+j][center+k]*integralFactor;
                 //                 matrix           row    column
-                ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+                massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
               }
             }
           }
@@ -1423,7 +1409,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -1445,7 +1431,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -1467,7 +1453,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -1489,7 +1475,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -1511,7 +1497,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
             }
           }
         }
@@ -1533,7 +1519,7 @@ setMassMatrix()
             {
               value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -1555,7 +1541,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES);
           }
         }
       }
@@ -1575,7 +1561,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
           }
         }
       }
@@ -1595,7 +1581,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1615,7 +1601,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1637,7 +1623,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES);
           }
         }
       }
@@ -1657,7 +1643,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
           }
         }
       }
@@ -1679,7 +1665,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1701,7 +1687,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1721,7 +1707,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1741,7 +1727,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1761,7 +1747,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1781,7 +1767,7 @@ setMassMatrix()
           {
             value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -1803,7 +1789,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -1821,7 +1807,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -1839,7 +1825,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -1857,7 +1843,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -1875,7 +1861,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -1893,7 +1879,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -1911,7 +1897,7 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -1929,14 +1915,13 @@ setMassMatrix()
         {
           value = stencilCorner[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(massMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          massMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
 
-    ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-    ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
+    // call MatAssemblyBegin, MatAssemblyEnd
+    massMatrix->assembly(MAT_FINAL_ASSEMBLY);
   }
 }
 

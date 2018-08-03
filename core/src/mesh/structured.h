@@ -24,14 +24,23 @@ public:
   //! constructor from python settings
   Structured(PyObject *specificSettings);
 
-  //! get number of elements in a given coordinate direction
+  //! get number of elements in a given coordinate direction for the local domain
   element_no_t nElementsPerCoordinateDirectionLocal(int dimension) const;
 
-  //! get the array with all numbers of elements per coordinate direction
+  //! get the array with all numbers of elements per coordinate direction for the local domain
   std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal() const;
 
-  //! get the total number of elements
+  //! get number of elements in a given coordinate direction for the global domain
+  global_no_t nElementsPerCoordinateDirectionGlobal(int dimension) const;
+
+  //! get the array with all numbers of elements per coordinate direction of the global domain
+  std::array<global_no_t, D> nElementsPerCoordinateDirectionGlobal() const;
+
+  //! get the total number of elements in the local domain
   element_no_t nLocalElements() const;
+  
+  //! get the total number of elements in the global domain
+  global_no_t nGlobalElements() const;
 
 protected:
   std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal_;    ///< the number of stored elements in each coordinate direction (the locally computed portion)

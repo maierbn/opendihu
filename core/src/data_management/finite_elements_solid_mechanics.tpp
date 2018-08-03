@@ -130,24 +130,22 @@ createPetscObjects()
   offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
 
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
-    <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
-
-  PetscUtility::createMatrix(this->tangentStiffnessMatrix_, tangentStiffnessMatrixNRows, diagonalNonZeros, offdiagonalNonZeros, this->mesh_->partition());
-
+    <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros; 
+  const int dimension = BasisOnMeshType::dim();
+    
+  tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->mesh_->meshPartition(), dimension, diagonalNonZeros, offdiagonalNonZeros);
+  
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
-  ierr = MatSetOption(this->tangentStiffnessMatrix_, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
+  ierr = MatSetOption(this->tangentStiffnessMatrix_.values(), MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
 }
 
 template<typename BasisOnMeshType,typename Term>
 void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 finalAssembly()
 {
-  PetscErrorCode ierr;
   // communicate portions to the right processors before using the matrix and vector in computations
-  ierr = MatAssemblyBegin(this->tangentStiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
-  ierr = MatAssemblyEnd(this->tangentStiffnessMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-
+  this->tangentStiffnessMatrix_.assembly(MAT_FINAL_ASSEMBLY);
+ 
   /*
   if (computeWithReducedVectors_)
   {

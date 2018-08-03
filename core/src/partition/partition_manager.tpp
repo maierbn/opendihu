@@ -30,10 +30,13 @@ createPartitioning(global_no_t globalSize)
   return std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
 }
 
-template<int D, typename BasisOnMesh>
+// use localSize and nRanks, fill globalSize
+template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
-createPartitioningStructuredLocal(std::array<element_no_t,D> localSize, std::array<int,D> nRanks)
+createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &globalSize, const std::array<element_no_t,BasisOnMesh::dim()> localSize, const std::array<int,BasisOnMesh::dim()> nRanks)
 { 
+  const int D = BasisOnMesh::dim();
+  
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
   
@@ -59,12 +62,10 @@ createPartitioningStructuredLocal(std::array<element_no_t,D> localSize, std::arr
     nRanksTotal += nRanks[i];
   }
   
-  if (nRanks != nRanksTotal)
+  if (nRanksSubsetCommunicator != nRanksTotal)
   {
     LOG(ERROR) << "Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << " = " << nRanksTotal << ".";
   }
-  
-  int color = MPI_UNDEFINED;
   
   std::array<int,3> rankGridCoordinate({0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks
   rankGridCoordinate[0] = rankNoSubsetCommunicator % nRanks[0];
@@ -116,27 +117,27 @@ createPartitioningStructuredLocal(std::array<element_no_t,D> localSize, std::arr
   }
   
   // reduce the global sizes in the coordinate directions
-  std::array<element_no_t,D> globalSize;   // note: because of MPI this cannot be of type global_no_t, but has to be the same as the send buffer
+  std::array<element_no_t,D> globalSizeMpi;   // note: because of MPI this cannot be of type global_no_t, but has to be the same as the send buffer
   if (rankGridCoordinate[1] == 0 && rankGridCoordinate[2] == 0)
   {
-    MPIUtility::handleReturnValue(MPI_Reduce(&localSize[0], &globalSize[0], 1, MPI_INT, 
+    MPIUtility::handleReturnValue(MPI_Reduce(&localSize[0], &globalSizeMpi[0], 1, MPI_INT, 
                                               MPI_SUM, 0, oneDimensionCommunicator[0]));
   }
   
   if (D >= 2 && rankGridCoordinate[0] == 0 && rankGridCoordinate[2] == 0)
   {
-     MPIUtility::handleReturnValue(MPI_Reduce(&localSize[1], &globalSize[1], 1, MPI_INT, 
+     MPIUtility::handleReturnValue(MPI_Reduce(&localSize[1], &globalSizeMpi[1], 1, MPI_INT, 
                                                MPI_SUM, 0, oneDimensionCommunicator[1]));
   }
   
   if (D >= 3 && rankGridCoordinate[0] == 0 && rankGridCoordinate[1] == 0)
   {
-     MPIUtility::handleReturnValue(MPI_Reduce(&localSize[2], &globalSize[2], 1, MPI_INT, 
+     MPIUtility::handleReturnValue(MPI_Reduce(&localSize[2], &globalSizeMpi[2], 1, MPI_INT, 
                                                MPI_SUM, 0, oneDimensionCommunicator[2]));
   }
   
-  // now broadcast globalSize value to all ranks
-  MPIUtility::handleReturnValue(MPI_Bcast(globalSize.data(), D, MPI_INT, 0, rankSubset->mpiCommunicator()));
+  // now broadcast globalSizeMpi value to all ranks
+  MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPI_INT, 0, rankSubset->mpiCommunicator()));
   
   // compute beginGlobal values by prefix sum
   std::array<PetscInt, D> beginGlobal({0});
@@ -152,13 +153,19 @@ createPartitioningStructuredLocal(std::array<element_no_t,D> localSize, std::arr
     MPIUtility::handleReturnValue(MPI_Exscan(&localSize[2], &beginGlobal[2], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[2]));
   }
   
+  for (int i = 0; i < D; i++)
+  {
+    globalSize[i] = globalSizeMpi[i];
+  }
+  
   // create a mesh partition with prescribed local partitions
   return std::make_shared<MeshPartition<BasisOnMesh>>(localSize, globalSize, beginGlobal, nRanks, rankSubset);
 }
 
-template<int D, typename BasisOnMesh>
+// use globalSize, fill localSize and nRanks
+template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
-createPartitioningStructuredGlobal(std::array<global_no_t,D> globalSize)
+createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim()> globalSize, std::array<element_no_t,BasisOnMesh::dim()> &localSize, std::array<int,BasisOnMesh::dim()> &nRanks)
 { 
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
@@ -175,7 +182,15 @@ createPartitioningStructuredGlobal(std::array<global_no_t,D> globalSize)
     rankSubset = nextRankSubset_;
   }
   
-  return std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
+  std::shared_ptr<MeshPartition<BasisOnMesh>> meshPartition = std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
+  
+  for (int coordinateDirection = 0; coordinateDirection < BasisOnMesh::dim(); coordinateDirection++)
+  {
+    localSize[coordinateDirection] = meshPartition->localSize(coordinateDirection);
+    nRanks[coordinateDirection] = meshPartition->nRanks(coordinateDirection);
+  }
+  
+  return meshPartition;
 }
 
 };    // namespace

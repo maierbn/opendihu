@@ -50,6 +50,14 @@ getValue(node_no_t dofLocalNo)
   return result;
 }
 
+//! get all stored local values
+template<typename BasisOnMeshType>
+void FieldVariableSetGetComponent<BasisOnMeshType,1>::
+getLocalValues(std::vector<double> &values)
+{
+  this->values_->getLocalValues(0, values);
+}
+  
 //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
@@ -68,4 +76,12 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, Inser
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
-};
+//! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType>
+void FieldVariableSetGetComponent<BasisOnMeshType,1>::
+setValues(std::vector<double> &values, InsertMode petscInsertMode)
+{
+  this->values_->setValues(0, values, petscInsertMode);
+}
+
+};  // namespace

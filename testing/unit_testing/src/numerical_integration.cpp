@@ -166,7 +166,8 @@ config = {
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
 }
-
+/*
+ * // the following tests are commented out because the take very long to compile, they should work, however
 TEST(NumericalIntegrationTest, GaussIntegrationHigherOrderWorks)
 {
   std::string pythonConfig = R"(
@@ -327,20 +328,20 @@ config = {
   
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized7);
-  /*
+  
   // Gauss integration order 64
-  FiniteElementMethod<
-    Mesh::StructuredDeformableOfDimension<3>,
-    BasisFunction::LagrangeOfOrder<>,
-    Quadrature::Gauss<64>,
-    Equation::Static::Laplace
-  > equationDiscretized64(settings2);
+//  FiniteElementMethod<
+//    Mesh::StructuredDeformableOfDimension<3>,
+//    BasisFunction::LagrangeOfOrder<>,
+//    Quadrature::Gauss<64>,
+//    Equation::Static::Laplace
+  //> equationDiscretized64(settings2);
   
-  Computation computation64(settings2, equationDiscretized64);
-  computation64.run(); 
+  //Computation computation64(settings2, equationDiscretized64);
+  //computation64.run(); 
   
-  StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized64);
-  */
+  //StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized64);
+  
 }
 
 TEST(NumericalIntegrationTest, NewtonCotesIntegrationHigherOrderWorks)
@@ -544,6 +545,7 @@ config = {
   
   equationDiscretized7.run(); 
 }
-
+*/
 };
+
 

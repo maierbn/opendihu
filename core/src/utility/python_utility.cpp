@@ -11,6 +11,7 @@
 #include "easylogging++.h"
 
 #include "control/use_numpy.h"
+#include "control/types.h"
 
 PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
@@ -50,6 +51,43 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
   else
   {
     LOG(WARNING) << "convertFromPython: object is no int: " << object;
+  }
+  return defaultValue;
+}
+
+template<>
+global_no_t PythonUtility::convertFromPython(PyObject *object, global_no_t defaultValue)
+{
+  if(object == NULL)
+    return defaultValue;
+
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+  
+  if (PyLong_Check(object))
+  {
+    long valueLong = PyLong_AsLong(object);
+    return global_no_t(valueLong);
+  }
+  else if (PyFloat_Check(object))
+  {
+    double valueDouble = PyFloat_AsDouble(object);
+
+    if (double(global_no_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+    {
+      LOG(WARNING) << "convertFromPython: object is no int: " << object;
+    }
+
+    return global_no_t(valueDouble);
+  }
+  else if (PyUnicode_Check(object))
+  {
+    std::string valueString = pyUnicodeToString(object);
+    return atoi(valueString.c_str());
+  }
+  else
+  {
+    LOG(WARNING) << "convertFromPython: object is no long int: " << object;
   }
   return defaultValue;
 }

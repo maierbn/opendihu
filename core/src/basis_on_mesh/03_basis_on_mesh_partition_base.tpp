@@ -8,21 +8,23 @@
 
 namespace BasisOnMesh
 {
+
 template<typename MeshType,typename BasisFunctionType>
-BasisOnMeshPartition<MeshType,BasisFunctionType>:: 
+BasisOnMeshPartitionBase<MeshType,BasisFunctionType>:: 
 BasisOnMeshPartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) : 
   partitionManager_(partitionManager), BasisOnMeshJacobian<MeshType,BasisFunctionType>(specificSettings)
 {
 }
 
-template<typename MeshType,typename BasisFunctionTypes>
-Partition::MeshPartition<BasisOnMeshType<MeshType,BasisFunctionType>> &BasisOnMeshPartitionBase<MeshType,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> 
+BasisOnMeshPartitionBase<MeshType,BasisFunctionType>::
 meshPartition()
 {
   return meshPartition_;
 }
 
-template<typename MeshType,typename BasisFunctionTypes>
+template<typename MeshType,typename BasisFunctionType>
 std::shared_ptr<Partition::MeshPartitionBase> BasisOnMeshPartitionBase<MeshType,BasisFunctionType>::
 meshPartitionBase()
 {

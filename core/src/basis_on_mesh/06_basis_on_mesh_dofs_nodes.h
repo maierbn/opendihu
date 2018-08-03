@@ -20,7 +20,6 @@ template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshDofsNodes
 {
 protected:
-const char*& LOG(WARNING arg1);
 };
 
 /** Partial specialization for RegularFixed mesh
@@ -45,22 +44,35 @@ public:
   //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
 
+  //! initialize the geometry field
+  void initialize();
+  
   //! return number of nodes
   node_no_t nLocalNodes() const;
 
-  //! return number of nodes in specified coordinate direction
+  //! return local number of nodes in specified coordinate direction for the local partition
   node_no_t nLocalNodes(int dimension) const;
 
   //! return local number of dofs
   dof_no_t nLocalDofs() const;
 
+  //! return number of nodes in specified coordinate direction for the whole global domain
+  global_no_t nGlobalNodes(int dimension) const;
+
+  //! return global number of nodes
+  global_no_t nGlobalNodes() const;
+
+  //! return global number of dofs
+  global_no_t nGlobalDofs() const;
+
 protected:
- 
-  virtual setPartititon();
+
+  //! create the geometry field object
+  void initializeGeometryField();
 
   //! create the geometry field from meshWidth_
-  void setupGeometryField();
-
+  void setGeometryFieldValues();
+  
   double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
 };
 
@@ -91,6 +103,15 @@ public:
   //! return number of dofs
   dof_no_t nLocalDofs() const;
   
+  //! return number of nodes in specified coordinate direction for the whole global domain
+  global_no_t nGlobalNodes(int dimension) const;
+
+  //! return global number of nodes
+  global_no_t nGlobalNodes() const;
+
+  //! return global number of dofs
+  global_no_t nGlobalDofs() const;
+
   //! initialize geometry
   virtual void initialize();
   
@@ -105,7 +126,7 @@ protected:
   //! set the values of the geometry field
   void setGeometryFieldValues();
   
-  std::vector<double> nodePositions_; //< Node positions to be inserted into geometry field
+  std::vector<double> localNodePositions_; //< Node positions to be inserted into geometry field, for local domain
  
 };
 
@@ -128,6 +149,12 @@ public:
   //! return number of dofs
   dof_no_t nLocalDofs() const;
   
+  //! return global number of nodes
+  global_no_t nGlobalNodes() const;
+
+  //! return global number of dofs
+  global_no_t nGlobalDofs() const;
+
   //! initialize geometry
   virtual void initialize();
   

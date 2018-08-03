@@ -1,11 +1,12 @@
 #include "field_variable/unstructured/02_field_variable_data_unstructured_deformable.h"
 
 #include <sstream>
-#include "utility/string_utility.h"
 #include <map>
+#include <memory>
 #include <fstream>
 #include <iomanip>
 #include <cassert>
+#include "utility/string_utility.h"
 
 namespace FieldVariable
 {
@@ -19,7 +20,8 @@ FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string n
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(rhs.partitionedPetscVec());
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>>(
+     rhs.partitionedPetscVec());
 
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
@@ -112,8 +114,7 @@ parseHeaderFromExelemFile(std::string content)
       {
 
         VLOG(2) << "finish previous component, parse header";
-
-        component_[componentNo-1].initialize(nullptr, nComponents, componentNo-1, nElements_);
+        component_[componentNo-1].initialize(nullptr, componentNo-1, nElements_);
         component_[componentNo-1].parseHeaderFromExelemFile(componentContent);
         this->componentNames_[componentNo-1] = componentName;
         componentContent = "";
@@ -153,7 +154,7 @@ parseHeaderFromExelemFile(std::string content)
   {
     VLOG(2) << "finish previous component, parse header";
 
-    component_[componentNo-1].initialize(nullptr, nComponents, componentNo-1, nElements_);
+    component_[componentNo-1].initialize(nullptr, componentNo-1, nElements_);
     component_[componentNo-1].parseHeaderFromExelemFile(componentContent);
     this->componentNames_[componentNo-1] = componentName;
   }
@@ -196,7 +197,7 @@ unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const 
   {
     VLOG(1) << " component " << this->componentNames_[componentNo];
 
-    Component<BasisOnMeshType> &firstComponent = component_[componentNo];
+    Component<BasisOnMeshType,nComponents> &firstComponent = component_[componentNo];
     std::string firstComponentName = this->componentNames_[componentNo];
 
     // extract exfile representation from first component
@@ -208,7 +209,7 @@ unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const 
     for (; componentNo < nComponents; componentNo++)
     {
       VLOG(1) << " component " << this->componentNames_[componentNo];
-      Component<BasisOnMeshType> &component = component_[componentNo];
+      Component<BasisOnMeshType,nComponents> &component = component_[componentNo];
 
       assert(component.exfileRepresentation());
 
@@ -237,14 +238,14 @@ unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformabl
   // loop over own components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    Component<BasisOnMeshType> &component = component_[componentNo];
+    Component<BasisOnMeshType,nComponents> &component = component_[componentNo];
     VLOG(1) << "first: " << this->componentNames_[componentNo];
 
     // loop over components of the other fieldVariable
     for (int componentNo2 = 0; componentNo2 < nComponents2; componentNo2++)
     //for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
     {
-      Component<BasisOnMeshType> &component2 = fieldVariable.component_[componentNo2];
+      Component<BasisOnMeshType,nComponents2> &component2 = fieldVariable.component_[componentNo2];
       VLOG(1) << "second: " << fieldVariable.componentNames_[componentNo2];
 
       // assert that pointers are not null
@@ -278,38 +279,153 @@ unifyMappings(std::shared_ptr<FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::U
   // loop over own components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    Component<BasisOnMeshType> &component = component_[componentNo];
+    Component<BasisOnMeshType,nComponents> &component = component_[componentNo];
     VLOG(1) << "first: " << this->componentNames_[componentNo];
 
     // loop over components of the other fieldVariable
     for (int componentNo2 = 0; componentNo2 < fieldVariable2->getNComponents(); componentNo2++)
-    //for (typename std::map<std::string, Component<BasisOnMeshType>>::iterator iter2 = fieldVariable.component_.begin(); iter2 != fieldVariable.component_.end(); iter2++)
     {
-      std::shared_ptr<Component<BasisOnMeshType>> component2 = fieldVariable2->component(componentNo2);
-      if (!component2)
-        continue;
-      VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
-
-      // assert that pointers are not null
-      assert (component.exfileRepresentation());
-      assert (component2->exfileRepresentation());
-      assert (component.elementToDofMapping());
-      assert (component2->elementToDofMapping());
-
-      if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+      // depending on number of components of the fieldVariable2, get different type of Component<...,nComponents2>
+      if (fieldVariable2->getNComponents() == 1)
       {
-        VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
-        component2->setExfileRepresentation(component.exfileRepresentation());
-      }
-      else VLOG(1) << "exfileRepresentation is different";
+        const int nComponents2 = 1;
+        std::shared_ptr<FieldVariableComponents<BasisOnMeshType,nComponents2>> fieldVariableComponents2
+          = std::static_pointer_cast<FieldVariableComponents<BasisOnMeshType,nComponents2>>(fieldVariable2);
+        std::shared_ptr<Component<BasisOnMeshType,nComponents2>> component2 = fieldVariableComponents2->component(componentNo2);
+      
+        if (!component2)
+        {
+          continue;
+        }
+        VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
 
-      if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
-      {
-        VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2)
-          << " to be the same as for " << this->componentNames_[componentNo];
-        component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+        // assert that pointers are not null
+        assert (component.exfileRepresentation());
+        assert (component2->exfileRepresentation());
+        assert (component.elementToDofMapping());
+        assert (component2->elementToDofMapping());
+
+        if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+        {
+          VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setExfileRepresentation(component.exfileRepresentation());
+        }
+        else VLOG(1) << "exfileRepresentation is different";
+
+        if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
+        {
+          VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2)
+            << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+        }
+        else VLOG(1) << "elementToDofMapping is different";
       }
-      else VLOG(1) << "elementToDofMapping is different";
+      else if (fieldVariable2->getNComponents() == 2)
+      {
+        const int nComponents2 = 2;
+        std::shared_ptr<FieldVariableComponents<BasisOnMeshType,nComponents2>> fieldVariableComponents2
+          = std::static_pointer_cast<FieldVariableComponents<BasisOnMeshType,nComponents2>>(fieldVariable2);
+        std::shared_ptr<Component<BasisOnMeshType,nComponents2>> component2 = fieldVariableComponents2->component(componentNo2);
+      
+        if (!component2)
+        {
+          continue;
+        }
+        VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
+
+        // assert that pointers are not null
+        assert (component.exfileRepresentation());
+        assert (component2->exfileRepresentation());
+        assert (component.elementToDofMapping());
+        assert (component2->elementToDofMapping());
+
+        if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+        {
+          VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setExfileRepresentation(component.exfileRepresentation());
+        }
+        else VLOG(1) << "exfileRepresentation is different";
+
+        if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
+        {
+          VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2)
+            << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+        }
+        else VLOG(1) << "elementToDofMapping is different";
+      }
+      else if (fieldVariable2->getNComponents() == 3)
+      {
+        const int nComponents2 = 3;
+        std::shared_ptr<FieldVariableComponents<BasisOnMeshType,nComponents2>> fieldVariableComponents2
+          = std::static_pointer_cast<FieldVariableComponents<BasisOnMeshType,nComponents2>>(fieldVariable2);
+        std::shared_ptr<Component<BasisOnMeshType,nComponents2>> component2 = fieldVariableComponents2->component(componentNo2);
+      
+        if (!component2)
+        {
+          continue;
+        }
+        VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
+
+        // assert that pointers are not null
+        assert (component.exfileRepresentation());
+        assert (component2->exfileRepresentation());
+        assert (component.elementToDofMapping());
+        assert (component2->elementToDofMapping());
+
+        if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+        {
+          VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setExfileRepresentation(component.exfileRepresentation());
+        }
+        else VLOG(1) << "exfileRepresentation is different";
+
+        if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
+        {
+          VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2)
+            << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+        }
+        else VLOG(1) << "elementToDofMapping is different";
+      }
+      else if (fieldVariable2->getNComponents() == 4)
+      {
+        const int nComponents2 = 4;
+        std::shared_ptr<FieldVariableComponents<BasisOnMeshType,nComponents2>> fieldVariableComponents2
+          = std::static_pointer_cast<FieldVariableComponents<BasisOnMeshType,nComponents2>>(fieldVariable2);
+        std::shared_ptr<Component<BasisOnMeshType,nComponents2>> component2 = fieldVariableComponents2->component(componentNo2);
+      
+        if (!component2)
+        {
+          continue;
+        }
+        VLOG(1) << "second: " << fieldVariable2->componentName(componentNo2);
+
+        // assert that pointers are not null
+        assert (component.exfileRepresentation());
+        assert (component2->exfileRepresentation());
+        assert (component.elementToDofMapping());
+        assert (component2->elementToDofMapping());
+
+        if (*component.exfileRepresentation() == *(component2->exfileRepresentation()))
+        {
+          VLOG(1) << "set exfile rep for " << fieldVariable2->componentName(componentNo2) << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setExfileRepresentation(component.exfileRepresentation());
+        }
+        else VLOG(1) << "exfileRepresentation is different";
+
+        if (*component.elementToDofMapping() == *(component2->elementToDofMapping()))
+        {
+          VLOG(1) << "set elementToDof and nodeToDofMapping for " << fieldVariable2->componentName(componentNo2)
+            << " to be the same as for " << this->componentNames_[componentNo];
+          component2->setDofMappings(component.elementToDofMapping(), component.nodeToDofMapping());
+        }
+        else VLOG(1) << "elementToDofMapping is different";
+      }
+      else 
+      {
+        LOG(WARNING) << "unifyMappings not implemented for field variables with > 4 components (this is not an error, it only means that more memory is needed).";
+      }
     }
   }
 }
@@ -530,7 +646,7 @@ parseFromExnodeFile(std::string content)
     blockValues.clear();
   }
 
-  // finialize Petsc vectors
+  // finalize Petsc vectors
   this->finishVectorManipulation();
 }
 
@@ -542,16 +658,16 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-std::shared_ptr<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+std::shared_ptr<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 component(int componentNo)
 {
   assert(componentNo >= 0);
   assert(componentNo < nComponents);
-  return std::make_shared<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(this->component_[componentNo]);
+  return std::make_shared<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>>(this->component_[componentNo]);
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 component(std::string componentName)
 {
   int componentNo = this->componentNames_.find(componentName);
@@ -559,7 +675,7 @@ component(std::string componentName)
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-std::array<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>,nComponents> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+std::array<Component<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>,nComponents> &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 component()
 {
   return this->component_;
@@ -605,21 +721,11 @@ void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDi
 initializeValuesVector()
 {
   // initialize the PETSc vector that contains all the value entries
-  // get number of entries
-  this->nEntries_ = 0;
-  // loop over components
-  for (auto &component : this->component_)
-  {
-    this->nEntries_ += component.nLocalDofs();
-    VLOG(1) << "  component " << component.name() << " has " << component.nLocalDofs() << " dofs";
-  }
-  VLOG(1) << "total entries: " << this->nEntries_;
-
-  // create PartitionedPetscVector
+  // create PartitionedPetscVector, the size of the vector is stored in meshPartition
   if (this->values_ == nullptr)
   {
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>>(
-      this->mesh_->meshPartition(), this->name_, this->nEntries_
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>>(
+      this->mesh_->meshPartition(), this->name_
     );
   }
 
@@ -664,8 +770,8 @@ initializeComponents(std::vector<std::string> &componentNames, std::string exfil
   // create a new values vector for the new field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    Component<BasisOnMeshType> &component = this->component_[componentNo];
-    component.initialize(this->values_, nComponents, componentIndex++, this->nElements_);   // note: this->values_ may be nullptr but is updated by initializeValuesVector
+    Component<BasisOnMeshType,nComponents> &component = this->component_[componentNo];
+    component.initialize(this->values_, componentIndex++, this->nElements_);   // note: this->values_ may be nullptr but is updated by initializeValuesVector
     component.setName(this->componentNames_[componentNo], exfileBasisRepresentation);
     component.setDofMappings(this->elementToDofMapping_, this->nodeToDofMapping_);
     component.setExfileRepresentation(this->exfileRepresentation_);
@@ -883,7 +989,8 @@ output(std::ostream &stream) const
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-std::shared_ptr<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+std::shared_ptr<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>>
+FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 partitionedPetscVec()
 {
   return values_; 

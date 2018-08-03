@@ -53,11 +53,8 @@ MultipleInstances(DihuContext context) :
   
   MPIUtility::gdbParallelDebuggingBarrier();
   
-  // initialize distribution of instances to processes
-  partition_ = context_.partitionManager()->createPartitioning(nInstances_);
-  
   // create a rank subset that contains just the current rank. The locally computed instances are all computed by this single-element rank subset.
-  Partition::RankSubset rankSubset(context_.partitionManager()->rankNo());
+  Partition::RankSubset rankSubset(context_.partitionManager()->rankNoCommWorld());
   
   // determine range of locally computed instances
   

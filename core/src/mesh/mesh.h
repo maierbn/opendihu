@@ -2,6 +2,13 @@
 
 #include <Python.h>  // has to be the first included header
 #include <control/types.h>
+#include <memory>
+
+// forward declaration
+namespace Partition
+{
+class MeshPartitionBase;
+}
 
 namespace Mesh
 {
@@ -30,6 +37,9 @@ public:
   
   //! get the meshPartition of this mesh (defined in BasisOnMesh)
   virtual std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase() = 0;
+  
+  //! initialize the mesh after creation
+  virtual void initialize() = 0;
   
   //! set the name of the mesh
   void setMeshName(std::string meshName);

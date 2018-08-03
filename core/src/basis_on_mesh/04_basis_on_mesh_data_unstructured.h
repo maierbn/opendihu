@@ -19,7 +19,7 @@ class FieldVariable;
 template<typename BasisOnMeshType>
 class FieldVariableBase;
 
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType,int nComponents>
 class Component;
 };
 
@@ -58,8 +58,11 @@ public:
   //! get the elementToNodeMapping
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
   
-  //! get the total number of elements, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
+  //! get the total number of elements on the local partition, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   element_no_t nLocalElements() const;
+
+  //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
+  global_no_t nGlobalElements() const;
 
   
 protected:

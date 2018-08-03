@@ -14,7 +14,7 @@ Manager::Manager(PyObject *specificSettings) :
   storePreconfiguredMeshes();
 }
 
-void Manager::setPartitionManager(std::shared_ptr partitionManager)
+void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager)
 {
   partitionManager_ = partitionManager;
 }
@@ -91,10 +91,7 @@ mesh<None>(PyObject *settings)
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
       typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
       
-      // create partitioning
-      Partition::MeshPartition partition = this->partitionManager_->createPartition();
-      
-      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(partition, meshConfiguration_[meshName]);
+      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, meshConfiguration_[meshName]);
       mesh->initialize();
       
       // store mesh
@@ -124,10 +121,7 @@ mesh<None>(PyObject *settings)
     typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
     LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
 
-    // create partitioning
-    Partition::MeshPartition partition = this->partitionManager_->createPartition();
-      
-    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(partition, settings);
+    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, settings);
     mesh->setMeshName(anonymousName.str());
     mesh->initialize();
     
@@ -142,7 +136,7 @@ mesh<None>(PyObject *settings)
   typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
   LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
 
-  std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(nElements, physicalExtent);
+  std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, nElements, physicalExtent);
   mesh->setMeshName(std::string("anonymous"));
   mesh->initialize();
   return mesh;

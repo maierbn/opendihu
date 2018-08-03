@@ -50,8 +50,6 @@ setStiffnessMatrix()
 
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
-  PetscErrorCode ierr;
-
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // stencil values
@@ -65,22 +63,21 @@ setStiffnessMatrix()
     // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
 
     //                 matrix           row        column
-    ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo, stencilCenter[center]*factor, INSERT_VALUES); CHKERRV(ierr);
+    stiffnessMatrix->setValue(dofNo, dofNo, stencilCenter[center]*factor, INSERT_VALUES);
 
     if (dofNo+1 < nDegreesOfFreedom)
     {
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo+1, stencilCenter[center+1]*factor, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofNo+1, stencilCenter[center+1]*factor, INSERT_VALUES);
     }
     if (dofNo-1 >= 0)
     {
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofNo-1, stencilCenter[center-1]*factor, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofNo-1, stencilCenter[center-1]*factor, INSERT_VALUES);
     }
   }
 
   // set center values for boundaries
-  ierr = MatSetValue(stiffnessMatrix, 0, 0, stencilSide[0]*factor, INSERT_VALUES); CHKERRV(ierr);
-  ierr = MatSetValue(stiffnessMatrix, nDegreesOfFreedom-1, nDegreesOfFreedom-1,
-                     stencilSide[0]*factor, INSERT_VALUES); CHKERRV(ierr);
+  stiffnessMatrix->setValue(0, 0, stencilSide[0]*factor, INSERT_VALUES);
+  stiffnessMatrix->setValue(nDegreesOfFreedom-1, nDegreesOfFreedom-1, stencilSide[0]*factor, INSERT_VALUES);
 }
 
 // 2D stiffness matrix
@@ -122,7 +119,6 @@ setStiffnessMatrix()
   //                        1/3*[1 _-8_ 1]                        [_-2/3_ 1/6]
   //                            [1  1   1]
 
-  PetscErrorCode ierr;
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   const int center = 1;
@@ -158,7 +154,7 @@ setStiffnessMatrix()
         {
           value = stencilCenter[center+i][center+j]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES);
         }
       }
     }
@@ -177,7 +173,7 @@ setStiffnessMatrix()
       {
         value = stencilEdge[center+i][center+j]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES);
       }
     }
   }
@@ -193,7 +189,7 @@ setStiffnessMatrix()
       {
         value = stencilEdge[center+i][center+j]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES);
       }
     }
   }
@@ -209,7 +205,7 @@ setStiffnessMatrix()
       {
         value = stencilEdge[center+j][center+i]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES);
       }
     }
   }
@@ -225,7 +221,7 @@ setStiffnessMatrix()
       {
         value = stencilEdge[center+j][center+i]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES);
       }
     }
   }
@@ -244,7 +240,7 @@ setStiffnessMatrix()
     {
       value = stencilCorner[center+i][center+j]*integralFactor;
       //                 matrix           row    column
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y-j), value, INSERT_VALUES);
     }
   }
 
@@ -259,7 +255,7 @@ setStiffnessMatrix()
     {
       value = stencilCorner[center+i][center+j]*integralFactor;
       //                 matrix           row    column
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j), value, INSERT_VALUES);
     }
   }
 
@@ -274,7 +270,7 @@ setStiffnessMatrix()
     {
       value = stencilCorner[center+i][center+j]*integralFactor;
       //                 matrix           row    column
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j), value, INSERT_VALUES);
     }
   }
 
@@ -289,7 +285,7 @@ setStiffnessMatrix()
     {
       value = stencilCorner[center+i][center+j]*integralFactor;
       //                 matrix           row    column
-      ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES); CHKERRV(ierr);
+      stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES);
     }
   }
 }
@@ -385,7 +381,6 @@ setStiffnessMatrix()
     {0./12, -4./12}},    //center
   };
 
-  PetscErrorCode ierr;
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
@@ -411,7 +406,7 @@ setStiffnessMatrix()
             {
               value = stencilCenter[center+i][center+j][center+k]*integralFactor;
               //                 matrix           row    column
-              ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+              stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
             }
           }
         }
@@ -435,7 +430,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -457,7 +452,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+i][center+j][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -479,7 +474,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -501,7 +496,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+j][center+i][center+k]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -523,7 +518,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
           }
         }
       }
@@ -545,7 +540,7 @@ setStiffnessMatrix()
           {
             value = stencilBoundarySurface[center+k][center+i][center+j]*integralFactor;
             //                 matrix           row    column
-            ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+            stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
           }
         }
       }
@@ -567,7 +562,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -587,7 +582,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -607,7 +602,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -627,7 +622,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+k][center+j]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -649,7 +644,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -669,7 +664,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
         }
       }
     }
@@ -691,7 +686,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -713,7 +708,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+j][center+k][center+i]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -733,7 +728,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -753,7 +748,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -773,7 +768,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -793,7 +788,7 @@ setStiffnessMatrix()
         {
           value = stencilBoundaryEdge[center+i][center+j][center+k]*integralFactor;
           //                 matrix           row    column
-          ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+          stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
         }
       }
     }
@@ -815,7 +810,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y-j, z-k), value, INSERT_VALUES);
       }
     }
   }
@@ -833,7 +828,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z-k), value, INSERT_VALUES);
       }
     }
   }
@@ -851,7 +846,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z-k), value, INSERT_VALUES);
       }
     }
   }
@@ -869,7 +864,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z-k), value, INSERT_VALUES);
       }
     }
   }
@@ -887,7 +882,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y-j, z+k), value, INSERT_VALUES);
       }
     }
   }
@@ -905,7 +900,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y-j, z+k), value, INSERT_VALUES);
       }
     }
   }
@@ -923,7 +918,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x-i, y+j, z+k), value, INSERT_VALUES);
       }
     }
   }
@@ -941,7 +936,7 @@ setStiffnessMatrix()
       {
         value = stencilCorner[center+i][center+j][center+k]*integralFactor;
         //                 matrix           row    column
-        ierr = MatSetValue(stiffnessMatrix, dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j, z+k), value, INSERT_VALUES);
       }
     }
   }

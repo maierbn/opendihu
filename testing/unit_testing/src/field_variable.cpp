@@ -66,7 +66,7 @@ config = {
   
   // set all to 0.0
   a->setValues(0.0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 1), 0.0);
   ASSERT_EQ(a->getValue(0, 5), 0.0);
@@ -75,7 +75,7 @@ config = {
   // set all components, 1 dof
   Vec2 v0 = {1.0, 2.0};
   a->setValue(5, v0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 5), v0[0]);
   ASSERT_EQ(a->getValue(1, 5), v0[1]);
@@ -84,7 +84,7 @@ config = {
   std::vector<Vec2> v1 = {Vec2({1.0, 2.0}), Vec2({3.0, 4.0}), Vec2({5.0, 6.0}), Vec2({7.0, 8.0}), Vec2({9.0, 10.0})};
   std::vector<dof_no_t> dofs = {4,8,2,7,10};
   a->setValues(dofs, v1);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0,4), 1.0);
   ASSERT_EQ(a->getValue(1,4), 2.0);
@@ -99,11 +99,11 @@ config = {
 
   // set all to 0.0
   c->setValues(0.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   // set single component, 1 dof
   c->setValue(5, 5.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   ASSERT_EQ(c->getValue(0,5), 5.0);
   ASSERT_EQ(c->getValue(5), 5.0);
   ASSERT_EQ(c->getValue(0), 0.0);
@@ -111,7 +111,7 @@ config = {
   // set single component, multiple dofs
   std::vector<double> v2 = {1.0, 2.0, 3.0, 4.0, 5.0};
   c->setValues(dofs, v2);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   ASSERT_EQ(c->getValue(4), 1.0);
   ASSERT_EQ(c->getValue(8), 2.0);
@@ -122,7 +122,7 @@ config = {
   std::vector<double> values10 = {11., 12., 13., 14.};
   std::vector<dof_no_t> dofs10 = {11, 12, 13, 14};
   c->setValues(dofs10, values10);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   /* values of c
      0.0, 0.0, 3.0, 0.0, 1.0,
@@ -240,7 +240,7 @@ config = {
   
   // copy a to b
   b->setValues(*a);
-  b->flushSetValues();
+  b->finishVectorManipulation();
   b->getElementValues(1, values7);
   ASSERT_EQ(values7,reference7);
   
@@ -264,10 +264,10 @@ config = {
   
   /*
    * 
-  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES)
   
-  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES)
  
    * 
@@ -311,10 +311,10 @@ config = {
   //! get a single value from global dof no. for all components
   double getValue(node_no_t dofGlobalNo);
   
-  //! set a single dof (all components) , after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofGlobalNo, double value, InsertMode petscInsertMode=INSERT_VALUES)
 
-  //! set values for all components for dofs, after all calls to setValue(s), flushSetValues has to be called to apply the cached changes
+  //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValues(std::vector<dof_no_t> &dofGlobalNos, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES)
 */
 }
@@ -372,7 +372,7 @@ config = {
   
   // set all to 0.0
   a->setValues(0.0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 1), 0.0);
   ASSERT_EQ(a->getValue(0, 5), 0.0);
@@ -381,7 +381,7 @@ config = {
   // set all components, 1 dof
   Vec2 v0 = {1.0, 2.0};
   a->setValue(5, v0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 5), v0[0]);
   ASSERT_EQ(a->getValue(1, 5), v0[1]);
@@ -390,7 +390,7 @@ config = {
   std::vector<Vec2> v1 = {Vec2({1.0, 2.0}), Vec2({3.0, 4.0}), Vec2({5.0, 6.0}), Vec2({7.0, 8.0}), Vec2({9.0, 10.0})};
   std::vector<dof_no_t> dofs = {4,8,2,7,10};
   a->setValues(dofs, v1);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0,4), 1.0);
   ASSERT_EQ(a->getValue(1,4), 2.0);
@@ -405,11 +405,11 @@ config = {
 
   // set all to 0.0
   c->setValues(0.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   // set single component, 1 dof
   c->setValue(5, 5.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   ASSERT_EQ(c->getValue(0,5), 5.0);
   ASSERT_EQ(c->getValue(5), 5.0);
   ASSERT_EQ(c->getValue(0), 0.0);
@@ -417,7 +417,7 @@ config = {
   // set single component, multiple dofs
   std::vector<double> v2 = {1.0, 2.0, 3.0, 4.0, 5.0};
   c->setValues(dofs, v2);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   ASSERT_EQ(c->getValue(4), 1.0);
   ASSERT_EQ(c->getValue(8), 2.0);
@@ -428,7 +428,7 @@ config = {
   std::vector<double> values10 = {11., 12., 13., 14.};
   std::vector<dof_no_t> dofs10 = {11, 12, 13, 14};
   c->setValues(dofs10, values10);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   /* values of c
      0.0, 0.0, 3.0, 0.0, 1.0,
@@ -546,7 +546,7 @@ config = {
   
   // copy a to b
   b->setValues(*a);
-  b->flushSetValues();
+  b->finishVectorManipulation();
   b->getElementValues(1, values7);
   ASSERT_EQ(values7,reference7);
   
@@ -620,7 +620,7 @@ config = {
   
   // set all to 0.0
   a->setValues(0.0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 1), 0.0);
   ASSERT_EQ(a->getValue(0, 5), 0.0);
@@ -629,7 +629,7 @@ config = {
   // set all components, 1 dof
   Vec2 v0 = {1.0, 2.0};
   a->setValue(5, v0);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0, 5), v0[0]);
   ASSERT_EQ(a->getValue(1, 5), v0[1]);
@@ -638,7 +638,7 @@ config = {
   std::vector<Vec2> v1 = {Vec2({1.0, 2.0}), Vec2({3.0, 4.0}), Vec2({5.0, 6.0}), Vec2({7.0, 8.0}), Vec2({9.0, 10.0})};
   std::vector<dof_no_t> dofs = {4,8,2,7,10};
   a->setValues(dofs, v1);
-  a->flushSetValues();
+  a->finishVectorManipulation();
   
   ASSERT_EQ(a->getValue(0,4), 1.0);
   ASSERT_EQ(a->getValue(1,4), 2.0);
@@ -653,11 +653,11 @@ config = {
 
   // set all to 0.0
   c->setValues(0.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   // set single component, 1 dof
   c->setValue(5, 5.0);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   ASSERT_EQ(c->getValue(0,5), 5.0);
   ASSERT_EQ(c->getValue(5), 5.0);
   ASSERT_EQ(c->getValue(0), 0.0);
@@ -665,7 +665,7 @@ config = {
   // set single component, multiple dofs
   std::vector<double> v2 = {1.0, 2.0, 3.0, 4.0, 5.0};
   c->setValues(dofs, v2);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   ASSERT_EQ(c->getValue(4), 1.0);
   ASSERT_EQ(c->getValue(8), 2.0);
@@ -676,7 +676,7 @@ config = {
   std::vector<double> values10 = {11., 12., 13., 14.};
   std::vector<dof_no_t> dofs10 = {11, 12, 13, 14};
   c->setValues(dofs10, values10);
-  c->flushSetValues();
+  c->finishVectorManipulation();
   
   /* values of c
      0.0, 0.0, 3.0, 0.0, 1.0,
@@ -797,7 +797,7 @@ config = {
   
   // copy a to b
   b->setValues(*a);
-  b->flushSetValues();
+  b->finishVectorManipulation();
   b->getElementValues(1, values7);
   ASSERT_EQ(values7,reference7);
   

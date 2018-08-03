@@ -30,12 +30,11 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // get mesh configuration that was parsed earlier
       PyObject *meshConfiguration = meshConfiguration_.at(meshName);
       
-      // create partitioning
-      Partition::MeshPartition partition = this->partitionManager_->createPartition();
-      
       // create new mesh and initialize
-      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, meshConfiguration);
+      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, meshConfiguration);
       mesh->setMeshName(meshName);
+      
+      // TODO: do we want to initialize the mesh already here? Or otherwise later in FE::initialize -> data::initialize -> mesh::initialize
       mesh->initialize();
       
       // store mesh under its name
@@ -60,11 +59,8 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<anonymousName.str()<<"\".";
   
-  // create partitioning
-  Partition::MeshPartition partition = this->partitionManager_->createPartition();
-  
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, settings);
+  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, settings);
   mesh->setMeshName(anonymousName.str());
   mesh->initialize();
 
@@ -88,13 +84,12 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   // create new mesh
   LOG(DEBUG) << "Create new mesh with type "<<typeid(BasisOnMeshType).name()<<" and name \""<<name<<"\".";
   
-  // create partitioning
-  Partition::MeshPartition partition = this->partitionManager_->createPartition();
-  
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(partition, std::forward<Args>(args)...);
-  mesh->initialize();
+  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, std::forward<Args>(args)...);
+
   mesh->setMeshName(name);
+  mesh->initialize();
+  
   meshes_[name] = mesh;
 
   VLOG(1) << "mesh nNodes: " << mesh->nLocalNodes();

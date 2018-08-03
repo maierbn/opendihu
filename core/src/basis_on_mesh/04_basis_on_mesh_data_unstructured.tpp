@@ -21,7 +21,7 @@ using namespace StringUtility;
 template<int D,typename BasisFunctionType>
 BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PyObject *settings, bool noGeometryField) :
-  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshPartition(partitionManager),
+  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::BasisOnMeshPartition(partitionManager, settings),
   noGeometryField_(noGeometryField)
 {
   LOG(TRACE) << "BasisOnMeshDataUnstructured constructor";
@@ -199,4 +199,12 @@ nLocalElements() const
 {
   return this->nElements_;
 }
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+nGlobalElements() const
+{
+  return this->meshPartition_->globalSize();
+}
+
 };  // namespace

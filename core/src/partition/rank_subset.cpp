@@ -1,5 +1,7 @@
 #include "partition/rank_subset.h"
 
+#include <algorithm>
+
 namespace Partition 
 {
   
@@ -24,7 +26,7 @@ RankSubset::RankSubset(int singleRank)
   
   // get the own current MPI rank
   int currentRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, currentRank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &currentRank);
   int color = MPI_UNDEFINED;
   
   // if currentRank is contained in rank subset
@@ -39,11 +41,11 @@ RankSubset::RankSubset(std::vector<int> ranks) : rankNo_(ranks)
 {
   // get the own current MPI rank
   int currentRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, currentRank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &currentRank);
   int color = MPI_UNDEFINED;
   
   // if currentRank is contained in rank subset
-  if (ranks.find(currentRank) != ranks.end())
+  if (std::find(ranks.begin(),ranks.end(),currentRank) != ranks.end())
     color = 1;
   
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)

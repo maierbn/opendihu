@@ -1,11 +1,10 @@
 #include "partition/partitioned_petsc_vec.h"
 
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
-PartitionedPetscVec(MeshPartition<BasisOnMeshType> &meshPartition, std::string name) :
-  meshPartition_(meshPartition)
+PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
+PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name) :
+  PartitionedPetscVecBase<BasisOnMeshType>(meshPartition)
 {
-  
   PetscErrorCode ierr;
   
   // loop over the components of this field variable
@@ -16,7 +15,7 @@ PartitionedPetscVec(MeshPartition<BasisOnMeshType> &meshPartition, std::string n
     ierr = PetscObjectSetName((PetscObject) values_[componentNo], name.c_str()); CHKERRV(ierr);
 
     // initialize size of vector
-    ierr = VecSetSizes(values_[componentNo], meshPartition_.localSize(), meshPartition_.globalSize()); CHKERRV(ierr);
+    ierr = VecSetSizes(values_[componentNo], meshPartition_->localSize(), meshPartition_->globalSize()); CHKERRV(ierr);
 
     // set sparsity type and other options
     ierr = VecSetFromOptions(values_[componentNo]); CHKERRV(ierr);
@@ -69,6 +68,18 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   ierr = VecSetValue(values_[componentNo], row, value, mode); CHKERRV(ierr);
 }
 
+//! for a single component vector set all values
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(values.size() == this->meshPartition_->localSize());
+ 
+  // this wraps the standard PETSc VecSetValue on the local vector
+  PetscErrorCode ierr;
+  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localDofs().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+}
+  
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
@@ -85,6 +96,14 @@ void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   getValues(componentNo, ni, ix, y);
+}
+
+//! get all locally stored values
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+getLocalValues(int componentNo, std::vector<double> &values)
+{
+  VecGetValues(values_[componentNo], this->meshPartition_->localSize(), this->meshPartition_->localDofs().data(), values.data());
 }
 
 //! set all entries to zero, wraps VecZeroEntries

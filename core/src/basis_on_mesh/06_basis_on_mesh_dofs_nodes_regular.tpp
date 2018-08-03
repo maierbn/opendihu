@@ -65,18 +65,12 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
   LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<this->nElementsPerCoordinateDirectionLocal_;
   LOG(DEBUG) << "  physicalExtent: " << physicalExtent;
   LOG(DEBUG) << "  meshWidth: " << this->meshWidth_;
-
-  LOG(DEBUG) << "   create geometry field ";
-
-  // TODO: setupGeometryField needs the meshPartition of this Mesh, is this available already in the constructor?
-  // meshPartition is only stored inside mesh, mesh is created by initialize, i.e. move setup from constructor to initialize!
-  setupGeometryField();
 }
 
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
-  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(nullptr)
+  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(partitionManager, nullptr)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
@@ -96,28 +90,54 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::
       LOG(ERROR) << "mesh width: " << this->meshWidth_ << ", other: " << *physicalExtentIter << "/" << *nElementsIter << "=" << meshWidthCurrentDirection;
     }
   }
-
-  setupGeometryField();
 }
 
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-setupGeometryField()
-{
-  this->geometryField_ = std::make_unique<GeometryFieldType>();
+initialize()
+{ 
+  // initialize the geometry field without values
+  initializeGeometryField();
 
-  // setup geometry field
-  this->geometryField_->setMeshWidth(this->meshWidth_);
-  std::vector<std::string> componentNames{"x","y","z"};
-  bool isGeometryField = true;
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> values;
-  dof_no_t nDofs = this->nLocalDofs();
-  std::size_t nEntries = nDofs * 3;   // 3 components (x,y,z) for every dof
-  this->geometryField_->set("geometry", componentNames, this->nElementsPerCoordinateDirectionLocal_, nEntries, isGeometryField, values);
+  // call initialize from parent class
+  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
+  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType,Mesh::StructuredRegularFixedOfDimension<D>>::
+    initialize();
   
-  VLOG(2) << "   setup geometry field: " << this->geometryField_->values() << " with " << nEntries << " entries";
+  if (!this->noGeometryField_)
+  {
+    // set geometry field
+    this->setGeometryFieldValues();
+  }
 }
 
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+initializeGeometryField()
+{
+  LOG(DEBUG) << " BasisOnMesh StructuredRegularFixed, initializeGeometryField";
+
+  // create empty field variable for geometry field
+  this->geometryField_ = std::make_unique<GeometryFieldType>();
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+setGeometryFieldValues()
+{
+  LOG(DEBUG) << " BasisOnMesh StructuredRegularFixed, setGeometryFieldValues";
+
+  // compute number of (local) dofs
+  //dof_no_t nLocalDofs = this->nLocalDofs();
+  //const dof_no_t nEntries = nLocalDofs * 3;
+  const dof_no_t nEntries = 0;
+  const bool isGeometryField = true;
+  
+  // initialize geometry field, this creates the internal DistributedPetscVec
+  std::vector<std::string> componentNames{"x", "y", "z"};
+  this->geometryField_->initialize("geometry", componentNames, 
+                                   nEntries, isGeometryField);
+}
 
 template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
@@ -125,7 +145,7 @@ nLocalNodes() const
 {
   int result = 1;
   for (int i=0; i<D; i++)
-    result *= nNodes(i);
+    result *= nLocalNodes(i);
   return result;
 }
 
@@ -136,12 +156,40 @@ nLocalDofs() const
   return nLocalNodes() * this->nDofsPerNode();
 }
 
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+nGlobalDofs() const
+{
+  return nGlobalNodes() * this->nDofsPerNode();
+}
+
 template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nLocalNodes(int dimension) const
+nLocalNodes(int coordinateDirection) const
 {
-  //LOG(DEBUG) << "nNodes (" << dimension << "): " << this->nElementsPerCoordinateDirectionLocal(dimension) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
-  return this->nElementsPerCoordinateDirectionLocal(dimension) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  //LOG(DEBUG) << "nNodes (" << coordinateDirection << "): " << this->nElementsPerCoordinateDirectionLocal(coordinateDirection) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
+  return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() 
+    + (this->meshPartition_->hasFullNumberOfNodes(coordinateDirection)? 1 : 0);
+}
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+nGlobalNodes() const
+{
+  global_no_t result = 1;
+  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
+  {
+    result *= nGlobalNodes(coordinateDirection);
+  }
+  return result;
+}
+
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+nGlobalNodes(int coordinateDirection) const
+{
+  return this->meshPartition_->globalSize(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
 template<int D,typename BasisFunctionType>

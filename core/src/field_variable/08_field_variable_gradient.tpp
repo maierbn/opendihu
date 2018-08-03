@@ -1,11 +1,11 @@
-#include "field_variable/field_variable.h"
+#include "field_variable/08_field_variable_vector.h"
 
 namespace FieldVariable
 {
 
 //! get values from their global dof no.s for all components, this eventually does not get all values if there are multiple versions
 template<typename BasisOnMeshType>
-void FieldVariable<BasisOnMeshType,1>::
+void FieldVariableVector<BasisOnMeshType,1>::
 computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField)
 {
   // initialize gradient field variable to 0

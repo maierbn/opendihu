@@ -52,7 +52,7 @@ createPetscObjects()
   assert(this->mesh_);
   
   // create partitioning
-  Partition::MeshPartition partition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
+  Partition::MeshPartition<BasisOnMeshType> partition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
   
   // create field variables on local partition
   this->gradient_ = this->mesh_->template createFieldVariable<3>("gradient", partition);

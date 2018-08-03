@@ -7,8 +7,6 @@
 #include <petscksp.h>
 #include <petscsnes.h>
 
-#include "partition/partition.h"
-
 class PetscUtility
 {
 public:

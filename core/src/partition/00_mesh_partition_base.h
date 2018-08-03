@@ -32,15 +32,11 @@ public:
   //! return reference to a vector containing all local dofs, i.e. a vector with {0,1,2,...,localSize()-1}
   std::vector<PetscInt> &localDofs();
   
+  //! remove all dofs from the vector that are not handled in the local partition
+  virtual void extractLocalDofs(std::vector<double> &values) = 0;
+  
   //! get the MPI communicator that is needed for the work portion
   MPI_Comm mpiCommunicator();
-  
-  //! get an AO object
-  virtual AO &applicationOrdering() = 0;
-  
-  //! from a vector of global numbers remove all that are non-local
-  template <typename T>
-  virtual void extractLocalNumbers(std::vector<T> &vector) = 0;
   
 protected:
  

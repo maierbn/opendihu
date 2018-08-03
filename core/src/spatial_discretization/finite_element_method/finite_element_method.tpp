@@ -24,10 +24,8 @@ setRightHandSide()
   LOG(DEBUG) << "fill rhs with 0";
  
   // fill rhs vector with 0
-  PetscErrorCode ierr;
-
-  Vec &rightHandSide = this->data_.rightHandSide().values();
-  ierr = VecZeroEntries(rightHandSide); CHKERRV(ierr);
+  FieldVariable::FieldVariable<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,1> &rightHandSide = this->data_.rightHandSide();
+  rightHandSide.zeroEntries();
 }
 
 };

@@ -12,8 +12,6 @@ namespace FieldVariable
 class ElementToNodeMapping;
 class NodeToDofMapping;
 class ElementToDofMapping;
-template<typename BasisOnMeshType>
-class Component;
 
 /** Base class for a field variable that just stores the mesh the field variable is defined on.
  */
@@ -59,9 +57,6 @@ public:
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector() = 0;
-
-  //! return the component by index
-  virtual std::shared_ptr<Component<BasisOnMeshType>> component(int componentNo) = 0;
 
   //! get the component Name
   virtual const std::string componentName(int componentNo) const = 0;

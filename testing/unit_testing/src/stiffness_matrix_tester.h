@@ -17,7 +17,7 @@ public:
     std::vector<double> &referenceMatrix
                            )
   {
-    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix();
+    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix()->values();
     std::vector<double> matrix;
     PetscUtility::getMatrixEntries(stiffnessMatrix, matrix);
     
@@ -87,10 +87,10 @@ public:
     }
     
     // stiffness matrix 
-    Mat &stiffnessMatrix1 = finiteElementMethod1.data_.stiffnessMatrix();
+    Mat &stiffnessMatrix1 = finiteElementMethod1.data_.stiffnessMatrix()->values();
     std::vector<double> matrix1;
     PetscUtility::getMatrixEntries(stiffnessMatrix1, matrix1);
-    Mat &stiffnessMatrix2 = finiteElementMethod2.data_.stiffnessMatrix();
+    Mat &stiffnessMatrix2 = finiteElementMethod2.data_.stiffnessMatrix()->values();
     std::vector<double> matrix2;
     PetscUtility::getMatrixEntries(stiffnessMatrix2, matrix2);
     
@@ -113,7 +113,7 @@ public:
   {
     // create the discretization matrix if it does not already exist
     finiteElementMethod2.setMassMatrix();
-    Mat &massMatrix = finiteElementMethod2.data_.massMatrix();
+    Mat &massMatrix = finiteElementMethod2.data_.massMatrix()->values();
     
     int n, m;
     MatGetSize(massMatrix, &n, &m);

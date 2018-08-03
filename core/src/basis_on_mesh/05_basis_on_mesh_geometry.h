@@ -28,6 +28,13 @@ public:
   std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
 
 protected:
+ 
+  //! set up the geometry field
+  virtual void initializeGeometryField() = 0;
+  
+  //! set the values of the geometry field
+  virtual void setGeometryFieldValues() = 0;
+  
   std::unique_ptr<GeometryFieldType> geometryField_;     ///< the geometry field variable
   bool noGeometryField_ = false;                         ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 };
@@ -83,14 +90,6 @@ public:
   //! if the geometry field is set
   bool hasGeometryField();
 
-protected:
- 
-  //! set up the geometry field
-  virtual void initializeGeometryField() = 0;
-  
-  //! set the values of the geometry field
-  virtual void setGeometryFieldValues() = 0;
-  
 };
 
 }  // namespace

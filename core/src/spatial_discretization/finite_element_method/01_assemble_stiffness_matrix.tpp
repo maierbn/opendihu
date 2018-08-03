@@ -34,7 +34,6 @@ setStiffnessMatrix()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
 
   // initialize variables
-  PetscErrorCode ierr;
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
@@ -52,7 +51,7 @@ setStiffnessMatrix()
       {
         VLOG(3) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
         //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
-        ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], 0, INSERT_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dof[i], dof[j], 0, INSERT_VALUES);
       }
     }
   }
@@ -69,6 +68,9 @@ setStiffnessMatrix()
     LOG(DEBUG) << "   " << value;
 #endif
 
+  // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
+  stiffnessMatrix->assembly(MAT_FLUSH_ASSEMBLY);
+  
   // fill entries in stiffness matrix
   // loop over elements
   for (int elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
@@ -113,7 +115,7 @@ setStiffnessMatrix()
 
         VLOG(2) << "  dof pair (" << i<<","<<j<<") dofs ("<<dof[i]<<","<<dof[j]<<"), prefactor: " << prefactor <<", integrated value: "<<integratedValue;
 
-        ierr = MatSetValue(stiffnessMatrix, dof[i], dof[j], value, ADD_VALUES); CHKERRV(ierr);
+        stiffnessMatrix->setValue(dof[i], dof[j], value, ADD_VALUES);
       }  // j
     }  // i
   }  // elementNo

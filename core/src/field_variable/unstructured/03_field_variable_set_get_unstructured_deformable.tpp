@@ -76,6 +76,16 @@ getValue(int componentNo, node_no_t dofLocalNo)
   return this->component_[componentNo].getValue(dofLocalNo);
 }
 
+//! get all stored local values
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+getLocalValues(int componentNo, std::vector<double> &values)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->getLocalValues(componentNo, values);
+}
+
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
@@ -122,7 +132,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
 {
-  this->values_ = rhs.partitionedPetsVec();
+  this->values_ = rhs.partitionedPetscVec();
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -146,9 +156,8 @@ setValues(double value)
   assert(this->mesh_);
   const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
-  std::array<PetscInt, nDofs> indices;
-  std::array<double, nDofs> valueBuffer;
-  valueBuffer.fill(value);
+  std::vector<PetscInt> indices(nDofs);
+  std::vector<double> valueBuffer(nDofs,value);
   
   std::iota(indices.begin(), indices.end(), 0);
   
@@ -166,7 +175,7 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nCom
   assert(dofLocalNos.size() == values.size());
  
   const int nValues = values.size();
-  std::array<double,nValues> valuesBuffer;
+  std::vector<double> valuesBuffer(nValues);
 
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -196,6 +205,32 @@ setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
+//! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->setValues(componentNo, values);
+}
+
+//! set values for the all component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  this->setValues(this->values_->localDofs(), values, petscInsertMode); 
+}
+
+//! set value to zero for all dofs
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+zeroEntries()
+{
+  this->values_->zeroEntries();
+}
+  
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::

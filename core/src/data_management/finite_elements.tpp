@@ -14,6 +14,7 @@
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
+#include "partition/partitioned_petsc_mat.h"
 
 namespace Data
 {
@@ -30,7 +31,6 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 ~FiniteElements()
 {
-  PetscErrorCode ierr;
   // free PETSc objects
   //if (this->initialized_)
   //{
@@ -84,14 +84,13 @@ createPetscObjects()
 
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
 
-  // create partitioning
-  Partition::MeshPartition meshPartition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
+  // get the partitioning from the mesh
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition = this->mesh_->meshPartition();
   
   // create field variables on local partition
   this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
   this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
 
-  PetscErrorCode ierr;
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
@@ -103,7 +102,7 @@ createPetscObjects()
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
 
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(meshPartition, n, diagonalNonZeros, offdiagonalNonZeros);
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, (int)n, diagonalNonZeros, offdiagonalNonZeros);
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -156,7 +155,7 @@ print()
   VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
 
   VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_->values(), this->rhs_->values());
-  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_);
+  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_->values());
 
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_->values(), MAT_LOCAL, &info);
@@ -209,9 +208,9 @@ initializeMassMatrix()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  std::shared_ptr<Partition::MeshPartition> partition = this->data_.partition();
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
   const int nComponents = 1;
-  this->massMatrix = PartitionedPetscMat(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
+  this->massMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
   
   this->massMatrixInitialized_ = true;
 }

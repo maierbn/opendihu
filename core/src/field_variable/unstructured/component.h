@@ -9,20 +9,21 @@
 
 #include "field_variable/unstructured/element_to_dof_mapping.h"
 #include "field_variable/unstructured/exfile_representation.h"
+#include "partition/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType>
+template<typename BasisOnMeshType, int nComponents>
 class Component
 {
 public:
 
   //! initialize values
-  void initialize(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values, int nComponents, int componentIndex, int nElements);
+  void initialize(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values, int componentIndex, int nElements);
 
   //! set the internal values PETSc vector
-  void setValuesVector(std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values);
+  void setValuesVector(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values);
 
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
@@ -99,8 +100,7 @@ public:
   void output(std::ostream &stream) const;
 
 private:
-  std::shared_ptr<PartitionedPetsVec<BasisOnMeshType>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
-  int nComponents_;    ///< number of components for this field variable, important for interpreting values_
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
   int componentIndex_; ///< index of the current component for this field variable, starts with 0, important for interpreting values_
 
   std::string name_;    ///< identifier of the component, e.g. 'x'
@@ -112,8 +112,8 @@ private:
 };
 
 // output operator
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType> &rhs);
+template<typename BasisOnMeshType,int nComponents>
+std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType,nComponents> &rhs);
 
 };  // namespace
 #include "field_variable/unstructured/component.tpp"

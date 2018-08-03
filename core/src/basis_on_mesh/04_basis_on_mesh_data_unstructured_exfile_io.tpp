@@ -249,6 +249,8 @@ parseExelemFile(std::string exelemFilename)
       if (fieldVariable.first != fieldVariable2.first)
       {
         VLOG(1) << " unifyMappings(fieldVariable) " << fieldVariable.first << "," << fieldVariable2.first;
+
+        // the template parameter is the number of components of the fieldVariable2
         fieldVariable.second->unifyMappings(fieldVariable2.second);
       }
     }
@@ -264,7 +266,7 @@ parseExelemFile(std::string exelemFilename)
   }
   VLOG(1) << "nDofs: " << this->nDofs_;
 
-  //! check if
+  //! check if it matches meshPartition
 
   VLOG(1) << "initialize values vectors";
   // allocate common values vector for each field variable
@@ -468,7 +470,7 @@ parseFromSettings(PyObject *settings)
 
     // loop over components
     int componentNo = 0;
-    std::array<::FieldVariable::Component<BasisOnMeshType>,3> &component = this->geometryField_->component();
+    std::array<::FieldVariable::Component<BasisOnMeshType,3>,3> &component = this->geometryField_->component();
     for (auto iter = component.begin(); iter != component.end(); iter++, componentNo++)
     {
       // get value of nodePositions vector that matches current component

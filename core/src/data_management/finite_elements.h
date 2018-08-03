@@ -75,13 +75,14 @@ private:
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
-  std::shared_ptr<PartitionedPetscMat> stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-  PartitionedPetscMat<BasisOnMeshType> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
 
   bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
 
+  protected:
 };
 
 /*

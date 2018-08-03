@@ -35,6 +35,13 @@ nLocalUnknowns()
 }
 
 template<typename BasisOnMeshType>
+global_no_t Data<BasisOnMeshType>::
+nGlobalUnknowns()
+{
+  return this->mesh_->nGlobalDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+}
+
+template<typename BasisOnMeshType>
 void Data<BasisOnMeshType>::
 setMesh(std::shared_ptr<BasisOnMeshType> mesh)
 {
@@ -47,6 +54,7 @@ initialize()
 {
   if (!this->initialized_)
   {
+    // the mesh contains the meshPartition
     this->createPetscObjects();
     this->initialized_ = true;
   }

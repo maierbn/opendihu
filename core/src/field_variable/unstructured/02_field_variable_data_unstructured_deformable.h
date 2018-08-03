@@ -124,13 +124,13 @@ public:
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
   //! return the component by name
-  Component<BasisOnMeshType> &component(std::string name);
+  Component<BasisOnMeshType,nComponents> &component(std::string name);
 
   //! return the component by index
-  std::shared_ptr<Component<BasisOnMeshType>> component(int componentNo);
+  std::shared_ptr<Component<BasisOnMeshType,nComponents>> component(int componentNo);
 
   //! return the array of components
-  std::array<Component<BasisOnMeshType>,nComponents> &component();
+  std::array<Component<BasisOnMeshType,nComponents>,nComponents> &component();
 
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
@@ -145,7 +145,7 @@ public:
   virtual void finishVectorManipulation() = 0;
   
   //! return the internal partitioned petsc vec
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec();
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> partitionedPetscVec();
   
 protected:
 
@@ -159,12 +159,12 @@ protected:
   std::size_t nEntries_;       ///< number of entries
   element_no_t nElements_;    ///< number of elements
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
-  std::array<Component<BasisOnMeshType>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
+  std::array<Component<BasisOnMeshType,nComponents>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components
   std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      ///< mapping from element-local node indices to global node numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       ///< the node to dof mapping of all components, this is the same for all components
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
+  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
 };  // namespace

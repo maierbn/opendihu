@@ -9,16 +9,22 @@
 namespace BasisOnMesh
 {
  
+// forward declaration
 template<typename MeshType,typename BasisFunctionType>
-void BasisOnMeshPartition<MeshType,BasisFunctionType>::
+class BasisOnMesh;
+
+ 
+template<int D,typename BasisFunctionType>
+void BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 initialize()
 {
   // Creation of the partitioning is only possible after the number of elements is known.
   // Because this may need file I/O (e.g. reading from exfiles)
  
   // create partitioning
-  assert(partitionManager_ != nullptr);
-  meshPartition_ = partitionManager_->createPartitioning(this->nLocalElements());
+  assert(this->partitionManager_ != nullptr);
+  this->meshPartition_ = this->partitionManager_->template createPartitioning<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(
+    this->nGlobalElements());
 }
 
 };  // namespace

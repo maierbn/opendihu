@@ -1,43 +1,29 @@
 #pragma once
 
-#include "field_variable/structured/06_field_variable_set_get_structured_deformable.h"
-#include "field_variable/structured/07_field_variable_set_get_component_dependent_structured_regular_fixed.h"
-#include "field_variable/unstructured/04_field_variable_set_get_component_dependent_unstructured_deformable.h"
+#include "field_variable/08_field_variable_vector.h"
 
 namespace FieldVariable
 {
 
-/** General field variable with != 1 components. A field variable is defined on a BasisOnMesh, i.e. knows mesh type and basis function type.
+/** General field variable
  */
 template<typename BasisOnMeshType,int nComponents>
 class FieldVariable :
-  public FieldVariableSetGet<BasisOnMeshType,nComponents>
+  public FieldVariableVector<BasisOnMeshType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableSetGet<BasisOnMeshType,nComponents>::FieldVariableSetGet;
+  using FieldVariableVector<BasisOnMeshType,nComponents>::FieldVariableVector;
 
   typedef BasisOnMeshType BasisOnMesh;
+  
+  //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that the current state of the vector is fetched from the global vector
+  void startVectorManipulation();
+  
+  //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that operations on different partitions are merged by Petsc
+  void finishVectorManipulation();
 };
 
-/** General scalar field variable.
- * A field variable is defined on a BasisOnMesh, i.e. knows mesh type and basis function type.
- * Scalar field variables can compute a gradient field.
- */
-template<typename BasisOnMeshType>
-class FieldVariable<BasisOnMeshType,1> :
-  public FieldVariableSetGet<BasisOnMeshType,1>
-{
-public:
-  //! inherited constructor
-  using FieldVariableSetGet<BasisOnMeshType,1>::FieldVariableSetGet;
-
-  typedef BasisOnMeshType BasisOnMesh;
-
-  //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
-  void computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField);
-
-};
 
 // output operator
 template<typename BasisOnMeshType,int nComponents>
@@ -49,4 +35,4 @@ std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMeshTy
 
 };  // namespace
 
-#include "field_variable/07_field_variable_gradient.tpp"
+#include "field_variable/field_variable.tpp"

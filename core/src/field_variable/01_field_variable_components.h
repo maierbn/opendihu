@@ -21,6 +21,9 @@ public:
   //! get the component names
   const std::array<std::string,nComponentsValue> &componentNames() const;
 
+  //! return the component by index
+  virtual std::shared_ptr<Component<BasisOnMeshType,nComponentsValue>> component(int componentNo) = 0;
+
   //! get the component Name
   const std::string componentName(int componentNo) const;
 

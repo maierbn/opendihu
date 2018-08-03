@@ -129,8 +129,15 @@ values()
 }
 
 template<typename BasisOnMeshType, int nComponents>
+std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+partitionedPetscVec()
+{
+  return this->values_; 
+}
+
+template<typename BasisOnMeshType, int nComponents>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-initialize(std::string name, std::vector<std::string> &componentNames, std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElements,
+initialize(std::string name, std::vector<std::string> &componentNames, 
            std::size_t nEntries, bool isGeometryField)
 {
   // set member variables from arguments
@@ -143,8 +150,8 @@ initialize(std::string name, std::vector<std::string> &componentNames, std::arra
 
   nEntries_ = nEntries;
   
-  // if there is not yet a values vector, create PartitionedPetscVec
-  if (this->values_ == nullptr)
+  // if there is not yet a values vector, create PartitionedPetscVec (not for RegularFixed mesh geometry fields)
+  if (this->values_ == nullptr && nEntries != 0)
   {
     initializeValuesVector();
   }
@@ -262,15 +269,10 @@ output(std::ostream &stream) const
 
 //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
 template<typename BasisOnMeshType, int nComponents>
-bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::isGeometryField() const
+bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+isGeometryField() const
 {
   return isGeometryField_;
-}
-
-template<typename BasisOnMeshType, int nComponents>
-std::shared_ptr<PartitionedPetscVec<BasisOnMeshType>> partitionedPetscVec()
-{
-  return values_;
 }
 
 };

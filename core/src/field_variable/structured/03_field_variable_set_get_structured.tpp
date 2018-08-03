@@ -17,20 +17,22 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
+  const int nLocalDofs = this->mesh_->nLocalDofs();
+  
   // set stride to nDofsPerNode if Hermite, else to 1
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
   
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = nDofs;
+  dof_no_t nValues = nLocalDofs;
   if (onlyNodalValues)
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
-      nValues = nDofs / BasisOnMeshType::nDofsPerNode();
+      nValues = nLocalDofs / BasisOnMeshType::nDofsPerNode();
 
   // store the array indices for values_ array in dofLocalNo
   std::vector<PetscInt> indices(nValues,0);
   dof_no_t indexNo = 0;
-  for (dof_no_t dofLocalNo = 0; dofLocalNo < nDofs; dofLocalNo += stride)
+  for (dof_no_t dofLocalNo = 0; dofLocalNo < nLocalDofs; dofLocalNo += stride)
   {
     assert(indexNo < nValues);
     indices[indexNo++] = dofLocalNo;
@@ -89,7 +91,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   std::array<double,N*nComponents> result;
 
   // prepare lookup indices for PETSc vector values_
-  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     this->values_->getValues(componentIndex, N, dofLocalNo.data(), result.data() + componentIndex*N);
   }
@@ -139,7 +141,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   //VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
 
   // prepare lookup indices for PETSc vector values_
-  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
@@ -154,7 +156,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   // copy result to output values
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++, j++)
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
     {
       values[dofIndex][componentIndex] = result[componentIndex*nDofsPerElement + dofIndex];
       //VLOG(2) << "getElementValues element " << elementNo << ", dofIndex " << dofIndex << " componentIndex " << componentIndex << " value: " << values[dofIndex][componentIndex];
@@ -176,6 +178,16 @@ getValue(int componentNo, node_no_t dofLocalNo)
   return result;
 }
 
+//! get all stored local values
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+getLocalValues(int componentNo, std::vector<double> &values)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->getLocalValues(componentNo, values);
+}
+  
 //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
@@ -184,7 +196,7 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nCom
   assert(dofLocalNos.size() == values.size());
  
   const int nValues = values.size();
-  std::array<double,nValues> valuesBuffer;
+  std::vector<double> valuesBuffer(nValues);
 
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -194,7 +206,7 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nCom
       valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
     }
     
-    this->values_->setValues(componentIndex, nValue, dofLocalNos.data(), valuesBuffer.data(), petscInsertMode);
+    this->values_->setValues(componentIndex, nValues, dofLocalNos.data(), valuesBuffer.data(), petscInsertMode);
   }
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
@@ -223,9 +235,8 @@ setValues(double value)
   assert(this->mesh_);
   const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
-  std::array<PetscInt, nDofs> indices;
-  std::array<double, nDofs> valueBuffer;
-  valueBuffer.fill(value);
+  std::vector<PetscInt> indices(nDofs);
+  std::vector<double> valueBuffer(nDofs,value);
   
   std::iota(indices.begin(), indices.end(), 0);
   
@@ -235,6 +246,31 @@ setValues(double value)
   }
 }
 
+//! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->setValues(componentNo, values);
+}
+
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  this->setValues(this->values_->localDofs(), values, petscInsertMode);
+}
+
+//! set value to zero for all dofs
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+zeroEntries()
+{
+  this->values_->zeroEntries();
+}
+  
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 finishVectorManipulation()

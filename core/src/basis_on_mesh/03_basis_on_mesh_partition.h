@@ -10,8 +10,8 @@
 namespace Partition 
 {
 class Manager;
-template<typename BasisOnMeshType, typename DummyForTraits>
-class MeshPartition;
+//template<typename BasisOnMeshType, typename DummyForTraits>
+//class MeshPartition;
 }
 
 namespace BasisOnMesh

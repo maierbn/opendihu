@@ -224,7 +224,7 @@ traceStreamlines()
   // create 1D meshes of streamline from collected node positions
   if (!csvFilenameBeforePostprocessing_.empty())
   {
-    std::ofstream file(csvFilenameBeforePostprocessing_);
+    std::ofstream file(csvFilenameBeforePostprocessing_, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!file.is_open())
       LOG(WARNING) << "Could not open \"" << csvFilenameBeforePostprocessing_ << "\" for writing";
     
@@ -249,7 +249,7 @@ traceStreamlines()
   // create 1D meshes of streamline from collected node positions
   if (!csvFilename_.empty())
   {
-    std::ofstream file(csvFilename_);
+    std::ofstream file(csvFilename_, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!file.is_open())
       LOG(WARNING) << "Could not open \"" << csvFilename_ << "\" for writing";
     

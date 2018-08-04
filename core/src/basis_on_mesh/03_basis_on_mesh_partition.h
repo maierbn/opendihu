@@ -4,6 +4,7 @@
 
 #include "basis_on_mesh/02_basis_on_mesh_jacobian.h"
 #include "partition/01_mesh_partition.h"
+#include "partition/00_mesh_partition_base.h"
 
 // forward declaration
 namespace Partition 

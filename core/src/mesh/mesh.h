@@ -3,12 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <control/types.h>
 #include <memory>
-
-// forward declaration
-namespace Partition
-{
-class MeshPartitionBase;
-}
+#include "partition/00_mesh_partition_base.h"
 
 namespace Mesh
 {

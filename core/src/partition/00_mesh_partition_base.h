@@ -39,7 +39,7 @@ public:
   MPI_Comm mpiCommunicator();
   
 protected:
- 
+  
   //! initialize the localDofs_ vector to values {0,1,...,localSize()-1}, this needs localSize set previously
   void initializeLocalDofs();
  

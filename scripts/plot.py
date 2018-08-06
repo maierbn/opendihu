@@ -35,8 +35,8 @@ else:
 
 
 # import needed packages from matplotlib
+import matplotlib as mpl
 if not show_plot:
-  import matplotlib as mpl
   mpl.use('Agg')
 
 import matplotlib.pyplot as plt
@@ -44,6 +44,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import animation
 from matplotlib import cm
 from matplotlib.patches import Polygon
+import matplotlib.gridspec as gridspec
 
 # extract the files that are npy files
 solution_condition = lambda filename: "solution.npy" in filename
@@ -58,8 +59,12 @@ solution_py_files = list(np.extract(np.array(list(map(solution_py_condition, fil
 # sort files by number in file name
 solution_py_files = sorted(solution_py_files)
 
-print( "{} files".format(len(solution_py_files)))
-print( solution_py_files[0:min(10,len(solution_py_files))])
+if len(solution_py_files) == 1:
+  print("1 file: {}".format(solution_py_files[0]))
+elif len(solution_py_files) <= 4:
+  print("{} files: {}".format(len(solution_py_files),solution_py_files))
+else:
+  print("{} files: {}, {}, {}, ..., {}".format(len(solution_py_files), solution_py_files[0],solution_py_files[1],solution_py_files[2],solution_py_files[-1]))
 
 data = py_reader.load_data(solution_py_files)
 
@@ -73,32 +78,97 @@ dimension = data[0]['dimension']
 # 1D
 if dimension == 1:
   
-  min_value, max_value = py_reader.get_min_max(data, "solution", "0")
-  min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
-  
-  print( "value range: [{}, {}]".format(min_value, max_value))
-  
-  # prepare plot
-  fig = plt.figure()
-
-  margin = abs(max_value - min_value) * 0.1
-  ax = plt.axes(xlim=(min_x, max_x), ylim=(min_value - margin, max_value + margin))
-  line, = ax.plot([], [], 'o-', color=(1.0,0.9,0.8), lw=2)
-  text = plt.figtext(0.15,0.85,"timestep",size=20)
-  ax.set_xlabel('X')
-  ax.set_ylabel('Y')
+  fig = plt.figure(figsize=(10,12))
   
   def init():
-    line.set_data([], [])
-    text.set_text("timestep {}".format(0))
-    return line,
+    global geometry_component, line_2D, lines_3D, cbar, text, ax1, ax2, cmap
+      
+    # determine in which direction the 1D fibre extends the most
+    min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
+    min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
+    min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
+    min_s, max_s = py_reader.get_min_max(data, "solution", "0")
+    
+    span_x = max_x - min_x
+    span_y = max_y - min_y
+    span_z = max_z - min_z
+    
+    if span_x >= span_y and span_x >= span_z:
+      geometry_component = "x"
+    elif span_y >= span_x and span_y >= span_z:
+      geometry_component = "y"
+    else:
+      geometry_component = "z"
+      
+    min_x, max_x = py_reader.get_min_max(data, "geometry", geometry_component)
+    
+    print( "value range: [{}, {}]".format(min_s, max_s))
+    
+    # prepare plot
+    gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
+    ax2 = plt.subplot(gs[0], projection='3d')
+    ax1 = plt.subplot(gs[1])
+    
+    line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
+    margin = abs(max_s - min_s) * 0.1
+    ax1.set_xlim(min_x, max_x)
+    ax1.set_ylim(min_s - margin, max_s + margin)
+    text = plt.figtext(0.15,0.95,"",size=20)
+    
+    xlabel = geometry_component
+    ax1.set_xlabel(xlabel.upper())
+    ax1.set_ylabel('Solution')
+    ax2.set_title("geometry")
+    ax2.set_xlim(min_x, max_x)
+    ax2.set_ylim(min_y, max_y)
+    ax2.set_zlim(min_z, max_z)
+    
+    lines_3D = []
+    # plot line segments with corresponding color
+    xdata = py_reader.get_values(data[0], "geometry", "x")
+    for i in range(len(xdata)):
+      p, = ax2.plot(xdata[i:i+2], xdata[i:i+2], xdata[i:i+2], lw=3)
+      lines_3D.append(p)
+    ax2.set_xlabel('X')
+    ax2.set_ylabel('Y')
+    ax2.set_zlabel('Z')
+      
+    # manually create colorbar  [https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots]
+    plt.sca(ax2)
+    
+    norm = mpl.colors.Normalize(vmin=min_s, vmax=max_s)
+    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.jet)
+    cmap.set_array([])
+    cbar = fig.colorbar(cmap)
+    
+    return line_2D,
 
   def animate(i):
+    ##################
+    # 2D plot
     # display data
-    xdata = py_reader.get_values(data[i], "geometry", "x")
-    ydata = py_reader.get_values(data[i], "solution", "0")
-    line.set_data(xdata, ydata)
+    xdata = py_reader.get_values(data[i], "geometry", geometry_component)
+    sdata = py_reader.get_values(data[i], "solution", "0")
     
+    line_2D.set_data(xdata,sdata)
+    ##################
+    # 3D plot
+    
+    # retrieve all values
+    xdata = py_reader.get_values(data[0], "geometry", "x")
+    ydata = py_reader.get_values(data[0], "geometry", "y")
+    zdata = py_reader.get_values(data[0], "geometry", "z")
+    
+    min_s = min(sdata)
+    max_s = max(sdata)
+    
+    # plot line segments with corresponding color
+    for j in range(len(xdata)):
+      normalized_value = (float)(sdata[j] - min_s) / (max_s - min_s)
+      lines_3D[j].set_data([xdata[j:j+2], ydata[j:j+2]])
+      lines_3D[j].set_3d_properties(zdata[j:j+2])
+      lines_3D[j].set_color(plt.cm.jet(normalized_value))
+      
     # display timestep
     if 'timeStepNo' in data[i]:
       timestep = data[i]['timeStepNo']
@@ -109,7 +179,7 @@ if dimension == 1:
       
     text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
     
-    return line,
+    return line_2D,
     
   interval = 5000.0 / len(data)
         
@@ -127,23 +197,26 @@ if dimension == 1:
     
     # create plot with first and last dataset
     # plot first dataset
-    line, = ax.plot([], [], 'o-', color=(0.8,1.0,0.9), lw=2, label="t=0")
-    line0, = animate(0)
+    plt.clf()
+    init()
+    line_2D, = ax1.plot([], [], '+-', color=(1.0,0.9,0.8), lw=2, label="t=0")
+    animate(0)
     
     # plot last dataset
     i = len(data)-1
-    if 'timeStepNo' in data[i]:
-      timestep = data[i]['timeStepNo']
     if 'currentTime' in data[i]:
       current_time = data[i]['currentTime']
-      
-    line, = ax.plot([], [], 'o-b', lw=2, label="t={}".format(current_time))
-    line1, = animate(i)
+    line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label="t={}".format(current_time))
+    
+    animate(i)
     
     max_timestep = len(data)-1
+    if 'timeStepNo' in data[i]:
+      timestep = data[i]['timeStepNo']
     text.set_text("timesteps 0 and {}".format(timestep))
+    ax2.set_title("geometry for t={}".format(current_time))
     
-    ax = plt.gca()
+    plt.sca(ax1)
     #ax.add_line(line0)
     #ax.add_line(line1)
     plt.legend()

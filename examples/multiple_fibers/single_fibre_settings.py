@@ -197,7 +197,8 @@ def get_instance_config(i):
             "DirichletBoundaryCondition": bc,
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/bin_fibre_"+str(i), "binaryOutput": True, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/txt_fibre_"+str(i), "binaryOutput": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
             {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
           ]

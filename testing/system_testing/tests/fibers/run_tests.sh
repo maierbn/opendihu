@@ -2,9 +2,12 @@
 
 echo "running example $(pwd)"
 
+export OMP_NUM_THREADS=1
+
 workdir=$(pwd)
 variant="debug"
-#variant="release"
+#variant="release_with_debug_info"
+variant="release"
 
 mkdir -p build_${variant}
 cd build_${variant}
@@ -16,6 +19,8 @@ rm -rf out
 ./laplace_structured_linear ../settings.py laplace3d_structured_linear
 ../scripts/csv2mesh.py laplace3d_structured_linear.csv laplace3d_structured_linear.stl
 ../scripts/read_csv_fibres.py laplace3d_structured_linear.csv laplace3d_structured_linear
+../scripts/read_csv_fibres.py laplace3d_structured_linear_raw.csv laplace3d_structured_linear_raw
+
 
 ./laplace_structured_quadratic ../settings.py laplace3d_structured_quadratic
 ../scripts/csv2mesh.py laplace3d_structured_quadratic.csv laplace3d_structured_quadratic.stl

@@ -360,8 +360,11 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
 
   VecRestoreArrayRead(solverVariableSolution, &solverVariableSolutionData);
 
-  VLOG(1) << "extracted displacements: " << PetscUtility::getStringVector(this->data_.displacements().values());
-  VLOG(1) << "extracted pressure: " << PetscUtility::getStringVector(this->data_.pressure().values());
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "extracted displacements: " << PetscUtility::getStringVector(this->data_.displacements().values());
+    VLOG(1) << "extracted pressure: " << PetscUtility::getStringVector(this->data_.pressure().values());
+  }
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>

@@ -891,7 +891,7 @@ computeExternalVirtualWork(Vec &resultVec)
   // return memory acces of result vector back to PETSc (not used)
   //VecRestoreArray(resultVec, &result);
 
-  VLOG(1) << "  ->wExt: " << PetscUtility::getStringVector(resultVec);
+  if (VLOG_IS_ON(1)) VLOG(1) << "  ->wExt: " << PetscUtility::getStringVector(resultVec);
 }
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
@@ -1267,8 +1267,8 @@ computeInternalVirtualWork(Vec &resultVec)
   // return memory acces of result vector back to PETSc (not used)
   //VecRestoreArray(resultVec, &result);
 
-  //VLOG(1) << "    disp: " << PetscUtility::getStringVector(this->data_.displacements().values());
-  VLOG(1) << "  ->wInt: " << PetscUtility::getStringVector(resultVec);
+  //if (VLOG_IS_ON(1)) VLOG(1) << "    disp: " << PetscUtility::getStringVector(this->data_.displacements().values());
+  if (VLOG_IS_ON(1)) VLOG(1) << "  ->wInt: " << PetscUtility::getStringVector(resultVec);
 }
 
 

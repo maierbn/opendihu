@@ -84,7 +84,8 @@
 \usepackage{verbatimbox}    % \begin{verbbox}
 \usepackage{booktabs}
 \usepackage{morefloats}
-\usepackage{multimedia}     % \movie
+%\usepackage{multimedia}     % \movie
+\usepackage{movie15}        % \animation{x.mp4}
 
 %\newsavebox\lstbox
 %\mdfdefinestyle{MyFrame}{%
@@ -204,6 +205,12 @@
         \label{fig:#1}%
     \end{figure}%
 }
+
+\newcommand{\animation}[1]{%
+   \includemovie[poster,controls]{\textwidth}{\textwidth}{#1}
+}
+
+
 
 %%%%%%%%%%%%%%%%   Abkürzungen   %%%%%%%%%%%%%%%%%%
 

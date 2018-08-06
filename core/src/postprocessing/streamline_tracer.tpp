@@ -20,12 +20,13 @@ StreamlineTracer(DihuContext context) :
   outputWriterManager_.initialize(specificSettings_);
 
   lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2, PythonUtility::Positive);
-  targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 1e-1, PythonUtility::Positive);
+  targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 0.0, PythonUtility::Positive);
   targetLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetLength", 0.0, PythonUtility::Positive);
   discardRelativeLength_ = PythonUtility::getOptionDouble(specificSettings_, "discardRelativeLength", 0.0, PythonUtility::Positive);
   maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
   useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField_", false);
   csvFilename_ = PythonUtility::getOptionString(specificSettings_, "csvFilename", "");
+  csvFilenameBeforePostprocessing_ = PythonUtility::getOptionString(specificSettings_, "csvFilenameBeforePostprocessing", "");
   
   // get the first seed position from the list
   PyObject *pySeedPositions = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "seedPoints");
@@ -218,6 +219,26 @@ traceStreamlines()
     streamlines[seedPointNo].insert(streamlines[seedPointNo].end(), forwardPoints.begin(), forwardPoints.end());
     
     LOG(DEBUG) << " seed point " << seedPointNo << ", " << streamlines[seedPointNo].size() << " points";
+  }
+  
+  // create 1D meshes of streamline from collected node positions
+  if (!csvFilenameBeforePostprocessing_.empty())
+  {
+    std::ofstream file(csvFilenameBeforePostprocessing_);
+    if (!file.is_open())
+      LOG(WARNING) << "Could not open \"" << csvFilenameBeforePostprocessing_ << "\" for writing";
+    
+    for (int streamlineNo = 0; streamlineNo != streamlines.size(); streamlineNo++)
+    {
+      for (std::vector<Vec3>::const_iterator iter = streamlines[streamlineNo].begin(); iter != streamlines[streamlineNo].end(); iter++)
+      {
+        Vec3 point = *iter;
+        file << point[0] << ";" << point[1] << ";" << point[2] << ";";
+      }
+      file << "\n";
+    }
+    file.close();
+    LOG(INFO) << "File \"" << csvFilenameBeforePostprocessing_ << "\" written.";
   }
   
   // coarsen streamlines and drop too small streamlines

@@ -970,14 +970,26 @@ With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we g
   \end{array}
 \end{equation*}
 \subsection{Lumped Mass Matrix}
+For linear or bilinear basis functions
+\begin{equation*}
+\left\{
+  \begin{array}{ll}
+    m'_{i,j}=0 &i\ne j\\
+    m'_{i,i}=S(i) &i=1,...,n
+  \end{array},
+\right.
+\end{equation*}
+where $S(i)=\sum_{j=1}^{n}m_{i,j}$ for $i=1,...,n$.\\[0.5em]
+For orders of basis greater than two suggested from Hinton et al. \cite{hinton_rock_zienkiewicz_1976}:
 \begin{equation}
 \left\{
   \begin{array}{ll}
-	m_{i,j}=0 &i\ne j\\
-	m_{i,i}=\frac{S}{D} m'_{i,i} & i=1,...,n
+	m'_{i,j}=0 &i\ne j\\
+	m'_{i,i}=\frac{S}{D} m_{i,i} & i=1,...,n
   \end{array}
+\right.
 \end{equation}
-where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m'_{i,j}$ and $D=\sum_{i=1}^{n}m'_{i,i}$.
+where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m_{i,j}$ and $D=\sum_{i=1}^{n}m_{i,i}$.
 
 
 \subsection{Analytical Solution}

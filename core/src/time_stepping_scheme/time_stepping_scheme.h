@@ -47,6 +47,7 @@ protected:
 
   double startTime_;        ///< start time of time interval to be simulated by call to advance
   double endTime_;          ///< end time of simulation
+
   int numberTimeSteps_;     ///< number of time steps in simulation time, this one is always used to compute the real timeStepWidth
 
   bool isTimeStepWidthSignificant_;   ///< if time step width will be used to determine number of steps

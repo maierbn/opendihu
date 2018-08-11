@@ -15,7 +15,22 @@ ImplicitEuler<DiscretizableInTime>::ImplicitEuler(DihuContext context) :
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context); // create data object for implicit euler
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ImplicitEuler");
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->outputWriterManager_.initialize(this->specificSettings_); 
+}
+
+template<typename DiscretizableInTime>
+void ImplicitEuler<DiscretizableInTime>::initialize()
+{
+  if (initialized_)
+    return;
+  
+  LOG(TRACE)<<"ImplicitEuler::initialize";
+  
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
+  this->discretizableInTime_.preComputeSystemMatrix(this->timeStepWidth_);
+  
+  initialized_ = true;
+  
 }
 
 template<typename DiscretizableInTime>
@@ -25,7 +40,7 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
+  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
 
   // loop over time steps
@@ -35,13 +50,8 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
 
-    // advance computed value
-    // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
-
-    // integrate, y += dt * delta_u
-    VecAXPY(this->data_->solution().values(), timeStepWidth, this->data_->increment().values());
+    // computed value
+    this->discretizableInTime_.solveLinearSystem(this->data_->solution().values(), this->data_->solution().values());
 
     // advance simulation time
     timeStepNo++;

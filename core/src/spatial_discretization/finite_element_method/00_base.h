@@ -47,6 +47,9 @@ protected:
   
   //! setup mass matrix
   virtual void setMassMatrix() = 0;
+  
+  //! setup inverse of the lumped mass matrix
+  //virtual void setInvLumMassMatrix()=0;
 
   //! solve finite element linear system
   virtual void solve();

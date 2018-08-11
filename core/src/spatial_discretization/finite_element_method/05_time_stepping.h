@@ -24,6 +24,12 @@ public:
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
+  //! inverse of the lumped mass matrix
+  void setInvLumMassMatrix();
+  
+  //! if the matrix is already initialized
+  bool invLumMassMatrixSet();
+  
   //! precomputes the system matrix A=I-M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
   void preComputeSystemMatrix(double timeStepWidth);
   
@@ -53,11 +59,9 @@ protected:
   //! check if the matrix and vector number of entries are correct such that stiffnessMatrix can be multiplied to rhs
   void checkDimensions(Mat &stiffnessMatrix, Vec &rhs);
   
-  Mat &systemMatrix();
+private:
+  bool invLumMassMatrixSet_=false;
   
-  private:
-    
-  Mat systemMatrix_;
 };
 
 };  // namespace

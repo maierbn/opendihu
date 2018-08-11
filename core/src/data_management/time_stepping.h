@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <petscmat.h>
+#include "utility/petsc_utility.h"
 #include <memory>
 
 #include "control/types.h"
@@ -37,6 +38,9 @@ public:
   FieldVariableType &increment();
 
   // virtual FieldVariableType &intermediateIncrement() = 0;
+  
+  //! if the matrix is already initialized
+  //bool invLumMassMatrixInitialized();
 
   //! print all stored data to stdout
   virtual void print();
@@ -64,6 +68,10 @@ protected:
   std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
+  
+private:
+  //! get maximum number of expected non-zeros in the system matrix
+  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
 };
 

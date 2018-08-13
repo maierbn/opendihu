@@ -4,8 +4,8 @@ basedir=$(pwd)
 
 # for all tests
 for name in \
-"diffusion" \
-"fibers"
+"laplace" \
+"diffusion"
 do
 
 echo ""

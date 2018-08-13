@@ -19,18 +19,32 @@ import scipy.integrate
 
 import py_reader
 import settings_1d
+import settings_2d
 
   
 # define analytic solution for testing
 def analytic_solution_1d(x):
-  # note: this analytic solution would be correct for a non-bounded domain
+  # u(x) = a + (b-a)*x/l,   a = 
+  
+  l = settings_1d.physicalExtent
   bc = settings_1d.bc
-  n = settings_1d.n
-  physicalExtent = settings_1d.physicalExtent
-  b = bc[0]; #a * 0 + b
-  a = (bc[n] - b) / physicalExtent # ax + b = bc[n], a = (bc[n] - b) / x[n]
-  value = a * x + b
+  a = bc[0]
+  b = bc[bc.keys()[-1]]
+  value = a + (b-a)*x/l
   return value
+
+def analytic_solution_2d(x1,x2):
+  # u(x) = c1*sin(k*pi*x1)*exp(k*pi*x2) + c2*sin(k*pi*x1)*exp(-k*pi*x2)
+  
+  k = settings_2d.k
+  c1 = 1./(2*np.sinh(k*np.pi))
+  c2 = -c1
+  
+  value = c1*np.sin(k*np.pi*x1)*np.exp(k*np.pi*x2) + c2*np.sin(k*np.pi*x1)*np.exp(-k*np.pi*x2)
+  #print( "({},{})={}".format(x1,x2,value))
+  
+  return value
+
 files = ""
 
 show_plot = True
@@ -46,16 +60,6 @@ else:
 
   # sort files by number in file name
   files = sorted(ls)
-
-# import needed packages from matplotlib
-if not show_plot:
-  import matplotlib as mpl
-  mpl.use('Agg')
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import animation
-from matplotlib import cm
 
 # extract the files that are npy files
 solution_condition = lambda filename: ".py" in filename
@@ -165,20 +169,72 @@ if dimension == 2:
       fdata = np.array(py_reader.get_values(dataset, "solution", "0"))
       
       # pick a subset of the data to be used for testing
-      test_index_subset = []
-      for i in range(10):
-        test_index_subset.append(int(len(xdata)*i/10.))
+      test_index_subset = range(len(xdata))
             
       xdata_subset = xdata[test_index_subset]
       ydata_subset = ydata[test_index_subset]
       fdata_subset = fdata[test_index_subset]
       
       # compute the analytic solution
-      f_analytic = [analytic_solution_2d(x,y,t) for (x,y) in zip(xdata_subset,ydata_subset)]
+      f_analytic = [analytic_solution_2d(x,y) for (x,y) in zip(xdata_subset,ydata_subset)]
       
-      #print("f_analytic:   ",f_analytic)
-      #print("fdata_subset: ",fdata_subset)
+  #    if True:  # debugging output and plot
+        #print("f_analytic:   ",np.array(f_analytic))
+#        print("fdata_subset: ",fdata_subset)
+
+
+      if "2d_structured_regular_fixed_quadratic" in solution_files[0] and False:
+
+        for (ana,num) in zip(f_analytic,fdata_subset):
+          print "ana,num:", ana,num
+      if False:  # debugging output and plot
       
+        # import needed packages from matplotlib
+        if not show_plot:
+          import matplotlib as mpl
+          mpl.use('Agg')
+
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        from matplotlib import animation
+        from matplotlib import cm
+
+        # prepare plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        
+        # create mesh
+        nEntries = []
+        for i in range(dimension):
+          nEntries.append(data[0]["nElements"][i] + 1)
+
+        nEntries = nEntries[::-1]   # reverse list
+        
+        x_positions = py_reader.get_values(data[0], "geometry", "x")
+        y_positions = py_reader.get_values(data[0], "geometry", "y")
+        
+        X = np.reshape(x_positions, nEntries)
+        Y = np.reshape(y_positions, nEntries)
+      
+        print( "nEntries: ", nEntries)
+        print( "x_positions: ", len(x_positions))
+        print( "X: ",X.size)
+        print( "y_positions: ", len(y_positions))
+        print( "Y: ",Y.size)
+      
+        # display data
+        #solution_shaped = py_reader.get_values(data[0], "solution", "0")
+          
+        Z = np.reshape(f_analytic, nEntries)
+        print( "x shape: {}, y shape: {}, z shape: {}".format(X.shape, Y.shape, Z.shape))
+        
+        plt.title("analytical solution")
+        ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+        plt.show()      
+        
       error_absolute = np.array(fdata_subset) - np.array(f_analytic)
       error_absolute_norm = np.linalg.norm(error_absolute) / len(fdata_subset)
       
@@ -188,7 +244,7 @@ if dimension == 2:
       error_absolute_timestep.append(error_absolute_norm)
       error_relative_timestep.append(error_relative_norm)
       
-      #print("t={}, error absolute/relative: {}/{}".format(t,error_absolute_norm,error_relative_norm))
+      #print("error absolute/relative: {}/{}".format(error_absolute_norm,error_relative_norm))
       
     # reduce error values for all timesteps
     error_absolute_mean = np.mean(error_absolute_timestep)

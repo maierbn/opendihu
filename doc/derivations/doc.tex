@@ -29,6 +29,30 @@ A classical solution $u: \Omega \to \R$ fulfills \eqref{eq:laplace}. For a uniqu
 \end{equation}
 where the homogeneous Neumann-type boundary conditions for $\bfx \in \Gamma_N$ set the flux over the boundary in normal direction $\bfn$ to zero and the Dirichlet-type boundary conditions on $\Gamma_D$ prescribe a value for $u$ on the boundary.
 
+\subsection{Analytical solution}
+%
+The solution for a 1D case on $\Omega = [0,l]$ with $u_0(0)=a$, $u_0(l)=b$, simply is
+\begin{equation*}
+  \begin{array}{lll}
+    u(x) = a + (b-a)\,x/l.
+  \end{array}
+\end{equation*}
+For the 2D case on $\Omega = [0,1]^2$ with Dirichlet boundary conditions
+\begin{equation*}
+  \begin{array}{lll}
+    u_0(x_1,1) = \sin(k\,\pi\,x_1), \quad k \in \N  \qquad &\text{\say{top}},\\[4mm]
+    u_0(x_1,0) = u_0(0,x_2) = u_0(1,x_2) = 0  \quad &\text{\say{left, right and bottom}},\\[4mm]
+  \end{array}
+\end{equation*}
+we have the solution
+\begin{equation*}
+  \begin{array}{lll}
+    u(x_1,x_2) = c_1\,\sin(k\,\pi\,x_1)\,e^{k\,\pi\,x_2} + c_2\,\sin(k\,\pi\,x_1)\,e^{-k\,\pi\,x_2}, \qquad \text{where}\\[4mm]
+    c_1 = 1/\big(2\,\sinh(k\,\pi)\big), \quad c_2=-1/\big(2\,\sinh(k\,\pi)\big).
+  \end{array}
+\end{equation*}
+Also see exercise in \say{Grundlagen des Wissenschaftlichen Rechnens} (2013 3.2d).
+
 \subsection{Finite Element formulation}
 
 By multiplication of a testfunction $\phi\in H^1_0(\Omega)$ and integration follows the weak formulation of \eqref{eq:laplace}:

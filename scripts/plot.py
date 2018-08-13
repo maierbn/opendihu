@@ -72,6 +72,11 @@ if len(data) == 0:
   print( "no data found.")
   sys.exit(0)
 
+# set global parameters for font sizes
+plt.rcParams.update({'font.size': 20})
+plt.rcParams['lines.linewidth'] = 3
+plt.rcParams['lines.markersize'] = 8
+
 dimension = data[0]['dimension']
 
 ####################
@@ -80,8 +85,10 @@ if dimension == 1:
   
   fig = plt.figure(figsize=(10,12))
   
+  show_geometry = True
+  
   def init():
-    global geometry_component, line_2D, lines_3D, cbar, text, ax1, ax2, cmap
+    global geometry_component, line_2D, lines_3D, cbar, text, ax1, ax2, cmap, show_geometry
       
     # determine in which direction the 1D fibre extends the most
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
@@ -93,6 +100,10 @@ if dimension == 1:
     span_y = max_y - min_y
     span_z = max_z - min_z
     
+    # if the geometry is a line, do not show geometry plot
+    if span_y == 0 and span_z == 0:
+      show_geometry = False
+    
     if span_x >= span_y and span_x >= span_z:
       geometry_component = "x"
     elif span_y >= span_x and span_y >= span_z:
@@ -103,11 +114,16 @@ if dimension == 1:
     min_x, max_x = py_reader.get_min_max(data, "geometry", geometry_component)
     
     print( "value range: [{}, {}]".format(min_s, max_s))
+    if show_geometry:
+      print( "geometry bounding box: x:[{},{}], y:[{},{}], z:[{},{}]".format(min_x,max_x,min_y,max_y,min_z,max_z))
     
     # prepare plot
-    gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
-    ax2 = plt.subplot(gs[0], projection='3d')
-    ax1 = plt.subplot(gs[1])
+    if show_geometry:
+      gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
+      ax2 = plt.subplot(gs[0], projection='3d')
+      ax1 = plt.subplot(gs[1])
+    else:
+      ax1 = plt.gca()
     
     line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
     margin = abs(max_s - min_s) * 0.1
@@ -118,32 +134,36 @@ if dimension == 1:
     xlabel = geometry_component
     ax1.set_xlabel(xlabel.upper())
     ax1.set_ylabel('Solution')
-    ax2.set_title("geometry")
-    ax2.set_xlim(min_x, max_x)
-    ax2.set_ylim(min_y, max_y)
-    ax2.set_zlim(min_z, max_z)
     
-    lines_3D = []
-    # plot line segments with corresponding color
-    xdata = py_reader.get_values(data[0], "geometry", "x")
-    for i in range(len(xdata)):
-      p, = ax2.plot(xdata[i:i+2], xdata[i:i+2], xdata[i:i+2], lw=3)
-      lines_3D.append(p)
-    ax2.set_xlabel('X')
-    ax2.set_ylabel('Y')
-    ax2.set_zlabel('Z')
+    if show_geometry:
+      ax2.set_title("geometry")
+      ax2.set_xlim(min_x, max_x)
+      ax2.set_ylim(min_y, max_y)
+      ax2.set_zlim(min_z, max_z)
       
-    # manually create colorbar  [https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots]
-    plt.sca(ax2)
-    
-    norm = mpl.colors.Normalize(vmin=min_s, vmax=max_s)
-    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.jet)
-    cmap.set_array([])
-    cbar = fig.colorbar(cmap)
+      lines_3D = []
+      # plot line segments with corresponding color
+      xdata = py_reader.get_values(data[0], "geometry", "x")
+      for i in range(len(xdata)):
+        p, = ax2.plot(xdata[i:i+2], xdata[i:i+2], xdata[i:i+2], lw=3)
+        lines_3D.append(p)
+      ax2.set_xlabel('X')
+      ax2.set_ylabel('Y')
+      ax2.set_zlabel('Z')
+        
+      # manually create colorbar  [https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots]
+      plt.sca(ax2)
+      
+      norm = mpl.colors.Normalize(vmin=min_s, vmax=max_s)
+      cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.jet)
+      cmap.set_array([])
+      cbar = fig.colorbar(cmap)
     
     return line_2D,
 
   def animate(i):
+    global text
+    
     ##################
     # 2D plot
     # display data
@@ -154,21 +174,22 @@ if dimension == 1:
     ##################
     # 3D plot
     
-    # retrieve all values
-    xdata = py_reader.get_values(data[0], "geometry", "x")
-    ydata = py_reader.get_values(data[0], "geometry", "y")
-    zdata = py_reader.get_values(data[0], "geometry", "z")
-    
-    min_s = min(sdata)
-    max_s = max(sdata)
-    
-    # plot line segments with corresponding color
-    for j in range(len(xdata)):
-      normalized_value = (float)(sdata[j] - min_s) / (max_s - min_s)
-      lines_3D[j].set_data([xdata[j:j+2], ydata[j:j+2]])
-      lines_3D[j].set_3d_properties(zdata[j:j+2])
-      lines_3D[j].set_color(plt.cm.jet(normalized_value))
+    if show_geometry:
+      # retrieve all values
+      xdata = py_reader.get_values(data[0], "geometry", "x")
+      ydata = py_reader.get_values(data[0], "geometry", "y")
+      zdata = py_reader.get_values(data[0], "geometry", "z")
       
+      min_s = min(sdata)
+      max_s = max(sdata)
+      
+      # plot line segments with corresponding color
+      for j in range(len(xdata)):
+        normalized_value = (float)(sdata[j] - min_s) / (max_s - min_s)
+        lines_3D[j].set_data([xdata[j:j+2], ydata[j:j+2]])
+        lines_3D[j].set_3d_properties(zdata[j:j+2])
+        lines_3D[j].set_color(plt.cm.jet(normalized_value))
+        
     # display timestep
     if 'timeStepNo' in data[i]:
       timestep = data[i]['timeStepNo']
@@ -214,7 +235,9 @@ if dimension == 1:
     if 'timeStepNo' in data[i]:
       timestep = data[i]['timeStepNo']
     text.set_text("timesteps 0 and {}".format(timestep))
-    ax2.set_title("geometry for t={}".format(current_time))
+    
+    if show_geometry:
+      ax2.set_title("geometry for t={}".format(current_time))
     
     plt.sca(ax1)
     #ax.add_line(line0)

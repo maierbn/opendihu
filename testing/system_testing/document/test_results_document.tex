@@ -11,68 +11,13 @@
 \tableofcontents
 \newpage
 
-\section{Laplace equation}
-\label{chap:laplace}
-
-For a computational domain $\Omega\subset \R^d$ the Laplace equation reads
-\begin{equation}\label{eq:laplace}
-  \begin{array}{ll}
-    Δu = 0 \quad \text{on }\Omega.
-  \end{array}
-\end{equation}
-A classical solution $u: \Omega \to \R$ fulfills \eqref{eq:laplace}. For a unique solution also boundary conditions have to be specified, e.g.
-\begin{equation}
-  \begin{array}{rcll}
-    ∇u(\bfx) \cdot \bfn &=& 0 \quad &\text{on } \Gamma_N,\\[4mm]
-    u(\bfx) &=& u_0(\bfx) \quad &\text{on } \Gamma_D,
-  \end{array}
-\end{equation}
-where the homogeneous Neumann-type boundary conditions for $\bfx \in \Gamma_N$ set the flux over the boundary in normal direction $\bfn$ to zero and the Dirichlet-type boundary conditions on $\Gamma_D$ prescribe a value for $u$ on the boundary.
-
 %-------------------------------------------------------------------------------------------------
 
-\section{Poisson Equation}
-The Poisson equation is a generalization of the Laplace equation and reads
-%
-\begin{equation*}
-  \begin{array}{lll}
-    Δu = f\qquad \text{on }\Omega.
-  \end{array}
-\end{equation*}
-%
-It can be subject to the same boundary conditions as Laplace equation, i.e. Neumann-type boundary conditions
-%
-\begin{equation*}
-  \begin{array}{lll}
-    ∇u(\bfx) \cdot \bfn = 0 \qquad \text{on }\Gamma_N,
-  \end{array}
-\end{equation*}
-%
-as well as Dirichlet-type boundary conditions
-%
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx) = u_0(\bfx) \qquad \text{on }\Gamma_D.
-  \end{array}
-\end{equation*}
-
-%-------------------------------------------------------------------------------------------------
-\section{Generalized Laplace operator}
-%
-The Laplace equation $Δu=0$ describes steady-state matter-/heat-/current flow where the computed quantity $u$ designates the potential that induces the flow $\bfF$, which can be modelled as being directed against the potential gradient, $\bfF = -∇u$. In terms of heat transfer this is \emph{Fick's law}. By considering the conservation law of the flowing quantity we assume $∇\cdot \bfF = 0$ which leads directly to the Laplace equation. 
-
-If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -AΔu$ and the resulting equation is called generalized Laplace equation, reading
-\begin{equation*}
-  \begin{array}{lll}
-    ∇\cdot (A ∇u) = 0.
-  \end{array}
-\end{equation*}
-The parantheses can also be neglected. $∇\cdot A∇$ is referred to as generalized Laplace operator.
+\input{../tests/laplace/documents/document.tex}
 
 %-------------------------------------------------------------------------------------------------
 
 \input{../tests/diffusion/documents/document.tex}
-
 %------------------------------------------------------------------------------------------------
 \section{Multidomain}
 

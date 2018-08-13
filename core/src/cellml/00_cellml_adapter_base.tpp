@@ -35,62 +35,6 @@ nComponents()
 }
 
 
-template<int nStates>
-bool CellmlAdapterBase<nStates>::
-scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitialValues)
-{
-  LOG(TRACE) << "scanInitialValues";
-
-  // read in source from file
-  std::ifstream sourceFile(sourceFilename.c_str());
-  if (!sourceFile.is_open())
-  {
-    LOG(WARNING) << "Could not open source file \""<<sourceFilename<<"\" for reading initial values.";
-    return false;
-  }
-  else
-  {
-    std::stringstream source;
-    source << sourceFile.rdbuf();
-    sourceFile.close();
-
-    statesInitialValues.resize(nStates);
-
-    // step through lines and create simd source
-    while(!source.eof())
-    {
-      std::string line;
-      getline(source, line);
-
-      // line contains initial value for a state or a known value, for example: "DUMMY_ASSIGNMENT /*OC_STATE[0]*/ = -79.974;"
-      if (line.find("DUMMY_ASSIGNMENT") == 0 && line.find("/*") != std::string::npos)
-      {
-        // parse line
-        size_t posBegin = line.find("/*")+2;
-        size_t posEnd = line.find("*/");
-        std::string variableType = line.substr(posBegin, posEnd-posBegin);
-        size_t pos = variableType.find("[");
-        std::string variableName = variableType.substr(0, pos);
-        unsigned int index = atoi(variableType.substr(pos+1).c_str());
-
-        pos = line.find("= ");
-        double value = atof(line.substr(pos+2).c_str());
-
-        if (variableName == "OC_STATE" && index >= 0 && index < (unsigned int)nStates)
-        {
-          statesInitialValues[index] = value;
-        }
-        else if (variableName == "OC_KNOWN" && index >= 0)
-        {
-          if (parameters_.size() < index+1)
-            parameters_.resize(index+1);
-          parameters_[index] = value;
-        }
-      }
-    }
-  }
-  return true;
-}
 
 template<int nStates>
 void CellmlAdapterBase<nStates>::
@@ -98,10 +42,6 @@ initialize()
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates>::initialize";
 
-  // parse number of variables
-  nIntermediates_ = PythonUtility::getOptionInt(specificSettings_, "numberIntermediates", 0, PythonUtility::NonNegative);
-  nParameters_ = PythonUtility::getOptionInt(specificSettings_, "numberParameters", 0, PythonUtility::NonNegative);
- 
   if (VLOG_IS_ON(1))
   {
     LOG(DEBUG) << "CellmlAdapterBase<nStates>::initialize querying meshManager for mesh";
@@ -116,9 +56,23 @@ initialize()
   //store number of instances
   nInstances_ = mesh_->nNodes();
 
-  LOG(DEBUG) << "Initialize CellML with nStates="<<nStates
-    <<", nIntermediates="<<nIntermediates_<<", nParameters="<<nParameters_<<", nInstances="<<nInstances_;
-
+  sourceFilename_ = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
+  this->scanSourceFile(this->sourceFilename_, statesInitialValues_);
+  
+  // add explicitely defined parameters that replace intermediates and constants
+  if (!inputFileTypeOpenCMISS_)
+  {
+    PythonUtility::getOptionVector(this->specificSettings_, "parametersUsedAsIntermediate", parametersUsedAsIntermediate_);
+    PythonUtility::getOptionVector(this->specificSettings_, "parametersUsedAsConstant", parametersUsedAsConstant_);
+    nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
+    
+    LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
+      << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
+  }
+  
+  LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_ 
+    << ", nStates = " << nStates << ", nIntermediates = " << nIntermediates_;
+    
   // allocate data vectors
   intermediates_.resize(nIntermediates_*nInstances_);
   parameters_.resize(nParameters_*nInstances_);
@@ -130,23 +84,21 @@ bool CellmlAdapterBase<nStates>::
 setInitialValues(Vec& initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_="<<this->sourceFilename_;
-  std::vector<double> states;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
-    PythonUtility::getOptionVector(this->specificSettings_, "statesInitialValues", nStates, states);
+    PythonUtility::getOptionVector(this->specificSettings_, "statesInitialValues", nStates, statesInitialValues_);
   }
   else if(this->sourceFilename_ != "")
   {
     LOG(DEBUG) << "set initial values from source file";
-
-    scanInitialValues(sourceFilename_, states);
+    // parsing the source file was already done, the initial values are stored in the statesInitialValues_ vector
   }
   else
   {
     LOG(DEBUG) << "initialize to zero";
-    states.resize(nStates*nInstances_, 0);
+    statesInitialValues_.resize(nStates*nInstances_, 0);
   }
 
   if(PythonUtility::hasKey(specificSettings_, "parametersInitialValues"))
@@ -178,27 +130,24 @@ setInitialValues(Vec& initialValues)
     LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
   }
 
-  if (!states.empty())
+  std::vector<double> statesAllInstances(nStates*nInstances_);
+  for(int j=0; j<nStates; j++)
   {
-    std::vector<double> statesAllInstances(nStates*nInstances_);
-    for(int j=0; j<nStates; j++)
+    for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
     {
-      for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
-      {
-        statesAllInstances[j*nInstances_ + instanceNo] = states[j];
-      }
+      statesAllInstances[j*nInstances_ + instanceNo] = statesInitialValues_[j];
     }
-
-    PetscUtility::setVector(statesAllInstances, initialValues);
-
-    if (VLOG_IS_ON(2))
-    {
-      VLOG(2) << "initial values were set as follows: ";
-      for(auto value : statesAllInstances)
-        VLOG(2) << "  " << value;
-    }
-    return true;
   }
+
+  PetscUtility::setVector(statesAllInstances, initialValues);
+
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "initial values were set as follows: ";
+    for(auto value : statesAllInstances)
+      VLOG(2) << "  " << value;
+  }
+  return true;
 
   LOG(DEBUG) << "do not set initial values";
 

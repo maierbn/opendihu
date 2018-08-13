@@ -33,7 +33,7 @@ std::string replace(std::string str, const std::string& from, const std::string&
 template<int N>
 std::string multiply(std::string str);
 
-//! extract the basename of a file, i.e. remove trailing .*
+//! extract the basename of a file, i.e. remove leading path and trailing .*
 std::string extractBasename(std::string str);
 
 };  // namespace

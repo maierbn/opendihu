@@ -78,9 +78,10 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
-  if(this->rhsRoutineSimd_)
-  { 
-    this->rhsRoutineSimd_((void *)this, states, rates, this->intermediates_.data(), this->parameters_.data());
+  if(this->rhsRoutine_)
+  {
+    // call actual rhs routine from cellml code
+    this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
   }
 
   // handle intermediates, call callback function of python config

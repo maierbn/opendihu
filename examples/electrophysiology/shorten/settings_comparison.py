@@ -1,4 +1,8 @@
-# Electrophysiology release (used for runtime measurements)
+
+# Monodomain test (essentially Electrophysiology)
+#
+# command arguments: <nElements>
+# for the last two arguments defaults are provided.
 
 import numpy as np
 import matplotlib 
@@ -10,7 +14,7 @@ import sys
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
-Cm = 0.58           # membrane capacitance [uF/cm^2]
+Cm = 0.58               # membrane capacitance [uF/cm^2]
 
 # adjustable parameters
 nElements = 1000
@@ -19,12 +23,9 @@ cellml_type = "non-simd"  # non-simd, native-simd, simd-opt
 
 print "sys.argv: ",sys.argv
 
-if len(sys.argv) > 2:
-  nElements = sys.argv[2]
-  
-if len(sys.argv) > 3:
-  cellml_type = sys.argv[3]
-  
+if len(sys.argv) > 0:
+  nElements = sys.argv[0]
+    
 print "nElements: ",nElements,", cellml_type=",cellml_type
 
 def setParameters(n_instances, time_step_no, current_time, parameters):
@@ -103,20 +104,9 @@ cellml = {
   "parametersInitialValues": [0.0, 1.0],      # parameters: I_Stim, l_hs
   "meshName": "MeshFibre",
   "prefactor": 1.0,
+  "sourceFilename": "cellml_single.cpp",
 }
-
-# 1) if simdSourceFilename is given, use that source to compile the library
-# 2) if not 1) but sourceFilename is given, create simdSourceFilename from that and compile library
-# 3) if not 2) but libraryFilename is given, load that library, if it contains simdRhs, use that, if it contains non-simd rhs use that
-
-if cellml_type == "non-simd":
-  cellml["libraryFilename"] = "cellml_non_simd_lib.so"
-elif cellml_type == "native-simd":
-  cellml["sourceFilename"] = "cellmlcode.cpp"
-elif cellml_type == "simd-opt":
-  cellml["simdSourceFilename"] = "simd-opt.cpp"
-  
-    
+   
 config = {
   "Meshes": {
     "MeshFibre": {

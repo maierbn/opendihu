@@ -88,7 +88,7 @@ if dimension == 1:
   show_geometry = True
   
   def init():
-    global geometry_component, line_2D, lines_3D, cbar, text, ax1, ax2, cmap, show_geometry
+    global geometry_component, line_2D, lines_3D, cbar, top_text, ax1, ax2, cmap, show_geometry
       
     # determine in which direction the 1D fibre extends the most
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
@@ -129,7 +129,7 @@ if dimension == 1:
     margin = abs(max_s - min_s) * 0.1
     ax1.set_xlim(min_x, max_x)
     ax1.set_ylim(min_s - margin, max_s + margin)
-    text = plt.figtext(0.15,0.95,"",size=20)
+    top_text = ax1.text(0.5,0.95,"",size=20,horizontalalignment='center',transform=ax1.transAxes)
     
     xlabel = geometry_component
     ax1.set_xlabel(xlabel.upper())
@@ -159,10 +159,10 @@ if dimension == 1:
       cmap.set_array([])
       cbar = fig.colorbar(cmap)
     
-    return line_2D,
+    return top_text,
 
   def animate(i):
-    global text
+    global top_text
     
     ##################
     # 2D plot
@@ -198,9 +198,9 @@ if dimension == 1:
       
     max_timestep = len(data)-1
       
-    text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
+    top_text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
     
-    return line_2D,
+    return top_text,
     
   interval = 5000.0 / len(data)
         
@@ -234,7 +234,7 @@ if dimension == 1:
     max_timestep = len(data)-1
     if 'timeStepNo' in data[i]:
       timestep = data[i]['timeStepNo']
-    text.set_text("timesteps 0 and {}".format(timestep))
+    top_text.set_text("timesteps 0 and {}".format(timestep))
     
     if show_geometry:
       ax2.set_title("geometry for t={}".format(current_time))

@@ -9,12 +9,10 @@ Import('env')     # import Environment object from calling SConstruct
 
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
-      
-  # define the source files
-  src_files = Split(
-  """
-    electrophysiology_implicit.cpp
-  """)
+        
+  examples = [
+    "hodgkin_huxley_explicit"
+  ]
 
-  # create the main executable
-  env.Program(target = 'electrophysiology', source = src_files)
+  for example in examples:
+    env.Program(target = example, source = "src/{}.cpp".format(example))

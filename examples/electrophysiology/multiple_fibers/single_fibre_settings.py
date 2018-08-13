@@ -177,7 +177,7 @@ def get_instance_config(i):
             "numberStates": 57,
             "numberIntermediates": 1,   # intermediates: gamma
             "numberParameters": 2,      # parameters: I_Stim, l_hs
-            "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
+            "outputStateIndex": 0,      # for Shorten model: state 0 = Vm, rate 28 = gamma
             "parametersInitialValues": [0.0, 1.0],      # parameters: I_Stim, l_hs
             "meshName": "MeshFibre"+str(i),
             "prefactor": 1.0,

@@ -383,8 +383,13 @@
     \progressbar@tmpcounta=\insertframenumber
     \progressbar@tmpcountb=\inserttotalframenumber
     \progressbar@tmpdim=\progressbar@pbwd
+    
+    \divide\progressbar@tmpdim by 100
+    
     \multiply\progressbar@tmpdim by \progressbar@tmpcounta
     \divide\progressbar@tmpdim by \progressbar@tmpcountb
+    
+    \multiply\progressbar@tmpdim by 100
     
     \begin{tikzpicture}
         \shade[top color=pbgray,bottom color=pbgray,middle color=pbgray]

@@ -12,11 +12,13 @@ def get_values(data, field_variable_name, component_name):
     extract the values of a single component of a field variable
     :param data: a single dict containing the data
     :param field_variable_name: the name of the field variable to consider
-    :param component_name: the name of the component of the field_variable. This is often "0"
+    :param component_name: the name of the component of the field_variable. If "0" is given, it takes the first component of the field variable.
   """
   
   for field_variable in data['data']:
     if field_variable['name'] == field_variable_name:
+      if component_name == "0":
+        component_name = field_variable['components'][0]['name']
       for components in field_variable['components']:
         if components['name'] == component_name:
           values = components['values']
@@ -27,7 +29,7 @@ def get_min_max(data, field_variable_name, component_name):
     get the minimum and maximum of a field_variable and component 
     :param data: list of dicts, from multiple input files
     :param field_variable_name: the name of the field variable to consider
-    :param component_name: the name of the component of the field_variable. This is often "0"
+    :param component_name: the name of the component of the field_variable. If "0" is given, it takes the first component of the field variable.
   """
   
   min_value = None
@@ -37,6 +39,8 @@ def get_min_max(data, field_variable_name, component_name):
   for item in data:
     for field_variable in item['data']:
       if field_variable['name'] == field_variable_name:
+        if component_name == "0":
+          component_name = field_variable['components'][0]['name']
         for components in field_variable['components']:
           if components['name'] == component_name:
             values = components['values']
@@ -93,5 +97,20 @@ def get_field_variable_names(data):
   result = []
   for field_variable in data[u'data']:
     result.append(field_variable['name'])
+  return result
+  
+
+def get_component_names(data, field_variable_name):
+  """
+    get the component names of the components of the field variable
+    :param data: a single dict containing the data
+    :param field_variable_name: the name of the field variable
+  """
+  
+  result = []
+  for field_variable in data['data']:
+    if field_variable['name'] == field_variable_name:
+      for components in field_variable['components']:
+        result.append(components['name'])
   return result
   

@@ -56,6 +56,7 @@ initialize()
   //store number of instances
   nInstances_ = mesh_->nNodes();
 
+  stateNames_.resize(nStates);
   sourceFilename_ = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
   this->scanSourceFile(this->sourceFilename_, statesInitialValues_);
   
@@ -168,6 +169,13 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
   nInstances = nInstances_;
   nIntermediates = nIntermediates_;
   nParameters = nParameters_;
+}
+
+template<int nStates>
+void CellmlAdapterBase<nStates>::
+getStateNames(std::vector<std::string> &stateNames)
+{
+  stateNames = this->stateNames_;
 }
 
 template<int nStates>

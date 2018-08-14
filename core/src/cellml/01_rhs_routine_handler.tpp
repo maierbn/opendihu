@@ -591,6 +591,9 @@ scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialVal
   }
   else
   {
+    std::string name;  // the parsed name of a specifier that follows 
+    
+    // read whole file contents
     std::stringstream source;
     source << sourceFile.rdbuf();
     sourceFile.close();
@@ -621,6 +624,9 @@ scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialVal
         {
           // store initial value for state
           statesInitialValues[index] = value;
+          
+          // store name of the state that was parsed from the comment in the previous line
+          this->stateNames_[index] = name;
         }
         else if (variableName == "OC_KNOWN" && index >= 0)
         {
@@ -632,15 +638,31 @@ scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialVal
           this->parameters_[index] = value;
         }
       }
+      else if (line.find("/* Constant") == 0)  // line in OpenCMISS generated input file of type "/* Constant C_m */"
+      {
+        // parse name of state, will be assigned to the state in the next line
+        name = line.substr(12, line.find(" */")-12);
+      }
+      else if (line.find(" * STATES") == 0)  // line in OpenCOR generated input file of type " * STATES[55] is P_C_SR in component razumova (milliM)."
+      {
+        // parse name of state
+        unsigned int index = atoi(line.substr(10,line.find("]")-10).c_str());
+        int posBegin = line.find("is",12)+3;
+        int posEnd = line.rfind(" in");
+        name = line.substr(posBegin,posEnd-posBegin);
+        LOG(DEBUG) << "index= " << index << ", this->stateNames_size = " << this->stateNames_.size();
+        this->stateNames_[index] = name;
+      }
       else if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
       {
-        unsigned int index = atoi(line.substr(7,line.find("]",7)).c_str());
+        // parse initial value of state
+        unsigned int index = atoi(line.substr(7,line.find("]",7)-7).c_str());
         double value = atof(line.substr(line.find("= ")+2).c_str());
         statesInitialValues[index] = value;
       }
       else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files
       {
-        int algebraicIndex = atoi(line.substr(10,line.find("]",10)).c_str());
+        int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
         this->nIntermediates_ = std::max(this->nIntermediates_, algebraicIndex+1);
       }
       else if (line.find("OC_KNOWN[") != std::string::npos)  // usage of a parameter variable in OpenCMISS generated file

@@ -3,6 +3,8 @@
 #include <Python.h>  // has to be the first included header
 #include <petscsys.h>
 #include <petscksp.h>
+#include <iostream>
+#include <vector>
 
 #include "data_management/solution_vector_mapping.h"
 
@@ -27,6 +29,9 @@ public:
   //! set initial values and return true or don't do anything and return false
   virtual bool setInitialValues(Vec &initialValues);
 
+  //! get the names of components to be used for the solution variable
+  virtual void getComponentNames(std::vector<std::string> &componentNames);
+  
   //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
   SolutionVectorMapping &solutionVectorMapping();
 

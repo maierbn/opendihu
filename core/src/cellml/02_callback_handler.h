@@ -24,7 +24,8 @@
  */
 template <int nStates>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates>
+  public RhsRoutineHandler<nStates>,
+  public DiscretizableInTime
 {
 public:
 

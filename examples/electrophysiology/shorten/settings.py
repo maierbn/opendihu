@@ -1,7 +1,7 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
-end_time = 10.0   # [ms] end time of simulation
+end_time = 1000.0   # [ms] end time of simulation
 n_elements = 500
 
 # global parameters
@@ -33,7 +33,7 @@ print("prefactor: ",Conductivity/(Am*Cm))
 def fibre_gets_stimulated(current_time):
   a = current_time * stimulation_frequency
   
-  if a - int(a) < 0.1:
+  if a - int(a) < 0.1 and a < 5:
     return True
   else:
     return False
@@ -160,7 +160,7 @@ config = {
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": 1e5, "filename": "out/states", "binary": True},
+          {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True},
         ],
       },
     },

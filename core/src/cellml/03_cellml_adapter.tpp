@@ -17,8 +17,7 @@
 template<int nStates>
 CellmlAdapter<nStates>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates>(context),
-  DiscretizableInTime(SolutionVectorMapping(true))
+  CallbackHandler<nStates>(context)
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
@@ -43,8 +42,8 @@ initialize()
   // in methods that use the result of this method, e.g. in operator splittings.
   // These are all values of a single STATE with number outputStateIndex from settings.
   // The data layout is for e.g. 3 instances like this: STATE[0] STATE[0] STATE[0] STATE[1] STATE[1] STATE[1] STATE[2]...
-  solutionVectorMapping_.setOutputRange(this->nInstances_*outputStateIndex, this->nInstances_*(outputStateIndex+1));
-  solutionVectorMapping_.setScalingFactor(prefactor);
+  this->solutionVectorMapping_.setOutputRange(this->nInstances_*outputStateIndex, this->nInstances_*(outputStateIndex+1));
+  this->solutionVectorMapping_.setScalingFactor(prefactor);
 }
 
 
@@ -119,8 +118,14 @@ knowsMeshType()
   return CellmlAdapterBase<nStates>::knowsMeshType();
 }
 
-//! return the mesh
+template<int nStates>
+void CellmlAdapter<nStates>::
+getComponentNames(std::vector<std::string> &stateNames)
+{
+  this->getStateNames(stateNames);
+}
 
+//! return the mesh
 template<int nStates>
 std::shared_ptr<Mesh::Mesh> CellmlAdapter<nStates>::
 mesh()

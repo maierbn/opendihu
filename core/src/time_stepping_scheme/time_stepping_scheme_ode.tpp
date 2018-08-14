@@ -71,6 +71,12 @@ initialize()
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   data_->setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
+  
+  // set component names in data
+  std::vector<std::string> componentNames;
+  discretizableInTime_.getComponentNames(componentNames);
+  data_->setComponentNames(componentNames);
+  
   data_->initialize();
 
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);

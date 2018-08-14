@@ -85,16 +85,20 @@ if dimension == 1:
   
   fig = plt.figure(figsize=(10,12))
   
-  show_geometry = True
+  show_geometry = True     # if the fibre geometry should be displayed in a 3D plot in a separate axis (ax2) on top of the solution plot
+  show_components = False  # if all the components of the solution should be displayed
   
   def init():
-    global geometry_component, line_2D, lines_3D, cbar, top_text, ax1, ax2, cmap, show_geometry
+    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, scaling_factors
       
     # determine in which direction the 1D fibre extends the most
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
     min_s, max_s = py_reader.get_min_max(data, "solution", "0")
+    
+    solution_components = py_reader.get_component_names(data[0], "solution")
+    n_components = len(solution_components)
     
     span_x = max_x - min_x
     span_y = max_y - min_y
@@ -103,6 +107,9 @@ if dimension == 1:
     # if the geometry is a line, do not show geometry plot
     if span_y == 0 and span_z == 0:
       show_geometry = False
+    if (not show_geometry) and n_components > 1:
+      if solution_components[1] != "1":
+        show_components = True
     
     if span_x >= span_y and span_x >= span_z:
       geometry_component = "x"
@@ -122,9 +129,14 @@ if dimension == 1:
       gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
       ax2 = plt.subplot(gs[0], projection='3d')
       ax1 = plt.subplot(gs[1])
+    elif show_components:
+      gs = gridspec.GridSpec(2,1,height_ratios=[3,4])
+      ax1 = plt.subplot(gs[0])  # main component
+      ax3 = plt.subplot(gs[1])  # all other components
     else:
       ax1 = plt.gca()
     
+    # prepare main plot
     line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
     margin = abs(max_s - min_s) * 0.1
     ax1.set_xlim(min_x, max_x)
@@ -135,6 +147,7 @@ if dimension == 1:
     ax1.set_xlabel(xlabel.upper())
     ax1.set_ylabel('Solution')
     
+    # prepare geometry plot
     if show_geometry:
       ax2.set_title("geometry")
       ax2.set_xlim(min_x, max_x)
@@ -159,20 +172,54 @@ if dimension == 1:
       cmap.set_array([])
       cbar = fig.colorbar(cmap)
     
+    # prepare other components plot
+    if show_components:
+      # determine scaling factors and axis limits for plot 2
+      scaling_factors = []
+      line_comp = []
+      min_value = 0
+      max_value = 1
+      for (j,component_name) in enumerate(solution_components):
+        min_comp, max_comp = py_reader.get_min_max(data, "solution", component_name)
+        values_comp = py_reader.get_values(data[0], "solution", component_name)
+        
+        v = max(abs(max_comp), abs(min_comp))
+        if abs(v) < 1e-5:
+          v = 1e-5
+          
+        scaling_factor = abs(1./v)
+        scaling_factors.append(scaling_factor)
+        
+        #print "{}, scaling_factor: {}, min_comp: {}, max_comp: {}".format(j, scaling_factor, min_comp, max_comp)
+      
+        if j > 0:
+          min_value = min(min_value, min_comp*scaling_factor)
+          max_value = max(max_value, max_comp*scaling_factor)
+        line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
+        line_comp.append(line_plot)
+        
+        #print "   min_value: {} -> {}, max_value: {} -> {}".format(min_comp*scaling_factor, min_value, max_comp*scaling_factor, max_value)
+      
+      ax3.set_xlim(min_x, max_x)
+      margin = abs(max_value - min_value) * 0.1
+      ax3.set_ylim(min_value - margin, max_value + margin)
+      ax3.set_ylabel('Other components')
+      ax3.legend(prop={'size': 6})
+    
     return top_text,
 
   def animate(i):
     global top_text
     
     ##################
-    # 2D plot
+    # 2D plot of main solution component
     # display data
     xdata = py_reader.get_values(data[i], "geometry", geometry_component)
     sdata = py_reader.get_values(data[i], "solution", "0")
     
     line_2D.set_data(xdata,sdata)
     ##################
-    # 3D plot
+    # 3D plot of geometry
     
     if show_geometry:
       # retrieve all values
@@ -189,6 +236,16 @@ if dimension == 1:
         lines_3D[j].set_data([xdata[j:j+2], ydata[j:j+2]])
         lines_3D[j].set_3d_properties(zdata[j:j+2])
         lines_3D[j].set_color(plt.cm.jet(normalized_value))
+        
+    ##################
+    # 2D plot of other components
+    if show_components:
+      for (j,component_name) in enumerate(solution_components):
+        # do not plot main component
+        if j == 0:
+          continue
+        data_comp = py_reader.get_values(data[i], "solution", component_name)
+        line_comp[j].set_data(xdata,np.array(data_comp)*scaling_factors[j])
         
     # display timestep
     if 'timeStepNo' in data[i]:

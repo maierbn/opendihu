@@ -3,7 +3,7 @@
 basedir=$(pwd)
 
 # for all tests
-for name in
+for name in \
 "laplace" \
 "diffusion" \
 "monodomain" \

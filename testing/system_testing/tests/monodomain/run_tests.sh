@@ -13,10 +13,10 @@ cd build_${variant}
 rm -rf out
 
 # arguments: <name> <cellml_file> <end_time>
-./shorten_explicit ../settings.py shorten_opencor ../input/shorten_ocallaghan_davidson_soboleva_2007.c 1
-./shorten_explicit ../settings.py shorten_opencmiss ../input/shorten_opencmiss.cpp 1
+./shorten_explicit ../settings.py shorten_opencor ../input/shorten_ocallaghan_davidson_soboleva_2007.c 30
+./shorten_explicit ../settings.py shorten_opencmiss ../input/shorten_opencmiss.cpp 30
 
-./hodgkin_huxley_explicit ../settings.py  hodgkin_huxley ../input/hodgkin_huxley_1952.c 1
+./hodgkin_huxley_explicit ../settings.py  hodgkin_huxley ../input/hodgkin_huxley_1952.c 30
 
 cd $workdir
 

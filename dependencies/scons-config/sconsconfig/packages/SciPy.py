@@ -101,7 +101,8 @@ class SciPy(Package):
         
         # build from wheel
         self.set_build_handler([
-          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+#          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install scipy --prefix=${DEPENDENCIES_DIR}/python/install'
         ])
         
         # Scipy is installed in the directory tree of python, under lib/python3.6/site-packages. It does not create any .h or .a files.

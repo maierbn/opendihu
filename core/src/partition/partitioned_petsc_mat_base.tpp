@@ -1,4 +1,4 @@
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat_base.h"
 
 void PartitionedPetscMatBase::
 setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)

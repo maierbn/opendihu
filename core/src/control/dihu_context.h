@@ -7,9 +7,6 @@
 #include <map>
 #include "partition/partition_manager.h"
 
-//#include <output_writer/generic.h>
-//#include <data_management/data.h>
-
 // forward declaration
 namespace Mesh { class Manager; }
 namespace Solver { class Manager; }

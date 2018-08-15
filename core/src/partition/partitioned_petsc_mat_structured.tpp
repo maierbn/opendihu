@@ -1,4 +1,4 @@
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat.h"
 
 //! constructor
 template<typename MeshType, typename BasisFunctionType>

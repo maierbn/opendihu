@@ -21,8 +21,8 @@ if not env['no_tests']:
   
   
   
-  #print ""
-  #print "WARNING: only compiling tests ",src_files
+  print ""
+  print "WARNING: only compiling tests ",src_files
 
   program = env.Program('run_tests', source=src_files)
   #Depends(test, program)

@@ -18,7 +18,7 @@ public:
   
 protected:
   
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
 };
 
 #include "partition/partitioned_petsc_vec_base.tpp"

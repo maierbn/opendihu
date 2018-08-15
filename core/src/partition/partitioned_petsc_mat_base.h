@@ -33,5 +33,3 @@ protected:
  
   Mat matrix_;   ///< the global Petsc matrix, access it performed using MatSetValuesLocal() with local indices
 };
-
-#include "partition/partitioned_petsc_mat_base.tpp"

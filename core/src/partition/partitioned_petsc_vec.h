@@ -63,8 +63,6 @@ public:
 
 protected:
   
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
-  
   std::array<Vec,nComponents> values_;  // the (serial) Petsc vector that contains all the data
 };
 
@@ -116,7 +114,6 @@ protected:
   //! create a distributed Petsc vector, according to partition
   void createVector(std::string name);
   
-  std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
   DM dm_;    ///< PETSc DMDA object (nowhere specified what the abbreviation means) that stores topology information and everything needed for communication of ghost values
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local vectors, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation

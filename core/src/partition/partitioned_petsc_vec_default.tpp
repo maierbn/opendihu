@@ -11,11 +11,11 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> m
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     // initialize PETSc vector object
-    ierr = VecCreate(meshPartition_->mpiCommunicator(), &values_[componentNo]); CHKERRV(ierr);
+    ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &values_[componentNo]); CHKERRV(ierr);
     ierr = PetscObjectSetName((PetscObject) values_[componentNo], name.c_str()); CHKERRV(ierr);
 
     // initialize size of vector
-    ierr = VecSetSizes(values_[componentNo], meshPartition_->localSize(), meshPartition_->globalSize()); CHKERRV(ierr);
+    ierr = VecSetSizes(values_[componentNo], this->meshPartition_->localSize(), this->meshPartition_->globalSize()); CHKERRV(ierr);
 
     // set sparsity type and other options
     ierr = VecSetFromOptions(values_[componentNo]); CHKERRV(ierr);

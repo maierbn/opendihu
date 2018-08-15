@@ -67,8 +67,9 @@ vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], varia
 # specify type and default value for recognized variables
 #vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
-                      '(Shortcuts: ''d'',''r'',''rd''=''dr'')', 'release', allowed_values=('debug', 'release', 'releasewithdebuginfo'), ignorecase = 2, 
-                      map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo'}))
+                      '(Shortcuts: ''d'',''r'',''rd''=''dr'', ''p'')', 'release', 
+                      allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess'), ignorecase = 2, 
+                      map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
     
@@ -162,6 +163,13 @@ elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
+
+elif env["BUILD_TYPE"] == "preprocess":
+  # only the preprocessing step
+  variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # folder of build
+  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp  -E -C -P ')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
+  env.Prepend(LIBS = ['opendihud'])
 
 else:
   # release build

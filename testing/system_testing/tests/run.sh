@@ -12,9 +12,8 @@ for name in \
 do
 
 echo ""
-date +%T
-echo $name
-echo "=================="
+echo "$name, starting at $(date +%T)"
+echo "=============================="
 
 # change directory to test directory
 cd $basedir/$name
@@ -28,7 +27,7 @@ START=$(date +%s.%N)
 
 END=$(date +%s.%N)
 DIFF=$(echo "$END - $START" | bc)
-echo "compilation took $(date -u -d @$DIFF +"%T")"
+echo "compilation took $(date -u -d @$DIFF +%T)"
 
 
 # run tests
@@ -38,7 +37,7 @@ START=$(date +%s.%N)
 
 END=$(date +%s.%N)
 DIFF=$(echo "$END - $START" | bc)
-echo "running tests took $(date -u -d @$DIFF +"%T")"
+echo "running tests took $(date -u -d @$DIFF +%T)"
 
 
 # run postprocessing
@@ -48,7 +47,7 @@ START=$(date +%s.%N)
 
 END=$(date +%s.%N)
 DIFF=$(echo "$END - $START" | bc)
-echo "postprocessing took $(date -u -d @$DIFF +"%T")"
+echo "postprocessing took $(date -u -d @$DIFF +%T)"
 
 
 # recompile documents

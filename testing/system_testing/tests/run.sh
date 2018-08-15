@@ -12,19 +12,44 @@ for name in \
 do
 
 echo ""
+date +%T
 echo $name
 echo "=================="
 
 # change directory to test directory
 cd $basedir/$name
 
+
 # compile
+START=$(date +%s.%N)
+
 ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 ../../../../dependencies/scons/scons.py BUILD_TYPE=RELEASE
 
-# run tests and postprocessing
+END=$(date +%s.%N)
+DIFF=$(echo "$END - $START" | bc)
+echo "compilation took $(date -u -d @$DIFF +"%T")"
+
+
+# run tests
+START=$(date +%s.%N)
+
 . run_tests.sh
+
+END=$(date +%s.%N)
+DIFF=$(echo "$END - $START" | bc)
+echo "running tests took $(date -u -d @$DIFF +"%T")"
+
+
+# run postprocessing
+START=$(date +%s.%N)
+
 . postprocess.sh
+
+END=$(date +%s.%N)
+DIFF=$(echo "$END - $START" | bc)
+echo "postprocessing took $(date -u -d @$DIFF +"%T")"
+
 
 # recompile documents
 cd $basedir/../document

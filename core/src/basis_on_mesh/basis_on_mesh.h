@@ -24,12 +24,12 @@ public:
   typedef BasisFunctionType BasisFunction;
   typedef BasisOnMesh<MeshType,BasisFunctionType> HighOrderBasisOnMesh;
 
-  //! return an array of all dof nos. of the element
+  //! return an array of all dof nos. of the element (local dof nos)
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
-  getElementDofNos(element_no_t elementNo) const;
+  getElementDofLocalNos(element_no_t elementNo) const;
 
   //! set a vector of all dof nos. of the element
-  void getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
+  void getElementDofLocalNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 };
 
 /** Partial specialization for CompletePolynomials which do not need nodes and thus have no nodes functionality.
@@ -48,17 +48,17 @@ public:
 
   //! return an array of all dof nos. of the element
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunction>::nDofsPerElement()>
-  getElementDofNos(element_no_t elementNo) const;
+  getElementDofLocalNos(element_no_t elementNo) const;
 
   //! set a vector of all dof nos. of the element
-  void getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
+  void getElementDofLocalNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 
   // the following methods are there for compatibility with the interface
   //! (unused method) initialize
   void initialize(){}
 
   //! (unused method) return number of nodes, 0 for this mesh
-  node_no_t nLocalNodes() const {return 0;}
+  node_no_t nNodesLocalWithGhosts() const {return 0;}
 
   //! (unused method) fill a vector with positions of the nodes, consecutive (x,y,z) values
   void getNodePositions(std::vector<double> &nodePositions) const {}

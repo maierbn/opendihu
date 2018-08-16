@@ -745,16 +745,17 @@ nEntries() const
 
 template<int D, typename BasisFunctionType, int nComponents>
 dof_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nLocalDofs() const
+nDofsLocalWithGhosts() const
 {
   return this->nEntries_ / nComponents;
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
 node_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nLocalNodes() const
+nNodesLocalWithGhosts() const
 {
-  return nodeToDofMapping_->nLocalNodes();
+  // because parallelism is not implemented for unstructured meshes, there is no difference to with or without ghosts
+  return nodeToDofMapping_->nNodesLocal();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

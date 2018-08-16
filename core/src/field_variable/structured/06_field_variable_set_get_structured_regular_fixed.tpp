@@ -22,9 +22,9 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   }
 
   // for geometry field compute information
-  node_no_t nLocalNodesInXDirection = this->mesh_->nLocalNodes(0);
-  node_no_t nLocalNodesInYDirection = this->mesh_->nLocalNodes(1);
-  node_no_t nLocalNodesInZDirection = this->mesh_->nLocalNodes(2);
+  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
+  node_no_t nLocalNodesInZDirection = this->mesh_->nNodesLocalWithGhosts(2);
 
   const int D = BasisOnMeshType::dim();
   if (D < 2)
@@ -102,8 +102,8 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   }
 
   // for geometry field compute information
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nLocalNodes(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nLocalNodes(1);
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // loop over entries in values to be filled
@@ -150,8 +150,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   }
 
   // for geometry field compute information
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nLocalNodes(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nLocalNodes(1);
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // resize result vector
@@ -205,8 +205,8 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 
   // for geometry field compute the entries
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nLocalNodes(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nLocalNodes(1);
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // loop over entries in values to be filled
@@ -255,7 +255,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Basi
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
 
   // get the values
   this->getValues<nDofsPerElement>(componentNo, elementDofs, values);
@@ -278,7 +278,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
 
   // compute the corresponding geometry values
   this->getValues<nDofsPerElement>(elementDofs, values);
@@ -296,8 +296,8 @@ getValue(int componentNo, node_no_t dofLocalNo)
   }
 
   // for geometry field compute information
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nLocalNodes(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nLocalNodes(1);
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   double value = 0;

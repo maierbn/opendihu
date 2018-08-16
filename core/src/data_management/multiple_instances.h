@@ -38,7 +38,10 @@ public:
   static constexpr int getNDofsPerNode();
 
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nLocalUnknowns();
+  virtual dof_no_t nUnknownsLocalWithGhosts();
+  
+  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
+  virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> MeshFibre;
   typedef FieldVariable::FieldVariable<MeshFibre,3> FieldVariableFibreGeometry;

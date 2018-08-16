@@ -40,10 +40,13 @@ public:
   const std::shared_ptr<BasisOnMeshType> mesh() const;
 
   //! return the total number of unknowns in the local partition, i.e. degrees of freedom x number of components, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nLocalUnknowns();
+  virtual dof_no_t nUnknownsLocalWithGhosts();
+
+  //! return the total number of unknowns in the local partition, i.e. degrees of freedom x number of components, this can be a multiple of the number of nodes of the mesh
+  virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
   //! return the total number of unknowns in the global domain, i.e. degrees of freedom x number of components, this can be a multiple of the number of nodes of the mesh
-  virtual global_no_t nGlobalUnknowns();
+  virtual global_no_t nUnknownsGlobal();
 
 protected:
 

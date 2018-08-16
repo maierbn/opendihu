@@ -25,13 +25,13 @@ getValue(node_no_t dofLocalNo)
 
     return result;
   }
-
-  // if this is a geometry field compute the information
-  const node_no_t nNodesInXDirection = this->mesh_->nLocalNodes(0);
-  const node_no_t nNodesInYDirection = this->mesh_->nLocalNodes(1);
+  
+  // for geometry field compute the entries
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
 
-  int nodeNo = int(dofLocalNo / nDofsPerNode);
+  int nodeLocalNo = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
 
   std::array<double,nComponents> value;
@@ -44,14 +44,18 @@ getValue(node_no_t dofLocalNo)
   else
   {
     // x direction
-    value[0] = (nodeNo % nNodesInXDirection) * this->meshWidth_;
+    value[0] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->meshWidth_ 
+      + (nodeLocalNo % nLocalNodesInXDirection) * this->meshWidth_;
 
     // y direction
-    value[1] = (int(nodeNo / nNodesInXDirection) % nNodesInYDirection) * this->meshWidth_;
+    value[1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->meshWidth_ 
+      + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->meshWidth_;
 
     // z direction
-    value[2] = int(nodeNo / (nNodesInXDirection*nNodesInYDirection)) * this->meshWidth_;
+    value[2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->meshWidth_ 
+      + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->meshWidth_;
   }
+  
   return value;
 }
 

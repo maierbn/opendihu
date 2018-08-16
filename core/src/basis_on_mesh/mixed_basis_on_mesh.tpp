@@ -37,9 +37,9 @@ dim()
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>
 node_no_t Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>::
-nLocalNodes() const
+nNodesLocalWithGhosts() const
 {
-  return highOrderBasisOnMesh_->nLocalNodes();
+  return highOrderBasisOnMesh_->nNodesLocalWithGhosts();
 }
 
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType>

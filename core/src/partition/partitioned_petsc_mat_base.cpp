@@ -26,6 +26,13 @@ zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag)
 }
 
 void PartitionedPetscMatBase::
+zeroEntries()
+{
+  PetscErrorCode ierr;
+  ierr = MatZeroEntries(matrix_); CHKERRV(ierr);  
+}
+
+void PartitionedPetscMatBase::
 assembly(MatAssemblyType type)
 {
   // this wraps the standard PETSc assembleBegin/End

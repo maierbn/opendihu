@@ -29,7 +29,7 @@ FiniteElementMethodTimeStepping(DihuContext context)
   // the solutionVectorMapping_ object stores the information which range of values of the solution will be further used
   // in methods that use the result of this method, e.g. in operator splittings. Since there are no internal values
   // in this FEM, set the range to all values.
-  solutionVectorMapping_.setOutputRange(0, this->data_.mesh()->nLocalNodes());
+  solutionVectorMapping_.setOutputRange(0, this->data_.mesh()->nNodesLocalWithoutGhosts());   // without ghosts because CellML vectors do not have ghost nodes
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>

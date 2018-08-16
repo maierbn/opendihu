@@ -255,7 +255,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<UnstructuredGrid> " << std::endl
     << std::string(2, '\t') << "<Piece "
-    << "NumberOfPoints=\"" << mesh->nLocalNodes() << "\" NumberOfCells=\"" << mesh->nLocalElements() << "\">" << std::endl;
+    << "NumberOfPoints=\"" << mesh->nNodesGlobal() << "\" NumberOfCells=\"" << mesh->nLocalElements() << "\">" << std::endl;
     
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
@@ -296,7 +296,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // loop over elements and collect point numbers of the element
   for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
-    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofLocalNos(elementNo);
     for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
     {
       dof_no_t dofNo = *iter;

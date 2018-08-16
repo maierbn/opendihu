@@ -43,15 +43,15 @@ setStiffnessMatrix()
   // loop over elements
   for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
-    auto dof = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     for (int i=0; i<nDofsPerElement; i++)
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
-        VLOG(3) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
-        //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dof[i] << "," << dof[j] << ") (no. " << cntr++ << ")";
-        stiffnessMatrix->setValue(dof[i], dof[j], 0, INSERT_VALUES);
+        VLOG(3) << " initialize stiffnessMatrix entry ( " << dofLocalNos[i] << "," << dofLocalNos[j] << ") (no. " << cntr++ << ")";
+        //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dofLocalNos[i] << "," << dofLocalNos[j] << ") (no. " << cntr++ << ")";
+        stiffnessMatrix->setValue(dofLocalNos[i], dofLocalNos[j], 0, INSERT_VALUES);
       }
     }
   }
@@ -76,7 +76,7 @@ setStiffnessMatrix()
   for (int elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     // get indices of element-local dofs
-    auto dof = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofNos(elementNo);
 
     VLOG(2) << "element " << elementNo;
 
@@ -113,9 +113,9 @@ setStiffnessMatrix()
         double integratedValue = integratedValues(i,j);
         double value = -prefactor * integratedValue;
 
-        VLOG(2) << "  dof pair (" << i<<","<<j<<") dofs ("<<dof[i]<<","<<dof[j]<<"), prefactor: " << prefactor <<", integrated value: "<<integratedValue;
+        VLOG(2) << "  dof pair (" << i<<","<<j<<") dofs ("<<dofLocalNos[i]<<","<<dofLocalNos[j]<<"), prefactor: " << prefactor <<", integrated value: "<<integratedValue;
 
-        stiffnessMatrix->setValue(dof[i], dof[j], value, ADD_VALUES);
+        stiffnessMatrix->setValue(dofLocalNos[i], dofLocalNos[j], value, ADD_VALUES);
       }  // j
     }  // i
   }  // elementNo

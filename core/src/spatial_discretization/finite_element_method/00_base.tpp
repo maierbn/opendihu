@@ -51,8 +51,8 @@ applyBoundaryConditions()
 
   LOG(TRACE)<<"applyBoundaryConditions";
 
-  dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
-  node_no_t nNodes = this->data_.mesh()->nLocalNodes();
+  dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();
+  node_no_t nNodes = this->data_.mesh()->nNodesLocalWithoutGhosts();
 
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = data_.rightHandSide();
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
@@ -99,11 +99,11 @@ applyBoundaryConditions()
     node_no_t boundaryConditionNodeNo = boundaryConditionIndex / BasisOnMeshType::nDofsPerNode();
     int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * BasisOnMeshType::nDofsPerNode();
     
-    if (boundaryConditionIndex > nLocalUnknowns)
+    if (boundaryConditionIndex > nUnknownsLocal)
     {
       LOG(WARNING) << "Boundary condition specified for index " << boundaryConditionIndex
         << " (on local node " << boundaryConditionNodeNo << ", index " << boundaryConditionNodalDofIndex << ")"
-        << ", but scenario has only " << nLocalUnknowns << " local unknowns, " << nNodes << " local nodes";
+        << ", but scenario has only " << nUnknownsLocal << " local unknowns, " << nNodes << " local nodes";
        continue;
     }
     
@@ -118,20 +118,20 @@ applyBoundaryConditions()
       << ", dof " << boundaryConditionDofNo << ", value " << boundaryConditionValue;
 
     // get the column number boundaryConditionDofNo of the stiffness matrix. It is needed for updating the rhs.
-    std::vector<int> rowIndices((int)nLocalUnknowns);
+    std::vector<int> rowIndices((int)nUnknownsLocal);
     std::iota (rowIndices.begin(), rowIndices.end(), 0);    // fill with increasing numbers: 0,1,2,...
     std::vector<int> columnIndices = {(int)boundaryConditionDofNo};
 
-    std::vector<double> coefficients(nLocalUnknowns);
+    std::vector<double> coefficients(nUnknownsLocal);
 
-    stiffnessMatrix->getValuesGlobalIndexing(nLocalUnknowns, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
+    stiffnessMatrix->getValuesGlobalIndexing(nUnknownsLocal, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionDofNo;
     stiffnessMatrix->zeroRowsColumns(1, &matrixIndex, 1.0);
     
     // update rhs
-    for (node_no_t rowNo = 0; rowNo < nLocalUnknowns; rowNo++)
+    for (node_no_t rowNo = 0; rowNo < nUnknownsLocal; rowNo++)
     {
       if (rowNo == boundaryConditionDofNo)
        continue;

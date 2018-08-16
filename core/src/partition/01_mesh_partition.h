@@ -28,6 +28,21 @@ class MeshPartition
 
 /** Partial specialization for structured meshes.
  *  The items under consideration are elements, i.e. localSize, etc. refer to number of elements.
+ * 
+ *  You can iterate over non-ghost and ghost nodes together using
+ *  for (node_no_t localNodeNo = 0; localNodeNo < meshPartition_->nNodesLocalWithGhosts(); localNodeNo++)
+ *  {
+ *    for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
+ *    {
+ *      dof_no_t dofLocalNo = localNodeNo*nDofsPerNode + dofIndex;
+ *    }
+ *  }
+ * 
+ *  To iterate only over non-ghost dofs:
+ *  for (std::vector<dof_no_t>::const_iterator localDof = meshPartition_->nonGhostDofsBegin(); localDof != meshPartition_->nonGhostDofsEnd(); localDof++)
+ *  {
+ *     
+ *  }
  */
 template<typename MeshType, typename BasisFunctionType>
 class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>> :
@@ -36,48 +51,48 @@ class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::i
 public:
  
   //! constructor, determine the decomposition by PETSc
-  MeshPartition(std::array<global_no_t,MeshType::dim()> globalSize, std::shared_ptr<RankSubset> rankSubset);
+  MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset);
  
   //! constructor from prescribed partition
-  MeshPartition(std::array<node_no_t,MeshType::dim()> localSize, std::array<global_no_t,MeshType::dim()> globalSize,
-                std::array<int,MeshType::dim()> beginGlobal, 
+  MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<global_no_t,MeshType::dim()> nElementsGlobal,
+                std::array<int,MeshType::dim()> beginElementGlobal, 
                 std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset);
   
   //! number of ranks in a coordinate direction
   int nRanks(int coordinateDirection);
   
   //! number of elements in the current partition
-  element_no_t localSize();
+  element_no_t nElementsLocal();
   
-  //! number of elements in the given coordinate direction in the current partition
-  element_no_t localSize(int coordinateDirection);
-
-  //! global no of first local element in current partition
-  global_no_t beginGlobal(int coordinateDirection);
+  //! number of elements in total
+  global_no_t nElementsGlobal();
+  
+  //! number of dofs in the local partition
+  dof_no_t nDofsLocalWithGhosts();
+  
+  //! number of dofs in the local partition, without ghosts
+  dof_no_t nDofsLocalWithoutGhosts();
+  
+  //! number of nodes in the local partition
+  node_no_t nNodesLocalWithGhosts();
+  
+  //! number of nodes in the local partition
+  node_no_t nNodesLocalWithoutGhosts();
+  
+  //! number of nodes in the local partition
+  node_no_t nNodesLocalWithGhosts(int coordinateDirection);
+  
+  //! number of nodes in the local partition
+  node_no_t nNodesLocalWithoutGhosts(int coordinateDirection);
+  
+  //! number of nodes in total
+  global_no_t nNodesGlobal();
   
   //! global no of first local node in current partition
-  global_no_t beginNodeGlobal(int coordinateDirection);
-  
-  //! global no of one after last local number in current partition
-  global_no_t endGlobal(int coordinateDirection);
-  
+  node_no_t beginNodeGlobal(int coordinateDirection);
+    
   //! number of nodes in total
-  global_no_t globalSize();
-  
-  //! number of nodes in total, in the given coordinate direction 
-  global_no_t globalSize(int coordinateDirection);
-  
-  //! number of nodes in the local partition
-  node_no_t nLocalNodes();
-  
-  //! number of nodes in the local partition
-  node_no_t nLocalNodes(int coordinateDirection);
-  
-  //! number of nodes in total
-  global_no_t nGlobalNodes();
-  
-  //! number of nodes in total
-  global_no_t nGlobalNodes(int coordinateDirection);
+  global_no_t nNodesGlobal(int coordinateDirection);
   
   //! get if there are nodes on both borders in the given coordinate direction
   //! this is the case if the local partition touches the right/top/back border
@@ -86,30 +101,44 @@ public:
   //! get a vector with the local sizes on every rank
   std::vector<element_no_t> &localSizesOnRanks(int coordinateDirection);
   
-  //! get the local to global mapping for the current partition
-  ISLocalToGlobalMapping localToGlobalMapping();
+  //! get the local to global mapping for the current partition, for the dof numbering
+  ISLocalToGlobalMapping localToGlobalMappingDofs();
   
   //! from a vector of values of global node numbers remove all that are non-local
   template <typename T>
   void extractLocalNodes(std::vector<T> &vector);
   
   //! from a vector of values of global dofs remove all that are non-local
-  void extractLocalDofs(std::vector<double> &values);
+  void extractLocalDofsWithoutGhosts(std::vector<double> &values);
   
   //! output to stream for debugging
   void output(std::ostream &stream);
   
-protected:
- 
-  DM dm_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information and cannot be used for real Petsc Vec and Mat objects, because they may have a different number of components.
+  //! return iterator to beginning of nonGhost dof nos
+  std::vector<dof_no_t>::const_iterator nonGhostDofsBegin();
   
-  std::array<int,MeshType::dim()> beginGlobal_;   ///< global element no.s of the lower left front corner of the domain (with ghost elements)
-  std::array<node_no_t,MeshType::dim()> localSizeWithGhosts_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion (including ghost elements)
-  std::array<global_no_t,MeshType::dim()> globalSize_;    ///< global size
+  //! return iterator to end of nonGhost dof nos
+  std::vector<dof_no_t>::const_iterator nonGhostDofsEnd();
+  
+protected:
+  
+  //! initialize the values of hasFullNumberOfNodes_ variable
+  void initializeHasFullNumberOfNodes();
+  
+  //! create the DM object for the node partitioning, such that is follows the element partitioning
+  void createDmElements();
+  
+  std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
+  
+  std::array<int,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
+  std::array<node_no_t,MeshType::dim()> nElementsLocal_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion (including ghost elements)
+  std::array<global_no_t,MeshType::dim()> nElementsGlobal_;    ///< global number of elements in the coodinate directions
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
  
   std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks_;  ///< the local sizes on the ranks
   std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;   ///< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
+  
+  std::vector<dof_no_t> nonGhostDofLocalNos_;   ///< vector of all local nos of non-ghost dofs
 };
 
 /** Partial specialization for unstructured meshes 
@@ -124,22 +153,22 @@ class MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimen
 public:
   
   //! constructor
-  MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset);
+  MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, std::shared_ptr<RankSubset> rankSubset);
   
   //! number of elements in the local partition
-  element_no_t localSize();
+  element_no_t nElementsLocal();
   
   //! number of elements in total
-  global_no_t globalSize();
+  global_no_t nElementsGlobal();
   
   //! number of nodes in the local partition
-  element_no_t nLocalNodes();
+  element_no_t nNodesLocalWithGhosts();
   
   //! number of nodes in total
-  global_no_t nGlobalNodes();
+  global_no_t nNodesGlobal();
   
   //! get the local to global mapping for the current partition
-  ISLocalToGlobalMapping localToGlobalMapping();
+  ISLocalToGlobalMapping localToGlobalMappingDofs();
   
   //! from a vector of values of global node numbers remove all that are non-local
   template <typename T>
@@ -153,8 +182,8 @@ public:
   
 protected:
  
-  global_no_t globalSize_;   ///< the global size, i.e. number of elements or nodes of the whole problem
-  element_no_t localSize_;   ///< the local size, i.e. the number of elements or nodes on the local rank
+  global_no_t nElementsGlobal_;   ///< the global size, i.e. number of elements of the whole problem
+  global_no_t nNodesGlobal_;   ///< the global size, i.e. the number of nodes of the whole problem
 };
 
 /** Partial specialization for Mesh::None, i.e. for not mesh-related partitions.

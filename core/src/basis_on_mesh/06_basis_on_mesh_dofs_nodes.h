@@ -6,6 +6,7 @@
 #include "control/types.h"
 
 #include "basis_on_mesh/05_basis_on_mesh_geometry.h"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_structured.h"
 #include "mesh/type_traits.h"
 
 namespace BasisOnMesh
@@ -26,7 +27,7 @@ protected:
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> :
-  public BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>
 {
 public:
 
@@ -38,32 +39,11 @@ public:
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
-  //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
-  void getNodePositions(std::vector<double> &nodes) const;
-
   //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
 
   //! initialize the geometry field
   void initialize();
-  
-  //! return number of nodes
-  node_no_t nLocalNodes() const;
-
-  //! return local number of nodes in specified coordinate direction for the local partition
-  node_no_t nLocalNodes(int dimension) const;
-
-  //! return local number of dofs
-  dof_no_t nLocalDofs() const;
-
-  //! return number of nodes in specified coordinate direction for the whole global domain
-  global_no_t nGlobalNodes(int dimension) const;
-
-  //! return global number of nodes
-  global_no_t nGlobalNodes() const;
-
-  //! return global number of dofs
-  global_no_t nGlobalDofs() const;
 
 protected:
 
@@ -80,7 +60,7 @@ protected:
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> :
-  public BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>
 {
 public:
   //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
@@ -90,27 +70,6 @@ public:
   BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
-
-  //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
-  void getNodePositions(std::vector<double> &nodes) const;
-
-  //! return number of nodes
-  node_no_t nLocalNodes() const;
-
-  //! return number of nodes in specified coordinate direction
-  node_no_t nLocalNodes(int dimension) const;
-
-  //! return number of dofs
-  dof_no_t nLocalDofs() const;
-  
-  //! return number of nodes in specified coordinate direction for the whole global domain
-  global_no_t nGlobalNodes(int dimension) const;
-
-  //! return global number of nodes
-  global_no_t nGlobalNodes() const;
-
-  //! return global number of dofs
-  global_no_t nGlobalDofs() const;
 
   //! initialize geometry
   virtual void initialize();
@@ -143,17 +102,20 @@ public:
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
 
-  //! return number of nodes
-  node_no_t nLocalNodes() const;
+  //! return number of nodes including ghost nodes, i.e. these nodes are known locally but some of them are owned by other ranks
+  node_no_t nNodesLocalWithGhosts() const;
 
+  //! return number of nodes that are owned by this partition
+  node_no_t nNodesLocalWithoutGhosts() const;
+  
   //! return number of dofs
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocalWithGhosts() const;
   
   //! return global number of nodes
-  global_no_t nGlobalNodes() const;
+  global_no_t nNodesGlobal() const;
 
   //! return global number of dofs
-  global_no_t nGlobalDofs() const;
+  global_no_t nDofsGlobal() const;
 
   //! initialize geometry
   virtual void initialize();
@@ -162,6 +124,6 @@ public:
 
 }  // namespace
 
-#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_regular.tpp"
-#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_structured.tpp"
-#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_unstructured.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_regular_fixed.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_structured_deformable.tpp"
+#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes_unstructured_deformable.tpp"

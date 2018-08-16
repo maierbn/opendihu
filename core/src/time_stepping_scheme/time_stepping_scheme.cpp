@@ -16,6 +16,7 @@ void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 {
   double epsilon = 1e-15;
   numberTimeSteps_ = int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon));
+  timeStepWidth_ = timeStepWidth;
 }
 
 void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)

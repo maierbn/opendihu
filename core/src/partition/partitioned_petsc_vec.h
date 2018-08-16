@@ -43,8 +43,11 @@ public:
   //! wrapper to the PETSc VecSetValue, acting only on the local data
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
   
-  //! for a single component vector set all values
-  void setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
+  //! for a single component vector set all values, the input vector values is expected to have ghosts included
+  void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
+  
+  //! for a single component vector set all values, the input vector values is expected to have no ghosts included
+  void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
   
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -94,8 +97,11 @@ public:
   //! wrapper to the PETSc VecSetValue, acting only on the local data
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
 
-  //! for a single component vector set all values
-  void setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
+  //! for a single component vector set all values. They have to be enough for all local dof including ghosts.
+  void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
+  
+  //! for a single component vector set all values. values does not contain ghost dofs.
+  void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -103,7 +109,7 @@ public:
   //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
   void getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
-  //! get all locally stored values
+  //! get all locally stored values, i.e. with ghosts
   void getLocalValues(int componentNo, std::vector<double> &values);
   
   //! set all entries to zero, wraps VecZeroEntries
@@ -117,7 +123,7 @@ protected:
   //! create a distributed Petsc vector, according to partition
   void createVector(std::string name);
   
-  DM dm_;    ///< PETSc DMDA object (nowhere specified what the abbreviation means) that stores topology information and everything needed for communication of ghost values
+  std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local vectors, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data

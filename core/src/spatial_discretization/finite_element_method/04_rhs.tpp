@@ -21,7 +21,7 @@ setRightHandSide()
 {
   LOG(TRACE)<<"setRightHandSide";
 
-  dof_no_t nLocalUnknowns = this->data_.nLocalUnknowns();
+  dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
 
   std::vector<double> localValues;
@@ -37,7 +37,7 @@ setRightHandSide()
   }
   else 
   {
-    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nLocalUnknowns, localValues);
+    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nUnknownsLocal, localValues);
   }
   
 #ifndef NDEBUG

@@ -16,7 +16,7 @@ namespace BasisOnMesh
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) :
-  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(partitionManager, specificSettings)
+  BasisOnMeshDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshDofsNodesStructured(partitionManager, specificSettings)
 {
   this->meshWidth_ = 0;
 
@@ -70,7 +70,7 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
 template<int D,typename BasisFunctionType>
 BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
-  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshGeometry(partitionManager, nullptr)
+  BasisOnMeshDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::BasisOnMeshDofsNodesStructured(partitionManager, nullptr)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
@@ -140,81 +140,10 @@ setGeometryFieldValues()
 }
 
 template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nLocalNodes() const
-{
-  int result = 1;
-  for (int i=0; i<D; i++)
-    result *= nLocalNodes(i);
-  return result;
-}
-
-template<int D,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nLocalDofs() const
-{
-  return nLocalNodes() * this->nDofsPerNode();
-}
-
-
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nGlobalDofs() const
-{
-  return nGlobalNodes() * this->nDofsPerNode();
-}
-
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nLocalNodes(int coordinateDirection) const
-{
-  //LOG(DEBUG) << "nNodes (" << coordinateDirection << "): " << this->nElementsPerCoordinateDirectionLocal(coordinateDirection) << "*" << BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() << "+1";
-  return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() 
-    + (this->meshPartition_->hasFullNumberOfNodes(coordinateDirection)? 1 : 0);
-}
-
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nGlobalNodes() const
-{
-  global_no_t result = 1;
-  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
-  {
-    result *= nGlobalNodes(coordinateDirection);
-  }
-  return result;
-}
-
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-nGlobalNodes(int coordinateDirection) const
-{
-  return this->meshPartition_->globalSize(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
-}
-
-template<int D,typename BasisFunctionType>
 double BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 meshWidth() const
 {
   return this->geometryField_->meshWidth();
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-getNodePositions(std::vector<double> &nodes) const
-{
-  nodes.resize(this->nLocalNodes()*3);
-
-  for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nLocalNodes(); nodeGlobalNo++)
-  {
-    dof_no_t firstNodeDofGlobalNo = nodeGlobalNo*this->nDofsPerNode();
-
-    std::size_t index = nodeGlobalNo*3;
-    Vec3 position = this->geometryField_->getValue(firstNodeDofGlobalNo);
-    nodes[index+0] = position[0];
-    nodes[index+1] = position[1];
-    nodes[index+2] = position[2];
-  }
 }
 
 

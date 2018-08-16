@@ -10,7 +10,7 @@ namespace BasisOnMesh
 {
 template<typename MeshType,int D,int order>
 std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMesh<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>::
-getElementDofNos(element_no_t elementNo) const
+getElementDofLocalNos(element_no_t elementNo) const
 {
   const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
   std::array<dof_no_t,nDofsPerElement> dof;
@@ -23,7 +23,7 @@ getElementDofNos(element_no_t elementNo) const
 
 template<typename MeshType,int D,int order>
 void BasisOnMesh<MeshType,BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>::
-getElementDofNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const
+getElementDofLocalNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const
 {
   const int nDofsPerElement = BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement();
   globalDofNos.resize(nDofsPerElement);

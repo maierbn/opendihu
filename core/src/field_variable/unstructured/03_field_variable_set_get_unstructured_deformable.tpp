@@ -205,11 +205,21 @@ setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
-  this->values_->setValues(componentNo, values);
+  this->values_->setValuesWithGhosts(componentNo, values);
+}
+
+//! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->setValuesWithoutGhosts(componentNo, values);
 }
 
 //! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes

@@ -20,6 +20,9 @@ public:
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
   void zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag);
   
+  //! wrapper of MatZeroEntries, sets all entries to 0
+  void zeroEntries();
+  
   //! parallel assembly of the matrix, wraps the PETSc function MatAssemblyBegin,MatAssemblyEnd, type is MAT_FLUSH_ASSEMBLY or MAT_FINAL_ASSEMBLY
   void assembly(MatAssemblyType type);
 

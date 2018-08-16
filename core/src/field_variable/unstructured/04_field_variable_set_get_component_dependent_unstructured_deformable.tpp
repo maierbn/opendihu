@@ -83,7 +83,15 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, Inser
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-setValues(std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(std::vector<double> &values, InsertMode petscInsertMode)
+{
+  this->values_->setValues(0, values, petscInsertMode);
+}
+
+//! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<int D, typename BasisFunctionType>
+void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+setValuesWithoutGhosts(std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, values, petscInsertMode);
 }

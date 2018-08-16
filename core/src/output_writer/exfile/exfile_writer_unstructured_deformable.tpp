@@ -72,7 +72,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   stream << " Group name: " << meshName << std::endl;
 
   bool outputHeader = true;
-  const node_no_t nNodes = mesh->nLocalNodes();
+  const node_no_t nNodes = mesh->nNodesGlobal();
 
   // loop over all nodes
   for(node_no_t currentNodeGlobalNo = 0; currentNodeGlobalNo < nNodes; currentNodeGlobalNo++)

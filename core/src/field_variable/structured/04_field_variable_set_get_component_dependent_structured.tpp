@@ -18,7 +18,7 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // prepare lookup indices for PETSc vector values_
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
 
   this->values_->getValues(0, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
 }
@@ -79,7 +79,15 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, Inser
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValues(std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(std::vector<double> &values, InsertMode petscInsertMode)
+{
+  this->values_->setValues(0, values, petscInsertMode);
+}
+
+//! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType>
+void FieldVariableSetGetComponent<BasisOnMeshType,1>::
+setValuesWithoutGhosts(std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, values, petscInsertMode);
 }

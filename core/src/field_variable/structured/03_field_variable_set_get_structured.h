@@ -43,7 +43,7 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);
 
-  //! get all stored local values
+  //! get all stored local values, including ghost values
   void getLocalValues(int componentNo, std::vector<double> &values);
   
   //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
@@ -53,7 +53,10 @@ public:
   void setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+  void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set value for all dofs
   void setValues(double value);

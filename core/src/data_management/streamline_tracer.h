@@ -40,7 +40,10 @@ public:
   static constexpr int getNDofsPerNode();
 
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nLocalUnknowns();
+  virtual dof_no_t nNodesLocalWithGhosts();
+  
+  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
+  virtual dof_no_t nNodesLocalWithoutGhosts();
 
   //! create a fibre mesh from the given node positions, store it in mesh manager and store a pointer to the geometry field in fibreGeometry
   void createFibreMesh(const std::vector<Vec3> &nodePositions);

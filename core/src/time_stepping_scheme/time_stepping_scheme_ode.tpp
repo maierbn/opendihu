@@ -32,8 +32,8 @@ setInitialValues()
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    const int nGlobalDofs = this->data_->mesh()->nGlobalDofs();
-    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nGlobalDofs, localValues);
+    const int nDofsGlobal = this->data_->mesh()->nDofsGlobal();
+    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
     //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
     this->data_->mesh()->meshPartition()->extractLocalDofs(localValues);

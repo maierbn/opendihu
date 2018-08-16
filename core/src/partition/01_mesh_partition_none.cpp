@@ -36,7 +36,7 @@ ISLocalToGlobalMapping MeshPartition<Mesh::None>::
 localToGlobalMapping()
 {
   PetscErrorCode ierr;
-  std::vector<PetscInt> globalDofNos(localSize());
+  std::vector<PetscInt> globalDofNos(localSize());  // the global dof nos for the local dofs
   std::iota(globalDofNos.begin(), globalDofNos.end(), beginGlobal_);
   ISLocalToGlobalMapping localToGlobalMapping;
   ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, localSize(), 

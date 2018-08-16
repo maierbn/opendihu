@@ -91,8 +91,8 @@ setStiffnessMatrix()
   {
     // get indices of element-local dofs
     std::vector<dof_no_t> dofUNo;
-    basisOnMeshU->getElementDofNos(elementNo, dofUNo);
-    //std::vector<dof_no_t> dofPNo = basisOnMeshP->getElementDofNos(elementNo);
+    basisOnMeshU->getElementDofLocalNos(elementNo, dofUNo);
+    //std::vector<dof_no_t> dofPNo = basisOnMeshP->getElementDofLocalNos(elementNo);
 
     // get geometry field of current configuration of meshU
     std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> geometryCurrentElementalDofValues;

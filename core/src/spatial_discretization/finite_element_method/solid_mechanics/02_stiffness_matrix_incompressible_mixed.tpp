@@ -85,8 +85,8 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
   for (int elementNo = 0; elementNo < nElements; elementNo++)
   {
    // get indices of element-local dofs
-    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNoU = meshU->getElementDofNos(elementNo);
-    std::array<dof_no_t,nPressureDofsPerElement> dofNoP = meshP->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNoU = meshU->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nPressureDofsPerElement> dofNoP = meshP->getElementDofLocalNos(elementNo);
 
     // loop over indices of unknows
     for (int dofIndexL = 0; dofIndexL < nPressureDofsPerElement; dofIndexL++)           // index over pressure dofs in element, L in derivation
@@ -231,8 +231,8 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNoU = meshU->getElementDofNos(elementNo);
-    std::array<dof_no_t,nPressureDofsPerElement> dofNoP = meshP->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDisplacementsDofsPerElement> dofNoU = meshU->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nPressureDofsPerElement> dofNoP = meshP->getElementDofLocalNos(elementNo);
 
     // add entries in tangent stiffness matrix
     // loop over indices of unknows
@@ -479,7 +479,7 @@ computeIncompressibilityConstraint(Vec &result)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nPressureDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nPressureDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows

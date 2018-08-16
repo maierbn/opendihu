@@ -29,16 +29,23 @@ Data<BasisOnMeshType>::
 
 template<typename BasisOnMeshType>
 dof_no_t Data<BasisOnMeshType>::
-nLocalUnknowns()
+nUnknownsLocalWithGhosts()
 {
-  return this->mesh_->nLocalDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->mesh_->nDofsLocalWithGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+}
+
+template<typename BasisOnMeshType>
+dof_no_t Data<BasisOnMeshType>::
+nUnknownsLocalWithoutGhosts()
+{
+  return this->mesh_->nDofsLocalWithoutGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
 template<typename BasisOnMeshType>
 global_no_t Data<BasisOnMeshType>::
-nGlobalUnknowns()
+nUnknownsGlobal()
 {
-  return this->mesh_->nGlobalDofs() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->mesh_->nDofsGlobal() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
 template<typename BasisOnMeshType>

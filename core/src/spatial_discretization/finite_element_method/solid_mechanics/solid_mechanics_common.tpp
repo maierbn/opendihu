@@ -94,7 +94,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
     // loop over elements
     for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
     {
-      auto dofNo = mesh->getElementDofNos(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)
       {
@@ -104,8 +104,8 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
           {
             for (int bComponent = 0; bComponent < D; bComponent++)
             {
-              dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
-              dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
+              dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
+              dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
 
               VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
               ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
@@ -427,7 +427,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // set entries in stiffness matrix
     // loop over indices of unknows ((aDof,aComponent), (bDof,bComponent)), i.e. (i,j)
@@ -450,8 +450,8 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
             // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components.
             // Therefore the nDofsPerElement number is not the number of unknows.
-            dof_no_t matrixRowIndex = dofNo[aDof]*D + aComponent;
-            dof_no_t matrixColumnIndex = dofNo[bDof]*D + bComponent;
+            dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
+            dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
 
             //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<")";
             //VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
@@ -573,7 +573,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -648,7 +648,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -740,7 +740,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -862,7 +862,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -1233,7 +1233,7 @@ computeInternalVirtualWork(Vec &resultVec)
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
 
     VLOG(2) << "  element " << elementNo << " has dofs " << dofNo;
 

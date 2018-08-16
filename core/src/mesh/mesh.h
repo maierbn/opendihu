@@ -24,11 +24,14 @@ public:
   //! dimensionality of the mesh
   virtual int dimension() const = 0;
   
-  //! number of nodes in the mesh
-  virtual node_no_t nLocalNodes() const = 0;
+  //! number of nodes in the mesh stored in the local partition, this also includes ghost nodes
+  virtual node_no_t nNodesLocalWithGhosts() const = 0;
   
-  //! number of elements in the mesh
-  virtual element_no_t nLocalElements() const = 0;
+  //! the number of non-ghost nodes stored in the local partition
+  virtual node_no_t nNodesLocalWithoutGhosts() const = 0;
+  
+  //! number of elements in the mesh stored in the current partition
+  virtual element_no_t nElementsLocal() const = 0;
   
   //! get the meshPartition of this mesh (defined in BasisOnMesh)
   virtual std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase() = 0;
@@ -55,11 +58,14 @@ public:
   int dimension() const {return 0;}
   static constexpr int dim() {return 0;}
   
-  //! number of nodes in the mesh
-  node_no_t nLocalNodes() const {return 0;}
+  //! number of nodes in the mesh stored in the local partition, this also includes ghost nodes
+  node_no_t nNodesLocalWithGhosts() const {return 0;}
   
-  //! number of elements in the mesh
-  element_no_t nLocalElements() const {return 0;}
+  //! the number of non-ghost nodes stored in the local partition
+  node_no_t nNodesLocalWithoutGhosts() const {return 0;}
+  
+  //! number of elements in the mesh stored in the current partition
+  element_no_t nElementsLocal() const {return 0;}
   
   //! initialization method
   void initialize(){}
@@ -82,11 +88,15 @@ public:
   //! return the template argument D (the dimension) as constexpr
   static constexpr int dim();
 
-  //! get the number of nodes of this mesh
-  virtual node_no_t nLocalNodes() const = 0;
+  //! number of nodes in the mesh stored in the local partition, this also includes ghost nodes
+  virtual node_no_t nNodesLocalWithGhosts() const = 0;
   
-  //! number of elements in the mesh
-  virtual element_no_t nLocalElements() const = 0;
+  //! the number of non-ghost nodes stored in the local partition
+  virtual node_no_t nNodesLocalWithoutGhosts() const = 0;
+  
+  //! number of elements in the mesh stored in the current partition
+  virtual element_no_t nElementsLocal() const = 0;
+  
 };
 
 }  // namespace

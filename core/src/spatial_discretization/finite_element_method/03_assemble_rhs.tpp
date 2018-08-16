@@ -57,7 +57,7 @@ transferRhsToWeakForm()
   for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
   {
     // get indices of element-local dofs
-    auto dof = mesh->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     VLOG(2) << "element " << elementNo;
 
@@ -90,10 +90,10 @@ transferRhsToWeakForm()
         // integrate value and set entry in stiffness matrix
         double integratedValue = integratedValues(i,j);
 
-        double value = integratedValue * rhsValues[dof[j]];
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), integrated value: "<<integratedValue<<", rhsValue["<<dof[j]<<"]: " << rhsValues[dof[j]] <<" = " << value;
+        double value = integratedValue * rhsValues[dofLocalNos[j]];
+        VLOG(2) << "  dof pair (" << i<<","<<j<<"), integrated value: "<<integratedValue<<", rhsValue["<<dofLocalNos[j]<<"]: " << rhsValues[dofLocalNos[j]] <<" = " << value;
 
-        rightHandSide.setValue(dof[i], value, ADD_VALUES);
+        rightHandSide.setValue(dofLocalNos[i], value, ADD_VALUES);
       }  // j
     }  // i
   }  // elementNo
@@ -137,13 +137,13 @@ setMassMatrix()
     // loop over elements
     for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
     {
-      auto dof = mesh->getElementDofNos(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
       for (int i=0; i<nDofsPerElement; i++)
       {
         for (int j=0; j<nDofsPerElement; j++)
         {
-          massMatrix->setValue(dof[i], dof[j], 0, INSERT_VALUES);
+          massMatrix->setValue(dofLocalNos[i], dofLocalNos[j], 0, INSERT_VALUES);
         }
       }
     }
@@ -160,7 +160,7 @@ setMassMatrix()
     for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
     {
       // get indices of element-local dofs
-      auto dof = mesh->getElementDofNos(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
       // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
       std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
@@ -191,7 +191,7 @@ setMassMatrix()
           // integrate value and set entry in discretization matrix
           double integratedValue = integratedValues(i,j);
 
-          massMatrix->setValue(dof[i], dof[j], integratedValue, ADD_VALUES);
+          massMatrix->setValue(dofLocalNos[i], dofLocalNos[j], integratedValue, ADD_VALUES);
         }  // j
       }  // i
     }  // elementNo

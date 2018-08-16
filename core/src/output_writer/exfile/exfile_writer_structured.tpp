@@ -71,7 +71,7 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
   //}
 
   // loop over nodes and output values
-  const int nNodes = mesh->nLocalNodes();
+  const int nNodes = mesh->nNodesGlobal();
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < nNodes; nodeGlobalNo++)
   {
     stream << " Node: " << nodeGlobalNo << std::endl;

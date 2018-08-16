@@ -6,37 +6,7 @@ PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nCompon
 PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name) :
   PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition)
 {
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
- 
-  const int D = MeshType::dim();
-  PetscErrorCode ierr;
-  
-  // Create PETSc DMDA object (distributed array). 
-  // This is a topology interface handling parallel data layout on structured grids.
-  if (D == 1)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate1d(this->meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, this->meshPartition_->globalSize(0), 1, ghostLayerWidth, 
-                        meshPartition.localSizesOnRanks(0).data(), dm_); CHKERRV(ierr);
-  }
-  else if (D == 2)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate2d(this->meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                 this->meshPartition_->globalSize(0), this->meshPartition_->globalSize(1), this->meshPartition_->nRanks(0), this->meshPartition_->nRanks(1),
-                 1, ghostLayerWidth, 
-                 meshPartition.localSizesOnRanks(0).data(), meshPartition.localSizesOnRanks(1).data(),
-                 dm_); CHKERRV(ierr);
-  }
-  else if (D == 3)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate3d(this->meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                 this->meshPartition_->globalSize(0), this->meshPartition_->globalSize(1), this->meshPartition_->globalSize(2), 
-                 this->meshPartition_->nRanks(0), this->meshPartition_->nRanks(1), this->meshPartition_->nRanks(2),
-                 1, ghostLayerWidth, meshPartition.localSizesOnRanks(0).data(), meshPartition.localSizesOnRanks(1).data(),
-                 meshPartition.localSizesOnRanks(2).data(), dm_); CHKERRV(ierr);
-  }
+  dm_ = meshPartition->dm();
   
   createVector(name);
 }
@@ -56,22 +26,18 @@ createVector(std::string name)
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = DMCreateGlobalVector(dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
-    ierr = DMCreateLocalVector(dm_, &vectorLocal_[componentNo]); CHKERRV(ierr);
+    /*ierr = DMCreateGlobalVector(dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
+    ierr = DMCreateLocalVector(dm_, &vectorLocal_[componentNo]); CHKERRV(ierr);*/
     
-    // serial vector
-    if (false)
-    {
-      // initialize PETSc vector object
-      ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &vectorLocal_[componentNo]); CHKERRV(ierr);
-      ierr = PetscObjectSetName((PetscObject) vectorLocal_[componentNo], name.c_str()); CHKERRV(ierr);
+    // initialize PETSc vector object
+    ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &vectorLocal_[componentNo]); CHKERRV(ierr);
+    ierr = PetscObjectSetName((PetscObject) vectorLocal_[componentNo], name.c_str()); CHKERRV(ierr);
 
-      // initialize size of vector
-      ierr = VecSetSizes(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->nGlobalNodes()); CHKERRV(ierr);
+    // initialize size of vector
+    ierr = VecSetSizes(vectorLocal_[componentNo], this->meshPartition_->nNodesLocalWithGhosts(), this->meshPartition_->nNodesGlobal()); CHKERRV(ierr);
 
-      // set sparsity type and other options
-      ierr = VecSetFromOptions(vectorLocal_[componentNo]); CHKERRV(ierr);
-    }
+    // set sparsity type and other options
+    ierr = VecSetFromOptions(vectorLocal_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -134,12 +100,14 @@ getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], Petsc
   ierr = VecGetValues(vectorGlobal_[componentNo], ni, ix, y); CHKERRV(ierr);
 }
 
-//! get all locally stored values
+//! get all locally stored values, with ghosts
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getLocalValues(int componentNo, std::vector<double> &values)
 {
-  VecGetValues(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->localNodeNos().data(), values.data());
+  assert(values.size() >= this->meshPartition_->nDofsLocalWithGhosts());
+  
+  VecGetValues(vectorLocal_[componentNo], this->meshPartition_->nDofsLocalWithGhosts(), this->meshPartition_->localDofNos().data(), values.data());
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -166,13 +134,33 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 //! for a single component vector set all values
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->meshPartition_->nLocalNodes());
+  assert(values.size() == this->meshPartition_->nDofsLocalWithGhosts());
  
   // this wraps the standard PETSc VecSetValue on the local vector
   PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->localNodeNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+  ierr = VecSetValues(vectorLocal_[componentNo], values.size(), this->meshPartition_->localDofNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+}
+
+//! for a single component vector set all values, input does not contain values for ghosts
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(values.size() == this->meshPartition_->nDofsLocalWithoutGhosts());
+ 
+  // copy all values to a bigger vector that is initialized with 0
+  std::vector<double> valuesWithGhosts(this->meshPartition_->nDofsLocalWithGhosts(), 0.0);
+  dof_no_t valueIndex = 0;
+  for (std::vector<dof_no_t>::const_iterator localDof = this->meshPartition_->nonGhostDofsBegin(); localDof != this->meshPartition_->nonGhostDofsEnd(); localDof++)
+  {
+    valuesWithGhosts[*localDof] = values[valueIndex++];
+  }
+  
+  // this wraps the standard PETSc VecSetValue on the local vector
+  PetscErrorCode ierr;
+  ierr = VecSetValues(vectorLocal_[componentNo], valuesWithGhosts.size(), this->meshPartition_->localDofNos().data(), valuesWithGhosts.data(), petscInsertMode); CHKERRV(ierr);
 }
   
 template<typename MeshType,typename BasisFunctionType,int nComponents>

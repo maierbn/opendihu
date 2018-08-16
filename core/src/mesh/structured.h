@@ -37,10 +37,10 @@ public:
   std::array<global_no_t, D> nElementsPerCoordinateDirectionGlobal() const;
 
   //! get the total number of elements in the local domain
-  element_no_t nLocalElements() const;
+  element_no_t nElementsLocal() const;
   
   //! get the total number of elements in the global domain
-  global_no_t nGlobalElements() const;
+  global_no_t nElementsGlobal() const;
 
 protected:
   std::array<element_no_t, D> nElementsPerCoordinateDirectionLocal_;    ///< the number of stored elements in each coordinate direction (the locally computed portion)

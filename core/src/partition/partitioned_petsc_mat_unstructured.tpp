@@ -32,8 +32,8 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   assert(meshPartition_);
   
   dof_no_t nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode();
-  dof_no_t nRowsLocal = this->meshPartition_->nLocalNodes() * nDofsPerNode;
-  dof_no_t nRowsGlobal = this->meshPartition_->nGlobalNodes() * nDofsPerNode;
+  dof_no_t nRowsLocal = this->meshPartition_->nNodesLocalWithoutGhosts() * nDofsPerNode;
+  dof_no_t nRowsGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
   
   //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
   //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);

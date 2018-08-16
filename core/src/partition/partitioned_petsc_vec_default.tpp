@@ -10,8 +10,8 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> m
   assert(this->meshPartition_);
   
   dof_no_t nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  dof_no_t nEntriesLocal = this->meshPartition_->nLocalNodes() * nDofsPerNode;
-  dof_no_t nEntriesGlobal = this->meshPartition_->nGlobalNodes() * nDofsPerNode;
+  dof_no_t nEntriesLocal = this->meshPartition_->nNodesLocal() * nDofsPerNode;
+  dof_no_t nEntriesGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -77,13 +77,25 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 //! for a single component vector set all values
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
-setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->meshPartition_->nLocalNodes());
+  assert(values.size() == this->meshPartition_->nNodesLocalWithGhosts());
  
   // this wraps the standard PETSc VecSetValue on the local vector
   PetscErrorCode ierr;
-  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localNodeNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localDofNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+}
+
+//! for a single component vector set all values
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(values.size() == this->meshPartition_->nNodesLocalWithoutGhosts());
+ 
+  // this wraps the standard PETSc VecSetValue on the local vector
+  PetscErrorCode ierr;
+  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localDofNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
 }
   
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
@@ -108,7 +120,8 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 getLocalValues(int componentNo, std::vector<double> &values)
 {
-  VecGetValues(values_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->localNodeNos().data(), values.data());
+  assert(values.size() >= this->meshPartition_->nLocalNodesWithGhosts());
+  VecGetValues(values_[componentNo], this->meshPartition_->nLocalNodesWithGhosts(), this->meshPartition_->localDofNos().data(), values.data());
 }
 
 //! set all entries to zero, wraps VecZeroEntries

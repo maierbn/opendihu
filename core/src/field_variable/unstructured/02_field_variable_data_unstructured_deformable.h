@@ -58,10 +58,10 @@ public:
   element_no_t nLocalElements() const;
 
   //! get the number of nodes
-  node_no_t nLocalNodes() const;
+  node_no_t nNodesLocalWithGhosts() const;
 
   //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocalWithGhosts() const;
 
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;

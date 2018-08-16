@@ -16,11 +16,13 @@ input_file=../meshes/biceps_full.stl
 
 #./remove_inside_triangles.py ${input_file} ${input_file}_repaired.stl    # remove non-surface triangles (takes ~1h)
 
+mkdir -p out
+
 cp $input_file out/mesh_00.stl    # cp input file
 
 # cut surface mesh at specified z positions and create rings from it. Write result to `rings_created`, debugging output to out/mesh_01.stl (takes <1min)
 # usage: ./create_rings.py <input file> [<n rings> [<min z> <max z>]]
-#./create_rings.py $input_file $n_rings $min_z $max_z    
+./create_rings.py $input_file $n_rings $min_z $max_z    
 
 # extract existing rings from surface mesh   (this is the alternative to create_rings.py)   Write result to `rings_extracted`
 #./extract_rings.py ../biceps.stl     

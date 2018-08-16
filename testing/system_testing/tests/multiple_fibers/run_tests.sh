@@ -6,7 +6,10 @@ workdir=$(pwd)
 variant="debug"
 variant="release"
 
-. input/copy.sh
+# copy fibre results from fibers system test to this folder
+cd input
+. copy.sh
+cd $workdir
 
 mkdir -p build_${variant}
 cd build_${variant}

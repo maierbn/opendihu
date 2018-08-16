@@ -18,6 +18,9 @@
 
 import sys, os
 import numpy as np
+import matplotlib
+if os.name == 'posix' and "DISPLAY" not in os.environ:      # if there is no display, use agg backend
+  matplotlib.use('Agg')
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches

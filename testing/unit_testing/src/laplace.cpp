@@ -25,9 +25,7 @@ bc[0] = 1.0
 bc[n] = 0.0
 
 config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": False,
-  "FiniteElementMethod" : {
+  "FiniteElementMethod": {
     "nElements": n,
     "physicalExtent": 4.0,
     "DirichletBoundaryCondition": bc,

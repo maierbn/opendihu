@@ -19,7 +19,7 @@ class ComputeXiApproximation<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::
 
 // -----------------------------------------------------
 
-/** Adds functionality to get the xi value for a point inside an element
+/** Adds functionality to get the xi value, i.e. the local coordinate, for a point inside an element
  */
 template<typename MeshType,typename BasisFunctionType, typename = MeshType>
 class BasisOnMeshXi : 

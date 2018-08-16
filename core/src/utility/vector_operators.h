@@ -59,6 +59,10 @@ bool operator<(const std::array<T,N> &vector, double value);
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector);
 
+//! output array content to stream
+template<std::size_t N>
+std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> vector);
+
 #if 0
 //! output vector content to stream, already defined by SEMT library
 template<typename T>

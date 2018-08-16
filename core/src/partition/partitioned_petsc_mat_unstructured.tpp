@@ -29,14 +29,17 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
 {
   PetscErrorCode ierr;
   
-  //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.localSize(), partition.localSize(), n, n,
-  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
-
   assert(meshPartition_);
   
+  dof_no_t nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode();
+  dof_no_t nRowsLocal = this->meshPartition_->nLocalNodes() * nDofsPerNode;
+  dof_no_t nRowsGlobal = this->meshPartition_->nGlobalNodes() * nDofsPerNode;
+  
+  //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
+  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
+  
   ierr = MatCreate(meshPartition_->mpiCommunicator(), &matrix_); CHKERRV(ierr);
-  ierr = MatSetSizes(matrix_, meshPartition_->localSize(), meshPartition_->localSize(), 
-                     meshPartition_->globalSize(), meshPartition_->globalSize()); CHKERRV(ierr);
+  ierr = MatSetSizes(matrix_, nRowsLocal, nRowsLocal, nRowsGlobal, nRowsGlobal); CHKERRV(ierr);
   ierr = MatSetFromOptions(matrix_); CHKERRV(ierr);                        
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh

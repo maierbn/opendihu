@@ -9,7 +9,7 @@ PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType
 
 template<typename BasisOnMeshType>
 std::vector<PetscInt> &PartitionedPetscVecBase<BasisOnMeshType>::
-localDofs()
+localNodeNos()
 {
-  return this->meshPartition_->localDofs();
+  return this->meshPartition_->localNodeNos();
 }

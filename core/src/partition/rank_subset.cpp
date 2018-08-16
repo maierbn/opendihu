@@ -72,4 +72,25 @@ MPI_Comm RankSubset::mpiCommunicator()
   return mpiCommunicator_;
 }
   
+std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
+{
+  if (rankSubset.size() == 0)
+  {
+    stream << "(empty rankSubset)";
+  }
+  else 
+  {
+    std::vector<int>::const_iterator iterRank = rankSubset.begin();
+    stream << "(" << *iterRank;
+    iterRank++;
+    
+    for (; iterRank != rankSubset.end(); iterRank++)
+    {
+      stream << ", " << *iterRank;
+    }
+    stream << ")";
+  }
+  return stream;
+}
+
 };

@@ -178,7 +178,7 @@ getValue(int componentNo, node_no_t dofLocalNo)
   return result;
 }
 
-//! get all stored local values
+//! get all stored local values for one component
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getLocalValues(int componentNo, std::vector<double> &values)
@@ -235,14 +235,11 @@ setValues(double value)
   assert(this->mesh_);
   const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
-  std::vector<PetscInt> indices(nDofs);
   std::vector<double> valueBuffer(nDofs,value);
-  
-  std::iota(indices.begin(), indices.end(), 0);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    this->values_->setValues(componentIndex, nDofs, indices.data(), valueBuffer.data(), INSERT_VALUES);
+    this->values_->setValues(componentIndex, valueBuffer, INSERT_VALUES);
   }
 }
 
@@ -260,7 +257,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  this->setValues(this->values_->localDofs(), values, petscInsertMode);
+  this->setValues(this->values_->localNodeNos(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs

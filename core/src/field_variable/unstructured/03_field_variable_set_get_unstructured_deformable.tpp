@@ -156,14 +156,11 @@ setValues(double value)
   assert(this->mesh_);
   const dof_no_t nDofs = this->mesh_->nLocalDofs();
 
-  std::vector<PetscInt> indices(nDofs);
   std::vector<double> valueBuffer(nDofs,value);
-  
-  std::iota(indices.begin(), indices.end(), 0);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    this->values_->setValues(componentIndex, nDofs, indices.data(), valueBuffer.data(), INSERT_VALUES);
+    this->values_->setValues(componentIndex, valueBuffer, INSERT_VALUES);
   }
 }
 
@@ -215,12 +212,12 @@ setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMo
   this->values_->setValues(componentNo, values);
 }
 
-//! set values for the all component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  this->setValues(this->values_->localDofs(), values, petscInsertMode); 
+  this->setValues(this->values_->localNodeNos(), values, petscInsertMode); 
 }
 
 //! set value to zero for all dofs

@@ -82,7 +82,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->name_ = name;
   this->isGeometryField_ = false;
   this->mesh_ = fieldVariable.mesh();
-  this->nEntries_ = fieldVariable.nLocalDofs() * nComponents;
+  this->nEntries_ = this->mesh_->nLocalDofs() * nComponents;
 
   // copy component names
   assert(nComponents == (int)componentNames.size());
@@ -118,7 +118,9 @@ template<typename BasisOnMeshType, int nComponents>
 dof_no_t FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 nLocalDofs() const
 {
-  return this->nEntries_ / nComponents;
+  // this is the same as this->nEntries_ / nComponents only if it is not the geometry mesh of StructuredRegularFixed mesh
+  return this->mesh_->nLocalDofs();
+ 
 }
 
 template<typename BasisOnMeshType, int nComponents>

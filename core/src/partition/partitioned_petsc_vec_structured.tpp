@@ -67,7 +67,7 @@ createVector(std::string name)
       ierr = PetscObjectSetName((PetscObject) vectorLocal_[componentNo], name.c_str()); CHKERRV(ierr);
 
       // initialize size of vector
-      ierr = VecSetSizes(vectorLocal_[componentNo], this->meshPartition_->localSize(), this->meshPartition_->globalSize()); CHKERRV(ierr);
+      ierr = VecSetSizes(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->nGlobalNodes()); CHKERRV(ierr);
 
       // set sparsity type and other options
       ierr = VecSetFromOptions(vectorLocal_[componentNo]); CHKERRV(ierr);
@@ -139,7 +139,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getLocalValues(int componentNo, std::vector<double> &values)
 {
-  VecGetValues(vectorLocal_[componentNo], this->meshPartition_->localSize(), this->meshPartition_->localDofs().data(), values.data());
+  VecGetValues(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->localNodeNos().data(), values.data());
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -168,11 +168,11 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->meshPartition_->localSize());
+  assert(values.size() == this->meshPartition_->nLocalNodes());
  
   // this wraps the standard PETSc VecSetValue on the local vector
   PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], this->meshPartition_->localSize(), this->meshPartition_->localDofs().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+  ierr = VecSetValues(vectorLocal_[componentNo], this->meshPartition_->nLocalNodes(), this->meshPartition_->localNodeNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
 }
   
 template<typename MeshType,typename BasisFunctionType,int nComponents>

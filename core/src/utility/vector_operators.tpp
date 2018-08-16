@@ -180,6 +180,16 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
   return stream;
 }
 
+template<std::size_t N>
+std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> vector)
+{
+  stream << "(" << vector[0];
+  for (std::size_t i = 1; i < N; i++)
+    stream << "," << vector[i];
+  stream << ")";
+  return stream;
+}
+
 #if 0
 // operator already defined by SEMT
 template<typename T>

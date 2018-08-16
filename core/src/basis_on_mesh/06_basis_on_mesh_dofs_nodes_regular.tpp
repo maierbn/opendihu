@@ -130,7 +130,7 @@ setGeometryFieldValues()
   // compute number of (local) dofs
   //dof_no_t nLocalDofs = this->nLocalDofs();
   //const dof_no_t nEntries = nLocalDofs * 3;
-  const dof_no_t nEntries = 0;
+  const dof_no_t nEntries = 0;   // geometry field für structured regular fixed mesh does not have any entries
   const bool isGeometryField = true;
   
   // initialize geometry field, this creates the internal DistributedPetscVec

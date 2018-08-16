@@ -244,6 +244,13 @@ config = {
   b->getElementValues(1, values7);
   ASSERT_EQ(values7,reference7);
   
+  // set all values of a to 9.0
+  a->setValue(9.0);
+  std::array<Vec2,3> values8;
+  a->getValues(std::array<dof_no_t,1>{1,15,24}, values8);
+  std::array<Vec2,3> reference8 = {Vec2({9.0, 9.0}), Vec2({9.0, 9.0}, Vec2({9.0, 9.0})};
+  
+  ASSERT_EQ(values8,reference8);
   /*
    * 
   //! copy the values from another field variable of the same type

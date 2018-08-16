@@ -12,6 +12,8 @@ template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
 createPartitioning(global_no_t globalSize)
 { 
+  LOG(DEBUG) << "Partition::Manager::createPartitioning of globalSize " << globalSize;
+  
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
   
@@ -27,6 +29,8 @@ createPartitioning(global_no_t globalSize)
     rankSubset = nextRankSubset_;
   }
   
+  LOG(DEBUG) << "using rankSubset " << *rankSubset;
+  
   return std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
 }
 
@@ -35,6 +39,8 @@ template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
 createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &globalSize, const std::array<element_no_t,BasisOnMesh::dim()> localSize, const std::array<int,BasisOnMesh::dim()> nRanks)
 { 
+  LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredLocal from localSize " << localSize << ", nRanks " << nRanks;
+  
   const int D = BasisOnMesh::dim();
   
   // the subset of ranks for the partition to be created
@@ -167,6 +173,8 @@ template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
 createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim()> globalSize, std::array<element_no_t,BasisOnMesh::dim()> &localSize, std::array<int,BasisOnMesh::dim()> &nRanks)
 { 
+  LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredGlobal from globalSize " << globalSize;
+  
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
   
@@ -182,8 +190,12 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim
     rankSubset = nextRankSubset_;
   }
   
+  LOG(DEBUG) << "using rankSubset " << *rankSubset;
+  
+  // create meshPartition
   std::shared_ptr<MeshPartition<BasisOnMesh>> meshPartition = std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
   
+  // set parameters localSize and nRanks
   for (int coordinateDirection = 0; coordinateDirection < BasisOnMesh::dim(); coordinateDirection++)
   {
     localSize[coordinateDirection] = meshPartition->localSize(coordinateDirection);

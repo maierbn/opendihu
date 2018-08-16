@@ -344,8 +344,8 @@ template<int D,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nLocalNodes() const
 {
-  int result = 1;
-  for (int i=0; i<D; i++)
+  node_no_t result = 1;
+  for (int i = 0; i < D; i++)
     result *= nLocalNodes(i);
   return result;
 }
@@ -355,8 +355,8 @@ node_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFun
 nLocalNodes(int coordinateDirection) const
 {
   assert(this->meshPartition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
-  return this->nElementsPerCoordinateDirectionLocal(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() 
-    + (this->meshPartition_->hasFullNumberOfNodes(coordinateDirection)? 1 : 0);
+ 
+  return this->meshPartition_->nLocalNodes(coordinateDirection);
 }
 
 template<int D,typename BasisFunctionType>
@@ -382,7 +382,7 @@ template<int D,typename BasisFunctionType>
 global_no_t BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 nGlobalNodes(int coordinateDirection) const
 {
-  return this->meshPartition_->globalSize(coordinateDirection) * BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  return this->meshPartition_->nGlobalNodes(coordinateDirection);
 }
 
 template<int D,typename BasisFunctionType>

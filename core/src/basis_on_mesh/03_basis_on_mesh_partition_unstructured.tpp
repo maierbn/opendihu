@@ -21,6 +21,8 @@ initialize()
   // Creation of the partitioning is only possible after the number of elements is known.
   // Because this may need file I/O (e.g. reading from exfiles)
  
+  VLOG(1) << "BasisOnMeshPartition<Unstructured>::initialize()";
+  
   // create partitioning
   assert(this->partitionManager_ != nullptr);
   this->meshPartition_ = this->partitionManager_->template createPartitioning<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(

@@ -10,7 +10,7 @@ MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D
 MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), globalSize_(globalSize)
 {
-  this->initializeLocalDofs();
+  this->initializeLocalNodeNos(nLocalNodes());
 }
 
 //! get the local to global mapping for the current partition
@@ -18,11 +18,13 @@ template<int D, typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 localToGlobalMapping()
 {
+  int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode();
+  
   PetscErrorCode ierr;
-  std::vector<PetscInt> globalDofNos(localSize());
+  std::vector<PetscInt> globalDofNos(nLocalNodes()*nDofsPerNode);
   std::iota(globalDofNos.begin(), globalDofNos.end(), 0);
   ISLocalToGlobalMapping localToGlobalMapping;
-  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, localSize(), 
+  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, nLocalNodes()*nDofsPerNode, 
                                       globalDofNos.data(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(mpiCommunicator(),ierr);
 
   return localToGlobalMapping;
@@ -43,6 +45,22 @@ globalSize()
 {
   return globalSize_;
 }
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nLocalNodes()
+{
+  return localSize_ * BasisOnMesh::BasisOnMeshBaseDim<D,BasisFunctionType>::nNodesPerElement();
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nGlobalNodes()
+{
+  return globalSize_ * BasisOnMesh::BasisOnMeshBaseDim<D,BasisFunctionType>::nNodesPerElement();
+}
   
 template<int D, typename BasisFunctionType>
 template <typename T>
@@ -59,4 +77,11 @@ extractLocalDofs(std::vector<double> &vector)
   
 }
   
+template<int D, typename BasisFunctionType>
+void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+output(std::ostream &stream)
+{
+  stream << "MeshPartition<Unstructured>, size global: " << globalSize_ << ", local: " << localSize_;
+} 
+
 }  // namespace

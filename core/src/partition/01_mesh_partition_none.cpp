@@ -28,7 +28,7 @@ MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset) :
   beginGlobal_ = rankNo * sizePerRank + std::min(residual, (global_no_t)rankNo);
   
   // initialize local dofs list 
-  this->initializeLocalDofs();
+  this->initializeLocalNodeNos(localSize_);
 }
 
 //! get the local to global mapping for the current partition
@@ -65,4 +65,91 @@ extractLocalDofs(std::vector<double> &vector)
   extractLocalNodes<double>(vector);
 }
   
+void MeshPartition<Mesh::None>::
+output(std::ostream &stream)
+{
+  stream << "MeshPartition<None>, size global: " << globalSize_ << ", local: " << localSize_ << ", beginGlobal: " << beginGlobal_;
+}
+
+
 }  // namespace
+
+// output local to global mapping
+std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMapping> localToGlobalMapping)
+{
+  stream << *localToGlobalMapping;
+  return stream;
+}
+
+// output local to global mapping
+std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlobalMapping)
+{
+  PetscErrorCode ierr;
+  PetscInt nproc;
+  PetscInt *procs;
+  PetscInt *numprocs;
+  PetscInt **indices;
+  ierr = ISLocalToGlobalMappingGetInfo(localToGlobalMapping, &nproc, &procs, &numprocs, &indices); CHKERRABORT(MPI_COMM_WORLD, ierr);
+  stream << "[localToGlobalMapping, number of foreign ranks: " << nproc << ": (";
+  
+  // output ranks
+  if (nproc > 0)
+  {
+    stream << procs[0];
+  }
+  for (int i = 1; i < nproc; i++)
+  {
+    stream << ", " << procs[i];
+  }
+  stream << "), number of indices on ranks: (";
+  
+  // output number of indices on ranks
+  PetscInt numprocmax = 0;
+  if (nproc > 0)
+  {
+    numprocmax = std::max(numprocmax, numprocs[0]);
+    stream << numprocs[0];
+  }
+  for (int i = 1; i < nproc; i++)
+  {
+    numprocmax = std::max(numprocmax, numprocs[i]);
+    stream << ", " << numprocs[i];
+  }
+  stream << "), local indices of boundary elements: (";
+  
+  // output boundary elements
+  if (nproc > 0)
+  {
+    for (int j = 0; j < numprocmax; j++) 
+    {
+      stream << indices[0][j] << " ";
+    }
+  }
+  for (int i = 1; i < nproc; i++)
+  {
+    for (int j = 0; j < numprocmax; j++) 
+    {
+      stream << "; " << indices[i][j];
+    }
+  }
+  stream << "), ";
+  
+  PetscInt nLocalIndices;
+  ierr = ISLocalToGlobalMappingGetSize(localToGlobalMapping, &nLocalIndices); CHKERRABORT(MPI_COMM_WORLD, ierr);
+  stream << nLocalIndices << " local indices: [";
+  
+  PetscInt const *localIndices;
+  ierr = ISLocalToGlobalMappingGetIndices(localToGlobalMapping, &localIndices); CHKERRABORT(MPI_COMM_WORLD, ierr);
+  
+  if (nLocalIndices > 0)
+  {
+    stream << localIndices[0];
+  }
+  for (int i = 1; i < nLocalIndices; i++)
+  {
+    stream << "," << localIndices[i];
+  }
+  stream << "]]";
+  
+  return stream;
+}

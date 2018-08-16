@@ -41,4 +41,7 @@ protected:
   
 };
 
+//! output rank subset
+std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset);
+
 }  // namespace

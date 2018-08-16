@@ -8,6 +8,9 @@
 namespace Partition
 {
 
+/** This manager object creates mesh partitions. They are needed for meshes/function spaces.
+ *  The rank subset to use for the next partitioning to be generated can be specified by setRankSubsetForNextCreatedMesh.
+  */
 class Manager
 {
 public:

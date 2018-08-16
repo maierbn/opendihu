@@ -18,7 +18,7 @@ class BasisOnMesh;
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
  *  A local Vec is stored that holds all values 
  *  Global numbering: such that each rank has its own contiguous subset of the total range.
- *  Local numbering: including ghost elements
+ *  Local numbering: starting with 0, including ghost elements
  * *
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
  *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented.
@@ -66,7 +66,10 @@ protected:
   std::array<Vec,nComponents> values_;  // the (serial) Petsc vector that contains all the data
 };
 
-/** partial specialization for structured meshes */
+/** This is the partial specialization for structured meshes.
+ *  An own DMDA object is generated, separately from the one in MeshPartition. This object now refers to nodes (as opposite the one of MeshPartition which refers to elements). 
+ *  This object is created such that it matches the partition given by the meshPartition.
+ */
 template<typename MeshType, typename BasisFunctionType, int nComponents>
 class PartitionedPetscVec<
   BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,

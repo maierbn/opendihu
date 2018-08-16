@@ -3,10 +3,9 @@
 #include "control/dihu_context.h"
 #include "data_management/solution_vector_mapping.h"
 #include "data_management/time_stepping.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "data_management/data.h"
-
-#include "time_stepping_scheme/time_stepping_scheme.h"
 
 namespace TimeSteppingScheme
 {
@@ -40,7 +39,7 @@ public:
   Data &data();
 
   //! initialize discretizableInTime
-  void initialize();
+  virtual void initialize();
 
   //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();

@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "time_stepping_scheme/discretizable_in_time.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 #include "cellml/02_callback_handler.h"
 
 /** The is a class that contains cellml equations and can be used with a time stepping scheme.
@@ -25,8 +25,14 @@ public:
   //! initialize callback functions and rhs
   void initialize();
   
+  //! initialize timestepping
+  void initialize(double timeStepWidth);
+  
   //! evaluate rhs
-  void evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, double currentTime);
+  void evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
+  
+  //! evaluate rhs
+  void evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();

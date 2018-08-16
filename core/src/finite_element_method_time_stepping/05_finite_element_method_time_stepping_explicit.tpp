@@ -1,4 +1,5 @@
-#include "spatial_discretization/finite_element_method/05_time_stepping.h"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 
 #include <Python.h>
 #include <iostream>
@@ -54,7 +55,7 @@ recoverRightHandSideStrongForm(Vec &result)
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
+evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   // this method computes output = M^{-1}*K*input
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();

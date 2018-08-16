@@ -3,7 +3,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
 #include "mesh/mesh.h"
-#include "time_stepping_scheme/discretizable_in_time.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 
 namespace SpatialDiscretization
 {
@@ -22,7 +22,10 @@ public:
   static constexpr int nComponents();
 
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
-  void evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  
+  //! timestepping rhs of equation Au^(t+1)=Rhs^(t), used for the case (M/dt-K)u^(t+1)=M/dtu^(t)
+  void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
   //! inverse of the lumped mass matrix
   void setInvLumMassMatrix();
@@ -31,13 +34,22 @@ public:
   bool invLumMassMatrixSet();
   
   //! precomputes the system matrix A=I-M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
-  void preComputeSystemMatrix(double timeStepWidth);
+  void preComputeSystemMatrix(Mat &systemMatrix);
+  
+  //! precomputes the system matrix A=M/dt-K for variant 1 of the implicit Euler
+  void preComputeSystemMatrix1();
   
   //! solves the linear system of equations resulting from the Implicit Euler method time discretization
   void solveLinearSystem(Vec &input, Vec &output);
 
   //! initialize for use with timestepping
-  void initialize() override;
+  void initialize();
+  
+  //! initialize for use with timestepping
+  void initialize(double timeStepWidth); 
+  
+  //! set initial values and return true
+  //bool setInitialValues(Vec& initialValues) override;
 
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
@@ -61,11 +73,12 @@ protected:
   
 private:
   bool invLumMassMatrixSet_=false;
+  //std::shared_ptr<KSP> ksp_;  //to be once created not for each implicit time step
   
 };
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
-#include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"
-#include "spatial_discretization/finite_element_method/05_time_stepping_implicit.tpp"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.tpp"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping_explicit.tpp"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping_implicit.tpp"

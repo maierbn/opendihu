@@ -39,7 +39,7 @@ setMassMatrix()
     this->data_.initializeMassMatrix();
 
     const int D = BasisOnMeshType::dim();
-    LOG(TRACE)<<"createMassMatrix " << D << "D";
+    LOG(INFO)<<"setMassMatrix " << D << "D";
 
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak
@@ -129,6 +129,18 @@ setMassMatrix()
 
     ierr = MatAssemblyBegin(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
     ierr = MatAssemblyEnd(massMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+    
+    /*
+    dof_no_t n = mesh->nDofs();
+    int nEntries=n;       
+    PetscScalar v=0.0;  
+    for (PetscInt i=0;i<nEntries;i++)
+      for(PetscInt j=0;j<nEntries;j++)
+      {
+        ierr=MatGetValues(massMatrix,1,&i,1,&j,&v);
+        LOG(DEBUG)<<"val_get: massMatrix assembly"<< v; 
+      }
+      */
   }
 }
 

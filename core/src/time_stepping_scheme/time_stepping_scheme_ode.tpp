@@ -68,6 +68,7 @@ initialize()
 
   // initialize underlying DiscretizableInTime object
   discretizableInTime_.initialize();
+  discretizableInTime_.initialize(this->timeStepWidth_);
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   data_->setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
@@ -78,11 +79,12 @@ initialize()
   // set initial values from settings
 
   Vec &solution = data_->solution().values();
-
+  
   if (!discretizableInTime_.setInitialValues(solution))
   {
     this->setInitialValues();
   }
+  
   data_->print();
   
   initialized_ = true;

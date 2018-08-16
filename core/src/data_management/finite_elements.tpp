@@ -117,10 +117,10 @@ createPetscObjects()
     ierr = MatSetFromOptions(this->stiffnessMatrix_); CHKERRV(ierr);
     ierr = MatSetUp(this->stiffnessMatrix_); CHKERRV(ierr);
   }
-  
-  createPetscObjects_systemMatrix();
+
 }
 
+/*
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects_systemMatrix()
@@ -159,7 +159,11 @@ createPetscObjects_systemMatrix()
     ierr = MatSetFromOptions(this->systemMatrix_); CHKERRV(ierr);
     ierr = MatSetUp(this->systemMatrix_); CHKERRV(ierr);
   }
+  
+  ierr = MatAssemblyBegin(this->systemMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(this->systemMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr); 
 }
+*/
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
@@ -175,6 +179,7 @@ finalAssembly()
 
   LOG(DEBUG) << "finalAssembly";
 }
+
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 Mat &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::

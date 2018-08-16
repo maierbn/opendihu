@@ -27,9 +27,6 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
-
-  //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  //void setMassMatrix();
 };
 
 /** specialization for linear Lagrange, 2D regular mesh (uses stencils)
@@ -45,9 +42,6 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
-
-  //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  //void setMassMatrix();
 };
 
 /** specialization for linear Lagrange, 3D regular mesh (uses stencils)
@@ -63,9 +57,6 @@ public:
   protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
-
-  //! create the discretization matrix which is the mapping between strong formulated and weak formulated rhs vector
-  //void setMassMatrix();
 };
 
 /** specialisation for RegularFixed not linear Lagrange, and other meshes of any dimension D (do proper integration of rhs)

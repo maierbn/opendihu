@@ -42,6 +42,8 @@ createPetscObjects()
   assert(this->mesh_);
   this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
   this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
+  //for the variant 1 of the implicit Euler
+  //this->rhs_ = this->mesh_->template createFieldVariable<nComponents>("rhs");
 }
 
 template<typename BasisOnMeshType,int nComponents>
@@ -57,6 +59,15 @@ increment()
 {
   return *this->increment_;
 }
+
+/*
+template<typename BasisOnMeshType,int nComponents>
+FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeStepping<BasisOnMeshType,nComponents>::
+rhs()
+{
+  return *this->rhs_;
+}
+*/
 
 template<typename BasisOnMeshType,int nComponents>
 dof_no_t TimeStepping<BasisOnMeshType,nComponents>::

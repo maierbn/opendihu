@@ -20,7 +20,9 @@ void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 
 void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
 {
-  numberTimeSteps_ = numberTimeSteps;
+  //numberTimeSteps_ = numberTimeSteps;
+  timeStepWidth_=(endTime_ - startTime_) /numberTimeSteps;
+  //LOG(DEBUG) << "timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
 }
 
 void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
@@ -59,7 +61,7 @@ void TimeSteppingScheme::initialize()
 
     if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
     {
-      numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
+      numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);      
       isTimeStepWidthSignificant_ = false;
       LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
     }
@@ -72,10 +74,12 @@ void TimeSteppingScheme::initialize()
   {
     numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps_="<<numberTimeSteps_;
+    setNumberTimeSteps(numberTimeSteps_);
   }
 
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
-    << ", time step width: " << (endTime_ - startTime_) / numberTimeSteps_;
+    << ", time step width: " << timeStepWidth_;
+    
   initialized_ = true;
 }
 

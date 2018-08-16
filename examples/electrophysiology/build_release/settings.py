@@ -1,6 +1,6 @@
 # Electrophysiology release
 nElements = 50
-endTime = 100.0
+endTime = 3.0
 
 import numpy as np
 import matplotlib 
@@ -93,7 +93,7 @@ config = {
     "disablePrinting": False,
     "disableMatrixPrinting": False,
     #"numberTimeSteps": 1,
-    "timeStepWidth": 1e-1,
+    "timeStepWidth": 1e-3,
     "endTime": endTime,
     "outputData1": True,
     "outputData2": False,
@@ -101,11 +101,11 @@ config = {
     "OutputWriter" : [
        #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
       #{"format": "Paraview", "filename": "out/out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
-      #{"format": "PythonFile", "filename": "out/vm", "outputInterval": 1, "binary": True}
+      {"format": "PythonFile", "filename": "out/vm", "outputInterval": 1, "binary": False}
     ],
     "Term1": {      # CellML
       "ExplicitEuler" : {
-        "timeStepWidth": 5e-5,
+        "timeStepWidth": 1e-3,
         "initialValues": [],
         "timeStepOutputInterval": 1e4,
         
@@ -136,15 +136,15 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ImplicitEuler" : {
+      "ExplicitEuler" : {
         #"initialValues": [2,2,4,5,2,2],
         #"numberTimeSteps": 1,
-        "timeStepWidth": 1e-5,
+        "timeStepWidth": 1e-3,
         "timeStepOutputInterval": 1e4,
         "FiniteElementMethod" : {
           #"nElements": 0,
           "physicalExtend": 1.0,
-          "relativeTolerance": 1e-15,
+          "relativeTolerance": 1e-10,
           "meshName": "MeshFibre",
           "prefactor": Conductivity/(Am*Cm),
         },

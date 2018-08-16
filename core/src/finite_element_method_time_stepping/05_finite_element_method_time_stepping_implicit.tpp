@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/05_time_stepping.h"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
 
 #include <Python.h>
 #include <iostream>
@@ -18,6 +18,67 @@
 
 namespace SpatialDiscretization
 {
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
+{
+  LOG(TRACE)<<"evaluateTimesteppingRightHandSideImplicit";
+  
+  // this method computes output = M*input  
+  Mat &massMatrix=this->data_.massMatrix();
+  
+  PetscErrorCode ierr;
+  
+  /*
+  PetscInt nEntries;
+  VecGetSize(input, &nEntries);  
+  PetscScalar v=0.0;  
+  for (PetscInt i=0;i<nEntries;i++)
+    for(PetscInt j=0;j<nEntries;j++)
+    {      
+      ierr=MatGetValues(massMatrix,1,&i,1,&j,&v);
+      LOG(DEBUG)<<"val_get: massMatrix "<< v; 
+    }
+  */
+  
+  /*
+  for (int i=0;i<nEntries;i++)
+  {
+    ierr=VecGetValues(input,1,&i,&val_get);
+    LOG(DEBUG)<<"val_get: input "<< val_get;   
+  }
+  */
+  
+  checkDimensions(massMatrix,input);
+  ierr=MatMult(massMatrix,input,output);
+  
+  /*
+  for (int i=0;i<nEntries;i++)
+  {
+    ierr=VecGetValues(output,1,&i,&val_get);
+    LOG(DEBUG)<<"val_get: output "<< val_get;   
+  }
+  */
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+preComputeSystemMatrix1()
+{
+  const int D = BasisOnMeshType::dim();
+  LOG(TRACE)<<"preComputeSystemMatrix" << D << "D";  
+  
+  //modifying the stiffness matrix to use it as the system matrix
+  this->data_.systemMatrix() = this->data_.stiffnessMatrix();
+  Mat &massMatrix = this->data_.massMatrix();
+  
+  PetscErrorCode ierr;
+
+  //Scale is 1.0 because the mass matrix is scaled with the time step by the initialization
+  PetscScalar scale=1.0;
+  ierr=MatAXPY(this->data_.systemMatrix(),scale,massMatrix,SAME_NONZERO_PATTERN);
+  
+}
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
@@ -48,16 +109,7 @@ setInvLumMassMatrix()
   //In case of linear and bilinear basis functions
   ierr=MatGetRowSum(massMatrix,rowSum);
   //for the inverse matrix
-  ierr=VecReciprocal(rowSum); 
- 
-  /*
-  PetscInt rowSum_size;
-  ierr=VecGetSize(rowSum,&rowSum_size);
-  LOG(INFO)<<"rowSum_size"<< rowSum_size;
-  
-  PetscScalar *rowSum_value[rowSum_size];
-  ierr=VecGetArray(rowSum,rowSum_value);
-  */
+  ierr=VecReciprocal(rowSum);   
 
   LOG(TRACE)<<"StartAssembleInvLumMassMatrix" << D << "D";
 
@@ -87,15 +139,12 @@ setInvLumMassMatrix()
   
   double val_get;
   for (int i=0; i<n_row; i++)
-  {
-    //ierr=MatSetValue(invLumMassMatrix, i,i, *rowSum_value[i], INSERT_VALUES);
-    
+  {    
     ierr=VecGetValues(rowSum,1,&i,&val_get);
-    //LOG(INFO)<<"val_get "<< val_get;   
+    //LOG(DEBUG)<<"val_get "<< val_get;   
     ierr=MatSetValue(invLumMassMatrix, i,i, val_get, INSERT_VALUES);
   }
-  
-    
+      
   //For finite element basis greater than 2, to be implemented here
     
   ierr = MatAssemblyBegin(invLumMassMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
@@ -112,45 +161,48 @@ invLumMassMatrixSet(){
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-preComputeSystemMatrix(double timeStepWidth)
+preComputeSystemMatrix(Mat &systemMatrix)
 {
   const int D = BasisOnMeshType::dim();
   LOG(TRACE)<<"preComputeSystemMatrix" << D << "D";
   
   if(!this->invLumMassMatrixSet())
     this->setInvLumMassMatrix();
- 
-  Mat &systemMatrix = this->data_.systemMatrix();
+  
   Mat &invLumMassMatrix = this->data_.invLumMassMatrix();
   Mat &stiffnessMatrix = this->data_.stiffnessMatrix();
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  
   PetscErrorCode ierr;
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  
+       
+  //The result matrix is created by the routine itself
   ierr=MatMatMult(invLumMassMatrix, stiffnessMatrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&systemMatrix);
-  PetscScalar scale=-timeStepWidth;
-  ierr=MatScale(systemMatrix,scale);
+ 
   
-  // set diagonal values
-  int cntr = 1;
-  // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElements(); elementNo++)
-  {
-    auto dof = mesh->getElementDofNos(elementNo);
-    
-    for (int i=0; i<nDofsPerElement; i++)
-    {
-      VLOG(3) << " systemMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
-      //LOG(DEBUG) << " systemMatrix entry ( " << dof[i] << "," << dof[i] << ") (no. " << cntr++ << ")";
-      ierr = MatSetValue(systemMatrix, dof[i], dof[i], 1.0, ADD_VALUES); CHKERRV(ierr);      
-    }
-  }
+  PetscInt n_row, n_col;
+  ierr=MatGetSize(stiffnessMatrix,&n_row,&n_col);
+  LOG(DEBUG) << "n_row: " << n_row;
+   
+ /*
+  //Scale is 1.0 because the mass matrix is scaled with the time step by the initialization
+  PetscScalar scale=1.0;
+  ierr=MatScale(systemMatrix,scale);
+*/  
+  
+  for (int i=0; i<n_row; i++)
+    ierr = MatSetValue(systemMatrix, i, i, 1.0, ADD_VALUES); CHKERRV(ierr);
+  
+  /*
+   P ets*cScalar v=0.0;  
+   for (PetscInt i=0;i<n_row;i++)
+     for(PetscInt j=0;j<n_col;j++)
+     {          
+        ierr=MatGetValues(systemMatrix,1,&i,1,&j,&v);
+        LOG(INFO)<<"val_get: systemMatrix "<< v;  
+     }    
+  */
   
   ierr = MatAssemblyBegin(systemMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(systemMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);  
-  
+  ierr = MatAssemblyEnd(systemMatrix, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);    
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
@@ -161,8 +213,23 @@ solveLinearSystem(Vec &input, Vec &output)
   
   Mat &systemMatrix=this->data_.systemMatrix();
   
+  LOG(DEBUG) << "solveLinearSystem";
+  
   PetscErrorCode ierr;
   
+  /*
+  PetscInt n_row, n_col;
+  ierr=MatGetSize(systemMatrix,&n_row,&n_col);
+  PetscScalar v=0.0; 
+  for (PetscInt i=0;i<n_row;i++)
+    for(PetscInt j=0;j<n_col;j++)
+    {
+      ierr=MatGetValues(systemMatrix,1,&i,1,&j,&v);
+      LOG(DEBUG)<<"val_get: systemMatrix in solveLinearSystem: "<< v; 
+    }
+    */
+   
+   
   // create linear solver context
   std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
   std::shared_ptr<KSP> ksp = linearSolver->ksp();
@@ -179,7 +246,7 @@ solveLinearSystem(Vec &input, Vec &output)
   ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
   ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
 
-  //LOG(INFO) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
+  LOG(INFO) << "Linear system solved in " << numberOfIterations << " iterations, residual norm " << residualNorm;
   VLOG(1) << "Solution of the linear system recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm;
   
 }

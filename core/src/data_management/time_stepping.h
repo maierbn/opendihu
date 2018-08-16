@@ -36,11 +36,11 @@ public:
 
   //! return a reference to the increment vector, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariableType &increment();
-
-  // virtual FieldVariableType &intermediateIncrement() = 0;
   
-  //! if the matrix is already initialized
-  //bool invLumMassMatrixInitialized();
+  //! return a reference to the rhs vector, used for the variant 1 of the implicit Euler scheme
+  //FieldVariableType &rhs();
+
+  // virtual FieldVariableType &intermediateIncrement() = 0; 
 
   //! print all stored data to stdout
   virtual void print();
@@ -67,6 +67,7 @@ protected:
 
   std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
+  //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
   
 private:

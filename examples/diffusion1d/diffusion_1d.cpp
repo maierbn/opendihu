@@ -10,16 +10,43 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  TimeSteppingScheme::ExplicitEuler<
+  PyObject *topLevelSettings = settings.getPythonConfig();
+  
+  if(PythonUtility::hasKey(topLevelSettings, "ExplicitEuler"))
+  {
+    LOG(INFO) << "ExplicitEuler";
+    
+    TimeSteppingScheme::ExplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<1>,
       BasisFunction::LagrangeOfOrder<>,
       Quadrature::None,
       Equation::Dynamic::IsotropicDiffusion
     >
-  > problem(settings);
+    > problem(settings);
   
-  problem.run();
+    problem.run();
   
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
+  } 
+  else if(PythonUtility::hasKey(topLevelSettings, "ImplicitEuler"))
+  {
+    LOG(INFO) << "ImplicitEuler";
+    
+    TimeSteppingScheme::ImplicitEuler<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion
+    >
+    > problem(settings);
+    
+    problem.run();
+    
+    return EXIT_SUCCESS;
+  }
+  else
+    LOG(ERROR) << "No valid time integration scheme in settings.py";
+   
 }

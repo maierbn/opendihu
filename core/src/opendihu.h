@@ -1,4 +1,5 @@
 // This file includes all header files that may be needed from an example
+#include "utility/python_utility.h"
 
 #include "control/dihu_context.h"
 #include "control/computation.h"
@@ -19,11 +20,14 @@
 
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 
+#include "discretizable_in_time/discretizable_in_time.h"
 
 #include "time_stepping_scheme/crank_nicholson.h"
 #include "time_stepping_scheme/explicit_euler.h"
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
+
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
 
 #include "model_order_reduction/pod.h"
 #include "postprocessing/streamline_tracer.h"

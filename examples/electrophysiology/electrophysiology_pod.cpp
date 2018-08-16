@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         ModelOrderReduction::LinearPart
       >
     >,
-    TimeSteppingScheme::ExplicitEuler<
+    TimeSteppingScheme::ImplicitEuler<
       ModelOrderReduction::POD<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredRegularFixedOfDimension<1>,

@@ -27,17 +27,31 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
   LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
-
+    
+    int nEntries;
+    VecGetSize(this->data_->solution().values(), &nEntries);
+    
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    
+    /*
+    PetscErrorCode ierr;
+    double val_get;
+      
+    for (int i=0;i<nEntries;i++)
+    {
+      ierr=VecGetValues(this->data_->solution().values(),1,&i,&val_get);
+      LOG(INFO)<<"val_get: solution "<< val_get;   
+    }
+    */
 
     // advance computed value
     // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
+    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       this->data_->solution().values(), this->data_->increment().values(), timeStepNo, currentTime);
 
     // integrate, y += dt * delta_u

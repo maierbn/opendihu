@@ -15,8 +15,9 @@ ImplicitEuler<DiscretizableInTime>::ImplicitEuler(DihuContext context) :
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context); // create data object for implicit euler
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ImplicitEuler");
-  this->outputWriterManager_.initialize(this->specificSettings_); 
+  this->outputWriterManager_.initialize(this->specificSettings_);
 }
+
 
 template<typename DiscretizableInTime>
 void ImplicitEuler<DiscretizableInTime>::initialize()
@@ -27,11 +28,12 @@ void ImplicitEuler<DiscretizableInTime>::initialize()
   LOG(TRACE)<<"ImplicitEuler::initialize";
   
   TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
-  this->discretizableInTime_.preComputeSystemMatrix(this->timeStepWidth_);
+  //In case required to initialize objects related to the implicit time stepping
   
   initialized_ = true;
   
 }
+
 
 template<typename DiscretizableInTime>
 void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
@@ -42,16 +44,58 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
     <<" n steps: "<<this->numberTimeSteps_;
+  
+  int nEntries;
+  VecGetSize(this->data_->solution().values(), &nEntries);
 
   // loop over time steps
   double currentTime = this->startTime_;
+  
+  
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
      LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+    
+    /*
+    PetscErrorCode ierr;
+    double val_get;
+    for (int i=0;i<nEntries;i++)
+    {
+      ierr=VecGetValues(this->data_->solution().values(),1,&i,&val_get);
+      LOG(INFO)<<"val_get solution before solve " << i <<": " << val_get;   
+    }
+    */
 
+    //prepare rhs for the variant 1 of the implicit Euler
+    //this->discretizableInTime_.evaluateTimesteppingRightHandSideImplicit(this->data_->solution().values(),this->data_->rhs().values(),timeStepNo, currentTime);
+    
+    /*
+    ierr=VecCopy(this->data_->solution().values(), this->data_->rhs().values());
+    // initialize with 0
+    ierr = VecSet(this->data_->solution().values(), 0.0); CHKERRV(ierr);
+    */
+    
+    /*
+    for (int i=0;i<nEntries;i++)
+    {
+      ierr=VecGetValues(this->data_->rhs().values(),1,&i,&val_get);
+      LOG(INFO)<<"val_get:rhs "<< val_get;   
+    } 
+    */
+    
     // computed value
     this->discretizableInTime_.solveLinearSystem(this->data_->solution().values(), this->data_->solution().values());
+    //Variant 1 of the implicit Euler
+    //this->discretizableInTime_.solveLinearSystem(this->data_->rhs().values(), this->data_->solution().values());
+    
+    /*
+    for (int i=0;i<nEntries;i++)
+    {
+      ierr=VecGetValues(this->data_->solution().values(),1,&i,&val_get);
+      LOG(INFO)<<"val_get solution after solve " << i <<": " << val_get;   
+    }
+    */
 
     // advance simulation time
     timeStepNo++;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "time_stepping_scheme/discretizable_in_time.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 
 namespace ModelOrderReduction
 {

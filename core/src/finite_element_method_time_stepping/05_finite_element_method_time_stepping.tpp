@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/05_time_stepping.h"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
 
 #include <Python.h>
 #include <iostream>
@@ -32,12 +32,26 @@ FiniteElementMethodTimeStepping(DihuContext context)
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-initialize()
+initialize(){
+}
+
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+initialize(double timeStepWidth)
 {
+  PetscErrorCode ierr;
+  PetscScalar scale=-1.0/timeStepWidth;
+  
   this->data_.initialize();
   this->setStiffnessMatrix();
-  this->setMassMatrix();
   this->data_.finalAssembly();
+  this->applyBoundaryConditions();
+  
+  this->setMassMatrix();
+  ierr=MatScale(this->data_.massMatrix(),scale);
+  
+  //this->preComputeSystemMatrix1();
+  this->preComputeSystemMatrix(this->data_.systemMatrix());
 
   if (this->outputWriterManager_.hasOutputWriters())
   {
@@ -46,6 +60,36 @@ initialize()
   }
 }
 
+/*
+template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+bool FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+setInitialValues(Vec& initialValues)
+{
+  LOG(TRACE)<<"FiniteElementMethodTimeStepping::setInitialValues()";
+  
+  dof_no_t nUnknowns = this->data_.nUnknowns();
+  Vec &rightHandSide = this->data_.rightHandSide().values();
+  
+  std::vector<double> values;
+  PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nUnknowns, values);
+  
+  #ifndef NDEBUG
+  LOG(DEBUG) << "Read in rhs values from config:";
+  std::stringstream s;
+  for(auto value : values)
+  {
+    s << " " << value;
+  }
+  LOG(DEBUG) << s.str();
+  #endif
+  
+  PetscUtility::setVector(values, rightHandSide);
+  
+  return false;
+  
+}
+*/
+  
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 constexpr int FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 nComponents()
@@ -53,19 +97,18 @@ nComponents()
   return 1;   // this may be different for structural mechanics
 }
 
-
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-checkDimensions(Mat &stiffnessMatrix, Vec &input)
+checkDimensions(Mat &matrix, Vec &input)
 {
 #ifndef NDEBUG
   int nRows, nColumns;
-  MatGetSize(stiffnessMatrix, &nRows, &nColumns);
+  MatGetSize(matrix, &nRows, &nColumns);
   int nEntries;
   VecGetSize(input, &nEntries);
   if (nColumns != nEntries)
   {
-    LOG(ERROR) << "Stiffness matrix dimension " << nRows << "x" << nColumns << " does not match input vector (" << nEntries << ")!";
+    LOG(ERROR) << "matrix dimension " << nRows << "x" << nColumns << " does not match input vector (" << nEntries << ")!";
   }
   assert(nColumns == nEntries);
 #endif

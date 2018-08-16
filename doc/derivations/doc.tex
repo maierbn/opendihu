@@ -957,18 +957,20 @@ We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matri
 \begin{equation*}
   \begin{array}{lll}
     \bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
-    \bfu^{(t+1)} &= \bfu^{(t)} + dt \,\bfM^{-1}\bfK\bfu^{(t)}%\\[4mm]
-                % &= \Big(\bfI - dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}
+    \bfu^{(t+1)} &= \bfu^{(t)} + dt \,\bfM^{-1}\bfK\bfu^{(t)}\\[4mm]
+                 &= \Big(\bfI + dt \,\bfM^{-1}\bfK\bf\Big)\bfu^{(t)}
                 .
   \end{array}
 \end{equation*}
-With an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
+For an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
     \bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
-     (I - dt\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}
+     (I - dt\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}\\[1em] \textrm{or}\\[1em]
+     \displaystyle(\bfK-\frac{\bfM}{dt})\bfu^{(t+1)}&=\,\displaystyle -\frac{\bfM}{dt}\bfu^{(t)}
   \end{array}
 \end{equation*}
+The second form may be beneficial in case of variable time step.
 \subsection{Lumped Mass Matrix}
 For linear or bilinear basis functions
 \begin{equation*}

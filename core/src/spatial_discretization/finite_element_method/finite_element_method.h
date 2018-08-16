@@ -7,7 +7,8 @@
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
-#include "spatial_discretization/finite_element_method/05_time_stepping.h"
+//#include "discretizable_in_time/discretizable_in_time.h"
+#include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 #include "basis_function/mixed.h"
@@ -28,7 +29,7 @@ public:
 };
 
 /** partial specialisation for Laplace: has only stiffnessMatrix
- * use inheritage hierarchy until file 02_stiffness_matrix.h
+ * use inheritage hierarchy until file 02_finite_element_matrix.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
@@ -76,7 +77,7 @@ public:
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
- * use inheritage hierarchy until file 05_timestepping_explicit.h
+ * use inheritage hierarchy until file 05_timestepping.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :

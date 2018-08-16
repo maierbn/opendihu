@@ -56,6 +56,9 @@ public:
   //! create the inverse of the lumped mass matrix
   void initializeInvLumMassMatrix();
   
+  //! initializes the system matrix in case required
+  //void createPetscObjects_systemMatrix();
+  
   //! return a reference to the discretization matrix  
   Mat &massMatrix(); 
   
@@ -79,7 +82,6 @@ private:
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
-  void createPetscObjects_systemMatrix();
 
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);

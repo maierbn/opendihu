@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <vector>
 
-#include "time_stepping_scheme/discretizable_in_time.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 #include "control/runnable.h"
 #include "data_management/streamline_tracer.h"
 

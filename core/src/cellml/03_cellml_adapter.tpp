@@ -47,10 +47,16 @@ initialize()
   solutionVectorMapping_.setScalingFactor(prefactor);
 }
 
+template<int nStates>
+void CellmlAdapter<nStates>::
+initialize(double timeStepWidth)
+{
+}
+
 
 template<int nStates>
 void CellmlAdapter<nStates>::
-evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, double currentTime)
+evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
@@ -108,6 +114,12 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   // give control of data back to Petsc
   VecRestoreArray(input, &states);
   VecRestoreArray(output, &rates);
+}
+
+template<int nStates>
+void CellmlAdapter<nStates>::
+evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
+{
 }
 
 //! return false because the object is independent of mesh type

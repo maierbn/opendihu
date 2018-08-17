@@ -9,35 +9,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisO
                     int diagonalNonZeros, int offdiagonalNonZeros) :
   meshPartition_(meshPartition), nComponents_(nComponents)
 {
-  VLOG(1) << "create PartitionedPetscMat from meshPartition " << meshPartition << " with " << nComponents << " components";
-  
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
-  
-  PetscErrorCode ierr;
-  
-  // create PETSc DMDA object that is a topology interface handling parallel data layout on structured grids
-  // This also contains the number of components for each dof. Therefore we can't simply use the DM object of meshPartition, but have to create a new DM object here.
-  if (MeshType::dim() == 1)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate1d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, meshPartition->globalSize(0), nComponents_, ghostLayerWidth, 
-                        NULL, &this->dm_); CHKERRV(ierr);
-  }
-  else if (MeshType::dim() == 2)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate2d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                        meshPartition->globalSize(0), meshPartition->globalSize(1), PETSC_DECIDE, PETSC_DECIDE,
-                        nComponents_, ghostLayerWidth, NULL, NULL, &this->dm_); CHKERRV(ierr);
-  }
-  else if (MeshType::dim() == 3)
-  {
-    int ghostLayerWidth = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
-    ierr = DMDACreate3d(meshPartition_->mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                        meshPartition->globalSize(0), meshPartition->globalSize(1), meshPartition->globalSize(2), 
-                        PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
-                        nComponents_, ghostLayerWidth, NULL, NULL, NULL, &this->dm_); CHKERRV(ierr);
-  }
+  VLOG(1) << "create PartitionedPetscMat from meshPartition " << meshPartition << " with " << nComponents_ << " components";
   
   createMatrix(diagonalNonZeros, offdiagonalNonZeros);
 }
@@ -62,8 +34,8 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   PetscErrorCode ierr;
   
   dof_no_t nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
-  dof_no_t nRowsLocal = this->meshPartition_->nNodesLocalWithoutGhosts() * nDofsPerNode;
-  dof_no_t nRowsGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
+  dof_no_t nRowsLocal = this->meshPartition_->nNodesLocalWithoutGhosts() * nDofsPerNode * nComponents_;
+  dof_no_t nRowsGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode * nComponents_;
   
   const bool serial = true;   /// use the serial PETSc API
   
@@ -90,14 +62,14 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
     ierr = MatMPIAIJSetPreallocation(matrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
     ierr = MatSeqAIJSetPreallocation(matrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
     
-    VLOG(1) << "set local to global mapping for matrix: " << (ISLocalToGlobalMapping)meshPartition_->localToGlobalMapping();
+    VLOG(1) << "set local to global mapping for matrix: " << (ISLocalToGlobalMapping)meshPartition_->localToGlobalMappingDofs();
     
-    ierr = MatSetLocalToGlobalMapping(matrix_, meshPartition_->localToGlobalMapping(), meshPartition_->localToGlobalMapping()); CHKERRV(ierr);
+    ierr = MatSetLocalToGlobalMapping(matrix_, meshPartition_->localToGlobalMappingDofs(), meshPartition_->localToGlobalMappingDofs()); CHKERRV(ierr);
   }
   else 
   {
     // parallel API
-    ierr = DMSetMatrixPreallocateOnly(this->dm_, PETSC_TRUE); CHKERRV(ierr);  // do not fill zero entries when DMCreateMatrix is called
-    ierr = DMCreateMatrix(dm_, &matrix_); CHKERRV(ierr);
+    //ierr = DMSetMatrixPreallocateOnly(this->dm_, PETSC_TRUE); CHKERRV(ierr);  // do not fill zero entries when DMCreateMatrix is called
+    //ierr = DMCreateMatrix(dm_, &matrix_); CHKERRV(ierr);
   }
 }

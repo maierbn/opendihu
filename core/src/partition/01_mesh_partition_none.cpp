@@ -28,7 +28,7 @@ MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset) :
   beginGlobal_ = rankNo * sizePerRank + std::min(residual, (global_no_t)rankNo);
   
   // initialize local dofs list 
-  this->initializeLocalNodeNos(localSize_);
+  this->initializeLocalDofsVector(localSize_);
 }
 
 //! get the local to global mapping for the current partition
@@ -36,10 +36,10 @@ ISLocalToGlobalMapping MeshPartition<Mesh::None>::
 localToGlobalMapping()
 {
   PetscErrorCode ierr;
-  std::vector<PetscInt> globalDofNos(localSize());  // the global dof nos for the local dofs
+  std::vector<PetscInt> globalDofNos(nElementsLocal());  // the global dof nos for the local dofs
   std::iota(globalDofNos.begin(), globalDofNos.end(), beginGlobal_);
   ISLocalToGlobalMapping localToGlobalMapping;
-  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, localSize(), 
+  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, nElementsLocal(), 
                                       globalDofNos.data(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(mpiCommunicator(), ierr);
 
   return localToGlobalMapping;
@@ -47,20 +47,20 @@ localToGlobalMapping()
  
 //! number of entries in the current partition
 element_no_t MeshPartition<Mesh::None>::
-localSize()
+nElementsLocal()
 {
   return localSize_;
 }
 
 //! number of entries in total
 global_no_t MeshPartition<Mesh::None>::
-globalSize()
+nElementsGlobal()
 {
   return globalSize_;
 }
     
 void MeshPartition<Mesh::None>::
-extractLocalDofs(std::vector<double> &vector)
+extractLocalDofsWithoutGhosts(std::vector<double> &vector)
 {
   extractLocalNodes<double>(vector);
 }

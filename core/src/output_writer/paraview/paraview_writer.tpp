@@ -255,7 +255,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<UnstructuredGrid> " << std::endl
     << std::string(2, '\t') << "<Piece "
-    << "NumberOfPoints=\"" << mesh->nNodesGlobal() << "\" NumberOfCells=\"" << mesh->nLocalElements() << "\">" << std::endl;
+    << "NumberOfPoints=\"" << mesh->nNodesGlobal() << "\" NumberOfCells=\"" << mesh->nElementsLocal() << "\">" << std::endl;
     
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
@@ -291,10 +291,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   // get the elements point lists
   std::vector<node_no_t> values;
-  values.reserve(mesh->nLocalElements() * BasisOnMesh::averageNNodesPerElement());
+  values.reserve(mesh->nElementsLocal() * BasisOnMesh::averageNNodesPerElement());
   
   // loop over elements and collect point numbers of the element
-  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofLocalNos(elementNo);
     for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
@@ -325,8 +325,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   // offsets 
   values.clear();
-  values.resize(mesh->nLocalElements());
-  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+  values.resize(mesh->nElementsLocal());
+  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     values[elementNo] = (elementNo + 1) * BasisOnMesh::nNodesPerElement();
   }
@@ -360,7 +360,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     cellType = 11; // VTK_VOXEL
     break;
   }
-  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     file << cellType << " ";
   }

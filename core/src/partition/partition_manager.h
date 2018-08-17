@@ -25,13 +25,17 @@ public:
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh, from global sizes
   //! use globalSize, fill localSize and nRanks
   template<typename BasisOnMesh>
-  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim()> globalSize, std::array<element_no_t,BasisOnMesh::dim()> &localSize, std::array<int,BasisOnMesh::dim()> &nRanks);
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim()> nElementsGlobal,
+                                                                                 std::array<element_no_t,BasisOnMesh::dim()> &nElementsLocal, 
+                                                                                 std::array<int,BasisOnMesh::dim()> &nRanks);
 
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh, from local sizes
   //! use localSize and nRanks, fill globalSize
   //! @param nRanks The number of ranks in the coordinate directions.
   template<typename BasisOnMesh>
-  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &globalSize, const std::array<element_no_t,BasisOnMesh::dim()> localSize, const std::array<int,BasisOnMesh::dim()> nRanks);
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &nElementsGlobal,
+                                                                                const std::array<element_no_t,BasisOnMesh::dim()> nElementsLocal,
+                                                                                const std::array<int,BasisOnMesh::dim()> nRanks);
 
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRankSubset);

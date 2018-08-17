@@ -21,14 +21,7 @@ public:
   //! inherited constructor
   using FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
 
-  //! set the meshWidth (the distance between nodes)
-  void setMeshWidth(double meshWidth);
-
-  //! get the mesh width (the distance between nodes)
-  double meshWidth() const;
-
 protected:
-  double meshWidth_;   ///< the uniform mesh width, this is the distance between nodes (not element length)
 };
 
 };  // namespace

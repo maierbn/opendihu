@@ -80,9 +80,7 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
-  dof_no_t n = this->mesh_->nLocalDofs();
-
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";
+  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects";
 
   // get the partitioning from the mesh
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition = this->mesh_->meshPartition();
@@ -102,7 +100,8 @@ createPetscObjects()
   LOG(DEBUG) << "d="<<this->mesh_->dimension()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
 
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, (int)n, diagonalNonZeros, offdiagonalNonZeros);
+  int nComponents = 1;
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>

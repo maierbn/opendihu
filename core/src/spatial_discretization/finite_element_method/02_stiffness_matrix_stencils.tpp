@@ -37,7 +37,7 @@ setStiffnessMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
+  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
 

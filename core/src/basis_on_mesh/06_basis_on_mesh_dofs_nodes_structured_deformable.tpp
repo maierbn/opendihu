@@ -52,19 +52,25 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 initialize()
 { 
-  // initialize the geometry field without values
-  initializeGeometryField();
+  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
+  BasisOnMeshPartition<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
+ 
+  // pass a shared "this" pointer to the geometryField
+  if (this->noGeometryField_)
+    return;
 
-  // call initialize from parent class
-  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
-  BasisOnMeshGeometry<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::StructuredDeformableOfDimension<D>>::
-    initialize();
+  // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
+  std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+    = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  assert(thisMesh != nullptr);
   
-  if (!this->noGeometryField_)
-  {
-    // set geometry field
-    this->setGeometryFieldValues();
-  }
+  // create empty field variable for geometry field
+  std::vector<std::string> componentNames{"x", "y", "z"};
+  this->geometryField_ = std::make_unique<GeometryFieldType>(thisMesh, "geometry", componentNames);
+  
+  // assign values of geometry field
+  this->setGeometryFieldValues();
 }
 
 // read in config nodes
@@ -73,7 +79,7 @@ void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunction
 parseNodePositionsFromSettings(PyObject *specificSettings)
 {
   // compute number of nodes
-  node_no_t nNodesLocal = this->nNodesLocalWithGhosts();
+  node_no_t nNodesLocal = this->nNodesLocalWithoutGhosts();
   global_no_t nNodesGlobal = this->nNodesGlobal();
   global_no_t nNodes;
 
@@ -229,9 +235,9 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     std::array<double, 3> position{0.,0.,0.};
 
     // compute absolute node positions
-    global_no_t nNodesInXDirection = this->nNodesLocal(0);
-    global_no_t nNodesInYDirection = this->nNodesLocal(1);
-    global_no_t nNodesInZDirection = this->nNodesLocal(2);
+    global_no_t nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
+    global_no_t nNodesInYDirection = this->nNodesLocalWithoutGhosts(1);
+    global_no_t nNodesInZDirection = this->nNodesLocalWithoutGhosts(2);
     
     double offsetX = this->meshPartition_->beginNodeGlobal(0);
     double offsetY = this->meshPartition_->beginNodeGlobal(1);
@@ -285,32 +291,12 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
 // create geometry field from config nodes
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-initializeGeometryField()
-{
-  LOG(DEBUG) << " BasisOnMesh StructuredDeformable, initializeGeometryField, size of nodePositions vector: " << localNodePositions_.size();
-
-  // create empty field variable for geometry field
-  this->geometryField_ = std::make_unique<GeometryFieldType>();
-}
-
-// create geometry field from config nodes
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 setGeometryFieldValues()
 {
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
   // compute number of (local) dofs
-  dof_no_t nLocalDofs = this->nLocalDofs();
-  const dof_no_t nEntries = nLocalDofs * 3;   // 3 components: x,y,z
-  const bool isGeometryField = true;
-  
-  // initialize geometry field, this creates the internal DistributedPetscVec
-  std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_->initialize("geometry", componentNames, 
-                                   nEntries, isGeometryField);
-
-  // set values of geometry field
+  dof_no_t nLocalDofs = this->nDofsLocalWithoutGhosts();
   
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
   std::vector<Vec3> geometryValues(nLocalDofs, Vec3{0.0});
@@ -318,7 +304,7 @@ setGeometryFieldValues()
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;
   // loop over nodes
-  for (node_no_t nodeNo = 0; nodeNo < this->nNodesLocal(); nodeNo++)
+  for (node_no_t nodeNo = 0; nodeNo < this->nNodesLocalWithoutGhosts(); nodeNo++)
   {
     // assign node position as first dof of the node
     geometryValues[geometryValuesIndex] = Vec3
@@ -340,7 +326,7 @@ setGeometryFieldValues()
   LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
 
   // set values for node positions as geometry field 
-  this->geometryField_->setValues(geometryValues);
+  this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishVectorManipulation();
 }
 

@@ -14,7 +14,7 @@ MeshPartitionBase::~MeshPartitionBase()
 {
 }
 
-void MeshPartitionBase::initializeLocalNodeNos(node_no_t nLocalDofsWithGhosts)
+void MeshPartitionBase::initializeLocalDofsVector(node_no_t nLocalDofsWithGhosts)
 {
   // set the localDofNos_ vector to {0,1,2,...,nLocalDofsWithGhosts-1}
   localDofNos_.resize(nLocalDofsWithGhosts);

@@ -91,7 +91,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
   
   this->component_[componentNo].getElementValues(elementNo, values);
@@ -102,7 +102,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
@@ -225,9 +225,17 @@ setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode 
 //! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  this->setValues(this->values_->localNodeNos(), values, petscInsertMode); 
+  this->setValues(this->values_->localDofNos(), values, petscInsertMode); 
+}
+
+//! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+setValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  this->setValues(this->values_->localDofNosWithoutGhosts(), values, petscInsertMode); 
 }
 
 //! set value to zero for all dofs

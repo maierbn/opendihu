@@ -2,14 +2,14 @@
 
 template<typename BasisOnMeshType>
 PartitionedPetscVecBase<BasisOnMeshType>::
-PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition) :
-  meshPartition_(meshPartition)
+PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name) :
+  name_(name), meshPartition_(meshPartition)
 {
 }
 
 template<typename BasisOnMeshType>
 std::vector<PetscInt> &PartitionedPetscVecBase<BasisOnMeshType>::
-localNodeNos()
+localDofNos()
 {
-  return this->meshPartition_->localNodeNos();
+  return this->meshPartition_->localDofNos();
 }

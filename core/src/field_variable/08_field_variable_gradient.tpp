@@ -20,10 +20,10 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
   std::vector<int> nSummands(nDofs,0.0);   ///< the number of elements that are adjacent to the node
 
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < this->mesh_->nLocalElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < this->mesh_->nElementsLocal(); elementNo++)
   {
     // get global dof nos of this element
-    std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
 
     // compute gradient at every dof, as continuous to current element (gradients have discontinuities between elements at dofs)
     std::array<double,nDofsPerElement> solutionValues;
@@ -60,7 +60,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
 
       dof_no_t dofNo = elementDofs[dofIndex];
 
-      VLOG(2) << "   global dof " << dofNo << ", add value " << gradPhiWorldSpace;
+      VLOG(2) << "   local dof " << dofNo << ", add value " << gradPhiWorldSpace;
 
       // add value to gradient field variable
       gradientField.setValue(dofNo, gradPhiWorldSpace, ADD_VALUES);

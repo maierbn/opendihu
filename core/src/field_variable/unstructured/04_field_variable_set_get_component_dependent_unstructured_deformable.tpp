@@ -34,7 +34,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const std::vector<dof_no_t> &elementDofs = this->elementToDofMapping_->getElementDofs(elementNo);

@@ -33,7 +33,7 @@ setRightHandSide()
     PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nGlobalUnknowns, localValues);
 
     std::shared_ptr<Mesh::Mesh> mesh = this->data_.mesh();
-    mesh->meshPartitionBase()->extractLocalDofs(localValues);
+    mesh->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {

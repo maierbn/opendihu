@@ -14,8 +14,7 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
   
-  this->createDMElements();
-  this->createDMNodes();
+  this->createDmElements();
   
   this->initializeLocalDofsVector(nNodesLocalWithGhosts() * BasisOnMesh::BasisOnMeshBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode());
   
@@ -94,7 +93,7 @@ createDmElements()
   if (MeshType::dim() == 1)
   {
     // create 1d decomposition
-    ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, globalSize_[0], nDofsPerElement, ghostLayerWidth, 
+    ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, nElementsGlobal_[0], nDofsPerElement, ghostLayerWidth, 
                         NULL, dmElements_.get()); CHKERRV(ierr);
     
     // get global coordinates of local partition
@@ -116,7 +115,7 @@ createDmElements()
   {
     // create 2d decomposition
     ierr = DMDACreate2d(mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                        globalSize_[0], globalSize_[1], PETSC_DECIDE, PETSC_DECIDE,
+                        nElementsGlobal_[0], nElementsGlobal_[1], PETSC_DECIDE, PETSC_DECIDE,
                         nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
                         
     // get global coordinates of local partition
@@ -141,7 +140,7 @@ createDmElements()
   {
     // create 3d decomposition
     ierr = DMDACreate3d(mpiCommunicator(), DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DM_BOUNDARY_NONE, DMDA_STENCIL_BOX,
-                        globalSize_[0], globalSize_[1], globalSize_[2],
+                        nElementsGlobal_[0], nElementsGlobal_[1], nElementsGlobal_[2],
                         PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                         nDofsPerElement, ghostLayerWidth, NULL, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
                         
@@ -331,7 +330,7 @@ template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nDofsLocalWithGhosts()
 {
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   
   return nNodesLocalWithGhosts() * nDofsPerNode;
 }
@@ -340,7 +339,7 @@ template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nDofsLocalWithoutGhosts()
 {
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   
   return nNodesLocalWithoutGhosts() * nDofsPerNode;
 }
@@ -382,6 +381,16 @@ nNodesLocalWithGhosts(int coordinateDirection)
   return this->nElementsLocal_[coordinateDirection] * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
+//! number of nodes in the local partition
+template<typename MeshType,typename BasisFunctionType>
+node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+nElementsLocal(int coordinateDirection)
+{
+  assert(0 <= coordinateDirection);
+  assert(coordinateDirection < MeshType::dim());
+  
+  return this->nElementsLocal_[coordinateDirection] * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+}
 
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
@@ -428,15 +437,6 @@ nNodesGlobal(int coordinateDirection)
   assert(coordinateDirection < MeshType::dim());
   
   return nElementsGlobal_[coordinateDirection] * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1; 
-}
-  
-template<typename MeshType,typename BasisFunctionType>
-global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-globalSize(int coordinateDirection)
-{
-  assert(0 <= coordinateDirection);
-  assert(coordinateDirection < MeshType::dim());
-  return globalSize_[coordinateDirection];
 }
   
 //! get if there are nodes on both borders in the given coordinate direction
@@ -500,7 +500,7 @@ void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::is
 extractLocalDofsWithoutGhosts(std::vector<double> &vector)
 {
   dof_no_t nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
-  std::vector<double> result(nLocalDofsWithoutGhosts());
+  std::vector<double> result(nDofsLocalWithoutGhosts());
   global_no_t resultIndex = 0;
   
   if (MeshType::dim() == 1)
@@ -547,7 +547,21 @@ extractLocalDofsWithoutGhosts(std::vector<double> &vector)
   // store values
   vector.assign(result.begin(), result.end());
 }
+
+template<typename MeshType,typename BasisFunctionType>
+std::vector<PetscInt> &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+localDofNosWithoutGhosts()
+{
+  return nonGhostDofLocalNos_;
+}
  
+template<typename MeshType,typename BasisFunctionType>
+std::shared_ptr<DM> MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+dmElements()
+{
+  return dmElements_;
+}
+
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)

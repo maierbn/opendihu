@@ -41,7 +41,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
   std::shared_ptr<HighOrderBasisOnMeshType> meshU = this->data_.mixedMesh()->highOrderBasisOnMesh();
 
   const int D = LowOrderBasisOnMeshType::dim();  // = 2 or 3
-  const int nElements = meshP->nLocalElements();
+  const int nElements = meshP->nElementsLocal();
   const int nPressureDofsPerElement = LowOrderBasisOnMeshType::nDofsPerElement();
   const int nDisplacementsDofsPerElement = HighOrderBasisOnMeshType::nDofsPerElement();
   const int nDisplacementsUnknownsPerElement = nDisplacementsDofsPerElement * D;
@@ -396,7 +396,7 @@ computeIncompressibilityConstraint(Vec &result)
   std::shared_ptr<LowOrderBasisOnMeshType> mesh = this->data_.mixedMesh()->lowOrderBasisOnMesh();
 
   const int D = LowOrderBasisOnMeshType::dim();  // = 2 or 3
-  const int nElements = mesh->nLocalElements();
+  const int nElements = mesh->nElementsLocal();
   const int nPressureDofsPerElement = LowOrderBasisOnMeshType::nDofsPerElement();
   const int nDisplacementsDofsPerElement = HighOrderBasisOnMeshType::nDofsPerElement();
 
@@ -479,7 +479,7 @@ computeIncompressibilityConstraint(Vec &result)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nPressureDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nPressureDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows
@@ -489,7 +489,7 @@ computeIncompressibilityConstraint(Vec &result)
       double integratedValue = integratedValues[dofIndex];
 
       // compute index in result vector
-      dof_no_t resultVectorIndex = dofNo[dofIndex];
+      dof_no_t resultVectorIndex = dofLocalNos[dofIndex];
 
       // store value to result Vec
       resultData[pressureDofOffset + resultVectorIndex] += integratedValue;

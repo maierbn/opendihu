@@ -3,7 +3,24 @@
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
 PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name) :
-  PartitionedPetscVecBase<BasisOnMeshType>(meshPartition)
+  PartitionedPetscVecBase<BasisOnMeshType>(meshPartition, name)
+{
+  createVector();
+}
+
+//! constructor, copy from existing vector
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
+PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name) :
+  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition_, name)
+ 
+{
+  createVector();
+}
+
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+createVector()
 {
   PetscErrorCode ierr;
   
@@ -18,7 +35,7 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> m
   {
     // initialize PETSc vector object
     ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &values_[componentNo]); CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) values_[componentNo], name.c_str()); CHKERRV(ierr);
+    ierr = PetscObjectSetName((PetscObject) values_[componentNo], this->name_.c_str()); CHKERRV(ierr);
 
     // initialize size of vector
     ierr = VecSetSizes(values_[componentNo], nEntriesLocal, nEntriesGlobal); CHKERRV(ierr);

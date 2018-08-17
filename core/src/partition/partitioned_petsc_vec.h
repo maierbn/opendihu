@@ -31,6 +31,9 @@ public:
   //! constructor
   PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition, std::string name);
  
+  //! constructor, copy from existing vector
+  PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name);
+  
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
   
@@ -66,6 +69,9 @@ public:
 
 protected:
   
+  //! create the values vectors
+  void createVector();
+  
   std::array<Vec,nComponents> values_;  // the (serial) Petsc vector that contains all the data
 };
 
@@ -84,6 +90,9 @@ public:
  
   //! constructor, construct a petsc Vec with meshPartition that can hold the values for a field variable with nComponents components
   PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
+ 
+  //! constructor, copy from existing vector
+  PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name);
  
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
@@ -118,10 +127,13 @@ public:
   //! get the local Vector of a specified component
   Vec &values(int componentNo = 0);
   
+  //! get a vector of local dof nos (from meshPartition), without ghost dofs
+  std::vector<PetscInt> &localDofNosWithoutGhosts();
+  
 protected:
  
   //! create a distributed Petsc vector, according to partition
-  void createVector(std::string name);
+  void createVector();
   
   std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
   

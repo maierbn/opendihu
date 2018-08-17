@@ -37,6 +37,12 @@ nDofsLocalWithGhosts() const
   return this->nDofs_;
 }
 
+template<int D,typename BasisFunctionType>
+dof_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
+nDofsLocalWithoutGhosts() const
+{
+  return this->nDofs_;
+}
 
 template<int D,typename BasisFunctionType>
 global_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
@@ -72,25 +78,6 @@ getNodePositions(std::vector<double> &nodes) const
     nodes[index+0] = position[0];
     nodes[index+1] = position[1];
     nodes[index+2] = position[2];
-  }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
-initialize()
-{ 
-  // initialize the geometry field without values and determine the number of elements, this is implemented in 04_basis_on_mesh_data_unstructured.tpp
-  this->initializeGeometryField();
-
-  // call initialize from parent class
-  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
-  BasisOnMeshGeometry<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::UnstructuredDeformableOfDimension<D>>::
-    initialize();
-  
-  if (!this->noGeometryField_)
-  {
-    // set values in geometry field
-    this->setGeometryFieldValues();
   }
 }
 

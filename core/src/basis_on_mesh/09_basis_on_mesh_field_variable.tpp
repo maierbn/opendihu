@@ -52,9 +52,8 @@ createFieldVariable(std::string name)
     componentNames[i] = std::to_string(i);
   }
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> fieldVariable
-    = std::make_shared<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>>();
+    = std::make_shared<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>>(this->geometryField().mesh(), name, componentNames);
 
-  fieldVariable->initializeFromFieldVariable(this->geometryField(), name, componentNames);
   return fieldVariable;
 }
 
@@ -204,7 +203,7 @@ template<typename MeshType, typename BasisFunctionType>
 bool BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
 findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi)
 {
-  const element_no_t nElements = this->nLocalElements();
+  const element_no_t nElements = this->nElementsLocal();
  
   // set starting no to 0 if it was not given and is thus arbitrarily initialized
   if (elementNo < 0 || elementNo >= nElements)

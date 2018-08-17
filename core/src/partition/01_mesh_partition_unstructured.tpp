@@ -16,7 +16,7 @@ MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, std::shared
 //! get the local to global mapping for the current partition
 template<int D, typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-localToGlobalMapping()
+localToGlobalMappingDofs()
 {
   int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode();
   
@@ -72,7 +72,7 @@ extractLocalNodes(std::vector<T> &vector)
   
 template<int D, typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalDofs(std::vector<double> &vector)
+extractLocalDofsWithoutGhosts(std::vector<double> &vector)
 {
   
 }
@@ -81,7 +81,7 @@ template<int D, typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)
 {
-  stream << "MeshPartition<Unstructured>, size global: " << globalSize_ << ", local: " << localSize_;
+  stream << "MeshPartition<Unstructured>, nElementsGlobal: " << nElementsGlobal_ << ", nNodesGlobal: " << nNodesGlobal_;
 } 
 
 }  // namespace

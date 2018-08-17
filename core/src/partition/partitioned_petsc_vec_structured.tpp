@@ -4,17 +4,33 @@
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition)
+  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name)
 {
-  dm_ = meshPartition->dm();
+  dm_ = meshPartition->dmElements();
   
-  createVector(name);
+  createVector();
 }
 
+//! constructor, copy from existing vector
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
+  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition_, name)
+{
+  dm_ = rhs.dm_;
+  
+  PetscErrorCode ierr;
+  for (int i = 0; i < nComponents; i++)
+  {
+    ierr = VecCopy(rhs.vectorLocal_[i], vectorLocal_[i]); CHKERRV(ierr);
+    ierr = VecCopy(rhs.vectorGlobal_[i], vectorGlobal_[i]); CHKERRV(ierr);
+  }
+}
+  
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-createVector(std::string name)
+createVector()
 {
   PetscErrorCode ierr;
   
@@ -26,12 +42,12 @@ createVector(std::string name)
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    /*ierr = DMCreateGlobalVector(dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
-    ierr = DMCreateLocalVector(dm_, &vectorLocal_[componentNo]); CHKERRV(ierr);*/
+    /*ierr = DMCreateGlobalVector(*dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
+    ierr = DMCreateLocalVector(*dm_, &vectorLocal_[componentNo]); CHKERRV(ierr);*/
     
     // initialize PETSc vector object
     ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &vectorLocal_[componentNo]); CHKERRV(ierr);
-    ierr = PetscObjectSetName((PetscObject) vectorLocal_[componentNo], name.c_str()); CHKERRV(ierr);
+    ierr = PetscObjectSetName((PetscObject) vectorLocal_[componentNo], this->name_.c_str()); CHKERRV(ierr);
 
     // initialize size of vector
     ierr = VecSetSizes(vectorLocal_[componentNo], this->meshPartition_->nNodesLocalWithGhosts(), this->meshPartition_->nNodesGlobal()); CHKERRV(ierr);
@@ -52,13 +68,13 @@ startVectorManipulation()
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     ierr = VecZeroEntries(vectorLocal_[componentNo]); CHKERRV(ierr);
-    ierr = DMGlobalToLocalBegin(dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
+    ierr = DMGlobalToLocalBegin(*dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
   }
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = DMGlobalToLocalEnd(dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
+    ierr = DMGlobalToLocalEnd(*dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -72,13 +88,13 @@ finishVectorManipulation()
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     ierr = VecZeroEntries(vectorGlobal_[componentNo]); CHKERRV(ierr);
-    ierr = DMLocalToGlobalBegin(dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
+    ierr = DMLocalToGlobalBegin(*dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = DMLocalToGlobalEnd(dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
+    ierr = DMLocalToGlobalEnd(*dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -179,4 +195,13 @@ Vec &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nC
 values(int componentNo)
 {
   return vectorLocal_[componentNo];
+}
+
+  
+//! get a vector of local dof nos (from meshPartition), without ghost dofs
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+std::vector<PetscInt> &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+localDofNosWithoutGhosts()
+{
+  return this->meshPartition_->localDofNosWithoutGhosts();
 }

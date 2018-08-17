@@ -34,9 +34,9 @@ public:
   FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name);
 
   //! constructor with mesh, name and components
-  FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent);
+  FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
 
-  //! empty constructor
+  //! empty constructor, this is needed for parsing exfiles
   FieldVariableData();
 
   //! destructor
@@ -53,16 +53,20 @@ public:
                               std::shared_ptr<ElementToNodeMapping> elementToNodeMapping,
                               std::shared_ptr<NodeToDofMapping> nodeToDofMapping,
                               std::vector<std::string> componentNames);
+  
+  //! set the internal mesh
+  void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
 
+/*
   //! get the number of elements
-  element_no_t nLocalElements() const;
+  element_no_t nElementsLocal() const;
 
   //! get the number of nodes
   node_no_t nNodesLocalWithGhosts() const;
 
   //! get the number of dofs, i.e. the number of entries per component
   dof_no_t nDofsLocalWithGhosts() const;
-
+*/
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;
 
@@ -94,10 +98,10 @@ public:
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
   friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
-
+/*
   //! resize internal representation variable to number of elements
   void setNumberElements(element_no_t nElements);
-
+*/
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
 
@@ -135,9 +139,6 @@ public:
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
 
-  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
-  bool isGeometryField() const;
-
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
 
@@ -156,9 +157,7 @@ protected:
   void initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation);
 
   int exfileNo_;    ///< number of the fieldvariable in exelem file (index starts at 1)
-  std::size_t nEntries_;       ///< number of entries
   element_no_t nElements_;    ///< number of elements
-  bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
   std::array<Component<BasisOnMeshType,nComponents>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components

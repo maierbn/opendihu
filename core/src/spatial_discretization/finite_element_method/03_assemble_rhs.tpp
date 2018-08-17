@@ -54,7 +54,7 @@ transferRhsToWeakForm()
 
   // set entries in rhs vector
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
@@ -135,7 +135,7 @@ setMassMatrix()
 
     // initialize values to zero
     // loop over elements
-    for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+    for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
     {
       std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
@@ -157,7 +157,7 @@ setMassMatrix()
     
     // set entries in massMatrix
     // loop over elements
-    for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+    for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
     {
       // get indices of element-local dofs
       std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);

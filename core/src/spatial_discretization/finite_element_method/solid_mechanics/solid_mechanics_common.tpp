@@ -44,7 +44,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nLocalElements();
+  const int nElements = mesh->nElementsLocal();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -92,7 +92,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
     int cntr = 1;
     // loop over elements
-    for (element_no_t elementNo = 0; elementNo < mesh->nLocalElements(); elementNo++)
+    for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
     {
       std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
@@ -107,7 +107,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
               dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
               dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
 
-              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
+              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofLocalNos[aDof] << ","<<dofLocalNos[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
               ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
             }
           }
@@ -453,7 +453,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
             dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
             dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
 
-            //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNo[aDof] << ","<<dofNo[bDof]<<")";
+            //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofLocalNos[aDof] << ","<<dofLocalNos[bDof]<<")";
             //VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
 
             ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
@@ -502,7 +502,7 @@ computeExternalVirtualWork(Vec &resultVec)
   const int D = BasisOnMesh::dim();  // = 2 or 3
   //const int nDofs = mesh->nLocalDofs();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  //const int nElements = mesh->nLocalElements();
+  //const int nElements = mesh->nElementsLocal();
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   typedef Quadrature::TensorProduct<D-1,QuadratureType> QuadratureSurface;
@@ -541,9 +541,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nLocalElements())
+    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
       continue;
     }
 
@@ -573,7 +573,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -589,7 +589,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -606,9 +606,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nLocalElements())
+    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
       continue;
     }
 
@@ -648,7 +648,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -664,7 +664,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the D displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -684,9 +684,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nLocalElements())
+    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
       continue;
     }
 
@@ -740,7 +740,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -758,7 +758,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         //LOG(DEBUG) << integratedValue << ", " << resultVectorIndex;
@@ -780,9 +780,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nLocalElements())
+    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << mesh->nLocalElements() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
       continue;
     }
 
@@ -862,7 +862,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -878,7 +878,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -909,7 +909,7 @@ computeInternalVirtualWork(Vec &resultVec)
   const int D = BasisOnMesh::dim();  // = 2 or 3
   //const int nDofs = mesh->nLocalDofs();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nLocalElements();
+  const int nElements = mesh->nElementsLocal();
   const int nUnknowsPerElement = nDofsPerElement*D;    // D directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -1233,9 +1233,9 @@ computeInternalVirtualWork(Vec &resultVec)
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNo = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
 
-    VLOG(2) << "  element " << elementNo << " has dofs " << dofNo;
+    VLOG(2) << "  element " << elementNo << " has dofs " << dofLocalNos;
 
     // add entries in result vector
     // loop over indices of unknows (aDof,aComponent)
@@ -1251,9 +1251,9 @@ computeInternalVirtualWork(Vec &resultVec)
 
         // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofNo[aDof]*D + aComponent;
+        dof_no_t resultVectorIndex = dofLocalNos[aDof]*D + aComponent;
 
-        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofNo[aDof];
+        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofLocalNos[aDof];
         VLOG(2) << "      vector index (unknown no): "<<resultVectorIndex<<", integrated value: "<<integratedValue;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);

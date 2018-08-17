@@ -25,17 +25,14 @@ public:
   //! return the mesh of this field variable
   std::shared_ptr<BasisOnMeshType> mesh();
 
-  //! set the internal mesh
-  void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
-
   //! get the name of the field variable
   std::string name() const;
 
+  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
+  bool isGeometryField() const;
+
   //! get the number of components
   virtual int getNComponents() const = 0;
-
-  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
-  virtual bool isGeometryField() const = 0;
 
   //! parse current component's exfile representation from file contents
   virtual void parseHeaderFromExelemFile(std::string content) = 0;
@@ -86,6 +83,9 @@ public:
   virtual void setValues(double value) = 0;
 
 protected:
+ 
+  bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
+ 
   std::shared_ptr<BasisOnMeshType> mesh_;  ///< the mesh for which the field variable is defined
   std::string name_;     ///< name of the field variable
 };

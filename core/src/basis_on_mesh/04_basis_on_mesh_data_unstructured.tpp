@@ -40,6 +40,7 @@ BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager
     this->parseExnodeFile(filenameExnode);
 
     // remap names of field variables if specified in config
+    // this assigns the geometry field
     this->remapFieldVariables(settings);
 
     // eliminate scale factors (not yet tested)
@@ -47,12 +48,39 @@ BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager
   }
   else if (PythonUtility::hasKey(settings, "nodePositions"))
   {
+    // this creates the geometryField, but without mesh
     this->parseFromSettings(settings);
   }
   else
   {
     LOG(FATAL) << "Could not create UnstructuredDeformable node positions. "
       << "Either specify \"exelem\" and \"exnode\" or \"nodePositions\". ";
+  }
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+initialize()
+{ 
+  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
+  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
+ 
+  // pass a shared "this" pointer to the geometryField
+  if (this->noGeometryField_)
+    return;
+
+  // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
+  std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+    = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  assert(thisMesh != nullptr);
+  assert(geometryField_ != nullptr);
+  
+  // set this mesh to geometry field
+  geometryField_->setMesh(thisMesh);
+  for(auto &fieldVariable : this->fieldVariable_)
+  {
+    fieldVariable.second->setMesh(thisMesh);
   }
 }
 
@@ -195,14 +223,14 @@ elementToNodeMapping()
 
 template<int D,typename BasisFunctionType>
 element_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-nLocalElements() const
+nElementsLocal() const
 {
   return this->nElements_;
 }
 
 template<int D,typename BasisFunctionType>
 global_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-nGlobalElements() const
+nElementsGlobal() const
 {
   return this->meshPartition_->globalSize();
 }

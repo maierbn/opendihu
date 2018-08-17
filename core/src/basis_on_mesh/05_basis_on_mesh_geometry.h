@@ -29,12 +29,6 @@ public:
 
 protected:
  
-  //! set up the geometry field
-  virtual void initializeGeometryField() = 0;
-  
-  //! set the values of the geometry field
-  virtual void setGeometryFieldValues() = 0;
-  
   std::unique_ptr<GeometryFieldType> geometryField_;     ///< the geometry field variable
   bool noGeometryField_ = false;                         ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 };
@@ -66,17 +60,13 @@ public:
  */
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=MeshType>
 class BasisOnMeshGeometry :
-  public BasisOnMeshGeometryData<MeshType,BasisFunctionType>,
-  public std::enable_shared_from_this<BasisOnMeshGeometry<MeshType,BasisFunctionType>>
+  public BasisOnMeshGeometryData<MeshType,BasisFunctionType>
 {
 public:
   //! inherit constructor
   using BasisOnMeshGeometryData<MeshType,BasisFunctionType>::BasisOnMeshGeometryData;
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
-
-  //! this assigns the geometry field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
-  void initialize();
 
   //! return the geometry field entry (node position for Lagrange elements) of a specific dof
   Vec3 getGeometry(node_no_t dofGlobalNo) const;

@@ -9,69 +9,76 @@
 namespace BasisOnMesh
 {
   
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodesStructuredStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithGhosts(int coordinateDirection) const
 {
-  assert(this->meshPartition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
+  assert(this->meshPartition_->nElementsLocal(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
  
   return this->meshPartition_->nNodesLocalWithGhosts(coordinateDirection);
 }
 
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodesStructuredStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithoutGhosts(int coordinateDirection) const
 {
-  assert(this->meshPartition_->localSize(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
+  assert(this->meshPartition_->nElementsLocal(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
  
   return this->meshPartition_->nNodesLocalWithoutGhosts(coordinateDirection);
 }
 
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodesStructuredStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithGhosts() const
 {
   return this->meshPartition_->nNodesLocalWithGhosts();
 }
 
-template<int D,typename BasisFunctionType>
-node_no_t BasisOnMeshDofsNodesStructuredStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithoutGhosts() const
 {
   return this->meshPartition_->nNodesLocalWithoutGhosts();
 }
 
-template<int D,typename BasisFunctionType>
-dof_no_t BasisOnMeshDofsNodesStructuredStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+dof_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nDofsLocalWithGhosts() const
 {
   return nNodesLocalWithGhosts() * this->nDofsPerNode();
 }
 
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+dof_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
+nDofsLocalWithoutGhosts() const
+{
+  return nNodesLocalWithoutGhosts() * this->nDofsPerNode();
+}
+
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal() const
 {
   this->meshPartition_->nNodesGlobal();
 }
 
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal(int coordinateDirection) const
 {
   return this->meshPartition_->nNodesGlobal(coordinateDirection);
 }
 
-template<int D,typename BasisFunctionType>
-global_no_t BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nDofsGlobal() const
 {
   return nNodesGlobal() * this->nDofsPerNode();
 }
 
 //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+template<typename MeshType,typename BasisFunctionType>
+void BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 getNodePositions(std::vector<double> &nodes) const
 {
   nodes.resize(this->nDofsLocalWithGhosts()*3);

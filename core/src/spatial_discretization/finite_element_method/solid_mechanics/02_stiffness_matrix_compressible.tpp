@@ -48,7 +48,7 @@ setStiffnessMatrix()
   //const int nDofsP = basisOnMeshP->nLocalDofs();
   const int nDofsUPerElement = HighOrderBasisOnMesh::nDofsPerElement();
   const int nDofsPPerElement = LowOrderBasisOnMesh::nDofsPerElement();
-  const int nElements = basisOnMeshU->nLocalElements();
+  const int nElements = basisOnMeshU->nElementsLocal();
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,typename MixedQuadratureType::HighOrderQuadrature> QuadratureU;

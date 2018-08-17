@@ -17,17 +17,17 @@ mesh()
 }
 
 template<typename BasisOnMeshType>
-void FieldVariableBase<BasisOnMeshType>::
-setMesh(std::shared_ptr<BasisOnMeshType> mesh)
-{
-  mesh_ = mesh;
-}
-
-template<typename BasisOnMeshType>
 std::string FieldVariableBase<BasisOnMeshType>::
 name() const
 {
   return this->name_;
+}
+
+template<typename BasisOnMeshType>
+bool FieldVariableBase<BasisOnMeshType>::
+isGeometryField() const
+{
+  return this->isGeometryField_;
 }
 
 } // namespace

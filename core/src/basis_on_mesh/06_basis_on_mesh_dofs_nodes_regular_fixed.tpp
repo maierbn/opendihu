@@ -96,54 +96,31 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 initialize()
 { 
-  // initialize the geometry field without values
-  initializeGeometryField();
+  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
+  BasisOnMeshPartition<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::initialize();
+ 
+  // pass a shared "this" pointer to the geometryField
+  if (this->noGeometryField_)
+    return;
 
-  // call initialize from parent class
-  // this creates a meshPartition and assigns the mesh to the geometry field (which then has meshPartition and can create the DistributedPetscVec)
-  BasisOnMeshGeometry<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType,Mesh::StructuredRegularFixedOfDimension<D>>::
-    initialize();
+  // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
+  std::shared_ptr<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>> thisMesh
+    = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  assert(thisMesh != nullptr);
   
-  if (!this->noGeometryField_)
-  {
-    // set geometry field
-    this->setGeometryFieldValues();
-  }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-initializeGeometryField()
-{
-  LOG(DEBUG) << " BasisOnMesh StructuredRegularFixed, initializeGeometryField";
-
   // create empty field variable for geometry field
-  this->geometryField_ = std::make_unique<GeometryFieldType>();
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-setGeometryFieldValues()
-{
-  LOG(DEBUG) << " BasisOnMesh StructuredRegularFixed, setGeometryFieldValues";
-
-  // compute number of (local) dofs
-  //dof_no_t nLocalDofs = this->nLocalDofs();
-  //const dof_no_t nEntries = nLocalDofs * 3;
-  const dof_no_t nEntries = 0;   // geometry field für structured regular fixed mesh does not have any entries
-  const bool isGeometryField = true;
-  
-  // initialize geometry field, this creates the internal DistributedPetscVec
   std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_->initialize("geometry", componentNames, 
-                                   nEntries, isGeometryField);
+  this->geometryField_ = std::make_unique<GeometryFieldType>(thisMesh, "geometry", componentNames);
+  
+  // no need to set values of the geometry field, because there is no data explicitly stored
 }
 
 template<int D,typename BasisFunctionType>
 double BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 meshWidth() const
 {
-  return this->geometryField_->meshWidth();
+  return this->meshWidth_;
 }
 
 

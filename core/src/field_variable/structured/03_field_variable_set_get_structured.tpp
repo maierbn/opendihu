@@ -17,7 +17,7 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
-  const int nLocalDofs = this->mesh_->nLocalDofs();
+  const int nLocalDofs = this->mesh_->nDofsLocalWithGhosts();
   
   // set stride to nDofsPerNode if Hermite, else to 1
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
@@ -25,9 +25,13 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = nLocalDofs;
   if (onlyNodalValues)
+  {
     // if the basis function is Hermite
     if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
+    {
       nValues = nLocalDofs / BasisOnMeshType::nDofsPerNode();
+    }
+  }
 
   // store the array indices for values_ array in dofLocalNo
   std::vector<PetscInt> indices(nValues,0);
@@ -69,12 +73,6 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   
   // store the array indices for values_ array in dofLocalNo
   const int nValues = dofLocalNo.size();
-  for (int i=0; i<nValues; i++)
-  {
-    dofLocalNo[i] = dofLocalNo[i];
-    
-    assert(dofLocalNo[i] >= 0 && dofLocalNo[i] < this->nEntries_);
-  }
 
   std::size_t previousSize = values.size();
   values.resize(previousSize+nValues);
@@ -112,7 +110,7 @@ void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo,
                  std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
@@ -132,7 +130,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nLocalElements());
+  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   std::array<int,nComponents> indices;
@@ -233,13 +231,13 @@ setValues(double value)
 {
   // get number of dofs
   assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+  const dof_no_t nDofs = this->mesh_->nDofsLocalWithGhosts();
 
   std::vector<double> valueBuffer(nDofs,value);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    this->values_->setValues(componentIndex, valueBuffer, INSERT_VALUES);
+    this->values_->setValuesWithGhosts(componentIndex, valueBuffer, INSERT_VALUES);
   }
 }
 
@@ -265,9 +263,16 @@ setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode 
 
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
-setValues(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  this->setValues(this->values_->localNodeNos(), values, petscInsertMode);
+  this->setValues(this->values_->localDofNos(), values, petscInsertMode);
+}
+
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+setValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  this->setValues(this->values_->localDofNosWithoutGhosts(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs

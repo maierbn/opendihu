@@ -18,7 +18,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
 
   const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();
-  const element_no_t nElements = mesh->nLocalElements();
+  const element_no_t nElements = mesh->nElementsLocal();
 
   bool outputHeader = true;
 

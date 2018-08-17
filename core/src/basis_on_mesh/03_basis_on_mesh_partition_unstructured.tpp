@@ -26,7 +26,7 @@ initialize()
   // create partitioning
   assert(this->partitionManager_ != nullptr);
   this->meshPartition_ = this->partitionManager_->template createPartitioning<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(
-    this->nGlobalElements());
+    this->nElementsGlobal());
 }
 
 };  // namespace

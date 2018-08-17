@@ -26,7 +26,7 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
+  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
   double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
   dof_no_t nUnknownsLocal = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts();
@@ -50,7 +50,7 @@ transferRhsToWeakForm()
   std::vector<double> vectorValues;
   rightHandSide.getLocalValues(vectorValues);
 
-  rightHandSide.zeroValues();
+  rightHandSide.zeroEntries();
   
   // loop over all dofs and set values with stencilCenter
   for (node_no_t dofNo = 1; dofNo < nUnknownsLocal-1; dofNo++)
@@ -136,7 +136,7 @@ transferRhsToWeakForm()
   std::vector<double> vectorValues;
   rightHandSide.getLocalValues(vectorValues);
 
-  rightHandSide.zeroValues();
+  rightHandSide.zeroEntries();
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int y=1; y<nNodes1-1; y++)
@@ -402,7 +402,7 @@ transferRhsToWeakForm()
   std::vector<double> vectorValues;
   rightHandSide.getLocalValues(vectorValues);
 
-  rightHandSide.zeroValues();
+  rightHandSide.zeroEntries();
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int z=1; z<nNodes2-1; z++)
@@ -1053,7 +1053,7 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 1D";
 
     // get settings values
-    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nLocalElements();
+    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
     double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
 
     dof_no_t nUnknownsLocal = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts();

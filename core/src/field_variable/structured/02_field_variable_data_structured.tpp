@@ -9,13 +9,13 @@
 
 namespace FieldVariable
 {
-
+/*
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 FieldVariableDataStructured() :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
-}
+}*/
 
 //! contructor as data copy with a different name (component names are the same)
 template<typename BasisOnMeshType, int nComponents>
@@ -24,104 +24,85 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
-  std::vector<std::string> componentNames(rhs.componentNames().size());
-  std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), componentNames.begin());
+  this->componentNames_.resize(rhs.componentNames().size());
+  std::copy(rhs.componentNames().begin(), rhs.componentNames().end(), this->componentNames_.begin());
+  
+  this->name_ = name;
+  this->isGeometryField_ = false;
+  this->mesh_ = rhs.mesh();
 
+  assert(this->mesh_);
+  
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec>(rhs.partitionedPetscVec());
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(rhs.partitionedPetscVec(), name);
+}
 
-  // initialize internal fields from rhs (values vector is not changed because it already exists)
-  initializeFromFieldVariable(rhs, name, componentNames);
+//! contructor as data copy with a different name and different components
+template<typename BasisOnMeshType, int nComponents>
+template <int nComponents2>
+FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames) :
+  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
+{
+  // initialize everything from other field variable
+  assert(componentNames.size() == nComponents);
+  std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
+  
+  this->name_ = name;
+  this->isGeometryField_ = false;
+  this->mesh_ = rhs.mesh();
+
+  assert(this->mesh_);
+  
+  // create new distributed petsc vec as copy of rhs values vector
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(rhs.partitionedPetscVec(), name);
 }
 
 //! constructor with mesh, name and components
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) :
+FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, bool isGeometryField) :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   this->name_ = name;
-  this->isGeometryField_ = false;
+  this->isGeometryField_ = isGeometryField;
   this->mesh_ = mesh;
 
+  assert(this->mesh_);
+  
   std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
 
   // assign component names
   assert(nComponents == componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
-  this->nEntries_ = mesh->nLocalDofs() * nComponents;
-
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
-   << ", components: " << nComponents << ", nEntries: " << this->nEntries_;
-
-  assert(this->nEntries_ != 0);
+   << ", components: " << nComponents;
 
   // create a new values vector for the new field variable
-
-  // create vector
-  PetscUtility::createVector(this->values, this->nEntries_, this->name_, this->mesh_->partition());
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
 }
 
 template<typename BasisOnMeshType, int nComponents>
 FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 ~FieldVariableDataStructured()
 {
-  if(this->values_)
-  {
-    //PetscErrorCode ierr = VecDestroy(&this->values_); CHKERRV(ierr);
-  }
 }
-
-template<typename BasisOnMeshType, int nComponents>
-template<typename FieldVariableType>
-void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
-{
-  // copy member variables
-  this->name_ = name;
-  this->isGeometryField_ = false;
-  this->mesh_ = fieldVariable.mesh();
-  this->nEntries_ = this->mesh_->nLocalDofs() * nComponents;
-
-  // copy component names
-  assert(nComponents == (int)componentNames.size());
-  std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
-
-  LOG(DEBUG) << "FieldVariable::initializeFromFieldVariable, name=" << this->name_
-   << ", components: " << nComponents << ", Vec nEntries: " << this->nEntries_;
-
-  assert(this->nEntries_ != 0);
-  
-  // if there is not yet a values vector, create PartitionedPetscVec
-  if (this->values_ == nullptr)
-  {
-    initializeValuesVector();
-  }
-}
-
+/*
 template<typename BasisOnMeshType, int nComponents>
 std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 nElementsPerCoordinateDirectionLocal() const
 {
   return this->mesh_->nElementsPerCoordinateDirectionLocal();
-}
-
-template<typename BasisOnMeshType, int nComponents>
-std::size_t FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-nEntries() const
-{
-  return this->nEntries_;
-}
-
+}*/
+/*
 template<typename BasisOnMeshType, int nComponents>
 dof_no_t FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-nLocalDofs() const
+nDofsLocalWithoutGhosts() const
 {
   // this is the same as this->nEntries_ / nComponents only if it is not the geometry mesh of StructuredRegularFixed mesh
-  return this->mesh_->nLocalDofs();
- 
-}
+  return this->mesh_->nDofsLocalWithoutGhosts();
+}*/
 
 template<typename BasisOnMeshType, int nComponents>
 Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
@@ -136,11 +117,11 @@ partitionedPetscVec()
 {
   return this->values_; 
 }
-
+/*
+ * why is this needed?
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-initialize(std::string name, std::vector<std::string> &componentNames, 
-           std::size_t nEntries, bool isGeometryField)
+initialize(std::string name, std::vector<std::string> &componentNames, bool isGeometryField)
 {
   // set member variables from arguments
   this->name_ = name;
@@ -150,14 +131,13 @@ initialize(std::string name, std::vector<std::string> &componentNames,
   assert(nComponents == (int)componentNames.size());
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
-  nEntries_ = nEntries;
-  
   // if there is not yet a values vector, create PartitionedPetscVec (not for RegularFixed mesh geometry fields)
-  if (this->values_ == nullptr && nEntries != 0)
+  if (this->values_ == nullptr)
   {
     initializeValuesVector();
   }
 }
+*/
 
 //! write a exelem file header to a stream, for a particular element
 template<typename BasisOnMeshType, int nComponents>
@@ -260,21 +240,13 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 output(std::ostream &stream) const
 {
-  stream << "\"" << this->name_ << "\", nEntries: " << nEntries_
+  stream << "\"" << this->name_ << "\""
     << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
     << "  components:" << std::endl;
   for (auto &componentName : this->componentNames_)
   {
     stream << componentName;
   }
-}
-
-//! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
-template<typename BasisOnMeshType, int nComponents>
-bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-isGeometryField() const
-{
-  return isGeometryField_;
 }
 
 };

@@ -11,13 +11,14 @@ class PartitionedPetscVecBase
 public:
  
   //! constructor
-  PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition);
+  PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition, std::string name);
  
-  //! get a vector of local node nos, which is also the local dof nos (for one component) (from meshPartition)
-  std::vector<PetscInt> &localNodeNos();
+  //! get a vector of local dof nos (from meshPartition), with ghost dofs
+  std::vector<PetscInt> &localDofNos();
   
 protected:
   
+  std::string name_;   ///< name of the vector
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
 };
 

@@ -25,7 +25,7 @@ template<typename MeshType,int D,int order>
 dof_no_t BasisOnMeshNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
 nLocalDofs() const
 {
-  return this->nLocalElements() * this->nDofsPerElement();
+  return this->nElementsLocal() * this->nDofsPerElement();
 }
 
 template<typename MeshType,int D,int order>

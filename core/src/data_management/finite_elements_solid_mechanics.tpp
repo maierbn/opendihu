@@ -133,7 +133,8 @@ createPetscObjects()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros; 
   const int dimension = BasisOnMeshType::dim();
     
-  tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->mesh_->meshPartition(), dimension, diagonalNonZeros, offdiagonalNonZeros);
+  const int nComponents = dimension;
+  tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->mesh_->meshPartition(), nComponents, diagonalNonZeros, offdiagonalNonZeros);
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
   ierr = MatSetOption(this->tangentStiffnessMatrix_.values(), MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);

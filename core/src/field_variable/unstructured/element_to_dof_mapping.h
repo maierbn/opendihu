@@ -37,7 +37,7 @@ public:
   dof_no_t nLocalDofs() const;
 
   //! return the number of elements
-  element_no_t nLocalElements() const;
+  element_no_t nElementsLocal() const;
 
   //! comparison operator
   bool operator==(const ElementToDofMapping &rhs);

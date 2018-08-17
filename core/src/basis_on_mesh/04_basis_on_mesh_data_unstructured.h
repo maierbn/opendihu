@@ -33,7 +33,8 @@ class BasisOnMesh;
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDataUnstructured :
-  public BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshDataUnstructured<D,BasisFunctionType>>
 {
 public:
 
@@ -59,11 +60,13 @@ public:
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping();
   
   //! get the total number of elements on the local partition, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
-  element_no_t nLocalElements() const;
+  element_no_t nElementsLocal() const;
 
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
-  global_no_t nGlobalElements() const;
+  global_no_t nElementsGlobal() const;
 
+  //! initialize geometry
+  virtual void initialize();
   
 protected:
   //! parse a given *.exelem file and prepare fieldVariable_

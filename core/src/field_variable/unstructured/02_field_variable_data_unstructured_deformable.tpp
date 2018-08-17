@@ -21,7 +21,7 @@ FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string n
 {
   // create new distributed petsc vec as copy of rhs values vector
   this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>>(
-     rhs.partitionedPetscVec());
+     rhs.partitionedPetscVec(), name);
 
   // initialize everything from other field variable
   initializeFromFieldVariable(rhs, name, rhs.componentNames());
@@ -30,7 +30,7 @@ FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string n
 // constructor with mesh, name and components
 template<int D, typename BasisFunctionType, int nComponents>
 FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, dof_no_t nDofsPerComponent) :
+FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames) :
   FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
 {
   assert(false); // not implemented
@@ -52,6 +52,13 @@ FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimensi
   {
     //PetscErrorCode ierr = VecDestroy(&*this->values_); CHKERRV(ierr);
   }
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+setMesh(std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh)
+{
+  this->mesh_ = mesh;
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
@@ -90,7 +97,7 @@ parseHeaderFromExelemFile(std::string content)
       this->name_ = extractUntil(line, ",");
       trim(this->name_);
       std::string type = extractUntil(line, ",");
-      isGeometryField_ = type.find("coordinate") != std::string::npos;
+      this->isGeometryField_ = type.find("coordinate") != std::string::npos;
       nComponentsParsed = getNumberAfterString(line, "#Components=");
 
       if (nComponentsParsed != nComponents)
@@ -169,7 +176,7 @@ parseElementFromExelemFile(std::string content)
     component.parseElementFromExelemFile(content);
   }
 }
-
+/*
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 setNumberElements(element_no_t nElements)
@@ -179,10 +186,10 @@ setNumberElements(element_no_t nElements)
 
 template<int D, typename BasisFunctionType, int nComponents>
 element_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-nLocalElements() const
+nElementsLocal() const
 {
   return this->nElements_;
-}
+}*/
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
@@ -734,7 +741,7 @@ initializeValuesVector()
   {
     component.setValuesVector(this->values_);
   }
-}
+}/*
 
 template<int D, typename BasisFunctionType, int nComponents>
 std::size_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
@@ -755,9 +762,9 @@ node_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformabl
 nNodesLocalWithGhosts() const
 {
   // because parallelism is not implemented for unstructured meshes, there is no difference to with or without ghosts
-  return nodeToDofMapping_->nNodesLocal();
+  return nodeToDofMapping_->nLocalNodes();
 }
-
+*/
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation)
@@ -792,7 +799,7 @@ initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, 
   this->exfileNo_ = 0;
   this->nEntries_ = 0;
   this->isGeometryField_ = false;
-  this->nElements_ = fieldVariable.nLocalElements();
+  this->nElements_ = fieldVariable.nElementsLocal();
   this->exfileRepresentation_ = fieldVariable.exfileRepresentation();
   this->elementToDofMapping_ = fieldVariable.elementToDofMapping();
   this->elementToNodeMapping_ = fieldVariable.elementToNodeMapping();
@@ -817,7 +824,7 @@ initializeFromMappings(std::string name, bool isGeometryField,
   this->exfileNo_ = 0;
   this->nEntries_ = 0;
   this->isGeometryField_ = isGeometryField;
-  this->nElements_ = elementToDofMapping->nLocalElements();
+  this->nElements_ = elementToDofMapping->nElementsLocal();
 
   // remove duplicate exfile representations
   exfileRepresentation->unifyExfileElementRepresentations();
@@ -855,7 +862,7 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
     exfileNo_ = fieldVariableNo+1;
 
   // output first line of header
-  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
+  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (this->isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
 
   // output headers of components
@@ -885,7 +892,7 @@ outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &val
     exfileNo_ = fieldVariableNo+1;
 
   // output first line of header
-  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
+  stream << " " << exfileNo_ << ") " << this->name_ << ", " << (this->isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
 
   // output headers of components
@@ -957,18 +964,11 @@ eliminateScaleFactors()
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
-bool FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-isGeometryField() const
-{
-  return isGeometryField_;
-}
-
-template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 output(std::ostream &stream) const
 {
-  stream << "\"" << this->name_ << "\", nEntries: " << nEntries_ << ", nElements: " << nElements_
-    << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
+  stream << "\"" << this->name_ << "\", nElements: " << nElements_
+    << ", isGeometryField: " << std::boolalpha << this->isGeometryField_ << std::endl
     << "  components:" << std::endl;
   for (auto &componentName : this->componentNames_)
   {

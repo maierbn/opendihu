@@ -215,7 +215,7 @@ dof_no_t Component<BasisOnMeshType,nComponents>::nLocalDofs() const
 }
 
 template<typename BasisOnMeshType,int nComponents>
-element_no_t Component<BasisOnMeshType,nComponents>::nLocalElements() const
+element_no_t Component<BasisOnMeshType,nComponents>::nElementsLocal() const
 {
   return this->nElements_;
 }

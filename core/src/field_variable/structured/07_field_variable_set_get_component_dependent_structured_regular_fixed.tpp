@@ -44,16 +44,16 @@ getValue(node_no_t dofLocalNo)
   else
   {
     // x direction
-    value[0] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->meshWidth_ 
-      + (nodeLocalNo % nLocalNodesInXDirection) * this->meshWidth_;
+    value[0] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
+      + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
 
     // y direction
-    value[1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->meshWidth_ 
-      + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->meshWidth_;
+    value[1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
+      + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
 
     // z direction
-    value[2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->meshWidth_ 
-      + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->meshWidth_;
+    value[2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
+      + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
   }
   
   return value;

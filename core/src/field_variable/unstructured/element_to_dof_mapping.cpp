@@ -208,7 +208,7 @@ dof_no_t ElementToDofMapping::nLocalDofs() const
   return nDofs_;
 }
 
-element_no_t ElementToDofMapping::nLocalElements() const
+element_no_t ElementToDofMapping::nElementsLocal() const
 {
   return elementDofs_.size();
 }

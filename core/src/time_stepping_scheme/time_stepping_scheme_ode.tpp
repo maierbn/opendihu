@@ -36,7 +36,7 @@ setInitialValues()
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
     //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-    this->data_->mesh()->meshPartition()->extractLocalDofs(localValues);
+    this->data_->mesh()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {

@@ -73,7 +73,7 @@ public:
   void initialize();
   
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
-  virtual global_no_t nGlobalElements() const = 0;
+  virtual global_no_t nElementsGlobal() const = 0;
 
 };
 

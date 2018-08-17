@@ -27,7 +27,8 @@ protected:
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> :
-  public BasisOnMeshDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>>
 {
 public:
 
@@ -42,16 +43,10 @@ public:
   //! get mesh width (=distance between nodes) of the given coordinate direction
   double meshWidth() const;
 
-  //! initialize the geometry field
-  void initialize();
-
+  //! initialize geometry
+  virtual void initialize();
+  
 protected:
-
-  //! create the geometry field object
-  void initializeGeometryField();
-
-  //! create the geometry field from meshWidth_
-  void setGeometryFieldValues();
   
   double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
 };
@@ -60,7 +55,8 @@ protected:
  */
 template<int D,typename BasisFunctionType>
 class BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> :
-  public BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>
+  public BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,
+  public std::enable_shared_from_this<BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>
 {
 public:
   //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
@@ -70,7 +66,7 @@ public:
   BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
-
+  
   //! initialize geometry
   virtual void initialize();
   
@@ -79,9 +75,6 @@ protected:
   //! parse the node from python config into a vector
   void parseNodePositionsFromSettings(PyObject *specificSettings);
 
-  //! set up the geometry field
-  void initializeGeometryField();
-  
   //! set the values of the geometry field
   void setGeometryFieldValues();
   
@@ -111,14 +104,14 @@ public:
   //! return number of dofs
   dof_no_t nDofsLocalWithGhosts() const;
   
+  //! return number of dofs
+  dof_no_t nDofsLocalWithoutGhosts() const;
+  
   //! return global number of nodes
   global_no_t nNodesGlobal() const;
 
   //! return global number of dofs
   global_no_t nDofsGlobal() const;
-
-  //! initialize geometry
-  virtual void initialize();
   
 };
 

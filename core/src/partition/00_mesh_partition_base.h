@@ -24,16 +24,16 @@ public:
   int nRanks();
   
   //! number of entries in the current partition (this usually refers to the elements)
-  virtual element_no_t localSize() = 0;
+  virtual element_no_t nElementsLocal() = 0;
   
   //! number of nodes in total
-  virtual global_no_t globalSize() = 0;
+  virtual global_no_t nElementsGlobal() = 0;
   
   //! return reference to a vector containing all local dofs, i.e. a vector with {0,1,2,...,nLocalDofsWithGhosts-1}
   std::vector<PetscInt> &localDofNos();
   
   //! remove all dofs from the vector that are not handled in the local partition
-  virtual void extractLocalDofs(std::vector<double> &values) = 0;
+  virtual void extractLocalDofsWithoutGhosts(std::vector<double> &values) = 0;
   
   //! get the MPI communicator that is needed for the work portion
   MPI_Comm mpiCommunicator();

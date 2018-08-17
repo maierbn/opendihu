@@ -28,29 +28,35 @@ public:
   using FieldVariableComponents<BasisOnMeshType,nComponents_>::FieldVariableComponents;
 
   //! empty contructor
-  FieldVariableDataStructured();
+  //FieldVariableDataStructured();
 
   //! contructor as data copy with a different name (component names are the same)
   FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents_> &rhs, std::string name);
 
-  //! constructor with mesh, name and components
-  FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
+  //! contructor as data copy with a different name and different components
+  template <int nComponents2>
+  FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames);
+
+  //! constructor with mesh, name and components and if it is a geometry field. This constructs a complete field variable
+  FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, bool isGeometryField=false);
 
   //! destructor
   virtual ~FieldVariableDataStructured();
 
+  /*
   //! set all data but the values from a second field variable, also create the internal Petsc vector if it does not already exist
   template<typename FieldVariableType>
   void initializeFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames);
-
-  //! set all the data fields as well as the internal values PETSc vector
+*/
+  /*//! set all the data fields as well as the internal values PETSc vector
   //! this creates the internal PartitionedPetscVec, therefore the mesh needs to be set because its meshPartition() is needed
   void initialize(std::string name, std::vector<std::string> &componentNames, 
-                  std::size_t nEntries, bool isGeometryField);
+                  std::size_t nEntries, bool isGeometryField);*/
 
+  /*
   //! get the number of elements per coordinate direction
   std::array<element_no_t, BasisOnMeshType::Mesh::dim()> nElementsPerCoordinateDirectionLocal() const;
-
+*/
   //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header. For parallel program execution this writes headers for the local exelem files on every rank.
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 
@@ -66,13 +72,10 @@ public:
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
 
+  /*
   //! get the number of dofs, i.e. the number of entries per component
   dof_no_t nLocalDofs() const;
-
-  //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
-  bool isGeometryField() const;
-
-
+  */
 
   //! not implemented interface methods
 
@@ -96,7 +99,7 @@ public:
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector(){}
-
+  
   //! return the component by index
   virtual std::shared_ptr<Component<BasisOnMeshType,nComponents_>> component(int componentNo) {return nullptr;}   // return empty Component
 
@@ -114,12 +117,8 @@ public:
   
 protected:
 
-  //! get the number of entries of the internal values_ Vector
-  std::size_t nEntries() const;
-
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
-  std::size_t nEntries_;       ///< number of entries the PETSc vector values_ will have (if it is used). This number of dofs * nComponents
-
+  
   std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 

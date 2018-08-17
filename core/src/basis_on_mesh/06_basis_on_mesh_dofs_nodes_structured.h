@@ -37,6 +37,9 @@ public:
   //! return number of dofs
   dof_no_t nDofsLocalWithGhosts() const;
   
+  //! return number of dofs
+  dof_no_t nDofsLocalWithoutGhosts() const;
+  
   //! return number of nodes in specified coordinate direction for the whole global domain
   global_no_t nNodesGlobal(int dimension) const;
 
@@ -48,7 +51,7 @@ public:
 
   //! fill a vector with the node position entries, nodes will contain consecutively the (x,y,z) values of just all nodes, i.e. for Hermite not the derivatives
   void getNodePositions(std::vector<double> &nodes) const;
-
+  
 protected:
 };
 

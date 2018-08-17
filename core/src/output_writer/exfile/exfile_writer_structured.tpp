@@ -16,7 +16,7 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     << " #Scale factor sets=0" << std::endl;
 
   const int nNodesPerElement = BasisOnMeshType::nNodesPerElement();
-  const element_no_t nElements = mesh->nLocalElements();
+  const element_no_t nElements = mesh->nElementsLocal();
 
   stream << " #Nodes=" << nNodesPerElement << std::endl
     << " #Fields=" << nFieldVariablesOfMesh << std::endl;

@@ -62,7 +62,7 @@ public:
   dof_no_t nLocalDofs() const;
 
   //! return the number of elements
-  element_no_t nLocalElements() const;
+  element_no_t nElementsLocal() const;
   
   //! return the name of the component
   std::string name() const;

@@ -85,6 +85,10 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithoutGhosts(int coordinateDirection);
   
+  //! number of elments in the local partition
+  node_no_t nElementsLocal(int coordinateDirection);
+  
+  //! number of nodes in the local partition
   //! number of nodes in total
   global_no_t nNodesGlobal();
   
@@ -119,6 +123,12 @@ public:
   
   //! return iterator to end of nonGhost dof nos
   std::vector<dof_no_t>::const_iterator nonGhostDofsEnd();
+  
+  //! get a vector of local dof nos, without ghost dofs
+  std::vector<PetscInt> &localDofNosWithoutGhosts();
+  
+  //! return the dmElements Petsc DMDA object
+  std::shared_ptr<DM> dmElements();
   
 protected:
   
@@ -175,7 +185,7 @@ public:
   void extractLocalNodes(std::vector<T> &vector);
   
   //! from a vector of values of global dofs remove all that are non-local
-  void extractLocalDofs(std::vector<double> &values);
+  void extractLocalDofsWithoutGhosts(std::vector<double> &values);
   
   //! output to stream for debugging
   void output(std::ostream &stream);
@@ -199,10 +209,10 @@ public:
   MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset);
   
   //! number of entries in the current partition (this usually refers to the elements)
-  element_no_t localSize();
+  element_no_t nElementsLocal();
   
   //! number of nodes in total
-  global_no_t globalSize();
+  global_no_t nElementsGlobal();
   
   //! get the local to global mapping for the current partition
   ISLocalToGlobalMapping localToGlobalMapping();
@@ -212,7 +222,7 @@ public:
   void extractLocalNodes(std::vector<T> &vector);
   
   //! from a vector of values of global dofs remove all that are non-local
-  void extractLocalDofs(std::vector<double> &values);
+  void extractLocalDofsWithoutGhosts(std::vector<double> &values);
   
   //! output to stream for debugging
   void output(std::ostream &stream);

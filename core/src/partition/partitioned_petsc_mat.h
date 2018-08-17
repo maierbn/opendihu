@@ -35,7 +35,6 @@ protected:
   
   std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
   int nComponents_;  ///< number of components of the field variable
-  DM dm_;    ///< PETSc DMDA object (data management distributed array) that stores topology information and everything needed for communication of ghost values, knows the number of components
 };
 
 /** partial specialization for unstructured meshes 

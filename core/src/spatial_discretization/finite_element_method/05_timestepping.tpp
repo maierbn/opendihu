@@ -99,7 +99,7 @@ void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 recoverRightHandSideStrongForm(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
-  Vec &rhs = this->data_.rightHandSide().values();   // rhs in weak formulation
+  Vec &rhs = this->data_.rightHandSide().valuesGlobal();   // rhs in weak formulation
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
 
   PetscErrorCode ierr;
@@ -109,7 +109,7 @@ recoverRightHandSideStrongForm(Vec &result)
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  ierr = KSPSetOperators (*ksp_, massMatrix->values(), massMatrix->values()); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp_, massMatrix->valuesGlobal(), massMatrix->valuesGlobal()); CHKERRV(ierr);
 
   // non zero initial values
   PetscScalar scalar = .5;
@@ -135,7 +135,7 @@ checkDimensions(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessM
 {
 #ifndef NDEBUG
   int nRows, nColumns;
-  MatGetSize(stiffnessMatrix->values(), &nRows, &nColumns);
+  MatGetSize(stiffnessMatrix->valuesGlobal(), &nRows, &nColumns);
   int nEntries;
   VecGetSize(input, &nEntries);
   if (nColumns != nEntries)
@@ -151,13 +151,13 @@ void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSide(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
-  Vec &rhs = this->data_.rightHandSide().values();
+  Vec &rhs = this->data_.rightHandSide().valuesGlobal();
 
   // check if matrix and vector sizes match
   checkDimensions(stiffnessMatrix, input);
 
   // compute rhs = stiffnessMatrix*input
-  MatMult(stiffnessMatrix->values(), input, rhs);
+  MatMult(stiffnessMatrix->valuesGlobal(), input, rhs);
  
   // compute output = massMatrix^{-1}*rhs
   recoverRightHandSideStrongForm(output);

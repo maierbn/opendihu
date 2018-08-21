@@ -62,7 +62,7 @@ setRightHandSide()
 #ifndef NDEBUG
   LOG(DEBUG) << "Transferred to weak form:";
   s.str("");
-  PetscUtility::getVectorEntries(rightHandSide.values(), localValues);
+  PetscUtility::getVectorEntries(rightHandSide.valuesLocal(), localValues);
   for(auto value : localValues)
   {
     s << " " << value;

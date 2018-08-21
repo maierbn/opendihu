@@ -83,7 +83,10 @@ public:
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const;
 
   //! get the internal values vector
-  Vec &values();
+  Vec &valuesLocal();
+
+  //! get the internal values vector
+  Vec &valuesGlobal();
 
   //! get the number of scale factors, TODO: local no
   int getNumberScaleFactors(element_no_t elementGlobalNo) const;
@@ -97,7 +100,7 @@ public:
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
-  friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
+  //friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
 /*
   //! resize internal representation variable to number of elements
   void setNumberElements(element_no_t nElements);

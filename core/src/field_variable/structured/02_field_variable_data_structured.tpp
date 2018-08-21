@@ -106,9 +106,16 @@ nDofsLocalWithoutGhosts() const
 
 template<typename BasisOnMeshType, int nComponents>
 Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-values()
+valuesLocal()
 {
-  return this->values_->values();
+  return this->values_->valuesLocal();
+}
+
+template<typename BasisOnMeshType, int nComponents>
+Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+valuesGlobal()
+{
+  return this->values_->valuesGlobal();
 }
 
 template<typename BasisOnMeshType, int nComponents>

@@ -209,9 +209,9 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
 }
 
 template<typename BasisOnMeshType,int nComponents>
-dof_no_t Component<BasisOnMeshType,nComponents>::nLocalDofs() const
+dof_no_t Component<BasisOnMeshType,nComponents>::nDofsLocal() const
 {
-  return this->elementToDofMapping_->nLocalDofs();
+  return this->elementToDofMapping_->nDofsLocal();
 }
 
 template<typename BasisOnMeshType,int nComponents>
@@ -237,7 +237,7 @@ template<typename BasisOnMeshType,int nComponents>
 void Component<BasisOnMeshType,nComponents>::
 getValues(std::vector<double> &values, bool onlyNodalValues)
 {
-  const dof_no_t nDofs = this->nLocalDofs();
+  const dof_no_t nDofs = this->nDofsLocal();
 
   // set stride to nDofsPerNode if Hermite, else to 1
   const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
@@ -265,20 +265,20 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
 template<typename BasisOnMeshType,int nComponents>
 template<int N>
 void Component<BasisOnMeshType,nComponents>::
-getValues(std::array<dof_no_t,N> dofLocalNos, std::array<double,N> &values)
+getValues(std::array<dof_no_t,N> dofNosLocal, std::array<double,N> &values)
 {
   assert (values_);
-  values_->getValues(componentIndex_, N, dofLocalNos.data(), values.data());
+  values_->getValues(componentIndex_, N, dofNosLocal.data(), values.data());
 }
 
 template<typename BasisOnMeshType,int nComponents>
 void Component<BasisOnMeshType,nComponents>::
-getValues(std::vector<dof_no_t> dofLocalNos, std::vector<double> &values)
+getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values)
 {
-  const int nValues = dofLocalNos.size();
+  const int nValues = dofNosLocal.size();
 
  VLOG(1) << "Component getValues, " << nValues << " values, componentIndex=" << componentIndex_
-   << ", nComponents= " << nComponents << " indices: " << dofLocalNos;
+   << ", nComponents= " << nComponents << " indices: " << dofNosLocal;
 
   assert (values_);
 
@@ -286,7 +286,7 @@ getValues(std::vector<dof_no_t> dofLocalNos, std::vector<double> &values)
   VLOG(1) << "previousSize: " << previousSize;
   values.resize(previousSize+nValues);
   VLOG(1) << "new size: " << values.size();
-  values_->getValues(componentIndex_, nValues, (PetscInt*)dofLocalNos.data(), values.data()+previousSize);
+  values_->getValues(componentIndex_, nValues, (PetscInt*)dofNosLocal.data(), values.data()+previousSize);
 
 
   VLOG(1) << "retrieved values: " << values;

@@ -87,7 +87,7 @@ const dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 getTangentStiffnessMatrixNRows()
 {
   const int D = BasisOnMeshType::dim();
-  return this->mesh_->nLocalDofs() * D;
+  return this->mesh_->nDofsLocal() * D;
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -110,7 +110,7 @@ createPetscObjects()
   PetscErrorCode ierr;
   if (BasisOnMeshType::dim() == 2)
   {
-    ierr = VecDuplicate(this->mesh_->geometryField().values(), &fullIncrement_); CHKERRV(ierr);
+    ierr = VecDuplicate(this->mesh_->geometryField().valuesGlobal(), &fullIncrement_); CHKERRV(ierr);
   }
 
   // create PETSc matrix object
@@ -137,7 +137,7 @@ createPetscObjects()
   tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->mesh_->meshPartition(), nComponents, diagonalNonZeros, offdiagonalNonZeros);
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
-  ierr = MatSetOption(this->tangentStiffnessMatrix_.values(), MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
+  ierr = MatSetOption(this->tangentStiffnessMatrix_.valuesGlobal(), MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
 }
 
 template<typename BasisOnMeshType,typename Term>
@@ -259,14 +259,14 @@ print()
   VLOG(4)<<"======================";
 
   int nEntries;
-  VecGetSize(this->residual_->values(), &nEntries);
+  VecGetSize(this->residual_->valuesLocal(), &nEntries);
   VLOG(4)<<"residual ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->residual_->values());
+  VLOG(4)<<PetscUtility::getStringVector(this->residual_->valuesLocal());
   VLOG(4)<<"======================";
 
-  VecGetSize(this->displacements_->values(), &nEntries);
+  VecGetSize(this->displacements_->valuesLocal(), &nEntries);
   VLOG(4)<<"displacements ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->displacements_->values());
+  VLOG(4)<<PetscUtility::getStringVector(this->displacements_->valuesLocal());
   VLOG(4)<<"======================";
 }
 
@@ -290,7 +290,7 @@ initializeMassMatrix()
 {
   // determine problem size
   int nEntries;
-  VecGetSize(this->solution_->values(), &nEntries);
+  VecGetSize(this->solution_->valuesGlobal(), &nEntries);
 
   // create PETSc matrix object
 
@@ -379,7 +379,7 @@ void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
 initializeSolverVariables(int nDofs)
 {
   const int D = BasisOnMeshType::dim();
-  const int nDofsDisplacementsReduced = this->mesh_->nLocalDofs() * D;
+  const int nDofsDisplacementsReduced = this->mesh_->nDofsLocal() * D;
 
   LOG(DEBUG) << "initializeSolverVariables with nDofs=" << nDofs << ", nDofsDisplacementsReduced=" << nDofsDisplacementsReduced;
 

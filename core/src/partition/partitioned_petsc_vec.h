@@ -45,34 +45,34 @@ public:
   
   //! wrapper to the PETSc VecSetValue, acting only on the local data
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
-  
+  /*
   //! for a single component vector set all values, the input vector values is expected to have ghosts included
   void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
   
   //! for a single component vector set all values, the input vector values is expected to have no ghosts included
   void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
-  
+  */
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
   //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
   void getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
-  //! get all locally stored values
-  void getLocalValues(int componentNo, std::vector<double> &values);
-  
   //! set all entries to zero, wraps VecZeroEntries
   void zeroEntries();
   
   //! get the local Vector of a specified component
-  Vec &values(int componentNo = 0);
+  Vec &valuesLocal(int componentNo = 0);
+
+  //! get the global Vector of a specified component
+  Vec &valuesGlobal(int componentNo = 0);
 
 protected:
   
   //! create the values vectors
   void createVector();
   
-  std::array<Vec,nComponents> values_;  // the (serial) Petsc vector that contains all the data
+  std::array<Vec,nComponents> values_;  // the (serial) Petsc vectors that contains all the data, one for each component
 };
 
 /** This is the partial specialization for structured meshes.
@@ -125,7 +125,10 @@ public:
   void zeroEntries();
   
   //! get the local Vector of a specified component
-  Vec &values(int componentNo = 0);
+  Vec &valuesLocal(int componentNo = 0);
+  
+  //! get the global Vector of a specified component
+  Vec &valuesGlobal(int componentNo = 0);
   
   //! get a vector of local dof nos (from meshPartition), without ghost dofs
   std::vector<PetscInt> &localDofNosWithoutGhosts();
@@ -137,7 +140,7 @@ protected:
   
   std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
   
-  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local vectors, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
+  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
 };
 

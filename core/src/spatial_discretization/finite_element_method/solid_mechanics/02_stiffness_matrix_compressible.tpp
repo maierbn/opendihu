@@ -44,8 +44,8 @@ setStiffnessMatrix()
   std::shared_ptr<LowOrderBasisOnMesh> basisOnMeshP = this->data_.mixedMesh()->lowOrderBasisOnMesh();
 
   const int D = BasisOnMeshType::dim();
-  //const int nDofsU = basisOnMeshU->nLocalDofs();
-  //const int nDofsP = basisOnMeshP->nLocalDofs();
+  //const int nDofsU = basisOnMeshU->nDofsLocal();
+  //const int nDofsP = basisOnMeshP->nDofsLocal();
   const int nDofsUPerElement = HighOrderBasisOnMesh::nDofsPerElement();
   const int nDofsPPerElement = LowOrderBasisOnMesh::nDofsPerElement();
   const int nElements = basisOnMeshU->nElementsLocal();

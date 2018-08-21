@@ -94,7 +94,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
     // loop over elements
     for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
     {
-      std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)
       {
@@ -104,10 +104,10 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
           {
             for (int bComponent = 0; bComponent < D; bComponent++)
             {
-              dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
-              dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
+              dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
+              dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofLocalNos[aDof] << ","<<dofLocalNos[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
+              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofNosLocal[aDof] << ","<<dofNosLocal[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
               ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
             }
           }
@@ -427,7 +427,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // set entries in stiffness matrix
     // loop over indices of unknows ((aDof,aComponent), (bDof,bComponent)), i.e. (i,j)
@@ -450,10 +450,10 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
             // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components.
             // Therefore the nDofsPerElement number is not the number of unknows.
-            dof_no_t matrixRowIndex = dofLocalNos[aDof]*D + aComponent;
-            dof_no_t matrixColumnIndex = dofLocalNos[bDof]*D + bComponent;
+            dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
+            dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-            //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofLocalNos[aDof] << ","<<dofLocalNos[bDof]<<")";
+            //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNosLocal[aDof] << ","<<dofNosLocal[bDof]<<")";
             //VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
 
             ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
@@ -477,14 +477,14 @@ template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename Q
 Vec &SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
 rightHandSide()
 {
-  return this->data_.rightHandSide().values();
+  return this->data_.rightHandSide().valuesLocal();
 }
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
 Vec &SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
 displacements()
 {
-  return this->data_.displacements().values();
+  return this->data_.displacements().valuesLocal();
 }
 
 template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
@@ -500,7 +500,7 @@ computeExternalVirtualWork(Vec &resultVec)
   std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nLocalDofs();
+  //const int nDofs = mesh->nDofsLocal();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
   //const int nElements = mesh->nElementsLocal();
   // define shortcuts for quadrature
@@ -573,7 +573,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -589,7 +589,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofNosLocal[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -648,7 +648,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -664,7 +664,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the D displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofNosLocal[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -740,7 +740,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -758,7 +758,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofNosLocal[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
         //LOG(DEBUG) << integratedValue << ", " << resultVectorIndex;
@@ -862,7 +862,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -878,7 +878,7 @@ computeExternalVirtualWork(Vec &resultVec)
 
         // Compute indices in result vector. For each dof there are D values for the displacement components.
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofLocalNos[dofIndex]*D + dofComponent;
+        dof_no_t resultVectorIndex = dofNosLocal[dofIndex]*D + dofComponent;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -907,7 +907,7 @@ computeInternalVirtualWork(Vec &resultVec)
   std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
 
   const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nLocalDofs();
+  //const int nDofs = mesh->nDofsLocal();
   const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
   const int nElements = mesh->nElementsLocal();
   const int nUnknowsPerElement = nDofsPerElement*D;    // D directions for displacements per dof
@@ -1233,9 +1233,9 @@ computeInternalVirtualWork(Vec &resultVec)
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
-    VLOG(2) << "  element " << elementNo << " has dofs " << dofLocalNos;
+    VLOG(2) << "  element " << elementNo << " has dofs " << dofNosLocal;
 
     // add entries in result vector
     // loop over indices of unknows (aDof,aComponent)
@@ -1251,9 +1251,9 @@ computeInternalVirtualWork(Vec &resultVec)
 
         // Compute indices in stiffness matrix. For each dof there are D values for the D displacement components
         // Therefore the nDofsPerElement number is not the number of unknows.
-        dof_no_t resultVectorIndex = dofLocalNos[aDof]*D + aComponent;
+        dof_no_t resultVectorIndex = dofNosLocal[aDof]*D + aComponent;
 
-        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofLocalNos[aDof];
+        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofNosLocal[aDof];
         VLOG(2) << "      vector index (unknown no): "<<resultVectorIndex<<", integrated value: "<<integratedValue;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
@@ -1279,12 +1279,12 @@ getExternalVirtualWork(Vec &resultVec)
   if (this->data_.externalVirtualWorkIsConstant())
   {
     // the external virtual work is independent of the current displacements and was already computed from initializeBoundaryConditions
-    VecCopy(this->data_.externalVirtualWork().values(), resultVec);
+    VecCopy(this->data_.externalVirtualWork().valuesLocal(), resultVec);
   }
   else
   {
     computeExternalVirtualWork(resultVec);
-    this->data_.externalVirtualWork().values() = resultVec;
+    this->data_.externalVirtualWork().valuesLocal() = resultVec;
   }
 
 }
@@ -1297,12 +1297,12 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
 
   if (this->data_.computeWithReducedVectors())
   {
-    Vec &wInt = this->data_.internalVirtualWork().values();
-    Vec &wExt = this->data_.externalVirtualWork().values();
+    Vec &wInt = this->data_.internalVirtualWork().valuesLocal();
+    Vec &wExt = this->data_.externalVirtualWork().valuesLocal();
     Vec &wIntReduced = this->data_.internalVirtualWorkReduced();
 
     const int D = BasisOnMeshType::dim();
-    const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
+    const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
 
     this->computeInternalVirtualWork(wInt);
     LOG(DEBUG) << "--                           dW_int: " << PetscUtility::getStringVector(wInt);
@@ -1321,7 +1321,7 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
   }
   else
   {
-    Vec &wInt = this->data_.internalVirtualWork().values();
+    Vec &wInt = this->data_.internalVirtualWork().valuesLocal();
 
     computeInternalVirtualWork(wInt);
     getExternalVirtualWork(resultVec);
@@ -1353,9 +1353,9 @@ initialize()
   // if the external virtual work is constant, i.e. independent of the displacement, it does not have to be computed for every new iteration of the nonlinear solver. Compute it once, now.
   if (this->data_.externalVirtualWorkIsConstant())
   {
-    this->computeExternalVirtualWork(this->data_.externalVirtualWork().values());
+    this->computeExternalVirtualWork(this->data_.externalVirtualWork().valuesLocal());
 
-    VLOG(1) << "-- initially computed dW_ext: " << PetscUtility::getStringVector(this->data_.externalVirtualWork().values());
+    VLOG(1) << "-- initially computed dW_ext: " << PetscUtility::getStringVector(this->data_.externalVirtualWork().valuesLocal());
   }
 
   this->outputIntermediateSteps_ = PythonUtility::getOptionBool(this->specificSettings_, "outputIntermediateSteps", false);

@@ -34,7 +34,7 @@ public:
   const std::vector<dof_no_t> &getElementDofs(element_no_t elementGlobalNo) const;
 
   //! return the number of dofs
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocal() const;
 
   //! return the number of elements
   element_no_t nElementsLocal() const;

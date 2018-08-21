@@ -66,15 +66,18 @@ public:
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
-  //! get the internal PETSc vector values
-  Vec &values();
+  //! get the internal PETSc vector values, the local vector
+  Vec &valuesLocal();
+
+  //! get the internal PETSc vector values, the global vector
+  Vec &valuesGlobal();
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
 
   /*
   //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocal() const;
   */
 
   //! not implemented interface methods

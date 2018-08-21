@@ -78,7 +78,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
 #endif
 
   PetscErrorCode ierr;
-  const int pressureDofOffset = this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs()*D;
+  const int pressureDofOffset = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D;
 
   // set values to zero
   // loop over elements
@@ -298,11 +298,11 @@ getPressureDofOffset()
 
   if (this->data_.computeWithReducedVectors())
   {
-    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs()*D - this->dirichletIndices_.size();
+    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D - this->dirichletIndices_.size();
   }
   else
   {
-    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs()*D;
+    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D;
   }
 }
 
@@ -318,7 +318,7 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
 {
   // store displacement values
   const int D = HighOrderBasisOnMeshType::dim();
-  const int nDisplacementsUnknowns = this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs() * D;
+  const int nDisplacementsUnknowns = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal() * D;
 
   // get memory read access to solverVariableSolution
   const double *solverVariableSolutionData;
@@ -328,13 +328,13 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
   {
     // store displacements values
     const int nLocalUnknownsOutputVector = nDisplacementsUnknowns;
-    this->expandVector(solverVariableSolution, this->data_.displacements().values(), nLocalUnknownsOutputVector);
+    this->expandVector(solverVariableSolution, this->data_.displacements().valuesGlobal(), nLocalUnknownsOutputVector);
   }
   else
   {
     // store displacements values
     double *displacementsData;
-    VecGetArray(this->data_.displacements().values(), &displacementsData);
+    VecGetArray(this->data_.displacements().valuesGlobal(), &displacementsData);
 
     // copy values from solverVariableSolution to displacements Vec
     for (dof_no_t currentDofNo = 0; currentDofNo < nDisplacementsUnknowns; currentDofNo++)
@@ -343,26 +343,26 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
     }
 
     // return memory access to Petsc
-    VecRestoreArray(this->data_.displacements().values(), &displacementsData);
+    VecRestoreArray(this->data_.displacements().valuesGlobal(), &displacementsData);
   }
 
   // store pressure values
   double *pressureData;
-  VecGetArray(this->data_.pressure().values(), &pressureData);
+  VecGetArray(this->data_.pressure().valuesLocal(), &pressureData);
 
-  const int nDofsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs();
+  const int nDofsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
   const int pressureDofOffset = getPressureDofOffset();
 
   for (dof_no_t currentDofNo = 0; currentDofNo < nDofsPressure; currentDofNo++)
   {
     pressureData[currentDofNo] = solverVariableSolutionData[pressureDofOffset + currentDofNo];
   }
-  VecRestoreArray(this->data_.pressure().values(), &pressureData);
+  VecRestoreArray(this->data_.pressure().valuesLocal(), &pressureData);
 
   VecRestoreArrayRead(solverVariableSolution, &solverVariableSolutionData);
 
-  VLOG(1) << "extracted displacements: " << PetscUtility::getStringVector(this->data_.displacements().values());
-  VLOG(1) << "extracted pressure: " << PetscUtility::getStringVector(this->data_.pressure().values());
+  VLOG(1) << "extracted displacements: " << PetscUtility::getStringVector(this->data_.displacements().valuesLocal());
+  VLOG(1) << "extracted pressure: " << PetscUtility::getStringVector(this->data_.pressure().valuesLocal());
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
@@ -424,7 +424,7 @@ computeIncompressibilityConstraint(Vec &result)
 
   // set all values corresponding to the incompressiblityt constraint to zero
   double *vectorBegin = pressureDofOffset + resultData;
-  double *vectorEnd = vectorBegin + this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs();
+  double *vectorEnd = vectorBegin + this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
   std::fill(vectorBegin, vectorEnd, 0.0);
 
   // loop over elements
@@ -479,7 +479,7 @@ computeIncompressibilityConstraint(Vec &result)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nPressureDofsPerElement> dofLocalNos = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nPressureDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows
@@ -489,7 +489,7 @@ computeIncompressibilityConstraint(Vec &result)
       double integratedValue = integratedValues[dofIndex];
 
       // compute index in result vector
-      dof_no_t resultVectorIndex = dofLocalNos[dofIndex];
+      dof_no_t resultVectorIndex = dofNosLocal[dofIndex];
 
       // store value to result Vec
       resultData[pressureDofOffset + resultVectorIndex] += integratedValue;
@@ -502,7 +502,7 @@ computeIncompressibilityConstraint(Vec &result)
     std::stringstream s;
     s << "(" << resultData[pressureDofOffset + 0];
 
-    for (int i = 1; i < this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs(); i++)
+    for (int i = 1; i < this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal(); i++)
     {
       s << "," << resultData[pressureDofOffset + i];
     }
@@ -558,8 +558,8 @@ const int FiniteElementMethodStiffnessMatrix<
 nLocalUnknowns()
 {
   const int D = HighOrderBasisOnMeshType::dim();
-  const int nLocalUnknownsDisplacements = this->data_.mixedMesh()->highOrderBasisOnMesh()->nLocalDofs() * D;
-  const int nLocalUnknownsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nLocalDofs();
+  const int nLocalUnknownsDisplacements = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal() * D;
+  const int nLocalUnknownsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
   return nLocalUnknownsDisplacements + nLocalUnknownsPressure;
 }
 

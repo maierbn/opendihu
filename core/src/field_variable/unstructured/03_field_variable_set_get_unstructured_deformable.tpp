@@ -39,11 +39,19 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 //! for a specific component, get all values
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
   this->component_[componentNo].getValues(values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+{
+  this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
 }
 
 //! for a specific component, get values from their local dof no.s
@@ -74,16 +82,6 @@ getValue(int componentNo, node_no_t dofLocalNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   return this->component_[componentNo].getValue(dofLocalNo);
-}
-
-//! get all stored local values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-getLocalValues(int componentNo, std::vector<double> &values)
-{
-  assert(componentNo >= 0 && componentNo < nComponents);
-  
-  this->values_->getLocalValues(componentNo, values);
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
@@ -137,12 +135,12 @@ setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
 
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, InsertMode petscInsertMode)
+setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(this->nComponents == 1 && nComponents == 1);
   const int nValues = values.size();
 
-  this->values_->setValues(0, nValues, (const int *) dofLocalNos.data(), values.data(), petscInsertMode);
+  this->values_->setValues(0, nValues, (const int *) dofNosLocal.data(), values.data(), petscInsertMode);
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
@@ -154,7 +152,7 @@ setValues(double value)
 {
   // get number of dofs
   assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+  const dof_no_t nDofs = this->mesh_->nDofsLocal();
 
   std::vector<double> valueBuffer(nDofs,value);
   
@@ -167,9 +165,9 @@ setValues(double value)
 //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  assert(dofLocalNos.size() == values.size());
+  assert(dofNosLocal.size() == values.size());
  
   const int nValues = values.size();
   std::vector<double> valuesBuffer(nValues);
@@ -182,7 +180,7 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nCom
       valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
     }
     
-    this->values_->setValues(componentIndex, nValues, dofLocalNos.data(), valuesBuffer.data(), petscInsertMode);
+    this->values_->setValues(componentIndex, nValues, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
   }
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
@@ -191,7 +189,7 @@ setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nCom
 //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode)
+setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
@@ -205,37 +203,46 @@ setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  
-  this->values_->setValuesWithGhosts(componentNo, values);
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+ 
+  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+ 
+  // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
+  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+}
+
+//! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
   
-  this->values_->setValuesWithoutGhosts(componentNo, values);
+  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  this->setValues(this->values_->localDofNos(), values, petscInsertMode); 
-}
-
-//! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
-{
-  this->setValues(this->values_->localDofNosWithoutGhosts(), values, petscInsertMode); 
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  
+  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs

@@ -23,7 +23,7 @@ public:
   RankSubset();
  
   //! number of ranks in the current rank list
-  element_no_t size();
+  element_no_t size() const;
 
   //! first entry of the rank list
   std::vector<int>::const_iterator begin();
@@ -32,7 +32,7 @@ public:
   std::vector<int>::const_iterator end();
   
   //! get the MPI communicator that contains all ranks of this subset
-  MPI_Comm mpiCommunicator();
+  MPI_Comm mpiCommunicator() const;
   
 protected:
  

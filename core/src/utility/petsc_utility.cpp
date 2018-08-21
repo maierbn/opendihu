@@ -21,14 +21,14 @@
 void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 {
   int nRows, nColumns;
-  MatGetSize(matrix, &nRows, &nColumns);
+  MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<int> rowIndices(nRows);
   std::iota(rowIndices.begin(), rowIndices.end(), 0);
   std::vector<int> columnIndices(nColumns);
   std::iota(columnIndices.begin(), columnIndices.end(), 0);
   matrixValues.resize(nRows*nColumns);
-  LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " entries for the " << nRows << "x" << nColumns << " matrix";
+  LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " local entries for the " << nRows << "x" << nColumns << " local matrix";
 
   // get values in row-major format
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
@@ -120,7 +120,9 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
 std::string PetscUtility::getStringMatrix(const Mat& matrix)
 {
   int nRows, nColumns;
-  MatGetSize(matrix, &nRows, &nColumns);
+  MatGetLocalSize(matrix, &nRows, &nColumns);
+  int nRowsGlobal, nColumnsGlobal;
+  MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
 
   std::vector<double> matrixValues, vectorValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);
@@ -128,7 +130,11 @@ std::string PetscUtility::getStringMatrix(const Mat& matrix)
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
-  s<<std::endl<<"    ";
+  s << nRows << "x" << nColumns;
+  if (nRows != nRowsGlobal || nColumns != nColumnsGlobal)
+    s << " (global: " << nRowsGlobal << "x" << nColumnsGlobal << ")";
+  s << std::endl
+    << "    ";
   for (int j=0; j<nColumns; j++)
   {
     s<<std::setw(6)<<std::setfill('_')<<j;

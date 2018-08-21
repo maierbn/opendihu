@@ -33,7 +33,7 @@ public:
   BasisOnMeshPartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
   
   //! get the partition
-  std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition();
+  std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition() const;
   
   //! get the partition as pointer of type meshPartitionBase, this is in the itnerface in mesh
   std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase();

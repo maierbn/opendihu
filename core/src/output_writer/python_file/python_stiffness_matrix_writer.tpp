@@ -66,7 +66,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
 
   // get data of rhs vector
   int vectorSize = 0;
-  VecGetSize(data.rightHandSide().values(), &vectorSize);
+  VecGetSize(data.rightHandSide().valuesLocal(), &vectorSize);
 
   std::vector<int> indices(vectorSize);
   std::iota(indices.begin(), indices.end(), 0);
@@ -83,7 +83,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
 
-  VecGetValues(data.rightHandSide().values(), vectorSize, indices.data(), vectorValues.data());
+  VecGetValues(data.rightHandSide().valuesLocal(), vectorSize, indices.data(), vectorValues.data());
 
   // write as numpy file
   writeToNumpyFile(vectorValues, filenameRhs, singleEntry);
@@ -100,7 +100,7 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
 
   nEntries = {nRows, nColumns};
 
-  MatGetValues(data.stiffnessMatrix(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+  MatGetValues(data.stiffnessMatrix().valuesLocal(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 
   // write as numpy file
   writeToNumpyFile(matrixValues, filenameStiffness, nEntries);

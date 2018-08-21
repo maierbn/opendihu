@@ -26,9 +26,6 @@ MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset) :
     localSize_++;
   
   beginGlobal_ = rankNo * sizePerRank + std::min(residual, (global_no_t)rankNo);
-  
-  // initialize local dofs list 
-  this->initializeLocalDofsVector(localSize_);
 }
 
 //! get the local to global mapping for the current partition
@@ -47,20 +44,20 @@ localToGlobalMapping()
  
 //! number of entries in the current partition
 element_no_t MeshPartition<Mesh::None>::
-nElementsLocal()
+nElementsLocal() const
 {
   return localSize_;
 }
 
 //! number of entries in total
 global_no_t MeshPartition<Mesh::None>::
-nElementsGlobal()
+nElementsGlobal() const
 {
   return globalSize_;
 }
     
 void MeshPartition<Mesh::None>::
-extractLocalDofsWithoutGhosts(std::vector<double> &vector)
+extractLocalDofsWithoutGhosts(std::vector<double> &vector) const
 {
   extractLocalNodes<double>(vector);
 }
@@ -90,7 +87,7 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   PetscInt *numprocs;
   PetscInt **indices;
   ierr = ISLocalToGlobalMappingGetInfo(localToGlobalMapping, &nproc, &procs, &numprocs, &indices); CHKERRABORT(MPI_COMM_WORLD, ierr);
-  stream << "[localToGlobalMapping, number of foreign ranks: " << nproc << ": (";
+  stream << "[localToGlobalMapping, " << nproc << " ranks: (";
   
   // output ranks
   if (nproc > 0)
@@ -101,53 +98,41 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   {
     stream << ", " << procs[i];
   }
-  stream << "), number of indices on ranks: (";
-  
-  // output number of indices on ranks
-  PetscInt numprocmax = 0;
-  if (nproc > 0)
-  {
-    numprocmax = std::max(numprocmax, numprocs[0]);
-    stream << numprocs[0];
-  }
-  for (int i = 1; i < nproc; i++)
-  {
-    numprocmax = std::max(numprocmax, numprocs[i]);
-    stream << ", " << numprocs[i];
-  }
-  stream << "), local indices of boundary elements: (";
+  stream << "), indices of nodes (in local numbering) shared with neighbors (sorted by global numbering) : (";
   
   // output boundary elements
   if (nproc > 0)
   {
-    for (int j = 0; j < numprocmax; j++) 
+    stream << "0=";
+    for (int j = 0; j < numprocs[0]; j++) 
     {
       stream << indices[0][j] << " ";
     }
   }
   for (int i = 1; i < nproc; i++)
   {
-    for (int j = 0; j < numprocmax; j++) 
+    stream << "; " << i << "=";
+    for (int j = 0; j < numprocs[i]; j++) 
     {
-      stream << "; " << indices[i][j];
+      stream << indices[i][j] << " ";
     }
   }
   stream << "), ";
   
   PetscInt nLocalIndices;
   ierr = ISLocalToGlobalMappingGetSize(localToGlobalMapping, &nLocalIndices); CHKERRABORT(MPI_COMM_WORLD, ierr);
-  stream << nLocalIndices << " local indices: [";
+  stream << nLocalIndices << " local to Petsc: [";
   
   PetscInt const *localIndices;
   ierr = ISLocalToGlobalMappingGetIndices(localToGlobalMapping, &localIndices); CHKERRABORT(MPI_COMM_WORLD, ierr);
   
   if (nLocalIndices > 0)
   {
-    stream << localIndices[0];
+    stream << "l0=p" << localIndices[0];
   }
   for (int i = 1; i < nLocalIndices; i++)
   {
-    stream << "," << localIndices[i];
+    stream << ",l" << i << "=p" << localIndices[i];
   }
   stream << "]]";
   

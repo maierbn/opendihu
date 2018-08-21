@@ -62,12 +62,12 @@ std::vector<int>::const_iterator RankSubset::end()
   return rankNo_.cend();
 }
 
-element_no_t RankSubset::size()
+element_no_t RankSubset::size() const
 {
   return rankNo_.size();
 }
 
-MPI_Comm RankSubset::mpiCommunicator()
+MPI_Comm RankSubset::mpiCommunicator() const
 {
   return mpiCommunicator_;
 }

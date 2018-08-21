@@ -15,8 +15,7 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
   
   this->createDmElements();
-  
-  this->initializeLocalDofsVector(nNodesLocalWithGhosts() * BasisOnMesh::BasisOnMeshBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode());
+  this->createLocalDofOrderings();
   
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_;
@@ -51,7 +50,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
       localSizesOnRanks_[i].data(), rankSubset->size(), MPI_INT, rankSubset->mpiCommunicator()));
   }
   
-  this->initializeLocalDofsVector(nNodesLocalWithGhosts() * BasisOnMesh::BasisOnMeshBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerNode());
+  this->createLocalDofOrderings();
   
   LOG(DEBUG) << *this;
   
@@ -75,6 +74,14 @@ initializeHasFullNumberOfNodes()
       hasFullNumberOfNodes_[i] = true;
     }
   }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeLocalDofsVector(node_no_t nDofsLocalWithGhosts)
+{
+  dofNosLocal_.resize(nDofsLocalWithGhosts);
+  std::iota(dofNosLocal_.begin(), dofNosLocal_.end(), 0);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -175,126 +182,12 @@ template<typename MeshType,typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 localToGlobalMappingDofs()
 {
-  // The local dofs number is unlike in OpenCMISS, where non-ghost and ghost numbers have their own contiguous range of local numbers.
-  // Here the numbering is straight from 0 to nNodesLocalWithGhosts()-1, over non-ghost and ghost dofs together.
-  
-  ISLocalToGlobalMapping localToGlobalMapping;
-  //DMGetLocalToGlobalMapping(*dmNodes_, &localToGlobalMapping);
-  
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-    
-  // create a local to global dof no.s mapping
-  PetscErrorCode ierr;
-  std::vector<PetscInt> globalDofNos(nDofsLocalWithGhosts());  
-
-  nonGhostDofLocalNos_.clear();
-  nonGhostDofLocalNos_.reserve(nDofsLocalWithoutGhosts());
-  
-  // set the global dof nos for the local dofs
-  if (MeshType::dim() == 1)
-  {
-    dof_no_t localDofNo = 0;
-    for (dof_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
-    {
-      global_no_t globalDofNo = i * nDofsPerNode;
-      
-      bool dofIsNonGhost = i < beginNodeGlobal(0) + nNodesLocalWithoutGhosts(0);
-        
-      for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
-      {
-        globalDofNos[localDofNo] = (PetscInt)(globalDofNo + dofIndex);
-        
-        if (dofIsNonGhost)
-        {
-          nonGhostDofLocalNos_.push_back(localDofNo);
-        }
-        
-        localDofNo++;
-      }
-    }
-  }
-  else if (MeshType::dim() == 2)
-  {
-    dof_no_t localDofNo = 0;
-    for (dof_no_t j = beginNodeGlobal(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
-    {
-      for (dof_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
-      {
-        global_no_t globalDofNo = (j * nNodesGlobal(0) + i) * nDofsPerNode;
-        
-        bool dofIsNonGhost = i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0) 
-          && j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1);
-          
-        for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
-        {
-          globalDofNos[localDofNo] = (PetscInt)(globalDofNo + dofIndex);
-          
-          if (dofIsNonGhost)
-          {
-            nonGhostDofLocalNos_.push_back(localDofNo);
-          }
-          
-          localDofNo++;
-        }
-      }
-    }
-  }
-  else if (MeshType::dim() == 3)
-  {
-    dof_no_t localDofNo = 0;
-    for (dof_no_t k = beginNodeGlobal(2); k < beginNodeGlobal(2) + nNodesLocalWithGhosts(2); k++)
-    {
-      for (dof_no_t j = beginNodeGlobal(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
-      {
-        for (dof_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
-        {
-          global_no_t globalDofNo = (k * nNodesGlobal(1) * nNodesGlobal(0) + j * nNodesGlobal(0) + i) * nDofsPerNode;
-        
-          bool dofIsNonGhost = i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0) 
-            && j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1)
-            && k < beginNodeGlobal(2) + nNodesLocalWithGhosts(2);
-              
-          for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
-          {
-            globalDofNos[localDofNo] = (PetscInt)(globalDofNo + dofIndex);
-            if (dofIsNonGhost)
-            {
-              nonGhostDofLocalNos_.push_back(localDofNo);
-            }
-            
-            localDofNo++;
-          }
-        }
-      }
-    }
-  }
-
-  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, globalDofNos.size(), 
-                                      globalDofNos.data(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(mpiCommunicator(), ierr);
-
-  return localToGlobalMapping;
-}
-
-//! return iterator to beginning of nonGhost dof nos
-template<typename MeshType,typename BasisFunctionType>
-std::vector<dof_no_t>::const_iterator MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nonGhostDofsBegin()
-{
-  return nonGhostDofLocalNos_.cbegin();
-}
-  
-//! return iterator to end of nonGhost dof nos
-template<typename MeshType,typename BasisFunctionType>
-std::vector<dof_no_t>::const_iterator MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nonGhostDofsEnd()
-{
-  return nonGhostDofLocalNos_.cend();
+  return localToGlobalMapping_;
 }
 
 template<typename MeshType,typename BasisFunctionType>
 int MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nRanks(int coordinateDirection)
+nRanks(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -304,7 +197,7 @@ nRanks(int coordinateDirection)
 //! number of entries in the current partition
 template<typename MeshType,typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nElementsLocal()
+nElementsLocal() const
 {
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -316,7 +209,7 @@ nElementsLocal()
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nElementsGlobal()
+nElementsGlobal() const
 {
   global_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -328,7 +221,7 @@ nElementsGlobal()
 
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nDofsLocalWithGhosts()
+nDofsLocalWithGhosts() const
 {
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   
@@ -337,7 +230,7 @@ nDofsLocalWithGhosts()
 
 template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nDofsLocalWithoutGhosts()
+nDofsLocalWithoutGhosts() const
 {
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   
@@ -347,7 +240,7 @@ nDofsLocalWithoutGhosts()
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithGhosts()
+nNodesLocalWithGhosts() const
 {
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -360,7 +253,7 @@ nNodesLocalWithGhosts()
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithoutGhosts()
+nNodesLocalWithoutGhosts() const
 {
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -373,7 +266,7 @@ nNodesLocalWithoutGhosts()
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithGhosts(int coordinateDirection)
+nNodesLocalWithGhosts(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -384,7 +277,7 @@ nNodesLocalWithGhosts(int coordinateDirection)
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nElementsLocal(int coordinateDirection)
+nElementsLocal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -395,7 +288,7 @@ nElementsLocal(int coordinateDirection)
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithoutGhosts(int coordinateDirection)
+nNodesLocalWithoutGhosts(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -407,7 +300,7 @@ nNodesLocalWithoutGhosts(int coordinateDirection)
 //! number of nodes in total
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesGlobal()
+nNodesGlobal() const
 {
   global_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
@@ -419,7 +312,7 @@ nNodesGlobal()
 
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-beginNodeGlobal(int coordinateDirection)
+beginNodeGlobal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -431,7 +324,7 @@ beginNodeGlobal(int coordinateDirection)
 //! number of nodes in total
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesGlobal(int coordinateDirection)
+nNodesGlobal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -443,7 +336,7 @@ nNodesGlobal(int coordinateDirection)
 //! this is the case if the local partition touches the right/top/back border
 template<typename MeshType,typename BasisFunctionType>
 bool MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-hasFullNumberOfNodes(int coordinateDirection)
+hasFullNumberOfNodes(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
@@ -454,7 +347,7 @@ hasFullNumberOfNodes(int coordinateDirection)
 template<typename MeshType,typename BasisFunctionType>
 template<typename T>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-extractLocalNodes(std::vector<T> &vector)
+extractLocalNodes(std::vector<T> &vector) const
 {
   std::vector<T> result(nNodesLocalWithGhosts());
   global_no_t resultIndex = 0;
@@ -497,7 +390,7 @@ extractLocalNodes(std::vector<T> &vector)
   
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-extractLocalDofsWithoutGhosts(std::vector<double> &vector)
+extractLocalDofsWithoutGhosts(std::vector<double> &vector) const 
 {
   dof_no_t nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   std::vector<double> result(nDofsLocalWithoutGhosts());
@@ -548,18 +441,114 @@ extractLocalDofsWithoutGhosts(std::vector<double> &vector)
   vector.assign(result.begin(), result.end());
 }
 
+//! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs
+//! @param onlyNodalValues: if for Hermite only get every second dof such that derivatives are not returned
 template<typename MeshType,typename BasisFunctionType>
-std::vector<PetscInt> &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-localDofNosWithoutGhosts()
+const std::vector<PetscInt> &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+dofNosLocal(bool onlyNodalValues) const
 {
-  return nonGhostDofLocalNos_;
+  if (onlyNodalValues)
+  {
+    return onlyNodalDofLocalNos_;
+  }
+  else 
+  {
+    return dofNosLocal_;
+  }
 }
- 
+
 template<typename MeshType,typename BasisFunctionType>
-std::shared_ptr<DM> MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-dmElements()
+const std::vector<PetscInt> &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+ghostDofGlobalNos() const
 {
-  return dmElements_;
+  return ghostDofGlobalNos_;
+}
+
+//! get a PETSc IS (index set) with the same information as dofNosLocal_
+template<typename MeshType,typename BasisFunctionType>
+const IS &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+dofNosLocalIS() const
+{
+  return dofNosLocalIS_;
+}
+
+//! fill the dofLocalNo vectors
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+createLocalDofOrderings()
+{
+  // fill dofNosLocal_ 
+  dofNosLocal_.resize(nDofsLocalWithGhosts());
+  std::iota(dofNosLocal_.begin(), dofNosLocal_.end(), 0);
+  
+  // fill onlyNodalDofLocalNos_
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
+  int nNodalDofs = nDofsLocalWithGhosts() / nDofsPerNode;
+  onlyNodalDofLocalNos_.resize(nNodalDofs);
+  
+  dof_no_t localDofNo = 0;
+  for (node_no_t localNodeNo = 0; localNodeNo < nNodesLocalWithGhosts(); localNodeNo++)
+  {
+    onlyNodalDofLocalNos_[localNodeNo] = localDofNo;
+    localDofNo += nDofsPerNode;
+  }
+  
+  // fill ghostDofGlobalNos_
+  int resultIndex = 0;
+  int nGhosts = nDofsLocalWithGhosts() - nDofsLocalWithoutGhosts();
+  ghostDofGlobalNos_.resize(nGhosts);
+  if (MeshType::dim() == 1)
+  {
+    for (global_no_t i = beginNodeGlobal(0) + nNodesLocalWithoutGhosts(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
+    {
+      for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+      {
+        ghostDofGlobalNos_[resultIndex++] = i*nDofsPerNode + dofOnNodeIndex;
+      }
+    }
+  }
+  else if (MeshType::dim() == 2)
+  {
+    for (global_no_t j = beginNodeGlobal(1) + nNodesLocalWithoutGhosts(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
+    {
+      for (global_no_t i = beginNodeGlobal(0) + nNodesLocalWithoutGhosts(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
+      {
+        for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+        {
+          ghostDofGlobalNos_[resultIndex++] = (j*nNodesGlobal(0) + i)*nDofsPerNode + dofOnNodeIndex;
+        }
+      }
+    }
+  }
+  else if (MeshType::dim() == 3)
+  {
+    for (global_no_t k = beginNodeGlobal(2) + nNodesLocalWithoutGhosts(2); k < beginNodeGlobal(2) + nNodesLocalWithGhosts(2); k++)
+    {
+      for (global_no_t j = beginNodeGlobal(1) + nNodesLocalWithoutGhosts(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
+      {
+        for (global_no_t i = beginNodeGlobal(0) + nNodesLocalWithoutGhosts(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
+        {
+          for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+          {
+            ghostDofGlobalNos_[resultIndex++] = (k*nNodesGlobal(1)*nNodesGlobal(0) + j*nNodesGlobal(0) + i)*nDofsPerNode + dofOnNodeIndex;
+          }
+        }
+      }
+    }
+  }
+  
+  // create localToGlobalMapping_
+  PetscErrorCode ierr;
+  Vec temporaryVector;
+  ierr = VecCreateGhost(this->mpiCommunicator(), nNodesLocalWithoutGhosts(), 
+                        nNodesGlobal(), nGhosts, ghostDofGlobalNos_.data(), &temporaryVector); CHKERRV(ierr);
+  
+  // retrieve local to global mapping
+  ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalMapping_); CHKERRV(ierr);
+  ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
+  
+  // create IS (indexSet) dofNosLocalIS_;
+  ierr = ISCreateGeneral(PETSC_COMM_SELF, dofNosLocal_.size(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -603,7 +592,8 @@ output(std::ostream &stream)
   stream << " nNodesLocalWithoutGhosts: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nNodesLocalWithoutGhosts(i) << ",";
-  stream << "total " << nNodesLocalWithoutGhosts();
+  stream << "total " << nNodesLocalWithoutGhosts()
+    << ", ghostDofGlobalNos: " << ghostDofGlobalNos_;
 } 
 
 }  // namespace

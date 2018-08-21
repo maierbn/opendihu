@@ -122,9 +122,9 @@ print()
   VLOG(4)<<"======================";
 
   int nEntries;
-  VecGetSize(this->gradient_->values(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->gradient_->values());
+  VecGetSize(this->gradient_->valuesLocal(), &nEntries);
+  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->gradient_->valuesLocal());
   VLOG(4)<<"======================";
 }
 

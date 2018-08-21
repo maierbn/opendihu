@@ -92,14 +92,14 @@ print()
   VLOG(4)<<"======================";
 
   int nEntries;
-  VecGetSize(this->increment_->values(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->increment_->values());
+  VecGetSize(this->increment_->valuesLocal(), &nEntries);
+  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->increment_->valuesLocal());
   VLOG(4)<<"======================";
 
-  VecGetSize(this->solution_->values(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
+  VecGetSize(this->solution_->valuesLocal(), &nEntries);
+  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
   VLOG(4)<<"======================";
 }
 

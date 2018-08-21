@@ -37,6 +37,7 @@ public:
 
   //! inherited constructor
   using FieldVariableSetGetRegularFixed<BasisOnMeshType,1>::FieldVariableSetGetRegularFixed;
+  
 };
 
 };  // namespace

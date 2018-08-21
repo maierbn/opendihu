@@ -11,7 +11,7 @@ namespace FieldVariable
 /** This is the Interface for all field variable types, i.e. it contains the methods that any field variable
  *  independent of the template instanciation provides.
  *  Commented out methods are also part of the interface. They can't be included directly because templates can't be
- *  virtual. Their occurence here is therefore only informative but can be trusted.
+ *  virtual. Their occurence here is therefore only informative.
  */
 template<typename BasisOnMeshType>
 struct Interface
@@ -42,7 +42,7 @@ struct Interface
   //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
-  virtual Vec &values() = 0;
+  virtual Vec &valuesLocal() = 0;
 
   //! get the names of the components
   //virtual std::array<std::string, nComponents> componentNames() const = 0;

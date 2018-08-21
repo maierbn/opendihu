@@ -23,11 +23,16 @@ public:
   using FieldVariableData<BasisOnMeshType,nComponents>::getValues;
   using FieldVariableData<BasisOnMeshType,nComponents>::getElementValues;
   using FieldVariableData<BasisOnMeshType,nComponents>::getValue;
+  using FieldVariableData<BasisOnMeshType,nComponents>::getValuesWithGhosts;
+  using FieldVariableData<BasisOnMeshType,nComponents>::getValuesWithoutGhosts;
   using FieldVariableData<BasisOnMeshType,nComponents>::setValue;
   using FieldVariableData<BasisOnMeshType,nComponents>::setValues;
 
   //! for a specific component, get all values
-  void getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
+  void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
+
+  //! for a specific component, get all values
+  void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
 
   //! for a specific component, get values from their local dof no.s
   template<int N>

@@ -23,7 +23,7 @@ getElementNodeNos(element_no_t elementNo) const
 
 template<typename MeshType,int D,int order>
 dof_no_t BasisOnMeshNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
-nLocalDofs() const
+nDofsLocal() const
 {
   return this->nElementsLocal() * this->nDofsPerElement();
 }

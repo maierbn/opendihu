@@ -26,10 +26,10 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
-  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-
-  dof_no_t nUnknownsLocal = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements = mesh->nElementsLocal();
+  double elementLength = mesh->meshWidth();
+  dof_no_t nUnknownsLocal = mesh->nNodesLocalWithGhosts();
 
   LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
@@ -48,7 +48,7 @@ transferRhsToWeakForm()
 
   // get all entries
   std::vector<double> vectorValues;
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues, false);
 
   rightHandSide.zeroEntries();
   
@@ -65,7 +65,7 @@ transferRhsToWeakForm()
   
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues);
   
   // set values for boundaries with stencilSide
   node_no_t dofNo = 0;
@@ -94,12 +94,13 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-  node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1);
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
+  double elementLength0 = mesh->meshWidth();
+  double elementLength1 = mesh->meshWidth();
   double integralFactor = elementLength0*elementLength1;
 
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
@@ -134,7 +135,7 @@ transferRhsToWeakForm()
 
   // get all values
   std::vector<double> vectorValues;
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues);
 
   rightHandSide.zeroEntries();
   // loop over all dofs and set values with stencilCenter
@@ -159,7 +160,7 @@ transferRhsToWeakForm()
 
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues);
   
   // set entries for boundary nodes on edges
   // left boundary (x=0)
@@ -324,15 +325,16 @@ transferRhsToWeakForm()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(2);
-  node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1);
-  node_no_t nNodes2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(2);
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+  element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
+  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
+  node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
+  double elementLength0 = mesh->meshWidth();
+  double elementLength1 = mesh->meshWidth();
+  double elementLength2 = mesh->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
 
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
@@ -400,7 +402,7 @@ transferRhsToWeakForm()
 
   // get all values
   std::vector<double> vectorValues;
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues);
 
   rightHandSide.zeroEntries();
   // loop over all dofs and set values with stencilCenter
@@ -431,7 +433,7 @@ transferRhsToWeakForm()
 
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getLocalValues(vectorValues);
+  rightHandSide.getValuesWithGhosts(vectorValues);
   
   // set entries for boundary nodes on surface boundaries
   // left boundary (x = 0)
@@ -1053,10 +1055,11 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 1D";
 
     // get settings values
-    element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
-    double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+    element_no_t nElements = mesh->nElementsLocal();
+    double elementLength = mesh->meshWidth();
 
-    dof_no_t nUnknownsLocal = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts();
+    dof_no_t nUnknownsLocal = mesh->nNodesLocalWithGhosts();
 
     LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
@@ -1115,12 +1118,13 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 2D";
 
     // get settings values
-    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-    node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-    node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1);
-    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+    element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+    element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+    node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+    node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
+    double elementLength0 = mesh->meshWidth();
+    double elementLength1 = mesh->meshWidth();
     double integralFactor = elementLength0*elementLength1;
 
     LOG(DEBUG) << "elementLength0: " << elementLength0;
@@ -1314,15 +1318,16 @@ setMassMatrix()
     LOG(DEBUG)<<"createMassMatrix 3D";
 
     // get settings values
-    element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-    element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-    element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(2);
-    node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-    node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1); 
-    node_no_t nNodes2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(2);
-    double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-    double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-    double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+    std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+    element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+    element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+    element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
+    node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+    node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1); 
+    node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
+    double elementLength0 = mesh->meshWidth();
+    double elementLength1 = mesh->meshWidth();
+    double elementLength2 = mesh->meshWidth();
     double integralFactor = elementLength0*elementLength1*elementLength2;
 
     // multiply factor to rhs

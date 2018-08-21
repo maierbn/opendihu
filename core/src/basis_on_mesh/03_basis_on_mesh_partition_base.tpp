@@ -19,7 +19,7 @@ BasisOnMeshPartitionBase(std::shared_ptr<Partition::Manager> partitionManager, P
 template<typename MeshType,typename BasisFunctionType>
 std::shared_ptr<Partition::MeshPartition<BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> 
 BasisOnMeshPartitionBase<MeshType,BasisFunctionType>::
-meshPartition()
+meshPartition() const
 {
   return meshPartition_;
 }

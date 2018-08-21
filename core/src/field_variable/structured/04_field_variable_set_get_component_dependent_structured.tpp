@@ -50,15 +50,23 @@ getValue(node_no_t dofLocalNo)
   return result;
 }
 
-//! get all stored local values
+//! get all stored local values, for 1 component
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-getLocalValues(std::vector<double> &values)
+getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
 {
-  this->values_->getLocalValues(0, values);
+  this->getValuesWithGhosts(0, values, onlyNodalValues);
 }
-  
-//! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+
+//! get all stored local values, for 1 component
+template<typename BasisOnMeshType>
+void FieldVariableSetGetComponent<BasisOnMeshType,1>::
+getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues)
+{
+  this->getValuesWithoutGhosts(0, values, onlyNodalValues);
+}
+
+//! set a single dof (all components), after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
@@ -70,26 +78,31 @@ setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<double> &values, InsertMode petscInsertMode)
+setValues(const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values, InsertMode petscInsertMode)
 {
-  this->values_->setValues(0, dofLocalNos.size(), (PetscInt*)dofLocalNos.data(), values.data(), petscInsertMode);
+  this->values_->setValues(0, dofNosLocal.size(), (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValuesWithGhosts(std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
-  this->values_->setValues(0, values, petscInsertMode);
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  
+  this->values_->setValues(0, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<typename BasisOnMeshType>
 void FieldVariableSetGetComponent<BasisOnMeshType,1>::
-setValuesWithoutGhosts(std::vector<double> &values, InsertMode petscInsertMode)
+setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
-  this->values_->setValues(0, values, petscInsertMode);
+  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  
+  // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
+  this->values_->setValues(0, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
 };  // namespace

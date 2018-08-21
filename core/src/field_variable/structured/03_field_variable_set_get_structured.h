@@ -21,7 +21,11 @@ public:
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
-  void getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
+  void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
+
+  //! for a specific component, get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
 
   //! for a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>
@@ -43,29 +47,26 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);
 
-  //! get all stored local values, including ghost values
-  void getLocalValues(int componentNo, std::vector<double> &values);
-  
   //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValues(std::vector<dof_no_t> &dofLocalNos, std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValue(dof_no_t dofLocalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set value for all dofs
   void setValues(double value);
 
   //! set values for the all component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set values for the all component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-  void setValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
+  void setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set value to zero for all dofs
   void zeroEntries();

@@ -13,12 +13,12 @@ template<typename MeshType, typename BasisFunctionType>
 std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> BasisOnMesh<MeshType,BasisFunctionType>::
 getElementDofLocalNos(element_no_t elementNo) const
 {
-  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> dofLocalNos;
+  std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> dofNosLocal;
   for (int dofIndex = 0; dofIndex < BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    dofLocalNos[dofIndex] = this->getDofNo(elementNo, dofIndex);
+    dofNosLocal[dofIndex] = this->getDofNo(elementNo, dofIndex);
   }
-  return dofLocalNos;
+  return dofNosLocal;
 }
 
 template<typename MeshType, typename BasisFunctionType>

@@ -150,14 +150,14 @@ print()
 
   VLOG(4)<<"======================";
   int nRows, nColumns;
-  MatGetSize(this->stiffnessMatrix_->values(), &nRows, &nColumns);
+  MatGetSize(this->stiffnessMatrix_->valuesGlobal(), &nRows, &nColumns);
   VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
 
-  VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->stiffnessMatrix_->values(), this->rhs_->values());
-  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_->values());
+  VLOG(4) << std::endl << PetscUtility::getStringMatrixVector(this->stiffnessMatrix_->valuesLocal(), this->rhs_->valuesLocal());
+  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_->valuesLocal());
 
   MatInfo info;
-  MatGetInfo(this->stiffnessMatrix_->values(), MAT_LOCAL, &info);
+  MatGetInfo(this->stiffnessMatrix_->valuesLocal(), MAT_LOCAL, &info);
 
   VLOG(4)<<"Matrix info: "<<std::endl
     <<"block_size: "<<info.block_size<<std::endl
@@ -172,14 +172,14 @@ print()
   VLOG(4)<<"======================";
 
   int nEntries;
-  VecGetSize(this->rhs_->values(), &nEntries);
-  VLOG(4)<<"rhs ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->rhs_->values());
+  VecGetSize(this->rhs_->valuesLocal(), &nEntries);
+  VLOG(4)<<"rhs ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->rhs_->valuesLocal());
   VLOG(4)<<"======================";
 
-  VecGetSize(this->solution_->values(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
+  VecGetSize(this->solution_->valuesLocal(), &nEntries);
+  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
   VLOG(4)<<"======================";
   
 }
@@ -195,10 +195,6 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
-  // determine problem size
-  int nEntries;
-  VecGetSize(this->rhs_->values(), &nEntries);
-
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters

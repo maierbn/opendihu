@@ -69,9 +69,9 @@ print() // use override in stead of extending the parents' print output.This way
   VLOG(4)<<"======================";
 
   int nEntries;
-  VecGetSize(this->intermediateIncrement_->values(), &nEntries);
-  VLOG(4)<<"intermediateIncrement ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->intermediateIncrement_->values());
+  VecGetSize(this->intermediateIncrement_->valuesLocal(), &nEntries);
+  VLOG(4)<<"intermediateIncrement ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->intermediateIncrement_->valuesLocal());
   VLOG(4)<<"======================";
 
   /*VecGetSize(this->intermediateSolution_->values(), &nEntries);
@@ -79,14 +79,14 @@ print() // use override in stead of extending the parents' print output.This way
   VLOG(4)<<PetscUtility::getStringVector(this->intermediateSolution_->values());
   VLOG(4)<<"======================";*/
 
-  VecGetSize(this->increment_->values(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->increment_->values());
+  VecGetSize(this->increment_->valuesLocal(), &nEntries);
+  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->increment_->valuesLocal());
   VLOG(4)<<"======================";
 
-  VecGetSize(this->solution_->values(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->values());
+  VecGetSize(this->solution_->valuesLocal(), &nEntries);
+  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
+  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
   VLOG(4)<<"======================";
 }
 

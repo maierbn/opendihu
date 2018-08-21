@@ -16,7 +16,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
   const int D = BasisOnMeshType::dim();
 
-  const dof_no_t nDofs = this->mesh_->nLocalDofs();
+  const dof_no_t nDofs = this->mesh_->nDofsLocal();
   std::vector<int> nSummands(nDofs,0.0);   ///< the number of elements that are adjacent to the node
 
   // loop over elements

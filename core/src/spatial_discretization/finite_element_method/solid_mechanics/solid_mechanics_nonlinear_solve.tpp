@@ -166,8 +166,8 @@ debug()
 
   //Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
   //Vec &residual = this->data_.residual().values();
-  Vec &displacements = this->data_.displacements().values();
-  Vec &externalVirtualWork = this->data_.externalVirtualWork().values();
+  Vec &displacements = this->data_.displacements().valuesLocal();
+  Vec &externalVirtualWork = this->data_.externalVirtualWork().valuesLocal();
 
   Vec internalVirtualWork;
   VecDuplicate(externalVirtualWork, &internalVirtualWork);
@@ -244,7 +244,7 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
+      const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
@@ -300,7 +300,7 @@ debug()
     if (this->data_.computeWithReducedVectors())
     {
       const int D = BasisOnMeshType::dim();
-      const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
+      const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
@@ -565,18 +565,18 @@ updateGeometryActual()
   // update geometry field from displacements
   if (BasisOnMeshType::dim() == 2)  // 2D problem
   {
-    const int nLocalUnknowns3D = this->data_.mesh()->nLocalDofs() * 3;
+    const int nLocalUnknowns3D = this->data_.mesh()->nDofsLocal() * 3;
 
     // expand 2D vector to 3D vector fullIncrement
-    this->expandVectorTo3D(this->data_.displacements().values(), this->data_.fullIncrement(), nLocalUnknowns3D);
+    this->expandVectorTo3D(this->data_.displacements().valuesLocal(), this->data_.fullIncrement(), nLocalUnknowns3D);
 
     // w = alpha*x+y
-    VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.fullIncrement());
+    VecWAXPY(this->data_.geometryActual().valuesLocal(), 1.0, this->data_.geometryReference().valuesLocal(), this->data_.fullIncrement());
   }
   else  // 3D problem
   {
     // w = alpha*x+y
-    VecWAXPY(this->data_.geometryActual().values(), 1.0, this->data_.geometryReference().values(), this->data_.displacements().values());
+    VecWAXPY(this->data_.geometryActual().valuesLocal(), 1.0, this->data_.geometryReference().valuesLocal(), this->data_.displacements().valuesLocal());
   }
 }
 

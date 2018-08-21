@@ -34,7 +34,7 @@ public:
   SolutionVectorMapping &solutionVectorMapping();
 
   //! return the Petsc solution vector
-  Vec &solution();
+  //Vec &solution();
 
   //! return the data object
   Data &data();

@@ -64,7 +64,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      fieldVariable.getValues(componentNo, componentValues[componentNo], true);
+      fieldVariable.getValuesWithoutGhosts(componentNo, componentValues[componentNo], true);
     }
     values.reserve(componentValues[0].size()*nComponents);
     
@@ -90,11 +90,11 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     // directly use the Petsc Vec
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(fieldVariable.values());
+      stringData = Paraview::encodeBase64(fieldVariable.valuesLocal());  // wrong anyway
     }
     else 
     {
-      stringData = Paraview::convertToAscii(fieldVariable.values(), fixedFormat);
+      stringData = Paraview::convertToAscii(fieldVariable.valuesLocal(), fixedFormat);
     }
   }
   

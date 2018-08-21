@@ -17,7 +17,7 @@ public:
     std::vector<double> &referenceMatrix
                            )
   {
-    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix()->values();
+    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix()->valuesLocal();
     std::vector<double> matrix;
     PetscUtility::getMatrixEntries(stiffnessMatrix, matrix);
     
@@ -35,7 +35,7 @@ public:
     std::vector<double> &referenceRhs
                            )
   {
-    Vec &rhsVector = finiteElementMethod.data_.rightHandSide().values();
+    Vec &rhsVector = finiteElementMethod.data_.rightHandSide().valuesLocal();
     std::vector<double> rhs;
     PetscUtility::getVectorEntries(rhsVector, rhs);
     
@@ -52,7 +52,7 @@ public:
     FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
     std::map<int, double> &dirichletBC)
   {
-    Vec &solutionVector = finiteElementMethod.data_.solution().values();
+    Vec &solutionVector = finiteElementMethod.data_.solution().valuesLocal();
     std::vector<double> solution;
     PetscUtility::getVectorEntries(solutionVector, solution);
     
@@ -72,10 +72,10 @@ public:
     FiniteElementMethod<MeshType2, BasisFunctionType2, QuadratureType2, EquationType2> &finiteElementMethod2)
   {
     // rhsVector
-    Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide().values();
+    Vec &rhsVector1 = finiteElementMethod1.data_.rightHandSide().valuesLocal();
     std::vector<double> rhs1;
     PetscUtility::getVectorEntries(rhsVector1, rhs1);
-    Vec &rhsVector2 = finiteElementMethod2.data_.rightHandSide().values();
+    Vec &rhsVector2 = finiteElementMethod2.data_.rightHandSide().valuesLocal();
     std::vector<double> rhs2;
     PetscUtility::getVectorEntries(rhsVector2, rhs2);
     
@@ -132,7 +132,7 @@ public:
     LOG(DEBUG) << "massMatrix * rhsStrong = rhsWeak: " << PetscUtility::getStringVector(rhsWeak);
     
     // massMatrix * f_strong = rhs_weak
-    Vec &rhs = finiteElementMethod1.data_.rightHandSide().values();   // rhs in weak formulation
+    Vec &rhs = finiteElementMethod1.data_.rightHandSide().valuesLocal();   // rhs in weak formulation
    
     LOG(DEBUG) << "using stencil: "<<PetscUtility::getStringVector(rhs);
     

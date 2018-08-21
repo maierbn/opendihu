@@ -10,7 +10,7 @@ namespace Partition
 
 template<typename T>
 void MeshPartition<Mesh::None>::
-extractLocalNodes(std::vector<T> &vector)
+extractLocalNodes(std::vector<T> &vector) const
 {
   // copy the entries at [beginGlobal_, beginGlobal_+localSize_] to [0,localSize_]
   for (int i = 0; i < localSize_; i++)

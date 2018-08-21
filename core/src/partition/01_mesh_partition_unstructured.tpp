@@ -33,7 +33,7 @@ localToGlobalMappingDofs()
 //! number of entries in the current partition
 template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-nElementsLocal()
+nElementsLocal() const
 {
   return nElementsGlobal_;
 }
@@ -41,7 +41,7 @@ nElementsLocal()
 //! number of entries in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-nElementsGlobal()
+nElementsGlobal() const
 {
   return nElementsGlobal_;
 }
@@ -49,7 +49,7 @@ nElementsGlobal()
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-nNodesLocalWithGhosts()
+nNodesLocalWithGhosts() const
 {
   return nNodesGlobal_;
 }
@@ -57,7 +57,7 @@ nNodesLocalWithGhosts()
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-nNodesGlobal()
+nNodesGlobal() const
 {
   return nNodesGlobal_;
 }
@@ -65,14 +65,14 @@ nNodesGlobal()
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalNodes(std::vector<T> &vector)
+extractLocalNodes(std::vector<T> &vector) const
 {
   
 }
   
 template<int D, typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalDofsWithoutGhosts(std::vector<double> &vector)
+extractLocalDofsWithoutGhosts(std::vector<double> &vector) const 
 {
   
 }

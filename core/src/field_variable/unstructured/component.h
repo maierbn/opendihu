@@ -59,7 +59,7 @@ public:
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
   //! return the total number of dofs for this component
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocal() const;
 
   //! return the number of elements
   element_no_t nElementsLocal() const;

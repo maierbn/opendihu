@@ -296,10 +296,10 @@ setGeometryFieldValues()
   LOG(DEBUG) << " BasisOnMesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
   // compute number of (local) dofs
-  dof_no_t nLocalDofs = this->nDofsLocalWithoutGhosts();
+  dof_no_t nDofsLocal = this->nDofsLocalWithoutGhosts();
   
   // fill geometry vector from nodePositions, initialize non-node position entries to 0 (for Hermite)
-  std::vector<Vec3> geometryValues(nLocalDofs, Vec3{0.0});
+  std::vector<Vec3> geometryValues(nDofsLocal, Vec3{0.0});
 
   int geometryValuesIndex = 0;
   int nodePositionsIndex = 0;

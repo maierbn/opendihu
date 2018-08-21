@@ -7,9 +7,13 @@
 
 /** Base class for a partitioned PetscMat
  */
+template<typename BasisOnMeshType>
 class PartitionedPetscMatBase
 {
 public:
+  
+  //! constructor
+  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition);
  
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
@@ -29,10 +33,17 @@ public:
   //! get entries from the matrix that are locally stored, uses the global indexing  
   void getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]);
   
-  //! get a reference to the PETSc matrix
-  Mat &values();
+  //! get a reference to the local PETSc matrix
+  Mat &valuesLocal();
+  
+  //! get a reference to the global PETSc matrix
+  Mat &valuesGlobal();
   
 protected:
  
-  Mat matrix_;   ///< the global Petsc matrix, access it performed using MatSetValuesLocal() with local indices
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
+  Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
+  Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
 };
+
+#include "partition/partitioned_petsc_mat_base.tpp"

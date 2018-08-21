@@ -36,10 +36,10 @@ public:
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix();
 
-  //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
 
-  //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &solution();
 
   //! perform the final assembly of petsc

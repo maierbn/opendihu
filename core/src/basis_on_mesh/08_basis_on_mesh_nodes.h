@@ -39,7 +39,7 @@ public:
   BasisOnMeshNodes(PyObject *specificSettings, bool noGeometryField=false);
 
   //! get the number of dofs
-  dof_no_t nLocalDofs() const;
+  dof_no_t nDofsLocal() const;
 
 };
 

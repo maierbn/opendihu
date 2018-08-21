@@ -25,12 +25,14 @@ getValue(node_no_t dofLocalNo)
 
     return result;
   }
-  
-  // for geometry field compute the entries
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
-  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
 
+  assert(dofLocalNo < this->mesh_->nDofsWithoutGhosts());
+   
+  // for geometry field compute the entries, this does not work for ghost dofs
+  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+  
   int nodeLocalNo = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
 

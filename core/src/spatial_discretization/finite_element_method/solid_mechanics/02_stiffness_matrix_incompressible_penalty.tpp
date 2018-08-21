@@ -71,13 +71,13 @@ setFromSolverVariableSolution(Vec &solverSolutionVariable)
   if (this->data_.computeWithReducedVectors())
   {
     const int D = BasisOnMeshType::dim();
-    const int nLocalUnknownsOutputVector = this->data_.mesh()->nLocalDofs() * D;
+    const int nLocalUnknownsOutputVector = this->data_.mesh()->nDofsLocal() * D;
 
-    this->expandVector(solverSolutionVariable, this->data_.displacements().values(), nLocalUnknownsOutputVector);
+    this->expandVector(solverSolutionVariable, this->data_.displacements().valuesLocal(), nLocalUnknownsOutputVector);
   }
   else
   {
-    VecCopy(solverSolutionVariable, this->data_.displacements().values());
+    VecCopy(solverSolutionVariable, this->data_.displacements().valuesLocal());
   }
 }
 
@@ -138,7 +138,7 @@ const int FiniteElementMethodStiffnessMatrix<
 nLocalUnknowns()
 {
   const int D = BasisOnMeshType::dim();
-  const int nLocalUnknowns = this->data_.mesh()->nLocalDofs() * D;
+  const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
   return nLocalUnknowns;
 }
 

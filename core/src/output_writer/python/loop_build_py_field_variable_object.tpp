@@ -56,7 +56,7 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
     VLOG(2) << "  component " << componentNo << " " << componentName;
 
     std::vector<double> values;
-    currentFieldVariable->getValues(componentNo, values, onlyNodalValues);
+    currentFieldVariable->getValuesWithoutGhosts(componentNo, values, onlyNodalValues);
 
     VLOG(2) << "  values: " << values << ", values.size(): " << values.size();
 

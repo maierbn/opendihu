@@ -718,9 +718,16 @@ nodeToDofMapping() const
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-values()
+valuesLocal()
 {
-  return this->values_->values();
+  return this->values_->valuesLocal();
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+Vec &FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+valuesGlobal()
+{
+  return this->values_->valuesGlobal();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
@@ -841,7 +848,7 @@ initializeFromMappings(std::string name, bool isGeometryField,
   initializeComponents(componentNames, exfileBasisRepresentation);
 
 
-  LOG(DEBUG) << "FieldVariable nDofs: " << this->nLocalDofs();
+  LOG(DEBUG) << "FieldVariable nDofs: " << this->nDofsLocal();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

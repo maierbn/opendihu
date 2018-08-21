@@ -40,8 +40,8 @@ setInitialValues()
   }
   else 
   {
-    const int nLocalDofs = this->data_->mesh()->nLocalDofs();
-    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nLocalDofs, localValues);
+    const int nDofsLocal = this->data_->mesh()->nDofsLocal();
+    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsLocal, localValues);
   }
   //LOG(DEBUG) << "set initial values to " << values;
 
@@ -54,13 +54,13 @@ solutionVectorMapping()
 {
   return discretizableInTime_.solutionVectorMapping();
 }
-
+/*
 template<typename DiscretizableInTimeType>
 Vec &TimeSteppingSchemeOde<DiscretizableInTimeType>::
 solution()
 {
   return data_->solution().values();
-}
+}*/
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
@@ -101,7 +101,7 @@ initialize()
 
   // set initial values from settings
 
-  Vec &solution = data_->solution().values();
+  Vec &solution = data_->solution().valuesLocal();
 
   if (!discretizableInTime_.setInitialValues(solution))
   {

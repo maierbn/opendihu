@@ -14,26 +14,14 @@ MeshPartitionBase::~MeshPartitionBase()
 {
 }
 
-void MeshPartitionBase::initializeLocalDofsVector(node_no_t nLocalDofsWithGhosts)
-{
-  // set the localDofNos_ vector to {0,1,2,...,nLocalDofsWithGhosts-1}
-  localDofNos_.resize(nLocalDofsWithGhosts);
-  std::iota(localDofNos_.begin(), localDofNos_.end(), 0);
-}
-
-int MeshPartitionBase::nRanks()
+int MeshPartitionBase::nRanks() const
 {
   return this->rankSubset_->size();
 }
 
-MPI_Comm MeshPartitionBase::mpiCommunicator()
+MPI_Comm MeshPartitionBase::mpiCommunicator() const
 {
   return rankSubset_->mpiCommunicator();
-}
-
-std::vector<PetscInt> &MeshPartitionBase::localDofNos()
-{
-  return localDofNos_;
 }
 
 }  // namespace

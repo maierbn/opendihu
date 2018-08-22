@@ -33,6 +33,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 createVector()
 {
+  VLOG(2) << "\"" << this->name_ << "\" createVector";
   PetscErrorCode ierr;
   
   // The local vector contains the nodal/dof values for the local portion of the current rank. This includes ghost nodes.
@@ -61,6 +62,9 @@ createVector()
 
     // set sparsity type and other options
     ierr = VecSetFromOptions(vectorGlobal_[componentNo]); CHKERRV(ierr);
+    
+    // initialize the local vector
+    ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -68,6 +72,8 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 startVectorManipulation()
 {
+  VLOG(2) << "\"" << this->name_ << "\" startVectorManipulation";
+  
   // copy the global values into the local vectors, distributing ghost values
   PetscErrorCode ierr;
   
@@ -92,6 +98,8 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 finishVectorManipulation()
 {
+  VLOG(2) << "\"" << this->name_ << "\" finishVectorManipulation";
+  
   // Copy the local values vectors into the global vector. ADD_VALUES means that ghost values are reduced (summed up)
   PetscErrorCode ierr;
   // loop over the components of this field variable
@@ -116,6 +124,18 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  if (VLOG_IS_ON(3))
+  {
+    std::stringstream str;
+    str << "\"" << this->name_ << "\" getValues(componentNo=" << componentNo << ", indices=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << ix[i] << " ";
+    }
+    str << ")";
+    VLOG(3) << str.str();
+  }
+  
   // this wraps the standard PETSc VecGetValues on the local vector
   PetscErrorCode ierr;
   ierr = VecGetValues(vectorLocal_[componentNo], ni, ix, y); CHKERRV(ierr);
@@ -125,6 +145,18 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  if (VLOG_IS_ON(3))
+  {
+    std::stringstream str;
+    str << "\"" << this->name_ << "\" getValuesGlobalIndexing(componentNo=" << componentNo << ", indices=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << ix[i] << " ";
+    }
+    str << ")";
+    VLOG(3) << str.str();
+  }
+  
   // this wraps the standard PETSc VecGetValues on the global vector
   PetscErrorCode ierr;
   ierr = VecGetValues(vectorGlobal_[componentNo], ni, ix, y); CHKERRV(ierr);
@@ -134,6 +166,24 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
+  if (VLOG_IS_ON(3))
+  {
+    std::stringstream str;
+    str << "\"" << this->name_ << "\" setValues(componentNo=" << componentNo << ", indices=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << ix[i] << " ";
+    }
+    str << ", values=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << y[i] << " ";
+    }
+    str << (iora == INSERT_VALUES? "INSERT_VALUES" : "ADD_VALUES");
+    str << ")";
+    VLOG(3) << str.str();
+  }
+  
   // this wraps the standard PETSc VecSetValues on the local vector
   PetscErrorCode ierr;
   ierr = VecSetValues(vectorLocal_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
@@ -146,6 +196,9 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
+  VLOG(3) << "\"" << this->name_ << "\" setValue(componentNo=" << componentNo << ", row=" << row << ", value=" << value
+    << (mode == INSERT_VALUES? "INSERT_VALUES" : "ADD_VALUES") << ")";
+  
   // this wraps the standard PETSc VecSetValue on the local vector
   PetscErrorCode ierr;
   ierr = VecSetValue(vectorLocal_[componentNo], row, value, mode); CHKERRV(ierr);
@@ -187,6 +240,8 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 zeroEntries()
 {
+  VLOG(3) << "\"" << this->name_ << "\" zeroEntries";
+  
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -214,4 +269,60 @@ std::vector<PetscInt> &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,Bas
 localDofNosWithoutGhosts()
 {
   return this->meshPartition_->localDofNosWithoutGhosts();
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+output(std::ostream &stream)
+{
+#ifndef NDEBUG  
+  // this method gets all values and outputs them to stream, only on rank 0
+  PetscMPIInt ownRankNo, nRanks;
+  MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
+  MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
+    
+  this->finishVectorManipulation();
+  
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get global size of matrix 
+    int nEntries, nEntriesLocal;
+    PetscErrorCode ierr;
+    ierr = VecGetSize(vectorLocal_[componentNo], &nEntries); CHKERRV(ierr);
+    ierr = VecGetLocalSize(vectorLocal_[componentNo], &nEntriesLocal); CHKERRV(ierr);
+    
+    // retrieve local values
+    int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
+    std::vector<double> localValues(nDofsLocal);
+    
+    VecGetValues(vectorLocal_[componentNo], nDofsLocal, this->meshPartition_->dofNosLocal().data(), localValues.data());
+    
+    std::vector<int> localSizes(nRanks);
+    localSizes[ownRankNo] = nDofsLocal;
+    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), nRanks, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    
+    int maxLocalSize;
+    MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
+    
+    std::vector<double> recvBuffer(maxLocalSize*nRanks);
+    std::vector<double> sendBuffer(maxLocalSize,0.0);
+    std::copy(localSizes.begin(), localSizes.end(), sendBuffer.begin());
+    
+    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize*nRanks, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    
+    if (ownRankNo == 0)
+    {
+      stream << "vector \"" << this->name_ << "\" (" << nEntries << " global entries per component)" << std::endl;
+      stream << "component " << componentNo << ": ";
+      for (int rankNo = 0; rankNo < nRanks; rankNo++)
+      {
+        for (int i = 0; i < localSizes[rankNo]; i++)
+        {
+          stream << recvBuffer[rankNo*maxLocalSize + i] << "  ";
+        }
+      }
+      stream << std::endl; 
+    }
+  }
+#endif
 }

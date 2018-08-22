@@ -6,10 +6,10 @@
 template<typename MeshType, typename BasisFunctionType>
 PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition, int nComponents,
-                    int diagonalNonZeros, int offdiagonalNonZeros) :
-  PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition), nComponents_(nComponents)
+                    int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+  PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name), nComponents_(nComponents)
 {
-  VLOG(1) << "create PartitionedPetscMat from meshPartition " << meshPartition << " with " << nComponents_ << " components";
+  VLOG(1) << "create PartitionedPetscMat<structured> with " << nComponents_ << " components from meshPartition " << meshPartition;
   
   createMatrix(diagonalNonZeros, offdiagonalNonZeros);
 }
@@ -38,6 +38,7 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   ierr = MatSetSizes(this->globalMatrix_, nRowsLocal, nRowsLocal, 
                       nRowsGlobal, nRowsGlobal); CHKERRV(ierr);
   ierr = MatSetFromOptions(this->globalMatrix_); CHKERRV(ierr);         // either use MatSetFromOptions or MatSetUp to allocate internal data structures                  
+  ierr = PetscObjectSetName((PetscObject) this->globalMatrix_, this->name_.c_str()); CHKERRV(ierr);
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
   //MatSetOption(matrix, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
@@ -59,4 +60,13 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   LOG(DEBUG) << "matrix created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
 
+  // get the local submatrix from the global matrix
+  ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartition_->dofNosLocalIS(), this->meshPartition_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+}
+
+template<typename BasisOnMeshType>
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscMat<BasisOnMeshType> &matrix)
+{
+  matrix.output(stream);
+  return stream;
 }

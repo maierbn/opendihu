@@ -248,12 +248,13 @@ void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
 output(std::ostream &stream) const
 {
   stream << "\"" << this->name_ << "\""
-    << ", isGeometryField: " << std::boolalpha << isGeometryField_ << std::endl
-    << "  components:" << std::endl;
+    << ", isGeometryField: " << std::boolalpha << isGeometryField_
+    << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
   for (auto &componentName : this->componentNames_)
   {
-    stream << componentName;
+    stream << "\"" << componentName << "\", ";
   }
+  stream << *values_;
 }
 
 };

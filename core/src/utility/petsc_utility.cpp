@@ -30,14 +30,14 @@ void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matr
   matrixValues.resize(nRows*nColumns);
   LOG(DEBUG) << "matrixValues contains " << nRows*nColumns << " local entries for the " << nRows << "x" << nColumns << " local matrix";
 
-  // get values in row-major format
+  // get values in row-major format, note, there is no "MatGetValuesLocal"
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
 
 void PetscUtility::getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 {
   int nEntries;
-  VecGetSize(vector, &nEntries);
+  VecGetLocalSize(vector, &nEntries);
 
   std::vector<int> indices(nEntries);
   std::iota(indices.begin(), indices.end(), 0);
@@ -85,7 +85,7 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
   name = cName;
 
   int nRows, nColumns;
-  MatGetSize(matrix, &nRows, &nColumns);
+  MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<double> matrixValues, vectorValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);
@@ -165,7 +165,7 @@ std::string PetscUtility::getStringVector(const Vec& vector)
   PetscUtility::getVectorEntries(vector, vectorValues);
 
   int nEntries;
-  VecGetSize(vector, &nEntries);
+  VecGetLocalSize(vector, &nEntries);
 
   LOG(DEBUG) << " getStringVector: " << nEntries;
 
@@ -183,7 +183,7 @@ std::string PetscUtility::getStringVector(const Vec& vector)
 std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
 {
   int nRows, nColumns;
-  MatGetSize(matrix, &nRows, &nColumns);
+  MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<double> matrixValues;
   PetscUtility::getMatrixEntries(matrix, matrixValues);

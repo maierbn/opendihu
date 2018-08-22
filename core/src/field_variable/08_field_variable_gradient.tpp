@@ -23,7 +23,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
   for (element_no_t elementNo = 0; elementNo < this->mesh_->nElementsLocal(); elementNo++)
   {
     // get global dof nos of this element
-    std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
 
     // compute gradient at every dof, as continuous to current element (gradients have discontinuities between elements at dofs)
     std::array<double,nDofsPerElement> solutionValues;

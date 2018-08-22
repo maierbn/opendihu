@@ -25,7 +25,10 @@ setRightHandSide()
  
   // fill rhs vector with 0
   FieldVariable::FieldVariable<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,1> &rightHandSide = this->data_.rightHandSide();
+  
+  rightHandSide.startVectorManipulation();
   rightHandSide.zeroEntries();
+  rightHandSide.finishVectorManipulation();
 }
 
 };

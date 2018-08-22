@@ -37,8 +37,9 @@ setStiffnessMatrix()
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings values
-  element_no_t nElements = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsLocal();
-  double elementLength = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements = mesh->nElementsLocal();
+  double elementLength = mesh->meshWidth();
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
 
   double factor = prefactor*1./elementLength;
@@ -61,7 +62,7 @@ setStiffnessMatrix()
   {
     // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
 
-    //                 matrix           row        column
+    //                        row    column value
     stiffnessMatrix->setValue(dofNo, dofNo, stencilCenter[center]*factor, INSERT_VALUES);
 
     if (dofNo+1 < nDegreesOfFreedom)
@@ -95,12 +96,13 @@ setStiffnessMatrix()
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
   // get settings value
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-  node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1);
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
+  double elementLength0 = mesh->meshWidth();
+  double elementLength1 = mesh->meshWidth();
   if (fabs(elementLength0-elementLength1) > 1e-15)
   {
     LOG(ERROR) << "Mesh resolution of 2D regular fixed mesh is not uniform! " << std::endl
@@ -310,15 +312,16 @@ setStiffnessMatrix()
   LOG(TRACE)<<"setStiffnessMatrix 3D for Mesh::RegularFixed";
 
   // get settings values
-  element_no_t nElements0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(1);
-  element_no_t nElements2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nElementsPerCoordinateDirectionLocal(2);
-  node_no_t nNodes0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(1);
-  node_no_t nNodes2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->nNodesLocalWithGhosts(2);
-  double elementLength0 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength1 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
-  double elementLength2 = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh())->meshWidth();
+  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
+  element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
+  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
+  node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
+  double elementLength0 = mesh->meshWidth();
+  double elementLength1 = mesh->meshWidth();
+  double elementLength2 = mesh->meshWidth();
 
   if (fabs(elementLength0-elementLength1) > 1e-15 || fabs(elementLength0-elementLength2) > 1e-15)
   {

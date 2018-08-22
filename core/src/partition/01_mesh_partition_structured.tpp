@@ -3,6 +3,8 @@
 #include "utility/vector_operators.h"
 #include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
 
+#include "semt/Semt.h"
+
 namespace Partition
 {
   
@@ -20,6 +22,8 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_;
   LOG(DEBUG) << "nRanks: " << nRanks_ << ", localSizesOnRanks_: " << localSizesOnRanks_ << ", beginElementGlobal_: " << beginElementGlobal_;
+  
+  LOG(DEBUG) << *this;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -199,9 +203,11 @@ template<typename MeshType,typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsLocal() const
 {
+  VLOG(1) << "determine nElementsLocal";
   element_no_t result = 1;
   for (int i = 0; i < MeshType::dim(); i++)
   {
+    VLOG(1) << "     * " << nElementsLocal_[i];
     result *= nElementsLocal_[i];
   }
   return result;
@@ -282,7 +288,18 @@ nElementsLocal(int coordinateDirection) const
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
   
-  return this->nElementsLocal_[coordinateDirection] * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  return this->nElementsLocal_[coordinateDirection];
+}
+
+//! number of nodes in total
+template<typename MeshType,typename BasisFunctionType>
+node_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+nElementsGlobal(int coordinateDirection) const
+{
+  assert(0 <= coordinateDirection);
+  assert(coordinateDirection < MeshType::dim());
+  
+  return this->nElementsGlobal_[coordinateDirection];
 }
 
 //! number of nodes in the local partition
@@ -545,7 +562,7 @@ createLocalDofOrderings()
   
   // retrieve local to global mapping
   ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalMapping_); CHKERRV(ierr);
-  ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
+  //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
   
   // create IS (indexSet) dofNosLocalIS_;
   ierr = ISCreateGeneral(PETSC_COMM_SELF, dofNosLocal_.size(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
@@ -593,7 +610,14 @@ output(std::ostream &stream)
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nNodesLocalWithoutGhosts(i) << ",";
   stream << "total " << nNodesLocalWithoutGhosts()
-    << ", ghostDofGlobalNos: " << ghostDofGlobalNos_;
+    << ", dofNosLocal: [";
+  for (int i = 0; i < dofNosLocal_.size(); i++)
+    stream << dofNosLocal_[i] << " ";
+  stream << "], ghostDofGlobalNos: [";
+    
+  for (int i = 0; i < ghostDofGlobalNos_.size(); i++)
+    stream << ghostDofGlobalNos_[i] << " ";
+  stream << "], localToGlobalMapping_: " << localToGlobalMapping_;
 } 
 
 }  // namespace

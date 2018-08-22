@@ -165,6 +165,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &nE
   for (int i = 0; i < D; i++)
   {
     nElementsGlobal[i] = globalSizeMpi[i];
+    VLOG(1) << "set nElementsGlobal[" << i << "] = " << nElementsGlobal[i];
   }
   
   // create a mesh partition with prescribed local partitions
@@ -205,6 +206,8 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim
   {
     nElementsLocal[coordinateDirection] = meshPartition->nElementsLocal(coordinateDirection);
     nRanks[coordinateDirection] = meshPartition->nRanks(coordinateDirection);
+    VLOG(1) << "set nElementsLocal[" << coordinateDirection << "] = " << nElementsLocal[coordinateDirection];
+    VLOG(1) << "set nRanks[" << coordinateDirection << "] = " << nRanks[coordinateDirection];
   }
   
   return meshPartition;

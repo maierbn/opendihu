@@ -48,6 +48,10 @@ public:
   
 protected:
   
+  //! compute the meshWidth_ from physicalExtent_
+  void computeMeshWidth();
+  
+  std::array<double,D> physicalExtent_;   ///< geometrical "size" of the mesh, i.e. length x width x height
   double meshWidth_;   ///< uniform mesh width, i.e. distance between nodes (not elements for quadratic element), this is a copy of the value which is stored in this->geometryField_
 };
 

@@ -89,18 +89,10 @@ print()
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4)<<"======================";
-
-  int nEntries;
-  VecGetSize(this->increment_->valuesLocal(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->increment_->valuesLocal());
-  VLOG(4)<<"======================";
-
-  VecGetSize(this->solution_->valuesLocal(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
-  VLOG(4)<<"======================";
+  VLOG(4) << "======================";
+  VLOG(4) << *this->increment_;
+  VLOG(4) << *this->solution_;
+  VLOG(4) << "======================";
 }
 
 template<typename BasisOnMeshType,int nComponents>

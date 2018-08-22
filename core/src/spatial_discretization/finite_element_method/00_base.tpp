@@ -128,6 +128,7 @@ applyBoundaryConditions()
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionDofNo;
+    stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
     stiffnessMatrix->zeroRowsColumns(1, &matrixIndex, 1.0);
     
     // update rhs
@@ -203,6 +204,9 @@ solve()
   // get stiffness matrix
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
 
+  // assemble matrix such that all entries are at their place
+  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
+  
   // get linear solver context from solver manager
   std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
   std::shared_ptr<KSP> ksp = linearSolver->ksp();

@@ -128,10 +128,10 @@ getElementValues(element_no_t elementNo,
   assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  std::array<int,nComponents> indices;
+  std::array<PetscInt,nDofsPerElement> indices;
   std::array<double,nDofsPerElement*nComponents> result;
 
-  //VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
+  VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents << ", nDofsPerElement=" << nDofsPerElement;
 
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)

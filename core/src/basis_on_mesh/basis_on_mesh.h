@@ -26,10 +26,10 @@ public:
 
   //! return an array of all dof nos. of the element (local dof nos)
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()>
-  getElementDofLocalNos(element_no_t elementNo) const;
+  getElementDofNosLocal(element_no_t elementNo) const;
 
   //! set a vector of all dof nos. of the element
-  void getElementDofLocalNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
+  void getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 };
 
 /** Partial specialization for CompletePolynomials which do not need nodes and thus have no nodes functionality.
@@ -48,10 +48,10 @@ public:
 
   //! return an array of all dof nos. of the element
   std::array<dof_no_t,BasisOnMeshFunction<MeshType,BasisFunction>::nDofsPerElement()>
-  getElementDofLocalNos(element_no_t elementNo) const;
+  getElementDofNosLocal(element_no_t elementNo) const;
 
   //! set a vector of all dof nos. of the element
-  void getElementDofLocalNos(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
+  void getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const;
 
   // the following methods are there for compatibility with the interface
   //! (unused method) initialize

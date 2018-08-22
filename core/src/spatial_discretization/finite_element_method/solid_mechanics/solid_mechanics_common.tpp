@@ -94,7 +94,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
     // loop over elements
     for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
     {
-      std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)
       {
@@ -427,7 +427,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     // set entries in stiffness matrix
     // loop over indices of unknows ((aDof,aComponent), (bDof,bComponent)), i.e. (i,j)
@@ -573,7 +573,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -648,7 +648,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -740,7 +740,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -862,7 +862,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -1233,7 +1233,7 @@ computeInternalVirtualWork(Vec &resultVec)
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     VLOG(2) << "  element " << elementNo << " has dofs " << dofNosLocal;
 

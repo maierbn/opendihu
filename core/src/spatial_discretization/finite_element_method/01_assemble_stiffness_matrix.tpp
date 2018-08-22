@@ -40,10 +40,13 @@ setStiffnessMatrix()
 
   // initialize values to zero
   int cntr = 1;
+  
+  LOG(DEBUG) << " nElementsLocal: " << mesh->nElementsLocal();
+  
   // loop over elements
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     for (int i=0; i<nDofsPerElement; i++)
     {
@@ -76,7 +79,7 @@ setStiffnessMatrix()
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
 
     VLOG(2) << "element " << elementNo;
 

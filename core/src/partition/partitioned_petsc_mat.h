@@ -23,7 +23,7 @@ class PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,M
 public:
   //! constructor
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition, 
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros);
+                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
  
 protected:
   
@@ -44,7 +44,7 @@ class PartitionedPetscMat<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableO
 public:
   //! constructor
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition, 
-                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros);
+                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
  
 protected:
   
@@ -54,6 +54,9 @@ protected:
   int nComponents_;  ///< number of components of the field variable
   
 };
+
+template<typename BasisOnMeshType>
+std::ostream &operator<<(std::ostream &stream, const PartitionedPetscMat<BasisOnMeshType> &matrix);
 
 #include "partition/partitioned_petsc_mat_structured.tpp"
 #include "partition/partitioned_petsc_mat_unstructured.tpp"

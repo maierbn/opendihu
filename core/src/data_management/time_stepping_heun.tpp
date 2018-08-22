@@ -40,7 +40,8 @@ createPetscObjects()
 {
   TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects();
 
-  LOG(DEBUG)<<"TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
+  LOG(DEBUG) << "TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects(" << nComponents << ")";
+  
   this->intermediateIncrement_ = this->mesh_->template createFieldVariable<nComponents>("intermediateIncrement");
 }
 
@@ -66,28 +67,11 @@ print() // use override in stead of extending the parents' print output.This way
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4)<<"======================";
-
-  int nEntries;
-  VecGetSize(this->intermediateIncrement_->valuesLocal(), &nEntries);
-  VLOG(4)<<"intermediateIncrement ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->intermediateIncrement_->valuesLocal());
-  VLOG(4)<<"======================";
-
-  /*VecGetSize(this->intermediateSolution_->values(), &nEntries);
-  VLOG(4)<<"intermediateSolution ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->intermediateSolution_->values());
-  VLOG(4)<<"======================";*/
-
-  VecGetSize(this->increment_->valuesLocal(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->increment_->valuesLocal());
-  VLOG(4)<<"======================";
-
-  VecGetSize(this->solution_->valuesLocal(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
-  VLOG(4)<<"======================";
+  VLOG(4) << "======================";
+  VLOG(4) << *this->intermediateIncrement_;
+  VLOG(4) << *this->increment_;
+  VLOG(4) << *this->solution_;
+  VLOG(4) << "======================";
 }
 
 } // namespace

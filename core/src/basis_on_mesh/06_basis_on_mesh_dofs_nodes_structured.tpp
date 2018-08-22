@@ -13,6 +13,7 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithGhosts(int coordinateDirection) const
 {
+  assert(this->meshPartition_);
   assert(this->meshPartition_->nElementsLocal(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
  
   return this->meshPartition_->nNodesLocalWithGhosts(coordinateDirection);
@@ -22,6 +23,7 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithoutGhosts(int coordinateDirection) const
 {
+  assert(this->meshPartition_);
   assert(this->meshPartition_->nElementsLocal(coordinateDirection) == this->nElementsPerCoordinateDirectionLocal(coordinateDirection));
  
   return this->meshPartition_->nNodesLocalWithoutGhosts(coordinateDirection);
@@ -31,6 +33,7 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithGhosts() const
 {
+  assert(this->meshPartition_);
   return this->meshPartition_->nNodesLocalWithGhosts();
 }
 
@@ -38,6 +41,7 @@ template<typename MeshType,typename BasisFunctionType>
 node_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesLocalWithoutGhosts() const
 {
+  assert(this->meshPartition_);
   return this->meshPartition_->nNodesLocalWithoutGhosts();
 }
 
@@ -59,6 +63,7 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal() const
 {
+  assert(this->meshPartition_);
   this->meshPartition_->nNodesGlobal();
 }
 
@@ -66,6 +71,7 @@ template<typename MeshType,typename BasisFunctionType>
 global_no_t BasisOnMeshDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal(int coordinateDirection) const
 {
+  assert(this->meshPartition_);
   return this->meshPartition_->nNodesGlobal(coordinateDirection);
 }
 

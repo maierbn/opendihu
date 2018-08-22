@@ -13,7 +13,7 @@ class PartitionedPetscMatBase
 public:
   
   //! constructor
-  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition);
+  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name);
  
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
@@ -38,12 +38,17 @@ public:
   
   //! get a reference to the global PETSc matrix
   Mat &valuesGlobal();
+    
+  //! output matrix to stream, the operator<< is also overloaded to use this method
+  void output(std::ostream &stream) const;
   
 protected:
  
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
   Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
   Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
+  std::string name_;   ///< a specifier for the matrix, only used for debugging
 };
+
 
 #include "partition/partitioned_petsc_mat_base.tpp"

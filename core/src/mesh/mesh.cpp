@@ -3,7 +3,8 @@
 namespace Mesh
 {
 
-Mesh::Mesh(PyObject *specificSettings)
+Mesh::Mesh(PyObject *specificSettings) : 
+  specificSettings_(specificSettings)
 {
 
 }

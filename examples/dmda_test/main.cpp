@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
   
   LOG(INFO) << "local values: " << values2;
   VecView(globalVector, PETSC_VIEWER_STDOUT_WORLD);
-#if 0
+
   // --------- matrix ------------
   LOG(INFO) << " --------- matrix ---------";
   Mat globalMatrix;
@@ -375,10 +375,6 @@ int main(int argc, char *argv[])
   
   ierr = MatRestoreLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
   
-  
-  //LOG(INFO) << "restore local submatrix";
-  //ierr = MatRestoreLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
-  
   ierr = MatAssemblyBegin(globalMatrix, MAT_FINAL_ASSEMBLY); CHKERRQ(ierr);
   ierr = MatAssemblyEnd(globalMatrix, MAT_FINAL_ASSEMBLY); CHKERRQ(ierr);
   
@@ -388,17 +384,15 @@ int main(int argc, char *argv[])
   // show entries
   ierr = MatView(globalMatrix, PETSC_VIEWER_STDOUT_WORLD); CHKERRQ(ierr);
   //exit(0);
-//#if 0  
   // again get submatrix
   ierr = MatGetLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
   
   rowIndices.resize(1);
-  rowIndices[0] = 2;
-  columnIndices.resize(1);
-  columnIndices[0] = 2;
-  ierr = MatSetValuesLocal(localMatrix, rowIndices.size(), rowIndices.data(), columnIndices.size(), columnIndices.data(), values.data(), ADD_VALUES); CHKERRQ(ierr);
+  rowIndices[0] = 1;
+  const int diag = 77;
+  ierr = MatZeroRowsColumnsLocal(globalMatrix, rowIndices.size(), rowIndices.data(), diag, NULL, NULL); CHKERRQ(ierr);
   
-  ierr = MatRestoreLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
+  //ierr = MatRestoreLocalSubMatrix(globalMatrix, indexSet, indexSet, &localMatrix); CHKERRQ(ierr);
   
   
   ierr = MatAssemblyBegin(globalMatrix, MAT_FINAL_ASSEMBLY); CHKERRQ(ierr);
@@ -411,7 +405,7 @@ int main(int argc, char *argv[])
   
   // show entries
   ierr = MatView(globalMatrix, PETSC_VIEWER_STDOUT_WORLD); CHKERRQ(ierr);
-#endif  
+
   PetscFinalize();
   MPI_Finalize();
   

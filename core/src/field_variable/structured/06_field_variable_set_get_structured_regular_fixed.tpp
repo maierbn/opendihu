@@ -341,7 +341,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Basi
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
 
   // get the values
   this->getValues<nDofsPerElement>(componentNo, elementDofs, values);
@@ -364,7 +364,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
 
   // compute the corresponding geometry values
   this->getValues<nDofsPerElement>(elementDofs, values);

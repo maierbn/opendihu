@@ -17,7 +17,7 @@ public:
     std::vector<double> &referenceMatrix
                            )
   {
-    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix()->valuesLocal();
+    Mat &stiffnessMatrix = finiteElementMethod.data_.stiffnessMatrix()->valuesGlobal();
     std::vector<double> matrix;
     PetscUtility::getMatrixEntries(stiffnessMatrix, matrix);
     
@@ -25,7 +25,8 @@ public:
     for(unsigned int i=0; i<matrix.size(); i++)
     {
       double difference = fabs(matrix[i]-referenceMatrix[i]);
-      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 1e-14) << "Matrix entry no. " << i << " differs by " << difference 
+        << ", should be " << referenceMatrix[i] << ", but is " << matrix[i];
     }
   }
   
@@ -43,7 +44,8 @@ public:
     for(unsigned int i=0; i<rhs.size(); i++)
     {
       double difference = fabs(rhs[i] - referenceRhs[i]);
-      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference 
+        << ", should be " << referenceRhs[i] << ", but is " << rhs[i];
     }
   }
   
@@ -83,14 +85,14 @@ public:
     for(unsigned int i=0; i<rhs1.size(); i++)
     {
       double difference = fabs(rhs1[i]-rhs2[i]);
-      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 1e-14) << "Rhs entry no. " << i << " differs by " << difference << ", " << rhs1[i] << " != " << rhs2[i];
     }
     
     // stiffness matrix 
-    Mat &stiffnessMatrix1 = finiteElementMethod1.data_.stiffnessMatrix()->values();
+    Mat &stiffnessMatrix1 = finiteElementMethod1.data_.stiffnessMatrix()->valuesGlobal();
     std::vector<double> matrix1;
     PetscUtility::getMatrixEntries(stiffnessMatrix1, matrix1);
-    Mat &stiffnessMatrix2 = finiteElementMethod2.data_.stiffnessMatrix()->values();
+    Mat &stiffnessMatrix2 = finiteElementMethod2.data_.stiffnessMatrix()->valuesGlobal();
     std::vector<double> matrix2;
     PetscUtility::getMatrixEntries(stiffnessMatrix2, matrix2);
     
@@ -98,10 +100,8 @@ public:
     for(unsigned int i=0; i<matrix1.size(); i++)
     {
       double difference = fabs(matrix1[i]-matrix2[i]);
-      EXPECT_LE(difference, 2e-14) << "Matrix entry no. " << i << " differs by " << difference << ".";
+      EXPECT_LE(difference, 2e-14) << "Matrix entry no. " << i << " differs by " << difference << ", entry1: " << matrix1[i] << " != " << matrix2[i];
     }
-    
-    
   }
 
   template<typename T1, typename T2>
@@ -133,7 +133,7 @@ public:
     
     // massMatrix * f_strong = rhs_weak
     Vec &rhs = finiteElementMethod1.data_.rightHandSide().valuesLocal();   // rhs in weak formulation
-   
+    
     LOG(DEBUG) << "using stencil: "<<PetscUtility::getStringVector(rhs);
     
     std::vector<double> rhsWeakDMatrix, rhsWeakStencil;

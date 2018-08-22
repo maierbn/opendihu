@@ -21,11 +21,6 @@ BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObj
   LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
 
   this->noGeometryField_ = noGeometryField;
-  if (!this->noGeometryField_)
-  { 
-    // create node positions from python config
-    this->parseNodePositionsFromSettings(specificSettings);
-  }
 }
 
 template<int D,typename BasisFunctionType>
@@ -55,10 +50,15 @@ initialize()
   // create meshPartition and redistribute elements if necessary, this needs information about mesh size
   BasisOnMeshPartition<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
  
-  // pass a shared "this" pointer to the geometryField
+  // if this mesh does not have a geometry field, do nothing further
   if (this->noGeometryField_)
     return;
 
+  // setup geometry field
+  // parse node positions from python config
+  this->parseNodePositionsFromSettings(this->specificSettings_);
+ 
+  // pass a shared "this" pointer to the geometryField 
   // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
   std::shared_ptr<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
     = std::static_pointer_cast<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
@@ -78,6 +78,8 @@ template<int D,typename BasisFunctionType>
 void BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 parseNodePositionsFromSettings(PyObject *specificSettings)
 {
+  LOG(TRACE) << "BasisOnMeshDofsNodes<structuredDeformable> parseNodePositionsFromSettings";
+  
   // compute number of nodes
   node_no_t nNodesLocal = this->nNodesLocalWithoutGhosts();
   global_no_t nNodesGlobal = this->nNodesGlobal();
@@ -85,6 +87,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
 
   // if the given information about the mesh in config is for the global mesh
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(specificSettings, "inputMeshIsGlobal", true);
+  LOG(DEBUG) << "inputMeshIsGlobal: " << std::boolalpha << inputMeshIsGlobal;
   
   global_no_t vectorSize;
   
@@ -99,6 +102,8 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     nNodes = nNodesLocal;
   }
   
+  VLOG(1) << "nNodesLocal: " << nNodesLocal << ", nNodesGlobal: " << nNodesGlobal << ", vectorSize: " << vectorSize;
+  
   localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
   // The vector localNodePositions_ is filled with all available node positions in this method, for inputMeshIsGlobal these are the global values of the global domain.
   // At the end of this method, non-local entries are removed if inputMeshIsGlobal.
@@ -108,6 +113,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
   if (PythonUtility::hasKey(specificSettings, "nodePositions"))
   {
     bool nodesStoredAsLists = false;
+    VLOG(1) << "specificSettings has \"nodePositions\"";
 
     // check if the node positions are stored as list, e.g. [[x,y,z], [x,y,z],...]
     PyObject *nodePositionsListPy = PythonUtility::getOptionPyObject(specificSettings, "nodePositions");
@@ -211,7 +217,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     }
   }
   else   // there was no "nodePositions" given in config, use physicalExtent instead
-  {
+  {    
     // if node positions are not given in settings but physicalExtent, fill from that
     std::array<double, D> physicalExtent, meshWidth;
     physicalExtent = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtent", 1.0, PythonUtility::Positive);
@@ -231,26 +237,51 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
       }
       LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
     }
-
+   
+    VLOG(1) << "specificSettings has no \"nodePositions\", use physicalExtent: " << physicalExtent << ", meshWidth: " << meshWidth;
+    
     std::array<double, 3> position{0.,0.,0.};
 
     // compute absolute node positions
-    global_no_t nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
-    global_no_t nNodesInYDirection = this->nNodesLocalWithoutGhosts(1);
-    global_no_t nNodesInZDirection = this->nNodesLocalWithoutGhosts(2);
+    global_no_t nNodesInXDirection;
+    global_no_t nNodesInYDirection;
+    global_no_t nNodesInZDirection;
     
-    double offsetX = this->meshPartition_->beginNodeGlobal(0);
-    double offsetY = this->meshPartition_->beginNodeGlobal(1);
-    double offsetZ = this->meshPartition_->beginNodeGlobal(2);
+    double offsetX;
+    double offsetY;
+    double offsetZ;
     
+    // initialize variables
     if (inputMeshIsGlobal)
     {
-      nNodesInXDirection = this->nNodesGlobal(0);
-      nNodesInYDirection = this->nNodesGlobal(1);
-      nNodesInZDirection = this->nNodesGlobal(2);
+      switch(D)
+      {
+      case 3:
+        nNodesInZDirection = this->nNodesGlobal(2);
+      case 2:
+        nNodesInYDirection = this->nNodesGlobal(1);
+      case 1:
+        nNodesInXDirection = this->nNodesGlobal(0);
+      }
+      
       offsetX = 0;
       offsetY = 0;
       offsetZ = 0;
+    }
+    else 
+    {
+      switch(D)
+      {
+      case 3:
+        nNodesInZDirection = this->nNodesLocalWithoutGhosts(2);
+        offsetZ = this->meshPartition_->beginNodeGlobal(2);
+      case 2:
+        nNodesInYDirection = this->nNodesLocalWithoutGhosts(1);
+        offsetY = this->meshPartition_->beginNodeGlobal(1);
+      case 1:
+        nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
+        offsetX = this->meshPartition_->beginNodeGlobal(0);
+      }
     }
     
     global_no_t nodeX, nodeY, nodeZ;

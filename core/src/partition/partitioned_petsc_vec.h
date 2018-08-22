@@ -67,6 +67,9 @@ public:
   //! get the global Vector of a specified component
   Vec &valuesGlobal(int componentNo = 0);
 
+  //! output the vector to stream, for debugging
+  void output(std::ostream &stream);
+
 protected:
   
   //! create the values vectors
@@ -133,6 +136,9 @@ public:
   //! get a vector of local dof nos (from meshPartition), without ghost dofs
   std::vector<PetscInt> &localDofNosWithoutGhosts();
   
+  //! output the vector to stream, for debugging
+  void output(std::ostream &stream);
+  
 protected:
  
   //! create a distributed Petsc vector, according to partition
@@ -158,6 +164,9 @@ public:
  
 };
 */
+
+template<typename BasisOnMeshType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<BasisOnMeshType,nComponents> &matrix);
 
 #include "partition/partitioned_petsc_vec_default.tpp"
 #include "partition/partitioned_petsc_vec_structured.tpp"

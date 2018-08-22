@@ -20,6 +20,8 @@ getDofNo(element_no_t elementNo, int dofIndex) const
   // 0 1       0 1 2        0,1 2,3
   // averageNDofsPerElement:
   // 1         2            2
+  VLOG(3) << "getDofNo<1D>(elementNo=" << elementNo << ", dofIndex=" << dofIndex << ") = " << BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNDofsPerElement() * elementNo + dofIndex;
+  
   return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNDofsPerElement() * elementNo + dofIndex;
 }
 
@@ -155,6 +157,10 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   // 1         1            2
   // nNodesPerElement:
   // 2         3            2
+  
+  VLOG(3) << "getNodeNo<1D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+    << BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNo + nodeIndex;
+  
   return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNo + nodeIndex;
 }
 
@@ -190,11 +196,17 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     // if there are ghost nodes on the right border
     if (this->meshPartition()->hasFullNumberOfNodes(0))
     {
+      VLOG(3) << "getNodeNo<2D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+        << this->meshPartition()->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * nElements[1] + averageNNodesPerElement1D * elementX + localX;
+      
       return this->meshPartition()->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * nElements[1]
         + averageNNodesPerElement1D * elementX + localX;
     }
     else 
     {
+      VLOG(3) << "getNodeNo<2D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+        << this->meshPartition()->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * elementX + localX;
+      
       return this->meshPartition()->nNodesLocalWithoutGhosts()
         + averageNNodesPerElement1D * elementX + localX;
     }
@@ -202,10 +214,16 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   
   if (!this->meshPartition()->hasFullNumberOfNodes(0) && elementX == nElements[0]-1 && localX == nNodesPerElement1D-1)
   {
+    VLOG(3) << "getNodeNo<2D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+      << this->meshPartition()->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * elementY + localY;
+    
     // node is a ghost node on the right border
     return this->meshPartition()->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * elementY + localY;
   }
   
+  VLOG(3) << "getNodeNo<2D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+    << nodesPerRow * (elementY * averageNNodesPerElement1D + localY) + averageNNodesPerElement1D * elementX + localX;
+    
   // compute local node no for non-ghost node
   return nodesPerRow * (elementY * averageNNodesPerElement1D + localY)
     + averageNNodesPerElement1D * elementX + localX;
@@ -260,6 +278,8 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     
     nodeNo += (averageNNodesPerElement1D * nElements[0] + 1) * (elementY * averageNNodesPerElement1D + localY);
     nodeNo += averageNNodesPerElement1D * elementX + localX;
+    
+    VLOG(3) << "getNodeNo<3D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " << nodeNo;
     return nodeNo;
   }
   
@@ -280,6 +300,8 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     }
     
     nodeNo += averageNNodesPerElement1D * elementX + localX;
+    
+    VLOG(3) << "getNodeNo<3D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " << nodeNo;
     return nodeNo;
   }
   
@@ -299,9 +321,14 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
       nodeNo += (nodesPerRow0 + nodesPerRow1 + 1) * (elementZ * averageNNodesPerElement1D + localZ);
     }
     nodeNo += averageNNodesPerElement1D * elementY + localY;
+    
+    VLOG(3) << "getNodeNo<3D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " << nodeNo;
     return nodeNo;
   }
   
+  VLOG(3) << "getNodeNo<3D>(elementNo=" << elementNo << ", nodeIndex=" << nodeIndex << ") = " 
+    << nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ) + nodesPerRow0 * (elementY * averageNNodesPerElement1D + localY) + averageNNodesPerElement1D * elementX + localX;
+    
   // compute local node no for non-ghost node
   return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
     + nodesPerRow0 * (elementY * averageNNodesPerElement1D + localY)

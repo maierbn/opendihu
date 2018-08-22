@@ -119,13 +119,9 @@ print()
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4)<<"======================";
-
-  int nEntries;
-  VecGetSize(this->gradient_->valuesLocal(), &nEntries);
-  VLOG(4)<<"increment ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->gradient_->valuesLocal());
-  VLOG(4)<<"======================";
+  VLOG(4) << "======================";
+  VLOG(4) << *this->gradient_;
+  VLOG(4) << "======================";
 }
 
 template<typename BasisOnMeshType,typename BaseDataType>

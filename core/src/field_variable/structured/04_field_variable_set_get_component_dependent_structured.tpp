@@ -18,7 +18,7 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
   // prepare lookup indices for PETSc vector values_
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofLocalNos(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
 
   this->values_->getValues(0, nDofsPerElement, (PetscInt *)elementDofs.data(), values.data());
 }

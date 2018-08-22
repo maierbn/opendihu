@@ -296,7 +296,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // loop over elements and collect point numbers of the element
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
-    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofLocalNos(elementNo);
+    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofNosLocal(elementNo);
     for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
     {
       dof_no_t dofNo = *iter;

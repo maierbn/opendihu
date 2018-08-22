@@ -101,7 +101,7 @@ createPetscObjects()
     <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros;
 
   int nComponents = 1;
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -148,18 +148,15 @@ print()
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4)<<"======================";
-  int nRows, nColumns;
-  MatGetSize(this->stiffnessMatrix_->valuesGlobal(), &nRows, &nColumns);
-  VLOG(4)<<"stiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
-
-  VLOG(4) << std::endl << PetscUtility::getStringMatrixVector(this->stiffnessMatrix_->valuesLocal(), this->rhs_->valuesLocal());
-  VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->stiffnessMatrix_->valuesLocal());
-
+  VLOG(4) << "======================";
+  VLOG(4) << *this->stiffnessMatrix_;
+  VLOG(4) << *this->rhs_;
+  VLOG(4) << *this->solution_;
+  
   MatInfo info;
-  MatGetInfo(this->stiffnessMatrix_->valuesLocal(), MAT_LOCAL, &info);
+  MatGetInfo(this->stiffnessMatrix_->valuesGlobal(), MAT_LOCAL, &info);
 
-  VLOG(4)<<"Matrix info: "<<std::endl
+  VLOG(4)<<"stiffnessMatrix info: "<<std::endl
     <<"block_size: "<<info.block_size<<std::endl
     <<"number of nonzeros: allocated: "<<info.nz_allocated<<", used: "<<info.nz_used<<", unneeded: "<<info.nz_unneeded<<std::endl
     <<"memory allocated: "<<info.memory<<std::endl
@@ -168,20 +165,7 @@ print()
     <<"fill ratio for LU/ILU: given: "<<info.fill_ratio_given<<", needed: "<<info.fill_ratio_needed<<std::endl
     <<"number of mallocs during factorization: "<<info.factor_mallocs<<std::endl;
 
-
   VLOG(4)<<"======================";
-
-  int nEntries;
-  VecGetSize(this->rhs_->valuesLocal(), &nEntries);
-  VLOG(4)<<"rhs ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->rhs_->valuesLocal());
-  VLOG(4)<<"======================";
-
-  VecGetSize(this->solution_->valuesLocal(), &nEntries);
-  VLOG(4)<<"solution ("<<nEntries<<" local entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->solution_->valuesLocal());
-  VLOG(4)<<"======================";
-  
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -205,7 +189,7 @@ initializeMassMatrix()
 
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
   const int nComponents = 1;
-  this->massMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros);
+  this->massMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
   
   this->massMatrixInitialized_ = true;
 }

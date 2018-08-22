@@ -88,7 +88,9 @@ public:
   //! number of elments in the local partition
   node_no_t nElementsLocal(int coordinateDirection) const;
   
-  //! number of nodes in the local partition
+  //! number of elments in total
+  node_no_t nElementsGlobal(int coordinateDirection) const;
+  
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   

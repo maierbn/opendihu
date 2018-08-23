@@ -56,6 +56,10 @@ private:
   std::map<std::string, std::shared_ptr<Mesh>> meshes_;    ///< the managed meshes with their string key
 };
 
+template<>
+std::shared_ptr<Mesh> Manager::
+mesh<None>(PyObject *settings);
+
 };    // namespace
 
 #include "mesh/mesh_manager.tpp"

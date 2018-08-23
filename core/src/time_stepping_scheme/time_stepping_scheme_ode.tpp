@@ -40,12 +40,13 @@ setInitialValues()
   }
   else 
   {
-    const int nDofsLocal = this->data_->mesh()->nDofsLocal();
+    const int nDofsLocal = this->data_->mesh()->nDofsLocalWithoutGhosts();
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsLocal, localValues);
   }
   //LOG(DEBUG) << "set initial values to " << values;
 
-  data_->solution().setValues(localValues);
+  // set the first component of the solution variable by the given values
+  data_->solution().setValuesWithoutGhosts(0, localValues);
 }
 
 template<typename DiscretizableInTimeType>
@@ -61,6 +62,13 @@ solution()
 {
   return data_->solution().values();
 }*/
+
+template<typename DiscretizableInTimeType>
+typename TimeSteppingSchemeOde<DiscretizableInTimeType>::Data::FieldVariableType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+solution()
+{
+  return data_->solution();
+}
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::

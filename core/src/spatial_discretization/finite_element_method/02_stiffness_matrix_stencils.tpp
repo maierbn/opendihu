@@ -97,34 +97,7 @@ setStiffnessMatrix()
     value = stencilSide[center+i]*integralFactor;
     stiffnessMatrix->setValue(dofNo, x+i, value, ADD_VALUES);
   }
-  /*
   
-  
-  
-  for (dof_no_t dofNo = 0; dofNo < nDegreesOfFreedom; dofNo++)
-  {
-
-    //                        row    column value
-    stiffnessMatrix->setValue(dofNo, dofNo, stencilCenter[center]*factor, INSERT_VALUES);
-
-    if (dofNo+1 < nDegreesOfFreedom)
-    {
-      stiffnessMatrix->setValue(dofNo, dofNo+1, stencilCenter[center+1]*factor, INSERT_VALUES);
-    }
-    if (dofNo-1 >= 0)
-    {
-      stiffnessMatrix->setValue(dofNo, dofNo-1, stencilCenter[center-1]*factor, INSERT_VALUES);
-    }
-  }
-  */
-/*
-  // call MatAssemblyBegin, MatAssemblyEnd
-  stiffnessMatrix->assembly(MAT_FLUSH_ASSEMBLY);
-  
-  // set center values for boundaries
-  stiffnessMatrix->setValue(0, 0, stencilSide[0]*factor, INSERT_VALUES);
-  stiffnessMatrix->setValue(nDegreesOfFreedom-1, nDegreesOfFreedom-1, stencilSide[0]*factor, ADD_VALUES);
-  */
   // call MatAssemblyBegin, MatAssemblyEnd
   //stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }

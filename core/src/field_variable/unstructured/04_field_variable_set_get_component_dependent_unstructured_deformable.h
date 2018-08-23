@@ -51,6 +51,8 @@ public:
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValue;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValue;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValues;
+  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValuesWithGhosts;
+  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValuesWithoutGhosts;
 
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);

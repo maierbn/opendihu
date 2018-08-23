@@ -33,8 +33,6 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // create new mesh and initialize
       std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, meshConfiguration);
       mesh->setMeshName(meshName);
-      
-      // TODO: do we want to initialize the mesh already here? Or otherwise later in FE::initialize -> data::initialize -> mesh::initialize
       mesh->initialize();
       
       // store mesh under its name

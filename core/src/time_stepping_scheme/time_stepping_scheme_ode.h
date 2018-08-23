@@ -34,6 +34,7 @@ public:
   SolutionVectorMapping &solutionVectorMapping();
 
   //! return the Petsc solution vector
+  typename Data::FieldVariableType &solution();
   //Vec &solution();
 
   //! return the data object

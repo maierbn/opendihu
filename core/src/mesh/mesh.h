@@ -55,6 +55,7 @@ class None : public Mesh
 {
 public:
   using Mesh::Mesh;
+
   //! dimensionality of the mesh
   int dimension() const {return 0;}
   static constexpr int dim() {return 0;}
@@ -67,6 +68,9 @@ public:
   
   //! number of elements in the mesh stored in the current partition
   element_no_t nElementsLocal() const {return 0;}
+  
+  //! return the MeshPartitionBase
+  std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase(){return nullptr;}
   
   //! initialization method
   void initialize(){}

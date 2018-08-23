@@ -1057,16 +1057,16 @@ setMassMatrix()
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
     element_no_t nElements = mesh->nElementsLocal();
+    node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
     double elementLength = mesh->meshWidth();
-
-    dof_no_t nUnknownsLocal = mesh->nNodesLocalWithGhosts();
+    double integralFactor = elementLength;
 
     LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
     std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
-    this->data_.massMatrix().zeroEntries();
+    this->data_.massMatrix()->zeroEntries();
     
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak
@@ -1075,28 +1075,46 @@ setMassMatrix()
     // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
     const int center = 1;
     const double stencilCenter[3] = {1./6.*1, 1./6.*4, 1./6.*1};
-    const double stencilSide[2] = {1./6.*2, 1./6.*1};
+    const double stencilSide[2] = {1./6.*1, 1./6.*2};
 
-    // loop over all dofs and set values in massMatrix with stencilCenter
-    for (node_no_t dofNo = 1; dofNo < nUnknownsLocal-1; dofNo++)
+    double value;
+    dof_no_t dofNo;
+
+    // loop over all dofs and set values with stencilCenter
+    // set entries for interior nodes
+    for (int x=1; x<nNodes0-1; x++)
     {
-      massMatrix->setValue(dofNo, dofNo-1, stencilCenter[center-1] * elementLength, INSERT_VALUES);
-      massMatrix->setValue(dofNo, dofNo,   stencilCenter[center]   * elementLength, INSERT_VALUES);
-      massMatrix->setValue(dofNo, dofNo+1, stencilCenter[center+1] * elementLength, INSERT_VALUES);
+      dofNo = x;
+      for (int i=-1; i<=1; i++) // x
+      {
+        value = stencilCenter[center+i]*integralFactor;
+        //                 matrix           row    column
+        massMatrix->setValue(dofNo, x+i, value, INSERT_VALUES);
+      }
     }
-    
+
     // call MatAssemblyBegin, MatAssemblyEnd
     massMatrix->assembly(MAT_FLUSH_ASSEMBLY);
 
-    // set values for boundaries with stencilSide
-    node_no_t dofNo = 0;
-    massMatrix->setValue(dofNo, dofNo,   stencilSide[0] * elementLength, ADD_VALUES);
-    massMatrix->setValue(dofNo, dofNo+1, stencilSide[1] * elementLength, ADD_VALUES);
+    // set entries for boundary nodes on edges
+    // left boundary (x=0)
+    int x = 0;
+    dofNo = x;
 
-    dofNo = nUnknownsLocal-1;
-    massMatrix->setValue(dofNo, dofNo,   stencilSide[0] * elementLength, ADD_VALUES);
-    massMatrix->setValue(dofNo, dofNo-1, stencilSide[1] * elementLength, ADD_VALUES);
+    for (int i=-1; i<=0; i++) // -x
+    {
+      value = stencilSide[center+i]*integralFactor;
+      massMatrix->setValue(dofNo, x-i, value, ADD_VALUES);
+    }
 
+    // right boundary (x=nNodes0-1)
+    x = nNodes0-1;
+    dofNo = x;
+    for (int i=-1; i<=0; i++) // x
+    {
+      value = stencilSide[center+i]*integralFactor;
+      massMatrix->setValue(dofNo, x+i, value, ADD_VALUES);
+    }
     // call MatAssemblyBegin, MatAssemblyEnd
     massMatrix->assembly(MAT_FINAL_ASSEMBLY);
   }

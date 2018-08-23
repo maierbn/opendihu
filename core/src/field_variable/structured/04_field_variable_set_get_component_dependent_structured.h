@@ -47,6 +47,8 @@ public:
   using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValue;
   using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValuesWithGhosts;
   using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValuesWithoutGhosts;
+  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValuesWithGhosts;
+  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValuesWithoutGhosts;
   using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValue;
   using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValues;
 

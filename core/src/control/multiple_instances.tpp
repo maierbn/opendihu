@@ -71,7 +71,7 @@ MultipleInstances(DihuContext context) :
       PythonUtility::getOptionVector(instanceConfig, "ranks", ranks);
       
       // check if own rank is part of ranks list
-      int thisRankNo = this->context_.partitionManager().rankNoCommWorld();
+      int thisRankNo = this->context_.partitionManager()->rankNoCommWorld();
       bool computeOnThisRank = false;
       for (int rank : ranks)
       {
@@ -86,17 +86,18 @@ MultipleInstances(DihuContext context) :
         continue;
       
       // create rank subset
-      Partition::RankSubset rankSubset(ranks);
+      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks);
       
       // store the rank subset containing only the own rank for the mesh of the current instance
-      this->context_.partitionManager().setRankSubsetForNextCreatedMesh(rankSubset);
+      this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
       
       VLOG(1) << "create sub context";
-      instances_.emplace_back(context_.createSubContext(instanceConfig));
+      instancesLocal_.emplace_back(context_.createSubContext(instanceConfig));
     
     }
   }
   
+  nInstancesLocal_ = instancesLocal_.size();
 }
 
 template<class TimeSteppingScheme>
@@ -104,9 +105,9 @@ void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
-  for (int i = 0; i < partition_->localSize(); i++)
+  for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instances_[i].advanceTimeSpan();
+    instancesLocal_[i].advanceTimeSpan();
   }
 }
 
@@ -114,9 +115,9 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 setTimeSpan(double startTime, double endTime)
 {
-  for (int i = 0; i < partition_->localSize(); i++)
+  for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instances_[i].setTimeSpan(startTime, endTime);
+    instancesLocal_[i].setTimeSpan(startTime, endTime);
   }
 }
 
@@ -124,12 +125,12 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
-  for (int i = 0; i < partition_->localSize(); i++)
+  for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instances_[i].initialize();
+    instancesLocal_[i].initialize();
   }
   
-  data_.setInstancesData(instances_);
+  data_.setInstancesData(instancesLocal_);
 }
 
 template<class TimeSteppingScheme>
@@ -139,17 +140,17 @@ run()
   initialize();
  
   //#pragma omp parallel for // does not work with the python interpreter
-  for (int i = 0; i < partition_->localSize(); i++)
+  for (int i = 0; i < nInstancesLocal_; i++)
   {
     if (omp_get_thread_num() == 0)
     {
       std::stringstream msg;
-      msg << omp_get_thread_num() << ": running " << partition_->localSize() << " instances with " << omp_get_num_threads() << " OpenMP threads";
+      msg << omp_get_thread_num() << ": running " << nInstancesLocal_ << " instances with " << omp_get_num_threads() << " OpenMP threads";
       LOG(INFO) << msg.str();
     }
     
-    //instances_[i].reset();
-    instances_[i].run();
+    //instancesLocal_[i].reset();
+    instancesLocal_[i].run();
   }
   
   this->outputWriterManager_.writeOutput(this->data_);
@@ -161,7 +162,7 @@ knowsMeshType()
 {
   // This is a dummy method that is currently not used, it is only important if we want to map between multiple data sets.
   assert(nInstances_ > 0);
-  return instances_[0].knowsMeshType();
+  return instancesLocal_[0].knowsMeshType();
 }
 
 template<class TimeSteppingScheme>
@@ -169,7 +170,7 @@ Vec &MultipleInstances<TimeSteppingScheme>::
 solution()
 {
   assert(nInstances_ > 0);
-  return instances_[0].solution();
+  return instancesLocal_[0].solution();
 }
 
 };

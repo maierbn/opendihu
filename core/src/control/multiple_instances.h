@@ -47,9 +47,8 @@ protected:
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
   int nInstances_; ///< number of instances
-  std::vector<TimeSteppingScheme> instances_;   ///< the instances of the problem
-  
-  std::shared_ptr<Partition::MeshPartition<typename TimeSteppingScheme::BasisOnMesh>> partition_;   ///< partitioning object that stores which instances are computed locally
+  std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
+  int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   
   Data::MultipleInstances<typename TimeSteppingScheme::BasisOnMesh, TimeSteppingScheme> data_;  ///< the data object
 };

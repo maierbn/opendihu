@@ -37,7 +37,7 @@ RankSubset::RankSubset(int singleRank)
   MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_);
 }
 
-RankSubset::RankSubset(std::vector<int> ranks) : rankNo_(ranks)
+RankSubset::RankSubset(std::vector<int> &ranks) : rankNo_(ranks)
 {
   // get the own current MPI rank
   int currentRank;

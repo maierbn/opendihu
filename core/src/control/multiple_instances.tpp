@@ -53,21 +53,48 @@ MultipleInstances(DihuContext context) :
   
   MPIUtility::gdbParallelDebuggingBarrier();
   
-  // create a rank subset that contains just the current rank. The locally computed instances are all computed by this single-element rank subset.
-  Partition::RankSubset rankSubset(context_.partitionManager()->rankNoCommWorld());
-  
-  // determine range of locally computed instances
-  
   // create all instances
-  for (int instanceConfigNo = 0; instanceConfigNo < partition_->localSize(); instanceConfigNo++)
+  for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
     PyObject *instanceConfig = instanceConfigs[instanceConfigNo];
    
-    // store the rank subset containing only the own rank for the mesh of the current instance
-    this->context_.partitionManager().setRankSubsetForNextCreatedMesh(rankSubset);
+    // extract ranks for this instance
+    if (!PythonUtility::hasKey(instanceConfig, "ranks"))
+    {
+      LOG(ERROR) << "Instance " << instanceConfigs << " has no \"ranks\" settings.";
+      continue;
+    }
+    else 
+    {
+      // extract rank list
+      std::vector<int> ranks;
+      PythonUtility::getOptionVector(instanceConfig, "ranks", ranks);
+      
+      // check if own rank is part of ranks list
+      int thisRankNo = this->context_.partitionManager().rankNoCommWorld();
+      bool computeOnThisRank = false;
+      for (int rank : ranks)
+      {
+        if (rank == thisRankNo)
+        {
+          computeOnThisRank = true;
+          break;
+        }
+      }
+      
+      if (!computeOnThisRank)
+        continue;
+      
+      // create rank subset
+      Partition::RankSubset rankSubset(ranks);
+      
+      // store the rank subset containing only the own rank for the mesh of the current instance
+      this->context_.partitionManager().setRankSubsetForNextCreatedMesh(rankSubset);
+      
+      VLOG(1) << "create sub context";
+      instances_.emplace_back(context_.createSubContext(instanceConfig));
     
-    VLOG(1) << "create sub context";
-    instances_.emplace_back(context_.createSubContext(instanceConfig));
+    }
   }
   
 }

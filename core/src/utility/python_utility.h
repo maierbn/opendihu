@@ -5,9 +5,6 @@
 #include <iostream>
 #include <array>
 #include <vector>
-#include <map>
-#include <mutex>
-#include <omp.h>
 
 // With python3+ PyString_* was renamed to PyBytes_*
 //(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
@@ -98,6 +95,12 @@ public:
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
   static void getOptionVector(const PyObject *settings, std::string keyString, int nEntries, std::vector<double> &values);
 
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values);
+
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values);
+
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);
 
@@ -143,35 +146,6 @@ public:
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
 
-  /** Helper class that acquires the global interpreter lock of the python interpreter. This is needed for every call to the python api when running multi-threaded (openmp) programs.
-   * A critical section for python API code starts when an object of this class is instantiated and ends, when the object gets destructed.
-   * Typical usage :
-   * {
-   *   GlobalInterpreterLock lock;
-   *   // python c-api code here
-   * }
-   */
-  class GlobalInterpreterLock
-  {
-  public:
-    //! constructor
-    GlobalInterpreterLock();
-    
-    //! destructor
-    ~GlobalInterpreterLock();
-  private:
-    PyGILState_STATE gstate_;
-    //static int nGILS_;
-    //static std::map<int, int> nGilsThreads_;
-    //PyThreadState *mainThreadState_;
-    
-    //static std::recursive_mutex mutex_;  ///< mutex for critical section
-    //static std::unique_lock<std::recursive_mutex> lock_;
-    
-    //static bool lockInitialized_;
-    //static omp_nest_lock_t lock_;
-  };
-  
 private:
 
   static PyObject *itemList;    ///< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext

@@ -18,9 +18,6 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
 
   if (settings)
   {
-    // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-  
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -72,9 +69,6 @@ void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyS
 {
   itemListIndex++;
 
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
   if (itemListIndex < PyList_Size(itemList))
   {
     PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
@@ -91,9 +85,6 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
 {
   if (settings)
   {
-    // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-  
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -135,9 +126,6 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
 {
   listIndex++;
 
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
   if (listIndex < PyList_Size(list))
   {
     PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
@@ -149,9 +137,6 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
 template<class ValueType, int D>
 std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue)
 {
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
   initNumpy();
 
   std::array<ValueType, D> result;
@@ -250,9 +235,6 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
 
   if (settings)
   {
-    // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-  
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
     if(PyDict_Contains((PyObject *)settings, key))
@@ -318,9 +300,6 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
 template<int D>
 PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)
 {
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
   PyObject *result = PyList_New((Py_ssize_t)D);
   for (unsigned int i=0; i<D; i++)
   {

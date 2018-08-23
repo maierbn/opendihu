@@ -5,3 +5,21 @@ Mesh
   "nodePositions": [[0, 1], [2,3], [4,5,6], ...],
   "physicalExtent": [5.0, 8.0, 2.0]     # this can be used to set nodePositions
   "physicalExtent": 4.0,
+
+
+
+
+
+"MultipleInstances": {
+    "nInstances": nInstances,
+    "instances": [
+      {
+        "ranks": [0,1,2],
+        "GodunovSplitting": {
+        }
+      },
+      {
+      }
+    ]
+    "OutputWriter" : [],
+  

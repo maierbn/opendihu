@@ -38,7 +38,7 @@ public:
   virtual bool knowsMeshType() = 0;
 
   ///! returns the Petsc solution vector
-  virtual Vec &solution() = 0;
+  //virtual Vec &solution() = 0;
 
   ///! destructor
   virtual ~TimeSteppingScheme() {}

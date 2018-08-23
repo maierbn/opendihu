@@ -126,6 +126,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
 def get_instance_config(i):
   
   instance_config = {
+    "ranks": [0],
     "GodunovSplitting": {
       #"numberTimeSteps": 1,
       "timeStepWidth": 1e-3,

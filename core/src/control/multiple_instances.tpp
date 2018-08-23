@@ -26,7 +26,7 @@ MultipleInstances(DihuContext context) :
   // parse all instance configs 
   std::vector<PyObject *> instanceConfigs;
   
-  // get the config for the firsetInstancesDatast instance from the list
+  // get the config for the first InstancesDataset instance from the list
   PyObject *instanceConfig = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "instances");
 
   int i = 0;
@@ -59,7 +59,7 @@ MultipleInstances(DihuContext context) :
   // determine range of locally computed instances
   
   // create all instances
-  for (int instanceConfigNo = partition_->begin(); instanceConfigNo < partition_->end(); instanceConfigNo++)
+  for (int instanceConfigNo = 0; instanceConfigNo < partition_->localSize(); instanceConfigNo++)
   {
     PyObject *instanceConfig = instanceConfigs[instanceConfigNo];
    

@@ -9,6 +9,11 @@
 
 double parseNumber(std::string::iterator &iterFileContents, std::string::iterator iterFileContentsEnd)
 {
+  if (iterFileContents == iterFileContentsEnd)
+    return 0;
+  
+  std::string::iterator iterFileContentsBegin = iterFileContents;
+
   // parse number in file Contents
   std::string numberFileContents;
   while ((isdigit(*iterFileContents) || *iterFileContents == '.') && iterFileContents != iterFileContentsEnd)
@@ -16,7 +21,24 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
     numberFileContents += *iterFileContents;
     iterFileContents++;
   }
-  double number = stod(numberFileContents, nullptr);
+  
+  if (numberFileContents.empty())
+    return 0;
+  
+  double number = 0;
+  try 
+  {
+    std::stod(numberFileContents, nullptr);
+  }
+  catch (std::exception &e)
+  {
+    std::string s;
+    for(std::string::iterator iterFileContents2 = iterFileContentsBegin; iterFileContents2 != iterFileContentsEnd; iterFileContents2++)
+    {
+      s += *iterFileContents2;
+    }
+    LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
+  }
   return number;
 }
 
@@ -25,6 +47,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   // read in generated exnode file 
   std::ifstream file(filename);
 
+  LOG(DEBUG) << "assertFileMatchesContent: Parse file \"" << filename << "\"";
   ASSERT_TRUE(file.is_open()) << "could not open output file"; 
   
   // reserve memory of size of file
@@ -49,7 +72,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     if (isdigit(*iterFileContents))
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
-      double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents2.end());
+      double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());
       if (fabs(numberFileContents - numberReferenceContents) >= 1e-13)
       {
         referenceContentMatches = false;

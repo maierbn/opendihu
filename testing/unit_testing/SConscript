@@ -12,12 +12,21 @@ if not env['no_tests']:
   #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
   #src_files = ['src/poisson.cpp', 'src/main.cpp', 'src/utility.cpp']
   # all src files:
-  src_files = ['src/diffusion.cpp', 'src/faces.cpp', 'src/field_variable.cpp', 'src/laplace.cpp',
-               'src/mesh.cpp', 'src/node_positions_tester.h', 'src/src/numerical_integration.cpp',
-               'src/operator_splitting.cpp', 'src/output.cpp', 'src/poisson.cpp', 'src/solid_mechanics.cpp',
-               'src/unstructured_deformable.cpp', 'src/main.cpp', 'src/utility.cpp']
+  src_files = ['src/diffusion.cpp', 
+               'src/faces.cpp', 
+               'src/field_variable.cpp', 
+               'src/laplace.cpp',
+               'src/main.cpp',
+               'src/mesh.cpp',
+               'src/numerical_integration.cpp',
+               'src/operator_splitting.cpp',
+               'src/output.cpp', 
+               'src/poisson.cpp',
+               'src/solid_mechanics.cpp',
+               'src/unstructured_deformable.cpp', 
+               'src/utility.cpp']
   
-  src_files = ['src/poisson.cpp', 'src/main.cpp', 'src/utility.cpp']
+  #src_files = ['src/field_variable.cpp', 'src/main.cpp', 'src/utility.cpp']
   
   
   

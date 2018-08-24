@@ -18,11 +18,13 @@ PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nCompon
 PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
   PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
 {
+  createVector();
+  
   // copy existing values
   PetscErrorCode ierr;
   for (int i = 0; i < nComponents; i++)
   {
-    ierr = VecCopy(rhs.valuesLocal(i), vectorLocal_[i]); CHKERRV(ierr);
+    //ierr = VecCopy(rhs.valuesLocal(i), vectorLocal_[i]); CHKERRV(ierr);
     ierr = VecCopy(rhs.valuesGlobal(i), vectorGlobal_[i]); CHKERRV(ierr);
   }
   
@@ -44,7 +46,6 @@ PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisF
   PetscErrorCode ierr;
   for (int i = 0; i < std::min(nComponents,nComponents2); i++)
   {
-    ierr = VecCopy(rhs.valuesLocal(i), vectorLocal_[i]); CHKERRV(ierr);
     ierr = VecCopy(rhs.valuesGlobal(i), vectorGlobal_[i]); CHKERRV(ierr);
   }
   
@@ -159,6 +160,11 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  // this wraps the standard PETSc VecGetValues on the local vector
+  PetscErrorCode ierr;
+  ierr = VecGetValues(vectorLocal_[componentNo], ni, ix, y); CHKERRV(ierr);
+  
+  // debugging output
   if (VLOG_IS_ON(3))
   {
     std::stringstream str;
@@ -167,19 +173,24 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       str << ix[i] << " ";
     }
-    str << ")";
+    str << "): ";
+    for (int i = 0; i < ni; i++)
+    {
+      str << y[i] << " ";
+    }
     VLOG(3) << str.str();
   }
-  
-  // this wraps the standard PETSc VecGetValues on the local vector
-  PetscErrorCode ierr;
-  ierr = VecGetValues(vectorLocal_[componentNo], ni, ix, y); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  // this wraps the standard PETSc VecGetValues on the global vector
+  PetscErrorCode ierr;
+  ierr = VecGetValues(vectorGlobal_[componentNo], ni, ix, y); CHKERRV(ierr);
+  
+  // debugging output
   if (VLOG_IS_ON(3))
   {
     std::stringstream str;
@@ -188,13 +199,13 @@ getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], Petsc
     {
       str << ix[i] << " ";
     }
-    str << ")";
+    str << "): ";
+    for (int i = 0; i < ni; i++)
+    {
+      str << y[i] << " ";
+    }
     VLOG(3) << str.str();
   }
-  
-  // this wraps the standard PETSc VecGetValues on the global vector
-  PetscErrorCode ierr;
-  ierr = VecGetValues(vectorGlobal_[componentNo], ni, ix, y); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -305,6 +316,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 Vec &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 valuesLocal(int componentNo)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
   return vectorLocal_[componentNo];
 }
 
@@ -312,6 +324,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 Vec &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 valuesGlobal(int componentNo)
 {
+  assert(componentNo >= 0 && componentNo < nComponents);
   return vectorGlobal_[componentNo];
 }
 
@@ -320,6 +333,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 std::vector<PetscInt> &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 localDofNosWithoutGhosts()
 {
+  assert(this->meshPartition_);
   return this->meshPartition_->localDofNosWithoutGhosts();
 }
 

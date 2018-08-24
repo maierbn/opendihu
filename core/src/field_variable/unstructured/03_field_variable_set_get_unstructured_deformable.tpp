@@ -226,6 +226,8 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->mesh_);
+  assert(this->mesh_->meshPartition());
   assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
   assert(this->values_);
    

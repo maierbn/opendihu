@@ -86,11 +86,8 @@ protected:
   //! parse the element and node positions from python settings
   void parseFromSettings(PyObject *settings);
 
-  //! create the geometry field variable object and parse number of local elements, such that afterwards the meshPartition can be created
-  void initializeGeometryField();
-
-  //! set everything in the geometry field variable that already has the meshPartition but no data yet
-  void setGeometryFieldValues();
+  //! initialize the meshPartition of this mesh (by calling BasisOnMeshPartition::initialize()), then create the partitioned Petsc vectors in each field variable
+  void initializeValuesVector();
   
   std::map<std::string, std::shared_ptr<FieldVariableBaseType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField_ = nullptr;  ///< the geometry field variable
@@ -105,4 +102,5 @@ protected:
 }  // namespace
 
 #include "basis_on_mesh/04_basis_on_mesh_data_unstructured.tpp"
-#include "basis_on_mesh/04_basis_on_mesh_data_unstructured_exfile_io.tpp"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured_parse_exfiles.tpp"
+#include "basis_on_mesh/04_basis_on_mesh_data_unstructured_parse_settings.tpp"

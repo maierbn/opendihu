@@ -29,8 +29,8 @@ transferRhsToWeakForm()
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
   element_no_t nElements = mesh->nElementsLocal();
   double elementLength = mesh->meshWidth();
-  dof_no_t nUnknownsLocal = mesh->nNodesLocalWithGhosts();
-
+  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  
   LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
 
   // multiply factor to rhs
@@ -44,7 +44,7 @@ transferRhsToWeakForm()
   // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
   const int center = 1;
   const double stencilCenter[3] = {1./6., 4./6., 1./6.};
-  const double stencilSide[2] = {2./6., 1./6.};
+  const double stencilSide[2] = {1./6., 2./6.};    // left side
 
   // get all entries
   std::vector<double> vectorValues;
@@ -53,7 +53,7 @@ transferRhsToWeakForm()
   rightHandSide.zeroEntries();
   
   // loop over all dofs and set values with stencilCenter
-  for (node_no_t dofNo = 1; dofNo < nUnknownsLocal-1; dofNo++)
+  for (node_no_t dofNo = 1; dofNo < nNodes0-1; dofNo++)
   {
     double value =
       (stencilCenter[center-1]*vectorValues[dofNo-1]
@@ -65,8 +65,34 @@ transferRhsToWeakForm()
   
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getValuesWithGhosts(vectorValues);
   
+  
+  // set entries for boundary nodes on edges
+  // left boundary (x=0)
+  int x = 0;
+  dof_no_t dofNo = x;
+
+  double value = 0;
+  for (int i=-1; i<=0; i++) // -x
+  {
+    value += stencilSide[center+i]*vectorValues[x-i];
+  }
+  value *= elementLength;
+  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+
+  // right boundary (x=nNodes0-1)
+  x = nNodes0-1;
+  dofNo = x;
+  value = 0;
+  for (int i=-1; i<=0; i++) // x
+  {
+    value += stencilSide[center+i]*vectorValues[x+i];
+  }
+  value *= elementLength;
+  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  
+  
+  /*
   // set values for boundaries with stencilSide
   node_no_t dofNo = 0;
   double value =
@@ -74,12 +100,12 @@ transferRhsToWeakForm()
     + stencilSide[1]*vectorValues[dofNo+1]) * elementLength;
   rightHandSide.setValue(0, value, ADD_VALUES);
 
-  dofNo = nUnknownsLocal-1;
+  dofNo = nNodes0-1;
   value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo-1]) * elementLength;
   rightHandSide.setValue(dofNo, value, ADD_VALUES);
-
+*/
   // call VecAssemblyBegin, VecAssemblyEnd
   rightHandSide.finishVectorManipulation();
 }
@@ -158,7 +184,6 @@ transferRhsToWeakForm()
 
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getValuesWithGhosts(vectorValues);
   
   // set entries for boundary nodes on edges
   // left boundary (x=0)
@@ -428,7 +453,6 @@ transferRhsToWeakForm()
 
   rightHandSide.finishVectorManipulation();
   rightHandSide.startVectorManipulation();
-  rightHandSide.getValuesWithGhosts(vectorValues);
   
   // set entries for boundary nodes on surface boundaries
   // left boundary (x = 0)

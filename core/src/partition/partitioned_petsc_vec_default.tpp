@@ -51,9 +51,8 @@ createVector()
   
   assert(this->meshPartition_);
   
-  dof_no_t nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  dof_no_t nEntriesLocal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
-  dof_no_t nEntriesGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
+  dof_no_t nEntriesLocal = this->meshPartition_->nDofs();
+  dof_no_t nEntriesGlobal = nEntriesLocal;
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -82,6 +81,8 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 finishVectorManipulation()
 {
+  assert(values_.size() == nComponents);
+  
   PetscErrorCode ierr;
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -101,6 +102,27 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
+  assert(componentNo >= 0);
+  assert(componentNo < values_.size());
+  assert(values_.size() == nComponents);
+  
+  // debugging output
+  if (VLOG_IS_ON(3))
+  {
+    std::stringstream str;
+    str << "\"" << this->name_ << "\" setValues(componentNo=" << componentNo << ", indices=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << ix[i] << " ";
+    }
+    str << "): ";
+    for (int i = 0; i < ni; i++)
+    {
+      str << y[i] << " ";
+    }
+    VLOG(3) << str.str();
+  }
+  
   // this wraps the standard PETSc VecSetValues on the local vector
   PetscErrorCode ierr;
   ierr = VecSetValues(values_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
@@ -111,6 +133,14 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
+  assert(componentNo >= 0);
+  assert(componentNo < values_.size());
+  assert(values_.size() == nComponents);
+  
+  // debugging output
+  VLOG(3) << "\"" << this->name_ << "\" setValue(componentNo=" << componentNo << ", row=" << row << ", value=" << value 
+    << (mode == INSERT_VALUES? "(INSERT_VALUES)": "(ADD_VALUES)") << ")";
+    
   // this wraps the standard PETSc VecSetValue on the local vector
   PetscErrorCode ierr;
   ierr = VecSetValue(values_[componentNo], row, value, mode); CHKERRV(ierr);
@@ -121,6 +151,8 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs)
 {
+  assert(values_.size() == nComponents);
+  
   VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
   
   PetscErrorCode ierr;
@@ -135,9 +167,30 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  assert(componentNo >= 0);
+  assert(componentNo < values_.size());
+  assert(values_.size() == nComponents);
+  
   // this wraps the standard PETSc VecGetValues on the local vector
   PetscErrorCode ierr;
   ierr = VecGetValues(values_[componentNo], ni, ix, y); CHKERRV(ierr); 
+  
+  // debugging output
+  if (VLOG_IS_ON(3))
+  {
+    std::stringstream str;
+    str << "\"" << this->name_ << "\" getValues(componentNo=" << componentNo << ", indices=";
+    for (int i = 0; i < ni; i++)
+    {
+      str << ix[i] << " ";
+    }
+    str << "): ";
+    for (int i = 0; i < ni; i++)
+    {
+      str << y[i] << " ";
+    }
+    VLOG(3) << str.str();
+  }
 }
 
 //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
@@ -153,6 +206,10 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 zeroEntries()
 {
+  assert(values_.size() == nComponents);
+  
+  VLOG(3) << "\"" << this->name_ << "\" zeroEntries";
+  
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -165,6 +222,10 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 Vec &PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 valuesLocal(int componentNo)
 {
+  assert(componentNo >= 0);
+  assert(componentNo < values_.size());
+  assert(values_.size() == nComponents);
+  
   return values_[componentNo];
 }
 
@@ -173,6 +234,10 @@ template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 Vec &PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
 valuesGlobal(int componentNo)
 {
+  assert(componentNo >= 0);
+  assert(componentNo < values_.size());
+  assert(values_.size() == nComponents);
+  
   return values_[componentNo];
 }
 

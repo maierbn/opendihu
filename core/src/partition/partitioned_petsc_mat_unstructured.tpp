@@ -174,5 +174,8 @@ output(std::ostream &stream) const
   PetscErrorCode ierr;
   ierr = MatGetSize(this->matrix_, &nRows, &nColumns); CHKERRV(ierr);
   
+  ierr = MatAssemblyBegin(this->matrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  ierr = MatAssemblyEnd(this->matrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  
   stream << PetscUtility::getStringMatrix(this->matrix_) << std::endl;
 }

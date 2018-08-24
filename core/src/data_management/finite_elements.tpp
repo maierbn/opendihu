@@ -84,7 +84,7 @@ createPetscObjects()
  
   if (VLOG_IS_ON(1))
   {
-    VLOG(1) << PetscUtility::getStringVector(geometry.values());
+    //VLOG(1) << PetscUtility::getStringVector(geometry.values());
   }
   
   

@@ -113,7 +113,7 @@ public:
   {
     // create the discretization matrix if it does not already exist
     finiteElementMethod2.setMassMatrix();
-    Mat &massMatrix = finiteElementMethod2.data_.massMatrix()->values();
+    Mat &massMatrix = finiteElementMethod2.data_.massMatrix()->valuesGlobal();
     
     int n, m;
     MatGetSize(massMatrix, &n, &m);

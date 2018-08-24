@@ -29,8 +29,8 @@ setRightHandSide()
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    global_no_t nGlobalUnknowns = this->data_.nGlobalUnknowns();
-    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nGlobalUnknowns, localValues);
+    global_no_t nUnknownsGlobal = this->data_.nUnknownsGlobal();
+    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nUnknownsGlobal, localValues);
 
     std::shared_ptr<Mesh::Mesh> mesh = this->data_.mesh();
     mesh->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
@@ -50,7 +50,7 @@ setRightHandSide()
   LOG(DEBUG) << s.str();
 #endif
 
-  rightHandSide.setValues(localValues);
+  rightHandSide.setValuesWithoutGhosts(localValues);
 
   // transform the entries from strong form to weak form
   this->transferRhsToWeakForm();

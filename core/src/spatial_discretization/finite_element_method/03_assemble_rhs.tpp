@@ -35,12 +35,12 @@ transferRhsToWeakForm()
 
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
 
-  // merge local changes on the vector
+  // merge local changes on the partitioned vector
   rightHandSide.startVectorManipulation();
   
   // get all entries
   std::vector<double> rhsValues;
-  rightHandSide.getLocalValues(rhsValues);
+  rightHandSide.getValuesWithGhosts(rhsValues);
 
   // initialize values to zero
   rightHandSide.zeroEntries();
@@ -53,7 +53,7 @@ transferRhsToWeakForm()
   LOG(DEBUG) << D << "D integration with " << QuadratureDD::numberEvaluations() << " evaluations";
 
   // set entries in rhs vector
-  // loop over elements
+  // loop over local elements
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
     // get indices of element-local dofs

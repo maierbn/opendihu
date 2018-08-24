@@ -95,8 +95,6 @@ transferRhsToWeakForm()
 
   // get settings values
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
   node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
   node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
   double elementLength0 = mesh->meshWidth();
@@ -326,9 +324,6 @@ transferRhsToWeakForm()
 
   // get settings values
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
-  element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
   node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
   node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
   node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
@@ -1056,12 +1051,11 @@ setMassMatrix()
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-    element_no_t nElements = mesh->nElementsLocal();
     node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
     double elementLength = mesh->meshWidth();
     double integralFactor = elementLength;
 
-    LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
+    LOG(DEBUG) << "Use settings nNodes0="<<nNodes0<<", elementLength="<<elementLength;
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
@@ -1137,8 +1131,6 @@ setMassMatrix()
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-    element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-    element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
     node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
     node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
     double elementLength0 = mesh->meshWidth();
@@ -1177,8 +1169,10 @@ setMassMatrix()
       {2./36, 1./36}
     };
 
-    auto dofIndex = [&nElements0, &nElements1](int x, int y){return y*(nElements0+1) + x;};
-
+    auto dofIndex = [&nNodes0, &nNodes1](int x, int y){
+      return y*nNodes0 + x;
+    };
+    
     // loop over all dofs and set values with stencilCenter
     // set entries for interior nodes
     for (int y=1; y<nNodes1-1; y++)
@@ -1337,9 +1331,6 @@ setMassMatrix()
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-    element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-    element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
-    element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
     node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
     node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1); 
     node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);

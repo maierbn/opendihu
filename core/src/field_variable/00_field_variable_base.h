@@ -31,6 +31,9 @@ public:
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
 
+  //! set the mesh
+  virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh) {LOG(FATAL)<<"this is unused";}
+  
   //! get the number of components
   virtual int getNComponents() const = 0;
 

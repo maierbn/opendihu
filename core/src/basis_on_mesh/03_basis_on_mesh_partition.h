@@ -75,6 +75,14 @@ public:
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   virtual global_no_t nElementsGlobal() const = 0;
 
+  //! get the number of nodes, this is stored in geometry field
+  virtual global_no_t nNodesGlobal() const = 0;
+  
+  //! get the number of dofs, this is stored in this->nDofs_ and in geometry field
+  virtual global_no_t nDofsGlobal() const = 0;
+
+  // nDofsGlobal() is defined in 06_basis_on_mesh_dofs_nodes.h
+  
 };
 
 }  // namespace

@@ -80,7 +80,7 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
-  LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects";
+  LOG(TRACE)<<"FiniteElements::createPetscObjects";
 
   // get the partitioning from the mesh
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition = this->mesh_->meshPartition();

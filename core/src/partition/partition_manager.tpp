@@ -10,9 +10,10 @@ namespace Partition
 
 template<typename BasisOnMesh>
 std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
-createPartitioning(global_no_t globalSize)
+createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal)
 { 
-  LOG(DEBUG) << "Partition::Manager::createPartitioning of globalSize " << globalSize;
+  LOG(DEBUG) << "Partition::Manager::createPartitioningUnstructured, nElementsGlobal: " 
+    << nElementsGlobal << ", nNodesGlobal: " << nNodesGlobal << ", nDofsGlobal: " << nDofsGlobal;
   
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
@@ -31,7 +32,7 @@ createPartitioning(global_no_t globalSize)
   
   LOG(DEBUG) << "using rankSubset " << *rankSubset;
   
-  return std::make_shared<MeshPartition<BasisOnMesh>>(globalSize, rankSubset);
+  return std::make_shared<MeshPartition<BasisOnMesh>>(nElementsGlobal, nNodesGlobal, nDofsGlobal, rankSubset);
 }
 
 // use nElementsLocal and nRanks, fill nElementsGlobal

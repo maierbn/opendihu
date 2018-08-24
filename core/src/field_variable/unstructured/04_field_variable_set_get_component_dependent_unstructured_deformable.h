@@ -31,7 +31,6 @@ public:
   //! get a single value from local dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofLocalNo);
 
-
 };
 
 /** For 1 component
@@ -49,6 +48,8 @@ public:
 
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getElementValues;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValue;
+  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValuesWithGhosts;
+  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValuesWithoutGhosts;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValue;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValues;
   using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValuesWithGhosts;

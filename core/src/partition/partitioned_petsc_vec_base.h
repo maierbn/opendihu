@@ -16,6 +16,12 @@ public:
   //! get a vector of local dof nos (from meshPartition), with ghost dofs
   std::vector<PetscInt> &localDofNos();
   
+  //! get the meshPartition
+  const std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition();
+  
+  //! get the name of the vector
+  std::string name();
+  
 protected:
   
   std::string name_;   ///< name of the vector

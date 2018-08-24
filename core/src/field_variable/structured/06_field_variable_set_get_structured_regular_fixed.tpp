@@ -189,7 +189,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
-    assert(dofLocalNo[i] < this->mesh_->nDofsWithoutGhosts());
+    assert(dofLocalNo[i] < this->mesh_->nDofsLocalWithoutGhosts());
     
     int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
@@ -418,7 +418,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
 setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
 {
-  this->values_ = rhs.partitionedPetscVec();
+  this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
 };

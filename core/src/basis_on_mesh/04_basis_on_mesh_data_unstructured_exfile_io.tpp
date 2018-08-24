@@ -154,9 +154,21 @@ parseExelemFile(std::string exelemFilename)
             );
             this->fieldVariable_.insert(newEntry);
           }
-          this->fieldVariable_[fieldName]->setNumberElements(this->nElements_);
-
+          
           VLOG(1) << "new field variable [" << fieldName << "]";
+          
+          // store number of elements in field variable
+          this->fieldVariable_[fieldName]->setNumberElements(this->nElements_);
+                  
+          // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
+          std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+            = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+          assert(thisMesh != nullptr);
+          assert(geometryField_ != nullptr);
+          
+          // set this mesh to geometry field
+          this->fieldVariable_[fieldName]->setMesh(thisMesh);
 
           // parse whole field description block inside component object
           this->fieldVariable_[fieldName]->parseHeaderFromExelemFile(fieldContent);
@@ -266,6 +278,9 @@ parseExelemFile(std::string exelemFilename)
   }
   VLOG(1) << "nDofs: " << this->nDofs_;
 
+    // create meshPartition and redistribute elements if necessary, this needs information about mesh size
+  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
+    
   //! check if it matches meshPartition
 
   VLOG(1) << "initialize values vectors";
@@ -452,13 +467,31 @@ parseFromSettings(PyObject *settings)
 
   // create and setup geometry field variable
   this->geometryField_ = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>();
+  
+  
+  // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
+  std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
+    = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
+
+  assert(thisMesh != nullptr);
+  assert(geometryField_ != nullptr);
+  
+  // set this mesh to geometry field
+  geometryField_->setMesh(thisMesh);
 
   this->geometryField_->initializeFromMappings("geometry", true, exfileRepresentation, elementToDofMapping,
                                                            this->elementToNodeMapping_, nodeToDofMapping, {"x","y","z"});
-
+  //this does not yet call initializeValuesVector(), which needs to be done after the meshPartition of the mesh is set
+  
   // unify exfile representation variables in field variables such that there is only one shared for all components of a field variable
   this->geometryField_->unifyMappings(this->elementToNodeMapping_, this->nDofsPerNode());
 
+  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
+  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
+  
+  // create the values vector
+  this->geometryField_->initializeValuesVector();
+  
   // set values from nodePositions
 
   // loop over nodes

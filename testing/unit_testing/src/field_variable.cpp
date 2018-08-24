@@ -51,6 +51,7 @@ config = {
   typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> FieldVariable3Type;
   
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(finiteElementMethod.mesh());
+  mesh->initialize();
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
@@ -74,6 +75,7 @@ config = {
   
   // set all components, 1 dof
   Vec2 v0 = {1.0, 2.0};
+  a->startVectorManipulation();
   a->setValue(5, v0);
   a->finishVectorManipulation();
   
@@ -83,6 +85,7 @@ config = {
   // set all components, multiple dofs
   std::vector<Vec2> v1 = {Vec2({1.0, 2.0}), Vec2({3.0, 4.0}), Vec2({5.0, 6.0}), Vec2({7.0, 8.0}), Vec2({9.0, 10.0})};
   std::vector<dof_no_t> dofs = {4,8,2,7,10};
+  a->startVectorManipulation();
   a->setValues(dofs, v1);
   a->finishVectorManipulation();
   
@@ -102,6 +105,7 @@ config = {
   c->finishVectorManipulation();
   
   // set single component, 1 dof
+  c->startVectorManipulation();
   c->setValue(5, 5.0);
   c->finishVectorManipulation();
   ASSERT_EQ(c->getValue(0,5), 5.0);
@@ -110,6 +114,7 @@ config = {
   
   // set single component, multiple dofs
   std::vector<double> v2 = {1.0, 2.0, 3.0, 4.0, 5.0};
+  c->startVectorManipulation();
   c->setValues(dofs, v2);
   c->finishVectorManipulation();
   
@@ -121,6 +126,7 @@ config = {
   
   std::vector<double> values10 = {11., 12., 13., 14.};
   std::vector<dof_no_t> dofs10 = {11, 12, 13, 14};
+  c->startVectorManipulation();
   c->setValues(dofs10, values10);
   c->finishVectorManipulation();
   
@@ -153,7 +159,7 @@ config = {
   
   // for a component get all values
   std::vector<double> values;
-  a->getValues(0, values);
+  a->getValuesWithoutGhosts(0, values);
   
   std::vector<double> reference0 = {
     0.0, 0.0, 5.0, 0.0, 1.0,
@@ -165,7 +171,7 @@ config = {
   ASSERT_EQ(values, reference0);
   
   values.clear();
-  a->getValues(1, values);
+  a->getValuesWithoutGhosts(1, values);
   
   std::vector<double> reference1 = {
      0.0, 0.0, 6.0, 0.0, 2.0,
@@ -201,12 +207,15 @@ config = {
   std::vector<double> rreference33 = {-1.0,-1.0,0.0,7.0,5.0,0.0,8.0,6.0};
   ASSERT_EQ(values3,rreference33);
   
+  std::cout<<"--1";
+  
   // all components, multiple dofs
   std::array<Vec2,3> values4;
   a->template getValues<3>(dofs2, values4);
   std::array<Vec2,3> reference4 = {Vec2({0.0,0.0}),Vec2({7.0,8.0}),Vec2({5.0,6.0})};
   ASSERT_EQ(values4,reference4);
   
+  std::cout<<"--2";
   
 //  node global nos.
 //  10__11_12__13_14
@@ -223,6 +232,7 @@ config = {
   std::array<double,BasisOnMeshType::nDofsPerElement()> reference5 = {5.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0};
   ASSERT_EQ(values5,reference5);
   
+  std::cout<<"-3";
   // component 1
   std::array<double,BasisOnMeshType::nDofsPerElement()> values6;
   a->getElementValues(1, 1, values6);
@@ -231,26 +241,36 @@ config = {
   
   
   
+  std::cout<<"--4";
   //! get the values corresponding to all element-local dofs for all components
   std::array<Vec2,BasisOnMeshType::nDofsPerElement()> values7;
   a->getElementValues(1, values7);
   std::array<Vec2,BasisOnMeshType::nDofsPerElement()> reference7 = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({1.0, 2.0}), Vec2({7.0, 8.0}), Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
   
+  std::cout<<"--5";
   ASSERT_EQ(values7,reference7);
   
   // copy a to b
   b->setValues(*a);
+  
+  std::cout<<"--6";
   b->finishVectorManipulation();
+  
+  std::cout<<"--7";
   b->getElementValues(1, values7);
   ASSERT_EQ(values7,reference7);
   
+  std::cout<<"--8";
   // set all values of a to 9.0
-  a->setValue(9.0);
-  std::array<Vec2,3> values8;
-  a->getValues(std::array<dof_no_t,1>{1,15,24}, values8);
-  std::array<Vec2,3> reference8 = {Vec2({9.0, 9.0}), Vec2({9.0, 9.0}, Vec2({9.0, 9.0})};
+  a->setValues(9.0);
   
-  ASSERT_EQ(values8,reference8);
+  std::cout<<"--9";
+  std::array<Vec2,3> values9;
+  a->getValues<3>(std::array<dof_no_t,3>{1,15,24}, values9);
+  std::array<Vec2,3> reference9 = {Vec2({9.0, 9.0}), Vec2({9.0, 9.0}), Vec2({9.0, 9.0})};
+  
+  std::cout<<"--10";
+  ASSERT_EQ(values9,reference9);
   /*
    * 
   //! copy the values from another field variable of the same type
@@ -280,18 +300,18 @@ config = {
    * 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
-  void getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
+  void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
   
   //! for a specific component, get values from their global dof no.s, as array, therefore templated by the number of elements, N, to retrieve
   template<int N>
-  void getValues(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
+  void getValuesWithoutGhosts(int componentNo, std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
   
   //! for a specific component, get values from their global dof no.s, as vector
-  void getValues(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
+  void getValuesWithoutGhosts(int componentNo, std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
   
   //! get values from their global dof no.s for all components
   template<int N>
-  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
+  void getValuesWithoutGhosts(std::array<dof_no_t,N> dofGlobalNo, std::array<std::array<double,nComponents>,N> &values)
   
   //! for a specific component, get the values corresponding to all element-local dofs
   template<int N>
@@ -387,6 +407,7 @@ config = {
   
   // set all components, 1 dof
   Vec2 v0 = {1.0, 2.0};
+  a->startVectorManipulation();
   a->setValue(5, v0);
   a->finishVectorManipulation();
   
@@ -396,6 +417,7 @@ config = {
   // set all components, multiple dofs
   std::vector<Vec2> v1 = {Vec2({1.0, 2.0}), Vec2({3.0, 4.0}), Vec2({5.0, 6.0}), Vec2({7.0, 8.0}), Vec2({9.0, 10.0})};
   std::vector<dof_no_t> dofs = {4,8,2,7,10};
+  a->startVectorManipulation();
   a->setValues(dofs, v1);
   a->finishVectorManipulation();
   
@@ -412,7 +434,6 @@ config = {
 
   // set all to 0.0
   c->setValues(0.0);
-  c->finishVectorManipulation();
   
   // set single component, 1 dof
   c->setValue(5, 5.0);
@@ -423,6 +444,7 @@ config = {
   
   // set single component, multiple dofs
   std::vector<double> v2 = {1.0, 2.0, 3.0, 4.0, 5.0};
+  c->startVectorManipulation();
   c->setValues(dofs, v2);
   c->finishVectorManipulation();
   
@@ -434,6 +456,7 @@ config = {
   
   std::vector<double> values10 = {11., 12., 13., 14.};
   std::vector<dof_no_t> dofs10 = {11, 12, 13, 14};
+  c->startVectorManipulation();
   c->setValues(dofs10, values10);
   c->finishVectorManipulation();
   
@@ -466,7 +489,7 @@ config = {
   
   // for a component get all values
   std::vector<double> values;
-  a->getValues(0, values);
+  a->getValuesWithoutGhosts(0, values);
   
   std::vector<double> reference0 = {
     0.0, 0.0, 5.0, 0.0, 1.0,
@@ -478,7 +501,7 @@ config = {
   ASSERT_EQ(values, reference0);
   
   values.clear();
-  a->getValues(1, values);
+  a->getValuesWithoutGhosts(1, values);
   
   std::vector<double> reference1 = {
      0.0, 0.0, 6.0, 0.0, 2.0,
@@ -714,7 +737,7 @@ config = {
   
   // for a component get all values
   std::vector<double> values;
-  a->getValues(0, values);
+  a->getValuesWithoutGhosts(0, values);
   
   std::vector<double> reference0 = {
     0.0, 0.0, 5.0, 0.0, 1.0,
@@ -726,7 +749,7 @@ config = {
   ASSERT_EQ(values, reference0);
   
   values.clear();
-  a->getValues(1, values);
+  a->getValuesWithoutGhosts(1, values);
   
   std::vector<double> reference1 = {
      0.0, 0.0, 6.0, 0.0, 2.0,

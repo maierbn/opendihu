@@ -5,7 +5,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition,
                     std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name)
+  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name), vectorManipulationStarted_(false)
 {
   //dm_ = meshPartition->dmElements();
   
@@ -16,16 +16,40 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisO
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition_, name)
+  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
 {
-  //dm_ = rhs.dm_;
-  
+  // copy existing values
   PetscErrorCode ierr;
   for (int i = 0; i < nComponents; i++)
   {
-    ierr = VecCopy(rhs.vectorLocal_[i], vectorLocal_[i]); CHKERRV(ierr);
-    ierr = VecCopy(rhs.vectorGlobal_[i], vectorGlobal_[i]); CHKERRV(ierr);
+    ierr = VecCopy(rhs.valuesLocal(i), vectorLocal_[i]); CHKERRV(ierr);
+    ierr = VecCopy(rhs.valuesGlobal(i), vectorGlobal_[i]); CHKERRV(ierr);
   }
+  
+  startVectorManipulation();
+}
+  
+//! constructor, copy from existing vector
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+template<int nComponents2>
+PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name) :
+  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
+{
+  //dm_ = rhs.dm_;
+  
+  createVector();
+  
+  // copy existing values
+  PetscErrorCode ierr;
+  for (int i = 0; i < std::min(nComponents,nComponents2); i++)
+  {
+    ierr = VecCopy(rhs.valuesLocal(i), vectorLocal_[i]); CHKERRV(ierr);
+    ierr = VecCopy(rhs.valuesGlobal(i), vectorGlobal_[i]); CHKERRV(ierr);
+  }
+  
+  vectorManipulationStarted_ = false;
+  startVectorManipulation();
 }
   
 //! create a distributed Petsc vector, according to partition
@@ -33,7 +57,8 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 createVector()
 {
-  VLOG(2) << "\"" << this->name_ << "\" createVector";
+  VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
+    << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghosts: " << this->meshPartition_->ghostDofGlobalNos();
   PetscErrorCode ierr;
   
   // The local vector contains the nodal/dof values for the local portion of the current rank. This includes ghost nodes.
@@ -62,10 +87,9 @@ createVector()
 
     // set sparsity type and other options
     ierr = VecSetFromOptions(vectorGlobal_[componentNo]); CHKERRV(ierr);
-    
-    // initialize the local vector
-    ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
   }
+  
+  startVectorManipulation();
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -76,6 +100,10 @@ startVectorManipulation()
   
   // copy the global values into the local vectors, distributing ghost values
   PetscErrorCode ierr;
+  if (vectorManipulationStarted_)
+  {
+    LOG(DEBUG) << "\"" << this->name_ << "\", startVectorManipulation called multiple times without finishVectorManipulation in between. (Creation of the vector also calls startVectorManipulation).";
+  }
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -92,6 +120,7 @@ startVectorManipulation()
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
     //ierr = DMGlobalToLocalEnd(*dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
   }
+  vectorManipulationStarted_ = true;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -99,6 +128,11 @@ void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nC
 finishVectorManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" finishVectorManipulation";
+  
+  if (!vectorManipulationStarted_)
+  {
+    LOG(ERROR) << "\"" << this->name_ << "\", finishVectorManipulation called without previous startVectorManipulation";
+  }
   
   // Copy the local values vectors into the global vector. ADD_VALUES means that ghost values are reduced (summed up)
   PetscErrorCode ierr;
@@ -118,6 +152,7 @@ finishVectorManipulation()
     ierr = VecGhostUpdateEnd(vectorGlobal_[componentNo], ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
     //ierr = DMLocalToGlobalEnd(*dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
+  vectorManipulationStarted_ = false;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -203,6 +238,23 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   PetscErrorCode ierr;
   ierr = VecSetValue(vectorLocal_[componentNo], row, value, mode); CHKERRV(ierr);
 }
+
+//! set values from another vector
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setValues(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs)
+{
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
+  
+  PetscErrorCode ierr;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]);
+  }
+  
+  startVectorManipulation();
+}
+
 /*
 //! for a single component vector set all values
 template<typename MeshType,typename BasisFunctionType,int nComponents>

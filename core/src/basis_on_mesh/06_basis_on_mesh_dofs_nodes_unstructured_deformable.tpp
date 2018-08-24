@@ -17,7 +17,7 @@ nNodesLocalWithGhosts() const
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->nNodesLocalWithGhosts();
+  return this->geometryField_->nNodes();
 }
 
 template<int D,typename BasisFunctionType>
@@ -27,13 +27,14 @@ nNodesLocalWithoutGhosts() const
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->nNodesLocalWithoutGhosts();
+  return this->geometryField_->nNodes();
 }
 
 template<int D,typename BasisFunctionType>
 dof_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nDofsLocalWithGhosts() const
 {
+  // parallelism not implemented for unstructured grids, therefore there is no distinction between global and local numbers
   return this->nDofs_;
 }
 
@@ -41,6 +42,7 @@ template<int D,typename BasisFunctionType>
 dof_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nDofsLocalWithoutGhosts() const
 {
+  // parallelism not implemented for unstructured grids, therefore there is no distinction between global and local numbers
   return this->nDofs_;
 }
 
@@ -48,8 +50,9 @@ template<int D,typename BasisFunctionType>
 global_no_t BasisOnMeshDofsNodes<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 nNodesGlobal() const
 {
-  // parallelism not implemented for unstructured grids
-  return nNodesLocalWithGhosts();
+  // parallelism not implemented for unstructured grids, therefore there is no distinction between global and local numbers
+  assert(this->geometryField_);
+  return this->geometryField_->nNodes();
 }
 
 template<int D,typename BasisFunctionType>
@@ -69,7 +72,6 @@ getNodePositions(std::vector<double> &nodes) const
 
   nodes.resize(this->nNodesLocalWithGhosts()*3);
 
-  // TODO local no!
   for (node_no_t nodeGlobalNo = 0; nodeGlobalNo < this->nNodesLocalWithGhosts(); nodeGlobalNo++)
   {
     node_no_t nodeFirstDofGlobalNo = this->geometryField_->nodeToDofMapping()->getNodeDofs(nodeGlobalNo)[0];

@@ -7,10 +7,11 @@ namespace Partition
  
 template<int D, typename BasisFunctionType>
 MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, std::shared_ptr<RankSubset> rankSubset):
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), nNodesGlobal_(nNodesGlobal) 
+MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal, std::shared_ptr<RankSubset> rankSubset):
+  MeshPartitionBase(rankSubset), nElements_(nElementsGlobal), nNodes_(nNodesGlobal), nDofs_(nDofsGlobal)
 {
-  this->initializeLocalDofsVector(nNodesLocalWithGhosts());
+  global_no_t nDofsLocal = nDofsGlobal;
+  this->createLocalDofOrderings(nDofsLocal);
 }
 
 //! get the local to global mapping for the current partition
@@ -18,13 +19,11 @@ template<int D, typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 localToGlobalMappingDofs()
 {
-  int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode();
-  
   PetscErrorCode ierr;
-  std::vector<PetscInt> globalDofNos(nNodesLocalWithGhosts()*nDofsPerNode);
+  std::vector<PetscInt> globalDofNos(nDofs_);
   std::iota(globalDofNos.begin(), globalDofNos.end(), 0);
   ISLocalToGlobalMapping localToGlobalMapping;
-  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, nNodesLocalWithGhosts()*nDofsPerNode, 
+  ierr = ISLocalToGlobalMappingCreate(mpiCommunicator(), 1, nDofs_, 
                                       globalDofNos.data(), PETSC_COPY_VALUES, &localToGlobalMapping); CHKERRABORT(mpiCommunicator(),ierr);
 
   return localToGlobalMapping;
@@ -35,7 +34,7 @@ template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nElementsLocal() const
 {
-  return nElementsGlobal_;
+  return nElements_;
 }
 
 //! number of entries in total
@@ -43,7 +42,7 @@ template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nElementsGlobal() const
 {
-  return nElementsGlobal_;
+  return nElements_;
 }
 
 //! number of nodes in the local partition
@@ -51,7 +50,31 @@ template<int D, typename BasisFunctionType>
 element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nNodesLocalWithGhosts() const
 {
-  return nNodesGlobal_;
+  return nNodes_;
+}
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nDofsLocalWithGhosts() const
+{
+  return nDofs_;
+}
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nDofsLocalWithoutGhosts() const
+{
+  return nDofs_;
+}
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesLocalWithoutGhosts() const
+{
+  return nNodes_;
 }
 
 //! number of nodes in total
@@ -59,7 +82,14 @@ template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nNodesGlobal() const
 {
-  return nNodesGlobal_;
+  return nNodes_;
+}
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nDofs() const
+{
+  return nDofs_;
 }
   
 template<int D, typename BasisFunctionType>
@@ -81,7 +111,7 @@ template<int D, typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)
 {
-  stream << "MeshPartition<Unstructured>, nElementsGlobal: " << nElementsGlobal_ << ", nNodesGlobal: " << nNodesGlobal_;
-} 
+  stream << "MeshPartition<Unstructured>, nElements_: " << nElements_ << ", nNodes_: " << nNodes_ << ", nDofs_: " << nDofs_;
+}
 
 }  // namespace

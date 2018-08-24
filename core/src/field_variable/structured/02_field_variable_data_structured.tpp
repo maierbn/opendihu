@@ -32,9 +32,10 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   this->mesh_ = rhs.mesh();
 
   assert(this->mesh_);
+  assert(rhs.partitionedPetscVec());
   
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(rhs.partitionedPetscVec(), name);
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
 }
 
 //! contructor as data copy with a different name and different components
@@ -53,9 +54,10 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, st
   this->mesh_ = rhs.mesh();
 
   assert(this->mesh_);
+  assert(rhs.partitionedPetscVec());
   
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(rhs.partitionedPetscVec(), name);
+  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
 }
 
 //! constructor with mesh, name and components

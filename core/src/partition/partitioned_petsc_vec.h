@@ -34,6 +34,10 @@ public:
   //! constructor, copy from existing vector
   PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name);
   
+  //! constructor, copy from existing vector
+  template<int nComponents2>
+  PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents2> &rhs, std::string name);
+  
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
   
@@ -45,13 +49,10 @@ public:
   
   //! wrapper to the PETSc VecSetValue, acting only on the local data
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
-  /*
-  //! for a single component vector set all values, the input vector values is expected to have ghosts included
-  void setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
   
-  //! for a single component vector set all values, the input vector values is expected to have no ghosts included
-  void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
-  */
+  //! set values from another vector
+  void setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs);
+
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
@@ -97,6 +98,10 @@ public:
   //! constructor, copy from existing vector
   PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name);
  
+  //! constructor, copy from existing vector
+  template<int nComponents2>
+  PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
+ 
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
   
@@ -115,6 +120,9 @@ public:
   //! for a single component vector set all values. values does not contain ghost dofs.
   void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
 
+  //! set values from another vector
+  void setValues(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs);
+  
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
@@ -145,25 +153,12 @@ protected:
   void createVector();
   
   std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
+  bool vectorManipulationStarted_;   ///< if startVectorManipulation() was called but not yet finishVectorManipulation(). This indicates that finishVectorManipulation() can be called next without giving an error.
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
 };
 
-/** partial specialization for unstructured meshes 
- *  use petsc IS
- *  not implemented yet, do not remove
- */
-/*
-template<int D, typename BasisFunctionType, int nComponents>
-class PartitionedPetscVec<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, nComponents, Mesh::UnstructuredDeformableOfDimension<D>>
-{
-public:
-  PartitionedPetscVec(MeshPartition &meshPartition, std::string name, dof_no_t nEntries);
-  
- 
-};
-*/
 
 template<typename BasisOnMeshType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<BasisOnMeshType,nComponents> &matrix);

@@ -20,7 +20,7 @@ public:
  
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh
   template<typename BasisOnMesh>
-  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioning(global_no_t globalSize);
+  std::shared_ptr<MeshPartition<BasisOnMesh>> createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal);
 
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh, for a structured mesh, from global sizes
   //! use globalSize, fill localSize and nRanks

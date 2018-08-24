@@ -35,26 +35,22 @@ createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std:
   const int nComponents = componentNames.size();
   if (nComponents == 1)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,1>> result = std::make_shared<FieldVariable<BasisOnMeshType,1>>();
-    result->initializeFromFieldVariable(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<BasisOnMeshType,1>> result = std::make_shared<FieldVariable<BasisOnMeshType,1>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 2)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,2>> result = std::make_shared<FieldVariable<BasisOnMeshType,2>>();
-    result->initializeFromFieldVariable(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<BasisOnMeshType,2>> result = std::make_shared<FieldVariable<BasisOnMeshType,2>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 3)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,3>> result = std::make_shared<FieldVariable<BasisOnMeshType,3>>();
-    result->initializeFromFieldVariable(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<BasisOnMeshType,3>> result = std::make_shared<FieldVariable<BasisOnMeshType,3>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 4)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,4>> result = std::make_shared<FieldVariable<BasisOnMeshType,4>>();
-    result->initializeFromFieldVariable(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<BasisOnMeshType,4>> result = std::make_shared<FieldVariable<BasisOnMeshType,4>>(fieldVariable, name, componentNames);
     return result;
   }
   else

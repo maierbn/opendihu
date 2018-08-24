@@ -65,6 +65,8 @@ public:
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not BasisOnMesh like here)
   global_no_t nElementsGlobal() const;
 
+  // nDofsGlobal() is defined in 06_basis_on_mesh_dofs_nodes.h
+  
   //! initialize geometry
   virtual void initialize();
   

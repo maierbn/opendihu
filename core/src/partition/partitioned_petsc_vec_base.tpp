@@ -13,3 +13,19 @@ localDofNos()
 {
   return this->meshPartition_->localDofNos();
 }
+
+//! get the meshPartition
+template<typename BasisOnMeshType>
+const std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> PartitionedPetscVecBase<BasisOnMeshType>::
+meshPartition()
+{
+  return this->meshPartition_;
+}
+
+template<typename BasisOnMeshType>
+std::string PartitionedPetscVecBase<BasisOnMeshType>::
+name()
+{
+  return this->name_;
+}
+

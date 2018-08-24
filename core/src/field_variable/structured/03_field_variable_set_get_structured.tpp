@@ -74,6 +74,17 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   this->values_->getValues(componentNo, nValues, (PetscInt *)dofLocalNo.data(), values.data()+previousSize);
 }
 
+//! for a specific component, get values from their local dof no.s
+template<typename BasisOnMeshType, int nComponents>
+template<int N>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  
+  this->values_->getValues(componentNo, N, (PetscInt *)dofLocalNo.data(), values.data());
+}
+
 template<typename BasisOnMeshType, int nComponents>
 template<int N>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
@@ -177,6 +188,11 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (dofNosLocal.size() != values.size())
+  {
+    LOG(DEBUG) << "dofNosLocal.size(): " << dofNosLocal.size() << ", values.size(): " << values.size();
+    LOG(DEBUG) << "dofNosLocal: " << dofNosLocal << ", values: " << values;
+  }
   assert(dofNosLocal.size() == values.size());
  
   const int nValues = values.size();

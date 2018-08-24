@@ -26,10 +26,16 @@ BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager
 {
   LOG(TRACE) << "BasisOnMeshDataUnstructured constructor";
 
-  if (PythonUtility::hasKey(settings, "exelem"))
+}
+
+template<int D,typename BasisFunctionType>
+void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+initialize()
+{ 
+  if (PythonUtility::hasKey(this->specificSettings_, "exelem"))
   {
-    std::string filenameExelem = PythonUtility::getOptionString(settings, "exelem", "input.exelem");
-    std::string filenameExnode = PythonUtility::getOptionString(settings, "exnode", "input.exnode");
+    std::string filenameExelem = PythonUtility::getOptionString(this->specificSettings_, "exelem", "input.exelem");
+    std::string filenameExnode = PythonUtility::getOptionString(this->specificSettings_, "exnode", "input.exnode");
 
     // ------------------------------------------------------------------------
     // read in exelem file
@@ -41,46 +47,20 @@ BasisOnMeshDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager
 
     // remap names of field variables if specified in config
     // this assigns the geometry field
-    this->remapFieldVariables(settings);
+    this->remapFieldVariables(this->specificSettings_);
 
     // eliminate scale factors (not yet tested)
     //this->eliminateScaleFactors();
   }
-  else if (PythonUtility::hasKey(settings, "nodePositions"))
+  else if (PythonUtility::hasKey(this->specificSettings_, "nodePositions"))
   {
-    // this creates the geometryField, but without mesh
-    this->parseFromSettings(settings);
+    // this creates the geometryField and sets the mesh, also creates the meshPartition by calling BasisOnMeshPartition::initialize();
+    this->parseFromSettings(this->specificSettings_);
   }
   else
   {
     LOG(FATAL) << "Could not create UnstructuredDeformable node positions. "
       << "Either specify \"exelem\" and \"exnode\" or \"nodePositions\". ";
-  }
-}
-
-template<int D,typename BasisFunctionType>
-void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
-initialize()
-{ 
-  // create meshPartition and redistribute elements if necessary, this needs information about mesh size
-  BasisOnMeshPartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::initialize();
- 
-  // pass a shared "this" pointer to the geometryField
-  if (this->noGeometryField_)
-    return;
-
-  // retrieve "this" pointer and convert to downwards pointer of most derived class "BasisOnMesh"
-  std::shared_ptr<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> thisMesh
-    = std::static_pointer_cast<BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(this->shared_from_this());
-
-  assert(thisMesh != nullptr);
-  assert(geometryField_ != nullptr);
-  
-  // set this mesh to geometry field
-  geometryField_->setMesh(thisMesh);
-  for(auto &fieldVariable : this->fieldVariable_)
-  {
-    fieldVariable.second->setMesh(thisMesh);
   }
 }
 
@@ -225,14 +205,16 @@ template<int D,typename BasisFunctionType>
 element_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 nElementsLocal() const
 {
-  return this->nElements_;
+  assert(geometryField_);
+  return this->geometryField_->nElements();
 }
 
 template<int D,typename BasisFunctionType>
 global_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 nElementsGlobal() const
 {
-  return this->meshPartition_->globalSize();
+  assert(geometryField_);
+  return this->geometryField_->nElements();
 }
 
 };  // namespace

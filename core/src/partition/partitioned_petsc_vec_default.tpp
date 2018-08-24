@@ -8,14 +8,39 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> m
   createVector();
 }
 
-//! constructor, copy from existing vector
+//! constructor from existing vector, values are not copied
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
 PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition_, name)
+  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition(), name)
  
 {
   createVector();
+  
+  // copy existing values
+  PetscErrorCode ierr;
+  for (int i = 0; i < nComponents; i++)
+  {
+    ierr = VecCopy(rhs.valuesGlobal(i), values_[i]); CHKERRV(ierr);
+  }
+}
+
+//! constructor from existing vector, values are not copied
+template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+template<int nComponents2>
+PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
+PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents2> &rhs, std::string name) :
+  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition(), name)
+ 
+{
+  createVector();
+  
+  // copy existing values
+  PetscErrorCode ierr;
+  for (int i = 0; i < std::min(nComponents,nComponents2); i++)
+  {
+    ierr = VecCopy(rhs.valuesGlobal(i), values_[i]); CHKERRV(ierr);
+  }
 }
 
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
@@ -27,7 +52,7 @@ createVector()
   assert(this->meshPartition_);
   
   dof_no_t nDofsPerNode = BasisOnMeshType::nDofsPerNode();
-  dof_no_t nEntriesLocal = this->meshPartition_->nNodesLocal() * nDofsPerNode;
+  dof_no_t nEntriesLocal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
   dof_no_t nEntriesGlobal = this->meshPartition_->nNodesGlobal() * nDofsPerNode;
   
   // loop over the components of this field variable
@@ -90,31 +115,21 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   PetscErrorCode ierr;
   ierr = VecSetValue(values_[componentNo], row, value, mode); CHKERRV(ierr);
 }
-/*
-//! for a single component vector set all values
+
+//! set values from another vector
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
-setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
+setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs)
 {
-  assert(values.size() == this->meshPartition_->nNodesLocalWithGhosts());
- 
-  // this wraps the standard PETSc VecSetValue on the local vector
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
+  
   PetscErrorCode ierr;
-  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localDofNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    ierr = VecCopy(rhs.valuesGlobal(componentNo), values_[componentNo]);
+  }
 }
 
-//! for a single component vector set all values
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
-setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
-{
-  assert(values.size() == this->meshPartition_->nNodesLocalWithoutGhosts());
- 
-  // this wraps the standard PETSc VecSetValue on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValue(values_[componentNo], this->meshPartition_->localDofNos().data(), values.data(), petscInsertMode); CHKERRV(ierr);
-}
-  */
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::

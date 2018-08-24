@@ -82,14 +82,6 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-initializeLocalDofsVector(node_no_t nDofsLocalWithGhosts)
-{
-  dofNosLocal_.resize(nDofsLocalWithGhosts);
-  std::iota(dofNosLocal_.begin(), dofNosLocal_.end(), 0);
-}
-
-template<typename MeshType,typename BasisFunctionType>
-void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 createDmElements()
 {
   typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
@@ -470,7 +462,7 @@ dofNosLocal(bool onlyNodalValues) const
   }
   else 
   {
-    return dofNosLocal_;
+    return this->dofNosLocal_;
   }
 }
 
@@ -481,23 +473,14 @@ ghostDofGlobalNos() const
   return ghostDofGlobalNos_;
 }
 
-//! get a PETSc IS (index set) with the same information as dofNosLocal_
-template<typename MeshType,typename BasisFunctionType>
-const IS &MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-dofNosLocalIS() const
-{
-  return dofNosLocalIS_;
-}
-
 //! fill the dofLocalNo vectors
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 createLocalDofOrderings()
 {
-  // fill dofNosLocal_ 
-  dofNosLocal_.resize(nDofsLocalWithGhosts());
-  std::iota(dofNosLocal_.begin(), dofNosLocal_.end(), 0);
-  
+  LOG(DEBUG) << "call createLocalDofOrderings of child";
+  MeshPartitionBase::createLocalDofOrderings(nDofsLocalWithGhosts());
+    
   // fill onlyNodalDofLocalNos_
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
   int nNodalDofs = nDofsLocalWithGhosts() / nDofsPerNode;
@@ -563,9 +546,6 @@ createLocalDofOrderings()
   // retrieve local to global mapping
   ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalMapping_); CHKERRV(ierr);
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
-  
-  // create IS (indexSet) dofNosLocalIS_;
-  ierr = ISCreateGeneral(PETSC_COMM_SELF, dofNosLocal_.size(), dofNosLocal_.data(), PETSC_COPY_VALUES, &dofNosLocalIS_); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -611,8 +591,8 @@ output(std::ostream &stream)
     stream << nNodesLocalWithoutGhosts(i) << ",";
   stream << "total " << nNodesLocalWithoutGhosts()
     << ", dofNosLocal: [";
-  for (int i = 0; i < dofNosLocal_.size(); i++)
-    stream << dofNosLocal_[i] << " ";
+  for (int i = 0; i < this->dofNosLocal_.size(); i++)
+    stream << this->dofNosLocal_[i] << " ";
   stream << "], ghostDofGlobalNos: [";
     
   for (int i = 0; i < ghostDofGlobalNos_.size(); i++)

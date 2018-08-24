@@ -18,6 +18,8 @@ template<int N>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
 {
+  assert(this->values_);
+  
   std::array<double,N*nComponents> resultVector;
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -101,10 +103,10 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
 {
   assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(this->values_);
   
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
 
-  // TODO: local to global
   const std::vector<dof_no_t> &dofLocalNo = this->elementToDofMapping_->getElementDofs(elementNo);
   
   std::array<double,nDofsPerElement*nComponents> resultVector;
@@ -130,7 +132,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
 {
-  this->values_ = rhs.partitionedPetscVec();
+  this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -139,6 +141,7 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &v
 {
   assert(this->nComponents == 1 && nComponents == 1);
   const int nValues = values.size();
+  assert(this->values_);
 
   this->values_->setValues(0, nValues, (const int *) dofNosLocal.data(), values.data(), petscInsertMode);
 
@@ -152,13 +155,13 @@ setValues(double value)
 {
   // get number of dofs
   assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nDofsLocal();
+  const dof_no_t nDofs = this->mesh_->nDofsLocalWithoutGhosts();
 
   std::vector<double> valueBuffer(nDofs,value);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
-    this->values_->setValues(componentIndex, valueBuffer, INSERT_VALUES);
+    this->setValuesWithoutGhosts(componentIndex, valueBuffer, INSERT_VALUES);
   }
 }
 
@@ -168,6 +171,7 @@ void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
   assert(dofNosLocal.size() == values.size());
+  assert(this->values_);
  
   const int nValues = values.size();
   std::vector<double> valuesBuffer(nValues);
@@ -191,6 +195,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
+  assert(this->values_);
+  
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -207,6 +213,7 @@ setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMo
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  assert(this->values_);
  
   this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 
@@ -220,7 +227,8 @@ setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, Inser
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
- 
+  assert(this->values_);
+   
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
   this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
@@ -250,6 +258,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 zeroEntries()
 {
+  assert(this->values_);
   this->values_->zeroEntries();
 }
   
@@ -258,6 +267,7 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
 finishVectorManipulation()
 {
+  assert(this->values_);
   this->values_->finishVectorManipulation();
 }
 

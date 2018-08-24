@@ -19,6 +19,7 @@ namespace FieldVariable
 {
 
 /** FieldVariable class for UnstructuredDeformable mesh
+ *  The number of elements, nodes and dofs for unstructured meshes is stored by the geometry field of the mesh and not directly at the mesh like for structured meshes.
  */
 template<int D, typename BasisFunctionType, int nComponents>
 class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
@@ -32,6 +33,10 @@ public:
 
   //! contructor as data copy with a different name (component names are the same)
   FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name);
+
+  //! contructor as data copy with a different name and different components
+  template <int nComponents2>
+  FieldVariableData(FieldVariable<BasisOnMeshType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames);
 
   //! constructor with mesh, name and components
   FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
@@ -82,6 +87,15 @@ public:
   //! get the node to dof mapping object
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping() const;
 
+  //! get the number of elements
+  element_no_t nElements() const;
+  
+  //! get the number of nodes
+  node_no_t nNodes() const;
+  
+  //! get the number of dofs
+  dof_no_t nDofs() const;
+  
   //! get the internal values vector
   Vec &valuesLocal();
 
@@ -101,10 +115,10 @@ public:
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
   //friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
-/*
+
   //! resize internal representation variable to number of elements
   void setNumberElements(element_no_t nElements);
-*/
+
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
 

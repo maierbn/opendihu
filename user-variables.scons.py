@@ -32,7 +32,7 @@ if os.environ.get("TRAVIS") is not None:
   MPI_DOWNLOAD=True
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
-LAPACK_DOWNLOAD=True
+LAPACK_REDOWNLOAD=True
 
 # PETSc
 PETSC_DOWNLOAD=True

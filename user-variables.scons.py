@@ -15,11 +15,15 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
+import lsb_release
+lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
 
 # MPI
-#MPI_DIR="/usr/lib/openmpi"
+MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
-MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"
+
+if lsb_info["RELEASE"] == "18.04":
+  MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
 
 # use value of environment variable 'MPI_HOME' if it is set
 import os
@@ -33,7 +37,7 @@ if os.environ.get("TRAVIS") is not None:
   MPI_DOWNLOAD=True
 
 # LAPACK, includes also BLAS, current OpenBLAS is used
-LAPACK_REDOWNLOAD=True
+LAPACK_DOWNLOAD=True
 
 # PETSc
 PETSC_DOWNLOAD=True

@@ -32,20 +32,21 @@ FiniteElementMethodTimeStepping(DihuContext context)
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
-initialize(){
+initialize()
+{
+  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize";
+  
+  FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::initialize();
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
 initialize(double timeStepWidth)
 {
+  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize(timeStepWidth=" << timeStepWidth << ")";
+  
   PetscErrorCode ierr;
   PetscScalar scale=-1.0/timeStepWidth;
-  
-  this->data_.initialize();
-  this->setStiffnessMatrix();
-  this->data_.finalAssembly();
-  this->applyBoundaryConditions();
   
   this->setMassMatrix();
   ierr=MatScale(this->data_.massMatrix(),scale);
@@ -58,6 +59,9 @@ initialize(double timeStepWidth)
     LOG(WARNING) << "You have specified output writers for a FiniteElementMethod which is used for a time stepping problem. "
       "The output will not contain any solution data, only geometry. Probably you want to get output from the time stepping scheme, then define the output writers there.";
   }
+  
+  scale=-timeStepWidth;
+  ierr=MatScale(this->data_.massMatrix(),scale); //required for explicit Euler but should be out commented for implicit1
 }
 
 /*

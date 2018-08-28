@@ -42,6 +42,8 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initialize()
 {
+  LOG(DEBUG) << "FiniteElements::initialize";
+  
   Data<BasisOnMeshType>::initialize();
 
   // set up diffusion tensor if there is any

@@ -335,4 +335,56 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
     + averageNNodesPerElement1D * elementX + localX;
 }
 
+// element-local nodeIndex of global element to global nodeNo for 1D
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
+getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+{
+  return BasisOnMeshFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNoGlobal + nodeIndex;
+}
+
+// element-local nodeIndex of global element to global nodeNo for 2D
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
+getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+{
+  const std::array<global_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionGlobal_;
+  int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+  int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
+
+  // the number of non-ghost nodes in different rows
+  global_no_t nodesPerRow = averageNNodesPerElement1D * nElements[0] + 1;
+  element_no_t elementX = element_no_t(elementNoGlobal % nElements[0]);
+  element_no_t elementY = element_no_t(elementNoGlobal / nElements[0]);
+  dof_no_t localX = nodeIndex % nNodesPerElement1D;
+  dof_no_t localY = dof_no_t(nodeIndex / nNodesPerElement1D);
+
+  return nodesPerRow * (elementY * averageNNodesPerElement1D + localY)
+    + averageNNodesPerElement1D * elementX + localX;
+}
+
+// element-local nodeIndex of global element to global nodeNo for 3D
+template<typename MeshType,typename BasisFunctionType>
+global_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
+getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+{
+  const std::array<global_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionGlobal_;
+  int averageNNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+  int nNodesPerElement1D = BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement();
+  global_no_t nodesPerRow0 = averageNNodesPerElement1D * nElements[0] + 1;
+  global_no_t nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow0;
+
+  element_no_t elementZ = element_no_t(elementNoGlobal / (nElements[0] * nElements[1]));
+  element_no_t elementY = element_no_t((elementNoGlobal % (nElements[0] * nElements[1])) / nElements[0]);
+  element_no_t elementX = elementNoGlobal % nElements[0];
+  dof_no_t localZ = dof_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
+  dof_no_t localY = dof_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
+  dof_no_t localX = nodeIndex % nNodesPerElement1D;
+
+  // compute local node no for non-ghost node
+  return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
+    + nodesPerRow0 * (elementY * averageNNodesPerElement1D + localY)
+    + averageNNodesPerElement1D * elementX + localX;
+}
+
 };  // namespace

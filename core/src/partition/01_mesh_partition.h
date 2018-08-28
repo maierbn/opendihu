@@ -110,6 +110,9 @@ public:
   //! get the local to global mapping for the current partition, for the dof numbering
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
+  //! get the global element no for a local element no
+  global_no_t getElementNoGlobal(element_no_t elementNoLocal) const;
+
   //! from a vector of values of global node numbers remove all that are non-local
   template <typename T>
   void extractLocalNodes(std::vector<T> &vector) const;
@@ -192,6 +195,9 @@ public:
   //! number of dofs
   global_no_t nDofs() const;
   
+  //! get the global element no for a local element no, this only has an effect for structured meshes, not for unstructured meshes
+  global_no_t getElementNoGlobal(element_no_t elementNoLocal) const;
+
   //! get the local to global mapping for the current partition
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   

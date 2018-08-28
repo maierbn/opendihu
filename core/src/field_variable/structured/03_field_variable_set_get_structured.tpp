@@ -194,8 +194,19 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
     LOG(DEBUG) << "dofNosLocal: " << dofNosLocal << ", values: " << values;
   }
   assert(dofNosLocal.size() == values.size());
- 
-  const int nValues = values.size();
+
+  setValues(values.size(), dofNosLocal, values, petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+}
+
+//! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+template<typename BasisOnMeshType, int nComponents>
+void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
+{
+  assert(dofNosLocal.size() >= nValues);
+  assert(values.size() == nValues);
+
   std::vector<double> valuesBuffer(nValues);
 
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
@@ -205,7 +216,7 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
     {
       valuesBuffer[dofIndex] = values[dofIndex][componentIndex];
     }
-    
+
     // set the values for the current component
     this->values_->setValues(componentIndex, nValues, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
   }
@@ -284,7 +295,7 @@ setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values
   assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
   
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
-  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+  this->setValues(values.size(), this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs

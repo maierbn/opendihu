@@ -346,12 +346,12 @@ output(std::ostream &stream)
   PetscMPIInt ownRankNo, nRanks;
   MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
   MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
-    
-  this->finishVectorManipulation();
   
+  startVectorManipulation();
+
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    // get global size of matrix 
+    // get global size of vector
     int nEntries, nEntriesLocal;
     PetscErrorCode ierr;
     ierr = VecGetSize(vectorLocal_[componentNo], &nEntries); CHKERRV(ierr);
@@ -362,6 +362,7 @@ output(std::ostream &stream)
     std::vector<double> localValues(nDofsLocal);
     
     VecGetValues(vectorLocal_[componentNo], nDofsLocal, this->meshPartition_->dofNosLocal().data(), localValues.data());
+    //VLOG(1) << "localValues: " << localValues;
     
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
@@ -370,25 +371,37 @@ output(std::ostream &stream)
     int maxLocalSize;
     MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
     
+    //VLOG(1) << "localSizes: " << localSizes << ", maxLocalSize: " << maxLocalSize << ", nRanks: " << nRanks;
+
     std::vector<double> recvBuffer(maxLocalSize*nRanks);
     std::vector<double> sendBuffer(maxLocalSize,0.0);
-    std::copy(localSizes.begin(), localSizes.end(), sendBuffer.begin());
+    std::copy(localValues.begin(), localValues.end(), sendBuffer.begin());
     
-    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize*nRanks, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    //VLOG(1) << " sendBuffer: " << sendBuffer;
+
+    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
     
     if (ownRankNo == 0)
     {
-      stream << "vector \"" << this->name_ << "\" (" << nEntries << " global entries per component)" << std::endl;
-      stream << "component " << componentNo << ": ";
+      if (componentNo == 0)
+      {
+        stream << "vector \"" << this->name_ << "\" (" << nEntries << " global entries per component)" << std::endl;
+      }
+
+      stream << "\"" << this->name_ << "\" component " << componentNo << ":";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
+        if (rankNo != 0)
+          stream << ",";
         for (int i = 0; i < localSizes[rankNo]; i++)
         {
-          stream << recvBuffer[rankNo*maxLocalSize + i] << "  ";
+          stream << "  " << recvBuffer[rankNo*maxLocalSize + i];
         }
       }
       stream << std::endl; 
     }
   }
+
+  finishVectorManipulation();
 #endif
 }

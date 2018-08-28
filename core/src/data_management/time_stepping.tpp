@@ -39,7 +39,7 @@ template<typename BasisOnMeshType,int nComponents>
 void TimeStepping<BasisOnMeshType,nComponents>::
 createPetscObjects()
 {
-  LOG(DEBUG)<<"TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects("<<nComponents<<")"<<std::endl;
+  LOG(DEBUG) << "TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects(" <<nComponents<< ")" << std::endl;
   assert(this->mesh_);
   
   // create field variables on local partition

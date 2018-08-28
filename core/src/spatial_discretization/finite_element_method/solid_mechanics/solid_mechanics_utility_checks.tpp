@@ -24,7 +24,7 @@ void checkSymmetry(const Tensor2<D> &rightCauchyGreen, std::string name)
       {
         if (fabs(rightCauchyGreen[a][b] - rightCauchyGreen[b][a]) > errorTolerance)
         {
-          LOG(ERROR) << name << "["<<a<<"]["<<b<<"] != " << name << "["<<b<<"]["<<a<<"] ("<<rightCauchyGreen[a][b]<<" != "<<rightCauchyGreen[b][a]<<") - symmetry violated"<<std::endl;
+          LOG(ERROR) << name << "[" <<a<< "][" <<b<< "] != " << name << "[" <<b<< "][" <<a<< "] (" <<rightCauchyGreen[a][b]<< " != " <<rightCauchyGreen[b][a]<< ") - symmetry violated" << std::endl;
           isSymmetric = false;
         }
       }
@@ -55,7 +55,7 @@ void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inver
 
         if (fabs(delta_ab - matrixProduct) > errorTolerance)
         {
-          LOG(ERROR) << name << " or " << name <<"^{-1} is wrong: " << matrixProduct << " should be " << delta_ab;
+          LOG(ERROR) << name << " or " << name << "^{-1} is wrong: " << matrixProduct << " should be " << delta_ab;
           inverseCorrect = false;
         }
       }
@@ -63,7 +63,7 @@ void checkInverseIsCorrect(const Tensor2<D> &rightCauchyGreen, Tensor2<D> &inver
 
     if (inverseCorrect)
     {
-      VLOG(2) << name << " corresponds to " << name <<"^{-1}";
+      VLOG(2) << name << " corresponds to " << name << "^{-1}";
     }
     else
     {

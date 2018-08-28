@@ -26,8 +26,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
-    <<" n steps: "<<this->numberTimeSteps_;
+  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan=" <<timeSpan<< ", timeStepWidth=" <<timeStepWidth
+    << " n steps: " <<this->numberTimeSteps_;
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -37,7 +37,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     {
       std::stringstream threadNumberMessage;
       threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+      LOG(INFO) << threadNumberMessage.str() << ": Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     // advance computed value

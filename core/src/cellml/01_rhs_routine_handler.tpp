@@ -93,12 +93,12 @@ initializeRhsRoutine()
       int ret = system(compileCommand.str().c_str());
       if (ret != 0)
       {
-        LOG(ERROR) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
         libraryFilename = "";
       }
       else
       {
-        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
       }
 
       // repeat compilation with different GCC vectorizer outputs
@@ -108,22 +108,22 @@ initializeRhsRoutine()
       ret = system(compileCommand.str().c_str());
       if (ret != 0)
       {
-        LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+        LOG(DEBUG) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
       }
       else
       {
-        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
       }
       compileCommand.str("");
       compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-all=vectorizer_all.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
       ret = system(compileCommand.str().c_str());
       if (ret != 0)
       {
-        LOG(DEBUG) << "Compilation failed. Command: \""<<compileCommand.str()<<"\".";
+        LOG(DEBUG) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
       }
       else
       {
-        LOG(DEBUG) << "Compilation successful. Command: \""<<compileCommand.str()<<"\".";
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
       }
   #endif
     }
@@ -154,13 +154,13 @@ initializeRhsRoutine()
     rhsRoutine_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine");
     rhsRoutineSimd_ = (void (*)(void *,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine_simd");
 
-    LOG(DEBUG) << "Library \""<<libraryFilename<<"\" loaded. "
+    LOG(DEBUG) << "Library \"" <<libraryFilename<< "\" loaded. "
       << "rhsRoutine: " << (rhsRoutine_==NULL? "NULL" : "yes") << ", rhsRoutineSimd: " << (rhsRoutineSimd_==NULL? "NULL" : "yes");
 
     // fail if none of both could be loaded
     if (!rhsRoutine_ && !rhsRoutineSimd_)
     {
-      LOG(FATAL) << "Could not load rhs routine from dynamic library \""<<libraryFilename<<"\".";
+      LOG(FATAL) << "Could not load rhs routine from dynamic library \"" <<libraryFilename<< "\".";
     }
 
     // if only non-simd version could be loaded, create other from that
@@ -216,7 +216,7 @@ initializeRhsRoutine()
   }
   else
   {
-    LOG(FATAL) << "Could not load dynamic library \""<<libraryFilename<<"\". Reason: "<<dlerror();
+    LOG(FATAL) << "Could not load dynamic library \"" <<libraryFilename<< "\". Reason: " <<dlerror();
   }
 }
 
@@ -230,7 +230,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
   std::ifstream sourceFile(this->sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "Could not open source file \""<<this->sourceFilename_<<"\" for reading!";
+    LOG(ERROR) << "Could not open source file \"" <<this->sourceFilename_<< "\" for reading!";
     return false;
   }
   else
@@ -262,7 +262,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
       {
         if (line.find("void OC_CellML_RHS_routine_simd") != std::string::npos)
         {
-          LOG(WARNING) << "The given source file \""<<this->sourceFilename_<<"\" already contains a simd version of the rhs routine. "
+          LOG(WARNING) << "The given source file \"" <<this->sourceFilename_<< "\" already contains a simd version of the rhs routine. "
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
@@ -283,18 +283,18 @@ createSimdSourceFile(std::string &simdSourceFilename)
         };
         std::list<entry_t> entries;
 
-        VLOG(2) << "line: ["<<line<<"]";
+        VLOG(2) << "line: [" <<line<< "]";
 
         size_t currentPos = 0;
         while(currentPos <= line.length())
         {
           VLOG(2);
-          VLOG(2) << "currentPos: "<<currentPos<<" code from there: \""<<line.substr(currentPos, 20)<<"\"";
+          VLOG(2) << "currentPos: " << currentPos<< " code from there: \"" <<line.substr(currentPos, 20) << "\"";
           VLOG(2) << "variables: "
-            <<line.find("OC_STATE", currentPos)<<", "
-            <<line.find("OC_RATE", currentPos)<<", "
-            <<line.find("ALGEBRAIC", currentPos)<<", "
-            <<line.find("OC_WANTED", currentPos)<<", "
+            <<line.find("OC_STATE", currentPos) << ", "
+            <<line.find("OC_RATE", currentPos) << ", "
+            <<line.find("ALGEBRAIC", currentPos) << ", "
+            <<line.find("OC_WANTED", currentPos) << ", "
             <<line.find("OC_KNOWN", currentPos);
 
           size_t posVariable = std::min({
@@ -305,7 +305,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             line.find("OC_KNOWN", currentPos)
           });
 
-          VLOG(2) << "posVariable: "<<posVariable;
+          VLOG(2) << "posVariable: " <<posVariable;
 
           entry_t entry;
           if (posVariable == currentPos)
@@ -314,7 +314,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             entry.code = line.substr(currentPos, posBracket-currentPos);
             entry.arrayIndex = atoi(line.substr(posBracket+1).c_str());
 
-            VLOG(2) << "extract variable name \""<<entry.code<<"\", index "<<entry.arrayIndex;
+            VLOG(2) << "extract variable name \"" <<entry.code<< "\", index " <<entry.arrayIndex;
 
             entry.type = entry_t::variableName;
 
@@ -327,17 +327,17 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
             // advance current position
             currentPos = line.find("]", currentPos)+1;
-            VLOG(2) << "(1)advance to "<<currentPos;
+            VLOG(2) << "(1)advance to " << currentPos;
           }
           else
           {
             entry.code = line.substr(currentPos, posVariable-currentPos);
-            VLOG(2) << "extract code \""<<entry.code<<"\".";
+            VLOG(2) << "extract code \"" <<entry.code<< "\".";
             entry.type = entry_t::other;
 
             // advance current position
             currentPos = posVariable;
-            VLOG(2) << "(2)advance to "<<currentPos;
+            VLOG(2) << "(2)advance to " << currentPos;
           }
           entries.push_back(entry);
         }
@@ -345,12 +345,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
         simdSource << "for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
           << "{" << std::endl << "\t";
 
-        VLOG(2) << "parsed "<<entries.size()<<" entries";
+        VLOG(2) << "parsed " <<entries.size() << " entries";
 
         // write out parsed code with adjusted indices
         for (auto entry : entries)
         {
-          VLOG(2) << " entry type=" <<entry.type<<", code: \""<<entry.code<<"\", index: "<<entry.arrayIndex;
+          VLOG(2) << " entry type=" <<entry.type<< ", code: \"" <<entry.code<< "\", index: " <<entry.arrayIndex;
           switch(entry.type)
           {
             case entry_t::variableName:
@@ -381,7 +381,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     std::ofstream simdSourceFile(simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
     {
-      LOG(ERROR) << "Could not write to file \""<<simdSourceFilename<<"\".";
+      LOG(ERROR) << "Could not write to file \"" <<simdSourceFilename<< "\".";
       return false;
     }
     else

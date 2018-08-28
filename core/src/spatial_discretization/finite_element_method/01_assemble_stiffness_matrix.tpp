@@ -18,7 +18,7 @@ void AssembleStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::
 setStiffnessMatrix()
 {
   const int D = BasisOnMeshType::dim();
-  LOG(TRACE)<<"setStiffnessMatrix " << D << "D, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  LOG(TRACE) << "setStiffnessMatrix " << D << "D, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
 
   // get prefactor value
   const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
@@ -96,7 +96,7 @@ setStiffnessMatrix()
       // compute the 3xD jacobian of the parameter space to world space mapping
       auto jacobian = BasisOnMeshType::computeJacobian(geometry, xi);
 
-      VLOG(2) << "samplingPointIndex="<<samplingPointIndex<<", xi="<<xi<<", geometry: "<<geometry<<", jac: " <<jacobian;
+      VLOG(2) << "samplingPointIndex=" <<samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex]
@@ -116,7 +116,7 @@ setStiffnessMatrix()
         double integratedValue = integratedValues(i,j);
         double value = -prefactor * integratedValue;
 
-        VLOG(2) << "  dof pair (" << i<<","<<j<<") dofs ("<<dofNosLocal[i]<<","<<dofNosLocal[j]<<"), prefactor: " << prefactor <<", integrated value: "<<integratedValue;
+        VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" <<dofNosLocal[i]<< "," <<dofNosLocal[j]<< "), prefactor: " << prefactor << ", integrated value: " <<integratedValue;
 
         stiffnessMatrix->setValue(dofNosLocal[i], dofNosLocal[j], value, ADD_VALUES);
       }  // j

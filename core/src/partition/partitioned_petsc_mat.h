@@ -32,7 +32,7 @@ public:
   void setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv);
   
   //! wrapper of MatZeroRowsColumns, zeros all entries (except possibly the main diagonal) of a set of local rows and columns
-  void zeroRowsColumns(PetscInt numRows,const PetscInt rows[], PetscScalar diag);
+  void zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag);
   
   //! wrapper of MatZeroEntries, sets all entries to 0
   void zeroEntries();

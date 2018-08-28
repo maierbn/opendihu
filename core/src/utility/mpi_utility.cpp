@@ -46,7 +46,7 @@ void gdbParallelDebuggingBarrier()
       << "sudo gdb -p " << pid << std::endl << std::endl
       << "select-frame 2" << std::endl
       << "set var gdbResume = 1" << std::endl
-      << "info locals "<< std::endl 
+      << "info locals " << std::endl 
       << "next";
     while (gdbResume == 0)
     {

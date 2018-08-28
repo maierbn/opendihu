@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/04_rhs.h"
+#include "spatial_discretization/finite_element_method/05_rhs.h"
 
 #include <iostream>
 #include <petscksp.h>
@@ -19,10 +19,11 @@ template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 void FiniteElementMethodRhs<BasisOnMeshType, QuadratureType, Term>::
 setRightHandSide()
 {
-  LOG(TRACE)<<"setRightHandSide";
+  LOG(TRACE) << "setRightHandSide";
 
   dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  rightHandSide.startVectorManipulation();
 
   std::vector<double> localValues;
   
@@ -51,6 +52,7 @@ setRightHandSide()
 #endif
 
   rightHandSide.setValuesWithoutGhosts(localValues);
+  rightHandSide.finishVectorManipulation();
 
   // transform the entries from strong form to weak form
   this->transferRhsToWeakForm();

@@ -45,7 +45,7 @@ scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitial
   std::ifstream sourceFile(sourceFilename.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(WARNING) << "Could not open source file \""<<sourceFilename<<"\" for reading initial values.";
+    LOG(WARNING) << "Could not open source file \"" <<sourceFilename<< "\" for reading initial values.";
     return false;
   }
   else
@@ -117,20 +117,20 @@ initialize()
   //store number of instances
   nInstances_ = mesh_->nNodesLocalWithoutGhosts();
 
-  LOG(DEBUG) << "Initialize CellML with nStates="<<nStates
-    <<", nIntermediates="<<nIntermediates_<<", nParameters="<<nParameters_<<", nInstances="<<nInstances_;
+  LOG(DEBUG) << "Initialize CellML with nStates=" <<nStates
+    << ", nIntermediates=" <<nIntermediates_<< ", nParameters=" <<nParameters_<< ", nInstances=" <<nInstances_;
 
   // allocate data vectors
   intermediates_.resize(nIntermediates_*nInstances_);
   parameters_.resize(nParameters_*nInstances_);
-  LOG(DEBUG) << "size of parameters: "<<parameters_.size();
+  LOG(DEBUG) << "size of parameters: " <<parameters_.size();
 }
 
 template<int nStates>
 bool CellmlAdapterBase<nStates>::
 setInitialValues(Vec& initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_="<<this->sourceFilename_;
+  LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_=" <<this->sourceFilename_;
   std::vector<double> states;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
   {

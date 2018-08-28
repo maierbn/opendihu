@@ -82,7 +82,7 @@ template<typename BasisOnMeshType,typename Term>
 void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
 initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data)
 {
-  LOG(TRACE)<<"initializeBoundaryConditions";
+  LOG(TRACE) << "initializeBoundaryConditions";
 
   const int D = BasisOnMeshType::dim();
   std::shared_ptr<typename BasisOnMeshType::HighOrderBasisOnMesh> mesh = data.mesh();
@@ -171,8 +171,8 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
 
     if (boundaryConditionLocalUnknownsIndex > nLocalUnknowns)
     {
-      LOG(WARNING) << "Boundary condition specified for degree of freedom no. "<<boundaryConditionLocalUnknownsIndex
-       <<", but scenario has only "<<nLocalUnknowns<<" degrees of freedom.";
+      LOG(WARNING) << "Boundary condition specified for degree of freedom no. " <<boundaryConditionLocalUnknownsIndex
+       << ", but scenario has only " <<nLocalUnknowns<< " degrees of freedom.";
        continue;
     }
 

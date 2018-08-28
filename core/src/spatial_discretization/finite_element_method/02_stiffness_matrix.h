@@ -19,7 +19,7 @@ public:
 
 protected:
   //! set entries in stiffness matrix
-  void setStiffnessMatrix(){LOG(FATAL)<<"FiniteElementMethodStiffnessMatrix inheritance is wrong!";}
+  void setStiffnessMatrix(){LOG(FATAL) << "FiniteElementMethodStiffnessMatrix inheritance is wrong!";}
 };
 
 /** stencils

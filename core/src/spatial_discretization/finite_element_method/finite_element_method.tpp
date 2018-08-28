@@ -21,7 +21,7 @@ template<typename MeshType, typename BasisFunctionType, typename QuadratureType,
 void FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>>::
 setRightHandSide()
 {
-  LOG(DEBUG) << "fill rhs with 0";
+  LOG(DEBUG) << "FiniteElementMethod::setRightHandSide(): rightHandSide.zeroEntries()";
  
   // fill rhs vector with 0
   FieldVariable::FieldVariable<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,1> &rightHandSide = this->data_.rightHandSide();
@@ -29,6 +29,8 @@ setRightHandSide()
   rightHandSide.startVectorManipulation();
   rightHandSide.zeroEntries();
   rightHandSide.finishVectorManipulation();
+
+  LOG(DEBUG) << rightHandSide;
 }
 
 };

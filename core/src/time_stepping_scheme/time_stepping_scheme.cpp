@@ -32,7 +32,7 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
   if(isTimeStepWidthSignificant_)
   {
     setTimeStepWidth(timeStepWidth_);
-    LOG(DEBUG) << "set number of time steps to "<<numberTimeSteps_<<" from timeStepWidth "<<timeStepWidth_;
+    LOG(DEBUG) << "set number of time steps to " <<numberTimeSteps_<< " from timeStepWidth " <<timeStepWidth_;
   }
 }
 
@@ -52,7 +52,7 @@ void TimeSteppingScheme::initialize()
   if (PythonUtility::hasKey(specificSettings_, "endTime"))
     endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
 
-  LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime="<<endTime_;
+  LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime=" <<endTime_;
 
   if (PythonUtility::hasKey(specificSettings_, "timeStepWidth"))
   {
@@ -61,7 +61,7 @@ void TimeSteppingScheme::initialize()
 
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth="
       <<PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive)
-      <<", compute numberTimeSteps="<<numberTimeSteps_;
+      << ", compute numberTimeSteps=" <<numberTimeSteps_;
 
     if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
     {
@@ -77,7 +77,7 @@ void TimeSteppingScheme::initialize()
   else
   {
     numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
-    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps_="<<numberTimeSteps_;
+    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps_=" <<numberTimeSteps_;
   }
 
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
-#include "spatial_discretization/finite_element_method/03_assemble_rhs.h"
+#include "spatial_discretization/finite_element_method/04_assemble_rhs.h"
 
 namespace SpatialDiscretization
 {
@@ -10,7 +10,7 @@ namespace SpatialDiscretization
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=typename BasisOnMeshType::Mesh, typename=Term>
 class FiniteElementMethodBaseRhs :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
+  public BoundaryConditions<BasisOnMeshType, QuadratureType, Term>
 {
 };
 
@@ -18,12 +18,11 @@ class FiniteElementMethodBaseRhs :
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1ul>, Equation::hasLaplaceOperator<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
+  public BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
-    ::FiniteElementMethodStiffnessMatrix;
+  using BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::BoundaryConditions;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -37,12 +36,12 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2ul>, Equation::hasLaplaceOperator<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
+  public BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
-    ::FiniteElementMethodStiffnessMatrix;
+  using BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>::BoundaryConditions;
+
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
@@ -55,12 +54,12 @@ protected:
  */
 template<typename QuadratureType, typename Term>
 class FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3ul>, Equation::hasLaplaceOperator<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
+  public BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
-    ::FiniteElementMethodStiffnessMatrix;
+  using BoundaryConditions<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3ul>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term>
+    ::BoundaryConditions;
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void transferRhsToWeakForm();
@@ -101,5 +100,5 @@ protected:
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/04_rhs.tpp"
-#include "spatial_discretization/finite_element_method/04_rhs_stencils.tpp"
+#include "spatial_discretization/finite_element_method/05_rhs.tpp"
+#include "spatial_discretization/finite_element_method/05_rhs_stencils.tpp"

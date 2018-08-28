@@ -649,7 +649,7 @@ We first compute element-wise stencils that state the contribution of a single e
 
 \subsection{Boundary Conditions}
 \label{sec:bc}
-The Dirichlet-type boundary condition
+The Neumann-type boundary condition
 %
 \begin{equation*}
   \begin{array}{lll}
@@ -667,7 +667,8 @@ is satisfied automatically by the Galerkin finite element formulation. Starting 
 %
 Because $Δu = 0$ on $\Omega$ we get $∇u\cdot \bfn=0$ on the boundary.
 
-Neumann boundary conditions can be easily considered at the discretized system. For each condition $u_i = u_{0,i}$ that enforces the degree of freedom $i$ to have the value $u_{0,i}$ we modify the linear system of equations. In the  right hand side vector we subtract from the value $f_{j}$ the product of $a_{ji}$ and the given value $u_{0,i}$ for every $j\neq i$, i.e. the new value is $\hat{f_j} = f_j - a_{ji}\,u_{0,i}$. We set $f_i = u_{0,i}$. In the matrix we zero the row and column that contain the entry $a_{ii}$, i.e. $a_{ij} = a_{ji} = 0, ∀j\neq i$ and set $a_{ii}=1$. As an example, consider the system
+\subsubsection{Dirichlet boundary conditions in strong form}
+Dirichlet boundary conditions can be easily considered at the discretized system. For each condition $u_i = u_{0,i}$ that enforces the degree of freedom $i\in I_\text{BC}$ to have the value $u_{0,i}$ we modify the linear system of equations. In the  right hand side vector we subtract from the value $f_{j}$ the product of $a_{ji}$ and the given value $u_{0,i}$ for every $j\neq i$, i.e. the new value is $\hat{f_j} = f_j - a_{ji}\,u_{0,i}$. We set $f_i = u_{0,i}$. In the matrix we zero the row and column that contain the entry $a_{ii}$, i.e. $a_{ij} = a_{ji} = 0, ∀j\neq i$ and set $a_{ii}=1$. As an example, consider the system
 %
 \begin{equation*}
   \begin{array}{lll}
@@ -683,6 +684,17 @@ with the Dirichlet boundary condition $u_3 = u_{0,3}$. The modified system is th
     \mat{u_1 \\ u_2 \\ u_3} = \mat{-m_{13}\,u_{0,3} \\ -m_{23}\,u_{0,3} \\ u_{0,3}}.
   \end{array}
 \end{equation*}
+%
+\subsubsection{Dirichlet boundary conditions in weak form}
+%
+We modify the system \eqref{eq:laplace_discretized} and add the weak form of the Dirichlet boundary conditions:
+%
+\begin{equation*}
+  \begin{array}{lll}
+    -\s{i=1}{N} u_i \ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx = -\s{i\in I_\text{BC}}{}u_{0,i}\ds\int_{\Omega}∇\phi_i\cdot ∇\phi_j\,\d\bfx \quad \text{for }j=1,\dots,N.
+  \end{array}
+\end{equation*}
+
 
 \subsection{Function spaces}
 \label{sec:hilbert}

@@ -16,7 +16,7 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   // TODO: change to data.OutputFieldVariables instead of data.solution
 
  /*
-  LOG(TRACE) << "writeNumpySolution RegularFixed, D="<<D;
+  LOG(TRACE) << "writeNumpySolution RegularFixed, D=" <<D;
 
   // solution and rhs vectors in mesh shape
 

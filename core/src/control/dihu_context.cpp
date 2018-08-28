@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <memory>
 #include <list>
+#include <petscvec.h>
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -58,6 +59,15 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
+
+    // parallel debugging barrier
+    bool enableDebuggingBarrier = false;
+    PetscErrorCode ierr = PetscOptionsHasName(NULL, NULL, "-pause", (PetscBool *)&enableDebuggingBarrier); CHKERRV(ierr);
+
+    if (enableDebuggingBarrier)
+    {
+      MPIUtility::gdbParallelDebuggingBarrier();
+    }
 
     // determine settings filename
     std::string filename = "settings.py";
@@ -136,7 +146,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
         pythonHome = "/usr";
 
       const char *pythonSearchPath = pythonHome.c_str();
-      LOG(DEBUG) << "Set python search path to \""<<pythonSearchPath<<"\".";
+      LOG(DEBUG) << "Set python search path to \"" <<pythonSearchPath<< "\".";
 
       VLOG(4) << "Py_SetPythonHome(" << pythonHome << ")";
     }
@@ -340,9 +350,9 @@ DihuContext DihuContext::operator[](std::string keyString)
     dihuContext.pythonConfig_ = pythonConfig_;
     VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
     Py_XINCREF(dihuContext.pythonConfig_);
-    LOG(WARNING) << "Dict does not contain key \""<<keyString<<"\".";
+    LOG(WARNING) << "Dict does not contain key \"" <<keyString<< "\".";
   }
-  LOG(TRACE) << "DihuContext::operator[](\""<<keyString<<"\")";
+  LOG(TRACE) << "DihuContext::operator[](\"" <<keyString<< "\")";
 
   return dihuContext;
 }
@@ -368,7 +378,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
   std::ifstream file(filename);
   if (!file.is_open())
   {
-    LOG(ERROR)<<"Could not open settings file \""<<filename<<"\".";
+    LOG(ERROR) << "Could not open settings file \"" <<filename<< "\".";
   }
   else
   {
@@ -383,7 +393,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
     // read in file contents
     file.read(&fileContents[0], fileSize);
 
-    LOG(INFO)<<"File \""<<filename<<"\" loaded.";
+    LOG(INFO) << "File \"" <<filename<< "\" loaded.";
 
     loadPythonScript(fileContents);
   }
@@ -391,11 +401,11 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  LOG(TRACE)<<"loadPythonScript("<<text.substr(0,std::min(std::size_t(80),text.length()))<<")";
+  LOG(TRACE) << "loadPythonScript(" <<text.substr(0,std::min(std::size_t(80),text.length())) << ")";
 
   // execute python code
   int ret = 0;
-  LOG(INFO)<<std::string(80, '-');
+  LOG(INFO) << std::string(80, '-');
   try
   {
     LOG(DEBUG) << "run python script";
@@ -411,7 +421,7 @@ void DihuContext::loadPythonScript(std::string text)
   catch(...)
   {
   }
-  LOG(INFO)<<std::string(80, '-');
+  LOG(INFO) << std::string(80, '-');
 
   // if there was an error in the python code
   if (ret != 0)
@@ -434,7 +444,7 @@ void DihuContext::loadPythonScript(std::string text)
   // check if type is valid
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
   {
-    LOG(ERROR)<<"Python config file does not contain a dict named \"config\".";
+    LOG(ERROR) << "Python config file does not contain a dict named \"config\".";
   }
 }
 
@@ -529,7 +539,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
 //#ifdef NDEBUG      // if release
 //  conf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
-//  std::cout<<"DISABLE Debug"<<std::endl;
+//  std::cout<< "DISABLE Debug" << std::endl;
 //#endif
 
   // reconfigure all loggers

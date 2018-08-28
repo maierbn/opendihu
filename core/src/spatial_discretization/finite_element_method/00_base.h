@@ -43,9 +43,6 @@ protected:
   //! read in rhs values from config and creates a FE rhs vector out of it
   virtual void setRightHandSide() = 0;
 
-  //! change the stiffness matrix such that Dirichlet boundary conditions are met, sets some rows/columns to 0 and the diagonal to 1, changes rhs accordingly
-  virtual void applyBoundaryConditions();
-
   //! setup stiffness matrix
   virtual void setStiffnessMatrix() = 0;
 
@@ -54,6 +51,9 @@ protected:
 
   //! after rhs is transferred to weak form this method is called and can be overriden later
   virtual void manipulateWeakRhs(){}
+
+  //! modify the rhs to incorporate dirichlet boundary conditions
+  virtual void applyBoundaryConditions() = 0;
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Data data_;     ///< data object that holds all PETSc vectors and matrices

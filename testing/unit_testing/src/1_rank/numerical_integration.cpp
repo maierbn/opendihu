@@ -18,15 +18,13 @@ TEST(NumericalIntegrationTest, StiffnessMatrixIsCorrect1D)
   std::string pythonConfig1 = R"(
 # Laplace 1D
 n = 5
-    
+
 # boundary conditions
 bc = {}
 bc[0] = 1.0
 bc[n] = 0.0
 
 config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
@@ -37,21 +35,21 @@ config = {
 )";
 
   DihuContext settings1(argc, argv, pythonConfig1);
-  
+
   FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<1>,
     BasisFunction::LagrangeOfOrder<>,
     Quadrature::Gauss<3>,
     Equation::Static::Laplace
   > equationDiscretized1(settings1);
-  
+
   equationDiscretized1.run();
 
   std::vector<double> referenceMatrix = {
     1, 0, 0, 0, 0, 0,
     0, -2.5, 1.25, 0, 0, 0,
     0, 1.25, -2.5, 1.25, 0, 0,
-    0, 0, 1.25, -2.5, 1.25, 0, 
+    0, 0, 1.25, -2.5, 1.25, 0,
     0, 0, 0, 1.25, -2.5, 0,
     0, 0, 0, 0, 0, 1
   };
@@ -59,12 +57,62 @@ config = {
     1, -1.25, 0, 0, 0, 0
   };
   std::map<int, double> dirichletBC = {{0, 1.0}, {5,0.0}};
-  
+
   StiffnessMatrixTester::compareMatrix(equationDiscretized1, referenceMatrix);
   StiffnessMatrixTester::compareRhs(equationDiscretized1, referenceRhs);
   StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized1, dirichletBC);
 }
 
+TEST(NumericalIntegrationTest, StiffnessMatrixIsCorrect1DBCBackwards)
+{
+  std::string pythonConfig1 = R"(
+# Laplace 1D
+n = 5
+
+# boundary conditions
+bc = {}
+bc[0] = 1.0
+bc[-1] = 5.0
+
+config = {
+  "FiniteElementMethod" : {
+    "nElements": n,
+    "physicalExtent": 4.0,
+    "DirichletBoundaryCondition": bc,
+    "relativeTolerance": 1e-15,
+  }
+}
+)";
+
+  DihuContext settings1(argc, argv, pythonConfig1);
+
+  FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<3>,
+    Equation::Static::Laplace
+  > equationDiscretized1(settings1);
+
+  equationDiscretized1.run();
+
+  std::vector<double> referenceMatrix = {
+    1, 0, 0, 0, 0, 0,
+    0, -2.5, 1.25, 0, 0, 0,
+    0, 1.25, -2.5, 1.25, 0, 0,
+    0, 0, 1.25, -2.5, 1.25, 0,
+    0, 0, 0, 1.25, -2.5, 0,
+    0, 0, 0, 0, 0, 1
+  };
+  std::vector<double> referenceRhs = {
+    1, -1.25, 0, 0, -6.25, 5
+  };
+  std::map<int, double> dirichletBC = {{0, 1.0}, {5,5.0}};
+
+  StiffnessMatrixTester::compareMatrix(equationDiscretized1, referenceMatrix);
+  StiffnessMatrixTester::compareRhs(equationDiscretized1, referenceRhs);
+  StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized1, dirichletBC);
+}
+/*
 
 TEST(NumericalIntegrationTest, StiffnessMatrixIsCorrect2D)
 {
@@ -165,7 +213,7 @@ config = {
   equationDiscretized2.run();
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
-}
+}*/
 /*
  * // the following tests are commented out because the take very long to compile, they should work, however
 TEST(NumericalIntegrationTest, GaussIntegrationHigherOrderWorks)

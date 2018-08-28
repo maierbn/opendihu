@@ -34,15 +34,15 @@ void Manager::storePreconfiguredSolvers()
 
         if (value == NULL)
         {
-          LOG(WARNING) << "Could not extract dict for solver \""<<key<<"\".";
+          LOG(WARNING) << "Could not extract dict for solver \"" <<key<< "\".";
         }
         else if(!PyDict_Check(value))
         {
-          LOG(WARNING) << "Value for solver with name \""<<key<<"\" should be a dict.";
+          LOG(WARNING) << "Value for solver with name \"" <<key<< "\" should be a dict.";
         }
         else
         {
-          LOG(DEBUG) << "store solver configuration with key \""<<key<<"\".";
+          LOG(DEBUG) << "store solver configuration with key \"" <<key<< "\".";
           solverConfiguration_[key] = value;
         }
       }

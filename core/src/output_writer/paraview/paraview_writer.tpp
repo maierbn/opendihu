@@ -20,12 +20,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // write a RectilinearGrid
   // determine file name
   std::stringstream s;
-  s<<filename<<".vtr";
+  s<<filename<< ".vtr";
 
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write RectilinearGrid, file \""<<s.str()<<"\".";
+  LOG(DEBUG) << "Write RectilinearGrid, file \"" <<s.str() << "\".";
 
   // extent
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
@@ -44,14 +44,14 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
     node_no_t nNodes = extent[dimensionNo] + 1;
     
-    LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;
+    LOG(DEBUG) << "dimension " <<dimensionNo<< ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
 
     coordinates[dimensionNo].resize(nNodes);
 
     for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       double coordinate = nodeNo * meshWidth;
-      VLOG(1) << "coordinate: "<<coordinate<<", nodeNo="<<nodeNo;
+      VLOG(1) << "coordinate: " << coordinate<< ", nodeNo=" <<nodeNo;
       coordinates[dimensionNo][nodeNo] = coordinate;
     }
   }
@@ -71,9 +71,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"RectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<RectilinearGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
     << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
+      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
     
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
@@ -145,7 +145,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << std::string(3, '\t') << "</Coordinates>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</RectilinearGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>" << std::endl;
   
 }
   
@@ -159,12 +159,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // write a StructuredGrid
   // determine file name
   std::stringstream s;
-  s<<filename<<".vts";
+  s<<filename<< ".vts";
 
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write StructuredGrid, file \""<<s.str()<<"\".";
+  LOG(DEBUG) << "Write StructuredGrid, file \"" <<s.str() << "\".";
 
   // extent
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
@@ -185,9 +185,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
     << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
+      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
     
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
@@ -220,7 +220,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</StructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>" << std::endl;
 }
   
   
@@ -239,7 +239,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write UnstructuredGrid, file \""<<s.str()<<"\".";
+  LOG(DEBUG) << "Write UnstructuredGrid, file \"" <<s.str() << "\".";
 
   // get type of geometry field
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType> BasisOnMesh;
@@ -369,7 +369,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << std::string(3, '\t') << "</Cells>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</UnstructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>" << std::endl;
 }
   
 };

@@ -92,27 +92,27 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
   PetscUtility::getVectorEntries(vector, vectorValues);
 
   std::stringstream s;
-  s<<std::endl<<"    ";
+  s<< std::endl<< "    ";
   for (int j=0; j<nColumns; j++)
   {
-    s<<std::setw(5)<<std::setfill('_')<<j;
+    s<< std::setw(5) << std::setfill('_') <<j;
   }
-  s<<std::string(5,'_')<<" | "<<name;
-  s<<std::endl;
+  s<< std::string(5,'_') << " | " <<name;
+  s<< std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<<std::setw(3)<<std::setfill(' ')<<i<<"| ";
+    s<< std::setw(3) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
       if(matrixValues[i*nRows + j] == 0.0)
-        s<<std::string(5, ' ');
+        s<< std::string(5, ' ');
       else
-        s<<std::setw(4)<<std::setfill(' ')<<matrixValues[i*nRows + j]<<" ";
+        s<< std::setw(4) << std::setfill(' ') <<matrixValues[i*nRows + j]<< " ";
     }
-    s<<std::string(5, ' ')<<"| "<<vectorValues[i];
-    s<<std::endl;
+    s<< std::string(5, ' ') << "| " <<vectorValues[i];
+    s<< std::endl;
   }
-  s<<std::endl;
+  s<< std::endl;
 
   return s.str();
 }
@@ -137,24 +137,24 @@ std::string PetscUtility::getStringMatrix(const Mat& matrix)
     << "    ";
   for (int j=0; j<nColumns; j++)
   {
-    s<<std::setw(6)<<std::setfill('_')<<j;
+    s<< std::setw(6) << std::setfill('_') <<j;
   }
-  s<<std::string(6,'_');
-  s<<std::endl;
+  s<< std::string(6,'_');
+  s<< std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<<std::setw(4)<<std::setfill(' ')<<i<<"| ";
+    s<< std::setw(4) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
       if(fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
-        s<<std::string(6, ' ');
+        s<< std::string(6, ' ');
       else
-        s<<std::showpos<<std::setw(5)<<std::setfill(' ')<<std::setprecision(3)<<matrixValues[i*nRows + j]<<" ";
+        s<< std::showpos<< std::setw(5) << std::setfill(' ') << std::setprecision(3) <<matrixValues[i*nRows + j]<< " ";
     }
-    s<<std::string(6, ' ');
-    s<<std::endl;
+    s<< std::string(6, ' ');
+    s<< std::endl;
   }
-  s<<std::endl;
+  s<< std::endl;
 
   return s.str();
 }
@@ -189,30 +189,30 @@ std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
   PetscUtility::getMatrixEntries(matrix, matrixValues);
 
   std::stringstream s;
-  s<<" ";
+  s<< " ";
   for (int j=0; j<nColumns; j++)
   {
     if (j%10 == 0)
-      s<<"|";
+      s<< "|";
     else if (j%2 == 0)
-      s<<".";
+      s<< ".";
     else
-      s<<" ";
+      s<< " ";
   }
-  s<<std::endl;
+  s<< std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<<" ";
+    s<< " ";
     for (int j=0; j<nColumns; j++)
     {
       if(matrixValues[i*nRows + j] == 0.0)
-        s<<" ";
+        s<< " ";
       else
-        s<<"*";
+        s<< "*";
     }
-    s<<std::endl;
+    s<< std::endl;
   }
-  s<<std::endl;
+  s<< std::endl;
   return s.str();
 }
 

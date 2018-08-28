@@ -42,7 +42,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
   }
 
   LOG(DEBUG) << "getValues, n dofs (with ghosts): " << this->mesh_->nDofsLocalWithGhosts() << ", nValues: " << nValues
-    << ", nNodes: " << nLocalNodesInXDirection<<","<<nLocalNodesInYDirection<<","<<nLocalNodesInZDirection
+    << ", nNodes: " << nLocalNodesInXDirection<< "," <<nLocalNodesInYDirection<< "," <<nLocalNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 
   values.resize(nValues);
@@ -122,7 +122,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
   }
 
   LOG(DEBUG) << "getValues, n dofs (without ghosts): " << this->mesh_->nDofsLocalWithoutGhosts() << ", nValues: " << nValues
-    << ", nNodes: " << nLocalNodesInXDirection<<","<<nLocalNodesInYDirection<<","<<nLocalNodesInZDirection
+    << ", nNodes: " << nLocalNodesInXDirection<< "," <<nLocalNodesInYDirection<< "," <<nLocalNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 
   values.resize(nValues);

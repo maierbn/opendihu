@@ -22,13 +22,13 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
     if (i != 0)
       shape << ",";
     shape << nEntries[i];
-    VLOG(1) << "nEntries["<<i<<"] = "<<nEntries[i];
+    VLOG(1) << "nEntries[" <<i<< "] = " <<nEntries[i];
   }
   shape << "]";
 
   if (nEntriesTotal != (long int)data.size())
   {
-    LOG(ERROR) << "Number of entries " << nEntriesTotal << " " << nEntries << " for file \"" << filename << "\" does not match vector size "<<data.size()<<".";
+    LOG(ERROR) << "Number of entries " << nEntriesTotal << " " << nEntries << " for file \"" << filename << "\" does not match vector size " <<data.size() << ".";
     return;
   }
 
@@ -63,7 +63,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
     for(int i=0; i<8; i++)
     {
-      file<<c[i];
+      file<< c[i];
     }
   }
 
@@ -74,7 +74,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   // convert to numpy file by python script
   std::stringstream converterScript;
   converterScript << "import numpy as np" << std::endl
-    << "v = np.fromfile(\""<< temporaryFilename.str() << "\")" << std::endl
+    << "v = np.fromfile(\"" << temporaryFilename.str() << "\")" << std::endl
     << "v = np.reshape(v," << shape.str() << ")" << std::endl
     << "np.save(\"" << filename << "\",v)";
 
@@ -82,7 +82,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   if (0)
   {
     std::ofstream scriptFile("convert.py");
-    scriptFile<<converterScript.str();
+    scriptFile<< converterScript.str();
     scriptFile.close();
     int ret = system("python convert.py");
     if (ret)
@@ -91,7 +91,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   }
   else
   {
-    VLOG(1) << "converterScript: ["<<converterScript.str()<<"]";
+    VLOG(1) << "converterScript: [" << converterScript.str() << "]";
 
     int ret = 1;
     // try 2 times, because sometimes it fails for the first time
@@ -131,12 +131,12 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   for (int i=0; i<dimension; i++)
   {
     nEntriesTotal *= nEntries[i];
-    LOG(DEBUG) << "nEntries["<<i<<"] = "<<nEntries[i];
+    LOG(DEBUG) << "nEntries[" <<i<< "] = " <<nEntries[i];
   }
 
   if (nEntriesTotal != data.size())
   {
-    LOG(ERROR) << "Number of entries " << nEntriesTotal << " does not match vector size "<<data.size()<<".";
+    LOG(ERROR) << "Number of entries " << nEntriesTotal << " does not match vector size " <<data.size() << ".";
     return;
   }
 

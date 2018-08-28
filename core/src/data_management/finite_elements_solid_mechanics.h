@@ -38,8 +38,8 @@ public:
   FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &residual();
 
   //! return reference to the increment field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &increment(){LOG(FATAL)<<"this should not be in use";}
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &solution(){LOG(FATAL)<<"this should not be in use";}
+  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &increment(){LOG(FATAL) << "this should not be in use";}
+  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &solution(){LOG(FATAL) << "this should not be in use";}
 
   //! return reference to the actual geometry field, the PETSc Vec can be obtained via fieldVariable.values()
   FieldVariable::FieldVariable<BasisOnMeshType,3> &geometryActual();
@@ -111,7 +111,7 @@ public:
   OutputFieldVariables getOutputFieldVariables();
 
   //! return reference to a stiffness matrix. This method is usually called for solving the linear system, but in this case we have an nonlinear system that does not retrieve the stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix(){LOG(FATAL)<<"this should not be in use";}
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix(){LOG(FATAL) << "this should not be in use";}
 
   //! return the value of computeWithReducedVectors. If the vector of unknowns only contains the real degrees of freedom and not the variables with Dirichlet BCs. This is maybe slower because copying of data is required, but the system to solve is smaller
   bool computeWithReducedVectors();

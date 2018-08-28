@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/03_boundary_conditions.h"
 
 namespace SpatialDiscretization
 {
@@ -9,13 +9,13 @@ namespace SpatialDiscretization
  * Class that sets the right hand side vector by integrating the integrand over the elements.
  * What to integrate is given by the class template Term.
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy= Term>
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy=Term>
 class AssembleRightHandSide :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>
+  public BoundaryConditions<BasisOnMeshType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
+  using BoundaryConditions<BasisOnMeshType, QuadratureType, Term>::BoundaryConditions;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -30,11 +30,11 @@ protected:
  */
 template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename QuadratureType,typename Term>
 class AssembleRightHandSide<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
+public BoundaryConditions<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodStiffnessMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::FiniteElementMethodStiffnessMatrix;
+  using BoundaryConditions<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::BoundaryConditions;
 
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
@@ -46,4 +46,4 @@ protected:
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/03_assemble_rhs.tpp"
+#include "spatial_discretization/finite_element_method/04_assemble_rhs.tpp"

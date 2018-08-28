@@ -17,8 +17,9 @@
 
 
 # MPI
-MPI_DIR="/usr/lib/openmpi"
+#MPI_DIR="/usr/lib/openmpi"
 #MPI_DIR="/usr/lib64/mpich/"
+MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"
 
 # use value of environment variable 'MPI_HOME' if it is set
 import os

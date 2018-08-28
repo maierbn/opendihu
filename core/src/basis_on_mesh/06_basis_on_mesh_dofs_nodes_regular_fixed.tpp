@@ -101,7 +101,7 @@ computeMeshWidth()
     this->meshWidth_ = 1.0;
   }
 
-  LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D="<< D<<", nElements: "<<nElements;
+  LOG(DEBUG) << "  BasisOnMeshDofsNodes Mesh::RegularFixed constructor, D=" << D<< ", nElements: " <<nElements;
   LOG(DEBUG) << "  physicalExtent: " << physicalExtent_;
   LOG(DEBUG) << "  meshWidth: " << this->meshWidth_; 
 }

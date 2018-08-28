@@ -34,7 +34,7 @@ void ParaviewWriter::write(DataType& data, int timeStepNo, double currentTime)
 template <int dimension, typename DataType>
 void ParaviewWriter::writeSolutionDim(DataType &data)
 {
-  LOG(TRACE) << "writeMesh<"<<dimension<<">()";
+  LOG(TRACE) << "writeMesh<" <<dimension<< ">()";
 
   if (std::dynamic_pointer_cast<Mesh::StructuredRegularFixedOfDimension<dimension>>(data.mesh()) != NULL)
   {
@@ -60,13 +60,13 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
  
   // determine file name
   std::stringstream s;
-  s<<filename_<<".vtr";
+  s<<filename_<< ".vtr";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write RectilinearGrid, file \""<<filename<<"\".";
+  LOG(DEBUG) << "Write RectilinearGrid, file \"" <<filename<< "\".";
 
   // determine values
   std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh>(data.mesh());
@@ -88,14 +88,14 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
     double meshWidth = mesh->meshWidth();
     double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
 
-    LOG(DEBUG) << "dimension "<<dimensionNo<<", meshWidth: "<<meshWidth<<", nElements: "<<nElements;
+    LOG(DEBUG) << "dimension " <<dimensionNo<< ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
 
     coordinates[dimensionNo].resize(nElements+1);
 
     for(int nodeNo = 0; nodeNo < nElements+1; nodeNo++)
     {
       double coordinate = nodeNo * meshWidth;
-      LOG(DEBUG) << "coordinate: "<<coordinate<<", nodeNo="<<nodeNo;
+      LOG(DEBUG) << "coordinate: " << coordinate<< ", nodeNo=" <<nodeNo;
       coordinates[dimensionNo][nodeNo] = coordinate;
     }
   }
@@ -117,9 +117,9 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"RectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<RectilinearGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
     << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl
+      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl
     << std::string(3, '\t') << "<PointData Scalars=\"" << scalarsName << "\">" << std::endl;
   if (binaryOutput)
   {
@@ -192,7 +192,7 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
   file << std::string(3, '\t') << "</Coordinates>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</RectilinearGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;
+    << "</VTKFile>" << std::endl;
     */
 }
 
@@ -201,13 +201,13 @@ void ParaviewWriter::writeStructuredGrid(DataType& data)
 {/*
   // determine file name
   std::stringstream s;
-  s<<filename_<<".vts";
+  s<<filename_<< ".vts";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write StructuredGrid, file \""<<filename<<"\".";
+  LOG(DEBUG) << "Write StructuredGrid, file \"" <<filename<< "\".";
 
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
@@ -231,9 +231,9 @@ void ParaviewWriter::writeStructuredGrid(DataType& data)
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
     << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl
+      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl
     << std::string(3, '\t') << "<PointData Scalars=\"" << scalarsName << "\">" << std::endl;
   if (binaryOutput)
   {
@@ -282,7 +282,7 @@ void ParaviewWriter::writeStructuredGrid(DataType& data)
   file << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</StructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;*/
+    << "</VTKFile>" << std::endl;*/
 }
 
 template <int D, typename DataType>
@@ -290,13 +290,13 @@ void ParaviewWriter::writeUnstructuredGrid(DataType& data)
 {/*
   // determine file name
   std::stringstream s;
-  s<<filename_<<".vtu";
+  s<<filename_<< ".vtu";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write UnstructuredGrid, file \""<<filename<<"\".";
+  LOG(DEBUG) << "Write UnstructuredGrid, file \"" <<filename<< "\".";
 
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
@@ -320,9 +320,9 @@ void ParaviewWriter::writeUnstructuredGrid(DataType& data)
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
+      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
     << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 "<< extent[1] << " 0 " << extent[2] << "\"> " << std::endl
+      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl
     << std::string(3, '\t') << "<PointData Scalars=\"" << scalarsName << "\">" << std::endl;
   if (binaryOutput)
   {
@@ -371,7 +371,7 @@ void ParaviewWriter::writeUnstructuredGrid(DataType& data)
   file << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</StructuredGrid>" << std::endl
-    << "</VTKFile>"<<std::endl;*/
+    << "</VTKFile>" << std::endl;*/
 }
 
 };

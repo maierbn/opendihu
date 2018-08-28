@@ -32,7 +32,7 @@ public:
   bool isGeometryField() const;
 
   //! set the mesh
-  virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh) {LOG(FATAL)<<"this is unused";}
+  virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh) {LOG(FATAL) << "this is unused";}
   
   //! get the number of components
   virtual int getNComponents() const = 0;

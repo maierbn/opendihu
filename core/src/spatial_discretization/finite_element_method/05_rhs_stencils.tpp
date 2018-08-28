@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/04_rhs.h"
+#include "spatial_discretization/finite_element_method/05_rhs.h"
 
 #include <iostream>
 #include <petscksp.h>
@@ -21,7 +21,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>>::
 transferRhsToWeakForm()
 {
-  LOG(TRACE)<<"transferRhsToWeakForm (1D)";
+  LOG(TRACE) << "transferRhsToWeakForm (1D)";
 
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -31,7 +31,7 @@ transferRhsToWeakForm()
   double elementLength = mesh->meshWidth();
   node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
   
-  LOG(DEBUG) << "Use settings nElements="<<nElements<<", elementLength="<<elementLength;
+  LOG(DEBUG) << "Use settings nElements=" <<nElements<< ", elementLength=" <<elementLength;
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
@@ -115,7 +115,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>>::
 transferRhsToWeakForm()
 {
-  LOG(TRACE)<<"transferRhsToWeakForm (2D)";
+  LOG(TRACE) << "transferRhsToWeakForm (2D)";
 
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -343,7 +343,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodBaseRhs<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>>::
 transferRhsToWeakForm()
 {
-  LOG(TRACE)<<"transferRhsToWeakForm (3D)";
+  LOG(TRACE) << "transferRhsToWeakForm (3D)";
 
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -1071,7 +1071,7 @@ setMassMatrix()
     this->data_.initializeMassMatrix();
 
     // set entries of matrix
-    LOG(DEBUG)<<"createMassMatrix 1D";
+    LOG(DEBUG) << "createMassMatrix 1D";
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
@@ -1079,7 +1079,7 @@ setMassMatrix()
     double elementLength = mesh->meshWidth();
     double integralFactor = elementLength;
 
-    LOG(DEBUG) << "Use settings nNodes0="<<nNodes0<<", elementLength="<<elementLength;
+    LOG(DEBUG) << "Use settings nNodes0=" <<nNodes0<< ", elementLength=" <<elementLength;
 
     // multiply factor to rhs
     // rhs *= stencil * elementLength
@@ -1151,7 +1151,7 @@ setMassMatrix()
     this->data_.initializeMassMatrix();
 
     // set entries of matrix
-    LOG(DEBUG)<<"createMassMatrix 2D";
+    LOG(DEBUG) << "createMassMatrix 2D";
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
@@ -1351,7 +1351,7 @@ setMassMatrix()
     this->data_.initializeMassMatrix();
 
     // set entries of matrix
-    LOG(DEBUG)<<"createMassMatrix 3D";
+    LOG(DEBUG) << "createMassMatrix 3D";
 
     // get settings values
     std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());

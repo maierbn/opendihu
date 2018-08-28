@@ -29,7 +29,7 @@ Exfile::Exfile(PyObject *settings) : Generic(settings)
 void Exfile::outputComFile()
 {
   std::stringstream s;
-  s<<filenameBase_<<".com";
+  s<<filenameBase_<< ".com";
   std::string filenameCom = s.str();
   // open file
   std::ofstream file = openFile(filenameCom);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spatial_discretization/finite_element_method/04_rhs.h"
+#include "spatial_discretization/finite_element_method/05_rhs.h"
 
 #include "mesh/mesh.h"
 #include "time_stepping_scheme/discretizable_in_time.h"
@@ -64,4 +64,4 @@ protected:
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/05_timestepping.tpp"
+#include "spatial_discretization/finite_element_method/06_timestepping.tpp"

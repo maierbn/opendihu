@@ -118,8 +118,8 @@ createPetscObjects()
   // dimension of the tangent stiffness matrix
   dof_no_t tangentStiffnessMatrixNRows = this->getTangentStiffnessMatrixNRows();
 
-  LOG(DEBUG)<<"FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, "
-    << "dimension of tangent stiffness matrix: "<<tangentStiffnessMatrixNRows<<"x"<<tangentStiffnessMatrixNRows<<"";
+  LOG(DEBUG) << "FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, "
+    << "dimension of tangent stiffness matrix: " <<tangentStiffnessMatrixNRows<< "x" <<tangentStiffnessMatrixNRows<< "";
 
   // PETSc MatCreateAIJ parameters
   int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
@@ -129,8 +129,8 @@ createPetscObjects()
   diagonalNonZeros = std::min(diagonalNonZeros, tangentStiffnessMatrixNRows);
   offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
 
-  LOG(DEBUG) << "d="<<this->mesh_->dimension()
-    <<", number of diagonal non-zeros: "<<diagonalNonZeros<<", number of off-diagonal non-zeros: "<<offdiagonalNonZeros; 
+  LOG(DEBUG) << "d=" <<this->mesh_->dimension()
+    << ", number of diagonal non-zeros: " <<diagonalNonZeros<< ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros; 
   const int dimension = BasisOnMeshType::dim();
     
   const int nComponents = dimension;
@@ -235,10 +235,10 @@ print()
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4)<<"======================";
+  VLOG(4) << "======================";
   int nRows, nColumns;
   MatGetSize(this->tangentStiffnessMatrix_, &nRows, &nColumns);
-  VLOG(4)<<"tangentStiffnessMatrix ("<<nRows<<" x "<<nColumns<<") and rhs:";
+  VLOG(4) << "tangentStiffnessMatrix (" <<nRows<< " x " <<nColumns<< ") and rhs:";
 
   VLOG(4) << std::endl<<PetscUtility::getStringMatrixVector(this->tangentStiffnessMatrix_, this->residual_->values());
   VLOG(4) << "sparsity pattern: " << std::endl << PetscUtility::getStringSparsityPattern(this->tangentStiffnessMatrix_);
@@ -246,28 +246,28 @@ print()
   MatInfo info;
   MatGetInfo(this->tangentStiffnessMatrix_, MAT_LOCAL, &info);
 
-  VLOG(4)<<"Matrix info: "<<std::endl
-    <<"block_size: "<<info.block_size<<std::endl
-    <<"number of nonzeros: allocated: "<<info.nz_allocated<<", used: "<<info.nz_used<<", unneeded: "<<info.nz_unneeded<<std::endl
-    <<"memory allocated: "<<info.memory<<std::endl
-    <<"number of matrix assemblies called: "<<info.assemblies<<std::endl
-    <<"number of mallocs during MatSetValues(): "<<info.mallocs<<std::endl
-    <<"fill ratio for LU/ILU: given: "<<info.fill_ratio_given<<", needed: "<<info.fill_ratio_needed<<std::endl
-    <<"number of mallocs during factorization: "<<info.factor_mallocs<<std::endl;
+  VLOG(4) << "Matrix info: " << std::endl
+    << "block_size: " <<info.block_size<< std::endl
+    << "number of nonzeros: allocated: " <<info.nz_allocated<< ", used: " <<info.nz_used<< ", unneeded: " <<info.nz_unneeded<< std::endl
+    << "memory allocated: " <<info.memory<< std::endl
+    << "number of matrix assemblies called: " <<info.assemblies<< std::endl
+    << "number of mallocs during MatSetValues(): " <<info.mallocs<< std::endl
+    << "fill ratio for LU/ILU: given: " <<info.fill_ratio_given<< ", needed: " <<info.fill_ratio_needed<< std::endl
+    << "number of mallocs during factorization: " <<info.factor_mallocs<< std::endl;
 
 
-  VLOG(4)<<"======================";
+  VLOG(4) << "======================";
 
   int nEntries;
   VecGetSize(this->residual_->valuesLocal(), &nEntries);
-  VLOG(4)<<"residual ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->residual_->valuesLocal());
-  VLOG(4)<<"======================";
+  VLOG(4) << "residual (" <<nEntries<< " entries):";
+  VLOG(4) <<PetscUtility::getStringVector(this->residual_->valuesLocal());
+  VLOG(4) << "======================";
 
   VecGetSize(this->displacements_->valuesLocal(), &nEntries);
-  VLOG(4)<<"displacements ("<<nEntries<<" entries):";
-  VLOG(4)<<PetscUtility::getStringVector(this->displacements_->valuesLocal());
-  VLOG(4)<<"======================";
+  VLOG(4) << "displacements (" <<nEntries<< " entries):";
+  VLOG(4) <<PetscUtility::getStringVector(this->displacements_->valuesLocal());
+  VLOG(4) << "======================";
 }
 
 template<typename BasisOnMeshType,typename Term>

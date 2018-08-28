@@ -241,7 +241,7 @@ parseExelemFile(std::string exelemFilename)
   VLOG(1) << "parsing done";
   for(auto &fieldVariable : this->fieldVariable_)
   {
-    VLOG(1)<<*fieldVariable.second;
+    VLOG(1) <<*fieldVariable.second;
   }
 
   VLOG(1) << "unifyMappings - 1";

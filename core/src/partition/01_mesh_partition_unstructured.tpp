@@ -84,12 +84,21 @@ nNodesGlobal() const
 {
   return nNodes_;
 }
+
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofs() const
 {
   return nDofs_;
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getElementNoGlobal(element_no_t elementNoLocal) const
+{
+  return (global_no_t)(elementNoLocal);
 }
   
 template<int D, typename BasisFunctionType>

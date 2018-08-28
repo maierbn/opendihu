@@ -31,7 +31,7 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::ostream &stream, node_no_t nodeGlobalNo)
 {
-  VLOG(2) << "loop_output_node_values.tpp:34, outputNodeValues, field variable " << currentFieldVariable->name()<<" at " << currentFieldVariable->valuesLocal();
+  VLOG(2) << "loop_output_node_values.tpp:34, outputNodeValues, field variable " << currentFieldVariable->name() << " at " << currentFieldVariable->valuesLocal();
  
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
   if (currentFieldVariable->mesh()->meshName() != meshName)

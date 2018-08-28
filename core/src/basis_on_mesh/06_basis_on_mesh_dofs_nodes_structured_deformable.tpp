@@ -18,7 +18,7 @@ BasisOnMeshDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>
 BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField) :
   BasisOnMeshDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
 {
-  LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_="<<this->noGeometryField_;
+  LOG(DEBUG) << "constructor BasisOnMeshDofsNodes StructuredDeformable, noGeometryField_=" <<this->noGeometryField_;
 
   this->noGeometryField_ = noGeometryField;
 }
@@ -235,7 +235,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
         meshWidth[dimNo] = physicalExtent[dimNo] /
           (this->nElementsPerCoordinateDirectionLocal(dimNo) * (BasisOnMeshBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
       }
-      LOG(DEBUG) << "meshWidth["<<dimNo<<"] = "<<meshWidth[dimNo];
+      LOG(DEBUG) << "meshWidth[" <<dimNo<< "] = " <<meshWidth[dimNo];
     }
    
     VLOG(1) << "specificSettings has no \"nodePositions\", use physicalExtent: " << physicalExtent << ", meshWidth: " << meshWidth;

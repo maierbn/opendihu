@@ -27,7 +27,7 @@ public:
   static std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,BasisOnMeshFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
                                                           const std::array<double,MeshType::dim()> xi)
   {
-    VLOG(3) << "computeJacobian generic for "<<xi;
+    VLOG(3) << "computeJacobian generic for " <<xi;
     std::array<Vec3,MeshType::dim()> jacobian;
     // loop over columns
     for(int dimNo = 0; dimNo < MeshType::dim(); dimNo++)

@@ -64,7 +64,7 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
     }
     else
     {
-      LOG(WARNING) << "Unknown output writer type \""<<typeString<<"\". "
+      LOG(WARNING) << "Unknown output writer type \"" <<typeString<< "\". "
         << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
     }
   }

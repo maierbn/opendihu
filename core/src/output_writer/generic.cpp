@@ -30,7 +30,7 @@ std::ofstream Generic::openFile(std::string filename)
       // create directory and wait until system has created it
       int ret = system((std::string("mkdir -p ")+path).c_str());
       if (ret != 0)
-        LOG(WARNING) << "Creation of directory \""<<path<<"\" failed.";
+        LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
       file.clear();
@@ -40,7 +40,7 @@ std::ofstream Generic::openFile(std::string filename)
 
   if (!file.is_open())
   {
-    LOG(WARNING) << "Could not open file \""<<filename<<"\" for writing!";
+    LOG(WARNING) << "Could not open file \"" <<filename<< "\" for writing!";
   }
 
   return file;

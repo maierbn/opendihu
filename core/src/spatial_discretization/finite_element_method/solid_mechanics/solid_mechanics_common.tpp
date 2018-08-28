@@ -83,7 +83,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
   PetscErrorCode ierr;
 
   LOG(TRACE) << "setStiffnessMatrix - compute tangent stiffness matrix";
-  LOG(DEBUG) << "nUnknowsPerElement: " << nUnknowsPerElement<<", n evaluations for quadrature: " << QuadratureDD::numberEvaluations();
+  LOG(DEBUG) << "nUnknowsPerElement: " << nUnknowsPerElement<< ", n evaluations for quadrature: " << QuadratureDD::numberEvaluations();
 
   // initialize values to zero
   if (!tangentStiffnessMatrixInitialized_)
@@ -107,7 +107,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
               dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
               dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-              VLOG(3) << " initialize tangentStiffnessMatrix (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")), dofs (" << dofNosLocal[aDof] << ","<<dofNosLocal[bDof]<<"), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
+              VLOG(3) << " initialize tangentStiffnessMatrix ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")), dofs (" << dofNosLocal[aDof] << "," <<dofNosLocal[bDof]<< "), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
               ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
             }
           }
@@ -274,7 +274,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
                 }
               }
 
-              VLOG(2) << "    (L,a),(M,b)=(" << aDof << ","<<aComponent<<"),("<<bDof<<","<<bComponent<<"), (i,j)=("<<i<<","<<j<<"), integrand=" << integrand;
+              VLOG(2) << "    (L,a),(M,b)=(" << aDof << "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< "), (i,j)=(" <<i<< "," <<j<< "), integrand=" << integrand;
 
               // store integrand in evaluations array
               evaluationsArray[samplingPointIndex](i,j) = integrand * fabs(jacobianDeterminant);
@@ -407,7 +407,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
                 }
               }
 
-              //LOG(DEBUG) << "(L,a),(M,b)=(" << aDof << ","<<aComponent<<"),("<<bDof<<","<<bComponent<<"), (i,j)=("<<i<<","<<j<<"), integrand=" << integrand;
+              //LOG(DEBUG) << "(L,a),(M,b)=(" << aDof << "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< "), (i,j)=(" <<i<< "," <<j<< "), integrand=" << integrand;
 
               // store integrand in evaluations array
               evaluationsExactArray[samplingPointIndex](i,j) = integrand * fabs(jacobianDeterminant);
@@ -453,8 +453,8 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
             dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
             dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-            //VLOG(2) << "  pair (("<<aDof<<","<<aComponent<<"),("<<bDof<<","<<bComponent<<")) = (" <<i<<","<<j<<"), dofs (" << dofNosLocal[aDof] << ","<<dofNosLocal[bDof]<<")";
-            //VLOG(2) << "      matrix indices ("<<matrixRowIndex<<","<<matrixColumnIndex<<"), integrated value: "<<integratedValue;
+            //VLOG(2) << "  pair ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")) = (" <<i<< "," <<j<< "), dofs (" << dofNosLocal[aDof] << "," <<dofNosLocal[bDof]<< ")";
+            //VLOG(2) << "      matrix indices (" <<matrixRowIndex<< "," <<matrixColumnIndex<< "), integrated value: " <<integratedValue;
 
             ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 
@@ -1047,7 +1047,7 @@ computeInternalVirtualWork(Vec &resultVec)
       VLOG(1) << "  xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << PK2Stress[0][0];
 
       if (samplingPointIndex == 0 && D == 3)
-        LOG(DEBUG) << " F11: " << deformationGradient[0][0] << ", F22,F33: " << deformationGradient[1][1] <<"," << deformationGradient[2][2]
+        LOG(DEBUG) << " F11: " << deformationGradient[0][0] << ", F22,F33: " << deformationGradient[1][1] << "," << deformationGradient[2][2]
           << ", F12,F13,F23: " << deformationGradient[1][0] << "," << deformationGradient[2][0] << "," << deformationGradient[2][1]
           << ", J: " << deformationGradientDeterminant << ", p: " << pressure;
 
@@ -1253,8 +1253,8 @@ computeInternalVirtualWork(Vec &resultVec)
         // Therefore the nDofsPerElement number is not the number of unknows.
         dof_no_t resultVectorIndex = dofNosLocal[aDof]*D + aComponent;
 
-        VLOG(2) << "  result vector (L,a)=("<<aDof<<","<<aComponent<<"), " <<i<<", dof " << dofNosLocal[aDof];
-        VLOG(2) << "      vector index (unknown no): "<<resultVectorIndex<<", integrated value: "<<integratedValue;
+        VLOG(2) << "  result vector (L,a)=(" <<aDof<< "," <<aComponent<< "), " <<i<< ", dof " << dofNosLocal[aDof];
+        VLOG(2) << "      vector index (unknown no): " <<resultVectorIndex<< ", integrated value: " <<integratedValue;
 
         ierr = VecSetValue(resultVec, resultVectorIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 

@@ -6,42 +6,53 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_tests']:
 
+  if env["BUILD_TYPE"] == "debug":
+    variant_directory = "build_debug"
+  else:
+    variant_directory = "build_release"
+
+  # ---- serial unit tests ----
   # define the source files
-  src_files = Glob('src/*.cpp')
+  src_files = Glob('src/1_rank/*.cpp')
 
   #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
   #src_files = ['src/poisson.cpp', 'src/main.cpp', 'src/utility.cpp']
   # all src files:
-  src_files = ['src/diffusion.cpp', 
-               'src/faces.cpp', 
-               'src/field_variable.cpp', 
-               'src/laplace.cpp',
-               'src/main.cpp',
-               'src/mesh.cpp',
-               'src/numerical_integration.cpp',
-               'src/operator_splitting.cpp',
-               'src/output.cpp', 
-               'src/poisson.cpp',
-               'src/solid_mechanics.cpp',
-               'src/unstructured_deformable.cpp', 
-               'src/utility.cpp']
+  src_files = ['src/1_rank/diffusion.cpp',
+               'src/1_rank/faces.cpp',
+               'src/1_rank/field_variable.cpp',
+               'src/1_rank/laplace.cpp',
+               'src/1_rank/main.cpp',
+               'src/1_rank/mesh.cpp',
+               'src/1_rank/numerical_integration.cpp',
+               'src/1_rank/operator_splitting.cpp',
+               'src/1_rank/output.cpp',
+               'src/1_rank/poisson.cpp',
+               'src/1_rank/solid_mechanics.cpp',
+               'src/1_rank/unstructured_deformable.cpp',
+               'src/1_rank/utility.cpp']
   
-  #src_files = ['src/field_variable.cpp', 'src/main.cpp', 'src/utility.cpp']
+  src_files = ['src/1_rank/numerical_integration.cpp', 'src/1_rank/main.cpp', 'src/1_rank/utility.cpp']
   
   
   
   print ""
   print "WARNING: only compiling tests ",src_files
 
-  program = env.Program('run_tests', source=src_files)
+  program = env.Program('1_rank_tests', source=src_files)
   #Depends(test, program)
-
-  if env["BUILD_TYPE"] == "debug":
-    variant_directory = "build_debug"
-  else:
-    variant_directory = "build_release"
   #env.Install(variant_directory, program)
 
   # add command that runs the tests after build
-  test = env.Command(target = 'test', source = './run_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./run_tests')
+  test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests')
+  AlwaysBuild(test)
+
+
+  # ---- parallel unit tests ----
+  src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp']
+
+  program = env.Program('2_ranks_tests', source=src_files)
+
+  # add command that runs the tests after build
+  test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 2 ./2_ranks_tests')
   AlwaysBuild(test)

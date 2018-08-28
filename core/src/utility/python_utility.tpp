@@ -50,17 +50,17 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
         }
         else
         {
-          LOG(WARNING)<<"Warning: key \""<<keyString<<"\" is not a dict";
+          LOG(WARNING) << "Warning: key \"" <<keyString<< "\" is not a dict";
         }
       }
       else
       {
-        LOG(WARNING)<<"Warning: Entry \""<<keyString<<"\" is not a dict.";
+        LOG(WARNING) << "Warning: Entry \"" <<keyString<< "\" is not a dict.";
       }
     }
     else
     {
-      LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
     }
   }
 
@@ -114,14 +114,14 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
       }
       else
       {
-        LOG(WARNING)<<"Key \""<<keyString<<"\" is not a list!";
+        LOG(WARNING) << "Key \"" <<keyString<< "\" is not a list!";
         Py_CLEAR(key);
         return convertFromPython<Value>(list);
       }
     }
     else
     {
-      LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
     }
 
     Py_CLEAR(key);
@@ -263,7 +263,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     }
     else
     {
-      LOG(WARNING)<<"Warning: key \""<<keyString<<"\" not found in dict in config file"<<std::endl;
+      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
 
       Py_CLEAR(key);
       return defaultValue;
@@ -279,8 +279,8 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] <= 0.0)
        {
-         LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not positive). Using default value "
-           <<defaultValue[i]<<".";
+         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not positive). Using default value "
+           <<defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }
@@ -289,8 +289,8 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] < 0.0)
        {
-         LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not non-negative). Using default value "
-           <<defaultValue[i]<<".";
+         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
+           <<defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }
@@ -301,8 +301,8 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
       {
        if (result[i] < 1.0 || result[i] > 3.0)
        {
-         LOG(WARNING)<<"Warning: value "<<result[i]<<" of key \""<<keyString<<"\" is invalid (not between 1 and 3). Using default value "
-           <<defaultValue[i]<<".";
+         LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not between 1 and 3). Using default value "
+           <<defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }

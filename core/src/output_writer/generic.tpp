@@ -12,7 +12,7 @@ namespace OutputWriter
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "Generic::prepareWrite timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
+  LOG(DEBUG) << "Generic::prepareWrite timeStepNo=" <<timeStepNo<< ", currentTime=" << currentTime;
 
   if (!data.mesh())
   {

@@ -25,8 +25,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
-    <<" n steps: "<<this->numberTimeSteps_;
+  LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan=" <<timeSpan<< ", timeStepWidth=" <<timeStepWidth
+    << " n steps: " <<this->numberTimeSteps_;
 
   // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
   std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>> dataHeun
@@ -37,7 +37,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+     LOG(INFO) << "Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
 
     //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
 

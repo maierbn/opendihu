@@ -302,7 +302,7 @@ getValue(node_no_t dofLocalNo)
   assert (values_);
   values_->getValues(componentIndex_, 1, indices.data(), &value);
 
-  VLOG(2) << "component " << this->name_<<", getValue for dof " << dofLocalNo
+  VLOG(2) << "component " << this->name_<< ", getValue for dof " << dofLocalNo
     << " componentIndex: " << componentIndex_ << ", nComponents: " << nComponents << ", vectorIndex: " << indices[0]
     << ", value: " << value;
   return value;

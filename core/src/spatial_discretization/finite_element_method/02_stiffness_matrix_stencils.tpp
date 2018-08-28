@@ -22,8 +22,6 @@
 #include "mesh/mesh.h"
 #include "control/types.h"
 
-
-
 namespace SpatialDiscretization
 {
 
@@ -32,7 +30,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
-  LOG(TRACE)<<"setStiffnessMatrix 1D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 1D for Mesh::RegularFixed";
 
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -47,7 +45,7 @@ setStiffnessMatrix()
 
   integralFactor = prefactor*integralFactor;
 
-  LOG(DEBUG) << "  Use settings nElements="<<nElements<<", elementLength="<<elementLength;
+  LOG(DEBUG) << "  Use settings nElements=" <<nElements<< ", elementLength=" <<elementLength;
 
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
@@ -107,7 +105,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
-  LOG(TRACE)<<"setStiffnessMatrix 2D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 2D for Mesh::RegularFixed";
 
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -132,8 +130,8 @@ setStiffnessMatrix()
 
   integralFactor = prefactor*integralFactor;
 
-  LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<", elementLength="<<elementLength0<<"x"<<elementLength1;
-  LOG(DEBUG) << "integralFactor="<<integralFactor;
+  LOG(DEBUG) << "Use settings nElements=" <<nElements0<< "x" <<nElements1<< ", elementLength=" <<elementLength0<< "x" <<elementLength1;
+  LOG(DEBUG) << "integralFactor=" <<integralFactor;
 
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
@@ -325,7 +323,7 @@ setStiffnessMatrix()
 {
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
-  LOG(TRACE)<<"setStiffnessMatrix 3D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 3D for Mesh::RegularFixed";
 
   // get settings values
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
@@ -352,9 +350,9 @@ setStiffnessMatrix()
 
   integralFactor = prefactor*integralFactor;
 
-  LOG(DEBUG) << "Use settings nElements="<<nElements0<<"x"<<nElements1<<"x"<<nElements2<<
-    ", elementLength="<<elementLength0<<"x"<<elementLength1<<"x"<<elementLength2;
-  LOG(DEBUG) << "integralFactor="<<integralFactor;
+  LOG(DEBUG) << "Use settings nElements=" <<nElements0<< "x" <<nElements1<< "x" <<nElements2<<
+    ", elementLength=" <<elementLength0<< "x" <<elementLength1<< "x" <<elementLength2;
+  LOG(DEBUG) << "integralFactor=" <<integralFactor;
 
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l

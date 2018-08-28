@@ -82,6 +82,14 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
 }
 
+//! return the global node number of element-local node nodeIndex of element with global no elementNoGlobal
+template<int D,typename BasisFunctionType>
+global_no_t BasisOnMeshDataUnstructured<D,BasisFunctionType>::
+getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+{
+  return this->getNodeNo(elementNoGlobal, nodeIndex);
+}
+
 template<int D,typename BasisFunctionType>
 void BasisOnMeshDataUnstructured<D,BasisFunctionType>::
 getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const

@@ -39,15 +39,15 @@ void Manager::storePreconfiguredMeshes()
 
         if (value == NULL)
         {
-          LOG(WARNING) << "Could not extract dict for Mesh \""<<key<<"\".";
+          LOG(WARNING) << "Could not extract dict for Mesh \"" <<key<< "\".";
         }
         else if(!PyDict_Check(value))
         {
-          LOG(WARNING) << "Value for mesh with name \""<<key<<"\" should be a dict.";
+          LOG(WARNING) << "Value for mesh with name \"" <<key<< "\" should be a dict.";
         }
         else
         {
-          LOG(DEBUG) << "store mesh configuration with key \""<<key<<"\".";
+          LOG(DEBUG) << "store mesh configuration with key \"" <<key<< "\".";
           meshConfiguration_[key] = value;
         }
       }
@@ -64,7 +64,7 @@ void Manager::storePreconfiguredMeshes()
 
 bool Manager::hasMesh(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh("<<meshName<<")";
+  LOG(DEBUG) << "hasMesh(" <<meshName<< ")";
   LOG(DEBUG) << "meshes size: " << meshes_.size();
 
   return meshes_.find(meshName) != meshes_.end();
@@ -78,7 +78,7 @@ mesh<None>(PyObject *settings)
   if (PythonUtility::hasKey(settings, "meshName"))
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    LOG(DEBUG) << "Config contains meshName \""<<meshName<<"\".";
+    LOG(DEBUG) << "Config contains meshName \"" <<meshName<< "\".";
 
     if (hasMesh(meshName))
     {
@@ -87,7 +87,7 @@ mesh<None>(PyObject *settings)
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
-      LOG(DEBUG) << "Mesh configuration for \""<<meshName<<"\" found and requested, will be created now. "
+      LOG(DEBUG) << "Mesh configuration for \"" <<meshName<< "\" found and requested, will be created now. "
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
       typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
       
@@ -97,12 +97,12 @@ mesh<None>(PyObject *settings)
       // store mesh
       mesh->setMeshName(meshName);
       meshes_[meshName] = mesh;
-      LOG(DEBUG) << "Stored under key \""<<meshName<<"\".";
+      LOG(DEBUG) << "Stored under key \"" <<meshName<< "\".";
       return std::static_pointer_cast<Mesh>(meshes_[meshName]);
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \""<<meshName<<"\" but no such mesh was defined.";
+      LOG(ERROR) << "Config contains reference to mesh with meshName \"" <<meshName<< "\" but no such mesh was defined.";
     }
   }
   else
@@ -119,7 +119,7 @@ mesh<None>(PyObject *settings)
 
     // set type to be 1D regular fixed mesh with linear lagrange basis
     typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-    LOG(DEBUG) << "Create new mesh with type "<<typeid(NewBasisOnMesh).name()<<" and name \""<<anonymousName.str()<<"\".";
+    LOG(DEBUG) << "Create new mesh with type " <<typeid(NewBasisOnMesh).name() << " and name \"" <<anonymousName.str() << "\".";
 
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, settings);
     mesh->setMeshName(anonymousName.str());
@@ -134,7 +134,7 @@ mesh<None>(PyObject *settings)
   std::array<double, 1> physicalExtent {1.0};
 
   typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-  LOG(DEBUG) << "Create new 1-node mesh with type "<<typeid(NewBasisOnMesh).name()<<", not stored.";
+  LOG(DEBUG) << "Create new 1-node mesh with type " <<typeid(NewBasisOnMesh).name() << ", not stored.";
 
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, nElements, physicalExtent);
   mesh->setMeshName(std::string("anonymous"));

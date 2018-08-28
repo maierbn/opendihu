@@ -9,8 +9,8 @@ void FieldVariableVector<BasisOnMeshType,1>::
 computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField)
 {
   // initialize gradient field variable to 0
-  gradientField.setValues(0.0);
-  gradientField.finishVectorManipulation();
+  gradientField.zeroEntries();
+  gradientField.startVectorManipulation();
 
   // define constants
   const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
@@ -72,6 +72,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
   }  // elementNo
 
   gradientField.finishVectorManipulation();
+  gradientField.startVectorManipulation();
 
   // divide by number of summands
   for (dof_no_t localDofNo = 0; localDofNo < nDofs; localDofNo++)

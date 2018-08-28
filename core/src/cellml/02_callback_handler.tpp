@@ -114,7 +114,7 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
     return;
 
   // compose callback function
-  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<<", nStates: " << nStates << ", nIntermediates: " << this->nIntermediates_;
+  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<< ", nStates: " << nStates << ", nIntermediates: " << this->nIntermediates_;
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*this->nInstances_, states);
   PyObject *intermediatesList = PythonUtility::convertToPythonList(this->nIntermediates_*this->nInstances_, intermediates);
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", nInstances, timeStepNo, currentTime, statesList, intermediatesList, pyHandleResultFunctionAdditionalParameter_);

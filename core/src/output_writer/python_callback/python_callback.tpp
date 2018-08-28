@@ -20,7 +20,7 @@ void PythonCallback::write(DataType& data, int timeStepNo, double currentTime)
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
 
-  LOG(TRACE) << "PythonCallback::write timeStepNo="<<timeStepNo<<", currentTime="<<currentTime;
+  LOG(TRACE) << "PythonCallback::write timeStepNo=" <<timeStepNo<< ", currentTime=" << currentTime;
 
   // call implementation specific for BasisOnMesh type
   PythonCallbackWriter<typename DataType::BasisOnMesh,typename DataType::OutputFieldVariables>::

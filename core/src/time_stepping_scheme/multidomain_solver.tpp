@@ -24,15 +24,15 @@ void MultidomainSolver<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan="<<timeSpan<<", timeStepWidth="<<timeStepWidth
-    <<" n steps: "<<this->numberTimeSteps_;
+  LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" <<timeSpan<< ", timeStepWidth=" <<timeStepWidth
+    << " n steps: " <<this->numberTimeSteps_;
 
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
+     LOG(INFO) << "Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
 
     //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_.solution().valuesGlobal());
 

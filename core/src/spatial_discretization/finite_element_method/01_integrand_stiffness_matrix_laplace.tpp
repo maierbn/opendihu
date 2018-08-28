@@ -27,7 +27,7 @@ evaluateIntegrand(const Data::FiniteElements<BasisOnMeshType,Term> &data, const 
     {
       double integrand = gradPhi[i][0] * gradPhi[j][0] * integralFactor;
       evaluations(i,j) = integrand;
-      VLOG(2) << "   dofs("<<i<<","<<j<<") integrand="<<gradPhi[i][0]<<"*"<<gradPhi[j][0]<<"*"<<integralFactor<<"="<<integrand;
+      VLOG(2) << "   dofs(" <<i<< "," <<j<< ") integrand=" <<gradPhi[i][0]<< "*" <<gradPhi[j][0]<< "*" <<integralFactor<< "=" <<integrand;
     }
   }
 

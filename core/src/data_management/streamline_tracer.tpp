@@ -48,7 +48,7 @@ template<typename BasisOnMeshType,typename BaseDataType>
 void StreamlineTracer<BasisOnMeshType,BaseDataType>::
 createPetscObjects()
 {
-  LOG(DEBUG)<<"StreamlineTracer<BasisOnMeshType,BaseDataType>::createPetscObjects()"<<std::endl;
+  LOG(DEBUG) << "StreamlineTracer<BasisOnMeshType,BaseDataType>::createPetscObjects()" << std::endl;
   assert(this->mesh_);
   
   // create partitioning

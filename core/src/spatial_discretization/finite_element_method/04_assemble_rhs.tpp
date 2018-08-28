@@ -1,4 +1,4 @@
-#include "spatial_discretization/finite_element_method/03_assemble_rhs.h"
+#include "spatial_discretization/finite_element_method/04_assemble_rhs.h"
 
 #include <Python.h>
 #include <memory>
@@ -7,7 +7,7 @@
 
 #include "quadrature/tensor_product.h"
 #include "basis_on_mesh/basis_on_mesh.h"
-#include "spatial_discretization/finite_element_method/03_integrand_rhs.h"
+#include "spatial_discretization/finite_element_method/04_integrand_rhs.h"
 #include "field_variable/field_variable.h"
 
 namespace SpatialDiscretization
@@ -19,7 +19,7 @@ void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
 transferRhsToWeakForm()
 {
   const int D = BasisOnMeshType::dim();
-  LOG(TRACE)<<"transferRhsToWeakForm " << D << "D";
+  LOG(TRACE) << "transferRhsToWeakForm " << D << "D";
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
@@ -91,7 +91,7 @@ transferRhsToWeakForm()
         double integratedValue = integratedValues(i,j);
 
         double value = integratedValue * rhsValues[dofNosLocal[j]];
-        VLOG(2) << "  dof pair (" << i<<","<<j<<"), integrated value: "<<integratedValue<<", rhsValue["<<dofNosLocal[j]<<"]: " << rhsValues[dofNosLocal[j]] <<" = " << value;
+        VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue<< ", rhsValue[" <<dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
 
         rightHandSide.setValue(dofNosLocal[i], value, ADD_VALUES);
       }  // j
@@ -114,7 +114,7 @@ setMassMatrix()
     this->data_.initializeMassMatrix();
 
     const int D = BasisOnMeshType::dim();
-    LOG(TRACE)<<"createMassMatrix " << D << "D";
+    LOG(TRACE) << "createMassMatrix " << D << "D";
 
     // massMatrix * f_strong = rhs_weak
     // row of massMatrix: contributions to a single entry in rhs_weak

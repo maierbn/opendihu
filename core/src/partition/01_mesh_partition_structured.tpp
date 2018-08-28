@@ -549,6 +549,34 @@ createLocalDofOrderings()
 }
 
 template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementNoGlobal(element_no_t elementNoLocal) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return beginElementGlobal_[0] + elementNoLocal;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    element_no_t elementY = element_no_t(elementNoLocal / nElementsLocal(0));
+    element_no_t elementX = elementNoLocal % nElementsLocal(0);
+
+    return (beginElementGlobal_[1] + elementY) * nElementsGlobal_[0]
+      + beginElementGlobal_[0] + elementX;
+  }
+  else if (MeshType::dim() == 3)
+  {
+    element_no_t elementZ = element_no_t(elementNoLocal / (nElementsLocal(0) * nElementsLocal(1)));
+    element_no_t elementY = element_no_t((elementNoLocal % (nElementsLocal(0) * nElementsLocal(1))) / nElementsLocal(0));
+    element_no_t elementX = elementNoLocal % nElementsLocal(0);
+
+    return (beginElementGlobal_[2] + elementZ) * nElementsGlobal_[0] * nElementsGlobal_[1]
+      + (beginElementGlobal_[1] + elementY) * nElementsGlobal_[0]
+      + beginElementGlobal_[0] + elementX;
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)
 {

@@ -370,7 +370,7 @@ computePK2Stress(const double pressure,                             //< [in] pre
       {
         if (fabs(pK2Stress[a][b] - pK2Stress[b][a]) > errorTolerance)
         {
-          LOG(ERROR) << "pK2Stress["<<a<<"]["<<b<<"] != pK2Stress["<<b<<"]["<<a<<"] ("<<pK2Stress[b][a]<<" != "<<pK2Stress[a][b]<<")";
+          LOG(ERROR) << "pK2Stress[" <<a<< "][" <<b<< "] != pK2Stress[" <<b<< "][" <<a<< "] (" <<pK2Stress[b][a]<< " != " <<pK2Stress[a][b]<< ")";
           pK2IsSymmetric = false;
         }
       }
@@ -605,7 +605,7 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
     {
       if (rightCauchyGreen[a][b] != rightCauchyGreen[b][a])
       {
-        std::cout << "rightCauchyGreen["<<a<<"]["<<b<<"] != " << "rightCauchyGreen["<<b<<"]["<<a<<"] ("<<rightCauchyGreen[b][a]<<" != "<<rightCauchyGreen[a][b]<<")"<<std::endl;
+        std::cout << "rightCauchyGreen[" <<a<< "][" <<b<< "] != " << "rightCauchyGreen[" <<b<< "][" <<a<< "] (" <<rightCauchyGreen[b][a]<< " != " <<rightCauchyGreen[a][b]<< ")" << std::endl;
         cIsSymmetric = false;
       }
     }
@@ -788,7 +788,7 @@ computeElasticityTensorEntry(const int i, const int j, const int k, const int l,
 
       PCbarPT_ijkl += P_ijab * CbarPT_abkl;
 
-      //LOG(DEBUG) << "   CbarPT_abkl [" << a << b << k << l <<"]: " << CbarPT_abkl;
+      //LOG(DEBUG) << "   CbarPT_abkl [" << a << b << k << l << "]: " << CbarPT_abkl;
 
     }
   }

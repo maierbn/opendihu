@@ -50,6 +50,9 @@ public:
   //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
+  //! return the global node number of element-local node nodeIndex of element elementNo, nElements is the total number of elements, this is the same as getNodeNo because there are no global numbers for unstructured meshes
+  global_no_t getNodeNoGlobal(global_no_t elementNo, int nodeIndex) const;
+
   //! get all dofs of a specific node, as vector, the array version that is present for structured meshes does not make sense here, because with versions the number of dofs per node is not static.
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
 

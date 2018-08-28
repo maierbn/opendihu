@@ -21,8 +21,8 @@ advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "  Strang::advanceTimeSpan: timeSpan=[" <<this->startTime_<<","<<this->endTime_<<"]"
-    <<", n steps: "<<this->numberTimeSteps_<<", timeStepWidth="<<timeStepWidth;
+  LOG(DEBUG) << "  Strang::advanceTimeSpan: timeSpan=[" <<this->startTime_<< "," <<this->endTime_<< "]"
+    << ", n steps: " <<this->numberTimeSteps_<< ", timeStepWidth=" <<timeStepWidth;
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -33,10 +33,10 @@ advanceTimeSpan()
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * timeStepWidth;
 
-    LOG(INFO) << "Timestep "<<timeStepNo<<"/"<<this->numberTimeSteps_<<", t="<<currentTime;
-    LOG(DEBUG) << "  Strang: time step "<<timeStepNo<<", t: "<<currentTime;
+    LOG(INFO) << "Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
+    LOG(DEBUG) << "  Strang: time step " <<timeStepNo<< ", t: " << currentTime;
 
-    LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan ["<<currentTime<<", "<<midTime<<"]";
+    LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan [" << currentTime<< ", " <<midTime<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, midTime);
 
@@ -50,7 +50,7 @@ advanceTimeSpan()
     this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution().valuesGlobal(),
       this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution().valuesGlobal());
 
-    LOG(DEBUG) << "  Strang: timeStepping2 (complete) setTimeSpan ["<<currentTime<<", "<<currentTime+timeStepWidth<<"]";
+    LOG(DEBUG) << "  Strang: timeStepping2 (complete) setTimeSpan [" << currentTime<< ", " << currentTime+timeStepWidth<< "]";
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+timeStepWidth);
 
@@ -63,7 +63,7 @@ advanceTimeSpan()
     this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution().valuesGlobal(),
       this->timeStepping1_.solutionVectorMapping(), this->timeStepping1_.solution().valuesGlobal());
 
-    LOG(DEBUG) << "  Strang: timeStepping1 (second half) setTimeSpan ["<<midTime<<", "<<currentTime+timeStepWidth<<"]";
+    LOG(DEBUG) << "  Strang: timeStepping1 (second half) setTimeSpan [" <<midTime<< ", " << currentTime+timeStepWidth<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(midTime,currentTime+timeStepWidth);
 

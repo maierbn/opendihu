@@ -1,5 +1,6 @@
 #include "partition/rank_subset.h"
 
+#include <numeric>
 #include <algorithm>
 
 namespace Partition 

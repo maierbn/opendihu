@@ -63,11 +63,8 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector);
 template<std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> vector);
 
-#if 0
-//! output vector content to stream, already defined by SEMT library
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vector);
-#endif
 
 //! comparison operator for vectors of arbitrary type
 template<typename T>

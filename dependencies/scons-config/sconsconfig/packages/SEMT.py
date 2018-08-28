@@ -17,6 +17,7 @@ class SEMT(Package):
         #self.headers = ['mysql.h']
         #self.libs = ['mysqlclient']
         #self.extra_libs = ['lapack', 'blas']
+        #self.build_flags = "-DSEMT_DISABLE_PRINT"
         self.check_text = r'''
 #include <iostream>
 using namespace std;
@@ -26,6 +27,22 @@ using namespace std;
 // Include macros: INT, DINT, VAR, DVAR, PARAM, DPARAM
 #include "semt/Shortcuts.h"
 using namespace SEMT;
+
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
+{
+  if (values.empty())
+  {
+    stream << "()";
+    return stream;
+  }
+
+  stream << "(" << values[0];
+  for (unsigned long i=1; i<values.size(); i++)
+    stream << "," << values[i];
+  stream << ")";
+  return stream;
+}
 
 int main(int argc, char* argv[])
 {
@@ -43,6 +60,7 @@ int main(int argc, char* argv[])
         # Setup the build handler.
         self.set_build_handler([
           "mkdir -p ${PREFIX}/include ",
+          "sed -i.bak '150,166d' ${SOURCE_DIR}/semt/Semtfwd.h",    # remove bogus definition of operator<< for vectors
           "ln -s ${SOURCE_DIR}/semt ${PREFIX}/include/semt",
           "ln -s ${SOURCE_DIR}/loki ${PREFIX}/include/loki",
           #"cd ${PREFIX}/../build && cmake \
@@ -61,6 +79,7 @@ int main(int argc, char* argv[])
           
         self.libs = []
         self.headers = ["semt/Semt.h", "semt/Shortcuts.h"]
+        
 
     def check(self, ctx):
         env = ctx.env

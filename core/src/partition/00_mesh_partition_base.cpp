@@ -1,6 +1,6 @@
 #include "partition/00_mesh_partition_base.h"
 
-#include <algorithm>
+#include <numeric>
 
 #include "utility/string_utility.h"
 #include "semt/Semt.h"

@@ -190,8 +190,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   return stream;
 }
 
-#if 0
-// operator already defined by SEMT
+
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
 {
@@ -207,8 +206,6 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   stream << ")";
   return stream;
 }
-#endif
-
 
 //! comparison operator for vectors of arbitrary type
 template<typename T>

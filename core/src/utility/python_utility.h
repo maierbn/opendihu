@@ -95,6 +95,12 @@ public:
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
   static void getOptionVector(const PyObject *settings, std::string keyString, int nEntries, std::vector<double> &values);
 
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values);
+
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values);
+
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);
 

@@ -14,10 +14,18 @@
  *  The nStates template parameter specifies the number of state variables that should be used with the integrator.
  *  It is necessary that this value is fixed at compile time because the timestepping scheme needs to know which field variable types is has to construct.
  *  This class can also be computed easily in multiple instances along the nodes of a mesh.
+ * 
+ *  Naming:
+ *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
+ *   Parameter (opendihu, OpenCMISS) = KNOWN (OpenCMISS), in OpenCOR also algebraic
+ *   Constant - these are constants that are only present in the source files
+ *   State: state variable
+ *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
 template <int nStates>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates>
+  public RhsRoutineHandler<nStates>,
+  public DiscretizableInTime
 {
 public:
 
@@ -46,7 +54,7 @@ protected:
   //! construct the python call back functions from config
   virtual void initializeCallbackFunctions();
 
-  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parmeters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
+  void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
   void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   ///< callback function that will be called after new states and intermediates were computed
 
   int setParametersCallInterval_;      ///< setParameters_ will be called every callInterval_ time steps

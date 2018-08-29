@@ -115,11 +115,14 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
       indices[componentIndex] = componentIndex*nDofs + dofGlobalNo[valueIndex];
     }
     
-    VLOG(2) << "valueIndex: " << valueIndex << ", indices: " << indices;
-    VLOG(3) << "values: " << PetscUtility::getStringVector(*this->values_);
-    int nEntries;
-    VecGetSize(*this->values_, &nEntries);
-    VLOG(2) << "size of values: " << nEntries;
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "valueIndex: " << valueIndex << ", indices: " << indices;
+      VLOG(3) << "values: " << PetscUtility::getStringVector(*this->values_);
+      int nEntries;
+      VecGetSize(*this->values_, &nEntries);
+      VLOG(2) << "size of values: " << nEntries;
+    }
 
     // get values and assign them to result values vector
     VecGetValues(*this->values_, nComponents, indices.data(), resultVector.data());

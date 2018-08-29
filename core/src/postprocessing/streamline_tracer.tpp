@@ -24,7 +24,7 @@ StreamlineTracer(DihuContext context) :
   targetLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetLength", 0.0, PythonUtility::Positive);
   discardRelativeLength_ = PythonUtility::getOptionDouble(specificSettings_, "discardRelativeLength", 0.0, PythonUtility::Positive);
   maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
-  useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField_", false);
+  useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField", false);
   csvFilename_ = PythonUtility::getOptionString(specificSettings_, "csvFilename", "");
   csvFilenameBeforePostprocessing_ = PythonUtility::getOptionString(specificSettings_, "csvFilenameBeforePostprocessing", "");
   
@@ -183,6 +183,7 @@ traceStreamlines()
  
   std::array<double,(unsigned long int)3> xi;
   const int nSeedPoints = seedPositions_.size();
+  //const int nSeedPoints = 1;
   std::vector<std::vector<Vec3>> streamlines(nSeedPoints);
 
   LOG(DEBUG) << "trace streamline, seedPositions: " << seedPositions_;
@@ -193,7 +194,7 @@ traceStreamlines()
   {
     // get starting point
     Vec3 startingPoint = seedPositions_[seedPointNo];
-    streamlines[seedPointNo].push_back(startingPoint);
+    //streamlines[seedPointNo].push_back(startingPoint);
 
     element_no_t initialElementNo = 0;
     
@@ -224,7 +225,7 @@ traceStreamlines()
   // create 1D meshes of streamline from collected node positions
   if (!csvFilenameBeforePostprocessing_.empty())
   {
-    std::ofstream file(csvFilenameBeforePostprocessing_);
+    std::ofstream file(csvFilenameBeforePostprocessing_, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!file.is_open())
       LOG(WARNING) << "Could not open \"" << csvFilenameBeforePostprocessing_ << "\" for writing";
     
@@ -249,7 +250,7 @@ traceStreamlines()
   // create 1D meshes of streamline from collected node positions
   if (!csvFilename_.empty())
   {
-    std::ofstream file(csvFilename_);
+    std::ofstream file(csvFilename_, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!file.is_open())
       LOG(WARNING) << "Could not open \"" << csvFilename_ << "\" for writing";
     
@@ -362,9 +363,14 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
       else 
       {
         std::vector<Vec3> newStreamline;
-        newStreamline.reserve(int(currentStreamline.size()*targetElementLength_/lineStepWidth_+10));
+        int presumedLength = int(currentStreamline.size()*targetElementLength_/lineStepWidth_+10);
+        newStreamline.reserve(presumedLength);
+        
+        VLOG(1) << "streamline no " << i << ", reserve length " << presumedLength;
+        VLOG(1) << "targetElementLength_: " << targetElementLength_ << ", scalingFactor: " << scalingFactor;
         
         Vec3 lastPoint = currentStreamline.front()*scalingFactor;
+        Vec3 previousStreamlinePoint = lastPoint;  // last point that was inserted into the new streamline
         // use starting point of streamline
         newStreamline.push_back(lastPoint);
         double length = 0.0;
@@ -378,16 +384,28 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
             Vec3 currentPoint = (*pointsIter)*scalingFactor;
             // sum up length since last element started
             length += MathUtility::length<3>(currentPoint - lastPoint);
+            
+            VLOG(1) << "old streamline interval " << lastPoint << " - " << currentPoint << ", new lentgh: " << length << " (targetElementLength=" << targetElementLength_ << ")";
+            
             if (length > targetElementLength_)
             {
               double alpha = targetElementLength_/length;
-              Vec3 point = (1. - alpha) * lastPoint + alpha * currentPoint;
+              Vec3 point = (1. - alpha) * previousStreamlinePoint + alpha * currentPoint;
+             
+              VLOG(1) << "  length is too big, alpha=" << alpha << ", take intermediate point " << point
+                << ", distance to previous point " << previousStreamlinePoint << ": " << MathUtility::length<3>(point - previousStreamlinePoint);
               
               newStreamline.push_back(point);
               
-              lastPoint = point;
+              previousStreamlinePoint = point;
+              lastPoint = previousStreamlinePoint;
               length = 0.0;
             }
+            else 
+            {
+              lastPoint = currentPoint;
+            }
+            
           }
           firstPoint = false;
         }

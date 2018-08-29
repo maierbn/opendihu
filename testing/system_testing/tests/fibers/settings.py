@@ -82,6 +82,7 @@ config = {
     "targetLength": 15,     # length of longest streamline, all streamlines are equally scaled to fit this value
     "discardRelativeLength": 0.7,
     "csvFilename": "{}.csv".format(name),
+    "csvFilenameBeforePostprocessing": "{}_raw.csv".format(name),
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
@@ -95,8 +96,6 @@ config = {
     ]
   }
 }
-
-print ("targetElementLength:",1./100. * 220./11.)
 
 # output config in a readable format
 if False:

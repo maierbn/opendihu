@@ -65,7 +65,8 @@ class Matplotlib(Package):
         
         # Setup the build handler.
         self.set_build_handler([
-            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+#            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install matplotlib --prefix=${DEPENDENCIES_DIR}/python/install'
         ])
         
         # Matplotlib is installed in the directory tree of python, under lib/python3.6/site-packages. It is done using pip.

@@ -32,6 +32,10 @@ public:
   template <int nComponents>
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
 
+  //! create a non-geometry field field variable with no values being set, with given number of components and component names
+  template <int nComponents>
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
+
   //! get the number of scale factors that are stored for the global element no
   int getNumberScaleFactors(element_no_t elementGlobalNo);
   

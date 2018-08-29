@@ -56,8 +56,8 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
   const int nComponents = FieldVariableType::nComponents();
   std::string stringData;
   
-  // for Hermite fields retrieve all data and interleave the components afterwards
-  if (std::is_same<typename BasisOnMesh::BasisFunction, BasisFunction::Hermite>::value)
+  //// for Hermite fields retrieve all data and interleave the components afterwards
+  //if (std::is_same<typename BasisOnMesh::BasisFunction, BasisFunction::Hermite>::value)
   {
     std::vector<double> values;
     std::array<std::vector<double>, nComponents> componentValues;
@@ -85,18 +85,18 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
       stringData = Paraview::convertToAscii(values, fixedFormat);
     }
   }
-  else    // not Hermite
-  {
-    // directly use the Petsc Vec
-    if (binaryOutput)
-    {
-      stringData = Paraview::encodeBase64(fieldVariable.values());
-    }
-    else 
-    {
-      stringData = Paraview::convertToAscii(fieldVariable.values(), fixedFormat);
-    }
-  }
+  //else    // not Hermite
+  //{
+  //  // directly use the Petsc Vec
+  //  if (binaryOutput)
+  //  {
+  //    stringData = Paraview::encodeBase64(fieldVariable.values());
+  //  }
+  //  else 
+  //  {
+  //    stringData = Paraview::convertToAscii(fieldVariable.values(), fixedFormat);
+  //  }
+  //}
   
   if (binaryOutput)
   {

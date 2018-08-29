@@ -317,7 +317,10 @@ applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMesh
     // set entries of Dirichlet BCs to specified values
     ierr = VecSetValues(data.displacements().values(), this->dirichletIndices_.size(), this->dirichletIndices_.data(), this->dirichletValues_.data(), INSERT_VALUES); CHKERRV(ierr);
 
-    VLOG(1) << "after applying Dirichlet BC displacements u:" << PetscUtility::getStringVector(data.displacements().values());
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "after applying Dirichlet BC displacements u:" << PetscUtility::getStringVector(data.displacements().values());
+    }
   }
 }
 

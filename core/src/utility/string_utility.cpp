@@ -72,7 +72,11 @@ std::string extractBasename(std::string str)
 {
   if (str.rfind(".") != std::string::npos)
   {
-    return str.substr(0, str.rfind("."));
+    str = str.substr(0, str.rfind("."));
+  }
+  if (str.find("/") != std::string::npos)
+  {
+    str = str.substr(str.rfind("/")+1);
   }
   return str;
 }

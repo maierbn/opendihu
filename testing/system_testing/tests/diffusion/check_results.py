@@ -238,7 +238,7 @@ if dimension == 2:
       
       # pick a subset of the data to be used for testing
       test_index_subset = []
-      for i in range(10):
+      for i in range(2):
         test_index_subset.append(int(len(xdata)*i/10.))
             
       xdata_subset = xdata[test_index_subset]

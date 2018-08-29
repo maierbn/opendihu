@@ -47,8 +47,11 @@ getValues(int componentNo, std::vector<double> &values, bool onlyNodalValues)
   values.resize(nValues);
   VecGetValues(this->values_, nValues, indices.data(), values.data());
   
-  VLOG(2) << "Retrieved values: " <<  values;
-  VLOG(2) << "Petsc vector: " << PetscUtility::getStringVector(this->values_);
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "Retrieved values: " <<  values;
+    VLOG(2) << "Petsc vector: " << PetscUtility::getStringVector(this->values_);
+  }
 }
 
 //! for a specific component, get values from their global dof no.s
@@ -176,8 +179,11 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 
   VecGetValues(this->values_, nDofsPerElement*nComponents, indices.data(), result.data());
 
-  VLOG(2) << "Indices: " << indices << ", retrieved values: " << result;
-  VLOG(2) << "Values: " << PetscUtility::getStringVector(this->values_);
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "Indices: " << indices << ", retrieved values: " << result;
+    VLOG(2) << "Values: " << PetscUtility::getStringVector(this->values_);
+  }
 
   // copy result to output values
   for (int dofIndex=0; dofIndex<nDofsPerElement; dofIndex++)

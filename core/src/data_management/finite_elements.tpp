@@ -82,6 +82,14 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
+  FieldVariable::FieldVariable<BasisOnMeshType,3> geometry = this->mesh_->geometryField();
+ 
+  if (VLOG_IS_ON(1))
+  {
+    //VLOG(1) << PetscUtility::getStringVector(geometry.values());
+  }
+  
+  
   dof_no_t n = this->mesh_->nDofs();
 
   LOG(DEBUG)<<"FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::createPetscObjects("<<n<<")";

@@ -42,6 +42,9 @@ public:
 
   // virtual FieldVariableType &intermediateIncrement() = 0; 
 
+  //! set the names of the components for the solution field variable
+  void setComponentNames(std::vector<std::string> componentNames);
+  
   //! print all stored data to stdout
   virtual void print();
 
@@ -69,6 +72,8 @@ protected:
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
   //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
+  
+  std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   
 private:
   //! get maximum number of expected non-zeros in the system matrix

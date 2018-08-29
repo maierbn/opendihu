@@ -8,21 +8,22 @@
 %======================================================================
 
 \begin{frame}
-\section{Diffusion Equation}
+\section{Laplace Equation}
 %
 We solve the following scalar equation,
 %
-\begin{equation}\label{eq:diffusion}
+\begin{equation}\label{eq:laplace}
   \begin{array}{lll}
-    u_t(\bfx,t) = c\,Δu(\bfx,t), \qquad \bfx \in \Omega, \quad t \in [0,t_\text{end}],
+    -c\,Δu(\bfx,t) = 0, \qquad \bfx \in \Omega,
   \end{array}
 \end{equation}
 %
-with homogeneous Neumann boundary conditions,
 %
-\begin{equation}\label{eq:diffusion}
+with Dirichlet boundary conditions,
+%
+\begin{equation}\label{eq:laplace_bc}
   \begin{array}{lll}
-    ∇u\cdot \bfn = 0.
+    u(\bfx) = u_0(\bfx), \qquad \bfx \in ∂\Omega.
   \end{array}
 \end{equation}
 
@@ -33,6 +34,13 @@ with homogeneous Neumann boundary conditions,
 \begin{frame}
 \subsection{1D Experiment}
 %
+The prescribed Dirichlet boundary conditions are as follows:
+\begin{equation*}
+  \begin{array}{lll}
+    u_0(0) = a,\\[4mm]
+    u_0(l) = b.\\[4mm]
+  \end{array}
+\end{equation*}
 The used parameters are
 \begin{equation*}
   \begin{array}{lll}
@@ -52,59 +60,30 @@ The discretization parameters are
   \caption{discretization parameters}
   \label{tab:table1}
 \end{table}
-
-\end{frame}
-
-%======================================================================
-
-\begin{frame}
-\subsection{2D Experiment}
-
-\subsection{Analytical Solution}
-The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
+%
+The analytical solution is
 \begin{equation*}
   \begin{array}{lll}
-    H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
-    H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
+    u(x) = a + (b-a)\,x/l.
   \end{array}
 \end{equation*}
-For $\Omega=\R^d$ and initial condition
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
-  \end{array}
-\end{equation*}
-the solution is
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
-  \end{array}
-\end{equation*}
-
+%
 \end{frame}
 
 %======================================================================
 
 % path to mp4 files must begin with tests/
 % the final pdf only shows the movies if it is located under opendihu/testing/functional_testing/
-
-\begin{frame}
-  \frametitle{Results}
+\begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_hermite.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_hermite.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_deformable_hermite.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_deformable_hermite}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_hermite.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_deformable_hermite.txt}
 \end{frame}
 %
 %======================================================================
@@ -112,39 +91,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_hermite.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_hermite.pdf}%
-    \end{subfigure}%
-    \caption{\lstinline{1d_structured_deformable_hermite}}
-  \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_hermite.txt}
-\end{frame}
-%
-%======================================================================
-%
-\begin{frame}{}
-  \vspace*{-0.2cm}
-  \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_linear.mp4}
-    \end{subfigure}
-    \begin{subfigure}[t]{0.48\textwidth}%
-      \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_deformable_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_deformable_linear}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_deformable_linear.txt}
 \end{frame}
 %
 %======================================================================
@@ -152,19 +105,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_deformable_quadratic.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_deformable_quadratic.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_deformable_quadratic.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_deformable_quadratic}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_deformable_quadratic.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_deformable_quadratic.txt}
 \end{frame}
 %
 %======================================================================
@@ -172,19 +119,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_hermite.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_regular_fixed_hermite.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_regular_fixed_hermite.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_regular_fixed_hermite}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_regular_fixed_hermite.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_regular_fixed_hermite.txt}
 \end{frame}
 %
 %======================================================================
@@ -192,19 +133,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_linear.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_regular_fixed_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_regular_fixed_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_regular_fixed_linear}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_regular_fixed_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_regular_fixed_linear.txt}
 \end{frame}
 %
 %======================================================================
@@ -212,19 +147,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_structured_regular_fixed_quadratic.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_structured_regular_fixed_quadratic.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_structured_regular_fixed_quadratic.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_structured_regular_fixed_quadratic}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_structured_regular_fixed_quadratic.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_structured_regular_fixed_quadratic.txt}
 \end{frame}
 %
 %======================================================================
@@ -232,19 +161,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_hermite.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_unstructured_deformable_hermite.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_unstructured_deformable_hermite.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_unstructured_deformable_hermite}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_unstructured_deformable_hermite.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_unstructured_deformable_hermite.txt}
 \end{frame}
 %
 %======================================================================
@@ -252,19 +175,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_linear.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_unstructured_deformable_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_unstructured_deformable_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_unstructured_deformable_linear}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_unstructured_deformable_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_unstructured_deformable_linear.txt}
 \end{frame}
 %
 %======================================================================
@@ -272,19 +189,55 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/1d_unstructured_deformable_quadratic.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/1d_unstructured_deformable_quadratic.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/1d_unstructured_deformable_quadratic.pdf}%
     \end{subfigure}%
     \caption{\lstinline{1d_unstructured_deformable_quadratic}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_1d_unstructured_deformable_quadratic.txt}
+  \showlog{../../tests/laplace/results/log_recent_1d_unstructured_deformable_quadratic.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+\subsection{2D Experiment}
+%
+The prescribed Dirichlet boundary conditions are as follows:
+\begin{equation*}
+  \begin{array}{lll}
+    u_0(x_1,1) = \sin(k\,\pi\,x_1), \quad k \in \N  \qquad &\text{\say{top}},\\[4mm]
+    u_0(x_1,0) = u_0(0,x_2) = u_0(1,x_2) = 0  \quad &\text{\say{left, right and bottom}},\\[4mm]
+  \end{array}
+\end{equation*}
+%
+The used parameters are
+\begin{equation*}
+  \begin{array}{lll}
+    c = 0.6,\qquad \Omega = [0,1]^2.
+  \end{array}
+\end{equation*}
+%
+The discretization parameters are
+\begin{table}[h!]
+  \begin{center}
+    \begin{tabular}{l|l}
+      \textbf{Parameter} & \textbf{Value}\\
+      \hline
+      Number of elements & 100\\
+    \end{tabular}
+  \end{center}
+  \caption{discretization parameters}
+  \label{tab:table1}
+\end{table}
+%
+The analytical solution is
+\begin{equation*}
+  \begin{array}{lll}
+    u(x_1,x_2) = c_1\,\sin(k\,\pi\,x_1)\,e^{k\,\pi\,x_2} + c_2\,\sin(k\,\pi\,x_1)\,e^{-k\,\pi\,x_2}, \qquad \text{where}\\[4mm]
+    c_1 = 1/\big(2\,\sinh(k\,\pi)\big), \quad c_2=-1/\big(2\,\sinh(k\,\pi)\big).
+  \end{array}
+\end{equation*}
 \end{frame}
 %
 %======================================================================
@@ -292,19 +245,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_deformable_hermite.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/2d_structured_deformable_hermite.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_deformable_hermite.pdf}%
     \end{subfigure}%
     \caption{\lstinline{2d_structured_deformable_hermite}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_2d_structured_deformable_hermite.txt}
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_deformable_hermite.txt}
 \end{frame}
 %
 %======================================================================
@@ -312,19 +259,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_deformable_linear.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/2d_structured_deformable_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_deformable_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{2d_structured_deformable_linear}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_2d_structured_deformable_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_deformable_linear.txt}
 \end{frame}
 %
 %======================================================================
@@ -332,19 +273,41 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-      \centering    
-      \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-        \includegraphics[width=\textwidth]{no_results.png}%
-      }{tests/diffusion/results/2d_structured_regular_fixed_linear.mp4}
-    \end{subfigure} 
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/2d_structured_regular_fixed_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_deformable_quadratic.pdf}%
+    \end{subfigure}%
+    \caption{\lstinline{2d_structured_deformable_quadratic}}
+  \end{figure} 
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_deformable_quadratic.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+  \vspace*{-0.2cm}
+  \begin{figure}[h!]
+    \begin{subfigure}[t]{0.48\textwidth}%
+      \centering%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_regular_fixed_hermite.pdf}%
+    \end{subfigure}%
+    \caption{\lstinline{2d_structured_regular_fixed_hermite}}
+  \end{figure}
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_regular_fixed_hermite.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+  \vspace*{-0.2cm}
+  \begin{figure}[h!]
+    \begin{subfigure}[t]{0.48\textwidth}%
+      \centering%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_regular_fixed_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{2d_structured_regular_fixed_linear}}
   \end{figure}
-  \showlog{../../tests/diffusion/results/log_recent_2d_structured_regular_fixed_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_regular_fixed_linear.txt}
 \end{frame}
 %
 %======================================================================
@@ -352,19 +315,13 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_structured_regular_fixed_quadratic.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/2d_structured_regular_fixed_quadratic.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_structured_regular_fixed_quadratic.pdf}%
     \end{subfigure}%
     \caption{\lstinline{2d_structured_regular_fixed_quadratic}}
   \end{figure} 
-  \showlog{../../tests/diffusion/results/log_recent_2d_structured_regular_fixed_quadratic.txt}
+  \showlog{../../tests/laplace/results/log_recent_2d_structured_regular_fixed_quadratic.txt}
 \end{frame}
 %
 %======================================================================
@@ -372,19 +329,41 @@ the solution is
 \begin{frame}{}
   \vspace*{-0.2cm}
   \begin{figure}[h!]
-    \begin{subfigure}[t]{0.5\textwidth}%
-    \centering    
-    \movie[label=show3,width=\textwidth,poster,autostart,showcontrols,loop]{%
-      \includegraphics[width=\textwidth]{no_results.png}%
-    }{tests/diffusion/results/2d_unstructured_deformable_linear.mp4}
-    \end{subfigure}
     \begin{subfigure}[t]{0.48\textwidth}%
       \centering%
-      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/diffusion/results/2d_unstructured_deformable_linear.pdf}%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_unstructured_deformable_hermite.pdf}%
+    \end{subfigure}%
+    \caption{\lstinline{2d_unstructured_deformable_hermite}}
+  \end{figure}
+  \showlog{../../tests/laplace/results/log_recent_2d_unstructured_deformable_hermite.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+  \vspace*{-0.2cm}
+  \begin{figure}[h!]
+    \begin{subfigure}[t]{0.48\textwidth}%
+      \centering%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_unstructured_deformable_linear.pdf}%
     \end{subfigure}%
     \caption{\lstinline{2d_unstructured_deformable_linear}}
   \end{figure}
-  \showlog{../../tests/diffusion/results/log_recent_2d_unstructured_deformable_linear.txt}
+  \showlog{../../tests/laplace/results/log_recent_2d_unstructured_deformable_linear.txt}
+\end{frame}
+%
+%======================================================================
+%
+\begin{frame}{}
+  \vspace*{-0.2cm}
+  \begin{figure}[h!]
+    \begin{subfigure}[t]{0.48\textwidth}%
+      \centering%
+      \includegraphics[height=0.7\textheight,width=\textwidth,keepaspectratio]{../../tests/laplace/results/2d_unstructured_deformable_quadratic.pdf}%
+    \end{subfigure}%
+    \caption{\lstinline{2d_unstructured_deformable_quadratic}}
+  \end{figure}
+  \showlog{../../tests/laplace/results/log_recent_2d_unstructured_deformable_quadratic.txt}
 \end{frame}
 %
 %===============================================================================

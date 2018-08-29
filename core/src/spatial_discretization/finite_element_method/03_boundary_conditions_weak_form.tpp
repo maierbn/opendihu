@@ -6,6 +6,7 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
+#include "utility/vector_operators.h"
 
 namespace SpatialDiscretization
 {
@@ -86,6 +87,7 @@ applyBoundaryConditionsWeakForm()
     return;
   }
 
+  // sort all parsed boundary conditions for their element no
   std::sort(boundaryConditions.begin(), boundaryConditions.end(), [](const std::pair<int,double> &item1, const std::pair<int,double> &item2){return item1.first < item2.first;});
 
   // determine elements with nodes that have prescribed Dirichlet boundary conditions, store them in the vector boundaryConditionElements, which is organized by local elements
@@ -108,8 +110,9 @@ applyBoundaryConditionsWeakForm()
   {
     // loop over the nodes of this element
     int elementalDofIndex = 0;
-    for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nDofsPerElement(); nodeIndex++)
+    for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nNodesPerElement(); nodeIndex++)
     {
+      // get global or local nodeNo of current node (depending on inputMeshIsGlobal)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
       {
@@ -121,6 +124,7 @@ applyBoundaryConditionsWeakForm()
         nodeNo = mesh->getNodeNo(elementNoLocal, nodeIndex);
       }
 
+      // loop over dofs of node
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, elementalDofIndex++)
       {
         // check if a dirichlet boundary condition for the current node is given
@@ -144,7 +148,23 @@ applyBoundaryConditionsWeakForm()
 
           // add current node and boundary condition value to list of boundary conditions for current element
           ElementWithNodes &boundaryConditionElement = boundaryConditionElements.back();
-          boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionIter->second));
+
+          // check if elementalDofIndex already contains the entry for elementalDofIndex
+          bool dofIndexAlreadyContained = false;
+          for (int i = 0; i < boundaryConditionElement.elementalDofIndex.size(); i++)
+          {
+            if (boundaryConditionElement.elementalDofIndex[i].first == elementalDofIndex)
+            {
+              dofIndexAlreadyContained = true;
+              break;
+            }
+          }
+
+          // add current node and boundary condition value to list of boundary conditions for current element
+          if (!dofIndexAlreadyContained)
+          {
+            boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionIter->second));
+          }
 
           // also store localDofNo
           dof_no_t dofLocalNo = mesh->getDofNo(elementNoLocal, elementalDofIndex);
@@ -167,7 +187,15 @@ applyBoundaryConditionsWeakForm()
       break;
   }
 
-  VLOG(1) << "dofsLocal of BC: " << boundaryConditionDofLocalNos << " with prescribed values: " << boundaryConditionValues;
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "dofsLocal of BC: " << boundaryConditionDofLocalNos << " with prescribed values: " << boundaryConditionValues;
+
+    for (auto boundaryConditionElement: boundaryConditionElements)
+    {
+      VLOG(1) << "elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
+    }
+  }
 
   const int D = BasisOnMeshType::dim();
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;

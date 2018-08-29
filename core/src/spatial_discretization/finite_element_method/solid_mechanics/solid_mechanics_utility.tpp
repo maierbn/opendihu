@@ -3,6 +3,7 @@
 #include "easylogging++.h"
 #include "utility/math_utility.h"
 #include "control/types.h"
+#include <semt/Semt.h>
 
 #include <cmath>
 #include <array>

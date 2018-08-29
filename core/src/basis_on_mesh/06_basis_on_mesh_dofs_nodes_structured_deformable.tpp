@@ -8,6 +8,7 @@
 #include "field_variable/field_variable.h"
 #include "utility/petsc_utility.h"
 #include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+#include "mesh/face_t.h"
 
 namespace BasisOnMesh
 {
@@ -243,13 +244,13 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     std::array<double, 3> position{0.,0.,0.};
 
     // compute absolute node positions
-    global_no_t nNodesInXDirection;
-    global_no_t nNodesInYDirection;
-    global_no_t nNodesInZDirection;
+    global_no_t nNodesInXDirection = 0;
+    global_no_t nNodesInYDirection = 0;
+    global_no_t nNodesInZDirection = 0;
     
-    double offsetX;
-    double offsetY;
-    double offsetZ;
+    global_no_t offsetX = 0;
+    global_no_t offsetY = 0;
+    global_no_t offsetZ = 0;
     
     // initialize variables
     if (inputMeshIsGlobal)
@@ -263,10 +264,6 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
       case 1:
         nNodesInXDirection = this->nNodesGlobal(0);
       }
-      
-      offsetX = 0;
-      offsetY = 0;
-      offsetZ = 0;
     }
     else 
     {
@@ -274,18 +271,23 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
       {
       case 3:
         nNodesInZDirection = this->nNodesLocalWithoutGhosts(2);
-        offsetZ = this->meshPartition_->beginNodeGlobal(2);
       case 2:
         nNodesInYDirection = this->nNodesLocalWithoutGhosts(1);
-        offsetY = this->meshPartition_->beginNodeGlobal(1);
       case 1:
         nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
-        offsetX = this->meshPartition_->beginNodeGlobal(0);
       }
+
+      offsetX = this->meshPartition_->beginNodeGlobal(0);
+      if (D >= 2)
+        offsetY = this->meshPartition_->beginNodeGlobal(1);
+      if (D >= 3)
+        offsetZ = this->meshPartition_->beginNodeGlobal(2);
     }
     
-    global_no_t nodeX, nodeY, nodeZ;
+    global_no_t nodeX, nodeY, nodeZ; // helper variables
+
     LOG(DEBUG) << "nNodes: " << nNodes << ", global: " << nNodesGlobal << ", local: " << nNodesLocal << ", vectorSize: " << vectorSize;
+    VLOG(1) << "offsetX: " << offsetX << ", offsetY: " << offsetY << ", offsetZ: " << offsetZ;
 
     for (global_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
@@ -293,29 +295,29 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
       {
       case 3:
         nodeZ = global_no_t(nodeNo / (nNodesInXDirection*nNodesInYDirection));
-        position[2] = offsetZ + meshWidth[2] * nodeZ;
+        position[2] = meshWidth[2] * (offsetZ + nodeZ);
       case 2:
         nodeY = global_no_t(nodeNo / nNodesInXDirection) % nNodesInYDirection;
-        position[1] = offsetY + meshWidth[1] * nodeY;
+        position[1] = meshWidth[1] * (offsetY + nodeY);
       case 1:
         nodeX = nodeNo % nNodesInXDirection;
-        position[0] = offsetX + meshWidth[0] * nodeX;
-
-        break;
+        position[0] = meshWidth[0] * (offsetX + nodeX);
       }
+
+      VLOG(1) << "position: " << position;
 
       // store the position values in nodePositions
       for (int i = 0; i < 3; i++)
       {
         localNodePositions_[nodeNo*3 + i] = position[i];
       }
-    }
+    }  // nodeNo
   }
 
   // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
   if (inputMeshIsGlobal)
   {
-    this->meshPartition_->extractLocalNodes(localNodePositions_);
+    this->meshPartition_->extractLocalNodes(localNodePositions_, 3);
   }
 }
 
@@ -347,19 +349,20 @@ setGeometryFieldValues()
     geometryValuesIndex++;
     nodePositionsIndex += 3;
 
-    // set entries to 0 for rest of dofs at this node (versions)
-    for (int dofIndex = 1; dofIndex < this->nDofsPerNode(); dofIndex++)
+    // set entries to 0 for rest of dofs at this node (derivatives). These values are adjusted later for Hermite in setHermiteDerivatives
+    for (int nodalDofIndex = 1; nodalDofIndex < this->nDofsPerNode(); nodalDofIndex++)
     {
       geometryValuesIndex++;
     }
   }
 
-  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
-
   // set values for node positions as geometry field 
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishVectorManipulation();
-}
 
+  this->setHermiteDerivatives();
+
+  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
+}
 
 };  // namespace

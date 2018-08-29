@@ -22,6 +22,9 @@ public:
  
   //! number of ranks
   int nRanks() const;
+
+  //! own rank id in the current communcator
+  int ownRankNo();
   
   //! number of entries in the current partition (this usually refers to the elements)
   virtual element_no_t nElementsLocal() const = 0;

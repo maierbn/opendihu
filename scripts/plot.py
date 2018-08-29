@@ -197,7 +197,11 @@ if dimension == 2:
       
       nEntries = []
       for i in range(dimension):
-        nEntries.append(n_average_nodes_1D_per_element * data[0]["nElements"][i] + 1)
+        if "nElements" in data[0]:
+          nElements = data[0]["nElements"][i]
+        else:
+          nElements = data[0]["nElementsLocal"][i]
+        nEntries.append(n_average_nodes_1D_per_element * nElements + 1)
 
       nEntries = nEntries[::-1]   # reverse list
       
@@ -389,12 +393,21 @@ if dimension == 2:
         if dataset["basisFunction"] == "Lagrange":
           nEntries = dimension * [0]
           for i in range(dimension):
-            nEntries[i] = dataset["basisOrder"] * dataset["nElements"][i] + 1
+            
+            if "nElements" in dataset:
+              nElements = dataset["nElements"][i]
+            else:
+              nElements = dataset["nElementsLocal"][i]
+            nEntries[i] = dataset["basisOrder"] * nElements + 1
             
         elif dataset["basisFunction"] == "Hermite":
           nEntries = dimension * [0]
           for i in range(dimension):
-            nEntries[i] = dataset["nElements"][i] + 1
+            if "nElements" in dataset:
+              nElements = dataset["nElements"][i]
+            else:
+              nElements = dataset["nElementsLocal"][i]
+            nEntries[i] = nElements + 1
         
         nEntries = nEntries[::-1]   # reverse list
       

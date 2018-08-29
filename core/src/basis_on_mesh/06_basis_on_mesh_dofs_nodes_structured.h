@@ -53,6 +53,9 @@ public:
   void getNodePositions(std::vector<double> &nodes) const;
   
 protected:
+
+  // if BasisFunction is Hermite, set the derivative values in the geometry field to mean distance between nodes in the corresponding (x,y,z)-direction
+  void setHermiteDerivatives();
 };
 
 }  // namespace

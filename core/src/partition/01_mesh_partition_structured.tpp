@@ -3,8 +3,6 @@
 #include "utility/vector_operators.h"
 #include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
 
-#include "semt/Semt.h"
-
 namespace Partition
 {
   
@@ -178,7 +176,7 @@ template<typename MeshType,typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 localToGlobalMappingDofs()
 {
-  return localToGlobalMapping_;
+  return localToGlobalMappingDofs_;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -231,8 +229,17 @@ dof_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh
 nDofsLocalWithoutGhosts() const
 {
   const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
-  
+
   return nNodesLocalWithoutGhosts() * nDofsPerNode;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+nDofsGlobal() const
+{
+  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>::nDofsPerNode();
+
+  return nNodesGlobal() * nDofsPerNode;
 }
 
 //! number of nodes in the local partition
@@ -356,42 +363,57 @@ hasFullNumberOfNodes(int coordinateDirection) const
 template<typename MeshType,typename BasisFunctionType>
 template<typename T>
 void MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-extractLocalNodes(std::vector<T> &vector) const
+extractLocalNodes(std::vector<T> &vector, int nComponents) const
 {
-  std::vector<T> result(nNodesLocalWithGhosts());
+  LOG(DEBUG) << "extractLocalNodes, nComponents=" << nComponents << ", input: " << vector;
+
+  std::vector<T> result(nNodesLocalWithGhosts()*nComponents);
   global_no_t resultIndex = 0;
   
   if (MeshType::dim() == 1)
   {
-    assert(vector.size() >= beginNodeGlobal(0) + nNodesLocalWithGhosts(0));
+    assert(vector.size() >= (beginNodeGlobal(0) + nNodesLocalWithGhosts(0)) * nComponents);
     for (global_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
     {
-      result[resultIndex++] = vector[i];
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        result[resultIndex++] = vector[i*nComponents + componentNo];
+      }
     }
   }
   else if (MeshType::dim() == 2)
   {
+    assert(vector.size() >= ((beginNodeGlobal(1) + nNodesLocalWithGhosts(1) - 1)*nNodesGlobal(0) + beginNodeGlobal(0) + nNodesLocalWithGhosts(0)) * nComponents);
     for (global_no_t j = beginNodeGlobal(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
     {
       for (global_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
       {
-        result[resultIndex++] = vector[j*nNodesGlobal(0) + i];
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          result[resultIndex++] = vector[(j*nNodesGlobal(0) + i)*nComponents + componentNo];
+        }
       }
     }
   }
   else if (MeshType::dim() == 3)
   {
+    assert(vector.size() >= ((beginNodeGlobal(2) + nNodesLocalWithGhosts(2) - 1)*nNodesGlobal(1)*nNodesGlobal(0)
+      + (beginNodeGlobal(1) + nNodesLocalWithGhosts(1) - 1)*nNodesGlobal(0) + beginNodeGlobal(0) + nNodesLocalWithGhosts(0)) * nComponents);
     for (global_no_t k = beginNodeGlobal(2); k < beginNodeGlobal(2) + nNodesLocalWithGhosts(2); k++)
     {
       for (global_no_t j = beginNodeGlobal(1); j < beginNodeGlobal(1) + nNodesLocalWithGhosts(1); j++)
       {
         for (global_no_t i = beginNodeGlobal(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
         {
-          result[resultIndex++] = vector[k*nNodesGlobal(1)*nNodesGlobal(0) + j*nNodesGlobal(0) + i];
+          for (int componentNo = 0; componentNo < nComponents; componentNo++)
+          {
+            result[resultIndex++] = vector[(k*nNodesGlobal(1)*nNodesGlobal(0) + j*nNodesGlobal(0) + i)*nComponents + componentNo];
+          }
         }
       }
     }
   }
+  LOG(DEBUG) << "                   output: " << result;
   
   // store values
   vector.assign(result.begin(), result.end());
@@ -495,8 +517,8 @@ createLocalDofOrderings()
   
   // fill ghostDofGlobalNos_
   int resultIndex = 0;
-  int nGhosts = nDofsLocalWithGhosts() - nDofsLocalWithoutGhosts();
-  ghostDofGlobalNos_.resize(nGhosts);
+  int nGhostDofss = nDofsLocalWithGhosts() - nDofsLocalWithoutGhosts();
+  ghostDofGlobalNos_.resize(nGhostDofss);
   if (MeshType::dim() == 1)
   {
     for (global_no_t i = beginNodeGlobal(0) + nNodesLocalWithoutGhosts(0); i < beginNodeGlobal(0) + nNodesLocalWithGhosts(0); i++)
@@ -537,14 +559,14 @@ createLocalDofOrderings()
     }
   }
   
-  // create localToGlobalMapping_
+  // create localToGlobalMappingDofs_
   PetscErrorCode ierr;
   Vec temporaryVector;
-  ierr = VecCreateGhost(this->mpiCommunicator(), nNodesLocalWithoutGhosts(), 
-                        nNodesGlobal(), nGhosts, ghostDofGlobalNos_.data(), &temporaryVector); CHKERRV(ierr);
+  ierr = VecCreateGhost(this->mpiCommunicator(), nDofsLocalWithoutGhosts(),
+                        nDofsGlobal(), nGhostDofss, ghostDofGlobalNos_.data(), &temporaryVector); CHKERRV(ierr);
   
   // retrieve local to global mapping
-  ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalMapping_); CHKERRV(ierr);
+  ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalMappingDofs_); CHKERRV(ierr);
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
 }
 
@@ -625,7 +647,7 @@ output(std::ostream &stream)
     
   for (int i = 0; i < ghostDofGlobalNos_.size(); i++)
     stream << ghostDofGlobalNos_[i] << " ";
-  stream << "], localToGlobalMapping_: " << localToGlobalMapping_;
+  stream << "], localToGlobalMappingDofs_: " << localToGlobalMappingDofs_;
 } 
 
 }  // namespace

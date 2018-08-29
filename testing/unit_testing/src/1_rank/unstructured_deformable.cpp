@@ -10,7 +10,7 @@
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 #include "node_positions_tester.h"
-#include "utility.h"
+#include "../utility.h"
 
 namespace SpatialDiscretization
 {

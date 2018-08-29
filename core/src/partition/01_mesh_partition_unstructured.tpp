@@ -104,7 +104,7 @@ getElementNoGlobal(element_no_t elementNoLocal) const
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalNodes(std::vector<T> &vector) const
+extractLocalNodes(std::vector<T> &vector, int nComponents) const
 {
   
 }

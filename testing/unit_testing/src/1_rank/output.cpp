@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 #include "opendihu.h"
-#include "utility.h"
+#include "../utility.h"
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 #include "node_positions_tester.h"

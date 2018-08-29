@@ -21,9 +21,9 @@ public:
   template<typename DataType>
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
-  //! write the given field variable as VTK <DataArray> element to file
+  //! write the given field variable as VTK <DataArray> element to file, if onlyParallelDatasetElement write the <PDataArray> element
   template<typename FieldVariableType>
-  static void writeParaviewFieldVariable(FieldVariableType &fieldVariable, std::ofstream &file, bool binaryOutput, bool fixedFormat);
+  static void writeParaviewFieldVariable(FieldVariableType &fieldVariable, std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement);
   
   //! encode a Petsc vector in Base64
   static std::string encodeBase64(const Vec &vector);

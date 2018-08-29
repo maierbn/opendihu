@@ -42,72 +42,96 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 
 template<typename FieldVariableType>
 void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable, 
-                                          std::ofstream &file, bool binaryOutput, bool fixedFormat)
+                                          std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
  
   // here we have the type of the mesh with meshName (which is typedef to BasisOnMesh)
   typedef typename FieldVariableType::BasisOnMesh BasisOnMesh;
 
-  file << std::string(4, '\t') << "<DataArray "
-      << "Name=\"" << fieldVariable.name() << "\" "
-      << "type=\"Float32\" "
-      << "NumberOfComponents=\"" << fieldVariable.nComponents() << "\" ";
-     
-  const int nComponents = FieldVariableType::nComponents();
-  std::string stringData;
-  
-  // for Hermite fields retrieve all data and interleave the components afterwards
-  if (std::is_same<typename BasisOnMesh::BasisFunction, BasisFunction::Hermite>::value)
+  // if only the "parallel dataset element" stub which is needed in the master files, should be written
+  if (onlyParallelDatasetElement)
   {
-    std::vector<double> values;
-    std::array<std::vector<double>, nComponents> componentValues;
-    
-    for (int componentNo = 0; componentNo < nComponents; componentNo++)
-    {
-      fieldVariable.getValuesWithoutGhosts(componentNo, componentValues[componentNo], true);
-    }
-    values.reserve(componentValues[0].size()*nComponents);
-    
-    for (int i = 0; i < componentValues[0].size(); i++)
-    {
-      for (int componentNo = 0; componentNo < nComponents; componentNo++)
-      {
-        values.push_back(componentValues[componentNo][i]);
-      }
-    }
-    
+
+    file << std::string(3, '\t') << "<PDataArray "
+        << "Name=\"" << fieldVariable.name() << "\" "
+        << "type=\"Float32\" "
+        << "NumberOfComponents=\"" << fieldVariable.nComponents() << "\" ";
+
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(values);
+      file << "format=\"binary\" />" << std::endl;
     }
-    else 
+    else
     {
-      stringData = Paraview::convertToAscii(values, fixedFormat);
+      file << "format=\"ascii\" />" << std::endl;
     }
-  }
-  else    // not Hermite
-  {
-    // directly use the Petsc Vec
-    if (binaryOutput)
-    {
-      stringData = Paraview::encodeBase64(fieldVariable.valuesLocal());  // wrong anyway
-    }
-    else 
-    {
-      stringData = Paraview::convertToAscii(fieldVariable.valuesLocal(), fixedFormat);
-    }
-  }
-  
-  if (binaryOutput)
-  {
-    file << "format=\"binary\" >" << std::endl;
   }
   else
   {
-    file << "format=\"ascii\" >" << std::endl;
+
+    // write normal data element
+
+    file << std::string(4, '\t') << "<DataArray "
+        << "Name=\"" << fieldVariable.name() << "\" "
+        << "type=\"Float32\" "
+        << "NumberOfComponents=\"" << fieldVariable.nComponents() << "\" ";
+
+    const int nComponents = FieldVariableType::nComponents();
+    std::string stringData;
+
+    // for Hermite fields retrieve all data and interleave the components afterwards
+    if (std::is_same<typename BasisOnMesh::BasisFunction, BasisFunction::Hermite>::value)
+    {
+      std::vector<double> values;
+      std::array<std::vector<double>, nComponents> componentValues;
+
+      for (int componentNo = 0; componentNo < nComponents; componentNo++)
+      {
+        fieldVariable.getValuesWithoutGhosts(componentNo, componentValues[componentNo], true);
+      }
+      values.reserve(componentValues[0].size()*nComponents);
+
+      for (int i = 0; i < componentValues[0].size(); i++)
+      {
+        for (int componentNo = 0; componentNo < nComponents; componentNo++)
+        {
+          values.push_back(componentValues[componentNo][i]);
+        }
+      }
+
+      if (binaryOutput)
+      {
+        stringData = Paraview::encodeBase64(values);
+      }
+      else
+      {
+        stringData = Paraview::convertToAscii(values, fixedFormat);
+      }
+    }
+    else    // not Hermite
+    {
+      // directly use the Petsc Vec
+      if (binaryOutput)
+      {
+        stringData = Paraview::encodeBase64(fieldVariable.valuesLocal());  // wrong anyway
+      }
+      else
+      {
+        stringData = Paraview::convertToAscii(fieldVariable.valuesLocal(), fixedFormat);
+      }
+    }
+
+    if (binaryOutput)
+    {
+      file << "format=\"binary\" >" << std::endl;
+    }
+    else
+    {
+      file << "format=\"ascii\" >" << std::endl;
+    }
+    file << std::string(5, '\t') << stringData << std::endl
+        << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
-  file << std::string(5, '\t') << stringData << std::endl
-       << std::string(4, '\t') << "</DataArray>" << std::endl;
 }
   
 };

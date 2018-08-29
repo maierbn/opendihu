@@ -8,7 +8,8 @@ from sympy.abc import *
 
 xi,xi1,xi2,xi3 = symbols('xi xi1 xi2 xi3')
 
-### 1D element contributions for linear Lagrange ansatz function (phi)
+##########################################################################
+### 1D element contributions for linear Lagrange ansatz function (phi) ###
 def phi0(xi):
   return (1-xi)
   
@@ -18,7 +19,7 @@ def phi1(xi):
 print "1D stencil"
 print "=========="
 
-# left node
+# left (center) node
 integrand = diff(phi0(xi),xi)**2
 entry0 = integrate(-integrand,(xi,0,1))
 
@@ -32,10 +33,93 @@ print "[",entry0,entry1,"]"
 print "nodal stencil:"
 print "[",entry1,2*entry0,entry1,"]"
 
+########################################################
+### 1D element contributions for cubic Hermite (phi) ###
+
+def phi0(xi):
+  return 1 - 3*xi*xi + 2*xi*xi*xi
+
+def phi1(xi):
+  return xi * (xi-1) * (xi-1)      # xi*xi*xi - 2*xi*xi + xi
+
+def phi2(xi):
+  return xi*xi * (3 - 2*xi)        # -2*xi*xi*xi + 3*xi*xi
+
+def phi3(xi):
+  return xi*xi * (xi-1)              # xi*xi*xi - xi*xi
+
+print "1D stencil Hermite"
+print "=========="
+
+integrand = diff(phi0(xi),xi) * diff(phi2(xi),xi)
+entry02 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi1(xi),xi) * diff(phi2(xi),xi)
+entry12 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi2(xi),xi) * diff(phi2(xi),xi)
+entry22 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi3(xi),xi) * diff(phi2(xi),xi)
+entry32 = integrate(-integrand,(xi,0,1))
+
+
+integrand = diff(phi0(xi),xi) * diff(phi3(xi),xi)
+entry03 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi1(xi),xi) * diff(phi3(xi),xi)
+entry13 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi2(xi),xi) * diff(phi3(xi),xi)
+entry23 = integrate(-integrand,(xi,0,1))
+
+integrand = diff(phi3(xi),xi) * diff(phi3(xi),xi)
+entry33 = integrate(-integrand,(xi,0,1))
+
+print "entry 02: ", entry02, "=", float(entry02)
+print "entry 12: ", entry12, "=", float(entry12)
+print "entry 22: ", entry22, "=", float(entry22)
+print "entry 32: ", entry32, "=", float(entry32)
+print ""
+print "entry 03: ", entry03, "=", float(entry03)
+print "entry 13: ", entry13, "=", float(entry13)
+print "entry 23: ", entry23, "=", float(entry23)
+print "entry 33: ", entry33, "=", float(entry33)
+
+# linear line in geometry, given by Hermite ansatz functions
+c0,c1,c2,c3 = symbols('c0,c1,c2,c3')
+xa,xb = symbols('xa,xb')
+
+def x1(t):
+  return (xb-xa)*t + xa
+def x2(t):
+  return c0*phi0(t) + c1*phi1(t) + c2*phi2(t) + c3*phi3(t)
+
+print "x(t) =",factor(x2(t),t)
+p1 = Poly(x1(t), t)
+coeffs1 = p1.all_coeffs()
+p2 = Poly(x2(t), t)
+coeffs2 = p2.all_coeffs()
+print "coefficients of x1: ", coeffs1
+print "coefficients of x2: ", coeffs2
+
+print "solve for c0,c1,c2,c3"
+result = solve([coeffs2[0], coeffs2[1], coeffs2[2] - coeffs1[0], coeffs2[3] - coeffs1[1]],[c0,c1,c2,c3])
+print result
+print "test:"
+p2 = x2(t)
+print p2
+print ""
+print factor(p2.subs(result),t)
+print ""
+print "conclusion: to represent a 1D linear geometry in an element between xa and xb, use the following nodal dofs:"
+print "node0: dof0 (c0):",result[c0]
+print "node0: dof1 (c1):",result[c1]
+print "node1: dof0 (c2):",result[c2]
+print "node1: dof1 (c3):",result[c3]
   
-  
-#
-### 2D element contributions for linear Lagrange ansatz function (phi)
+##########################################################################
+### 2D element contributions for linear Lagrange ansatz function (phi) ###
 
 # 2 3
 # 0 1
@@ -107,9 +191,65 @@ print collect(term,(xi1,xi2))
 integrand = (diff(phi0(xi1,xi2),xi1)**2 + diff(phi0(xi1,xi2),xi2)**2)*term
 print "00", factor(integrate(-integrand,(xi1,0,1),(xi2,0,1)))
 
+##############################################################
+# linear area in geometry, given by Hermite ansatz functions #
 
+def phi0(xi):
+  return 1 - 3*xi*xi + 2*xi*xi*xi
 
-### 3D element contributions for linear Lagrange ansatz function (phi)
+def phi1(xi):
+  return xi * (xi-1) * (xi-1)      # xi*xi*xi - 2*xi*xi + xi
+
+def phi2(xi):
+  return xi*xi * (3 - 2*xi)        # -2*xi*xi*xi + 3*xi*xi
+
+def phi3(xi):
+  return xi*xi * (xi-1)              # xi*xi*xi - xi*xi
+
+c00,c01,c02,c03,c10,c11,c12,c13,c20,c21,c22,c23,c30,c31,c32,c33 = symbols('c00,c01,c02,c03,c10,c11,c12,c13,c20,c21,c22,c23,c30,c31,c32,c33')
+x0,x1,x2,x3 = symbols('x0,x1,x2,x3')
+
+def x_1(xi1,xi2):
+  return (1-xi1)*(1-xi2)*x0 + xi1*(1-xi2)*x1 + (1-xi1)*xi2*x2 + xi1*xi2*x3
+  
+def x_2(xi1,xi2):
+  return (c00*phi0(xi1)*phi0(xi2) + c01*phi0(xi1)*phi1(xi2) + c02*phi1(xi1)*phi0(xi2) + c03*phi1(xi1)*phi1(xi2))*x0 \
+    + (c10*phi2(xi1)*phi0(xi2) + c11*phi2(xi1)*phi1(xi2) + c12*phi3(xi1)*phi0(xi2) + c13*phi3(xi1)*phi1(xi2))*x1 \
+    + (c20*phi0(xi1)*phi2(xi2) + c21*phi0(xi1)*phi3(xi2) + c22*phi1(xi1)*phi2(xi2) + c23*phi1(xi1)*phi3(xi2))*x2 \
+    + (c30*phi2(xi1)*phi2(xi2) + c31*phi2(xi1)*phi3(xi2) + c32*phi3(xi1)*phi2(xi2) + c33*phi3(xi1)*phi3(xi2))*x3
+
+print ""
+print "x(t) =",factor(x_2(xi1,xi2),[xi1,xi2])
+p1 = factor(x_1(xi1,xi2), [xi1,xi2])
+p2 = factor(x_2(xi1,xi2), [xi1,xi2])
+print ""
+#print p1
+print ""
+
+print "factors:"
+print [xi1**ex1*xi2**ex2 for ex1 in range(0,4) for ex2 in range(0,4)]
+coeff1 = [p1.coeff(xi1**ex1*xi2**ex2) for ex1 in range(0,4) for ex2 in range(0,4)]
+coeff2 = [p2.coeff(xi1**ex1*xi2**ex2) for ex1 in range(0,4) for ex2 in range(0,4)]
+
+print "coefficients of x_1: ", coeff1
+print "coefficients of x_2: ", coeff2
+
+print "solve for c's"
+result = solve([coeff1[i] - coeff2[i] for i in range(16)],[c00,c01,c02,c03,c10,c11,c12,c13,c20,c21,c22,c23,c30,c31,c32,c33])
+print result
+print "test:"
+p2 = x_2(xi1,xi2)
+print ""
+print factor(p2.subs(result),[xi1,xi2])
+print ""
+print "conclusion: to represent a 1D linear geometry in an element between xa and xb, use the following nodal dofs:"
+print "node0: dof0 (c0):",result[c00]
+print "node0: dof1 (c1):",result[c01]
+print "node1: dof0 (c2):",result[c02]
+print "node1: dof1 (c3):",result[c03]
+
+###########################################################################
+### 3D element contributions for linear Lagrange ansatz function (phi)  ###
 
 def phi0(xi1,xi2,xi3):
   return (1-xi1)*(1-xi2)*(1-xi3)

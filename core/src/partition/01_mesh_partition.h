@@ -49,6 +49,8 @@ class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::i
   public MeshPartitionBase
 {
 public:
+
+  using MeshPartitionBase::nRanks;
  
   //! constructor, determine the decomposition by PETSc
   MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset);
@@ -73,6 +75,9 @@ public:
   //! number of dofs in the local partition, without ghosts
   dof_no_t nDofsLocalWithoutGhosts() const;
   
+  //! number of dofs in total
+  global_no_t nDofsGlobal() const;
+
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithGhosts() const;
   
@@ -113,9 +118,9 @@ public:
   //! get the global element no for a local element no
   global_no_t getElementNoGlobal(element_no_t elementNoLocal) const;
 
-  //! from a vector of values of global node numbers remove all that are non-local
+  //! from a vector of values of global node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
-  void extractLocalNodes(std::vector<T> &vector) const;
+  void extractLocalNodes(std::vector<T> &vector, int nComponents=1) const;
   
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
@@ -154,7 +159,7 @@ protected:
   std::vector<dof_no_t> onlyNodalDofLocalNos_;   ///< vector of local nos of the dofs, not including derivatives for Hermite
   std::vector<dof_no_t> ghostDofGlobalNos_;   ///< vector of global dof nos of the ghost dofs which are stored on the local partition
   
-  ISLocalToGlobalMapping localToGlobalMapping_;   ///< local to global mapping for dofs
+  ISLocalToGlobalMapping localToGlobalMappingDofs_;   ///< local to global mapping for dofs
 };
 
 /** Partial specialization for unstructured meshes 
@@ -201,9 +206,9 @@ public:
   //! get the local to global mapping for the current partition
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
-  //! from a vector of values of global node numbers remove all that are non-local
+  //! from a vector of values of global node numbers remove all that are non-local, nComponents consecutive components are assumed for each dof
   template <typename T>
-  void extractLocalNodes(std::vector<T> &vector) const;
+  void extractLocalNodes(std::vector<T> &vector, int nComponents=1) const;
   
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
@@ -218,45 +223,6 @@ protected:
   global_no_t nDofs_;    ///< the number of dofs
 };
 
-/** Partial specialization for Mesh::None, i.e. for not mesh-related partitions.
- *  The items of this partition are not necessarily elements or nodes.
- * TODO: delete
- */
-template<>
-class MeshPartition<Mesh::None> :
-  public MeshPartitionBase
-{
-public:
-  
-  //! constructor
-  MeshPartition(global_no_t globalSize, std::shared_ptr<RankSubset> rankSubset);
-  
-  //! number of entries in the current partition (this usually refers to the elements)
-  element_no_t nElementsLocal() const;
-  
-  //! number of nodes in total
-  global_no_t nElementsGlobal() const;
-  
-  //! get the local to global mapping for the current partition
-  ISLocalToGlobalMapping localToGlobalMapping();
-  
-  //! from a vector of values of global node numbers remove all that are non-local
-  template <typename T>
-  void extractLocalNodes(std::vector<T> &vector) const;
-  
-  //! from a vector of values of global dofs remove all that are non-local
-  void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
-  
-  //! output to stream for debugging
-  void output(std::ostream &stream);
-  
-protected:
- 
-  global_no_t globalSize_;   ///< the global size, i.e. number of elements or nodes of the whole problem
-  element_no_t localSize_;   ///< the local size, i.e. the number of elements or nodes on the local rank
-  global_no_t beginGlobal_;  ///< first index of the local portion
-};
-
 }  // namespace
 
 //! output mesh partition
@@ -269,6 +235,6 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPa
 std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlobalMapping);
 std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMapping> localToGlobalMapping);
 
-#include "partition/01_mesh_partition_none.tpp"
+#include "partition/01_mesh_partition_output.tpp"
 #include "partition/01_mesh_partition_structured.tpp"
 #include "partition/01_mesh_partition_unstructured.tpp"

@@ -219,6 +219,14 @@ bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2)
   return true;
 }
 
+//! output operator for pairs of arbitrary type
+template<typename T1, typename T2>
+std::ostream &operator<<(std::ostream &stream, const std::pair<T1,T2> &pair)
+{
+  stream << "(" << pair.first << "," << pair.second << ")";
+  return stream;
+}
+
 /*
 std::ostream &operator<<(std::ostream &stream, const Mat &mat)
 {

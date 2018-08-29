@@ -40,9 +40,12 @@ public:
   //! parallel assembly of the matrix, wraps the PETSc function MatAssemblyBegin,MatAssemblyEnd, type is MAT_FLUSH_ASSEMBLY or MAT_FINAL_ASSEMBLY
   void assembly(MatAssemblyType type);
 
-  //! get entries from the matrix that are locally stored, uses the global indexing  
+  //! get entries from the matrix that are locally stored, uses the local indexing
+  void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
+
+  //! get entries from the matrix that are locally stored, uses the global indexing
   void getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]);
-  
+
   //! get a reference to the local PETSc matrix
   Mat &valuesLocal();
   
@@ -90,7 +93,10 @@ public:
   //! parallel assembly of the matrix, wraps the PETSc function MatAssemblyBegin,MatAssemblyEnd, type is MAT_FLUSH_ASSEMBLY or MAT_FINAL_ASSEMBLY
   void assembly(MatAssemblyType type);
 
-  //! get entries from the matrix that are locally stored, uses the global indexing  
+  //! get entries from the matrix that are locally stored
+  void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const;
+
+  //! get entries from the matrix that are locally stored
   void getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]);
   
   //! get a reference to the PETSc matrix, because there is no parallelism with UnstructuredDeformableOfDimension meshes, this is the same as valuesGlobal

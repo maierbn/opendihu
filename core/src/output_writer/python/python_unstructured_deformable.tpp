@@ -47,6 +47,9 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
   int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
 
+  int nRanks = mesh->meshPartition()->nRanks();
+  int ownRankNo = mesh->meshPartition()->ownRankNo();
+
   // start critical section for python API calls
   PythonUtility::GlobalInterpreterLock lock;
   
@@ -54,10 +57,11 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
     buildPyElementalDofsObject(meshBase, onlyNodalValues);
   
   // build python dict that will contain all information and data
-  PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s O, s O, s i, s d}", "meshType", "UnstructuredDeformable",
+  PyObject *data = Py_BuildValue("{s s, s i, s i, s s, s i, s O, s i, s i, s O, s O, s i, s d}", "meshType", "UnstructuredDeformable",
                                  "dimension", D, "nElements", mesh->nElementsLocal(),
                                  "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder,
                                  "onlyNodalValues", onlyNodalValues ? Py_True: Py_False,
+                                 "nRanks", nRanks, "ownRankNo", ownRankNo,
                                  "data", pyData, "elementalDofs", pyElementalDofs, 
                                  "timeStepNo", timeStepNo, "currentTime", currentTime);
 

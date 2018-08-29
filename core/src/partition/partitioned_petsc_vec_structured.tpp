@@ -59,7 +59,7 @@ void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nC
 createVector()
 {
   VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
-    << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghosts: " << this->meshPartition_->ghostDofGlobalNos();
+    << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghost dof global nos: " << this->meshPartition_->ghostDofGlobalNos();
   PetscErrorCode ierr;
   
   // The local vector contains the nodal/dof values for the local portion of the current rank. This includes ghost nodes.
@@ -71,9 +71,9 @@ createVector()
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    const dof_no_t nGhosts = this->meshPartition_->nNodesLocalWithGhosts() - this->meshPartition_->nNodesLocalWithoutGhosts();
-    ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), this->meshPartition_->nNodesLocalWithoutGhosts(), 
-                          this->meshPartition_->nNodesGlobal(), nGhosts, this->meshPartition_->ghostDofGlobalNos().data(), &vectorGlobal_[componentNo]); CHKERRV(ierr);
+    const dof_no_t nGhostDofs = this->meshPartition_->nDofsLocalWithGhosts() - this->meshPartition_->nDofsLocalWithoutGhosts();
+    ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), this->meshPartition_->nDofsLocalWithoutGhosts(),
+                          this->meshPartition_->nDofsGlobal(), nGhostDofs, this->meshPartition_->ghostDofGlobalNos().data(), &vectorGlobal_[componentNo]); CHKERRV(ierr);
     
     
     /*ierr = DMCreateGlobalVector(*dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
@@ -366,7 +366,7 @@ output(std::ostream &stream)
     
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
-    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), nRanks, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
     
     int maxLocalSize;
     MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
@@ -388,7 +388,7 @@ output(std::ostream &stream)
         stream << "vector \"" << this->name_ << "\" (" << nEntries << " global entries per component)" << std::endl;
       }
 
-      stream << "\"" << this->name_ << "\" component " << componentNo << ":";
+      stream << "\"" << this->name_ << "\" component " << componentNo << ": [";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
         if (rankNo != 0)
@@ -398,9 +398,9 @@ output(std::ostream &stream)
           stream << "  " << recvBuffer[rankNo*maxLocalSize + i];
         }
       }
-      stream << std::endl; 
+      stream << "]" << std::endl;
     }
-  }
+  }  // componentNo
 
   finishVectorManipulation();
 #endif

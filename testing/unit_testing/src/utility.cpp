@@ -69,6 +69,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   std::string::iterator iterReferenceContents = referenceContents.begin(); 
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
+    //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
     if (isdigit(*iterFileContents))
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
@@ -84,11 +85,14 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       if(*iterFileContents != *iterReferenceContents)
       {
         referenceContentMatches = false;
+        //VLOG(1) << "mismatch!";
       }
       iterFileContents++;
       iterReferenceContents++;
     }
   }
+
+  //VLOG(1) << "referenceContentMatches: " << referenceContentMatches;
   
   if (referenceContents2 != "-")
   {
@@ -118,7 +122,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     }
   }
   
-  if (!referenceContentMatches && !referenceContent2Matches)
+  //VLOG(1) << "referenceContent2Matches: " << referenceContent2Matches;
+
+  if (!referenceContentMatches && (referenceContents2 == "-" || !referenceContent2Matches))
   {
     if (!referenceContentMatches)
       LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents: " << std::endl << referenceContents;

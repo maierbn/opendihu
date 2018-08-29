@@ -22,6 +22,9 @@ public:
   //! open file given by filename, create directory if necessary
   static std::ofstream openFile(std::string filename);
 
+  //! append rank no in the format ".001" to str
+  static void appendRankNo(std::stringstream &str, int nRanks, int ownRankNo);
+
 protected:
 
   //! check if output should be written in this timestep and prepare filename, i.e. set filename_ from config

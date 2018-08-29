@@ -47,7 +47,7 @@ void gdbParallelDebuggingBarrier()
       << "select-frame 2" << std::endl
       << "set var gdbResume = 1" << std::endl
       << "info locals " << std::endl 
-      << "next";
+      << "continue";
     while (gdbResume == 0)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));

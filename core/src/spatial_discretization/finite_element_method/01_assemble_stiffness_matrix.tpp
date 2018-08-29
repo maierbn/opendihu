@@ -37,6 +37,7 @@ setStiffnessMatrix()
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  mesh->geometryField().startVectorManipulation();
 
   // initialize values to zero
   int cntr = 1;

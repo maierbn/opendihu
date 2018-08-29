@@ -377,14 +377,262 @@ getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
   element_no_t elementZ = element_no_t(elementNoGlobal / (nElements[0] * nElements[1]));
   element_no_t elementY = element_no_t((elementNoGlobal % (nElements[0] * nElements[1])) / nElements[0]);
   element_no_t elementX = elementNoGlobal % nElements[0];
-  dof_no_t localZ = dof_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
-  dof_no_t localY = dof_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
-  dof_no_t localX = nodeIndex % nNodesPerElement1D;
+  node_no_t localZ = node_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
+  node_no_t localY = node_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
+  node_no_t localX = nodeIndex % nNodesPerElement1D;
 
   // compute local node no for non-ghost node
   return nodesPerPlane * (elementZ * averageNNodesPerElement1D + localZ)
     + nodesPerRow0 * (elementY * averageNNodesPerElement1D + localY)
     + averageNNodesPerElement1D * elementX + localX;
+}
+
+// local node no of neighbour node, may be a ghost node, for 1D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::
+getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
+{
+  assert (nodeNoLocal < this->nNodesLocalWithoutGhosts());
+
+  if (direction == Mesh::face_t::face0Minus)  // left node
+  {
+    // if there is no neighbouring node
+    if (nodeNoLocal == 0)
+    {
+      return -1;
+    }
+
+    // get previous node no
+    return nodeNoLocal - 1;
+  }
+  else if (direction == Mesh::face_t::face0Plus) // right node
+  {
+    // if there is no neighbouring node
+    if (nodeNoLocal == this->meshPartition()->nNodesLocalWithGhosts(0)-1)
+    {
+      return -1;
+    }
+
+    // get next node no, this is correct for ghost as well as non-ghost nodes
+    return nodeNoLocal + 1;
+  }
+  else
+  {
+    assert(false);
+  }
+}
+
+// local node no of neighbour node, may be a ghost node, for 2D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::
+getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
+{
+  assert (nodeNoLocal < this->nNodesLocalWithoutGhosts());
+
+  dof_no_t localX = nodeNoLocal % this->meshPartition()->nNodesLocalWithoutGhosts(0);
+  dof_no_t localY = dof_no_t(nodeNoLocal / this->meshPartition()->nNodesLocalWithoutGhosts(0));
+
+
+  if (direction == Mesh::face_t::face0Minus)  // left node
+  {
+    // if there is no neighbouring node
+    if (localX == 0)
+    {
+      return -1;
+    }
+    // get previous node no
+    return nodeNoLocal - 1;
+  }
+  else if (direction == Mesh::face_t::face0Plus) // right node
+  {
+    // if the node is on the right row, there is no neighbouring node
+    if (localX == this->meshPartition()->nNodesLocalWithGhosts(0)-1)
+    {
+      return -1;
+    }
+
+    // check if right node is a ghost node
+    if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0)-1)
+    {
+      // there is a row of ghost nodes on the right
+      return this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
+    }
+
+    // return next node no
+    return nodeNoLocal + 1;
+  }
+  else if (direction == Mesh::face_t::face1Minus)  // bottom node
+  {
+    // if there is no neighbouring node
+    if (localY == 0)
+    {
+      return -1;
+    }
+
+    // get node below
+    return nodeNoLocal - this->meshPartition()->nNodesLocalWithoutGhosts(0);
+  }
+  else if (direction == Mesh::face_t::face1Plus)  // top node
+  {
+    // if the node is at the top row, there is no neighbouring node
+    if (localY == this->meshPartition()->nNodesLocalWithGhosts(1)-1)
+    {
+      return -1;
+    }
+
+    if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1)-1)
+    {
+      // there is one row of ghost nodes above the current
+      return this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithGhosts(1) - 1 + localX;
+    }
+
+    // get node above
+    return nodeNoLocal + this->meshPartition()->nNodesLocalWithoutGhosts(0);
+  }
+  else
+  {
+    assert(false);
+  }
+}
+
+// local node no of neighbour node, may be a ghost node, for 3D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t BasisOnMeshNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::
+getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
+{
+  assert (nodeNoLocal < this->nNodesLocalWithoutGhosts());
+
+  node_no_t localZ = node_no_t(nodeNoLocal / (this->meshPartition()->nNodesLocalWithoutGhosts(0) * this->meshPartition()->nNodesLocalWithoutGhosts(1)));
+  node_no_t localY = node_no_t((nodeNoLocal % (this->meshPartition()->nNodesLocalWithoutGhosts(0) * this->meshPartition()->nNodesLocalWithoutGhosts(1))) / this->meshPartition()->nNodesLocalWithoutGhosts(0));
+  node_no_t localX = nodeNoLocal % this->meshPartition()->nNodesLocalWithoutGhosts(0);
+
+  if (direction == Mesh::face_t::face0Minus)  // left node
+  {
+    // if there is no neighbouring node
+    if (localX == 0)
+    {
+      return -1;
+    }
+
+    // get previous node no
+    return nodeNoLocal - 1;
+  }
+  else if (direction == Mesh::face_t::face0Plus) // right node
+  {
+    // if the node is on the right row, there is no neighbouring node
+    if (localX == this->meshPartition()->nNodesLocalWithGhosts(0)-1)
+    {
+      return -1;
+    }
+
+    // if right node is a ghost node, this implies !this->meshPartition()->hasFullNumberOfNodes(0)
+    if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0)-1)
+    {
+      // there is a y-z plane of ghost nodes on the right
+      node_no_t neighbourNodeNo = this->meshPartition()->nNodesLocalWithoutGhosts();
+
+      if (this->meshPartition()->hasFullNumberOfNodes(1))
+      {
+        neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(1)) * localZ;
+      }
+      else
+      {
+        neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1) - 1) * localZ;
+      }
+      return neighbourNodeNo + localY;
+    }
+
+    // return next node no
+    return nodeNoLocal + 1;
+  }
+  else if (direction == Mesh::face_t::face1Minus)  // y- node
+  {
+    // if there is no neighbouring node
+    if (localY == 0)
+    {
+      return -1;
+    }
+
+    // get node below
+    return nodeNoLocal - this->meshPartition()->nNodesLocalWithoutGhosts(0);
+  }
+  else if (direction == Mesh::face_t::face1Plus)  // y+ node
+  {
+    // if the node is at the top row, there is no neighbouring node
+    if (localY == this->meshPartition()->nNodesLocalWithGhosts(1)-1)
+    {
+      return -1;
+    }
+
+    // if y+ node is a ghost node, this implies !this->meshPartition()->hasFullNumberOfNodes(1)
+    if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1)-1)
+    {
+      // there is one row of ghost nodes above the current
+      node_no_t neighbourNodeNo = this->meshPartition()->nNodesLocalWithoutGhosts();
+
+      if (this->meshPartition()->hasFullNumberOfNodes(0))
+      {
+        neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0)) * localZ;
+      }
+      else
+      {
+        neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1) - 1) * localZ;
+      }
+      return neighbourNodeNo + this->meshPartition()->nNodesLocalWithGhosts(1) - 1 + localX;
+    }
+
+    // get node above
+    return nodeNoLocal + this->meshPartition()->nNodesLocalWithoutGhosts(0);
+  }
+  else if (direction == Mesh::face_t::face2Minus)  // z- node
+  {
+    // if there is no node below
+    if (localZ == 0)
+    {
+      return -1;
+    }
+
+    // get node below
+    return nodeNoLocal - this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(1);
+  }
+  else if (direction == Mesh::face_t::face2Plus)  // z+ node
+  {
+    // if the node is at the top row, there is no neighbouring node
+    if (localZ == this->meshPartition()->nNodesLocalWithGhosts(2)-1)
+    {
+      return -1;
+    }
+
+    // if z+ node is a ghost node, this implies !this->meshPartition()->hasFullNumberOfNodes(2)
+    if (localZ == this->meshPartition()->nNodesLocalWithoutGhosts(1)-1)
+    {
+      // there is one row of ghost nodes above the current
+      node_no_t neighbourNodeNo = this->meshPartition()->nNodesLocalWithoutGhosts();
+
+      if (this->meshPartition()->hasFullNumberOfNodes(0))
+      {
+        if (!this->meshPartition()->hasFullNumberOfNodes(1))
+        {
+          neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0)) * localZ;
+        }
+      }
+      else
+      {
+        if (this->meshPartition()->hasFullNumberOfNodes(1))
+        {
+          neighbourNodeNo += this->meshPartition()->nNodesLocalWithGhosts(1) * localZ;
+        }
+        else
+        {
+          neighbourNodeNo += (this->meshPartition()->nNodesLocalWithGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1) - 1) * localZ;
+        }
+      }
+      return neighbourNodeNo + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
+    }
+
+    // get node above
+    return nodeNoLocal + this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(1);
+  }
 }
 
 };  // namespace

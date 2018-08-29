@@ -92,7 +92,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
 #if 1
 
     // set program name of python script
-    char const *programName = "dihu";
+    char const *programName = "opendihu";
     VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
 
 #if PY_MAJOR_VERSION >= 3
@@ -507,6 +507,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
   MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
   
+  // set prefix for output that includes current rank no
   std::string prefix;
   if (nRanks > 1)
   {
@@ -516,7 +517,29 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   }
   
   conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
-  conf.setGlobally(el::ConfigurationType::Filename, "/tmp/logs/opendihu.log");
+
+  // set location of log files
+  std::string logFilesPath = "/tmp/logs/";   // must end with '/'
+  if (nRanks > 1)
+  {
+    std::stringstream s;
+    s << logFilesPath << rankNo << "_opendihu.log";
+    conf.setGlobally(el::ConfigurationType::Filename, s.str());
+
+    // truncate logfile
+    std::ofstream logfile(s.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+    logfile.close();
+  }
+  else
+  {
+    std::string logFilename = logFilesPath+"opendihu.log";
+    conf.setGlobally(el::ConfigurationType::Filename, logFilename);
+
+    // truncate logfile
+    std::ofstream logfile(logFilename.c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+    logfile.close();
+  }
+
   conf.setGlobally(el::ConfigurationType::Enabled, "true");
   conf.setGlobally(el::ConfigurationType::ToFile, "true");
   conf.setGlobally(el::ConfigurationType::ToStandardOutput, "true");

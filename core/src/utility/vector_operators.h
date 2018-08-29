@@ -70,6 +70,10 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &vector);
 template<typename T>
 bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2);
 
+//! output operator for pairs of arbitrary type
+template<typename T1, typename T2>
+std::ostream &operator<<(std::ostream &stream, const std::pair<T1,T2> &pair);
+
 //! output operator for PETSc matrices
 //std::ostream &operator<<(std::ostream &stream, const Mat &mat);
 

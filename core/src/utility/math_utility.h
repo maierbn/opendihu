@@ -6,7 +6,6 @@
 
 #include <petscmat.h>
 #include "control/types.h"
-#include "semt/Semt.h"    // include semt for operator<<(std::vector<double>)
 
 #include "utility/matrix.h"
 #include "utility/matrix_operators.h"

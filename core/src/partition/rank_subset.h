@@ -25,6 +25,9 @@ public:
   //! number of ranks in the current rank list
   element_no_t size() const;
 
+  //! get the own rank id of the mpi Communicator
+  element_no_t ownRankNo();
+
   //! first entry of the rank list
   std::vector<int>::const_iterator begin();
   
@@ -37,6 +40,7 @@ public:
 protected:
  
   std::vector<int> rankNo_;  ///< the list of ranks
+  int ownRankNo_;             ///< own rank id of this rankSubset
   MPI_Comm mpiCommunicator_;    ///< the MPI communicator that contains only the ranks of this rank subset
   
 };

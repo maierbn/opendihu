@@ -50,6 +50,9 @@ public:
   
   //! get the dof no of the specified dof at the node
   dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
+
+  //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
+  node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=2
@@ -79,6 +82,9 @@ public:
 
   //! get the dof no of the specified dof at the node
   dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
+
+  //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
+  node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=3
@@ -108,6 +114,9 @@ public:
 
   //! get the dof no of the specified dof at the node
   dof_no_t getNodeDofNo(node_no_t nodeGlobalNo, int dofIndex) const;
+
+  //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
+  node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
 };
 
 

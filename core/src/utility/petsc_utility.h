@@ -25,6 +25,9 @@ public:
   //! return a string of the matrix that can be printed
   static std::string getStringMatrix(const Mat &matrix);
 
+  //! get the string representation of a matrix, from the values
+  static std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nColumns, int nRowsGlobal, int nColumnsGlobal);
+
   //! return a string of the matrix and vector, that can be printed
   static std::string getStringMatrixVector(const Mat &matrix, const Vec &vector);
 

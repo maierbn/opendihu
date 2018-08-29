@@ -3,7 +3,7 @@
 #include <numeric>
 
 #include "utility/string_utility.h"
-#include "semt/Semt.h"
+#include "utility/vector_operators.h"
 #include "easylogging++.h"
 
 
@@ -22,6 +22,11 @@ MeshPartitionBase::~MeshPartitionBase()
 int MeshPartitionBase::nRanks() const
 {
   return this->rankSubset_->size();
+}
+
+int MeshPartitionBase::ownRankNo()
+{
+  return this->rankSubset_->ownRankNo();
 }
 
 MPI_Comm MeshPartitionBase::mpiCommunicator() const

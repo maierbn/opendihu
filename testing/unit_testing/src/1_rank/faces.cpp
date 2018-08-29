@@ -11,7 +11,7 @@
 #include "arg.h"
 #include "stiffness_matrix_tester.h"
 #include "node_positions_tester.h"
-#include "utility.h"
+#include "../utility.h"
 #include "mesh/face_t.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 

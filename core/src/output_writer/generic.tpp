@@ -1,13 +1,14 @@
 #include "output_writer/generic.h"
 
 #include <iomanip>
+#include <cmath>
+#include <iomanip>
 
 #include "easylogging++.h"
 #include "utility/python_utility.h"
 
 namespace OutputWriter
 {
-
 
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
@@ -45,6 +46,13 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   {
     s << "_" << std::setw(5) << std::setfill('0') << timeStepNo;
   }
+
+  // add rank no to file name base
+  if (data.mesh()->meshPartition()->nRanks() > 1)
+  {
+    appendRankNo(s, data.mesh()->meshPartition()->nRanks(), data.mesh()->meshPartition()->ownRankNo());
+  }
+
   filename_ = s.str();
   return true;
 }

@@ -137,11 +137,22 @@ getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const Pet
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
   PetscErrorCode ierr;
-  
+
   // assemble the global matrix
   ierr = MatAssemblyBegin(this->matrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   ierr = MatAssemblyEnd(this->matrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  
+
+  // access the global matrix
+  ierr = MatGetValues(this->matrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
+}
+
+template<int D, typename BasisFunctionType>
+void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
+{
+  // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
+  PetscErrorCode ierr;
+
   // access the global matrix
   ierr = MatGetValues(this->matrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
 }

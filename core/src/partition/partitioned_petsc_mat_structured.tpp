@@ -176,7 +176,8 @@ getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const Pet
   PetscErrorCode ierr;
   
   // map the values of the localMatrix back into the global matrix
-  ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartition_->dofNosLocalIS(), this->meshPartition_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+  ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartition_->dofNosLocalIS(),
+                                  this->meshPartition_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
   
   // assemble the global matrix
   ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
@@ -184,6 +185,24 @@ getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const Pet
   
   // access the global matrix
   ierr = MatGetValues(this->globalMatrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
+}
+
+template<typename MeshType, typename BasisFunctionType>
+void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
+{
+  // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
+  PetscErrorCode ierr;
+
+  // transfer the local indices to global indices
+  std::vector<int> rowIndicesGlobal(m);
+  std::vector<int> columnIndicesGlobal(n);
+  ierr = ISLocalToGlobalMappingApply(this->meshPartition_->localToGlobalMappingDofs(), m, idxm, rowIndicesGlobal.data()); CHKERRV(ierr);
+  ierr = ISLocalToGlobalMappingApply(this->meshPartition_->localToGlobalMappingDofs(), n, idxn, columnIndicesGlobal.data()); CHKERRV(ierr);
+
+  // access the global matrix
+  ierr = MatGetValues(this->globalMatrix_, m, rowIndicesGlobal.data(), n, columnIndicesGlobal.data(), v); CHKERRV(ierr);
+
 }
 
 template<typename MeshType, typename BasisFunctionType>
@@ -211,34 +230,33 @@ output(std::ostream &stream) const
   MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
   
   // get global size of matrix 
-  int nRows, nColumns, nRowsLocal, nColumnsLocal;
+  int nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
   PetscErrorCode ierr;
-  ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
+  ierr = MatGetSize(this->globalMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   
   // retrieve local values
-  //int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
-  //std::vector<double> localValues;
-  //localValues.resize(MathUtility::sqr(nDofsLocal));
+  int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
+  std::vector<double> localValues;
+  localValues.resize(MathUtility::sqr(nDofsLocal));
   
-  //MatGetValuesLocal(this->globalMatrix_, nDofsLocal, this->meshPartition_->dofNosLocal(), nDofsLocal, this->meshPartition_->dofNosLocal(), localValues);
+  getValues(nDofsLocal, this->meshPartition_->dofNosLocal().data(), nDofsLocal, this->meshPartition_->dofNosLocal().data(),
+            localValues.data());
+
   
   // on every rank prepare a string with the local information
   std::string str;
-  for (int rankNo = 0; rankNo < nRanks; rankNo++)
-  {
-    if (rankNo == ownRankNo)
-    {    
-      std::stringstream s;
-      s << "Rank " << rankNo << ": " << PetscUtility::getStringMatrix(this->globalMatrix_);
-      str = s.str();
-    }
-  }
+  std::stringstream s;
+  s << "Rank " << ownRankNo << ": " << PetscUtility::getStringMatrix(localValues, nRowsLocal, nColumnsLocal, nRowsGlobal, nColumnsGlobal);
+  str = s.str();
   
+  //VLOG(1) << str;
+
+
   // exchange the lengths of the local information
   std::vector<int> localSizes(nRanks);
   localSizes[ownRankNo] = str.length();
-  MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), nRanks, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+  MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
   
   // determine the maximum length
   int maxLocalSize;
@@ -249,12 +267,14 @@ output(std::ostream &stream) const
   std::vector<char> sendBuffer(maxLocalSize,0);
   memcpy(sendBuffer.data(), str.c_str(), str.length());
   
-  MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_CHAR, recvBuffer.data(), maxLocalSize*nRanks, MPI_CHAR, 0, this->meshPartition_->mpiCommunicator());
+  // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+  // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
+  MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_CHAR, recvBuffer.data(), maxLocalSize, MPI_CHAR, 0, this->meshPartition_->mpiCommunicator());
   
   if (ownRankNo == 0)
   {
     // on rank 0 concatenate the strings from the ranks
-    stream << "matrix \"" << this->name_ << "\" (" << nRows << "x" << nColumns << ")" << std::endl;
+    stream << "matrix \"" << this->name_ << "\" (" << nRowsGlobal << "x" << nColumnsGlobal << ")" << std::endl;
     for (int rankNo = 0; rankNo < nRanks; rankNo++)
     {
       std::string s(recvBuffer.data() + maxLocalSize*rankNo, localSizes[rankNo]);

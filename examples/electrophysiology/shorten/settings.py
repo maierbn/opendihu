@@ -165,7 +165,7 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ExplicitEuler" : {
+      "ImplicitEuler" : {
         #"initialValues": [2,2,4,5,2,2],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,

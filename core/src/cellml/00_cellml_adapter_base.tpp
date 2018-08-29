@@ -67,8 +67,8 @@ initialize()
     PythonUtility::getOptionVector(this->specificSettings_, "parametersUsedAsConstant", parametersUsedAsConstant_);
     nParameters_ += parametersUsedAsIntermediate_.size() + parametersUsedAsConstant_.size();
     
-    LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
-      << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
+    //LOG(DEBUG) << "parametersUsedAsIntermediate_: " << parametersUsedAsIntermediate_ 
+    //  << ", parametersUsedAsConstant_: " << parametersUsedAsConstant_;
   }
   
   LOG(DEBUG) << "Initialize CellML with nInstances = " << nInstances_ << ", nParameters_ = " << nParameters_ 

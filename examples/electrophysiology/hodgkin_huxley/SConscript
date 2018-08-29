@@ -11,7 +11,8 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
         
   examples = [
-    "hodgkin_huxley_explicit"
+    "hodgkin_huxley_explicit",
+    "hodgkin_huxley_implicit"
   ]
 
   for example in examples:

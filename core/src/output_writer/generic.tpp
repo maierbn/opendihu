@@ -15,9 +15,9 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
   LOG(DEBUG) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
-  if (!data.mesh())
+  if (!data.functionSpace())
   {
-    LOG(FATAL) << "Mesh is not set!";
+    LOG(FATAL) << "Function space is not set!";
   }
 
   timeStepNo_ = timeStepNo;
@@ -60,9 +60,9 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   outputFileNo_++;
   
   // add rank no to file name base
-  if (data.mesh()->meshPartition()->nRanks() > 1)
+  if (data.functionSpace()->meshPartition()->nRanks() > 1)
   {
-    appendRankNo(s, data.mesh()->meshPartition()->nRanks(), data.mesh()->meshPartition()->ownRankNo());
+    appendRankNo(s, data.functionSpace()->meshPartition()->nRanks(), data.functionSpace()->meshPartition()->ownRankNo());
   }
 
   filename_ = s.str();

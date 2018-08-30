@@ -15,9 +15,9 @@ namespace Data
 /**  The datastructures used for streamline tracer.
  *   BaseDataType is a Data class that provides the solution field variable for the streamline tracer to operate on.
  */
-template<typename BasisOnMeshType, typename BaseTimesteppingType>
+template<typename FunctionSpaceType, typename BaseTimesteppingType>
 class MultipleInstances :
-  public Data<BasisOnMeshType>
+  public Data<FunctionSpaceType>
 {
 public:
   typedef typename BaseTimesteppingType::Data BaseDataType;
@@ -43,7 +43,7 @@ public:
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> MeshFibre;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> MeshFibre;
   typedef FieldVariable::FieldVariable<MeshFibre,3> FieldVariableFibreGeometry;
   
   //! field variables that will be output by outputWriters

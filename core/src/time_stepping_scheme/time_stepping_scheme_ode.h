@@ -16,9 +16,9 @@ template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOde : public TimeSteppingScheme
 {
 public:
-  typedef typename DiscretizableInTimeType::BasisOnMesh BasisOnMesh;
+  typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
 
-  typedef Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
+  typedef Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
 
   //! constructor
   TimeSteppingSchemeOde(DihuContext context, const std::string name);

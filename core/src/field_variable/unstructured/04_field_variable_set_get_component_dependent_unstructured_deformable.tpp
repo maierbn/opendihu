@@ -15,7 +15,7 @@ using namespace StringUtility;
 
 //! get a single value from local dof no. for all components
 template<int D, typename BasisFunctionType, int nComponents>
-std::array<double,nComponents> FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+std::array<double,nComponents> FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getValue(node_no_t dofLocalNo)
 {
   std::array<double,nComponents> resultVector;
@@ -31,12 +31,12 @@ getValue(node_no_t dofLocalNo)
 
 //! get the values corresponding to all element-local dofs for all components
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const std::vector<dof_no_t> &elementDofs = this->elementToDofMapping_->getElementDofs(elementNo);
   
   //VLOG(2) << "getElementValues element " << elementNo << ", nComponents=" << nComponents;
@@ -46,7 +46,7 @@ getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDof
 
 //! get a single value from local dof no. for the single component
 template<int D, typename BasisFunctionType>
-double FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+double FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getValue(node_no_t dofLocalNo)
 {
   double result;
@@ -56,7 +56,7 @@ getValue(node_no_t dofLocalNo)
 
 //! get all stored local values
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
 {
   this->getValuesWithGhosts(0, values, onlyNodalValues);
@@ -64,7 +64,7 @@ getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
 
 //! get all stored local values
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues)
 {
   this->getValuesWithoutGhosts(0, values, onlyNodalValues);
@@ -72,7 +72,7 @@ getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues)
 
 //! set a single dof (one components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
@@ -81,7 +81,7 @@ setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 
 //! set values for one components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, dofNosLocal.size(), (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
@@ -90,7 +90,7 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &v
 
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, values, petscInsertMode);
@@ -98,7 +98,7 @@ setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMod
 
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, values, petscInsertMode);

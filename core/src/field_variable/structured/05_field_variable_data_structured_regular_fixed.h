@@ -4,7 +4,7 @@
 
 #include "field_variable/structured/04_field_variable_set_get_component_dependent_structured.h"
 #include "field_variable/field_variable_data.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace FieldVariable
 {
@@ -12,14 +12,14 @@ namespace FieldVariable
 /** FieldVariable class for RegularFixed mesh
  */
 template<int D, typename BasisFunctionType, int nComponents>
-class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>
+class FieldVariableData<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents> :
+  public FieldVariableSetGetComponent<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! inherited constructor
-  using FieldVariableSetGetComponent<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
+  using FieldVariableSetGetComponent<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetComponent;
 
 protected:
 };

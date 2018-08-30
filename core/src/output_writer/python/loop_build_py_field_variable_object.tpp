@@ -32,7 +32,7 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
                            PyObject *pyData, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh)
 {
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
-  if (currentFieldVariable->mesh()->meshName() != meshName)
+  if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {
     return false;  // do not break iteration
   }
@@ -40,7 +40,7 @@ buildPyFieldVariableObject(CurrentFieldVariableType currentFieldVariable, int &f
   // the first time retrieve the mesh
   if (fieldVariableIndex == 0)
   {
-    mesh = currentFieldVariable->mesh();
+    mesh = currentFieldVariable->functionSpace();
   }
  
   VLOG(2) << "field variable \"" << currentFieldVariable->name() << "\"";

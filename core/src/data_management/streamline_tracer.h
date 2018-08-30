@@ -15,9 +15,9 @@ namespace Data
 /**  The datastructures used for streamline tracer.
  *   BaseDataType is a Data class that provides the solution field variable for the streamline tracer to operate on.
  */
-template<typename BasisOnMeshType, typename BaseDataType>
+template<typename FunctionSpaceType, typename BaseDataType>
 class StreamlineTracer :
-  public Data<BasisOnMeshType>
+  public Data<FunctionSpaceType>
 {
 public:
 
@@ -28,7 +28,7 @@ public:
   ~StreamlineTracer();
 
   //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,3> &gradient();
+  FieldVariable::FieldVariable<FunctionSpaceType,3> &gradient();
 
   //! print all stored data to stdout
   virtual void print();
@@ -48,13 +48,13 @@ public:
   //! create a fibre mesh from the given node positions, store it in mesh manager and store a pointer to the geometry field in fibreGeometry
   void createFibreMesh(const std::vector<Vec3> &nodePositions);
   
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> MeshFibre;
-  typedef FieldVariable::FieldVariable<MeshFibre,3> FieldVariableFibreGeometry;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> FunctionSpaceFibre;
+  typedef FieldVariable::FieldVariable<FunctionSpaceFibre,3> FieldVariableFibreGeometry;
   
   //! field variables that will be output by outputWriters
   typename BaseDataType::OutputFieldVariables dummy;
   typedef decltype(std::tuple_cat(dummy, std::tuple<
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // gradient field
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::vector<std::shared_ptr<FieldVariableFibreGeometry>>   // geometry fields of meshes
   >())) OutputFieldVariables;
 
@@ -67,7 +67,7 @@ protected:
   virtual void createPetscObjects();
 
   std::shared_ptr<BaseDataType> baseData_;    ///< the data object that holds the field frorm which stream lines are generated
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> gradient_;    ///< the gradient field of the solution field variable
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    ///< the gradient field of the solution field variable
 
   std::vector<std::shared_ptr<FieldVariableFibreGeometry>> fibreGeometry_;   ///< geometry fields of fibres
   

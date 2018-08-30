@@ -7,13 +7,13 @@
 
 /** Base class for a partitioned PetscMat
  */
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 class PartitionedPetscMatBase
 {
 public:
   
   //! constructor
-  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name);
+  PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name);
  
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   virtual void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode) = 0;
@@ -47,7 +47,7 @@ public:
   
 protected:
  
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
   std::string name_;   ///< a specifier for the matrix, only used for debugging
 };
 

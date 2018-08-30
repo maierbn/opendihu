@@ -5,12 +5,12 @@
 #include <vector>
 #include <memory>
 
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace OutputWriter
 {
 
-template<typename BasisOnMeshType, typename OutputFieldVariablesType>
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 class PythonCallbackWriter
 {
 public:

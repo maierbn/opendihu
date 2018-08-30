@@ -17,16 +17,16 @@ namespace FieldVariable
 /* For >1 components
  */
 template<int D, typename BasisFunctionType, int nComponents>
-class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
+class FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
+  public FieldVariableSetGetUnstructured<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
 
   //! inherited constructors
-  using FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetUnstructured;
+  using FieldVariableSetGetUnstructured<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableSetGetUnstructured;
 
   //! avoid name hiding of "getValue" in parent classes
-  using FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
+  using FieldVariableSetGetUnstructured<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
 
   //! get a single value from local dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofLocalNo);
@@ -36,27 +36,27 @@ public:
 /** For 1 component
  */
 template<int D, typename BasisFunctionType>
-class FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1> :
-  public FieldVariableSetGetUnstructured<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>
+class FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1> :
+  public FieldVariableSetGetUnstructured<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>
 {
 public:
 
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! inherited constructors
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::FieldVariableSetGetUnstructured;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::FieldVariableSetGetUnstructured;
 
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getElementValues;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValue;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValuesWithGhosts;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::getValuesWithoutGhosts;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValue;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValues;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValuesWithGhosts;
-  using FieldVariableSetGetUnstructured<BasisOnMeshType,1>::setValuesWithoutGhosts;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getElementValues;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValue;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValuesWithGhosts;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::getValuesWithoutGhosts;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValue;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValues;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValuesWithGhosts;
+  using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValuesWithoutGhosts;
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo);

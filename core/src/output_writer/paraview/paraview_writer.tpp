@@ -12,9 +12,9 @@ namespace OutputWriter
 {
 // regular fixed
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
-           std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh, 
+           std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PyObject *specificSettings)
 {
   // write a RectilinearGrid
@@ -56,7 +56,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
     {
       extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionGlobal(dimensionNo)
-        * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+        * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
     }
 
     // write file
@@ -154,7 +154,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
     extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
-      * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+      * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   }
 
   // coordinates of grid
@@ -266,9 +266,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
 // structured deformable
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
-           std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
+           std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PyObject *specificSettings)
 {
   // write a StructuredGrid
@@ -286,11 +286,11 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
     extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
-      * BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+      * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
   }
   
   // get type of geometry field
-  typedef FieldVariable::FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
+  typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
 
   // name of value field
   bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
@@ -345,9 +345,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
 // unstructured deformable
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
-           std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh, 
+           std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
            int nFieldVariablesOfMesh, PyObject *specificSettings)
 {
   // write an UnstructuredGrid
@@ -361,8 +361,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   LOG(DEBUG) << "Write UnstructuredGrid, file \"" << s.str() << "\".";
 
   // get type of geometry field
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType> BasisOnMesh;
-  typedef FieldVariable::FieldVariable<BasisOnMesh,3> GeometryFieldType;
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType> FunctionSpace;
+  typedef FieldVariable::FieldVariable<FunctionSpace,3> GeometryFieldType;
   
   
   // name of value field
@@ -410,18 +410,18 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     
   // get the elements point lists
   std::vector<node_no_t> values;
-  values.reserve(mesh->nElementsLocal() * BasisOnMesh::averageNNodesPerElement());
+  values.reserve(mesh->nElementsLocal() * FunctionSpace::averageNNodesPerElement());
   
   // loop over elements and collect point numbers of the element
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
-    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofNosLocal(elementNo);
-    for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
+    std::array<dof_no_t,FunctionSpace::nDofsPerElement()> dofsOfElement = mesh->getElementDofNosLocal(elementNo);
+    for (typename std::array<dof_no_t,FunctionSpace::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
     {
       dof_no_t dofNo = *iter;
-      if (dofNo % BasisOnMesh::nDofsPerNode() == 0)
+      if (dofNo % FunctionSpace::nDofsPerNode() == 0)
       {
-        node_no_t nodeNo = dofNo / BasisOnMesh::nDofsPerNode();
+        node_no_t nodeNo = dofNo / FunctionSpace::nDofsPerNode();
         values.push_back(nodeNo);
       }
     }
@@ -447,7 +447,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   values.resize(mesh->nElementsLocal());
   for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
   {
-    values[elementNo] = (elementNo + 1) * BasisOnMesh::nNodesPerElement();
+    values[elementNo] = (elementNo + 1) * FunctionSpace::nNodesPerElement();
   }
     
   if (binaryOutput)

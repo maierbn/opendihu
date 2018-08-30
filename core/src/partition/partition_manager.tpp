@@ -8,8 +8,8 @@
 namespace Partition
 {
 
-template<typename BasisOnMesh>
-std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
+template<typename FunctionSpace>
+std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
 createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal)
 { 
   LOG(DEBUG) << "Partition::Manager::createPartitioningUnstructured, nElementsGlobal: " 
@@ -32,20 +32,20 @@ createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGl
   
   LOG(DEBUG) << "using rankSubset " << *rankSubset;
   
-  return std::make_shared<MeshPartition<BasisOnMesh>>(nElementsGlobal, nNodesGlobal, nDofsGlobal, rankSubset);
+  return std::make_shared<MeshPartition<FunctionSpace>>(nElementsGlobal, nNodesGlobal, nDofsGlobal, rankSubset);
 }
 
 // use nElementsLocal and nRanks, fill nElementsGlobal
-template<typename BasisOnMesh>
-std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
-createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &nElementsGlobal,
-                                  const std::array<element_no_t,BasisOnMesh::dim()> nElementsLocal,
-                                  const std::array<int,BasisOnMesh::dim()> nRanks)
+template<typename FunctionSpace>
+std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
+createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
+                                  const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
+                                  const std::array<int,FunctionSpace::dim()> nRanks)
 { 
   LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredLocal from localSize " << nElementsLocal 
     << ", nRanks " << nRanks;
   
-  const int D = BasisOnMesh::dim();
+  const int D = FunctionSpace::dim();
   
   // the subset of ranks for the partition to be created
   std::shared_ptr<RankSubset> rankSubset;
@@ -170,15 +170,15 @@ createPartitioningStructuredLocal(std::array<global_no_t,BasisOnMesh::dim()> &nE
   }
   
   // create a mesh partition with prescribed local partitions
-  return std::make_shared<MeshPartition<BasisOnMesh>>(nElementsLocal, nElementsGlobal, beginGlobal, nRanks, rankSubset);
+  return std::make_shared<MeshPartition<FunctionSpace>>(nElementsLocal, nElementsGlobal, beginGlobal, nRanks, rankSubset);
 }
 
 // use nElementsGlobal, fill nElementsLocal and nRanks
-template<typename BasisOnMesh>
-std::shared_ptr<MeshPartition<BasisOnMesh>> Manager::
-createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim()> nElementsGlobal, 
-                                   std::array<element_no_t,BasisOnMesh::dim()> &nElementsLocal,
-                                   std::array<int,BasisOnMesh::dim()> &nRanks)
+template<typename FunctionSpace>
+std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
+createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal, 
+                                   std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal,
+                                   std::array<int,FunctionSpace::dim()> &nRanks)
 { 
   LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredGlobal from nElementsGlobal " << nElementsGlobal;
   
@@ -200,10 +200,10 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,BasisOnMesh::dim
   LOG(DEBUG) << "using rankSubset " << *rankSubset;
   
   // create meshPartition
-  std::shared_ptr<MeshPartition<BasisOnMesh>> meshPartition = std::make_shared<MeshPartition<BasisOnMesh>>(nElementsGlobal, rankSubset);
+  std::shared_ptr<MeshPartition<FunctionSpace>> meshPartition = std::make_shared<MeshPartition<FunctionSpace>>(nElementsGlobal, rankSubset);
   
   // set parameters localSize and nRanks
-  for (int coordinateDirection = 0; coordinateDirection < BasisOnMesh::dim(); coordinateDirection++)
+  for (int coordinateDirection = 0; coordinateDirection < FunctionSpace::dim(); coordinateDirection++)
   {
     nElementsLocal[coordinateDirection] = meshPartition->nElementsLocal(coordinateDirection);
     nRanks[coordinateDirection] = meshPartition->nRanks(coordinateDirection);

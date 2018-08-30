@@ -11,27 +11,27 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 
 namespace Data
 {
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1> &FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<LowOrderFunctionSpaceType,1> &FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 pressure()
 {
   return *this->pressure_;
 }
 
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-typename FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::OutputFieldVariables FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+typename FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::OutputFieldVariables FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 getOutputFieldVariables()
 {
-  std::shared_ptr<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>> actualGeometryField
-    = std::make_shared<FieldVariable::FieldVariable<HighOrderBasisOnMeshType,3>>(this->mesh_->geometryField());
+  std::shared_ptr<FieldVariable::FieldVariable<HighOrderFunctionSpaceType,3>> actualGeometryField
+    = std::make_shared<FieldVariable::FieldVariable<HighOrderFunctionSpaceType,3>>(this->functionSpace->geometryField());
 
   return OutputFieldVariables(
     this->geometryReference_,
@@ -43,48 +43,48 @@ getOutputFieldVariables()
   );
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
-setMesh(std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> mixedMesh)
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+void FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
+setFunctionSpace(std::shared_ptr<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>> mixedMesh)
 {
   mixedMesh_ = mixedMesh;
 
   // store high order mesh as mesh_
-  this->mesh_ = mixedMesh_->highOrderBasisOnMesh();
+  this->functionSpace = mixedMesh_->highOrderFunctionSpace();
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-std::shared_ptr<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>> FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+std::shared_ptr<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>> FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 mixedMesh()
 {
   return mixedMesh_;
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+void FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 initialize()
 {
   // call initialize of parent class
-  FiniteElementsSolidMechanics<HighOrderBasisOnMeshType,Term>::initialize();
+  FiniteElementsSolidMechanics<HighOrderFunctionSpaceType,Term>::initialize();
 
-  LOG(DEBUG) << "mesh has geometry field: " << this->mesh_->hasGeometryField();
+  LOG(DEBUG) << "functionSpace has geometry field: " << this->functionSpace->hasGeometryField();
   initializeFieldVariables();
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-void FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+void FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 initializeFieldVariables()
 {
   std::vector<std::string> unnamedSingleComponent({"0"});
-  this->pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderBasisOnMeshType,1>>(this->mixedMesh_->lowOrderBasisOnMesh(), "pressure", unnamedSingleComponent);
+  this->pressure_ = std::make_shared<FieldVariable::FieldVariable<LowOrderFunctionSpaceType,1>>(this->mixedMesh_->lowOrderFunctionSpace(), "pressure", unnamedSingleComponent);
 }
 
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename Term>
-const dof_no_t FiniteElements<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,Term>::
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
+const dof_no_t FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 getTangentStiffnessMatrixNRows()
 {
-  const int D = HighOrderBasisOnMeshType::dim();
-  return this->mixedMesh_->highOrderBasisOnMesh()->nDofsLocal() * D + this->mixedMesh_->lowOrderBasisOnMesh()->nDofsLocal();
+  const int D = HighOrderFunctionSpaceType::dim();
+  return this->mixedMesh_->highOrderFunctionSpace()->nDofsLocal() * D + this->mixedMesh_->lowOrderFunctionSpace()->nDofsLocal();
 }
 
 } // namespace Data

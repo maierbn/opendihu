@@ -19,13 +19,13 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 computeInverseMassMatrixTimesRightHandSide(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
   Vec &rightHandSide = this->data_.rightHandSide().valuesGlobal();   // rhs in weak formulation
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
 
   PetscErrorCode ierr;
 
@@ -58,12 +58,12 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   // this method computes output = M^{-1}*K*input
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
   Vec &rhs = this->data_.rightHandSide().valuesGlobal();
 
   // check if matrix and vector sizes match

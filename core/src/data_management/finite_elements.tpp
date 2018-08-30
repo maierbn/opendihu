@@ -11,7 +11,7 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 #include "partition/partitioned_petsc_mat.h"
@@ -19,38 +19,38 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
-FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
+FiniteElements(DihuContext context) : Data<FunctionSpaceType>(context)
 {
   //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 ~FiniteElements()
 {
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 initialize()
 {
   LOG(DEBUG) << "FiniteElements::initialize";
   
-  Data<BasisOnMeshType>::initialize();
+  Data<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor if there is any
-  DiffusionTensor<BasisOnMeshType::dim()>::initialize(this->context_.getPythonConfig());
+  DiffusionTensor<FunctionSpaceType::dim()>::initialize(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
-  const int D = this->mesh_->dimension();
-  const int nDofsPerNode = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode();
-  const int nDofsPerBasis = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerElement();
+  const int D = this->functionSpace_->dimension();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
+  const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
   const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
 
   // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
@@ -72,18 +72,18 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 createPetscObjects()
 {
   LOG(TRACE) << "FiniteElements::createPetscObjects";
 
-  // get the partitioning from the mesh
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition = this->mesh_->meshPartition();
+  // get the partitioning from the function space
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
   // create field variables on local partition
-  this->rhs_ = this->mesh_->template createFieldVariable<1>("rhs");
-  this->solution_ = this->mesh_->template createFieldVariable<1>("solution");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<1>("rhs");
+  this->solution_ = this->functionSpace_->template createFieldVariable<1>("solution");
 
   // create PETSc matrix object
 
@@ -93,15 +93,15 @@ createPetscObjects()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  LOG(DEBUG) << "d=" << this->mesh_->dimension()
+  LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
     << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
   int nComponents = 1;
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 finalAssembly()
 {
   this->stiffnessMatrix_->assembly(MAT_FINAL_ASSEMBLY);
@@ -119,50 +119,50 @@ finalAssembly()
 }
 
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 systemMatrix()
 {
   return this->systemMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 inverseLumpedMassMatrix()
 {
   return this->inverseLumpedMassMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<FunctionSpaceType,1> &FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 rightHandSide()
 {
   return *this->rhs_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FieldVariable::FieldVariable<BasisOnMeshType,1> &FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+FieldVariable::FieldVariable<FunctionSpaceType,1> &FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 solution()
 {
   return *this->solution_;
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -182,7 +182,7 @@ print()
   if (this->systemMatrix_)
     VLOG(4) << *this->systemMatrix_;
 
-  VLOG(4) << this->mesh_->geometryField();
+  VLOG(4) << this->functionSpace_->geometryField();
   
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_->valuesGlobal(), MAT_LOCAL, &info);
@@ -199,8 +199,8 @@ print()
   VLOG(4) << "======================";
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
   // if the massMatrix is already initialized do not initialize again
@@ -215,13 +215,13 @@ initializeMassMatrix()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   const int nComponents = 1;
-  this->massMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
+  this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 initializeSystemMatrix(Mat &systemMatrix)
 {
   // if the systemMatrix_ is already initialized do not initialize again
@@ -229,12 +229,12 @@ initializeSystemMatrix(Mat &systemMatrix)
     return;
 
   // the PETSc matrix object is created outside by MatMatMult
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
-  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, systemMatrix, "systemMatrix");
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
+  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, systemMatrix, "systemMatrix");
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 initializeInverseLumpedMassMatrix()
 {
   // if the inverseLumpedMassMatrix_ is already initialized do not initialize again
@@ -249,21 +249,21 @@ initializeInverseLumpedMassMatrix()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   const int nComponents = 1;
-  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
+  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
 }
 
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-typename FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::OutputFieldVariables FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+typename FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::OutputFieldVariables FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 getOutputFieldVariables()
 {
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryField
-    = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->geometryField());
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
+    = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
   /*
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> generalField;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> generalField;
 
-  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->fieldVariable("general"));
+  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->fieldVariable("general"));
   if (!generalField)
    generalField = geometryField;
   */

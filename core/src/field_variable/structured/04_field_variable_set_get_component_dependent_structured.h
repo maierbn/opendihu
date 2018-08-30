@@ -14,17 +14,17 @@ namespace FieldVariable
  */
 /* For >1 components
  */
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetComponent :
-  public FieldVariableSetGetStructured<BasisOnMeshType,nComponents>
+  public FieldVariableSetGetStructured<FunctionSpaceType,nComponents>
 {
 public:
 
   //! inherited constructors
-  using FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::FieldVariableSetGetStructured;
+  using FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::FieldVariableSetGetStructured;
 
   //! avoid name hiding of "getValue" in parent classes
-  using FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::getValue;
+  using FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::getValue;
 
   //! get a single value from local dof no. for all components
   std::array<double,nComponents> getValue(node_no_t dofLocalNo);
@@ -34,26 +34,26 @@ public:
 
 /** For 1 component
  */
-template<typename BasisOnMeshType>
-class FieldVariableSetGetComponent<BasisOnMeshType,1> :
-  public FieldVariableSetGetStructured<BasisOnMeshType,1>
+template<typename FunctionSpaceType>
+class FieldVariableSetGetComponent<FunctionSpaceType,1> :
+  public FieldVariableSetGetStructured<FunctionSpaceType,1>
 {
 public:
 
   //! inherited constructors
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::FieldVariableSetGetStructured;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::FieldVariableSetGetStructured;
 
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::getElementValues;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValue;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValuesWithGhosts;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::getValuesWithoutGhosts;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValuesWithGhosts;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValuesWithoutGhosts;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValue;
-  using FieldVariableSetGetStructured<BasisOnMeshType,1>::setValues;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::getElementValues;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValue;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValuesWithGhosts;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValuesWithoutGhosts;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValuesWithGhosts;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValuesWithoutGhosts;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValue;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValues;
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo);

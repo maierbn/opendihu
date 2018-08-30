@@ -14,49 +14,49 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+Data<FunctionSpaceType>::
 Data(DihuContext context) :
   context_(context), rankSubset_(nullptr)
 {
 }
 
-template<typename BasisOnMeshType>
-Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+Data<FunctionSpaceType>::
 ~Data()
 {
 }
 
-template<typename BasisOnMeshType>
-dof_no_t Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+dof_no_t Data<FunctionSpaceType>::
 nUnknownsLocalWithGhosts()
 {
-  return this->mesh_->nDofsLocalWithGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->functionSpace_->nDofsLocalWithGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
-template<typename BasisOnMeshType>
-dof_no_t Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+dof_no_t Data<FunctionSpaceType>::
 nUnknownsLocalWithoutGhosts()
 {
-  return this->mesh_->nDofsLocalWithoutGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->functionSpace_->nDofsLocalWithoutGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
-template<typename BasisOnMeshType>
-global_no_t Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+global_no_t Data<FunctionSpaceType>::
 nUnknownsGlobal()
 {
-  return this->mesh_->nDofsGlobal() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->functionSpace_->nDofsGlobal() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
 }
 
-template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::
-setMesh(std::shared_ptr<BasisOnMeshType> mesh)
+template<typename FunctionSpaceType>
+void Data<FunctionSpaceType>::
+setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace)
 {
-  this->mesh_ = mesh;
+  this->functionSpace_ = functionSpace;
 }
 
-template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+void Data<FunctionSpaceType>::
 initialize()
 {
   if (!this->initialized_)
@@ -67,22 +67,22 @@ initialize()
   }
   else
   {
-    LOG(WARNING) << "Initialize, mesh is already assigned";
+    LOG(WARNING) << "Initialize, functionSpace is already assigned";
   }
 }
 
-template<typename BasisOnMeshType>
-void Data<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+void Data<FunctionSpaceType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   rankSubset_ = std::make_shared<Partition::RankSubset>(rankSubset);
 }
   
-template<typename BasisOnMeshType>
-const std::shared_ptr<BasisOnMeshType> Data<BasisOnMeshType>::
-mesh() const
+template<typename FunctionSpaceType>
+const std::shared_ptr<FunctionSpaceType> Data<FunctionSpaceType>::
+functionSpace() const
 {
-  return this->mesh_;
+  return this->functionSpace_;
 }
 
 } // namespace Data

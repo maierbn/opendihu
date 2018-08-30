@@ -10,9 +10,9 @@ namespace SpatialDiscretization
 
 /** class used for timestepping as for diffusion equation
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class FiniteElementMethodTimeStepping :
-  public AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term>,
+  public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
   public DiscretizableInTime
 {
 public:
@@ -45,7 +45,7 @@ public:
   //! return the mesh that is stored in the data class
   std::shared_ptr<Mesh::Mesh> mesh();
 
-  typedef BasisOnMeshType BasisOnMesh;   ///< the BasisOnMesh type needed for time stepping scheme
+  typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:

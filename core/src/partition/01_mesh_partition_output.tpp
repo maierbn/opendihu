@@ -6,8 +6,8 @@
 #include "utility/mpi_utility.h"
 
 //! output mesh partition
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition)
+template<typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition)
 {
   meshPartition->output(stream);
   return stream;
@@ -15,8 +15,8 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPa
 
 
 //! output mesh partition
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, Partition::MeshPartition<BasisOnMeshType> meshPartition)
+template<typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, Partition::MeshPartition<FunctionSpaceType> meshPartition)
 {
   meshPartition.output(stream);
   return stream;

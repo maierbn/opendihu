@@ -4,26 +4,26 @@ namespace FieldVariable
 {
 
 //! get values from their global dof no.s for all components, this eventually does not get all values if there are multiple versions
-template<typename BasisOnMeshType>
-void FieldVariableVector<BasisOnMeshType,1>::
-computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField)
+template<typename FunctionSpaceType>
+void FieldVariableVector<FunctionSpaceType,1>::
+computeGradientField(FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()> &gradientField)
 {
   // initialize gradient field variable to 0
   gradientField.zeroEntries();
   gradientField.startVectorManipulation();
 
   // define constants
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
-  const int D = BasisOnMeshType::dim();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+  const int D = FunctionSpaceType::dim();
 
-  const dof_no_t nDofs = this->mesh_->nDofsLocal();
+  const dof_no_t nDofs = this->functionSpace_->nDofsLocal();
   std::vector<int> nSummands(nDofs,0.0);   ///< the number of elements that are adjacent to the node
 
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < this->mesh_->nElementsLocal(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < this->functionSpace_->nElementsLocal(); elementNo++)
   {
     // get global dof nos of this element
-    std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
 
     // compute gradient at every dof, as continuous to current element (gradients have discontinuities between elements at dofs)
     std::array<double,nDofsPerElement> solutionValues;
@@ -31,7 +31,7 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
-    this->mesh_->getElementGeometry(elementNo, geometryValues);
+    this->functionSpace_->getElementGeometry(elementNo, geometryValues);
 
     std::array<double,D> xi;
 
@@ -52,11 +52,11 @@ computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gra
       VLOG(2) << "element " << elementNo << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(BasisOnMeshType::computeJacobian(geometryValues, xi));
+      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
 
-      std::array<double,D> gradPhiWorldSpace = this->mesh_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+      std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
 
       dof_no_t dofNo = elementDofs[dofIndex];
 

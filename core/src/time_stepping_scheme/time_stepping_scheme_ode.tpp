@@ -16,7 +16,7 @@ TimeSteppingSchemeOde(DihuContext context, const std::string name) :
 }
 
 template<typename DiscretizableInTimeType>
-Data::TimeStepping<typename DiscretizableInTimeType::BasisOnMesh, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
 data()
 {
   return *data_;
@@ -32,15 +32,15 @@ setInitialValues()
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
-    const int nDofsGlobal = this->data_->mesh()->nDofsGlobal();
+    const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
     //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-    this->data_->mesh()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
+    this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {
-    const int nDofsLocal = this->data_->mesh()->nDofsLocalWithoutGhosts();
+    const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsLocal, localValues);
   }
   //LOG(DEBUG) << "set initial values to " << values;
@@ -96,7 +96,7 @@ initialize()
   discretizableInTime_.initialize(this->timeStepWidth_);
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-  data_->setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
+  data_->setFunctionSpace(std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh));
   
   // set component names in data
   std::vector<std::string> componentNames;

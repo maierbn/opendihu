@@ -1,18 +1,18 @@
 #include "partition/partitioned_petsc_vec.h"
 
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
-PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name) :
-  PartitionedPetscVecBase<BasisOnMeshType>(meshPartition, name)
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+PartitionedPetscVec<FunctionSpaceType,nComponents,DummyForTraits>::
+PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name) :
+  PartitionedPetscVecBase<FunctionSpaceType>(meshPartition, name)
 {
   createVector();
 }
 
 //! constructor from existing vector, values are not copied
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
-PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition(), name)
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+PartitionedPetscVec<FunctionSpaceType,nComponents,DummyForTraits>::
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs, std::string name) :
+  PartitionedPetscVecBase<FunctionSpaceType>(rhs.meshPartition(), name)
  
 {
   createVector();
@@ -26,11 +26,11 @@ PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::
 }
 
 //! constructor from existing vector, values are not copied
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 template<int nComponents2>
-PartitionedPetscVec<BasisOnMeshType,nComponents,DummyForTraits>::
-PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents2> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMeshType>(rhs.meshPartition(), name)
+PartitionedPetscVec<FunctionSpaceType,nComponents,DummyForTraits>::
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name) :
+  PartitionedPetscVecBase<FunctionSpaceType>(rhs.meshPartition(), name)
  
 {
   createVector();
@@ -43,8 +43,8 @@ PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents2> &rhs, std:
   }
 }
 
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 createVector()
 {
   PetscErrorCode ierr;
@@ -70,15 +70,15 @@ createVector()
 }
 
 //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 startVectorManipulation()
 {
 }
 
 //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 finishVectorManipulation()
 {
   assert(values_.size() == nComponents);
@@ -98,8 +98,8 @@ finishVectorManipulation()
 }
 
 //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
   assert(componentNo >= 0);
@@ -129,8 +129,8 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
 }
 
 //! wrapper to the PETSc VecSetValue, acting only on the local data
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
   assert(componentNo >= 0);
@@ -147,9 +147,9 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 }
 
 //! set values from another vector
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
-setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs)
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs)
 {
   assert(values_.size() == nComponents);
   
@@ -163,8 +163,8 @@ setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs)
 }
 
 //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   assert(componentNo >= 0);
@@ -194,16 +194,16 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 }
 
 //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   getValues(componentNo, ni, ix, y);
 }
 
 //! set all entries to zero, wraps VecZeroEntries
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 zeroEntries()
 {
   assert(values_.size() == nComponents);
@@ -218,8 +218,8 @@ zeroEntries()
 }
 
 //! get the local Vector of a specified component
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-Vec &PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+Vec &PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 valuesLocal(int componentNo)
 {
   assert(componentNo >= 0);
@@ -230,8 +230,8 @@ valuesLocal(int componentNo)
 }
 
 //! get the global Vector of a specified component
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-Vec &PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+Vec &PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 valuesGlobal(int componentNo)
 {
   assert(componentNo >= 0);
@@ -241,8 +241,8 @@ valuesGlobal(int componentNo)
   return values_[componentNo];
 }
 
-template<typename BasisOnMeshType, int nComponents, typename DummyForTraits>
-void PartitionedPetscVec<BasisOnMeshType, nComponents, DummyForTraits>::
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 output(std::ostream &stream)
 {
 #ifndef NDEBUG  
@@ -295,8 +295,8 @@ output(std::ostream &stream)
 #endif
 }
 
-template<typename BasisOnMeshType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<BasisOnMeshType,nComponents> &vector)
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &vector)
 {
   vector.output(stream);
   return stream;

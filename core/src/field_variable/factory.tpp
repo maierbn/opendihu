@@ -5,21 +5,21 @@
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 template <typename ...Args>
-std::shared_ptr<FieldVariableBase<BasisOnMeshType>> Factory<BasisOnMeshType>::
+std::shared_ptr<FieldVariableBase<FunctionSpaceType>> Factory<FunctionSpaceType>::
 makeShared(const int nComponents, Args && ...args)
 {
   switch (nComponents)
   {
     case 1:
-      return std::make_shared<FieldVariable<BasisOnMeshType,1>>(std::forward<Args>(args)...);
+      return std::make_shared<FieldVariable<FunctionSpaceType,1>>(std::forward<Args>(args)...);
     case 2:
-      return std::make_shared<FieldVariable<BasisOnMeshType,2>>(std::forward<Args>(args)...);
+      return std::make_shared<FieldVariable<FunctionSpaceType,2>>(std::forward<Args>(args)...);
     case 3:
-      return std::make_shared<FieldVariable<BasisOnMeshType,3>>(std::forward<Args>(args)...);
+      return std::make_shared<FieldVariable<FunctionSpaceType,3>>(std::forward<Args>(args)...);
     case 4:
-      return std::make_shared<FieldVariable<BasisOnMeshType,4>>(std::forward<Args>(args)...);
+      return std::make_shared<FieldVariable<FunctionSpaceType,4>>(std::forward<Args>(args)...);
     default:
       LOG(ERROR) << "Could not create field variable with nComponents=" << nComponents;
       break;
@@ -27,30 +27,30 @@ makeShared(const int nComponents, Args && ...args)
   return nullptr;
 };
 
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 template<typename FieldVariableType>
-std::shared_ptr<FieldVariableBase<BasisOnMeshType>> Factory<BasisOnMeshType>::
+std::shared_ptr<FieldVariableBase<FunctionSpaceType>> Factory<FunctionSpaceType>::
 createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std::vector<std::string> componentNames)
 {
   const int nComponents = componentNames.size();
   if (nComponents == 1)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,1>> result = std::make_shared<FieldVariable<BasisOnMeshType,1>>(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<FunctionSpaceType,1>> result = std::make_shared<FieldVariable<FunctionSpaceType,1>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 2)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,2>> result = std::make_shared<FieldVariable<BasisOnMeshType,2>>(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<FunctionSpaceType,2>> result = std::make_shared<FieldVariable<FunctionSpaceType,2>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 3)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,3>> result = std::make_shared<FieldVariable<BasisOnMeshType,3>>(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<FunctionSpaceType,3>> result = std::make_shared<FieldVariable<FunctionSpaceType,3>>(fieldVariable, name, componentNames);
     return result;
   }
   else if (nComponents == 4)
   {
-    std::shared_ptr<FieldVariable<BasisOnMeshType,4>> result = std::make_shared<FieldVariable<BasisOnMeshType,4>>(fieldVariable, name, componentNames);
+    std::shared_ptr<FieldVariable<FunctionSpaceType,4>> result = std::make_shared<FieldVariable<FunctionSpaceType,4>>(fieldVariable, name, componentNames);
     return result;
   }
   else

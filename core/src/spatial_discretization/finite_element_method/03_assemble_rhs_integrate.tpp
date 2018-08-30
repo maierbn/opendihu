@@ -6,7 +6,7 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.h"
 #include "field_variable/field_variable.h"
 
@@ -14,16 +14,16 @@ namespace SpatialDiscretization
 {
 
 // 1D,2D,3D rhs vector of Deformable mesh
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy>
-void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term, typename Dummy>
+void AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term, Dummy>::
 multiplyRightHandSideWithMassMatrix()
 {
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix " << D << "D";
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
@@ -31,9 +31,9 @@ multiplyRightHandSideWithMassMatrix()
           > EvaluationsArrayType;    // evaluations[nGP^D][nDofs][nDofs]
 
   // initialize variables
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
 
   // merge local changes on the partitioned vector
   rightHandSide.startVectorManipulation();
@@ -54,16 +54,16 @@ multiplyRightHandSideWithMassMatrix()
 
   // set entries in rhs vector
   // loop over local elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
   {
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     VLOG(2) << "element " << elementNo;
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
-    mesh->getElementGeometry(elementNo, geometry);
+    std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNo, geometry);
 
     // compute integral
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -72,10 +72,10 @@ multiplyRightHandSideWithMassMatrix()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = BasisOnMeshType::computeJacobian(geometry, xi);
+      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       // get evaluations of integrand which is defined in another class
-      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(jacobian,xi);
+      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(jacobian,xi);
 
     }  // function evaluations
 

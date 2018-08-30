@@ -45,8 +45,8 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
  
-  // here we have the type of the mesh with meshName (which is typedef to BasisOnMesh)
-  typedef typename FieldVariableType::BasisOnMesh BasisOnMesh;
+  // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
+  typedef typename FieldVariableType::FunctionSpace FunctionSpace;
 
   // if only the "parallel dataset element" stub which is needed in the master files, should be written
   if (onlyParallelDatasetElement)

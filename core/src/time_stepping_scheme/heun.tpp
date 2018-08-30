@@ -12,7 +12,7 @@ template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared <Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+  this->data_ = std::make_shared <Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
   this->outputWriterManager_.initialize(this->specificSettings_);
@@ -29,8 +29,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     << " n steps: " << this->numberTimeSteps_;
 
   // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
-  std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>> dataHeun
-    = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(this->data_);
+  std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>> dataHeun
+    = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
   // loop over time steps
   double currentTime = this->startTime_;

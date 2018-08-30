@@ -16,14 +16,14 @@ namespace SpatialDiscretization
 /** This class performs the nonlinear (Newton) solution process.
  * The nonlinear function to be solved is given by object->computeInternalMinusExternalVirtualWork(f);
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class SolidMechanicsNonlinearSolve :
-  public FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>,
-  public SolidMechanicsBoundaryConditions<BasisOnMeshType, Term>
+  public FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>,
+  public SolidMechanicsBoundaryConditions<FunctionSpaceType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodBase;
 
 protected:
   //! solve nonlinear system
@@ -40,7 +40,7 @@ protected:
   virtual void setFromSolverVariableSolution(Vec &solverSolutionVariable) = 0;
 
   //! compute and return the appropriate analytical stiffness matrix
-  virtual void computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix) = 0;
+  virtual void computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> solverStiffnessMatrix) = 0;
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
   virtual const int nLocalUnknowns() = 0;

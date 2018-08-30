@@ -9,10 +9,10 @@
 #include "mesh/type_traits.h"
 
 // forward declaration
-namespace BasisOnMesh 
+namespace FunctionSpace 
 {
 template<typename MeshType,typename BasisFunctionType>
-class BasisOnMesh; 
+class FunctionSpace; 
 }
 
 namespace Partition
@@ -21,7 +21,7 @@ namespace Partition
 /** Global numbering: such that each rank has its own contiguous subset of the total range.
  *  Local numbering: starting with 0, up to total number including ghost elements
  */
-template<typename BasisOnMeshType, typename DummyForTraits = typename BasisOnMeshType::Mesh>
+template<typename FunctionSpaceType, typename DummyForTraits = typename FunctionSpaceType::Mesh>
 class MeshPartition
 {
 };
@@ -45,7 +45,7 @@ class MeshPartition
  *  }
  */
 template<typename MeshType, typename BasisFunctionType>
-class MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>> :
+class MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>> :
   public MeshPartitionBase
 {
 public:
@@ -168,7 +168,7 @@ protected:
  *  Unstructured meshes should work for non-parallel execution, as usual.
  */
 template<int D, typename BasisFunctionType>
-class MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>> : 
+class MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>> : 
   public MeshPartitionBase
 {
 public:
@@ -226,10 +226,10 @@ protected:
 }  // namespace
 
 //! output mesh partition
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, Partition::MeshPartition<BasisOnMeshType> meshPartition);
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition);
+template<typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, Partition::MeshPartition<FunctionSpaceType> meshPartition);
+template<typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition);
 
 //! output local to global mapping
 std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlobalMapping);

@@ -30,10 +30,10 @@ namespace SpatialDiscretization
 
 // 1D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   LOG(TRACE) << "setMassMatrix 1D for Mesh::RegularFixed using stencils";
 
@@ -47,16 +47,16 @@ setMassMatrix()
   LOG(DEBUG) << "set entries of mass matrix";
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  double elementLength = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  double elementLength = functionSpace->meshWidth();
   double integralFactor = elementLength;
 
   LOG(DEBUG) << "Use settings nNodes0=" <<nNodes0<< ", elementLength=" << elementLength;
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
   this->data_.massMatrix()->zeroEntries();
 
   // massMatrix * f_strong = rhs_weak
@@ -112,10 +112,10 @@ setMassMatrix()
 
 // 2D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   LOG(TRACE) << "setMassMatrix 2D for Mesh::RegularFixed using stencils";
 
@@ -129,18 +129,18 @@ setMassMatrix()
   LOG(DEBUG) << "set entries of mass matrix 2D";
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1;
 
   LOG(DEBUG) << "elementLength0: " << elementLength0;
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
   this->data_.massMatrix()->zeroEntries();
 
   // massMatrix * f_strong = rhs_weak
@@ -314,10 +314,10 @@ setMassMatrix()
 
 // 3D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   LOG(TRACE) << "setMassMatrix 3D for Mesh::RegularFixed using stencils";
 
@@ -331,18 +331,18 @@ setMassMatrix()
   LOG(DEBUG) << "set entries of mass matrix 3D";
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
-  double elementLength2 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  node_no_t nNodes2 = functionSpace->nNodesLocalWithGhosts(2);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
+  double elementLength2 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix = this->data_.massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
   this->data_.massMatrix()->zeroEntries();
 
   // massMatrix * f_strong = rhs_weak

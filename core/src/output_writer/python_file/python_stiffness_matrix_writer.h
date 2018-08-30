@@ -35,12 +35,12 @@ public:
  */
 template<int D, typename BasisFunctionType, typename Term>
 class PythonStiffnessMatrixWriter<
-  Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>
+  Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>
 > :
   public NumpyFileWriter
 {
 public:
-  typedef Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> DataType;
+  typedef Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> DataType;
 
   //! write out solution to file filename as numpy array, as 1D data and in correct shape, also write rhs matrix
   static void writeNumpySolution(DataType &data, std::string filename);

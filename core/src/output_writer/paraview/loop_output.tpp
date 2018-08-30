@@ -36,16 +36,16 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
        std::string filename, PyObject *specificSettings)
 {
   // if mesh name is the specified meshName
-  if (currentFieldVariable->mesh()->meshName() == meshName)
+  if (currentFieldVariable->functionSpace()->meshName() == meshName)
   {
-    // here we have the type of the mesh with meshName (which is typedef to BasisOnMesh)
-    typedef typename CurrentFieldVariableType::element_type::BasisOnMesh BasisOnMesh;
+    // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
+    typedef typename CurrentFieldVariableType::element_type::FunctionSpace FunctionSpace;
    
     int nFieldVariablesInMesh = 0;
     LoopOverTuple::loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
     
     // call exfile writer to output all field variables with the meshName
-    ParaviewWriter<BasisOnMesh, OutputFieldVariablesType>::outputFile(filename, fieldVariables, meshName, currentFieldVariable->mesh(), nFieldVariablesInMesh, specificSettings);
+    ParaviewWriter<FunctionSpace, OutputFieldVariablesType>::outputFile(filename, fieldVariables, meshName, currentFieldVariable->functionSpace(), nFieldVariablesInMesh, specificSettings);
    
     return true;  // break iteration
   }

@@ -4,29 +4,29 @@
 
 #include "field_variable/structured/05_field_variable_data_structured_regular_fixed.h"
 #include "field_variable/field_variable_set_get.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace FieldVariable
 {
 
 /** FieldVariable class for RegularFixed mesh
  */
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetRegularFixed :
-  public FieldVariableData<BasisOnMeshType,nComponents>
+  public FieldVariableData<FunctionSpaceType,nComponents>
 {
 public:
 
   //! inherited constructor
-  using FieldVariableData<BasisOnMeshType,nComponents>::FieldVariableData;
+  using FieldVariableData<FunctionSpaceType,nComponents>::FieldVariableData;
 
-  using FieldVariableData<BasisOnMeshType,nComponents>::getValues;
-  using FieldVariableData<BasisOnMeshType,nComponents>::getElementValues;
-  using FieldVariableData<BasisOnMeshType,nComponents>::getValue;
-  using FieldVariableData<BasisOnMeshType,nComponents>::getValuesWithGhosts;
-  using FieldVariableData<BasisOnMeshType,nComponents>::getValuesWithoutGhosts;
-  using FieldVariableData<BasisOnMeshType,nComponents>::setValue;
-  using FieldVariableData<BasisOnMeshType,nComponents>::setValues;
+  using FieldVariableData<FunctionSpaceType,nComponents>::getValues;
+  using FieldVariableData<FunctionSpaceType,nComponents>::getElementValues;
+  using FieldVariableData<FunctionSpaceType,nComponents>::getValue;
+  using FieldVariableData<FunctionSpaceType,nComponents>::getValuesWithGhosts;
+  using FieldVariableData<FunctionSpaceType,nComponents>::getValuesWithoutGhosts;
+  using FieldVariableData<FunctionSpaceType,nComponents>::setValue;
+  using FieldVariableData<FunctionSpaceType,nComponents>::setValues;
 
   //! for a specific component, get all values
   void getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false);
@@ -46,16 +46,16 @@ public:
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values);
 
   //! for a specific component, get the values corresponding to all element-local dofs
-  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);
 
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs);
+  void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
 };
 
 };  // namespace

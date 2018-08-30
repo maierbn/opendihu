@@ -6,7 +6,7 @@
 
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 /** This is the base class of the CellmlAdapter, that handles common functionality.
  * nStates: number of states in one instance of the CellML problem
@@ -50,7 +50,7 @@ public:
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
   
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> BasisOnMesh;   ///< BasisOnMesh type
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> FunctionSpace;   ///< FunctionSpace type
 
 protected:
 

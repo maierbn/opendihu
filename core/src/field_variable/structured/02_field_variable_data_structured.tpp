@@ -10,18 +10,18 @@
 namespace FieldVariable
 {
 /*
-template<typename BasisOnMeshType, int nComponents>
-FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 FieldVariableDataStructured() :
-  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
+  FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
 }*/
 
 //! contructor as data copy with a different name (component names are the same)
-template<typename BasisOnMeshType, int nComponents>
-FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name) :
-  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
+template<typename FunctionSpaceType, int nComponents>
+FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents> &rhs, std::string name) :
+  FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
   this->componentNames_.resize(rhs.componentNames().size());
@@ -29,30 +29,30 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   
   this->name_ = name;
   this->isGeometryField_ = false;
-  this->mesh_ = rhs.mesh();
+  this->functionSpace_ = rhs.functionSpace();
 
-  assert(this->mesh_);
+  assert(this->functionSpace_);
   
 
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
     // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name);
   }
   else
   {
     // else create new values vector
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(this->functionSpace_->meshPartition(), name);
   }
 }
 
 //! contructor as data copy with a different name and different components
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template <int nComponents2>
-FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames) :
-  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
+FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames) :
+  FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   // initialize everything from other field variable
   assert(componentNames.size() == nComponents);
@@ -60,36 +60,36 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, st
   
   this->name_ = name;
   this->isGeometryField_ = false;
-  this->mesh_ = rhs.mesh();
+  this->functionSpace_ = rhs.functionSpace();
 
-  assert(this->mesh_);
+  assert(this->functionSpace_);
   
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())
   {
     // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(*rhs.partitionedPetscVec(), name);
   }
   else
   {
     // else create new values vector
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(this->functionSpace_->meshPartition(), name);
   }
 }
 
-//! constructor with mesh, name and components
-template<typename BasisOnMeshType, int nComponents>
-FieldVariableDataStructured<BasisOnMeshType,nComponents>::
-FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames, bool isGeometryField) :
-  FieldVariableComponents<BasisOnMeshType,nComponents>::FieldVariableComponents()
+//! constructor with functionSpace, name and components
+template<typename FunctionSpaceType, int nComponents>
+FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames, bool isGeometryField) :
+  FieldVariableComponents<FunctionSpaceType,nComponents>::FieldVariableComponents()
 {
   this->name_ = name;
   this->isGeometryField_ = isGeometryField;
-  this->mesh_ = mesh;
+  this->functionSpace_ = functionSpace;
 
-  assert(this->mesh_);
+  assert(this->functionSpace_);
   
-  std::shared_ptr<Mesh::Structured<BasisOnMeshType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<BasisOnMeshType::dim()>>(mesh);
+  //std::shared_ptr<Mesh::Structured<FunctionSpaceType::dim()>> meshStructured = std::static_pointer_cast<Mesh::Structured<FunctionSpaceType::dim()>>(functionSpace);
 
   // assign component names
   assert(nComponents == componentNames.size());
@@ -98,64 +98,64 @@ FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string n
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
    << ", components: " << nComponents;
 
-  bool usesStencils = (std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
-    || std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<2>>::value
-    || std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<3>>::value) &&
-    std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::LagrangeOfOrder<1>>::value;
+  bool usesStencils = (std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
+    || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<2>>::value
+    || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<3>>::value) &&
+    std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::LagrangeOfOrder<1>>::value;
 
   // create a new values vector for the new field variable
   if (!this->isGeometryField_ || !usesStencils)
   {
     LOG(DEBUG) << "create a geometry field without values_ vector";
-    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+    this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(this->functionSpace_->meshPartition(), name);
   }
 }
 
-template<typename BasisOnMeshType, int nComponents>
-FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 ~FieldVariableDataStructured()
 {
 }
 /*
-template<typename BasisOnMeshType, int nComponents>
-std::array<element_no_t, BasisOnMeshType::Mesh::dim()> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+std::array<element_no_t, FunctionSpaceType::Mesh::dim()> FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 nElementsPerCoordinateDirectionLocal() const
 {
-  return this->mesh_->nElementsPerCoordinateDirectionLocal();
+  return this->functionSpace_->nElementsPerCoordinateDirectionLocal();
 }*/
 /*
-template<typename BasisOnMeshType, int nComponents>
-dof_no_t FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+dof_no_t FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 nDofsLocalWithoutGhosts() const
 {
   // this is the same as this->nEntries_ / nComponents only if it is not the geometry mesh of StructuredRegularFixed mesh
-  return this->mesh_->nDofsLocalWithoutGhosts();
+  return this->functionSpace_->nDofsLocalWithoutGhosts();
 }*/
 
-template<typename BasisOnMeshType, int nComponents>
-Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 valuesLocal()
 {
   return this->values_->valuesLocal();
 }
 
-template<typename BasisOnMeshType, int nComponents>
-Vec &FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 valuesGlobal()
 {
   return this->values_->valuesGlobal();
 }
 
-template<typename BasisOnMeshType, int nComponents>
-std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 partitionedPetscVec()
 {
   return this->values_; 
 }
 /*
  * why is this needed?
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 initialize(std::string name, std::vector<std::string> &componentNames, bool isGeometryField)
 {
   // set member variables from arguments
@@ -175,8 +175,8 @@ initialize(std::string name, std::vector<std::string> &componentNames, bool isGe
 */
 
 //! write a exelem file header to a stream, for a particular element
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // output first line of header
@@ -190,7 +190,7 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
 
     // compose basis representation string, e.g. "l.Lagrange*l.Lagrange"
     std::stringstream basisFunction;
-    switch(BasisOnMeshType::BasisFunction::getBasisOrder())
+    switch(FunctionSpaceType::BasisFunction::getBasisOrder())
     {
     case 1:
       basisFunction << "l.";
@@ -204,19 +204,19 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
     default:
       break;
     }
-    basisFunction << BasisOnMeshType::BasisFunction::getBasisFunctionString();
+    basisFunction << FunctionSpaceType::BasisFunction::getBasisFunctionString();
 
-    stream << " " << name << ".   " << StringUtility::multiply<BasisOnMeshType::dim()>(basisFunction.str())
+    stream << " " << name << ".   " << StringUtility::multiply<FunctionSpaceType::dim()>(basisFunction.str())
       << ", no modify, standard node based." << std::endl
-      << "   #Nodes= " << BasisOnMeshType::nNodesPerElement() << std::endl;
+      << "   #Nodes= " << FunctionSpaceType::nNodesPerElement() << std::endl;
 
     // loop over nodes of a representative element
-    for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nNodesPerElement(); nodeIndex++)
+    for (int nodeIndex = 0; nodeIndex < FunctionSpaceType::nNodesPerElement(); nodeIndex++)
     {
-      stream << "   " << (nodeIndex+1) << ".  #Values=" << BasisOnMeshType::nDofsPerNode() << std::endl
+      stream << "   " << (nodeIndex+1) << ".  #Values=" << FunctionSpaceType::nDofsPerNode() << std::endl
         << "      Value indices: ";
       
-      for (int dofIndex = 0; dofIndex <BasisOnMeshType::nDofsPerNode(); dofIndex++)
+      for (int dofIndex = 0; dofIndex <FunctionSpaceType::nDofsPerNode(); dofIndex++)
       {
         stream << " " << dofIndex + 1;
       }
@@ -238,8 +238,8 @@ outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, in
 }
 
 //! write a exnode file header to a stream, for a particular element
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo)
 {
 /* example output:
@@ -259,20 +259,20 @@ outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &val
     std::string name = this->componentNames_[componentNo];
     stream << "  " << name << ".  Value index=" << valueIndex+1 << ", #Derivatives= 0" << std::endl;
 
-    valueIndex += BasisOnMeshType::nDofsPerNode();
+    valueIndex += FunctionSpaceType::nDofsPerNode();
   }
 }
 
 //! tell if 2 elements have the same exfile representation, i.e. same number of versions
-template<typename BasisOnMeshType, int nComponents>
-bool FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+bool FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
 {
   return true;   // structured meshes do not have exfile representations
 }
 
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableDataStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 output(std::ostream &stream) const
 {
   stream << "\"" << this->name_ << "\""

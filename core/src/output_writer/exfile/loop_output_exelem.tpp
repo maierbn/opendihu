@@ -35,18 +35,18 @@ outputExelem(CurrentFieldVariableType currentFieldVariable, const OutputFieldVar
              std::ofstream &file, std::shared_ptr<Mesh::Mesh> &mesh)
 {
   // if mesh name is the specified meshName
-  if (currentFieldVariable->mesh()->meshName() == meshName)
+  if (currentFieldVariable->functionSpace()->meshName() == meshName)
   {
-    // here we have the type of the mesh with meshName (which is typedef to BasisOnMesh)
-    typedef typename CurrentFieldVariableType::element_type::BasisOnMesh BasisOnMesh;
+    // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
+    typedef typename CurrentFieldVariableType::element_type::FunctionSpace FunctionSpace;
    
     int nFieldVariablesInMesh = 0;
     LoopOverTuple::loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
     // get mesh
-    mesh = currentFieldVariable->mesh();
+    mesh = currentFieldVariable->functionSpace();
     
     // call exfile writer to output all field variables with the meshName
-    ExfileWriter<BasisOnMesh, OutputFieldVariablesType>::outputExelem(file, fieldVariables, meshName, currentFieldVariable->mesh(), nFieldVariablesInMesh);
+    ExfileWriter<FunctionSpace, OutputFieldVariablesType>::outputExelem(file, fieldVariables, meshName, currentFieldVariable->functionSpace(), nFieldVariablesInMesh);
    
     return true;  // break iteration
   }

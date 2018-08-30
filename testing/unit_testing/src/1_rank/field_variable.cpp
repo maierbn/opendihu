@@ -44,13 +44,13 @@ config = {
   typedef Mesh::StructuredDeformableOfDimension<2> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMeshType>> FieldVariableBaseType;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> FieldVariable1Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,2>> FieldVariable2Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> FieldVariable3Type;
+  typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(finiteElementMethod.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
   mesh->initialize();
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
@@ -61,9 +61,9 @@ config = {
   FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
   
   
-  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(aBase);
-  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(bBase);
-  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,1>>(cBase);
+  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);
+  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(bBase);
+  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,1>>(cBase);
   
   // set all to 0.0
   a->setValues(0.0);
@@ -140,10 +140,10 @@ config = {
    */
 // dofs element 1: 2,3,4, 7,8,9, 12,13,14
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values8;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values8;
   c->getElementValues(1.0, values8);
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference8 = {
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference8 = {
     3.0, 0.0, 1.0,  4.0, 2.0, 0.0,  12.0, 13.0, 14.0
   };
   ASSERT_EQ(values8, reference8);
@@ -227,25 +227,25 @@ config = {
   
   //! for a specific component, get the values corresponding to all element-local dofs
   // component 0
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values5;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values5;
   a->getElementValues(0, 1, values5);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference5 = {5.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference5 = {5.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0};
   ASSERT_EQ(values5,reference5);
   
   std::cout<<"-3";
   // component 1
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values6;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values6;
   a->getElementValues(1, 1, values6);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference6 = {6.0, 0.0, 2.0, 8.0, 4.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference6 = {6.0, 0.0, 2.0, 8.0, 4.0, 0.0, 0.0, 0.0, 0.0};
   ASSERT_EQ(values6,reference6);
   
   
   
   std::cout<<"--4";
   //! get the values corresponding to all element-local dofs for all components
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> values7;
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> values7;
   a->getElementValues(1, values7);
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> reference7 = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({1.0, 2.0}), Vec2({7.0, 8.0}), Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> reference7 = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({1.0, 2.0}), Vec2({7.0, 8.0}), Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
   
   std::cout<<"--5";
   ASSERT_EQ(values7,reference7);
@@ -274,19 +274,19 @@ config = {
   /*
    * 
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs);
+  void setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs);
   */
   
   /*
   //! create a non-geometry field field variable with no values being set, with given component names
-  std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
+  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
   
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
-  std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMesh<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
+  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
   
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
   template <int nComponents>
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
   */
   
   /*
@@ -315,10 +315,10 @@ config = {
   
   //! for a specific component, get the values corresponding to all element-local dofs
   template<int N>
-  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
   
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
  
   //! for a specific component, get a single value from global dof no.
   double getValue(int componentNo, node_no_t dofGlobalNo);
@@ -333,7 +333,7 @@ config = {
   
   
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
   
   //! get a single value from global dof no. for all components
   double getValue(node_no_t dofGlobalNo);
@@ -377,13 +377,13 @@ config = {
   typedef Mesh::StructuredRegularFixedOfDimension<2> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMeshType>> FieldVariableBaseType;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> FieldVariable1Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,2>> FieldVariable2Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> FieldVariable3Type;
+  typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(finiteElementMethod.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
@@ -393,9 +393,9 @@ config = {
   FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
   
   
-  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(aBase);
-  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(bBase);
-  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,1>>(cBase);
+  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);
+  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(bBase);
+  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,1>>(cBase);
   
   // set all to 0.0
   a->setValues(0.0);
@@ -470,10 +470,10 @@ config = {
    */
 // dofs element 1: 2,3,4, 7,8,9, 12,13,14
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values8;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values8;
   c->getElementValues(1.0, values8);
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference8 = {
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference8 = {
     3.0, 0.0, 1.0,  4.0, 2.0, 0.0,  12.0, 13.0, 14.0
   };
   ASSERT_EQ(values8, reference8);
@@ -554,23 +554,23 @@ config = {
   
   //! for a specific component, get the values corresponding to all element-local dofs
   // component 0
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values5;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values5;
   a->getElementValues(0, 1, values5);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference5 = {5.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference5 = {5.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0};
   ASSERT_EQ(values5,reference5);
   
   // component 1
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values6;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values6;
   a->getElementValues(1, 1, values6);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference6 = {6.0, 0.0, 2.0, 8.0, 4.0, 0.0, 0.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference6 = {6.0, 0.0, 2.0, 8.0, 4.0, 0.0, 0.0, 0.0, 0.0};
   ASSERT_EQ(values6,reference6);
   
   
   
   //! get the values corresponding to all element-local dofs for all components
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> values7;
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> values7;
   a->getElementValues(1, values7);
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> reference7 = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({1.0, 2.0}), Vec2({7.0, 8.0}), Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> reference7 = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({1.0, 2.0}), Vec2({7.0, 8.0}), Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
   
   ASSERT_EQ(values7,reference7);
   
@@ -628,13 +628,13 @@ config = {
   typedef Mesh::UnstructuredDeformableOfDimension<2> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
   
-  typedef BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType> BasisOnMeshType;
-  typedef std::shared_ptr<FieldVariable::FieldVariableBase<BasisOnMeshType>> FieldVariableBaseType;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> FieldVariable1Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,2>> FieldVariable2Type;
-  typedef std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> FieldVariable3Type;
+  typedef FunctionSpace::FunctionSpace<MeshType,BasisFunctionType> FunctionSpaceType;
+  typedef std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpaceType>> FieldVariableBaseType;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FieldVariable1Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(finiteElementMethod.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
@@ -644,9 +644,9 @@ config = {
   FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
   
   
-  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(aBase);
-  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,2>>(bBase);
-  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,1>>(cBase);
+  FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);
+  FieldVariable2Type b = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(bBase);
+  FieldVariable1Type c = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,1>>(cBase);
   
   // set all to 0.0
   a->setValues(0.0);
@@ -718,10 +718,10 @@ config = {
    */
 // dofs element 1: 2,9,10, 5,11,12, 8,13,14
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values8;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values8;
   c->getElementValues(1.0, values8);
   
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference8 = {
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference8 = {
     3.0, 0.0, 5.0,  5.0,11.0,12.0,  2.0, 13.0, 14.0
   };
   ASSERT_EQ(values8, reference8);
@@ -803,23 +803,23 @@ config = {
   
   //! for a specific component, get the values corresponding to all element-local dofs
   // component 0
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values5;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values5;
   a->getElementValues(0, 1, values5);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference5 = {5.0, 0.0, 9.0, 1.0, 0.0, 0.0, 3.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference5 = {5.0, 0.0, 9.0, 1.0, 0.0, 0.0, 3.0, 0.0, 0.0};
   ASSERT_EQ(values5,reference5);
   
   // component 1
-  std::array<double,BasisOnMeshType::nDofsPerElement()> values6;
+  std::array<double,FunctionSpaceType::nDofsPerElement()> values6;
   a->getElementValues(1, 1, values6);
-  std::array<double,BasisOnMeshType::nDofsPerElement()> reference6 = {6.0, 0.0,10.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0};
+  std::array<double,FunctionSpaceType::nDofsPerElement()> reference6 = {6.0, 0.0,10.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0};
   ASSERT_EQ(values6,reference6);
   
   
   
   //! get the values corresponding to all element-local dofs for all components
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> values7;
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> values7;
   a->getElementValues(1, values7);
-  std::array<Vec2,BasisOnMeshType::nDofsPerElement()> reference7 
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> reference7 
     = {Vec2({5.0, 6.0}), Vec2({0.0, 0.0}), Vec2({9.0, 10.0}), Vec2({1.0, 2.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0}), 
        Vec2({3.0, 4.0}), Vec2({0.0, 0.0}), Vec2({0.0, 0.0})};
   

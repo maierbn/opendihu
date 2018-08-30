@@ -4,14 +4,14 @@
 #include <memory>
 #include <sstream>
 
-#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+#include "function_space/00_function_space_base_dim.h"
 
 namespace OutputWriter
 {
 
 template<int D,typename BasisFunctionType,typename Term>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
-writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
+writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
   // TODO: change to data.OutputFieldVariables instead of data.solution
 
@@ -35,7 +35,7 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
     dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirectionLocal(i) + BasisFunctionType::nDofsPerNode());
 
     nEntries[i] = dofsPerRow * 1;
@@ -51,8 +51,8 @@ writeNumpySolution(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::Structure
 }
 
 template<int D,typename BasisFunctionType,typename Term>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
-writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
+writeMatrices(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
   // solution and rhs vectors in mesh shape
   // determine file names
@@ -76,8 +76,8 @@ writeMatrices(Data::FiniteElements<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegu
   std::vector<long int> nEntries(D);
   for (int i=0; i<D; i++)
   {
-    int averageNDofsPerElement1D = BasisOnMesh::BasisOnMeshBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.mesh()->nElementsPerCoordinateDirectionLocal(i) + BasisFunctionType::nDofsPerNode());
+    int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+    dof_no_t dofsPerRow = (averageNDofsPerElement1D * data.functionSpace()->nElementsPerCoordinateDirectionLocal(i) + BasisFunctionType::nDofsPerNode());
 
     nEntries[i] = dofsPerRow;
   }

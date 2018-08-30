@@ -13,9 +13,9 @@ namespace FieldVariable
 using namespace StringUtility;
 
 //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   assert(this->values_);
@@ -39,8 +39,8 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 }
 
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -49,17 +49,17 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 }
 
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
 }
 
 //! for a specific component, get values from their local dof no.s
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -68,8 +68,8 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
 }
 
 //! for a specific component, get values from their local dof no.s
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -78,8 +78,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 }
 
 //! for a specific component, get a single value from local dof no.
-template<typename BasisOnMeshType, int nComponents>
-double FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+double FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValue(int componentNo, node_no_t dofLocalNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -87,25 +87,25 @@ getValue(int componentNo, node_no_t dofLocalNo)
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
   
   this->component_[componentNo].getElementValues(elementNo, values);
 }
 
 //! get the values corresponding to all element-local dofs for all components
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(this->values_);
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   const std::vector<dof_no_t> &dofLocalNo = this->elementToDofMapping_->getElementDofs(elementNo);
   
@@ -128,15 +128,15 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 }
 
 //! copy the values from another field variable of the same type
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
-setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
   this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(this->nComponents == 1 && nComponents == 1);
@@ -149,13 +149,13 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &v
 }
 
 //! set value for all dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(double value)
 {
   // get number of dofs
-  assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nDofsLocalWithoutGhosts();
+  assert(this->functionSpace_);
+  const dof_no_t nDofs = this->functionSpace_->nDofsLocalWithoutGhosts();
 
   std::vector<double> valueBuffer(nDofs,value);
   
@@ -166,8 +166,8 @@ setValues(double value)
 }
 
 //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
   assert(dofNosLocal.size() == values.size());
@@ -191,8 +191,8 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
 }
 
 //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
   assert(this->values_);
@@ -207,57 +207,57 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 }
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   assert(this->values_);
  
-  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+  this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
 }
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  assert(this->mesh_);
-  assert(this->mesh_->meshPartition());
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(this->functionSpace_);
+  assert(this->functionSpace_->meshPartition());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
   assert(this->values_);
    
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
-  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+  this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
 //! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   
-  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+  this->setValues(this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set values for all components for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
   
-  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+  this->setValues(this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 zeroEntries()
 {
   assert(this->values_);
@@ -265,8 +265,8 @@ zeroEntries()
 }
   
 //! calls PETSc functions to "assemble" the vector, i.e. flush the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetUnstructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 finishVectorManipulation()
 {
   assert(this->values_);

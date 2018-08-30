@@ -33,7 +33,7 @@ outputHeaderExelem(CurrentFieldVariableType currentFieldVariable, int &fieldVari
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo)
 {
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
-  if (currentFieldVariable->mesh()->meshName() != meshName)
+  if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {
     return false;  // do not break iteration
   }

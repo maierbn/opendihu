@@ -16,12 +16,12 @@ namespace Data
 /**  The datastructures used for Heun timestepping schemes, store all data as of timestepping
  *   schemes and an additional intermediate increment vector.
   */
-template<typename BasisOnMeshType, int nComponents>
-class TimeSteppingHeun : public TimeStepping<BasisOnMeshType,nComponents>
+template<typename FunctionSpaceType, int nComponents>
+class TimeSteppingHeun : public TimeStepping<FunctionSpaceType,nComponents>
 {
 public:
 
-  typedef FieldVariable::FieldVariable<BasisOnMeshType,nComponents> FieldVariableType;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
 
   //! constructor
   TimeSteppingHeun(DihuContext context);

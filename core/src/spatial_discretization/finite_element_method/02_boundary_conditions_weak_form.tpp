@@ -11,38 +11,38 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<BasisOnMeshType,QuadratureType,Term,Dummy>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
   applyBoundaryConditionsWeakForm();
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term,typename Dummy>
-void BoundaryConditions<BasisOnMeshType,QuadratureType,Term,Dummy>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditionsWeakForm()
 {
-  std::shared_ptr<BasisOnMeshType> mesh = this->data_.mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
 
   // add weak form of Dirichlet BC to rhs
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   int nDofs = 0;
   if (inputMeshIsGlobal)
   {
-    nDofs = mesh->nDofsGlobal();
+    nDofs = functionSpace->nDofsGlobal();
   }
   else
   {
-    nDofs = mesh->nDofsLocalWithoutGhosts();
+    nDofs = functionSpace->nDofsLocalWithoutGhosts();
   }
 
   LOG(TRACE) << "applyBoundaryConditionsWeakForm";
 
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   rightHandSide.startVectorManipulation();
 
@@ -106,22 +106,22 @@ applyBoundaryConditionsWeakForm()
   std::vector<std::pair<int, double>>::const_iterator boundaryConditionIter = boundaryConditions.begin();
 
   // loop over local elements
-  for (element_no_t elementNoLocal = 0; elementNoLocal < mesh->nElementsLocal(); elementNoLocal++)
+  for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
     // loop over the nodes of this element
     int elementalDofIndex = 0;
-    for (int nodeIndex = 0; nodeIndex < BasisOnMeshType::nNodesPerElement(); nodeIndex++)
+    for (int nodeIndex = 0; nodeIndex < FunctionSpaceType::nNodesPerElement(); nodeIndex++)
     {
       // get global or local nodeNo of current node (depending on inputMeshIsGlobal)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
       {
-        global_no_t elementNoGlobal = mesh->meshPartition()->getElementNoGlobal(elementNoLocal);
-        nodeNo = mesh->getNodeNoGlobal(elementNoGlobal, nodeIndex);
+        global_no_t elementNoGlobal = functionSpace->meshPartition()->getElementNoGlobal(elementNoLocal);
+        nodeNo = functionSpace->getNodeNoGlobal(elementNoGlobal, nodeIndex);
       }
       else
       {
-        nodeNo = mesh->getNodeNo(elementNoLocal, nodeIndex);
+        nodeNo = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
       }
 
       // loop over dofs of node
@@ -167,7 +167,7 @@ applyBoundaryConditionsWeakForm()
           }
 
           // also store localDofNo
-          dof_no_t dofLocalNo = mesh->getDofNo(elementNoLocal, elementalDofIndex);
+          dof_no_t dofLocalNo = functionSpace->getDofNo(elementNoLocal, elementalDofIndex);
           boundaryConditionDofLocalNos.push_back(dofLocalNo);
           boundaryConditionValues.push_back(boundaryConditionIter->second);
         }
@@ -197,9 +197,9 @@ applyBoundaryConditionsWeakForm()
     }
   }
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
   typedef std::array<
             EvaluationsType,
@@ -213,11 +213,11 @@ applyBoundaryConditionsWeakForm()
   for (typename std::vector<ElementWithNodes>::const_iterator iter = boundaryConditionElements.cbegin(); iter != boundaryConditionElements.cend(); iter++)
   {
     element_no_t elementNoLocal = iter->elementNoLocal;
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNoLocal);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
-    mesh->getElementGeometry(elementNoLocal, geometry);
+    std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNoLocal, geometry);
 
     // compute integral
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -226,11 +226,11 @@ applyBoundaryConditionsWeakForm()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = BasisOnMeshType::computeJacobian(geometry, xi);
+      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(this->data_, jacobian, xi);
+        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_, jacobian, xi);
 
     }  // function evaluations
 

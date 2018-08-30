@@ -16,14 +16,14 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename BaseDataType>
-StreamlineTracer<BasisOnMeshType,BaseDataType>::
-StreamlineTracer(DihuContext context) : Data<BasisOnMeshType>(context), fibreNo_(0)
+template<typename FunctionSpaceType,typename BaseDataType>
+StreamlineTracer<FunctionSpaceType,BaseDataType>::
+StreamlineTracer(DihuContext context) : Data<FunctionSpaceType>(context), fibreNo_(0)
 {
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+StreamlineTracer<FunctionSpaceType,BaseDataType>::
 ~StreamlineTracer()
 {
   // free PETSc objects
@@ -34,35 +34,35 @@ StreamlineTracer<BasisOnMeshType,BaseDataType>::
   }
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 setBaseData(std::shared_ptr<BaseDataType> baseData)
 {
   baseData_ = baseData;
 
-  // set mesh
-  this->setMesh(baseData_->mesh());
+  // set function space
+  this->setFunctionSpace(baseData_->functionSpace());
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 createPetscObjects()
 {
-  LOG(DEBUG) << "StreamlineTracer<BasisOnMeshType,BaseDataType>::createPetscObjects()" << std::endl;
-  assert(this->mesh_);
+  LOG(DEBUG) << "StreamlineTracer<FunctionSpaceType,BaseDataType>::createPetscObjects()" << std::endl;
+  assert(this->functionSpace_);
   
   // create partitioning
-  Partition::MeshPartition<BasisOnMeshType> partition = this->context_.template createPartitioning<BasisOnMeshType>(this->rankSubset_, this->mesh_);
+  Partition::MeshPartition<FunctionSpaceType> partition = this->context_.template createPartitioning<FunctionSpaceType>(this->rankSubset_, this->functionSpace_);
   
   // create field variables on local partition
-  this->gradient_ = this->mesh_->template createFieldVariable<3>("gradient", partition);
+  this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient", partition);
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 createFibreMesh(const std::vector<Vec3> &nodePositions)
 {
-  std::shared_ptr<MeshFibre> meshPtr; 
+  std::shared_ptr<FunctionSpaceFibre> meshPtr;
  
   // create name for fibre mesh 
   std::stringstream name;
@@ -74,8 +74,8 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
   std::array<element_no_t,1> nElementsPerCoordinateDirection{nElements}; 
   
   // create mesh by meshManager
-  meshPtr = std::static_pointer_cast<MeshFibre>(
-     this->context_.meshManager()->template createMesh<MeshFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection));
+  meshPtr = std::static_pointer_cast<FunctionSpaceFibre>(
+     this->context_.meshManager()->template createMesh<FunctionSpaceFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection));
   
   // get geometry field 
   std::shared_ptr<FieldVariableFibreGeometry> geometryField = std::make_shared<FieldVariableFibreGeometry>(meshPtr->geometryField());
@@ -84,36 +84,36 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
   this->fibreGeometry_.push_back(geometryField);
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+FieldVariable::FieldVariable<FunctionSpaceType,3> &StreamlineTracer<FunctionSpaceType,BaseDataType>::
 gradient()
 {
   return *this->gradient_;
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-dof_no_t StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+dof_no_t StreamlineTracer<FunctionSpaceType,BaseDataType>::
 nNodesLocalWithGhosts()
 {
-  return this->mesh_->nNodesLocalWithGhosts();
+  return this->functionSpace_->nNodesLocalWithGhosts();
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-dof_no_t StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+dof_no_t StreamlineTracer<FunctionSpaceType,BaseDataType>::
 nNodesLocalWithoutGhosts()
 {
-  return this->mesh_->nNodesLocalWithoutGhosts();
+  return this->functionSpace_->nNodesLocalWithoutGhosts();
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-constexpr int StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+constexpr int StreamlineTracer<FunctionSpaceType,BaseDataType>::
 getNDofsPerNode()
 {
   return 1;
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -124,12 +124,12 @@ print()
   VLOG(4) << "======================";
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-typename StreamlineTracer<BasisOnMeshType,BaseDataType>::OutputFieldVariables StreamlineTracer<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+typename StreamlineTracer<FunctionSpaceType,BaseDataType>::OutputFieldVariables StreamlineTracer<FunctionSpaceType,BaseDataType>::
 getOutputFieldVariables()
 {
   return std::tuple_cat(baseData_->getOutputFieldVariables(),
-                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>>(gradient_),
+                        std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(gradient_),
                         std::tuple<std::vector<std::shared_ptr<FieldVariableFibreGeometry>>>(fibreGeometry_)
                        );
 }

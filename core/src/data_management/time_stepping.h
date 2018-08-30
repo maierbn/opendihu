@@ -19,12 +19,12 @@ namespace Data
  *   The time stepping works independent of that constant, it is only important for the output files, how many values there are associated with a single node.
  *   E.g. for a cellml model the nComponents should be set to the number of components of this model.
   */
-template<typename BasisOnMeshType, int nComponents>
-class TimeStepping : public Data<BasisOnMeshType>
+template<typename FunctionSpaceType, int nComponents>
+class TimeStepping : public Data<FunctionSpaceType>
 {
 public:
 
-  typedef FieldVariable::FieldVariable<BasisOnMeshType,nComponents> FieldVariableType;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
 
   //! constructor
   TimeStepping(DihuContext context);
@@ -60,7 +60,7 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometry
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariableType>  // solution
   > OutputFieldVariables;
 

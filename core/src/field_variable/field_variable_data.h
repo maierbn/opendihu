@@ -5,7 +5,7 @@
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType,int nComponents>
+template<typename FunctionSpaceType,int nComponents>
 class FieldVariableData
 {
 public:

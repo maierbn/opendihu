@@ -17,35 +17,35 @@ namespace SpatialDiscretization
  */
 /** Helper template
  */
-template<typename HighOrderBasisOnMeshType, int completePolynomialOrder>
-using MixedBasisOnMeshTemplate =
-BasisOnMesh::Mixed<
-  BasisOnMesh::BasisOnMesh<
-    typename HighOrderBasisOnMeshType::Mesh,
-    BasisFunction::CompletePolynomialOfDimensionAndOrder<HighOrderBasisOnMeshType::Mesh::dim(),completePolynomialOrder>
+template<typename HighOrderFunctionSpaceType, int completePolynomialOrder>
+using MixedFunctionSpaceTemplate =
+FunctionSpace::Mixed<
+  FunctionSpace::FunctionSpace<
+    typename HighOrderFunctionSpaceType::Mesh,
+    BasisFunction::CompletePolynomialOfDimensionAndOrder<HighOrderFunctionSpaceType::Mesh::dim(),completePolynomialOrder>
   >,
-  HighOrderBasisOnMeshType
+  HighOrderFunctionSpaceType
 >;
 
 /** u-p Mixed formulation with static condensation of the pressure.
  * Specialisation for incompressible solid mechanics, mixed formulation with static condensation
  */
-template<typename HighOrderBasisOnMeshType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
+template<typename HighOrderFunctionSpaceType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodMatrix<
-  MixedBasisOnMeshTemplate<HighOrderBasisOnMeshType, completePolynomialOrder>,
+  MixedFunctionSpaceTemplate<HighOrderFunctionSpaceType, completePolynomialOrder>,
   MixedQuadratureType,
   Term,
-  Mesh::isDeformable<typename HighOrderBasisOnMeshType::Mesh>,
+  Mesh::isDeformable<typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 > :
-  public FiniteElementMethodBase<MixedBasisOnMeshTemplate<HighOrderBasisOnMeshType, completePolynomialOrder>, MixedQuadratureType, Term>,
-  public SolidMechanicsUtility<HighOrderBasisOnMeshType, Term>
+  public FiniteElementMethodBase<MixedFunctionSpaceTemplate<HighOrderFunctionSpaceType, completePolynomialOrder>, MixedQuadratureType, Term>,
+  public SolidMechanicsUtility<HighOrderFunctionSpaceType, Term>
 {
 public:
-  typedef MixedBasisOnMeshTemplate<HighOrderBasisOnMeshType, completePolynomialOrder> MixedBasisOnMesh;
+  typedef MixedFunctionSpaceTemplate<HighOrderFunctionSpaceType, completePolynomialOrder> MixedFunctionSpace;
 
   // use constructor of base class
-  using FiniteElementMethodBase<MixedBasisOnMesh, MixedQuadratureType, Term>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<MixedFunctionSpace, MixedQuadratureType, Term>::FiniteElementMethodBase;
 
   //! assemble the stiffness matrix
   void setStiffnessMatrix();
@@ -54,26 +54,26 @@ public:
 
 /** u-p Mixed formulation
  * Specialisation for incompressible solid mechanics, mixed formulation without static condensation.
- * The solverSolutionVariable contains the D components of displacements based on HighOrderBasisOnMeshType, then 1 component of pressure based on LowOrderBasisOnMeshType.
+ * The solverSolutionVariable contains the D components of displacements based on HighOrderFunctionSpaceType, then 1 component of pressure based on LowOrderFunctionSpaceType.
  */
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 > :
-  public SolidMechanicsCommon<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, HighOrderBasisOnMeshType, MixedQuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<BasisOnMeshType, MixedQuadratureType, Term>
+  public SolidMechanicsCommon<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, HighOrderFunctionSpaceType, MixedQuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<FunctionSpaceType, MixedQuadratureType, Term>
 {
 public:
-  typedef BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType> MixedBasisOnMesh;
+  typedef FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType> MixedFunctionSpace;
 
   // use constructor of base class
-  using SolidMechanicsCommon<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, HighOrderBasisOnMeshType, MixedQuadratureType, Term>::SolidMechanicsCommon;
+  using SolidMechanicsCommon<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, HighOrderFunctionSpaceType, MixedQuadratureType, Term>::SolidMechanicsCommon;
 
   //! assemble the stiffness matrix
-  void setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>> stiffnessMatrix);
+  void setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderFunctionSpaceType>> stiffnessMatrix);
 
   //! set the internal displacements and pressure variables as copy of the given values
   void setFromSolverVariableSolution(Vec &solverSolutionVariable);
@@ -90,7 +90,7 @@ protected:
   void preparePressureInterpolation(element_no_t elementNo) override;
 
   //! get the pressure in the current element (set previously by preparePressureInterpolation), interpolated for mixed formulation, by constitutive equation from J for penalty formulation
-  double getPressure(double deformationGradientDeterminant, VecD<HighOrderBasisOnMeshType::dim()> xi, double &pressureTilde) override;
+  double getPressure(double deformationGradientDeterminant, VecD<HighOrderFunctionSpaceType::dim()> xi, double &pressureTilde) override;
 
   //! compute the D_δp Π_L = integral (J-1)*δp dV, store at position in result after displacements
   void computeIncompressibilityConstraint(Vec &result);
@@ -99,29 +99,29 @@ protected:
   const dof_no_t getPressureDofOffset();
 
 
-  std::array<double,LowOrderBasisOnMeshType::nDofsPerElement()> pressureValuesCurrentElement_;  ///< the pressure values of the current element, to be used for interpolating the pressure. They are set by preparePressureInterpolation and used by getPressure
+  std::array<double,LowOrderFunctionSpaceType::nDofsPerElement()> pressureValuesCurrentElement_;  ///< the pressure values of the current element, to be used for interpolating the pressure. They are set by preparePressureInterpolation and used by getPressure
 };
 
 /** Penalty
  * Specialisation for incompressible solid mechanics, not mixed formulation, i.e. penalty formulation,
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 > :
-  public SolidMechanicsCommon<BasisOnMeshType, BasisOnMeshType, QuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<BasisOnMeshType, QuadratureType, Term>
+  public SolidMechanicsCommon<FunctionSpaceType, FunctionSpaceType, QuadratureType, Term>  // this inherits from SolidMechanicsNonlinearSolve and FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using SolidMechanicsCommon<BasisOnMeshType, BasisOnMeshType, QuadratureType, Term>::SolidMechanicsCommon;
+  using SolidMechanicsCommon<FunctionSpaceType, FunctionSpaceType, QuadratureType, Term>::SolidMechanicsCommon;
 
   //! assemble the stiffness matrix
-  void setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix);
+  void setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix);
 
   //! set the internal displacement variable as copy of the given values
   void setFromSolverVariableSolution(Vec &solverSolutionVariable);
@@ -138,7 +138,7 @@ protected:
   void preparePressureInterpolation(element_no_t elementNo) override;
 
   //! get the pressure in the current element (set previously by preparePressureInterpolation), interpolated for mixed formulation, by constitutive equation from J for penalty formulation
-  double getPressure(double deformationGradientDeterminant, VecD<BasisOnMeshType::dim()> xi, double &pressureTilde) override;
+  double getPressure(double deformationGradientDeterminant, VecD<FunctionSpaceType::dim()> xi, double &pressureTilde) override;
 };
 
 };  // namespace

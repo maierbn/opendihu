@@ -30,7 +30,7 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::string> &meshNames)
 {
   // get mesh name and insert into meshNames
-  std::string meshName = currentFieldVariable->mesh()->meshName();
+  std::string meshName = currentFieldVariable->functionSpace()->meshName();
   meshNames.insert(meshName);
   
   return false;  // do not break iteration

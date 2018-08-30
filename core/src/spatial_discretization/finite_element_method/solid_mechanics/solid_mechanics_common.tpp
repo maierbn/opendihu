@@ -11,7 +11,7 @@
 #include "semt/Shortcuts.h"
 #include "control/types.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/elasticity_tensor.h"
-#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+#include "function_space/00_function_space_base_dim.h"
 #include "utility/python_utility.h"
 #include "utility/matrix.h"
 #include "quadrature/quadrature.h"
@@ -27,26 +27,26 @@ namespace SpatialDiscretization
 {
 
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 setStiffnessMatrix()
 {
   // call setStiffnessMatrix of the derived class. That, in turn, calls setStiffnessMatrixEntriesForDisplacements of this class.
   this->setStiffnessMatrix(PETSC_NULL);
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,MixedQuadratureType,Term>::
-setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix)
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename MixedQuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,MixedQuadratureType,Term>::
+setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> tangentStiffnessMatrix)
 {
-  typedef typename BasisOnMeshType::HighOrderBasisOnMesh BasisOnMesh;
+  typedef typename FunctionSpaceType::HighOrderFunctionSpace FunctionSpace;
 
   // get pointer to mesh object
-  std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
+  std::shared_ptr<FunctionSpace> functionSpace = this->data_.functionSpace();
 
-  const int D = BasisOnMesh::dim();  // = 2 or 3
-  const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nElementsLocal();
+  const int D = FunctionSpace::dim();  // = 2 or 3
+  const int nDofsPerElement = FunctionSpace::nDofsPerElement();
+  const int nElements = functionSpace->nElementsLocal();
   const int nUnknowsPerElement = nDofsPerElement*D;    // 3 directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -94,9 +94,9 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
     int cntr = 1;
     // loop over elements
-    for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
+    for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
     {
-      std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+      std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
       for (int aDof = 0; aDof < nDofsPerElement; aDof++)
       {
@@ -151,7 +151,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
       VecD<D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -181,7 +181,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
       // elasticity tensor C_{ijkl}
       ElasticityTensor elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, pk2StressIsochoric, deformationGradientDeterminant, reducedInvariants);
 
-      std::array<VecD<D>,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhi = functionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -302,7 +302,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
       VecD<D> xi = samplingPointsExact[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -332,7 +332,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
       // elasticity tensor C_{ijkl}
       ElasticityTensor elasticity = this->computeElasticityTensor(artificialPressure, artificialPressureTilde, rightCauchyGreen, inverseRightCauchyGreen, fictitiousPK2Stress, pk2StressIsochoric, deformationGradientDeterminant, reducedInvariants);
 
-      std::array<VecD<D>,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhi = functionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -429,7 +429,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     // set entries in stiffness matrix
     // loop over indices of unknows ((aDof,aComponent), (bDof,bComponent)), i.e. (i,j)
@@ -468,43 +468,43 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Ba
 
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 tangentStiffnessMatrix()
 {
   return this->data_.tangentStiffnessMatrix();
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-Vec &SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+Vec &SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 rightHandSide()
 {
   return this->data_.rightHandSide().valuesLocal();
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-Vec &SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+Vec &SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 displacements()
 {
   return this->data_.displacements().valuesLocal();
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,MixedQuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename MixedQuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,MixedQuadratureType,Term>::
 computeExternalVirtualWork(Vec &resultVec)
 {
   LOG(TRACE) << "computeExternalVirtualWork";
 
   // get pointer to mesh object
-  typedef typename BasisOnMeshType::HighOrderBasisOnMesh BasisOnMesh;  // for mixed formulation get the high order BasisOnMesh
+  typedef typename FunctionSpaceType::HighOrderFunctionSpace FunctionSpace;  // for mixed formulation get the high order FunctionSpace
   typedef typename MixedQuadratureType::HighOrderQuadrature QuadratureType;  // for mixed formulation get the high order quadrature
 
-  std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
+  std::shared_ptr<FunctionSpace> functionSpace = this->data_.functionSpace();
 
-  const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nDofsLocal();
-  const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  //const int nElements = mesh->nElementsLocal();
+  const int D = FunctionSpace::dim();  // = 2 or 3
+  //const int nDofs = functionSpace->nDofsLocal();
+  const int nDofsPerElement = FunctionSpace::nDofsPerElement();
+  //const int nElements = functionSpace->nElementsLocal();
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   typedef Quadrature::TensorProduct<D-1,QuadratureType> QuadratureSurface;
@@ -543,9 +543,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
+    if (elementNo < 0 || elementNo > functionSpace->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (ref.conf.) is specified is invalid (number of elements: " << functionSpace->nElementsLocal() << ")";
       continue;
     }
 
@@ -559,7 +559,7 @@ computeExternalVirtualWork(Vec &resultVec)
       // loop over dofs of element
       for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
       {
-        VecD<D> dofIntegrand = forceVector * MathUtility::sqr(mesh->phi(dofIndex, xi));
+        VecD<D> dofIntegrand = forceVector * MathUtility::sqr(functionSpace->phi(dofIndex, xi));
 
         // store integrand in evaluations array
         for (int i = 0; i < D; i++)
@@ -575,7 +575,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -608,9 +608,9 @@ computeExternalVirtualWork(Vec &resultVec)
     VecD<D> forceVector = iter->second;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
+    if (elementNo < 0 || elementNo > functionSpace->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which body force (cur.conf.) is specified is invalid (number of elements: " << functionSpace->nElementsLocal() << ")";
       continue;
     }
 
@@ -625,7 +625,7 @@ computeExternalVirtualWork(Vec &resultVec)
       VecD<D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant = MathUtility::computeDeterminant<D>(jacobianMaterial);
 
       // loop over dofs of element
@@ -634,7 +634,7 @@ computeExternalVirtualWork(Vec &resultVec)
         // scale the force vector with the Jacobian determinant: B = J*b
         // for incompressible material this should have no effect, J=1
 
-        VecD<D> dofIntegrand = forceVector * jacobianDeterminant * MathUtility::sqr(mesh->phi(dofIndex, xi));
+        VecD<D> dofIntegrand = forceVector * jacobianDeterminant * MathUtility::sqr(functionSpace->phi(dofIndex, xi));
 
         // store integrand in evaluations array
         for (int i = 0; i < D; i++)
@@ -650,7 +650,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -675,7 +675,7 @@ computeExternalVirtualWork(Vec &resultVec)
   }  // elementNo
 
   // -------------- surface traction in reference configuration --------------
-  for (typename std::vector<typename SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::TractionBoundaryCondition>::const_iterator iter = this->tractionReferenceConfiguration_.begin();
+  for (typename std::vector<typename SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::TractionBoundaryCondition>::const_iterator iter = this->tractionReferenceConfiguration_.begin();
        iter != this->tractionReferenceConfiguration_.end(); iter++)
   {
     //  element_no_t elementGlobalNo;
@@ -686,9 +686,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
+    if (elementNo < 0 || elementNo > functionSpace->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which traction (ref.conf.) is specified is invalid (number of elements: " << functionSpace->nElementsLocal() << ")";
       continue;
     }
 
@@ -713,7 +713,7 @@ computeExternalVirtualWork(Vec &resultVec)
         int dofIndex = dofVectorsIter->first;
         VecD<D> forceVector = dofVectorsIter->second;
 
-        tractionReferenceConfiguration += forceVector * mesh->phi(dofIndex, xi);
+        tractionReferenceConfiguration += forceVector * functionSpace->phi(dofIndex, xi);
       }
 
       // loop over dofs of element with given traction, those have potentially non-zero virtual external work contribution
@@ -724,10 +724,10 @@ computeExternalVirtualWork(Vec &resultVec)
         int dofIndex = dofVectorsIter->first;
         VecD<D> forceVector = dofVectorsIter->second;
 
-        VecD<D> dofIntegrand = tractionReferenceConfiguration * mesh->phi(dofIndex, xi);
+        VecD<D> dofIntegrand = tractionReferenceConfiguration * functionSpace->phi(dofIndex, xi);
 
         LOG(DEBUG) << "  dofIndex " << dofIndex << ", xi=" << xi << ", traction: " << tractionReferenceConfiguration[0]
-          << " phi = " << mesh->phi(dofIndex, xi);
+          << " phi = " << functionSpace->phi(dofIndex, xi);
 
         // store integrand in evaluations array
         for (int i = 0; i < D; i++)
@@ -742,7 +742,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -770,7 +770,7 @@ computeExternalVirtualWork(Vec &resultVec)
   }  // elementNo
 
   // -------------- surface traction in current configuration --------------
-  for (typename std::vector<typename SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::TractionBoundaryCondition>::const_iterator iter = this->tractionCurrentConfiguration_.begin();
+  for (typename std::vector<typename SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::TractionBoundaryCondition>::const_iterator iter = this->tractionCurrentConfiguration_.begin();
        iter != this->tractionCurrentConfiguration_.end(); iter++)
   {
     /*
@@ -782,9 +782,9 @@ computeExternalVirtualWork(Vec &resultVec)
     element_no_t elementNo = iter->elementGlobalNo;
 
     // check if element no is valid
-    if (elementNo < 0 || elementNo > mesh->nElementsLocal())
+    if (elementNo < 0 || elementNo > functionSpace->nElementsLocal())
     {
-      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << mesh->nElementsLocal() << ")";
+      LOG(ERROR) << "Element " << elementNo << " for which surface traction (cur.conf.) is specified is invalid (number of elements: " << functionSpace->nElementsLocal() << ")";
       continue;
     }
 
@@ -804,10 +804,10 @@ computeExternalVirtualWork(Vec &resultVec)
       VecD<D> xi = Mesh::getXiOnFace(iter->face, xiSurface);
 
       // compute the normal in reference configuration of the specified face at point xi
-      VecD<D> normalReferenceConfiguration = MathUtility::transformToD<D,3>(mesh->getNormal(iter->face, geometryReferenceValues, xi));
+      VecD<D> normalReferenceConfiguration = MathUtility::transformToD<D,3>(functionSpace->getNormal(iter->face, geometryReferenceValues, xi));
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -839,7 +839,7 @@ computeExternalVirtualWork(Vec &resultVec)
         int dofIndex = dofVectorsIter->first;
         VecD<D> forceVector = dofVectorsIter->second;
 
-        tractionCurrentConfiguration += forceVector * mesh->phi(dofIndex, xi);
+        tractionCurrentConfiguration += forceVector * functionSpace->phi(dofIndex, xi);
       }
 
       // loop over dofs of element
@@ -849,7 +849,7 @@ computeExternalVirtualWork(Vec &resultVec)
       {
         int dofIndex = dofVectorsIter->first;
 
-        VecD<D> dofIntegrand = tractionCurrentConfiguration * surfaceStretch * MathUtility::sqr(mesh->phi(dofIndex, xi));
+        VecD<D> dofIntegrand = tractionCurrentConfiguration * surfaceStretch * MathUtility::sqr(functionSpace->phi(dofIndex, xi));
 
         // store integrand in evaluations array
         for (int i = 0; i < D; i++)
@@ -864,7 +864,7 @@ computeExternalVirtualWork(Vec &resultVec)
     EvaluationsType integratedValues = QuadratureSurface::computeIntegral(evaluationsArraySurface);
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     // add entries in result vector
     // loop over indices of unknows (dofIndex,dofComponent)
@@ -896,22 +896,22 @@ computeExternalVirtualWork(Vec &resultVec)
   if (VLOG_IS_ON(1)) VLOG(1) << "  ->wExt: " << PetscUtility::getStringVector(resultVec);
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,MixedQuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename MixedQuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,MixedQuadratureType,Term>::
 computeInternalVirtualWork(Vec &resultVec)
 {
   LOG(TRACE) << "computeInternalVirtualWork";
 
-  typedef typename BasisOnMeshType::HighOrderBasisOnMesh BasisOnMesh;  // for mixed formulation get the high order BasisOnMesh
+  typedef typename FunctionSpaceType::HighOrderFunctionSpace FunctionSpace;  // for mixed formulation get the high order FunctionSpace
   typedef typename MixedQuadratureType::HighOrderQuadrature QuadratureType;  // for mixed formulation get the high order quadrature
 
   // get pointer to mesh object
-  std::shared_ptr<BasisOnMesh> mesh = this->data_.mesh();
+  std::shared_ptr<FunctionSpace> functionSpace = this->data_.functionSpace();
 
-  const int D = BasisOnMesh::dim();  // = 2 or 3
-  //const int nDofs = mesh->nDofsLocal();
-  const int nDofsPerElement = BasisOnMesh::nDofsPerElement();
-  const int nElements = mesh->nElementsLocal();
+  const int D = FunctionSpace::dim();  // = 2 or 3
+  //const int nDofs = functionSpace->nDofsLocal();
+  const int nDofsPerElement = FunctionSpace::nDofsPerElement();
+  const int nElements = functionSpace->nElementsLocal();
   const int nUnknowsPerElement = nDofsPerElement*D;    // D directions for displacements per dof
 
   // define shortcuts for quadrature
@@ -979,7 +979,7 @@ computeInternalVirtualWork(Vec &resultVec)
       VecD<D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -1021,7 +1021,7 @@ computeInternalVirtualWork(Vec &resultVec)
         this->checkFictitiousPK2Stress(fictitiousPK2Stress, rightCauchyGreen, deformationGradientDeterminant, reducedInvariants);
       }
 
-      std::array<VecD<D>,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhi = functionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -1132,7 +1132,7 @@ computeInternalVirtualWork(Vec &resultVec)
       VecD<D> xi = samplingPointsExact[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(BasisOnMesh::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(FunctionSpace::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -1174,7 +1174,7 @@ computeInternalVirtualWork(Vec &resultVec)
         this->checkFictitiousPK2Stress(fictitiousPK2Stress, rightCauchyGreen, deformationGradientDeterminant, reducedInvariants);
       }
 
-      std::array<VecD<D>,nDofsPerElement> gradPhi = mesh->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhi = functionSpace->getGradPhi(xi);
       // (column-major storage) gradPhi[M][a] = dphi_M / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -1235,7 +1235,7 @@ computeInternalVirtualWork(Vec &resultVec)
 #endif
 
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     VLOG(2) << "  element " << elementNo << " has dofs " << dofNosLocal;
 
@@ -1274,8 +1274,8 @@ computeInternalVirtualWork(Vec &resultVec)
 }
 
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 getExternalVirtualWork(Vec &resultVec)
 {
   if (this->data_.externalVirtualWorkIsConstant())
@@ -1291,8 +1291,8 @@ getExternalVirtualWork(Vec &resultVec)
 
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 computeInternalMinusExternalVirtualWork(Vec &resultVec)
 {
   PetscErrorCode ierr;
@@ -1303,8 +1303,8 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
     Vec &wExt = this->data_.externalVirtualWork().valuesLocal();
     Vec &wIntReduced = this->data_.internalVirtualWorkReduced();
 
-    const int D = BasisOnMeshType::dim();
-    const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
+    const int D = FunctionSpaceType::dim();
+    const int nLocalUnknowns = this->data_.functionSpace()->nDofsLocal() * D;
 
     this->computeInternalVirtualWork(wInt);
     LOG(DEBUG) << "--                           dW_int: " << PetscUtility::getStringVector(wInt);
@@ -1336,8 +1336,8 @@ computeInternalMinusExternalVirtualWork(Vec &resultVec)
   }
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename MixedQuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,MixedQuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename MixedQuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,MixedQuadratureType,Term>::
 initialize()
 {
   initializeMaterialParameters();
@@ -1369,8 +1369,8 @@ initialize()
   this->data_.finalAssembly();
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 initializeMaterialParameters()
 {
   std::array<double,Term::nMaterialParameters> parameters
@@ -1385,16 +1385,16 @@ initializeMaterialParameters()
   SEMT::set_parameters<Term::nMaterialParameters>::to(parametersVector);
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-bool SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+bool SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 computeWithReducedVectors()
 {
   return this->data_.computeWithReducedVectors();
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
-computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverStiffnessMatrix)
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
+computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> solverStiffnessMatrix)
 {
   if (this->data_.computeWithReducedVectors())
   {
@@ -1417,8 +1417,8 @@ computeAnalyticStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshTy
   }
 }
 
-template<typename BasisOnMeshType,typename BasisOnMeshTypeForUtility, typename QuadratureType, typename Term>
-void SolidMechanicsCommon<BasisOnMeshType,BasisOnMeshTypeForUtility,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>
+void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 writeOutput()
 {
   if (this->outputIntermediateSteps_)

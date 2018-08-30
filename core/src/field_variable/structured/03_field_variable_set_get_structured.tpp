@@ -11,17 +11,17 @@
 namespace FieldVariable
 {
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->mesh_->meshPartition()->nDofsLocalWithGhosts();
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
   if (onlyNodalValues)
   {
-    const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
     nValues /= nDofsPerNode;
   }
   
@@ -30,21 +30,21 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
   values.resize(nValues);
   
   // get values
-  this->values_->getValues(componentNo, nValues, this->mesh_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data());
+  this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data());
 }
 
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->mesh_->meshPartition()->nDofsLocalWithGhosts();
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
   if (onlyNodalValues)
   {
-    const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
     nValues /= nDofsPerNode;
   }
   
@@ -54,12 +54,12 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
   VLOG(2) << "Field variable structured, getValues, resize values vector to " << previousSize+nValues << " entries.";
   
   // get values
-  this->values_->getValues(componentNo, nValues, this->mesh_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data()+previousSize);
+  this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data()+previousSize);
 }
 
 //! for a specific component, get values from their local dof no.s
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -75,9 +75,9 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 }
 
 //! for a specific component, get values from their local dof no.s
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -85,9 +85,9 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   this->values_->getValues(componentNo, N, (PetscInt *)dofLocalNo.data(), values.data());
 }
 
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   std::array<double,N*nComponents> result;   // temporary result buffer
@@ -109,21 +109,21 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo,
-                 std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+                 std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // create indices with dofs
   std::array<PetscInt,nDofsPerElement> indices;
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
-    indices[dofIndex] = this->mesh_->getDofNo(elementNo, dofIndex);
+    indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
   }
   
   // get the values
@@ -131,14 +131,14 @@ getElementValues(int componentNo, element_no_t elementNo,
 }
 
 //! get the values corresponding to all element-local dofs for all components
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getElementValues(element_no_t elementNo, 
-                 std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+                 std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
 {
-  assert(elementNo >= 0 && elementNo < this->mesh_->nElementsLocal());
+  assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   std::array<PetscInt,nDofsPerElement> indices;
   std::array<double,nDofsPerElement*nComponents> result;
 
@@ -149,7 +149,7 @@ getElementValues(element_no_t elementNo,
   {
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      indices[dofIndex] = this->mesh_->getDofNo(elementNo, dofIndex);
+      indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
     }
     
     // get the values for the current component
@@ -170,8 +170,8 @@ getElementValues(element_no_t elementNo,
 }
 
 //! for a specific component, get a single value from local dof no.
-template<typename BasisOnMeshType, int nComponents>
-double FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+double FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValue(int componentNo, node_no_t dofLocalNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -184,8 +184,8 @@ getValue(int componentNo, node_no_t dofLocalNo)
 }
   
 //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
   if (dofNosLocal.size() != values.size())
@@ -200,8 +200,8 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
 }
 
 //! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
   assert(dofNosLocal.size() >= nValues);
@@ -226,8 +226,8 @@ setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vect
 }
 
 //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
   assert(this->values_);
@@ -242,13 +242,13 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
 }
 
 //! set value for all dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(double value)
 {
   // get number of dofs
-  assert(this->mesh_);
-  const dof_no_t nDofs = this->mesh_->nDofsLocalWithGhosts();
+  assert(this->functionSpace_);
+  const dof_no_t nDofs = this->functionSpace_->nDofsLocalWithGhosts();
 
   std::vector<double> valueBuffer(nDofs,value);
   
@@ -259,58 +259,58 @@ setValues(double value)
 }
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
  
   // set the values
-  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+  this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
 //! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
  
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
-  this->values_->setValues(componentNo, values.size(), this->mesh_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
+  this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   
-  this->setValues(this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+  this->setValues(this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
-  assert(values.size() == this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
   
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
-  this->setValues(values.size(), this->mesh_->meshPartition()->dofNosLocal(), values, petscInsertMode);
+  this->setValues(values.size(), this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);
 }
 
 //! set value to zero for all dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 zeroEntries()
 {
   this->values_->zeroEntries();
 }
   
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 finishVectorManipulation()
 {
   this->values_->finishVectorManipulation();

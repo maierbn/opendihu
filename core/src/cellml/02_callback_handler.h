@@ -6,7 +6,7 @@
 #include "control/dihu_context.h"
 //#include "discretizable_in_time/discretizable_in_time.h"
 #include "output_writer/manager.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "basis_function/lagrange.h"
 #include "cellml/01_rhs_routine_handler.h"
 

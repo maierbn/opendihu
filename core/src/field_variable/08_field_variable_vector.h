@@ -7,31 +7,31 @@
 namespace FieldVariable
 {
 
-/** General field variable with != 1 components. A field variable is defined on a BasisOnMesh, i.e. knows mesh type and basis function type.
+/** General field variable with != 1 components. A field variable is defined on a FunctionSpace, i.e. knows mesh type and basis function type.
  */
-template<typename BasisOnMeshType,int nComponents>
+template<typename FunctionSpaceType,int nComponents>
 class FieldVariableVector :
-  public FieldVariableSetGet<BasisOnMeshType,nComponents>
+  public FieldVariableSetGet<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableSetGet<BasisOnMeshType,nComponents>::FieldVariableSetGet;
+  using FieldVariableSetGet<FunctionSpaceType,nComponents>::FieldVariableSetGet;
 };
 
 /** General scalar field variable.
- * A field variable is defined on a BasisOnMesh, i.e. knows mesh type and basis function type.
+ * A field variable is defined on a FunctionSpace, i.e. knows mesh type and basis function type.
  * Scalar field variables can compute a gradient field.
  */
-template<typename BasisOnMeshType>
-class FieldVariableVector<BasisOnMeshType,1> :
-  public FieldVariableSetGet<BasisOnMeshType,1>
+template<typename FunctionSpaceType>
+class FieldVariableVector<FunctionSpaceType,1> :
+  public FieldVariableSetGet<FunctionSpaceType,1>
 {
 public:
   //! inherited constructor
-  using FieldVariableSetGet<BasisOnMeshType,1>::FieldVariableSetGet;
+  using FieldVariableSetGet<FunctionSpaceType,1>::FieldVariableSetGet;
 
   //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
-  void computeGradientField(FieldVariable<BasisOnMeshType, BasisOnMeshType::dim()> &gradientField);
+  void computeGradientField(FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()> &gradientField);
 
 };
 

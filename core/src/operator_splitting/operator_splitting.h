@@ -14,7 +14,7 @@ class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme, public Runnable
 {
 public:
-  typedef typename TimeStepping1::BasisOnMesh BasisOnMesh;
+  typedef typename TimeStepping1::FunctionSpace FunctionSpace;
   typedef typename TimeStepping1::Data Data;
  
   //! constructor

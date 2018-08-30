@@ -6,8 +6,8 @@
 #include <map>
 
 #include "field_variable/01_field_variable_components.h"
-#include "basis_on_mesh/basis_on_mesh.h"
-#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes.h"
+#include "function_space/function_space.h"
+#include "function_space/06_function_space_dofs_nodes.h"
 #include "mesh/unstructured_deformable.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
 #include "field_variable/unstructured/node_to_dof_mapping.h"
@@ -22,24 +22,24 @@ namespace FieldVariable
  *  The number of elements, nodes and dofs for unstructured meshes is stored by the geometry field of the mesh and not directly at the mesh like for structured meshes.
  */
 template<int D, typename BasisFunctionType, int nComponents>
-class FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
-  public FieldVariableComponents<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
+class FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> :
+  public FieldVariableComponents<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableComponents<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableComponents;
+  using FieldVariableComponents<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::FieldVariableComponents;
 
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! contructor as data copy with a different name (component names are the same)
-  FieldVariableData(FieldVariable<BasisOnMeshType,nComponents> &rhs, std::string name);
+  FieldVariableData(FieldVariable<FunctionSpaceType,nComponents> &rhs, std::string name);
 
   //! contructor as data copy with a different name and different components
   template <int nComponents2>
-  FieldVariableData(FieldVariable<BasisOnMeshType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames);
+  FieldVariableData(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames);
 
-  //! constructor with mesh, name and components
-  FieldVariableData(std::shared_ptr<BasisOnMeshType> mesh, std::string name, std::vector<std::string> componentNames);
+  //! constructor with functionSpace, name and components
+  FieldVariableData(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames);
 
   //! empty constructor, this is needed for parsing exfiles
   FieldVariableData();
@@ -60,7 +60,7 @@ public:
                               std::vector<std::string> componentNames);
   
   //! set the internal mesh
-  void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
+  void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace);
 
   //! set the property to be geometry field to this field variable
   void setGeometryField(bool isGeometryField=true);
@@ -124,10 +124,10 @@ public:
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
   template<int nComponents2>
-  void unifyMappings(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents2> &fieldVariable);
+  void unifyMappings(FieldVariable<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents2> &fieldVariable);
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  void unifyMappings(std::shared_ptr<FieldVariableBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2);
+  void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2);
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   void initializeValuesVector();
@@ -136,13 +136,13 @@ public:
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 
   //! return the component by name
-  Component<BasisOnMeshType,nComponents> &component(std::string name);
+  Component<FunctionSpaceType,nComponents> &component(std::string name);
 
   //! return the component by index
-  std::shared_ptr<Component<BasisOnMeshType,nComponents>> component(int componentNo);
+  std::shared_ptr<Component<FunctionSpaceType,nComponents>> component(int componentNo);
 
   //! return the array of components
-  std::array<Component<BasisOnMeshType,nComponents>,nComponents> &component();
+  std::array<Component<FunctionSpaceType,nComponents>,nComponents> &component();
 
   //! multiply dof values with scale factors such that scale factor information is completely contained in dof values
   void eliminateScaleFactors();
@@ -154,7 +154,7 @@ public:
   virtual void finishVectorManipulation() = 0;
   
   //! return the internal partitioned petsc vec
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> partitionedPetscVec();
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> partitionedPetscVec();
   
 protected:
 
@@ -166,12 +166,12 @@ protected:
 
   int exfileNo_;    ///< number of the fieldvariable in exelem file (index starts at 1)
   element_no_t nElements_;    ///< number of elements
-  std::array<Component<BasisOnMeshType,nComponents>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
+  std::array<Component<FunctionSpaceType,nComponents>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
   std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components
   std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components
   std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      ///< mapping from element-local node indices to global node numbers
   std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       ///< the node to dof mapping of all components, this is the same for all components
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
 };  // namespace

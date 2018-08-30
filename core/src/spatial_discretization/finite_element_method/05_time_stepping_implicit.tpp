@@ -18,8 +18,8 @@
 
 namespace SpatialDiscretization
 {
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   LOG(TRACE) << "evaluateTimesteppingRightHandSideImplicit";
@@ -32,11 +32,11 @@ evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepN
   VLOG(1) << PetscUtility::getStringVector(output);
 }
 /*
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 precomputeSystemMatrix1()
 {
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   LOG(TRACE) << "precomputeSystemMatrix1 " << D << "D";
   
   //modify the stiffness matrix to use it as the system matrix
@@ -52,13 +52,13 @@ precomputeSystemMatrix1()
   this->data_.systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
 }
 */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 setInverseLumpedMassMatrix()
 {
   LOG(TRACE) << "setInverseLumpedMassMatrix";
 
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
   Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->valuesGlobal();
   Mat &massMatrix = this->data_.massMatrix()->valuesGlobal();
   this->data_.massMatrix()->assembly(MAT_FINAL_ASSEMBLY);
@@ -69,7 +69,7 @@ setInverseLumpedMassMatrix()
   ierr = MatGetSize(massMatrix,&nRows,&nColumns); CHKERRV(ierr);
   VLOG(1) << "massMatrix nRows " << nRows << " nColumns " << nColumns;
      
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,1>> rowSum = std::make_shared<PartitionedPetscVec<BasisOnMeshType,1>>(mesh->meshPartition(), "rowSum");
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,1>> rowSum = std::make_shared<PartitionedPetscVec<FunctionSpaceType,1>>(functionSpace->meshPartition(), "rowSum");
 
   // In case of linear and bilinear basis functions
   // store the sum of each row of the matrix in the vector rowSum
@@ -86,8 +86,8 @@ setInverseLumpedMassMatrix()
   VLOG(2) << *this->data_.inverseLumpedMassMatrix();
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 setSystemMatrix(double timeStepWidth)
 {
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
@@ -116,8 +116,8 @@ setSystemMatrix(double timeStepWidth)
   VLOG(1) << *this->data_.systemMatrix();
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output

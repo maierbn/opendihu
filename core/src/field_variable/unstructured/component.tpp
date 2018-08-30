@@ -8,25 +8,25 @@ namespace FieldVariable
 
 using namespace StringUtility;
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
-initialize(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values, int componentIndex, int nElements)
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
+initialize(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values, int componentIndex, int nElements)
 {
   values_ = values;
   componentIndex_ = componentIndex;
   nElements_ = nElements;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
-setValuesVector(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values)
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
+setValuesVector(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values)
 {
   assert(values);
   values_ = values;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 parseHeaderFromExelemFile(std::string content)
 {
   VLOG(1) << "parseHeaderFromExelemFile";
@@ -68,8 +68,8 @@ parseHeaderFromExelemFile(std::string content)
   exfileRepresentation_->parseHeaderFromExelemFile(exfileRepresentationContent);
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 parseElementFromExelemFile(std::string content)
 {
   VLOG(1) << "component " << name_ << ", parseElementFromExelemFile";
@@ -77,59 +77,59 @@ parseElementFromExelemFile(std::string content)
   //VLOG(1) << "   after parseElementFromExelemFile: " << *exfileRepresentation_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::shared_ptr<ExfileRepresentation> Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<ExfileRepresentation> Component<FunctionSpaceType,nComponents>::
 exfileRepresentation()
 {
   return exfileRepresentation_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::shared_ptr<ElementToDofMapping> Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<ElementToDofMapping> Component<FunctionSpaceType,nComponents>::
 elementToDofMapping()
 {
   return elementToDofMapping_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::shared_ptr<NodeToDofMapping> Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<NodeToDofMapping> Component<FunctionSpaceType,nComponents>::
 nodeToDofMapping()
 {
   return nodeToDofMapping_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 setExfileRepresentation(std::shared_ptr<ExfileRepresentation> exfileRepresentation)
 {
   exfileRepresentation_ = exfileRepresentation;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 setName(std::string name, std::string exfileBasisFunctionSpecification)
 {
   this->name_ = name;
   this->exfileBasisFunctionSpecification_ = exfileBasisFunctionSpecification;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::string Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+std::string Component<FunctionSpaceType,nComponents>::
 exfileBasisFunctionSpecification() const
 {
   return this->exfileBasisFunctionSpecification_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 setDofMappings(std::shared_ptr<ElementToDofMapping> elementToDofMapping, std::shared_ptr<NodeToDofMapping> nodeToDofMapping)
 {
   elementToDofMapping_ = elementToDofMapping;
   nodeToDofMapping_ = nodeToDofMapping;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
 {
   NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
@@ -149,8 +149,8 @@ setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
   }
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
 {
   NodeToDofMapping::NodeDofInformation &nodeDofInformation = nodeToDofMapping_->getNodeDofInformation(nodeGlobalNo);
@@ -159,14 +159,14 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
   std::vector<double> values;
 
   const unsigned int nVersions = nodeDofInformation.elementsOfVersion.size();
-  indices.reserve(BasisOnMeshType::nDofsPerNode()*nVersions);
-  values.reserve(BasisOnMeshType::nDofsPerNode()*nVersions);
+  indices.reserve(FunctionSpaceType::nDofsPerNode()*nVersions);
+  values.reserve(FunctionSpaceType::nDofsPerNode()*nVersions);
 
   VLOG(2) << "setNodeValuesFromBlock(" << nodeGlobalNo << "), block: ";
-  for (std::vector<double>::iterator iter = valuesBegin; iter < valuesBegin + BasisOnMeshType::nDofsPerNode()*nVersions; iter++)
+  for (std::vector<double>::iterator iter = valuesBegin; iter < valuesBegin + FunctionSpaceType::nDofsPerNode()*nVersions; iter++)
     VLOG(2) << "  " << *iter;
 
-  VLOG(2) << " reserve " << BasisOnMeshType::nDofsPerNode() << "*" << nVersions << " entries";
+  VLOG(2) << " reserve " << FunctionSpaceType::nDofsPerNode() << "*" << nVersions << " entries";
   // loop over versions
   for (unsigned int versionIdx = 0; versionIdx < nVersions; versionIdx++)
   {
@@ -207,46 +207,46 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
   values_->setValues(componentIndex_, indices.size(), indices.data(), values.data(), INSERT_VALUES);
 }
 
-template<typename BasisOnMeshType,int nComponents>
-dof_no_t Component<BasisOnMeshType,nComponents>::nDofsLocal() const
+template<typename FunctionSpaceType,int nComponents>
+dof_no_t Component<FunctionSpaceType,nComponents>::nDofsLocal() const
 {
   return this->elementToDofMapping_->nDofsLocal();
 }
 
-template<typename BasisOnMeshType,int nComponents>
-element_no_t Component<BasisOnMeshType,nComponents>::nElementsLocal() const
+template<typename FunctionSpaceType,int nComponents>
+element_no_t Component<FunctionSpaceType,nComponents>::nElementsLocal() const
 {
   return this->nElements_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::string Component<BasisOnMeshType,nComponents>::name() const
+template<typename FunctionSpaceType,int nComponents>
+std::string Component<FunctionSpaceType,nComponents>::name() const
 {
   return this->name_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-dof_no_t Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+dof_no_t Component<FunctionSpaceType,nComponents>::
 getDofNo(element_no_t elementNo, int dofIndex) const
 {
   return elementToDofMapping_->getElementDofs(elementNo)[dofIndex];
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 getValues(std::vector<double> &values, bool onlyNodalValues)
 {
   const dof_no_t nDofs = this->nDofsLocal();
 
   // set stride to nDofsPerNode if Hermite, else to 1
-  const int stride = (onlyNodalValues && std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value ? BasisOnMeshType::nDofsPerNode() : 1);
+  const int stride = (onlyNodalValues && std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::Hermite>::value ? FunctionSpaceType::nDofsPerNode() : 1);
   
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = nDofs;
   if (onlyNodalValues)
     // if the basis function is Hermite
-    if (std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::Hermite>::value)
-      nValues = nDofs / BasisOnMeshType::nDofsPerNode();
+    if (std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::Hermite>::value)
+      nValues = nDofs / FunctionSpaceType::nDofsPerNode();
 
   std::vector<int> indices(nValues,0);
   dof_no_t indexNo = 0;
@@ -261,17 +261,17 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
   values_->getValues(componentIndex_, nValues, indices.data(), values.data());
 }
 
-template<typename BasisOnMeshType,int nComponents>
+template<typename FunctionSpaceType,int nComponents>
 template<int N>
-void Component<BasisOnMeshType,nComponents>::
+void Component<FunctionSpaceType,nComponents>::
 getValues(std::array<dof_no_t,N> dofNosLocal, std::array<double,N> &values)
 {
   assert (values_);
   values_->getValues(componentIndex_, N, dofNosLocal.data(), values.data());
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values)
 {
   const int nValues = dofNosLocal.size();
@@ -291,8 +291,8 @@ getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values)
   VLOG(1) << "retrieved values: " << values;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-double Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+double Component<FunctionSpaceType,nComponents>::
 getValue(node_no_t dofLocalNo)
 {
   double value;
@@ -307,29 +307,29 @@ getValue(node_no_t dofLocalNo)
   return value;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
+getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 {
   const std::vector<dof_no_t> &elementDofs = elementToDofMapping_->getElementDofs(elementNo);
 
   assert (values_);
-  values_->getValues(componentIndex_, BasisOnMeshType::nDofsPerElement(), elementDofs.data(), values.data());
+  values_->getValues(componentIndex_, FunctionSpaceType::nDofsPerElement(), elementDofs.data(), values.data());
 }
 
-template<typename BasisOnMeshType,int nComponents>
-int Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+int Component<FunctionSpaceType,nComponents>::
 getNumberScaleFactors(node_no_t nodeGlobalNo) const
 {
   return nodeToDofMapping_->getNodeScaleFactors(nodeGlobalNo).size();
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
 {
   file << " " << name_ << ". " << exfileBasisFunctionSpecification_ << ", no modify, standard node based." << std::endl
-    << "   #Nodes=" << BasisOnMeshType::nNodesPerElement() << std::endl;
+    << "   #Nodes=" << FunctionSpaceType::nNodesPerElement() << std::endl;
   exfileRepresentation_->getExfileElementRepresentation(currentElementGlobalNo)->outputHeaderExelem(file);
   
   /*
@@ -344,11 +344,11 @@ outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo)
    */
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex)
 {
-  int nDerivativesPerNode = BasisOnMeshType::nDofsPerNode() - 1;
+  int nDerivativesPerNode = FunctionSpaceType::nDofsPerNode() - 1;
   std::string derivativeSpecifiers = "";
   if (nDerivativesPerNode == 1)
     derivativeSpecifiers = " (d/ds1)";
@@ -362,12 +362,12 @@ outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &value
   file << "  " << name_ << ".  Value index=" << valueIndex+1 << ", #Derivatives=" << nDerivativesPerNode << derivativeSpecifiers
     << ", #Versions=" << nVersions << std::endl;
 
-  valueIndex += BasisOnMeshType::nDofsPerNode() * nVersions;
+  valueIndex += FunctionSpaceType::nDofsPerNode() * nVersions;
   
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void Component<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void Component<FunctionSpaceType,nComponents>::
 output(std::ostream &stream) const
 {
   stream << "\"" << name_ << "\", componentIndex_: " << componentIndex_ << "/" << nComponents << ", nElements: " << nElements_
@@ -376,8 +376,8 @@ output(std::ostream &stream) const
     << ", elementToDofMapping_=" << elementToDofMapping_ << std::endl << "exfileRepresentation: " << *exfileRepresentation_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType,nComponents> &rhs)
+template<typename FunctionSpaceType,int nComponents>
+std::ostream &operator<<(std::ostream &stream, const Component<FunctionSpaceType,nComponents> &rhs)
 {
   rhs.output(stream);
   return stream;

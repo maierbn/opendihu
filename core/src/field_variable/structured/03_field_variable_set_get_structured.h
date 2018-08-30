@@ -11,13 +11,13 @@ namespace FieldVariable
 /** Field variable for a structured mesh, i.e. dof and node information are purely implicit.
  *  This is used for RegularFixed and StructuredDeformable meshes.
  */
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetStructured :
-  public FieldVariableDataStructured<BasisOnMeshType,nComponents>
+  public FieldVariableDataStructured<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableDataStructured<BasisOnMeshType,nComponents>::FieldVariableDataStructured;
+  using FieldVariableDataStructured<FunctionSpaceType,nComponents>::FieldVariableDataStructured;
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
@@ -39,10 +39,10 @@ public:
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values);
 
   //! for a specific component, get the values corresponding to all element-local dofs
-  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);

@@ -22,9 +22,6 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   
   LOG(TRACE) << "PythonFile::write ";
 
-  typedef typename DataType::BasisOnMesh MeshType;
-  std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
-
   // collect all available meshes
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
@@ -53,7 +50,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     PythonUtility::GlobalInterpreterLock lock;
    
     // build python object for data
-    PyObject *pyData = Python<typename DataType::BasisOnMesh, typename DataType::OutputFieldVariables>::
+    PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::OutputFieldVariables>::
       buildPyDataObject(data.getOutputFieldVariables(), meshName, timeStepNo, currentTime, this->onlyNodalValues_);
     //PyObject *pyData = PyDict_New();
     //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));

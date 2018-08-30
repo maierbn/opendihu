@@ -8,8 +8,8 @@
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
-#include "basis_on_mesh/basis_on_mesh.h"
-#include "basis_on_mesh/mixed_basis_on_mesh.h"
+#include "function_space/function_space.h"
+#include "function_space/mixed_function_space.h"
 #include "basis_function/mixed.h"
 
 
@@ -22,7 +22,7 @@ namespace SpatialDiscretization
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term, typename = BasisFunctionType>
 class FiniteElementMethod :
-  public FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
 };
@@ -32,11 +32,11 @@ public:
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasNoRhs<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
-  public BoundaryConditions<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using BoundaryConditions<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::BoundaryConditions;
+  using BoundaryConditions<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>::BoundaryConditions;
 
 protected:
   //! initialize rhs vector to 0
@@ -47,15 +47,15 @@ protected:
  */
 template<typename MeshType, typename LowOrderBasisFunctionType, typename HighOrderBasisFunctionType, typename MixedQuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunction::Mixed<LowOrderBasisFunctionType, HighOrderBasisFunctionType>, MixedQuadratureType, Term> :
-  public FiniteElementMethodRhs<BasisOnMesh::Mixed<
-    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>
+  public FiniteElementMethodRhs<FunctionSpace::Mixed<
+    FunctionSpace::FunctionSpace<MeshType, LowOrderBasisFunctionType>,
+    FunctionSpace::FunctionSpace<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<BasisOnMesh::Mixed<
-    BasisOnMesh::BasisOnMesh<MeshType, LowOrderBasisFunctionType>,
-    BasisOnMesh::BasisOnMesh<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodRhs;
+  using FiniteElementMethodRhs<FunctionSpace::Mixed<
+    FunctionSpace::FunctionSpace<MeshType, LowOrderBasisFunctionType>,
+    FunctionSpace::FunctionSpace<MeshType, HighOrderBasisFunctionType>>, MixedQuadratureType, Term>::FiniteElementMethodRhs;
 
 protected:
   void setRightHandSide(){}
@@ -66,11 +66,11 @@ protected:
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :
-  public FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodRhs<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodRhs;
+  using FiniteElementMethodRhs<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodRhs;
 
 };
 
@@ -79,11 +79,11 @@ public:
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :
-  public FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodTimeStepping<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
   //! use constructor of base class
-  using FiniteElementMethodTimeStepping<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
+  using FiniteElementMethodTimeStepping<FunctionSpace::FunctionSpace<MeshType, BasisFunctionType>, QuadratureType, Term>::FiniteElementMethodTimeStepping;
 
 };
 

@@ -22,8 +22,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 FiniteElementMethodBase(DihuContext context) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"])
 {
@@ -37,35 +37,35 @@ FiniteElementMethodBase(DihuContext context) :
   }
 
   // Create mesh or retrieve existing mesh from meshManager. This does not yet create meshPartition, it is done later in data_.initialize().
-  std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<BasisOnMeshType>(specificSettings_);
+  std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<FunctionSpaceType>(specificSettings_);
   
   // store mesh in data
-  data_.setMesh(std::static_pointer_cast<BasisOnMeshType>(mesh));
+  data_.setFunctionSpace(std::static_pointer_cast<FunctionSpaceType>(mesh));
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 mesh()
 {
-  return data_.mesh();
+  return data_.functionSpace();
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-Data::FiniteElements<BasisOnMeshType,Term> &FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+Data::FiniteElements<FunctionSpaceType,Term> &FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 data()
 {
   return data_;
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   data_.setRankSubset(rankSubset);
 }
  
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 initialize()
 {
   data_.initialize();
@@ -75,8 +75,8 @@ initialize()
   this->applyBoundaryConditions();
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 run()
 {
   initialize();
@@ -86,8 +86,8 @@ run()
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
-void FiniteElementMethodBase<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 solve()
 {
   // solve linear system k*d=f for d
@@ -102,7 +102,7 @@ solve()
   }
 
   // get stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = data_.stiffnessMatrix();
 
   // assemble matrix such that all entries are at their place
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);

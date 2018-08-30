@@ -155,8 +155,8 @@ PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mc
   return 0;
 };
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void SolidMechanicsNonlinearSolve<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void SolidMechanicsNonlinearSolve<FunctionSpaceType,QuadratureType,Term>::
 debug()
 {
   LOG(DEBUG) << "------- debug method ------";
@@ -175,7 +175,7 @@ debug()
   // zero initial values
   ierr = VecSet(displacements, 0.0); CHKERRV(ierr);
 
-  if (BasisOnMeshType::dim() == 3)
+  if (FunctionSpaceType::dim() == 3)
   {
     double lx = 1.0;
     double lz = 1.0;
@@ -243,14 +243,14 @@ debug()
 
     if (this->data_.computeWithReducedVectors())
     {
-      const int D = BasisOnMeshType::dim();
-      const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
+      const int D = FunctionSpaceType::dim();
+      const int nLocalUnknowns = this->data_.functionSpace()->nDofsLocal() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
 
   }
-  else if(BasisOnMeshType::dim() == 2)
+  else if(FunctionSpaceType::dim() == 2)
   {
 
 #if 0   // 1 element
@@ -299,8 +299,8 @@ debug()
 
     if (this->data_.computeWithReducedVectors())
     {
-      const int D = BasisOnMeshType::dim();
-      const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
+      const int D = FunctionSpaceType::dim();
+      const int nLocalUnknowns = this->data_.functionSpace()->nDofsLocal() * D;
 
       this->reduceVector(displacements, this->data_.solverVariableSolution(), nLocalUnknowns);
     }
@@ -409,8 +409,8 @@ debug()
 }
 
 // general implementation of nonlinear solving for solid mechanics
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void SolidMechanicsNonlinearSolve<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void SolidMechanicsNonlinearSolve<FunctionSpaceType,QuadratureType,Term>::
 solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
@@ -467,12 +467,12 @@ solve()
   }
 
   typedef FiniteElementMethodMatrix<
-    BasisOnMeshType,
+    FunctionSpaceType,
     QuadratureType,
     Term,
-    typename BasisOnMeshType::Mesh,
+    typename FunctionSpaceType::Mesh,
     Term,
-    typename BasisOnMeshType::BasisFunction
+    typename FunctionSpaceType::BasisFunction
   > ThisClass;
 
   PetscErrorCode (*callbackNonlinearFunction)(SNES, Vec, Vec, void *) = *nonlinearFunction<ThisClass>;
@@ -558,14 +558,14 @@ solve()
 }
 
 // general implementation of nonlinear solving for solid mechanics
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void SolidMechanicsNonlinearSolve<BasisOnMeshType,QuadratureType,Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void SolidMechanicsNonlinearSolve<FunctionSpaceType,QuadratureType,Term>::
 updateGeometryActual()
 {
   // update geometry field from displacements
-  if (BasisOnMeshType::dim() == 2)  // 2D problem
+  if (FunctionSpaceType::dim() == 2)  // 2D problem
   {
-    const int nLocalUnknowns3D = this->data_.mesh()->nDofsLocal() * 3;
+    const int nLocalUnknowns3D = this->data_.functionSpace()->nDofsLocal() * 3;
 
     // expand 2D vector to 3D vector fullIncrement
     this->expandVectorTo3D(this->data_.displacements().valuesLocal(), this->data_.fullIncrement(), nLocalUnknowns3D);

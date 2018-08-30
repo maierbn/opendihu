@@ -75,9 +75,9 @@ template<typename DiscretizableInTimeType>
 void StreamlineTracer<DiscretizableInTimeType>::
 traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points)
 {
-  const int D = DiscretizableInTimeType::BasisOnMesh::dim();
+  const int D = DiscretizableInTimeType::FunctionSpace::dim();
   
-  const int nDofsPerElement = DiscretizableInTimeType::BasisOnMesh::nDofsPerElement();
+  const int nDofsPerElement = DiscretizableInTimeType::FunctionSpace::nDofsPerElement();
   
   Vec3 currentPoint = startingPoint;
   element_no_t elementNo = initialElementNo;
@@ -102,7 +102,7 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
      problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
 
      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-     problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
+     problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
    }
    
    VLOG(2) << "streamline starts in element " << elementNo;
@@ -118,9 +118,9 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
      }
     
      // check if element_no is still valid
-     if (!problem_.data().mesh()->pointIsInElement(currentPoint, elementNo, xi))
+     if (!problem_.data().functionSpace()->pointIsInElement(currentPoint, elementNo, xi))
      {
-       bool positionFound = problem_.data().mesh()->findPosition(currentPoint, elementNo, xi);
+       bool positionFound = problem_.data().functionSpace()->findPosition(currentPoint, elementNo, xi);
 
        // if no position was found, the streamline exits the domain
        if (!positionFound)
@@ -139,7 +139,7 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
          problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
            
          // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-         problem_.data().mesh()->getElementGeometry(elementNo, geometryValues);
+         problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
        }
        
        VLOG(2) << "streamline enters element " << elementNo;
@@ -149,14 +149,14 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
      Vec3 gradient;
      if (useGradientField_)
      {       
-       gradient = problem_.data().mesh()->template interpolateValueInElement<3>(elementalGradientValues, xi);
+       gradient = problem_.data().functionSpace()->template interpolateValueInElement<3>(elementalGradientValues, xi);
        VLOG(2) << "use gradient field";
      }
      else 
      {
        // compute the gradient value in the current value
-       Tensor2<D> inverseJacobian = problem_.data().mesh()->getInverseJacobian(geometryValues, elementNo, xi);
-       gradient = problem_.data().mesh()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+       Tensor2<D> inverseJacobian = problem_.data().functionSpace()->getInverseJacobian(geometryValues, elementNo, xi);
+       gradient = problem_.data().functionSpace()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
        
        VLOG(2) << "use direct gradient";
      }
@@ -199,7 +199,7 @@ traceStreamlines()
     element_no_t initialElementNo = 0;
     
     // find out initial element no and xi value where the current Point lies
-    bool positionFound = problem_.data().mesh()->findPosition(startingPoint, initialElementNo, xi);
+    bool positionFound = problem_.data().functionSpace()->findPosition(startingPoint, initialElementNo, xi);
     if (!positionFound)
     {
       LOG(ERROR) << "Seed point " << startingPoint << " is outside of domain.";

@@ -10,25 +10,25 @@
 #include "semt/Shortcuts.h"
 #include "control/types.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/elasticity_tensor.h"
-#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+#include "function_space/00_function_space_base_dim.h"
 #include "utility/python_utility.h"
 
 namespace SpatialDiscretization
 {
 
 // general implementation for solid mechanics penalty
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
-setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix)
+setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix)
 {
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
 
   // set all non-zero entries
   this->setStiffnessMatrixEntriesForDisplacements(tangentStiffnessMatrix);
@@ -56,22 +56,22 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffne
   }
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
 setFromSolverVariableSolution(Vec &solverSolutionVariable)
 {
   // if the computation uses reduced vectors, expand to full vectors
   if (this->data_.computeWithReducedVectors())
   {
-    const int D = BasisOnMeshType::dim();
-    const int nLocalUnknownsOutputVector = this->data_.mesh()->nDofsLocal() * D;
+    const int D = FunctionSpaceType::dim();
+    const int nLocalUnknownsOutputVector = this->data_.functionSpace()->nDofsLocal() * D;
 
     this->expandVector(solverSolutionVariable, this->data_.displacements().valuesLocal(), nLocalUnknownsOutputVector);
   }
@@ -81,44 +81,44 @@ setFromSolverVariableSolution(Vec &solverSolutionVariable)
   }
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
 evaluateNonlinearFunction(Vec &result)
 {
   this->computeInternalMinusExternalVirtualWork(result);
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
 preparePressureInterpolation(element_no_t elementNo)
 {
   // Do nothing because pressure is not interpolated in penalty formulation. This method is needed to generalize to mixed formulation.
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 double FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
-getPressure(double deformationGradientDeterminant, VecD<BasisOnMeshType::dim()> xi, double &artificialPressureTilde)
+getPressure(double deformationGradientDeterminant, VecD<FunctionSpaceType::dim()> xi, double &artificialPressureTilde)
 {
   // artifical pressure p
   const double artificialPressure = this->computeArtificialPressure(deformationGradientDeterminant, artificialPressureTilde);
@@ -126,19 +126,19 @@ getPressure(double deformationGradientDeterminant, VecD<BasisOnMeshType::dim()> 
   return artificialPressure;
 }
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 const int FiniteElementMethodMatrix<
-  BasisOnMeshType,
+  FunctionSpaceType,
   QuadratureType,
   Term,
-  typename BasisOnMeshType::Mesh,
+  typename FunctionSpaceType::Mesh,
   Equation::isIncompressible<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 >::
 nLocalUnknowns()
 {
-  const int D = BasisOnMeshType::dim();
-  const int nLocalUnknowns = this->data_.mesh()->nDofsLocal() * D;
+  const int D = FunctionSpaceType::dim();
+  const int nLocalUnknowns = this->data_.functionSpace()->nDofsLocal() * D;
   return nLocalUnknowns;
 }
 

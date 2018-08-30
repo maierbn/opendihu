@@ -1,6 +1,6 @@
 #include "output_writer/exfile/exfile_writer.h"
 
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 #include <cstdlib>
 
@@ -9,15 +9,15 @@ namespace OutputWriter
 
 //! write exelem file to given stream
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
 outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
-             std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh, 
+             std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh, 
              int nFieldVariablesOfMesh)
 {
   stream << " Group name: " << meshName << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl;
 
-  const int nNodesPerElement = BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();
+  const int nNodesPerElement = FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::nNodesPerElement();
   const element_no_t nElements = mesh->nElementsLocal();
 
   bool outputHeader = true;
@@ -63,9 +63,9 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
 
 //! write exnode file to given stream
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ExfileWriter<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+void ExfileWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
 outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
-             std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh,
+             std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> mesh,
              int nFieldVariablesOfMesh
             )
 {

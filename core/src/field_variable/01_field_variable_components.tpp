@@ -3,36 +3,36 @@
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType,int nComponents>
-const std::array<std::string,nComponents> &FieldVariableComponents<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+const std::array<std::string,nComponents> &FieldVariableComponents<FunctionSpaceType,nComponents>::
 componentNames() const
 {
   return componentNames_;
 }
 
-template<typename BasisOnMeshType,int nComponents>
-const std::string FieldVariableComponents<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+const std::string FieldVariableComponents<FunctionSpaceType,nComponents>::
 componentName(int componentNo) const
 {
   return componentNames_[componentNo];
 }
 
-template<typename BasisOnMeshType, int nComponentsValue>
-constexpr int FieldVariableComponents<BasisOnMeshType,nComponentsValue>::
+template<typename FunctionSpaceType, int nComponentsValue>
+constexpr int FieldVariableComponents<FunctionSpaceType,nComponentsValue>::
 nComponents()
 {
   return nComponentsValue;
 }
 
-template<typename BasisOnMeshType, int nComponentsValue>
-int FieldVariableComponents<BasisOnMeshType,nComponentsValue>::
+template<typename FunctionSpaceType, int nComponentsValue>
+int FieldVariableComponents<FunctionSpaceType,nComponentsValue>::
 getNComponents() const
 {
   return nComponentsValue;
 }
 
-template<typename BasisOnMeshType, int nComponents>
-int FieldVariableComponents<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+int FieldVariableComponents<FunctionSpaceType,nComponents>::
 findComponent(std::string componentName)
 {
   for (int componentNo = 0; componentNo < componentNames_.size(); componentNo++)

@@ -3,28 +3,28 @@
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType>
-FieldVariableBase<BasisOnMeshType>::
-FieldVariableBase() : mesh_(nullptr)
+template<typename FunctionSpaceType>
+FieldVariableBase<FunctionSpaceType>::
+FieldVariableBase() : functionSpace_(nullptr)
 {
 }
 
-template<typename BasisOnMeshType>
-std::shared_ptr<BasisOnMeshType> FieldVariableBase<BasisOnMeshType>::
-mesh()
+template<typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> FieldVariableBase<FunctionSpaceType>::
+functionSpace()
 {
-  return mesh_;
+  return functionSpace_;
 }
 
-template<typename BasisOnMeshType>
-std::string FieldVariableBase<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+std::string FieldVariableBase<FunctionSpaceType>::
 name() const
 {
   return this->name_;
 }
 
-template<typename BasisOnMeshType>
-bool FieldVariableBase<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+bool FieldVariableBase<FunctionSpaceType>::
 isGeometryField() const
 {
   return this->isGeometryField_;

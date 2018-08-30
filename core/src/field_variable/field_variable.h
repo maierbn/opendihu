@@ -7,15 +7,15 @@ namespace FieldVariable
 
 /** General field variable
  */
-template<typename BasisOnMeshType,int nComponents>
+template<typename FunctionSpaceType,int nComponents>
 class FieldVariable :
-  public FieldVariableVector<BasisOnMeshType,nComponents>
+  public FieldVariableVector<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableVector<BasisOnMeshType,nComponents>::FieldVariableVector;
+  using FieldVariableVector<FunctionSpaceType,nComponents>::FieldVariableVector;
 
-  typedef BasisOnMeshType BasisOnMesh;
+  typedef FunctionSpaceType FunctionSpace;
   
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that the current state of the vector is fetched from the global vector
   void startVectorManipulation();
@@ -26,8 +26,8 @@ public:
 
 
 // output operator
-template<typename BasisOnMeshType,int nComponents>
-std::ostream &operator<<(std::ostream &stream, const FieldVariable<BasisOnMeshType,nComponents> &rhs)
+template<typename FunctionSpaceType,int nComponents>
+std::ostream &operator<<(std::ostream &stream, const FieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
   rhs.output(stream);
   return stream;

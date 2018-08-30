@@ -4,7 +4,7 @@
 #include <map>
 
 #include "control/dihu_context.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace Partition{
 class Manager;
@@ -30,7 +30,7 @@ public:
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
   
   //! return previously created mesh or create on the fly
-  template<typename BasisOnMeshType=None>
+  template<typename FunctionSpaceType=None>
   std::shared_ptr<Mesh> mesh(PyObject *settings);
 
   //! check if a mesh with the given name is stored
@@ -38,7 +38,7 @@ public:
 
   //! create a mesh not from python config but directly by calling an appropriate construtor. 
   //! With this e.g. meshes from node positions can be created.
-  template<typename BasisOnMeshType, typename ...Args>
+  template<typename FunctionSpaceType, typename ...Args>
   std::shared_ptr<Mesh> createMesh(std::string name, Args && ...args);
   
   friend class NodePositionsTester;    ///< a class used for testing

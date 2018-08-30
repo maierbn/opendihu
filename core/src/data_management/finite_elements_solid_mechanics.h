@@ -16,9 +16,9 @@ namespace Data
 
 /** Common base class for solid mechanics finite elements, 1.) penalty formulation, 2.) mixed formulation
  */
-template<typename BasisOnMeshType,typename Term>
+template<typename FunctionSpaceType,typename Term>
 class FiniteElementsSolidMechanics :
-  public Data<BasisOnMeshType>
+  public Data<FunctionSpaceType>
 {
 public:
 
@@ -32,41 +32,41 @@ public:
   virtual void initialize() override;
 
   //! return reference to a stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> tangentStiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> tangentStiffnessMatrix();
 
   //! return reference to the residual field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &residual();
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &residual();
 
   //! return reference to the increment field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &increment(){LOG(FATAL) << "this should not be in use";}
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &solution(){LOG(FATAL) << "this should not be in use";}
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &increment(){LOG(FATAL) << "this should not be in use";}
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &solution(){LOG(FATAL) << "this should not be in use";}
 
   //! return reference to the actual geometry field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,3> &geometryActual();
+  FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryActual();
 
   //! return reference to the reference configuration geometry field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,3> &geometryReference();
+  FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryReference();
 
   //! return reference to the displacements field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &displacements();
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &displacements();
 
   //! return reference to the wExt field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &externalVirtualWork();
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &externalVirtualWork();
 
   //! return reference to the wInt field, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &internalVirtualWork();
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &internalVirtualWork();
 
   //! alias for externalVirtualWork, needed such that rhs setting functionality works
-  FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &rightHandSide();
 
   //! 3D vector to be used in 2D problems for adding to actual geometry which is also 3D
   Vec &fullIncrement();
 
   //! get a reference to the tangent stiffness matrix as it is used for the nonlinear solver
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverMatrixTangentStiffness();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> solverMatrixTangentStiffness();
 
   //! get a reference to the tangent stiffness matrix that is used for the finite difference approximation of the stiffness matrix if analytic jacobian is used
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> solverMatrixTangentStiffnessFiniteDifferences();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> solverMatrixTangentStiffnessFiniteDifferences();
 
   //! get a reference to the residual vector as it is used for the nonlinear solver
   Vec &solverVariableResidual();
@@ -93,25 +93,25 @@ public:
   bool &externalVirtualWorkIsConstant();
 
   //! return a reference to the discretization matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix();
 
   //! get the number of unknows in the solution variable which is 3*nNodes
   virtual dof_no_t nUnknownsLocalWithGhosts();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometryReference
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // actual geometry (stored in mesh)
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>>,  // displacements
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>>,   // residual
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>>   // externalVirtualWork
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometryReference
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // actual geometry (stored in functionSpace)
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>>,  // displacements
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>>,   // residual
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>>   // externalVirtualWork
   > OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers
   OutputFieldVariables getOutputFieldVariables();
 
   //! return reference to a stiffness matrix. This method is usually called for solving the linear system, but in this case we have an nonlinear system that does not retrieve the stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix(){LOG(FATAL) << "this should not be in use";}
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix(){LOG(FATAL) << "this should not be in use";}
 
   //! return the value of computeWithReducedVectors. If the vector of unknowns only contains the real degrees of freedom and not the variables with Dirichlet BCs. This is maybe slower because copying of data is required, but the system to solve is smaller
   bool computeWithReducedVectors();
@@ -130,21 +130,21 @@ protected:
   //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
   virtual const dof_no_t getTangentStiffnessMatrixNRows();
 
-  PartitionedPetscMat<BasisOnMeshType> tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
-  PartitionedPetscMat<BasisOnMeshType> solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_
-  PartitionedPetscMat<BasisOnMeshType> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  PartitionedPetscMat<FunctionSpaceType> tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
+  PartitionedPetscMat<FunctionSpaceType> solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_
+  PartitionedPetscMat<FunctionSpaceType> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
 
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> residual_;           ///< the residual vector, needed in the solution process by PETSc
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> increment_;           ///< the increments vector
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>> residual_;           ///< the residual vector, needed in the solution process by PETSc
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>> increment_;           ///< the increments vector
 
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> geometryReference_;   //< geometry field in reference configuration, the geometry in actual configuration is stored by mesh_
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> displacements_;        //< current displacements
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> externalVirtualWork_;        //< the external virtual work vector δW_ext
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()>> internalVirtualWork_;        //< the internal virtual work vector δW_int
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryReference_;   //< geometry field in reference configuration, the geometry in actual configuration is stored by functionSpace_
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>> displacements_;        //< current displacements
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>> externalVirtualWork_;        //< the external virtual work vector δW_ext
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()>> internalVirtualWork_;        //< the internal virtual work vector δW_int
 
   Vec fullIncrement_;   ///< only for 2D problems this vec is a 3D vector that is filled from the 2D displacements vector and afterwards added to the geometry values.
 
-  PartitionedPetscMat<BasisOnMeshType> solverMatrixTangentStiffness_;    ///< the tangent stiffness matrix used as jacobian in the nonlinear solver, in reduced form if we use reduce quantities (displacements without Dirichlet BC)
+  PartitionedPetscMat<FunctionSpaceType> solverMatrixTangentStiffness_;    ///< the tangent stiffness matrix used as jacobian in the nonlinear solver, in reduced form if we use reduce quantities (displacements without Dirichlet BC)
   Vec solverVariableResidual_;  ///< this vector is used to store a reduced version of the residual for the nonlinear solver
   Vec solverVariableSolution_;  ///< this vector is used to store the reduced displacements vector that does contain the same as displacements_ but without values for Dirichlet BCs
   Vec internalVirtualWorkReduced_;  ///< reduced vector for the internal virtual work
@@ -158,18 +158,18 @@ protected:
 
 /** inherit everything from FiniteElementsSolidMechanics
  */
-template<typename BasisOnMeshType,typename Term>
+template<typename FunctionSpaceType,typename Term>
 class FiniteElements<
-  BasisOnMeshType,
+  FunctionSpaceType,
   Term,
   Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 > :
-  public FiniteElementsSolidMechanics<BasisOnMeshType,Term>
+  public FiniteElementsSolidMechanics<FunctionSpaceType,Term>
 {
 public:
   //! inherit constructor
-  using FiniteElementsSolidMechanics<BasisOnMeshType,Term>::FiniteElementsSolidMechanics;
+  using FiniteElementsSolidMechanics<FunctionSpaceType,Term>::FiniteElementsSolidMechanics;
 };
 
 }  // namespace

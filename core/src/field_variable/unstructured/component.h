@@ -14,16 +14,16 @@
 namespace FieldVariable
 {
 
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 class Component
 {
 public:
 
   //! initialize values
-  void initialize(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values, int componentIndex, int nElements);
+  void initialize(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values, int componentIndex, int nElements);
 
   //! set the internal values PETSc vector
-  void setValuesVector(std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values);
+  void setValuesVector(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values);
 
   //! parse current component's exfile representation from file contents
   void parseHeaderFromExelemFile(std::string content);
@@ -82,7 +82,7 @@ public:
   void getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
 
   //! get the values corresponding to all element-local dofs
-  void getElementValues(element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get a single value from global dof no.
   double getValue(node_no_t dofGlobalNo);
@@ -100,7 +100,7 @@ public:
   void output(std::ostream &stream) const;
 
 private:
-  std::shared_ptr<PartitionedPetscVec<BasisOnMeshType,nComponents>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;    ///< vector of all values, the first components of all dofs, then the 2nd component of all dofs, etc.
   int componentIndex_; ///< index of the current component for this field variable, starts with 0, important for interpreting values_
 
   std::string name_;    ///< identifier of the component, e.g. 'x'
@@ -112,8 +112,8 @@ private:
 };
 
 // output operator
-template<typename BasisOnMeshType,int nComponents>
-std::ostream &operator<<(std::ostream &stream, const Component<BasisOnMeshType,nComponents> &rhs);
+template<typename FunctionSpaceType,int nComponents>
+std::ostream &operator<<(std::ostream &stream, const Component<FunctionSpaceType,nComponents> &rhs);
 
 };  // namespace
 #include "field_variable/unstructured/component.tpp"

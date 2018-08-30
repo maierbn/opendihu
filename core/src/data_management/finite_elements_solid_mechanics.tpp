@@ -11,24 +11,24 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
 
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename Term>
-FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 FiniteElementsSolidMechanics(DihuContext context) :
-  Data<BasisOnMeshType>(context), computeWithReducedVectors_(true)  // true: works for analytic and numeric Jacobian in nonlinear solver, false: works only for analyitc Jacobian
+  Data<FunctionSpaceType>(context), computeWithReducedVectors_(true)  // true: works for analytic and numeric Jacobian in nonlinear solver, false: works only for analyitc Jacobian
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
   //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
-template<typename BasisOnMeshType,typename Term>
-FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 ~FiniteElementsSolidMechanics()
 {
   PetscErrorCode ierr;
@@ -39,21 +39,21 @@ FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
   }
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 initialize()
 {
-  Data<BasisOnMeshType>::initialize();
+  Data<FunctionSpaceType>::initialize();
   externalVirtualWorkIsConstant_ = true;
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
 {
-  const int D = this->mesh_->dimension();
-  const int nDofsPerNode = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerNode();
-  const int nDofsPerBasis = BasisOnMesh::BasisOnMeshBaseDim<1,typename BasisOnMeshType::BasisFunction>::nDofsPerElement();
+  const int D = this->functionSpace_->dimension();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
+  const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
   const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
 
   // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
@@ -75,42 +75,42 @@ getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
   };
 }
 
-template<typename BasisOnMeshType,typename Term>
-dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+dof_no_t FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 nUnknownsLocalWithGhosts()
 {
-  return this->mesh_->nNodesLocalWithGhosts() * BasisOnMeshType::dim();  // D components for displacements
+  return this->functionSpace_->nNodesLocalWithGhosts() * FunctionSpaceType::dim();  // D components for displacements
 }
 
-template<typename BasisOnMeshType,typename Term>
-const dof_no_t FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+const dof_no_t FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 getTangentStiffnessMatrixNRows()
 {
-  const int D = BasisOnMeshType::dim();
-  return this->mesh_->nDofsLocal() * D;
+  const int D = FunctionSpaceType::dim();
+  return this->functionSpace_->nDofsLocal() * D;
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 createPetscObjects()
 {
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
 
-  this->residual_ = this->mesh_->template createFieldVariable<D>("residual");
-  this->externalVirtualWork_ = this->mesh_->template createFieldVariable<D>("externalVirtualWork");
-  this->internalVirtualWork_ = this->mesh_->template createFieldVariable<D>("internalVirtualWork");
-  this->increment_ = this->mesh_->template createFieldVariable<D>("increment");
-  this->displacements_ = this->mesh_->template createFieldVariable<D>("displacements");
-  this->geometryReference_ = this->mesh_->template createFieldVariable<3>("geometryReference");
+  this->residual_ = this->functionSpace_->template createFieldVariable<D>("residual");
+  this->externalVirtualWork_ = this->functionSpace_->template createFieldVariable<D>("externalVirtualWork");
+  this->internalVirtualWork_ = this->functionSpace_->template createFieldVariable<D>("internalVirtualWork");
+  this->increment_ = this->functionSpace_->template createFieldVariable<D>("increment");
+  this->displacements_ = this->functionSpace_->template createFieldVariable<D>("displacements");
+  this->geometryReference_ = this->functionSpace_->template createFieldVariable<3>("geometryReference");
 
   // set geometryReference to be the same as the initial geometry field
-  this->geometryReference_->setValues(this->mesh_->geometryField());
+  this->geometryReference_->setValues(this->functionSpace_->geometryField());
 
   // create a 3D vector
   PetscErrorCode ierr;
-  if (BasisOnMeshType::dim() == 2)
+  if (FunctionSpaceType::dim() == 2)
   {
-    ierr = VecDuplicate(this->mesh_->geometryField().valuesGlobal(), &fullIncrement_); CHKERRV(ierr);
+    ierr = VecDuplicate(this->functionSpace_->geometryField().valuesGlobal(), &fullIncrement_); CHKERRV(ierr);
   }
 
   // create PETSc matrix object
@@ -118,7 +118,7 @@ createPetscObjects()
   // dimension of the tangent stiffness matrix
   dof_no_t tangentStiffnessMatrixNRows = this->getTangentStiffnessMatrixNRows();
 
-  LOG(DEBUG) << "FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, "
+  LOG(DEBUG) << "FiniteElementsSolidMechanics<FunctionSpaceType,Term>::createPetscObjects, "
     << "dimension of tangent stiffness matrix: " << tangentStiffnessMatrixNRows << "x" << tangentStiffnessMatrixNRows << "";
 
   // PETSc MatCreateAIJ parameters
@@ -129,19 +129,19 @@ createPetscObjects()
   diagonalNonZeros = std::min(diagonalNonZeros, tangentStiffnessMatrixNRows);
   offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
 
-  LOG(DEBUG) << "d=" << this->mesh_->dimension()
+  LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
     << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros; 
-  const int dimension = BasisOnMeshType::dim();
+  const int dimension = FunctionSpaceType::dim();
     
   const int nComponents = dimension;
-  tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->mesh_->meshPartition(), nComponents, diagonalNonZeros, offdiagonalNonZeros);
+  tangentStiffnessMatrix_ = std::make_shared<PartitionedPetscMat>(this->functionSpace_->meshPartition(), nComponents, diagonalNonZeros, offdiagonalNonZeros);
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
   ierr = MatSetOption(this->tangentStiffnessMatrix_.valuesGlobal(), MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE); CHKERRV(ierr);
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 finalAssembly()
 {
   // communicate portions to the right processors before using the matrix and vector in computations
@@ -158,78 +158,78 @@ finalAssembly()
   LOG(DEBUG) << "finalAssembly";
 }
 
-template<typename BasisOnMeshType,typename Term>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 tangentStiffnessMatrix()
 {
   return this->tangentStiffnessMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 solverMatrixTangentStiffnessFiniteDifferences()
 {
   return this->solverMatrixTangentStiffnessFiniteDifferences_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 residual()
 {
   return *this->residual_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,3> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 geometryActual()
 {
-  return this->mesh_->geometryField();
+  return this->functionSpace_->geometryField();
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,3> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,3> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 geometryReference()
 {
   return *this->geometryReference_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 displacements()
 {
   return *this->displacements_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 rightHandSide()
 {
   return *this->externalVirtualWork_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 externalVirtualWork()
 {
   return *this->externalVirtualWork_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-FieldVariable::FieldVariable<BasisOnMeshType,BasisOnMeshType::dim()> &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 internalVirtualWork()
 {
   return *this->internalVirtualWork_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 print()
 {
   if (!VLOG_IS_ON(4))
@@ -270,22 +270,22 @@ print()
   VLOG(4) << "======================";
 }
 
-template<typename BasisOnMeshType,typename Term>
-bool FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+bool FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 massMatrixInitialized()
 {
   return this->massMatrixInitialized_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-bool &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+bool &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 externalVirtualWorkIsConstant()
 {
   return this->externalVirtualWorkIsConstant_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 initializeMassMatrix()
 {
   // determine problem size
@@ -308,17 +308,17 @@ initializeMassMatrix()
   this->massMatrixInitialized_ = true;
 }
 
-template<typename BasisOnMeshType,typename Term>
-typename FiniteElementsSolidMechanics<BasisOnMeshType,Term>::OutputFieldVariables
-FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+typename FiniteElementsSolidMechanics<FunctionSpaceType,Term>::OutputFieldVariables
+FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 getOutputFieldVariables()
 {
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> actualGeometryField
-    = std::make_shared<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->geometryField());
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> actualGeometryField
+    = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
   /*
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>> generalField;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> generalField;
 
-  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(this->mesh_->fieldVariable("general"));
+  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->fieldVariable("general"));
   if (!generalField)
    generalField = geometryField;
   */
@@ -332,62 +332,62 @@ getOutputFieldVariables()
 }
 
 
-template<typename BasisOnMeshType,typename Term>
-bool FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+bool FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 computeWithReducedVectors()
 {
   return computeWithReducedVectors_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+Vec &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 fullIncrement()
 {
   return fullIncrement_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 solverMatrixTangentStiffness()
 {
   return solverMatrixTangentStiffness_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+Vec &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 solverVariableSolution()
 {
   return solverVariableSolution_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+Vec &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 solverVariableResidual()
 {
   return solverVariableResidual_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-Vec &FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+Vec &FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 internalVirtualWorkReduced()
 {
   return internalVirtualWorkReduced_;
 }
 
-template<typename BasisOnMeshType,typename Term>
-void FiniteElementsSolidMechanics<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 initializeSolverVariables(int nDofs)
 {
-  const int D = BasisOnMeshType::dim();
-  const int nDofsDisplacementsReduced = this->mesh_->nDofsLocal() * D;
+  const int D = FunctionSpaceType::dim();
+  const int nDofsDisplacementsReduced = this->functionSpace_->nDofsLocal() * D;
 
   LOG(DEBUG) << "initializeSolverVariables with nDofs=" << nDofs << ", nDofsDisplacementsReduced=" << nDofsDisplacementsReduced;
 
   PetscErrorCode ierr;
   
-  PetscUtility::createVector(this->solverVariableSolution_, nDofs, "solverVariableSolution", this->mesh_->partition());
-  PetscUtility::createVector(this->solverVariableResidual_, nDofs, "solverVariableResidual", this->mesh_->partition());
-  PetscUtility::createVector(this->internalVirtualWorkReduced_, nDofsDisplacementsReduced, "internalVirtualWorkReduced", this->mesh_->partition());
+  PetscUtility::createVector(this->solverVariableSolution_, nDofs, "solverVariableSolution", this->functionSpace_->partition());
+  PetscUtility::createVector(this->solverVariableResidual_, nDofs, "solverVariableResidual", this->functionSpace_->partition());
+  PetscUtility::createVector(this->internalVirtualWorkReduced_, nDofsDisplacementsReduced, "internalVirtualWorkReduced", this->functionSpace_->partition());
   /*
   ierr = VecCreate(PETSC_COMM_WORLD, &this->solverVariableSolution_);  CHKERRV(ierr);
   ierr = VecCreate(PETSC_COMM_WORLD, &this->solverVariableResidual_);  CHKERRV(ierr);

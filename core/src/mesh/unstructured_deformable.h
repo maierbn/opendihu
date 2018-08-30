@@ -7,7 +7,7 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "mesh/deformable.h"
-#include "basis_on_mesh/00_basis_on_mesh_base_dim.h"
+#include "function_space/00_function_space_base_dim.h"
 
 namespace Mesh
 {
@@ -23,7 +23,7 @@ public:
   //! constructor of base class
   using MeshOfDimension<D>::MeshOfDimension;
 
-  //! get the total number of elements, this is implemented in basis_on_mesh/04_basis_on_mesh_data_unstructured.h
+  //! get the total number of elements, this is implemented in function_space/04_function_space_data_unstructured.h
   //element_no_t nElementsLocal() const;
 
 private:

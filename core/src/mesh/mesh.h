@@ -33,7 +33,7 @@ public:
   //! number of elements in the mesh stored in the current partition
   virtual element_no_t nElementsLocal() const = 0;
   
-  //! get the meshPartition of this mesh (defined in BasisOnMesh)
+  //! get the meshPartition of this mesh (defined in FunctionSpace)
   virtual std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase() = 0;
   
   //! initialize the mesh after creation

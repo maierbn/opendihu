@@ -31,7 +31,7 @@ countNFieldVariablesOfMesh(CurrentFieldVariableType currentFieldVariable, std::s
                            int &nFieldVariablesOfMesh)
 {
   // if mesh name is the specified meshName, count this mesh
-  if (currentFieldVariable->mesh()->meshName() == meshName)
+  if (currentFieldVariable->functionSpace()->meshName() == meshName)
   {
     nFieldVariablesOfMesh++;
   }

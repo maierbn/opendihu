@@ -12,12 +12,12 @@ namespace SpatialDiscretization
 {
 
 // set stiffness matrix for a u-p mixed formulation in which the pressure is condensed out
-template<typename HighOrderBasisOnMeshType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
+template<typename HighOrderFunctionSpaceType, int completePolynomialOrder, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  MixedBasisOnMeshTemplate<HighOrderBasisOnMeshType, completePolynomialOrder>,
+  MixedFunctionSpaceTemplate<HighOrderFunctionSpaceType, completePolynomialOrder>,
   MixedQuadratureType,
   Term,
-  Mesh::isDeformable<typename HighOrderBasisOnMeshType::Mesh>,
+  Mesh::isDeformable<typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 setStiffnessMatrix()

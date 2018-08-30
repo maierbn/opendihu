@@ -10,15 +10,15 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType,typename Term>
-void BoundaryConditions<BasisOnMeshType,Quadrature::None,Term,Term>::
+template<typename FunctionSpaceType,typename Term>
+void BoundaryConditions<FunctionSpaceType,Quadrature::None,Term,Term>::
 applyBoundaryConditions()
 {
   applyBoundaryConditionsStrongForm();
 }
 
-template<typename BasisOnMeshType,typename Term>
-void BoundaryConditions<BasisOnMeshType,Quadrature::None,Term,Term>::
+template<typename FunctionSpaceType,typename Term>
+void BoundaryConditions<FunctionSpaceType,Quadrature::None,Term,Term>::
 applyBoundaryConditionsStrongForm()
 {
   // This sets rows and columns in stiffness matrix to 0 and diagonal to 1 for BC dofs.
@@ -27,11 +27,11 @@ applyBoundaryConditionsStrongForm()
 
   LOG(TRACE) << "applyBoundaryConditionsStrongForm";
 
-  dof_no_t nDofsLocal = this->data_.mesh()->nDofsLocalWithoutGhosts();
-  node_no_t nNodes = this->data_.mesh()->nNodesLocalWithoutGhosts();
+  dof_no_t nDofsLocal = this->data_.functionSpace()->nDofsLocalWithoutGhosts();
+  node_no_t nNodes = this->data_.functionSpace()->nNodesLocalWithoutGhosts();
 
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // add Dirichlet boundary conditions
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
@@ -72,8 +72,8 @@ applyBoundaryConditionsStrongForm()
       continue;
 
     // translate BC index to nodeNo and dofIndex
-    node_no_t boundaryConditionNodeNo = boundaryConditionIndex / BasisOnMeshType::nDofsPerNode();
-    int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * BasisOnMeshType::nDofsPerNode();
+    node_no_t boundaryConditionNodeNo = boundaryConditionIndex / FunctionSpaceType::nDofsPerNode();
+    int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * FunctionSpaceType::nDofsPerNode();
 
     if (boundaryConditionIndex > nDofsLocal)
     {
@@ -83,7 +83,7 @@ applyBoundaryConditionsStrongForm()
       continue;
     }
 
-    dof_no_t boundaryConditionDofNo = this->data_.mesh()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
+    dof_no_t boundaryConditionDofNo = this->data_.functionSpace()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
 
     // set rhs entry to prescribed value
     rightHandSide.setValue(boundaryConditionDofNo, boundaryConditionValue, INSERT_VALUES);

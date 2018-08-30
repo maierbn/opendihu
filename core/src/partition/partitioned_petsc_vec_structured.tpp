@@ -2,10 +2,10 @@
 
 //! constructor
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition,
+PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition,
                     std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name), vectorManipulationStarted_(false)
+  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, name), vectorManipulationStarted_(false)
 {
   //dm_ = meshPartition->dmElements();
   
@@ -14,9 +14,9 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisO
 
 //! constructor, copy from existing vector
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
+PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
+  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
 {
   createVector();
   
@@ -34,9 +34,9 @@ PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisF
 //! constructor, copy from existing vector
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
-PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name) :
-  PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
+PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name) :
+  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), vectorManipulationStarted_(false)
 {
   //dm_ = rhs.dm_;
   
@@ -55,7 +55,7 @@ PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisF
   
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 createVector()
 {
   VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
@@ -94,7 +94,7 @@ createVector()
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 startVectorManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" startVectorManipulation";
@@ -125,7 +125,7 @@ startVectorManipulation()
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 finishVectorManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" finishVectorManipulation";
@@ -157,7 +157,7 @@ finishVectorManipulation()
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   // this wraps the standard PETSc VecGetValues on the local vector
@@ -183,7 +183,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   // this wraps the standard PETSc VecGetValues on the global vector
@@ -209,7 +209,7 @@ getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], Petsc
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
   if (VLOG_IS_ON(3))
@@ -239,7 +239,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
   VLOG(3) << "\"" << this->name_ << "\" setValue(componentNo=" << componentNo << ", row=" << row << ", value=" << value
@@ -252,8 +252,8 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 
 //! set values from another vector
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setValues(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs)
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs)
 {
   VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
   
@@ -269,7 +269,7 @@ setValues(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionTyp
 /*
 //! for a single component vector set all values
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(values.size() == this->meshPartition_->nDofsLocalWithGhosts());
@@ -281,7 +281,7 @@ setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode pet
 
 //! for a single component vector set all values, input does not contain values for ghosts
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(values.size() == this->meshPartition_->nDofsLocalWithoutGhosts());
@@ -300,7 +300,7 @@ setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode 
 }
   */
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 zeroEntries()
 {
   VLOG(3) << "\"" << this->name_ << "\" zeroEntries";
@@ -313,7 +313,7 @@ zeroEntries()
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-Vec &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 valuesLocal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -321,7 +321,7 @@ valuesLocal(int componentNo)
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-Vec &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 valuesGlobal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -330,7 +330,7 @@ valuesGlobal(int componentNo)
 
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-std::vector<PetscInt> &PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+std::vector<PetscInt> &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 localDofNosWithoutGhosts()
 {
   assert(this->meshPartition_);
@@ -338,7 +338,7 @@ localDofNosWithoutGhosts()
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)
 {
 #ifndef NDEBUG  

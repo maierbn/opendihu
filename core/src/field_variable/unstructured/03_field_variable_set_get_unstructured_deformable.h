@@ -9,8 +9,8 @@
 #include "field_variable/unstructured/component.h"
 #include "field_variable/unstructured/element_to_node_mapping.h"
 #include "field_variable/unstructured/node_to_dof_mapping.h"
-#include "basis_on_mesh/basis_on_mesh.h"
-#include "basis_on_mesh/06_basis_on_mesh_dofs_nodes.h"
+#include "function_space/function_space.h"
+#include "function_space/06_function_space_dofs_nodes.h"
 #include "mesh/unstructured_deformable.h"
 #include "field_variable/field_variable_set_get.h"
 
@@ -19,13 +19,13 @@ namespace FieldVariable
 
 /** FieldVariable class for UnstructuredDeformable mesh
  */
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 class FieldVariableSetGetUnstructured :
-  public FieldVariableData<BasisOnMeshType,nComponents>
+  public FieldVariableData<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableData<BasisOnMeshType,nComponents>::FieldVariableData;
+  using FieldVariableData<FunctionSpaceType,nComponents>::FieldVariableData;
 
   //! for a specific component, get all values
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
@@ -47,16 +47,16 @@ public:
   void getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values);
 
   //! for a specific component, get the values corresponding to all element-local dofs
-  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values);
 
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo);
 
   //! copy the values from another field variable of the same type
-  void setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs);
+  void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
 
   //! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode=INSERT_VALUES);

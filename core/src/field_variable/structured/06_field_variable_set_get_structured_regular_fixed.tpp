@@ -8,41 +8,41 @@ namespace FieldVariable
 {
 
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
     VLOG(3) << "getValues(componentNo=" << componentNo << "): field variable is not a geometry field, retrieve stored values";
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getValuesWithGhosts(componentNo, values, onlyNodalValues);
     return;
   }
 
   // for geometry field compute information
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
   node_no_t nLocalNodesInZDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithGhosts(1);
 
   if (D >= 3)
-    nLocalNodesInZDirection = this->mesh_->nNodesLocalWithGhosts(2);
+    nLocalNodesInZDirection = this->functionSpace_->nNodesLocalWithGhosts(2);
 
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine the number of values to be retrieved which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->mesh_->nDofsLocalWithGhosts();
+  dof_no_t nValues = this->functionSpace_->nDofsLocalWithGhosts();
   if (onlyNodalValues)
   {
     nValues /= nDofsPerNode;
   }
 
-  LOG(DEBUG) << "getValues, n dofs (with ghosts): " << this->mesh_->nDofsLocalWithGhosts() << ", nValues: " << nValues
+  LOG(DEBUG) << "getValues, n dofs (with ghosts): " << this->functionSpace_->nDofsLocalWithGhosts() << ", nValues: " << nValues
     << ", nNodes: " << nLocalNodesInXDirection<< "," <<nLocalNodesInYDirection<< "," <<nLocalNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 
@@ -59,8 +59,8 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
         if (componentNo == 0)  // "x"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-            + nodeX * this->mesh_->meshWidth();
+          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+            + nodeX * this->functionSpace_->meshWidth();
         }
         else if (componentNo == 1)  // "y"
         {
@@ -71,8 +71,8 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
           }
           else
           {
-            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-              + nodeY * this->mesh_->meshWidth();
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+              + nodeY * this->functionSpace_->meshWidth();
           }
         }
         else  // "z"
@@ -84,8 +84,8 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
           }
           else
           {
-            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-              + nodeZ * this->mesh_->meshWidth();
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+              + nodeZ * this->functionSpace_->meshWidth();
           }
         }
 
@@ -103,41 +103,41 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 }
 
 //! for a specific component, get all values
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
     VLOG(3) << "getValues(componentNo=" << componentNo << "): field variable is not a geometry field, retrieve stored values";
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getValuesWithoutGhosts(componentNo, values, onlyNodalValues);
     return;
   }
 
   // for geometry field compute information
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
   node_no_t nLocalNodesInZDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
 
   if (D >= 3)
-    nLocalNodesInZDirection = this->mesh_->nNodesLocalWithoutGhosts(2);
+    nLocalNodesInZDirection = this->functionSpace_->nNodesLocalWithoutGhosts(2);
 
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine the number of values to be retrieved which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->mesh_->nDofsLocalWithoutGhosts();
+  dof_no_t nValues = this->functionSpace_->nDofsLocalWithoutGhosts();
   if (onlyNodalValues)
   {
     nValues /= nDofsPerNode;
   }
 
-  LOG(DEBUG) << "getValues, n dofs (without ghosts): " << this->mesh_->nDofsLocalWithoutGhosts() << ", nValues: " << nValues
+  LOG(DEBUG) << "getValues, n dofs (without ghosts): " << this->functionSpace_->nDofsLocalWithoutGhosts() << ", nValues: " << nValues
     << ", nNodes: " << nLocalNodesInXDirection<< "," <<nLocalNodesInYDirection<< "," <<nLocalNodesInZDirection
     << ", nDofsPerNode: " << nDofsPerNode;
 
@@ -154,8 +154,8 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
         if (componentNo == 0)  // "x"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-            + nodeX * this->mesh_->meshWidth();
+          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+            + nodeX * this->functionSpace_->meshWidth();
         }
         else if (componentNo == 1)  // "y"
         {
@@ -166,8 +166,8 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
           }
           else
           {
-            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-              + nodeY * this->mesh_->meshWidth();
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+              + nodeY * this->functionSpace_->meshWidth();
           }
         }
         else  // "z"
@@ -179,8 +179,8 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
           }
           else
           {
-            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-              + nodeZ * this->mesh_->meshWidth();
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+              + nodeZ * this->functionSpace_->meshWidth();
           }
         }
 
@@ -198,33 +198,33 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 }
 
 //! for a specific component, get values from their local dof no.s
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       template getValues<N>(componentNo, dofLocalNo, values);
     return;
   }
   
   // for geometry field compute information, this does not work for ghost dofs!
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
   
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
-    assert(dofLocalNo[i] < this->mesh_->nDofsLocalWithoutGhosts());
+    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
     
     int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
@@ -237,8 +237,8 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
     {
       if (componentNo == 0)   // x direction
       {
-        values[i] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
+        values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
       }
       else if (componentNo == 1)   // y direction
       {
@@ -248,8 +248,8 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
         }
       }
       else  // z direction
@@ -260,34 +260,34 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
         }
       }
     }
   }
 }
 //! for a specific component, get values from their local dof no.s, as vector
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       template getValues(componentNo, dofLocalNo, values);
     return;
   }
 
   // for geometry field compute information, this does not work for ghost dofs!
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // resize result vector
   const int nValues = dofLocalNo.size();
@@ -297,7 +297,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   // loop over entries in values to be filled
   for (int i=0; i<nValues; i++)
   {
-    assert(dofLocalNo[i] < this->mesh_->nDofsLocalWithoutGhosts());
+    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
     
     int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
@@ -310,8 +310,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
     {
       if (componentNo == 0)   // x direction
       {
-        values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
+        values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
       }
       else if (componentNo == 1)   // y direction
       {
@@ -321,8 +321,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
         }
       }
       else  // z direction
@@ -333,8 +333,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
         }
       }
     }
@@ -342,32 +342,32 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 }
 
 //! get values from their local dof no.s for all components
-template<typename BasisOnMeshType, int nComponents>
+template<typename FunctionSpaceType, int nComponents>
 template<int N>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       template getValues<N>(dofLocalNo, values);
     return;
   }
 
   // for geometry field compute the entries, this does not work for ghost dofs
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
-    assert(dofLocalNo[i] < this->mesh_->nDofsLocalWithoutGhosts());
+    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
     
     int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
@@ -381,8 +381,8 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
     else
     {
       // x direction
-      values[i][0] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
+      values[i][0] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
 
       // y direction
       if (D < 2)
@@ -391,8 +391,8 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        values[i][1] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
       }
 
       // z direction
@@ -402,81 +402,81 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        values[i][2] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
       }
     }
   }
 }
 
 //! for a specific component, get the values corresponding to all element-local dofs
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getElementValues(componentNo, elementNo, values);
     return;
   }
 
   // if this is a geometry field, compute the entries
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
 
   // get the values
   this->getValues<nDofsPerElement>(componentNo, elementDofs, values);
 }
 
 //! get the values corresponding to all element-local dofs for all components
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
   {
-    FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getElementValues(elementNo, values);
     return;
   }
 
   // for geometry field compute the requested values
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // get the element-local dofs of the element
-  std::array<dof_no_t,nDofsPerElement> elementDofs = this->mesh_->getElementDofNosLocal(elementNo);
+  std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
 
   // compute the corresponding geometry values
   this->getValues<nDofsPerElement>(elementDofs, values);
 }
 
 //! for a specific component, get a single value from local dof no.
-template<typename BasisOnMeshType, int nComponents>
-double FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType, int nComponents>
+double FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
 getValue(int componentNo, node_no_t dofLocalNo)
 {
   if (!this->isGeometryField_)
   {
-    return FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
+    return FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getValue(componentNo, dofLocalNo);
   }
 
-  assert(dofLocalNo < this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(dofLocalNo < this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
     
   // for geometry field compute information, this does not work for ghost dofs
-  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
   node_no_t nLocalNodesInYDirection = 1;
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   if (D >= 2)
-    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
 
-  const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
+  const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   double value = 0;
   int nodeLocalNo = int(dofLocalNo / nDofsPerNode);
@@ -486,8 +486,8 @@ getValue(int componentNo, node_no_t dofLocalNo)
   {
     if (componentNo == 0)   // x direction
     {
-      value = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
+      value = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
     }
     else if (componentNo == 1)   // y direction
     {
@@ -497,8 +497,8 @@ getValue(int componentNo, node_no_t dofLocalNo)
       }
       else
       {
-        value = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
-          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        value = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
       }
     }
     else     // z direction
@@ -509,8 +509,8 @@ getValue(int componentNo, node_no_t dofLocalNo)
       }
       else
       {
-        value = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
-          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        value = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
       }
     }
   }
@@ -518,9 +518,9 @@ getValue(int componentNo, node_no_t dofLocalNo)
 }
 
 //! copy the values from another field variable of the same type
-template<typename BasisOnMeshType, int nComponents>
-void FieldVariableSetGetRegularFixed<BasisOnMeshType,nComponents>::
-setValues(FieldVariable<BasisOnMeshType,nComponents> &rhs)
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
+setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
   this->values_->setValues(*rhs.partitionedPetscVec());
 }

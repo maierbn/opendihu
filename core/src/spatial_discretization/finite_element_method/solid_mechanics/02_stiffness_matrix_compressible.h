@@ -12,16 +12,16 @@ namespace SpatialDiscretization
  * This is not yet fully implemented.
  */
 /*
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
 class FiniteElementMethodStiffnessMatrix<
-  BasisOnMeshType, MixedQuadratureType, Equation::isCompressible<Term>, Mesh::isDeformable<typename BasisOnMeshType::Mesh>
+  FunctionSpaceType, MixedQuadratureType, Equation::isCompressible<Term>, Mesh::isDeformable<typename FunctionSpaceType::Mesh>
 > :
-  public FiniteElementMethodBase<BasisOnMeshType, MixedQuadratureType>,
-  public SolidMechanicsUtility<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin>
+  public FiniteElementMethodBase<FunctionSpaceType, MixedQuadratureType>,
+  public SolidMechanicsUtility<FunctionSpaceType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodBase<BasisOnMeshType, MixedQuadratureType>::FiniteElementMethodBase;
+  using FiniteElementMethodBase<FunctionSpaceType, MixedQuadratureType>::FiniteElementMethodBase;
 
   //! assemble the stiffness matrix
   void setStiffnessMatrix();

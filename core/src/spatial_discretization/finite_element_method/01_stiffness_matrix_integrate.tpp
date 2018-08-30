@@ -6,26 +6,26 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_laplace.h"
 
 namespace SpatialDiscretization
 {
 
 // 1D,2D,3D stiffness matrix of Deformable mesh
-template<typename BasisOnMeshType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
-void FiniteElementMethodMatrix<BasisOnMeshType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
+void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::
 setStiffnessMatrix()
 {
-  const int D = BasisOnMeshType::dim();
-  LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  const int D = FunctionSpaceType::dim();
+  LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, FunctionSpaceType: " << typeid(FunctionSpaceType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
 
   // get prefactor value
   const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
-  const int nDofsPerElement = BasisOnMeshType::nDofsPerElement();
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   //typedef std::array<std::array<double, nDofsPerElement>, nDofsPerElement> EvaluationsType;
   typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
   typedef std::array<
@@ -34,20 +34,20 @@ setStiffnessMatrix()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
 
   // initialize variables
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  mesh->geometryField().startVectorManipulation();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  functionSpace->geometryField().startVectorManipulation();
 
   // initialize values to zero
   int cntr = 1;
   
-  LOG(DEBUG) << " nElementsLocal: " << mesh->nElementsLocal();
+  LOG(DEBUG) << " nElementsLocal: " << functionSpace->nElementsLocal();
   
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
   {
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     for (int i=0; i<nDofsPerElement; i++)
     {
@@ -77,16 +77,16 @@ setStiffnessMatrix()
   
   // fill entries in stiffness matrix
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < mesh->nElementsLocal(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
   {
     // get indices of element-local dofs
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = mesh->getElementDofNosLocal(elementNo);
+    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
     VLOG(2) << "element " << elementNo;
 
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,BasisOnMeshType::nDofsPerElement()> geometry;
-    mesh->getElementGeometry(elementNo, geometry);
+    std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
+    functionSpace->getElementGeometry(elementNo, geometry);
 
     // compute integral
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
@@ -95,13 +95,13 @@ setStiffnessMatrix()
       std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = BasisOnMeshType::computeJacobian(geometry, xi);
+      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
 
       VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,BasisOnMeshType,Term>::evaluateIntegrand(this->data_,jacobian,xi);
+        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_,jacobian,xi);
 
     }  // function evaluations
 

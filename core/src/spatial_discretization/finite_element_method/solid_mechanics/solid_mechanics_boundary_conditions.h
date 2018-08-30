@@ -8,7 +8,7 @@ namespace SpatialDiscretization
 
 /** This class stores and handles boundary conditions for the nonlinear solid mechanics problems. There are Dirichlet BC, traction and body force boundary, in reference and current configuration each.
   */
-template<typename BasisOnMeshType,typename Term>
+template<typename FunctionSpaceType,typename Term>
 class SolidMechanicsBoundaryConditions
 {
 public:
@@ -20,13 +20,13 @@ public:
   void expandVector(Vec &input, Vec &output, const int nLocalUnknownsOutputVector);
 
   //! set entries in displacements to Dirichlet BC values
-  void applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<FunctionSpaceType,Term> &data);
 
   //! set entries in f to the entry in rhs for which Dirichlet BC are set
-  void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements<FunctionSpaceType,Term> &data);
 
   //! set rows and columns in stiffness matrix to 0 for which boundary conditions are specified
-  void applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> matrix, Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> matrix, Data::FiniteElements<FunctionSpaceType,Term> &data);
 
   //! This transforms a 2D mesh input vector to a 3D mesh output vector by inserting 0's. It can only be called for 2D problems.
   void expandVectorTo3D(Vec &input, Vec &output, const int nLocalUnknowns3D);
@@ -34,10 +34,10 @@ public:
 protected:
 
   //! extract the submatrix that only contains entries for dofs that are not constraint by Dirichlet BCs
-  void reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nLocalUnknowns);
+  void reduceMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> input, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> output, const int nLocalUnknowns);
 
   //! initialize Dirichlet boundary conditions
-  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data);
+  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data);
 
   //! print boundary conditions
   void printBoundaryConditions();
@@ -51,17 +51,17 @@ protected:
     element_no_t elementGlobalNo;
 
     Mesh::face_t face;
-    std::vector<std::pair<dof_no_t, VecD<BasisOnMeshType::dim()>>> dofVectors;  //<element-local dof no, value>
+    std::vector<std::pair<dof_no_t, VecD<FunctionSpaceType::dim()>>> dofVectors;  //<element-local dof no, value>
 
     // parse values from python config, e.g. {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-    TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename BasisOnMeshType::HighOrderBasisOnMesh> mesh);
+    TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh);
   };
 
   std::vector<TractionBoundaryCondition> tractionReferenceConfiguration_;   //< tractions for elements
   std::vector<TractionBoundaryCondition> tractionCurrentConfiguration_;
 
-  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceReferenceConfiguration_;  //< <element global no, vector>
-  std::vector<std::pair<element_no_t, VecD<BasisOnMeshType::dim()>>> bodyForceCurrentConfiguration_;    //< <element global no, vector>
+  std::vector<std::pair<element_no_t, VecD<FunctionSpaceType::dim()>>> bodyForceReferenceConfiguration_;  //< <element global no, vector>
+  std::vector<std::pair<element_no_t, VecD<FunctionSpaceType::dim()>>> bodyForceCurrentConfiguration_;    //< <element global no, vector>
 
 };
 

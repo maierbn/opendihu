@@ -1,6 +1,6 @@
 #include "mesh/mesh_manager.h"
 
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
 
@@ -89,9 +89,9 @@ mesh<None>(PyObject *settings)
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
       LOG(DEBUG) << "Mesh configuration for \"" <<meshName << "\" found and requested, will be created now. "
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
-      typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
+      typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
       
-      std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, meshConfiguration_[meshName]);
+      std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, meshConfiguration_[meshName]);
       mesh->initialize();
       
       // store mesh
@@ -118,10 +118,10 @@ mesh<None>(PyObject *settings)
     anonymousName << "anonymous" << numberAnonymousMeshes_++;
 
     // set type to be 1D regular fixed mesh with linear lagrange basis
-    typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-    LOG(DEBUG) << "Create new mesh with type " << typeid(NewBasisOnMesh).name() << " and name \"" <<anonymousName.str() << "\".";
+    typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
+    LOG(DEBUG) << "Create new mesh with type " << typeid(NewFunctionSpace).name() << " and name \"" <<anonymousName.str() << "\".";
 
-    std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, settings);
+    std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, settings);
     mesh->setMeshName(anonymousName.str());
     mesh->initialize();
     
@@ -133,10 +133,10 @@ mesh<None>(PyObject *settings)
   std::array<element_no_t, 1> nElements {0};
   std::array<double, 1> physicalExtent {1.0};
 
-  typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-  LOG(DEBUG) << "Create new 1-node mesh with type " << typeid(NewBasisOnMesh).name() << ", not stored.";
+  typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
+  LOG(DEBUG) << "Create new 1-node mesh with type " << typeid(NewFunctionSpace).name() << ", not stored.";
 
-  std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, nElements, physicalExtent);
+  std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, nElements, physicalExtent);
   mesh->setMeshName(std::string("anonymous"));
   mesh->initialize();
   return mesh;

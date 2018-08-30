@@ -13,7 +13,7 @@
 #include "node_positions_tester.h"
 #include "../utility.h"
 #include "mesh/face_t.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace SpatialDiscretization
 {
@@ -33,16 +33,16 @@ TEST(FaceTest, faceDofsLinearLagrange1D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<1> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 1> dofIndices1;
   std::array<dof_no_t, 1> dofIndices1Reference = {0};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 1> dofIndices2;
   std::array<dof_no_t, 1> dofIndices2Reference = {1};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
 }
   
@@ -50,16 +50,16 @@ TEST(FaceTest, faceDofsQuadraticLagrange1D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<1> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 1> dofIndices1;
   std::array<dof_no_t, 1> dofIndices1Reference = {0};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 1> dofIndices2;
   std::array<dof_no_t, 1> dofIndices2Reference = {2};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
 }
 
@@ -67,26 +67,26 @@ TEST(FaceTest, faceDofsLinearLagrange2D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<2> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 2> dofIndices1;
   std::array<dof_no_t, 2> dofIndices1Reference = {0, 2};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 2> dofIndices2;
   std::array<dof_no_t, 2> dofIndices2Reference = {1, 3};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
   
   std::array<dof_no_t, 2> dofIndices3;
   std::array<dof_no_t, 2> dofIndices3Reference = {0, 1};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
   
   std::array<dof_no_t, 2> dofIndices4;
   std::array<dof_no_t, 2> dofIndices4Reference = {2, 3};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
 }
 
@@ -94,26 +94,26 @@ TEST(FaceTest, faceDofsQuadraticLagrange2D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<2> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 3> dofIndices1;
   std::array<dof_no_t, 3> dofIndices1Reference = {0, 3, 6};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 3> dofIndices2;
   std::array<dof_no_t, 3> dofIndices2Reference = {2, 5, 8};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
   
   std::array<dof_no_t, 3> dofIndices3;
   std::array<dof_no_t, 3> dofIndices3Reference = {0, 1, 2};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
   
   std::array<dof_no_t, 3> dofIndices4;
   std::array<dof_no_t, 3> dofIndices4Reference = {6, 7, 8};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
 }
 
@@ -121,7 +121,7 @@ TEST(FaceTest, faceDofsLinearLagrange3D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   /*
   std::string pythonConfig = R"(
@@ -148,32 +148,32 @@ config = {
   
   std::array<dof_no_t, 4> dofIndices1;
   std::array<dof_no_t, 4> dofIndices1Reference = {0, 2, 4, 6};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 4> dofIndices2;
   std::array<dof_no_t, 4> dofIndices2Reference = {1, 3, 5, 7};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
   
   std::array<dof_no_t, 4> dofIndices3;
   std::array<dof_no_t, 4> dofIndices3Reference = {0, 1, 4, 5};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
   
   std::array<dof_no_t, 4> dofIndices4;
   std::array<dof_no_t, 4> dofIndices4Reference = {2, 3, 6, 7};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
   
   std::array<dof_no_t, 4> dofIndices5;
   std::array<dof_no_t, 4> dofIndices5Reference = {0, 1, 2, 3};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
   ASSERT_EQ(dofIndices5, dofIndices5Reference);
   
   std::array<dof_no_t, 4> dofIndices6;
   std::array<dof_no_t, 4> dofIndices6Reference = {4, 5, 6, 7};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
   ASSERT_EQ(dofIndices6, dofIndices6Reference);
   
   
@@ -183,36 +183,36 @@ TEST(FaceTest, faceDofsQuadraticLagrange3D)
 { 
   typedef Mesh::UnstructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<2> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   std::array<dof_no_t, 9> dofIndices1;
   std::array<dof_no_t, 9> dofIndices1Reference = {0, 3, 6, 9, 12, 15, 18, 21, 24};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Minus, dofIndices1);  // 0-
   ASSERT_EQ(dofIndices1, dofIndices1Reference);
   
   std::array<dof_no_t, 9> dofIndices2;
   std::array<dof_no_t, 9> dofIndices2Reference = {2, 5, 8, 11, 14, 17, 20, 23, 26};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face0Plus, dofIndices2);  // 0+
   ASSERT_EQ(dofIndices2, dofIndices2Reference);
   
   std::array<dof_no_t, 9> dofIndices3;
   std::array<dof_no_t, 9> dofIndices3Reference = {0, 1, 2, 9, 10, 11, 18, 19, 20};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Minus, dofIndices3);  // 1-
   ASSERT_EQ(dofIndices3, dofIndices3Reference);
   
   std::array<dof_no_t, 9> dofIndices4;
   std::array<dof_no_t, 9> dofIndices4Reference = {6, 7, 8, 15, 16, 17, 24, 25, 26};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face1Plus, dofIndices4);  // 1+
   ASSERT_EQ(dofIndices4, dofIndices4Reference);
   
   std::array<dof_no_t, 9> dofIndices5;
   std::array<dof_no_t, 9> dofIndices5Reference = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Minus, dofIndices5);  // 2-
   ASSERT_EQ(dofIndices5, dofIndices5Reference);
   
   std::array<dof_no_t, 9> dofIndices6;
   std::array<dof_no_t, 9> dofIndices6Reference = {18, 19, 20, 21, 22, 23, 24, 25, 26};
-  BasisOnMeshType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
+  FunctionSpaceType::getFaceDofs(Mesh::face_t::face2Plus, dofIndices6);  // 2+
   ASSERT_EQ(dofIndices6, dofIndices6Reference);
   
 }
@@ -221,7 +221,7 @@ TEST(FaceTest, normals3DCubeElement)
 {
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   
   std::string pythonConfig = R"(
@@ -247,7 +247,7 @@ config = {
     Equation::None
   > problem(settings);
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
   
   {
     Vec3 xi({0.0, 0.5, 0.5});
@@ -361,7 +361,7 @@ TEST(FaceTest, normals3DDistortedElement)
 {
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   
   std::string pythonConfig = R"(
@@ -387,7 +387,7 @@ config = {
     Equation::None
   > problem(settings);
   problem.initialize();
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
   
   {
     Vec3 xi({0.0, 0.5, 0.5});
@@ -425,7 +425,7 @@ TEST(FaceTest, normals3DDistortedElement2)
 {
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
   typedef BasisFunction::LagrangeOfOrder<1> BasisFunctionType;
-  typedef BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<MeshType, BasisFunctionType> FunctionSpaceType;
   
   
   std::string pythonConfig = R"(
@@ -451,7 +451,7 @@ config = {
     Equation::None
   > problem(settings);
   
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
   
   {
     Vec3 xi({0.0, 0.5, 0.5});

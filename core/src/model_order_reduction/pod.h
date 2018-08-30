@@ -54,7 +54,7 @@ class POD<DiscretizableInTimeType, LinearPart>:
   public PODBase<DiscretizableInTimeType>
 {
 public:
-  typedef typename DiscretizableInTimeType::BasisOnMesh BasisOnMesh;
+  typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
 
   //! use constructor of base class
   using PODBase<DiscretizableInTimeType>::PODBase;

@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <memory>
 #include "field_variable/interface.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 
 namespace FieldVariable
 {
@@ -15,15 +15,15 @@ class ElementToDofMapping;
 
 /** Base class for a field variable that just stores the mesh the field variable is defined on.
  */
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 class FieldVariableBase :
-  public Interface<BasisOnMeshType>
+  public Interface<FunctionSpaceType>
 {
 public:
   FieldVariableBase();
 
-  //! return the mesh of this field variable
-  std::shared_ptr<BasisOnMeshType> mesh();
+  //! return the functionSpace of this field variable
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get the name of the field variable
   std::string name() const;
@@ -31,8 +31,8 @@ public:
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
 
-  //! set the mesh
-  virtual void setMesh(std::shared_ptr<BasisOnMeshType> mesh) {LOG(FATAL) << "this is unused";}
+  //! set the functionSpace
+  virtual void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace) {LOG(FATAL) << "this is unused";}
   
   //! get the number of components
   virtual int getNComponents() const = 0;
@@ -53,7 +53,7 @@ public:
   virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode) = 0;
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<BasisOnMeshType>> fieldVariable2) = 0;
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpaceType>> fieldVariable2) = 0;
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector() = 0;
@@ -92,13 +92,13 @@ protected:
  
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
  
-  std::shared_ptr<BasisOnMeshType> mesh_;  ///< the mesh for which the field variable is defined
+  std::shared_ptr<FunctionSpaceType> functionSpace_;  ///< the mesh/function_space for which the field variable is defined
   std::string name_;     ///< name of the field variable
 };
 
 // output operator
-template<typename BasisOnMeshType>
-std::ostream &operator<<(std::ostream &stream, const FieldVariableBase<BasisOnMeshType> &rhs)
+template<typename FunctionSpaceType>
+std::ostream &operator<<(std::ostream &stream, const FieldVariableBase<FunctionSpaceType> &rhs)
 {
   stream << rhs.name();
   return stream;

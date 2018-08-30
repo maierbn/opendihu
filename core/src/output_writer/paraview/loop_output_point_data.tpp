@@ -38,7 +38,7 @@ outputPointData(CurrentFieldVariableType currentFieldVariable, const OutputField
                 std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   // if mesh name is the specified meshName
-  if (currentFieldVariable->mesh()->meshName() == meshName && !currentFieldVariable->isGeometryField())
+  if (currentFieldVariable->functionSpace()->meshName() == meshName && !currentFieldVariable->isGeometryField())
   {
     Paraview::writeParaviewFieldVariable<typename CurrentFieldVariableType::element_type>(*currentFieldVariable, file, binaryOutput, fixedFormat, onlyParallelDatasetElement);
   }

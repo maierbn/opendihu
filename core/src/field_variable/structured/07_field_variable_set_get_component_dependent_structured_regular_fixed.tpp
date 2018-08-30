@@ -9,7 +9,7 @@ namespace FieldVariable
 
 //! get a single value from local dof no. for all components
 template<int D,typename BasisFunctionType,int nComponents>
-std::array<double,nComponents> FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::
+std::array<double,nComponents> FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::
 getValue(node_no_t dofLocalNo)
 {
   // if this is not a geometry field get the stored values
@@ -26,12 +26,12 @@ getValue(node_no_t dofLocalNo)
     return result;
   }
 
-  assert(dofLocalNo < this->mesh_->nDofsWithoutGhosts());
+  assert(dofLocalNo < this->functionSpace_->nDofsWithoutGhosts());
    
   // for geometry field compute the entries, this does not work for ghost dofs
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
-  const int nDofsPerNode = BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+  const node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
+  const node_no_t nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::nDofsPerNode();
   
   int nodeLocalNo = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
@@ -46,16 +46,16 @@ getValue(node_no_t dofLocalNo)
   else
   {
     // x direction
-    value[0] = this->mesh_->meshPartition()->beginNodeGlobal(0) * this->mesh_->meshWidth() 
-      + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
+    value[0] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+      + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
 
     // y direction
-    value[1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-      + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+    value[1] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+      + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
 
     // z direction
-    value[2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-      + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+    value[2] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+      + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
   }
   
   return value;

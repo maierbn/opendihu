@@ -6,16 +6,16 @@ namespace OutputWriter
 {
 
 //! write exnode file to given stream
-template<typename BasisOnMeshType, typename OutputFieldVariablesType>
-void ExfileWriter<BasisOnMeshType,OutputFieldVariablesType>::
-outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<BasisOnMeshType> mesh, int nFieldVariablesOfMesh)
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+void ExfileWriter<FunctionSpaceType,OutputFieldVariablesType>::
+outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh)
 {
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   stream << " Group name: " << meshName << std::endl
     << " Shape. Dimension=" << D << ", " << StringUtility::multiply<D>("line") << std::endl
     << " #Scale factor sets=0" << std::endl;
 
-  const int nNodesPerElement = BasisOnMeshType::nNodesPerElement();
+  const int nNodesPerElement = FunctionSpaceType::nNodesPerElement();
   const element_no_t nElements = mesh->nElementsLocal();
 
   stream << " #Nodes=" << nNodesPerElement << std::endl
@@ -41,17 +41,17 @@ outputExelem(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     stream << " Element:            " << elementGlobalNo+1 << " 0 0" << std::endl
       << "   Nodes:" << std::endl;
 
-    std::array<dof_no_t,BasisOnMeshType::nNodesPerElement()> elementNodes = mesh->getElementNodeNos(elementGlobalNo);
+    std::array<dof_no_t,FunctionSpaceType::nNodesPerElement()> elementNodes = mesh->getElementNodeNos(elementGlobalNo);
     StringUtility::outputValuesBlockAdd1(stream, elementNodes.begin(), elementNodes.end());
   }
 
 }
 
 //! write exnode file to given stream
-template<typename BasisOnMeshType, typename OutputFieldVariablesType>
-void ExfileWriter<BasisOnMeshType,OutputFieldVariablesType>::
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+void ExfileWriter<FunctionSpaceType,OutputFieldVariablesType>::
 outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std::string meshName, 
-             std::shared_ptr<BasisOnMeshType> mesh, int nFieldVariablesOfMesh)
+             std::shared_ptr<FunctionSpaceType> mesh, int nFieldVariablesOfMesh)
 {
   VLOG(2) << "ExfileWriter<Structured>::outputExnode, meshName: " << meshName << ",nFieldVariablesOfMesh:" << nFieldVariablesOfMesh;
     
@@ -83,10 +83,10 @@ outputExnode(std::ostream &stream, OutputFieldVariablesType fieldVariables, std:
     {
       // get all values of the element for the field variable
       const int nComponents = fieldVariableBase->nComponents();
-      std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,nComponents>> fieldVariable
-       = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,nComponents>>(fieldVariableBase);
+      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable
+       = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>>(fieldVariableBase);
 
-      std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> elementValues;
+      std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> elementValues;
 
       fieldVariable->template getElementValues<nComponents>(nodeGlobalNo, elementValues);
 

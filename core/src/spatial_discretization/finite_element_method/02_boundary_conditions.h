@@ -8,13 +8,13 @@ namespace SpatialDiscretization
 /**
  * Class that prepares the system to enforce Dirichlet boundary conditions, regular numerical integration
  */
-template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy= Term>
+template<typename FunctionSpaceType, typename QuadratureType, typename Term, typename Dummy= Term>
 class BoundaryConditions :
-  public FiniteElementMethodMatrix<BasisOnMeshType, QuadratureType, Term>
+  public FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodMatrix<BasisOnMeshType, QuadratureType, Term>::FiniteElementMethodMatrix;
+  using FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodMatrix;
 
 protected:
 
@@ -28,13 +28,13 @@ protected:
 /**
  * Class that prepares the system to enforce Dirichlet boundary conditions, when Quadrature::None is given, uses values from stiffness matrix
  */
-template<typename BasisOnMeshType, typename Term>
-class BoundaryConditions<BasisOnMeshType, Quadrature::None, Term, Term> :
-  public FiniteElementMethodMatrix<BasisOnMeshType, Quadrature::None, Term>
+template<typename FunctionSpaceType, typename Term>
+class BoundaryConditions<FunctionSpaceType, Quadrature::None, Term, Term> :
+  public FiniteElementMethodMatrix<FunctionSpaceType, Quadrature::None, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodMatrix<BasisOnMeshType, Quadrature::None, Term>::FiniteElementMethodMatrix;
+  using FiniteElementMethodMatrix<FunctionSpaceType, Quadrature::None, Term>::FiniteElementMethodMatrix;
 
 protected:
 
@@ -48,13 +48,13 @@ protected:
 /**
  * Partial specialization for solid mechanics, mixed formulation
  */
-template<typename LowOrderBasisOnMeshType,typename HighOrderBasisOnMeshType,typename QuadratureType,typename Term>
-class BoundaryConditions<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
-  public FiniteElementMethodMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>
+template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename QuadratureType,typename Term>
+class BoundaryConditions<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, Term, Equation::isSolidMechanics<Term>> :
+  public FiniteElementMethodMatrix<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodMatrix<BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>, QuadratureType, Term>::FiniteElementMethodMatrix;
+  using FiniteElementMethodMatrix<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>, QuadratureType, Term>::FiniteElementMethodMatrix;
 
 protected:
   //! apply dirichlet boundary conditions

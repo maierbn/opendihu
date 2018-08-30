@@ -18,24 +18,24 @@ namespace SpatialDiscretization
 
 // 1D rhs
 template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (1D)";
 
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements = mesh->nElementsLocal();
-  double elementLength = mesh->meshWidth();
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  element_no_t nElements = functionSpace->nElementsLocal();
+  double elementLength = functionSpace->meshWidth();
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
   
   LOG(DEBUG) << "Use settings nElements=" <<nElements << ", elementLength=" << elementLength;
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
   rightHandSide.startVectorManipulation();
@@ -112,22 +112,22 @@ multiplyRightHandSideWithMassMatrix()
 
 // 2D rhs
 template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (2D)";
 
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1;
 
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
   rightHandSide.startVectorManipulation();
@@ -340,24 +340,24 @@ multiplyRightHandSideWithMassMatrix()
 
 // 3D rhs
 template<typename QuadratureType, typename Term>
-void AssembleRightHandSide<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
+void AssembleRightHandSide<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Equation::hasLaplaceOperator<Term>>::
 multiplyRightHandSideWithMassMatrix()
 {
   LOG(TRACE) << "multiplyRightHandSideWithMassMatrix (3D)";
 
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
-  double elementLength2 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  node_no_t nNodes2 = functionSpace->nNodesLocalWithGhosts(2);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
+  double elementLength2 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
 
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
   rightHandSide.startVectorManipulation();

@@ -15,14 +15,14 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodRhs<BasisOnMeshType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodRhs<FunctionSpaceType, QuadratureType, Term>::
 setRightHandSide()
 {
   LOG(TRACE) << "setRightHandSide";
 
   dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide = this->data_.rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
   rightHandSide.startVectorManipulation();
 
   std::vector<double> localValues;
@@ -34,8 +34,8 @@ setRightHandSide()
     global_no_t nUnknownsGlobal = this->data_.nUnknownsGlobal();
     PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nUnknownsGlobal, localValues);
 
-    std::shared_ptr<Mesh::Mesh> mesh = this->data_.mesh();
-    mesh->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
+    std::shared_ptr<Mesh::Mesh> functionSpace = this->data_.functionSpace();
+    functionSpace->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {

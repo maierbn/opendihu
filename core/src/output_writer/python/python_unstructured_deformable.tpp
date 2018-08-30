@@ -10,7 +10,7 @@ namespace OutputWriter
 {
 
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
 buildPyDataObject(OutputFieldVariablesType fieldVariables, 
                   std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
@@ -41,11 +41,11 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
 
   // cast mesh to its real type
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(meshBase);
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(meshBase);
 
-  std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
-  int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
+  std::string basisFunction = FunctionSpaceType::BasisFunction::getBasisFunctionString();
+  int basisOrder = FunctionSpaceType::BasisFunction::getBasisOrder();
 
   int nRanks = mesh->meshPartition()->nRanks();
   int ownRankNo = mesh->meshPartition()->ownRankNo();
@@ -53,7 +53,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   // start critical section for python API calls
   PythonUtility::GlobalInterpreterLock lock;
   
-  PyObject *pyElementalDofs = Python<BasisOnMeshType,OutputFieldVariablesType>::
+  PyObject *pyElementalDofs = Python<FunctionSpaceType,OutputFieldVariablesType>::
     buildPyElementalDofsObject(meshBase, onlyNodalValues);
   
   // build python dict that will contain all information and data
@@ -71,11 +71,11 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
 }
 
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
 buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalValues)
 {
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMesh;
-  std::shared_ptr<BasisOnMesh> mesh = std::static_pointer_cast<BasisOnMesh>(meshBase);
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpace;
+  std::shared_ptr<FunctionSpace> mesh = std::static_pointer_cast<FunctionSpace>(meshBase);
 
   // create a list of lists for each element the node numbers (if onlyNodalValues) or the dofs
   PyObject *pyElementalDofs = PyList_New((Py_ssize_t)mesh->nElementsLocal());
@@ -85,16 +85,16 @@ buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalV
   {
     std::vector<node_no_t> dofs;
     
-    std::array<dof_no_t,BasisOnMesh::nDofsPerElement()> dofsOfElement = mesh->getElementDofNosLocal(elementNo);
-    for (typename std::array<dof_no_t,BasisOnMesh::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
+    std::array<dof_no_t,FunctionSpace::nDofsPerElement()> dofsOfElement = mesh->getElementDofNosLocal(elementNo);
+    for (typename std::array<dof_no_t,FunctionSpace::nDofsPerElement()>::const_iterator iter = dofsOfElement.begin(); iter != dofsOfElement.end(); iter++)
     {
       dof_no_t dofNo = *iter;
       
       if (onlyNodalValues)
       {
-        if (dofNo % BasisOnMesh::nDofsPerNode() == 0)
+        if (dofNo % FunctionSpace::nDofsPerNode() == 0)
         {
-          node_no_t nodeNo = dofNo / BasisOnMesh::nDofsPerNode();
+          node_no_t nodeNo = dofNo / FunctionSpace::nDofsPerNode();
           dofs.push_back(nodeNo);
         }
       }

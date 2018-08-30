@@ -12,7 +12,7 @@ template<typename DiscretizableInTime>
 ImplicitEuler<DiscretizableInTime>::ImplicitEuler(DihuContext context) :
   TimeSteppingSchemeOde<DiscretizableInTime>(context, "ImplicitEuler")
 {
-  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::BasisOnMesh, DiscretizableInTime::nComponents()>>(context); // create data object for implicit euler
+  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for implicit euler
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ImplicitEuler");
   this->outputWriterManager_.initialize(this->specificSettings_);

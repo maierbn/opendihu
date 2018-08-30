@@ -40,7 +40,7 @@ protected:
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   DiscretizableInTimeType problem_;   ///< the DiscretizableInTime object that is managed by this class
 
-  Data::StreamlineTracer<typename DiscretizableInTimeType::BasisOnMesh, typename DiscretizableInTimeType::Data> data_;    ///< the data object that holds the gradient field variable
+  Data::StreamlineTracer<typename DiscretizableInTimeType::FunctionSpace, typename DiscretizableInTimeType::Data> data_;    ///< the data object that holds the gradient field variable
 
   PyObject *specificSettings_;   ///< the specific python config for this module
   double lineStepWidth_;     ///< the line step width used for integrating the streamlines

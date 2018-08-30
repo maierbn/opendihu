@@ -14,7 +14,7 @@
 #include "mesh/structured_deformable.h"
 #include "mesh/unstructured_deformable.h"
 #include "mesh/mesh.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "output_writer/exfile/exfile_writer.h"
 #include "output_writer/exfile/loop_output_exelem.h"
 #include "output_writer/exfile/loop_output_exnode.h"

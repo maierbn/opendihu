@@ -13,15 +13,15 @@ namespace FieldVariable
  *  Commented out methods are also part of the interface. They can't be included directly because templates can't be
  *  virtual. Their occurence here is therefore only informative.
  */
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 struct Interface
 {
 
   //! contructor as data copy with a different name (component names are the same)
   //FieldVariable(const FieldVariable &rhs, std::string name);
 
-  //! constructor with mesh, name and components
-  //FieldVariable(std::shared_ptr<MeshType> mesh, std::string name, std::vector<std::string> componentNames);
+  //! constructor with functionSpace, name and components
+  //FieldVariable(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames);
 
   //! set all data but the values from a second field variable
   //template<typename FieldVariableType>
@@ -41,7 +41,7 @@ struct Interface
   //template<std::size_t nComponents>
   //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
-  //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different BasisOnMeshTypes)
+  //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different FunctionSpaceTypes)
   virtual Vec &valuesLocal() = 0;
 
   //! get the names of the components
@@ -64,10 +64,10 @@ struct Interface
 
   //! for a specific component, get the values corresponding to all element-local dofs
   //template<int N>
-  //void getElementValuesComponent(std::string component, element_no_t elementNo, std::array<double,BasisOnMeshType::nDofsPerElement()> &values)
+  //void getElementValuesComponent(std::string component, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
 
   //! get the values corresponding to all element-local dofs for all components
-  //void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,BasisOnMeshType::nDofsPerElement()> &values)
+  //void getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
 
   //! for a specific component, get a single value from global dof no.
   //virtual double getValue(std::string component, node_no_t dofGlobalNo) = 0;

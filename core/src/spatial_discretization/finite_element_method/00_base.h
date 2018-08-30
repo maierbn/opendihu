@@ -13,14 +13,14 @@ namespace SpatialDiscretization
  * Base class containing basic finite element functionality such as initializing and solving.
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
-template<typename BasisOnMeshType,typename QuadratureType,typename Term>
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
   FiniteElementMethodBase(DihuContext context);
 
-  typedef ::Data::FiniteElements<BasisOnMeshType,Term> Data;
-  typedef BasisOnMeshType BasisOnMesh;
+  typedef ::Data::FiniteElements<FunctionSpaceType,Term> Data;
+  typedef FunctionSpaceType FunctionSpace;
 
   // perform computation
   void run();

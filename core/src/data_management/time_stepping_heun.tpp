@@ -16,14 +16,14 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType,int nComponents>
-TimeSteppingHeun<BasisOnMeshType,nComponents>::
-TimeSteppingHeun(DihuContext context) : TimeStepping<BasisOnMeshType,nComponents>::TimeStepping(context)
+template<typename FunctionSpaceType,int nComponents>
+TimeSteppingHeun<FunctionSpaceType,nComponents>::
+TimeSteppingHeun(DihuContext context) : TimeStepping<FunctionSpaceType,nComponents>::TimeStepping(context)
 {
 }
 
-template<typename BasisOnMeshType,int nComponents>
-TimeSteppingHeun<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+TimeSteppingHeun<FunctionSpaceType,nComponents>::
 ~TimeSteppingHeun()
 {
   // free PETSc objects
@@ -34,34 +34,34 @@ TimeSteppingHeun<BasisOnMeshType,nComponents>::
   }
 }
 
-template<typename BasisOnMeshType,int nComponents>
-void TimeSteppingHeun<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void TimeSteppingHeun<FunctionSpaceType,nComponents>::
 createPetscObjects()
 {
-  TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects();
+  TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects();
 
-  LOG(DEBUG) << "TimeSteppingHeun<BasisOnMeshType,nComponents>::createPetscObjects(" << nComponents << ")";
+  LOG(DEBUG) << "TimeSteppingHeun<FunctionSpaceType,nComponents>::createPetscObjects(" << nComponents << ")";
   
-  this->intermediateIncrement_ = this->mesh_->template createFieldVariable<nComponents>("intermediateIncrement");
+  this->intermediateIncrement_ = this->functionSpace_->template createFieldVariable<nComponents>("intermediateIncrement");
 }
 
-template<typename BasisOnMeshType,int nComponents>
-FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeSteppingHeun<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeSteppingHeun<FunctionSpaceType,nComponents>::
 intermediateIncrement()
 {
   return *this->intermediateIncrement_;
 }
 
-/*template<typename BasisOnMeshType,int nComponents>
-FieldVariable::FieldVariable<BasisOnMeshType,nComponents> &TimeSteppingHeun<BasisOnMeshType,nComponents>::
+/*template<typename FunctionSpaceType,int nComponents>
+FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeSteppingHeun<FunctionSpaceType,nComponents>::
 intermediateSolution()
 {
   return *this->intermediateSolution_;
 }*/
 
 
-template<typename BasisOnMeshType,int nComponents>
-void TimeSteppingHeun<BasisOnMeshType,nComponents>::
+template<typename FunctionSpaceType,int nComponents>
+void TimeSteppingHeun<FunctionSpaceType,nComponents>::
 print() // use override in stead of extending the parents' print output.This way "solution" is still in the end.
 {
   if (!VLOG_IS_ON(4))

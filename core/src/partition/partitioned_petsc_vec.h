@@ -4,15 +4,15 @@
 
 #include "control/types.h"
 #include "partition/rank_subset.h"
-#include "basis_on_mesh/basis_on_mesh.h"
+#include "function_space/function_space.h"
 #include "mesh/type_traits.h"
 #include "partition/partitioned_petsc_vec_base.h"
 
 // forward declaration
-namespace BasisOnMesh
+namespace FunctionSpace
 {
 template<typename MeshType, typename BasisFunctionType>
-class BasisOnMesh;
+class FunctionSpace;
 };
 
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
@@ -23,20 +23,20 @@ class BasisOnMesh;
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
  *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented.
  */
-template<typename BasisOnMeshType, int nComponents, typename = typename BasisOnMeshType::Mesh>
+template<typename FunctionSpaceType, int nComponents, typename = typename FunctionSpaceType::Mesh>
 class PartitionedPetscVec : 
-  public PartitionedPetscVecBase<BasisOnMeshType>
+  public PartitionedPetscVecBase<FunctionSpaceType>
 {
 public:
   //! constructor
-  PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType,typename BasisOnMeshType::Mesh>> meshPartition, std::string name);
+  PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType,typename FunctionSpaceType::Mesh>> meshPartition, std::string name);
  
   //! constructor, copy from existing vector
-  PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs, std::string name);
+  PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs, std::string name);
   
   //! constructor, copy from existing vector
   template<int nComponents2>
-  PartitionedPetscVec(PartitionedPetscVec<BasisOnMeshType,nComponents2> &rhs, std::string name);
+  PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name);
   
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
@@ -51,7 +51,7 @@ public:
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
   
   //! set values from another vector
-  void setValues(PartitionedPetscVec<BasisOnMeshType,nComponents> &rhs);
+  void setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs);
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -85,22 +85,22 @@ protected:
  */
 template<typename MeshType, typename BasisFunctionType, int nComponents>
 class PartitionedPetscVec<
-  BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,
+  FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,
   nComponents,
   Mesh::isStructured<MeshType>> : 
-  public PartitionedPetscVecBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>
+  public PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>
 {
 public:
  
   //! constructor, construct a petsc Vec with meshPartition that can hold the values for a field variable with nComponents components
-  PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
+  PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
  
   //! constructor, copy from existing vector
-  PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name);
+  PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name);
  
   //! constructor, copy from existing vector
   template<int nComponents2>
-  PartitionedPetscVec(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
+  PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
  
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void startVectorManipulation();
@@ -121,7 +121,7 @@ public:
   void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
 
   //! set values from another vector
-  void setValues(PartitionedPetscVec<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,nComponents> &rhs);
+  void setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs);
   
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -160,8 +160,8 @@ protected:
 };
 
 
-template<typename BasisOnMeshType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<BasisOnMeshType,nComponents> &matrix);
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &matrix);
 
 #include "partition/partitioned_petsc_vec_default.tpp"
 #include "partition/partitioned_petsc_vec_structured.tpp"

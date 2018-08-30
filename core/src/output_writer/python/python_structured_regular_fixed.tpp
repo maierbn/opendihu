@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-PyObject *Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
+PyObject *Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType>::
 buildPyDataObject(OutputFieldVariablesType fieldVariables,
                   std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues)
 {
@@ -39,38 +39,38 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   PyObject *pyData = PythonBase<OutputFieldVariablesType>::buildPyFieldVariablesObject(fieldVariables, meshName, onlyNodalValues, meshBase);
 
   // cast mesh to its real type
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(meshBase);
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> FunctionSpaceType;
+  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(meshBase);
 
   // convert nElementsPerCoordinateDirectionGlobal to python list
-  std::array<global_no_t, BasisOnMeshType::dim()> nElementsPerCoordinateDirectionGlobal = mesh->nElementsPerCoordinateDirectionGlobal();
-  std::array<long, BasisOnMeshType::dim()> nElementsPerCoordinateDirectionGlobalArray;
+  std::array<global_no_t, FunctionSpaceType::dim()> nElementsPerCoordinateDirectionGlobal = mesh->nElementsPerCoordinateDirectionGlobal();
+  std::array<long, FunctionSpaceType::dim()> nElementsPerCoordinateDirectionGlobalArray;
 
   std::copy(nElementsPerCoordinateDirectionGlobal.begin(), nElementsPerCoordinateDirectionGlobal.end(), nElementsPerCoordinateDirectionGlobalArray.begin());
-  PyObject *pyNElementsGlobal = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(nElementsPerCoordinateDirectionGlobalArray);
+  PyObject *pyNElementsGlobal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(nElementsPerCoordinateDirectionGlobalArray);
 
   // convert nElementsPerCoordinateDirectionLocal to python list
-  std::array<element_no_t, BasisOnMeshType::dim()> nElementsPerCoordinateDirectionLocal = mesh->nElementsPerCoordinateDirectionLocal();
-  std::array<long, BasisOnMeshType::dim()> nElementsPerCoordinateDirectionLocalArray;
+  std::array<element_no_t, FunctionSpaceType::dim()> nElementsPerCoordinateDirectionLocal = mesh->nElementsPerCoordinateDirectionLocal();
+  std::array<long, FunctionSpaceType::dim()> nElementsPerCoordinateDirectionLocalArray;
 
   std::copy(nElementsPerCoordinateDirectionLocal.begin(), nElementsPerCoordinateDirectionLocal.end(), nElementsPerCoordinateDirectionLocalArray.begin());
-  PyObject *pyNElementsLocal = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(nElementsPerCoordinateDirectionLocalArray);
+  PyObject *pyNElementsLocal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(nElementsPerCoordinateDirectionLocalArray);
 
-  std::array<long, BasisOnMeshType::dim()> beginNodeGlobal;
-  std::array<long, BasisOnMeshType::dim()> hasFullNumberOfNodes;
+  std::array<long, FunctionSpaceType::dim()> beginNodeGlobal;
+  std::array<long, FunctionSpaceType::dim()> hasFullNumberOfNodes;
 
-  for (int i = 0; i < BasisOnMeshType::dim(); i++)
+  for (int i = 0; i < FunctionSpaceType::dim(); i++)
   {
     beginNodeGlobal[i] = mesh->meshPartition()->beginNodeGlobal(i);
     hasFullNumberOfNodes[i] = mesh->meshPartition()->hasFullNumberOfNodes(i);
   }
 
-  PyObject *pyBeginNodeGlobal = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(beginNodeGlobal);
-  PyObject *pyHasFullNumberOfNodes = PythonUtility::convertToPythonList<BasisOnMeshType::dim()>(hasFullNumberOfNodes);
+  PyObject *pyBeginNodeGlobal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(beginNodeGlobal);
+  PyObject *pyHasFullNumberOfNodes = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(hasFullNumberOfNodes);
 
   // convert basis function information
-  std::string basisFunction = BasisOnMeshType::BasisFunction::getBasisFunctionString();
-  int basisOrder = BasisOnMeshType::BasisFunction::getBasisOrder();
+  std::string basisFunction = FunctionSpaceType::BasisFunction::getBasisFunctionString();
+  int basisOrder = FunctionSpaceType::BasisFunction::getBasisOrder();
 
   int nRanks = mesh->meshPartition()->nRanks();
   int ownRankNo = mesh->meshPartition()->ownRankNo();

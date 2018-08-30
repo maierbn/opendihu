@@ -25,7 +25,7 @@ public:
   using Structured<D>::Structured;
 
   //! get mesh width
-  virtual double meshWidth() const = 0;  // defined in 06_basis_on_mesh_dofs_nodes.h. 
+  virtual double meshWidth() const = 0;  // defined in 06_function_space_dofs_nodes.h.
   // The mesh width is the distance between nodes, not necessarily the element length.
 
 private:

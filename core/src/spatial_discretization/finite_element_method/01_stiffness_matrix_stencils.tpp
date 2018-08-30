@@ -27,18 +27,18 @@ namespace SpatialDiscretization
 
 // 1D stiffness matrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
   LOG(TRACE) << "setStiffnessMatrix 1D for Mesh::RegularFixed using stencils";
 
-  typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements = mesh->nElementsLocal();
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  double elementLength = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  element_no_t nElements = functionSpace->nElementsLocal();
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  double elementLength = functionSpace->meshWidth();
 
   double integralFactor = 1./elementLength;
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
@@ -49,7 +49,7 @@ setStiffnessMatrix()
 
   // fill stiffness matrix
   // M_ij = -int[0,1] dphi_i/dxi * dphi_j/dxi * (dxi/ds)^2 ds = l
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   // stencil values
   // stencil for -Δu in 1D: [1 _-2_ 1] (element contribution: [_-1_ 1])
@@ -102,21 +102,21 @@ setStiffnessMatrix()
 
 // 2D stiffness matrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
   LOG(TRACE) << "setStiffnessMatrix 2D for Mesh::RegularFixed using stencils";
 
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   // get settings value
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  element_no_t nElements0 = functionSpace->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = functionSpace->nElementsPerCoordinateDirectionLocal(1);
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
   if (fabs(elementLength0-elementLength1) > 1e-15)
   {
     LOG(ERROR) << "Mesh resolution of 2D regular fixed mesh is not uniform! " << std::endl
@@ -140,7 +140,7 @@ setStiffnessMatrix()
   //                        1/3*[1 _-8_ 1]                        [_-2/3_ 1/6]
   //                            [1  1   1]
 
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   const int center = 1;
   const double stencilCenter[3][3] = {
@@ -318,24 +318,24 @@ setStiffnessMatrix()
 
 // 3D stiffness matrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
   LOG(TRACE) << "setStiffnessMatrix 3D for Mesh::RegularFixed using stencils";
 
   // get settings values
-  std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  element_no_t nElements0 = mesh->nElementsPerCoordinateDirectionLocal(0);
-  element_no_t nElements1 = mesh->nElementsPerCoordinateDirectionLocal(1);
-  element_no_t nElements2 = mesh->nElementsPerCoordinateDirectionLocal(2);
-  node_no_t nNodes0 = mesh->nNodesLocalWithGhosts(0);
-  node_no_t nNodes1 = mesh->nNodesLocalWithGhosts(1);
-  node_no_t nNodes2 = mesh->nNodesLocalWithGhosts(2);
-  double elementLength0 = mesh->meshWidth();
-  double elementLength1 = mesh->meshWidth();
-  double elementLength2 = mesh->meshWidth();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  element_no_t nElements0 = functionSpace->nElementsPerCoordinateDirectionLocal(0);
+  element_no_t nElements1 = functionSpace->nElementsPerCoordinateDirectionLocal(1);
+  element_no_t nElements2 = functionSpace->nElementsPerCoordinateDirectionLocal(2);
+  node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
+  node_no_t nNodes1 = functionSpace->nNodesLocalWithGhosts(1);
+  node_no_t nNodes2 = functionSpace->nNodesLocalWithGhosts(2);
+  double elementLength0 = functionSpace->meshWidth();
+  double elementLength1 = functionSpace->meshWidth();
+  double elementLength2 = functionSpace->meshWidth();
 
   if (fabs(elementLength0-elementLength1) > 1e-15 || fabs(elementLength0-elementLength2) > 1e-15)
   {
@@ -408,7 +408,7 @@ setStiffnessMatrix()
     {0./12, -4./12}},    //center
   };
 
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
     return z*nNodes0*nNodes1 + y*nNodes0 + x;

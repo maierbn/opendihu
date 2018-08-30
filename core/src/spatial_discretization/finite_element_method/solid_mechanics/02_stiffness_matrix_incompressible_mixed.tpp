@@ -16,18 +16,18 @@ namespace SpatialDiscretization
 {
 
 // set stiffness matrix for a u-p mixed formulation in which the pressure is not condensed out
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
-setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>> stiffnessMatrix)
+setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderFunctionSpaceType>> stiffnessMatrix)
 {
   // TODO
-  std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
+  std::shared_ptr<PartitionedPetscMat<HighOrderFunctionSpaceType>> tangentStiffnessMatrix = (stiffnessMatrix == nullptr ? this->data_.tangentStiffnessMatrix() : stiffnessMatrix);
 
   LOG(TRACE) << "setStiffnessMatrix";
 
@@ -37,13 +37,13 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
   // set entries for the off-diagonal blocks
 
   // get pointer to mesh object
-  std::shared_ptr<LowOrderBasisOnMeshType> meshP = this->data_.mixedMesh()->lowOrderBasisOnMesh();
-  std::shared_ptr<HighOrderBasisOnMeshType> meshU = this->data_.mixedMesh()->highOrderBasisOnMesh();
+  std::shared_ptr<LowOrderFunctionSpaceType> meshP = this->data_.mixedMesh()->lowOrderFunctionSpace();
+  std::shared_ptr<HighOrderFunctionSpaceType> meshU = this->data_.mixedMesh()->highOrderFunctionSpace();
 
-  const int D = LowOrderBasisOnMeshType::dim();  // = 2 or 3
+  const int D = LowOrderFunctionSpaceType::dim();  // = 2 or 3
   const int nElements = meshP->nElementsLocal();
-  const int nPressureDofsPerElement = LowOrderBasisOnMeshType::nDofsPerElement();
-  const int nDisplacementsDofsPerElement = HighOrderBasisOnMeshType::nDofsPerElement();
+  const int nPressureDofsPerElement = LowOrderFunctionSpaceType::nDofsPerElement();
+  const int nDisplacementsDofsPerElement = HighOrderFunctionSpaceType::nDofsPerElement();
   const int nDisplacementsUnknownsPerElement = nDisplacementsDofsPerElement * D;
 
   // define shortcuts for quadrature
@@ -78,7 +78,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
 #endif
 
   PetscErrorCode ierr;
-  const int pressureDofOffset = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D;
+  const int pressureDofOffset = this->data_.mixedMesh()->highOrderFunctionSpace()->nDofsLocal()*D;
 
   // set values to zero
   // loop over elements
@@ -132,7 +132,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
       VecD<D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderBasisOnMeshType::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderFunctionSpaceType::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -189,7 +189,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
       VecD<D> xi = samplingPointsExact[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderBasisOnMeshType::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderFunctionSpaceType::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -284,41 +284,41 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
   VLOG(1) << "computed analytical stiffness matrix (not reduced): " << PetscUtility::getStringMatrix(tangentStiffnessMatrix);
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 const dof_no_t FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 getPressureDofOffset()
 {
-  const int D = HighOrderBasisOnMeshType::dim();
+  const int D = HighOrderFunctionSpaceType::dim();
 
   if (this->data_.computeWithReducedVectors())
   {
-    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D - this->dirichletIndices_.size();
+    return this->data_.mixedMesh()->highOrderFunctionSpace()->nDofsLocal()*D - this->dirichletIndices_.size();
   }
   else
   {
-    return this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal()*D;
+    return this->data_.mixedMesh()->highOrderFunctionSpace()->nDofsLocal()*D;
   }
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 setFromSolverVariableSolution(Vec &solverVariableSolution)
 {
   // store displacement values
-  const int D = HighOrderBasisOnMeshType::dim();
-  const int nDisplacementsUnknowns = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal() * D;
+  const int D = HighOrderFunctionSpaceType::dim();
+  const int nDisplacementsUnknowns = this->data_.mixedMesh()->highOrderFunctionSpace()->nDofsLocal() * D;
 
   // get memory read access to solverVariableSolution
   const double *solverVariableSolutionData;
@@ -350,7 +350,7 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
   double *pressureData;
   VecGetArray(this->data_.pressure().valuesLocal(), &pressureData);
 
-  const int nDofsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
+  const int nDofsPressure = this->data_.mixedMesh()->lowOrderFunctionSpace()->nDofsLocal();
   const int pressureDofOffset = getPressureDofOffset();
 
   for (dof_no_t currentDofNo = 0; currentDofNo < nDofsPressure; currentDofNo++)
@@ -365,12 +365,12 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
   VLOG(1) << "extracted pressure: " << PetscUtility::getStringVector(this->data_.pressure().valuesLocal());
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 evaluateNonlinearFunction(Vec &result)
@@ -379,12 +379,12 @@ evaluateNonlinearFunction(Vec &result)
   this->computeIncompressibilityConstraint(result);
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 computeIncompressibilityConstraint(Vec &result)
@@ -393,12 +393,12 @@ computeIncompressibilityConstraint(Vec &result)
   LOG(TRACE) << "computeIncompressibilityConstraint";
 
   // get pointer to mesh object
-  std::shared_ptr<LowOrderBasisOnMeshType> mesh = this->data_.mixedMesh()->lowOrderBasisOnMesh();
+  std::shared_ptr<LowOrderFunctionSpaceType> mesh = this->data_.mixedMesh()->lowOrderFunctionSpace();
 
-  const int D = LowOrderBasisOnMeshType::dim();  // = 2 or 3
+  const int D = LowOrderFunctionSpaceType::dim();  // = 2 or 3
   const int nElements = mesh->nElementsLocal();
-  const int nPressureDofsPerElement = LowOrderBasisOnMeshType::nDofsPerElement();
-  const int nDisplacementsDofsPerElement = HighOrderBasisOnMeshType::nDofsPerElement();
+  const int nPressureDofsPerElement = LowOrderFunctionSpaceType::nDofsPerElement();
+  const int nDisplacementsDofsPerElement = HighOrderFunctionSpaceType::nDofsPerElement();
 
   // define shortcuts for quadrature
   typedef typename MixedQuadratureType::LowOrderQuadrature QuadratureType;
@@ -424,7 +424,7 @@ computeIncompressibilityConstraint(Vec &result)
 
   // set all values corresponding to the incompressiblityt constraint to zero
   double *vectorBegin = pressureDofOffset + resultData;
-  double *vectorEnd = vectorBegin + this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
+  double *vectorEnd = vectorBegin + this->data_.mixedMesh()->lowOrderFunctionSpace()->nDofsLocal();
   std::fill(vectorBegin, vectorEnd, 0.0);
 
   // loop over elements
@@ -445,7 +445,7 @@ computeIncompressibilityConstraint(Vec &result)
       VecD<D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderBasisOnMeshType::computeJacobian(geometryReferenceValues, xi));
+      Tensor2<D> jacobianMaterial = MathUtility::transformToDxD<D,D>(HighOrderFunctionSpaceType::computeJacobian(geometryReferenceValues, xi));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianMaterial = MathUtility::computeInverse<D>(jacobianMaterial, jacobianDeterminant);
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
@@ -502,7 +502,7 @@ computeIncompressibilityConstraint(Vec &result)
     std::stringstream s;
     s << "(" << resultData[pressureDofOffset + 0];
 
-    for (int i = 1; i < this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal(); i++)
+    for (int i = 1; i < this->data_.mixedMesh()->lowOrderFunctionSpace()->nDofsLocal(); i++)
     {
       s << "," << resultData[pressureDofOffset + i];
     }
@@ -515,12 +515,12 @@ computeIncompressibilityConstraint(Vec &result)
 
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 void FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 preparePressureInterpolation(element_no_t elementNo)
@@ -529,37 +529,37 @@ preparePressureInterpolation(element_no_t elementNo)
   this->data_.pressure().getElementValues(elementNo, pressureValuesCurrentElement_);
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 double FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
-getPressure(double deformationGradientDeterminant, VecD<HighOrderBasisOnMeshType::dim()> xi, double &pressureTilde)
+getPressure(double deformationGradientDeterminant, VecD<HighOrderFunctionSpaceType::dim()> xi, double &pressureTilde)
 {
   // interpolate pressure value at xi in current element
-  pressureTilde = this->data_.mixedMesh()->lowOrderBasisOnMesh()->interpolateValueInElement(pressureValuesCurrentElement_, xi);
+  pressureTilde = this->data_.mixedMesh()->lowOrderFunctionSpace()->interpolateValueInElement(pressureValuesCurrentElement_, xi);
 
   VLOG(3) << "pressureValuesCurrentElement: " << pressureValuesCurrentElement_ << ", pressureTilde: " << pressureTilde;
 
   return pressureTilde;
 }
 
-template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
+template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
 const int FiniteElementMethodMatrix<
-  BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
+  FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
-  std::enable_if_t<LowOrderBasisOnMeshType::BasisFunction::isNodalBased, typename HighOrderBasisOnMeshType::Mesh>,
+  std::enable_if_t<LowOrderFunctionSpaceType::BasisFunction::isNodalBased, typename HighOrderFunctionSpaceType::Mesh>,
   Equation::isIncompressible<Term>
 >::
 nLocalUnknowns()
 {
-  const int D = HighOrderBasisOnMeshType::dim();
-  const int nLocalUnknownsDisplacements = this->data_.mixedMesh()->highOrderBasisOnMesh()->nDofsLocal() * D;
-  const int nLocalUnknownsPressure = this->data_.mixedMesh()->lowOrderBasisOnMesh()->nDofsLocal();
+  const int D = HighOrderFunctionSpaceType::dim();
+  const int nLocalUnknownsDisplacements = this->data_.mixedMesh()->highOrderFunctionSpace()->nDofsLocal() * D;
+  const int nLocalUnknownsPressure = this->data_.mixedMesh()->lowOrderFunctionSpace()->nDofsLocal();
   return nLocalUnknownsDisplacements + nLocalUnknownsPressure;
 }
 

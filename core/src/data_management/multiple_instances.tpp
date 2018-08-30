@@ -16,14 +16,14 @@
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename BaseDataType>
-MultipleInstances<BasisOnMeshType,BaseDataType>::
-MultipleInstances(DihuContext context) : Data<BasisOnMeshType>(context)
+template<typename FunctionSpaceType,typename BaseDataType>
+MultipleInstances<FunctionSpaceType,BaseDataType>::
+MultipleInstances(DihuContext context) : Data<FunctionSpaceType>(context)
 {
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+MultipleInstances<FunctionSpaceType,BaseDataType>::
 ~MultipleInstances()
 {
   // free PETSc objects
@@ -34,8 +34,8 @@ MultipleInstances<BasisOnMeshType,BaseDataType>::
   }
 }
 
-template<typename BasisOnMeshType,typename BaseTimesteppingType>
-void MultipleInstances<BasisOnMeshType,BaseTimesteppingType>::
+template<typename FunctionSpaceType,typename BaseTimesteppingType>
+void MultipleInstances<FunctionSpaceType,BaseTimesteppingType>::
 setInstancesData(std::vector<BaseTimesteppingType> &instances)
 {
   instancesData_.clear();
@@ -47,48 +47,48 @@ setInstancesData(std::vector<BaseTimesteppingType> &instances)
   }
 
   // set mesh
-  this->setMesh(instances[0].data().mesh());
+  this->setFunctionSpace(instances[0].data().functionSpace());
   
-  assert(this->mesh() != nullptr);
+  assert(this->functionSpace() != nullptr);
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void MultipleInstances<FunctionSpaceType,BaseDataType>::
 createPetscObjects()
 {
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-dof_no_t MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+dof_no_t MultipleInstances<FunctionSpaceType,BaseDataType>::
 nUnknownsLocalWithGhosts()
 {
-  return this->mesh_->nNodesLocalWithGhosts();
+  return this->functionSpace_->nNodesLocalWithGhosts();
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-dof_no_t MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+dof_no_t MultipleInstances<FunctionSpaceType,BaseDataType>::
 nUnknownsLocalWithoutGhosts()
 {
-  return this->mesh_->nNodesLocalWithoutGhosts();
+  return this->functionSpace_->nNodesLocalWithoutGhosts();
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-constexpr int MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+constexpr int MultipleInstances<FunctionSpaceType,BaseDataType>::
 getNDofsPerNode()
 {
   return 1;
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-void MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+void MultipleInstances<FunctionSpaceType,BaseDataType>::
 print()
 {
   if (!VLOG_IS_ON(4))
     return;
 }
 
-template<typename BasisOnMeshType,typename BaseDataType>
-typename MultipleInstances<BasisOnMeshType,BaseDataType>::OutputFieldVariables MultipleInstances<BasisOnMeshType,BaseDataType>::
+template<typename FunctionSpaceType,typename BaseDataType>
+typename MultipleInstances<FunctionSpaceType,BaseDataType>::OutputFieldVariables MultipleInstances<FunctionSpaceType,BaseDataType>::
 getOutputFieldVariables()
 {
   std::vector<typename BaseDataType::OutputFieldVariables> instancesOutputFieldVariables;

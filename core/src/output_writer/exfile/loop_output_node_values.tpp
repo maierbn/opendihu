@@ -34,7 +34,7 @@ outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string mesh
   VLOG(2) << "loop_output_node_values.tpp:34, outputNodeValues, field variable " << currentFieldVariable->name() << " at " << currentFieldVariable->valuesLocal();
  
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
-  if (currentFieldVariable->mesh()->meshName() != meshName)
+  if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {
     return false;  // do not break iteration
   }
@@ -47,13 +47,13 @@ outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string mesh
   // get the current field variable
   auto fieldVariable = currentFieldVariable;  // this type is std::shared_ptr<FieldVariable<..>>
 
-  const int nDofsPerNode = FieldVariableType::element_type::BasisOnMesh::nDofsPerNode();
+  const int nDofsPerNode = FieldVariableType::element_type::FunctionSpace::nDofsPerNode();
 
   // get all dofs that are associated with the current node
   //std::array<dof_no_t,nDofsPerNode> dofGlobalNos;
   std::vector<dof_no_t> dofGlobalNos;
   dofGlobalNos.reserve(nDofsPerNode);
-  fieldVariable->mesh()->getNodeDofs(nodeGlobalNo, dofGlobalNos);
+  fieldVariable->functionSpace()->getNodeDofs(nodeGlobalNo, dofGlobalNos);
 
   // loop over components of the field variable
   for (int componentNo = 0; componentNo < fieldVariable->nComponents(); componentNo++)

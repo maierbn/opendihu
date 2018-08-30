@@ -6,12 +6,12 @@
 namespace SpatialDiscretization
 {
 
-template<typename BasisOnMeshType,typename Term>
-SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::TractionBoundaryCondition::
-TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename BasisOnMeshType::HighOrderBasisOnMesh> mesh)
+template<typename FunctionSpaceType,typename Term>
+SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::TractionBoundaryCondition::
+TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh)
 {
-  typedef typename BasisOnMeshType::HighOrderBasisOnMesh BasisOnMesh;  // the high order BasisOnMesh for mixed formulation or the BasisOnMesh itself for non-mixed formulation
-  const int D = BasisOnMesh::dim();
+  typedef typename FunctionSpaceType::HighOrderFunctionSpace FunctionSpace;  // the high order FunctionSpace for mixed formulation or the FunctionSpace itself for non-mixed formulation
+  const int D = FunctionSpace::dim();
 
   // store global element no
   elementGlobalNo = PythonUtility::getOptionInt(specificSettings, "element", 0, PythonUtility::NonNegative);
@@ -47,10 +47,10 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename B
     }
 
     // get dofs indices within element that correspond to the selected face
-    const int D = BasisOnMesh::dim();
-    const int nDofs = ::BasisOnMesh::BasisOnMeshBaseDim<D-1,typename BasisOnMesh::BasisFunction>::nDofsPerElement();
+    const int D = FunctionSpace::dim();
+    const int nDofs = ::FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpace::BasisFunction>::nDofsPerElement();
     std::array<dof_no_t,nDofs> dofIndices;
-    BasisOnMesh::getFaceDofs(face, dofIndices);
+    FunctionSpace::getFaceDofs(face, dofIndices);
 
     for (int i = 0; i < nDofs; i++)
     {
@@ -78,14 +78,14 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename B
   }
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<BasisOnMeshType,Term> &data)
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
+initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data)
 {
   LOG(TRACE) << "initializeBoundaryConditions";
 
-  const int D = BasisOnMeshType::dim();
-  std::shared_ptr<typename BasisOnMeshType::HighOrderBasisOnMesh> mesh = data.mesh();
+  const int D = FunctionSpaceType::dim();
+  std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> functionSpace = data.functionSpace();
 
   // ----- Neumann BC ----------
   // parse values for traction and body force
@@ -99,7 +99,7 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
          !PythonUtility::getOptionListEnd(specificSettings, "tractionReferenceConfiguration");
          PythonUtility::getOptionListNext<PyObject*>(specificSettings, "tractionReferenceConfiguration", listItem))
     {
-      tractionReferenceConfiguration_.emplace_back(listItem, mesh);
+      tractionReferenceConfiguration_.emplace_back(listItem, functionSpace);
     }
   }
 
@@ -114,7 +114,7 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
          !PythonUtility::getOptionListEnd(specificSettings, "tractionCurrentConfiguration");
          PythonUtility::getOptionListNext<PyObject*>(specificSettings, "tractionCurrentConfiguration", listItem))
     {
-      tractionCurrentConfiguration_.emplace_back(listItem, mesh);
+      tractionCurrentConfiguration_.emplace_back(listItem, functionSpace);
     }
   }
 
@@ -184,11 +184,11 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
 
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
 printBoundaryConditions()
 {
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   /*
    *
   std::vector<dof_no_t> dirichletIndices_;  ///< the indices of unknowns (not dofs) for which the displacement is fixed
@@ -259,9 +259,9 @@ printBoundaryConditions()
   LOG(DEBUG) << "============ ============";
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements<BasisOnMeshType,Term> &data)
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
+applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements<FunctionSpaceType,Term> &data)
 {
   LOG(TRACE) << "applyDirichletBoundaryConditionsInNonlinearFunction";
 
@@ -302,9 +302,9 @@ applyDirichletBoundaryConditionsInNonlinearFunction(Vec &f, Data::FiniteElements
 #endif
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMeshType,Term> &data)
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
+applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<FunctionSpaceType,Term> &data)
 {
   LOG(TRACE) << "applyDirichletBoundaryConditionsInDisplacements";
 
@@ -324,9 +324,9 @@ applyDirichletBoundaryConditionsInDisplacements(Data::FiniteElements<BasisOnMesh
   }
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> matrix, Data::FiniteElements<BasisOnMeshType,Term> &data)
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
+applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> matrix, Data::FiniteElements<FunctionSpaceType,Term> &data)
 {
   // if the nonlinear solver should work with not reduced vectors
   if (!data.computeWithReducedVectors())
@@ -340,8 +340,8 @@ applyDirichletBoundaryConditionsInStiffnessMatrix(std::shared_ptr<PartitionedPet
   }
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
 reduceVector(Vec &input, Vec &output, const int nLocalUnknownsInputVector)
 {
   const double *inputData;
@@ -371,8 +371,8 @@ reduceVector(Vec &input, Vec &output, const int nLocalUnknownsInputVector)
   VecRestoreArray(output, &outputData);
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
 expandVector(Vec &input, Vec &output, const int nLocalUnknownsOutputVector)
 {
   const double *inputData;
@@ -406,12 +406,12 @@ expandVector(Vec &input, Vec &output, const int nLocalUnknownsOutputVector)
   VecRestoreArray(output, &outputData);
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
 expandVectorTo3D(Vec &input, Vec &output, const int nLocalUnknowns3D)
 {
   // compute number of reduced dofs
-  assert(BasisOnMeshType::dim() == 2);
+  assert(FunctionSpaceType::dim() == 2);
 
   const double *inputData;
   double *outputData;
@@ -435,9 +435,9 @@ expandVectorTo3D(Vec &input, Vec &output, const int nLocalUnknowns3D)
   VecRestoreArray(output, &outputData);
 }
 
-template<typename BasisOnMeshType,typename Term>
-void SolidMechanicsBoundaryConditions<BasisOnMeshType,Term>::
-reduceMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> input, std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> output, const int nLocalUnknownsFull)
+template<typename FunctionSpaceType,typename Term>
+void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
+reduceMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> input, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> output, const int nLocalUnknownsFull)
 {
   // compute number of reduced dofs
   int nLocalUnknownsReduced = nLocalUnknownsFull - this->dirichletValues_.size();

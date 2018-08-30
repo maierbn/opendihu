@@ -10,19 +10,19 @@ namespace FieldVariable
 
 /** Base class for a field variable that also stores the component names
  */
-template<typename BasisOnMeshType, int nComponentsValue>
+template<typename FunctionSpaceType, int nComponentsValue>
 class FieldVariableComponents :
-  public FieldVariableBase<BasisOnMeshType>
+  public FieldVariableBase<FunctionSpaceType>
 {
 public:
   //! inherited constructor
-  using FieldVariableBase<BasisOnMeshType>::FieldVariableBase;
+  using FieldVariableBase<FunctionSpaceType>::FieldVariableBase;
 
   //! get the component names
   const std::array<std::string,nComponentsValue> &componentNames() const;
 
   //! return the component by index
-  virtual std::shared_ptr<Component<BasisOnMeshType,nComponentsValue>> component(int componentNo) = 0;
+  virtual std::shared_ptr<Component<FunctionSpaceType,nComponentsValue>> component(int componentNo) = 0;
 
   //! get the component Name
   const std::string componentName(int componentNo) const;

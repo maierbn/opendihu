@@ -50,7 +50,7 @@ protected:
   std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   
-  Data::MultipleInstances<typename TimeSteppingScheme::BasisOnMesh, TimeSteppingScheme> data_;  ///< the data object
+  Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> data_;  ///< the data object
 };
 
 };

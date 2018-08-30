@@ -35,7 +35,7 @@ collectFieldVariablesNames(CurrentFieldVariableType currentFieldVariable, const 
                            std::vector<std::string> &scalars, std::vector<std::string> &vectors)
 {
   // if mesh name is the specified meshName
-  if (currentFieldVariable->mesh()->meshName() == meshName && !currentFieldVariable->isGeometryField())
+  if (currentFieldVariable->functionSpace()->meshName() == meshName && !currentFieldVariable->isGeometryField())
   {
     if (currentFieldVariable->nComponents() == 1)
     {

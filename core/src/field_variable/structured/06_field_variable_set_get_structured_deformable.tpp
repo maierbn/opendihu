@@ -10,8 +10,8 @@ namespace FieldVariable
 
 //! copy the values from another field variable of the same type
 template<int D,typename BasisFunctionType,int nComponents>
-void FieldVariableSetGet<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-setValues(FieldVariable<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs)
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs)
 {
   this->values_->setValues(*rhs.partitionedPetscVec());
 }

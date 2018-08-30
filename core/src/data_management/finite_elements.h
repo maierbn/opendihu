@@ -10,17 +10,17 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
-#include "basis_on_mesh/mixed_basis_on_mesh.h"
+#include "function_space/mixed_function_space.h"
 #include "partition/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat.h"
 
 namespace Data
 {
 
-template<typename BasisOnMeshType,typename Term,typename = Term,typename = typename BasisOnMeshType::BasisFunction>
+template<typename FunctionSpaceType,typename Term,typename = Term,typename = typename FunctionSpaceType::BasisFunction>
 class FiniteElements :
-  public Data<BasisOnMeshType>,
-  public DiffusionTensor<BasisOnMeshType::dim()>
+  public Data<FunctionSpaceType>,
+  public DiffusionTensor<FunctionSpaceType::dim()>
 {
 public:
 
@@ -34,10 +34,10 @@ public:
   virtual void initialize() override;
 
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide();
 
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<BasisOnMeshType,1> &solution();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &solution();
 
   //! perform the final assembly of petsc
   void finalAssembly();
@@ -55,22 +55,22 @@ public:
   void initializeSystemMatrix(Mat &systemMatrix);
 
   //! return reference to a stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
 
   //! get the mass matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix();
 
   //! get the system matrix, corresponding to the specific time integration. (I - d*tM^(-1)*K) for the implicit Euler scheme.
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> systemMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();
 
   //! get the inversed lumped mass matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> inverseLumpedMassMatrix();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometry
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>,  // solution
-    std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>>   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // solution
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>   // rhs
   > OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers
@@ -84,27 +84,27 @@ private:
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
 
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
-  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rhs_;                 ///< the rhs vector in weak formulation
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
 
 };
 
 /*
 #include "equation/type_traits.h"
 
-template<typename BasisOnMeshType,typename Term>
+template<typename FunctionSpaceType,typename Term>
 class FiniteElements<
-  BasisOnMeshType,
+  FunctionSpaceType,
   Term,
   Equation::isSolidMechanics<Term>,
-  BasisFunction::isNotMixed<typename BasisOnMeshType::BasisFunction>
+  BasisFunction::isNotMixed<typename FunctionSpaceType::BasisFunction>
 > :
-  public Data<BasisOnMeshType>
+  public Data<FunctionSpaceType>
 {
 public:
   void tangentStiffnessMatrix();

@@ -15,8 +15,8 @@ namespace SpatialDiscretization
 
 /*
 // initialization for mooney rivlin
-template<typename BasisOnMeshType, typename MixedQuadratureType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>::
+template<typename FunctionSpaceType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename FunctionSpaceType::Mesh>>::
 initialize()
 {
   kappa_ = PythonUtility::getOptionDouble(this->specificSettings_, "kappa", 1000, PythonUtility::Positive);
@@ -24,30 +24,30 @@ initialize()
 
   c1_ = materialConstants[0];
   c2_ = materialConstants[1];
-  FiniteElementMethodBase<BasisOnMeshType,MixedQuadratureType>::initialize();
+  FiniteElementMethodBase<FunctionSpaceType,MixedQuadratureType>::initialize();
 }
 
 // stiffness matrix for compressible mooney rivlin
-template<typename BasisOnMeshType, typename MixedQuadratureType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>::
+template<typename FunctionSpaceType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename FunctionSpaceType::Mesh>>::
 setStiffnessMatrix()
 {
   LOG(TRACE) << "setStiffnessMatrix for solid mechanics";
 
   // naming: P = pressure variables, U = displacement variables
 
-  typedef typename BasisOnMeshType::HighOrderBasisOnMesh HighOrderBasisOnMesh;
-  typedef typename BasisOnMeshType::LowOrderBasisOnMesh LowOrderBasisOnMesh;
+  typedef typename FunctionSpaceType::HighOrderFunctionSpace HighOrderFunctionSpace;
+  typedef typename FunctionSpaceType::LowOrderFunctionSpace LowOrderFunctionSpace;
 
   // get references to mesh objects
-  std::shared_ptr<HighOrderBasisOnMesh> basisOnMeshU = this->data_.mixedMesh()->highOrderBasisOnMesh();
-  std::shared_ptr<LowOrderBasisOnMesh> basisOnMeshP = this->data_.mixedMesh()->lowOrderBasisOnMesh();
+  std::shared_ptr<HighOrderFunctionSpace> basisOnMeshU = this->data_.mixedMesh()->highOrderFunctionSpace();
+  std::shared_ptr<LowOrderFunctionSpace> basisOnMeshP = this->data_.mixedMesh()->lowOrderFunctionSpace();
 
-  const int D = BasisOnMeshType::dim();
+  const int D = FunctionSpaceType::dim();
   //const int nDofsU = basisOnMeshU->nDofsLocal();
   //const int nDofsP = basisOnMeshP->nDofsLocal();
-  const int nDofsUPerElement = HighOrderBasisOnMesh::nDofsPerElement();
-  const int nDofsPPerElement = LowOrderBasisOnMesh::nDofsPerElement();
+  const int nDofsUPerElement = HighOrderFunctionSpace::nDofsPerElement();
+  const int nDofsPPerElement = LowOrderFunctionSpace::nDofsPerElement();
   const int nElements = basisOnMeshU->nElementsLocal();
 
   // define shortcuts for integrator and basis
@@ -95,23 +95,23 @@ setStiffnessMatrix()
     //std::vector<dof_no_t> dofPNo = basisOnMeshP->getElementDofNosLocal(elementNo);
 
     // get geometry field of current configuration of meshU
-    std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> geometryCurrentElementalDofValues;
+    std::array<Vec3,HighOrderFunctionSpace::nDofsPerElement()> geometryCurrentElementalDofValues;
     basisOnMeshU->getElementGeometry(elementNo, geometryCurrentElementalDofValues);
 
     // get geometry field of reference configuration
-    std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> geometryReferenceElementalDofValues;
+    std::array<Vec3,HighOrderFunctionSpace::nDofsPerElement()> geometryReferenceElementalDofValues;
     this->data_.geometryReference().template getElementValues<D>(elementNo, geometryReferenceElementalDofValues);
 
     // get displacement field
-    std::array<Vec3,HighOrderBasisOnMesh::nDofsPerElement()> displacementElementalDofValues;
+    std::array<Vec3,HighOrderFunctionSpace::nDofsPerElement()> displacementElementalDofValues;
     this->data_.displacement().template getElementValues<D>(elementNo, displacementElementalDofValues);
 
     // get separately interpolated pressure field
-    std::array<double,LowOrderBasisOnMesh::nDofsPerElement()> separatePressureElementalDofValues;
+    std::array<double,LowOrderFunctionSpace::nDofsPerElement()> separatePressureElementalDofValues;
     this->data_.pressure().template getElementValues<1>(elementNo, separatePressureElementalDofValues);
 
     // get right hand side component for displacements in weak form, fu
-    std::array<double,HighOrderBasisOnMesh::nDofsPerElement()> fValues;
+    std::array<double,HighOrderFunctionSpace::nDofsPerElement()> fValues;
     this->data_.f().template getElementValues<1>(elementNo, fValues);
 
     // loop over integration points (e.g. gauss points) for displacement field
@@ -121,7 +121,7 @@ setStiffnessMatrix()
       std::array<double,D> xi = samplingPointsU[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2 jacobian = HighOrderBasisOnMesh::computeJacobian(geometryCurrent, xi);
+      Tensor2 jacobian = HighOrderFunctionSpace::computeJacobian(geometryCurrent, xi);
 
       // F
       Tensor2 deformationGradient = this->computeDeformationGradient(geometryReference, displacement, jacobian, xi);
@@ -143,7 +143,7 @@ setStiffnessMatrix()
       Tensor4 elasticity = computeElasticityTensor(rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants);
 
       // get the pressure from the separate field variable
-      std::array<double,1> interpolatedPressure = LowOrderBasisOnMesh::interpolateValueInElement(separatePressureElementalDofValues, xi);
+      std::array<double,1> interpolatedPressure = LowOrderFunctionSpace::interpolateValueInElement(separatePressureElementalDofValues, xi);
 
       double pressureFromField = interpolatedPressure[0];
       double pressureFromDisplacements = -kappa_*(J3 - 1);
@@ -161,7 +161,7 @@ setStiffnessMatrix()
         int dofIndexI = i;
 
         // dp_tilde/dp_i where the first p_tilde is the interpolated pressure and p_i is the pressure DOF
-        double dpdpi = LowOrderBasisOnMesh::phi(dofIndexI, xi);
+        double dpdpi = LowOrderFunctionSpace::phi(dofIndexI, xi);
 
         // column index
         for (int j = 0; j < nDofsUPerElement; j++)
@@ -169,7 +169,7 @@ setStiffnessMatrix()
           int dofIndexJ = j;
 
           // dp_tilde/dp_j where the first p_tilde is the interpolated pressure and p_j is the pressure DOF
-          double dpdpj = LowOrderBasisOnMesh::phi(dofIndexJ, xi);
+          double dpdpj = LowOrderFunctionSpace::phi(dofIndexJ, xi);
 
           // indices of elasticity tensor
           for (int k = 0; k < 3; k++)
@@ -180,15 +180,15 @@ setStiffnessMatrix()
               double dp_deps_kl = -kappa_*J3*rightCauchyGreen[l][k];
 
               // deps_kl/du_i
-              double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)
-                  + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi));
+              double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderFunctionSpace::dphi_dxi(dofIndexI, k, xi)
+                  + rightCauchyGreen[k][i]*HighOrderFunctionSpace::dphi_dxi(dofIndexI, l, xi));
 
               // d^2eps_kl/(dui*duj)
               double d2epskl_duij = 0;
               if (i == j)   // d^2eps_kl/(dui*duj) is zero for i!=j
               {
-                d2epskl_duij = 1./2*(HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, l, xi)
-                  + HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi)*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, k, xi));
+                d2epskl_duij = 1./2*(HighOrderFunctionSpace::dphi_dxi(dofIndexI, k, xi)*HighOrderFunctionSpace::dphi_dxi(dofIndexJ, l, xi)
+                  + HighOrderFunctionSpace::dphi_dxi(dofIndexI, l, xi)*HighOrderFunctionSpace::dphi_dxi(dofIndexJ, k, xi));
               }
 
               // -----------
@@ -198,8 +198,8 @@ setStiffnessMatrix()
                 for (int s = 0; s < 3; s++)
                 {
                   // deps_rs/du_j
-                  double depsrs_duj = 1./2*(rightCauchyGreen[s][j]*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, r, xi)
-                    + rightCauchyGreen[r][j]*HighOrderBasisOnMesh::dphi_dxi(dofIndexJ, s, xi));
+                  double depsrs_duj = 1./2*(rightCauchyGreen[s][j]*HighOrderFunctionSpace::dphi_dxi(dofIndexJ, r, xi)
+                    + rightCauchyGreen[r][j]*HighOrderFunctionSpace::dphi_dxi(dofIndexJ, s, xi));
 
                   // dp/deps_kl: derivative of \bar{p} w.r.t Green-Lagrange strain tensor E (or eps in paper)
                   double dp_deps_rs = -kappa_*J3*inverseRightCauchyGreen[s][r];
@@ -254,7 +254,7 @@ setStiffnessMatrix()
       {
         int dofIndexI = i;
         // dp_tilde/dp_i where the first p_tilde is the interpolated pressure and p_i is the pressure DOF
-        double dpdpi = LowOrderBasisOnMesh::phi(dofIndexI, xi);
+        double dpdpi = LowOrderFunctionSpace::phi(dofIndexI, xi);
 
         // set fu
         // indices of elasticity tensor
@@ -263,8 +263,8 @@ setStiffnessMatrix()
           for (int l = 0; l < 3; l++)
           {
             // deps_kl/du_i
-            double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, k, xi)
-                + rightCauchyGreen[k][i]*HighOrderBasisOnMesh::dphi_dxi(dofIndexI, l, xi));
+            double depskl_dui = 1./2*(rightCauchyGreen[l][i]*HighOrderFunctionSpace::dphi_dxi(dofIndexI, k, xi)
+                + rightCauchyGreen[k][i]*HighOrderFunctionSpace::dphi_dxi(dofIndexI, l, xi));
 
             double fu_i = PK2Stress[l][k]*depskl_dui;
 
@@ -380,8 +380,8 @@ setStiffnessMatrix()
 
 
 // right hand side for compressible mooney rivlin
-template<typename BasisOnMeshType, typename MixedQuadratureType>
-void FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename BasisOnMeshType::Mesh>>::
+template<typename FunctionSpaceType, typename MixedQuadratureType>
+void FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename FunctionSpaceType::Mesh>>::
 void manipulateWeakRhs()
 {
   // compute the rhs R-F that fits to the condensed matrix
@@ -392,8 +392,8 @@ void manipulateWeakRhs()
 }
 
 //! compute the reduced invariants J1 = I1*I3^-1/3, J2 = I2*I3^-2/3, J3=det F
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
+template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
+std::array<double,3> FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Term>::
 computeReducedInvariants(const std::array<double,3> &invariants, double deformationGradientDeterminant)
 {
   const double I1 = invariants[0];
@@ -410,8 +410,8 @@ computeReducedInvariants(const std::array<double,3> &invariants, double deformat
 }
 
 //! compute the elasticity tensor C = 2*dS/dC. Due to hyperelasticity there are symmetries C_{ijrs} = C_{jirs} and C_{ijrs} = C_{rsij} that leave 21 independent values.
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<double,21> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
+template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
+std::array<double,21> FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Term>::
 computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants,
                         const std::array<double,3> &reducedInvariants)
 {
@@ -505,8 +505,8 @@ computeElasticityTensor(const std::array<Vec3,3> &rightCauchyGreen, const std::a
   return elasticity;
 }
 
-//! compute 2nd Piola-Kirchhoff stress tensor S = 2*sym(dPsi/dC)template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-std::array<Vec3,3> FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
+//! compute 2nd Piola-Kirchhoff stress tensor S = 2*sym(dPsi/dC)template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
+std::array<Vec3,3> FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Term>::
 computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Vec3,3> &inverseRightCauchyGreen, const std::array<double,3> invariants,
                  const std::array<double,3> &reducedInvariants)
 {
@@ -552,8 +552,8 @@ computePK2Stress(const std::array<Vec3,3> &rightCauchyGreen, const std::array<Ve
 }
 
 //! return the entry klrs of the elasticity tensor
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-int FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
+template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
+int FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Term>::
 getElasticityEntryNo(int k, int l, int r, int s)
 {
   // this method was tested outside of this codebase and is correct
@@ -1129,8 +1129,8 @@ getElasticityEntryNo(int k, int l, int r, int s)
 
 
 //! return the entry klrs of the elasticity tensor
-template<typename BasisOnMeshType, typename MixedQuadratureType, typename Term>
-double FiniteElementMethodStiffnessMatrix<BasisOnMeshType, MixedQuadratureType, Term>::
+template<typename FunctionSpaceType, typename MixedQuadratureType, typename Term>
+double FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Term>::
 getElasticityEntry(std::array<double, 21> &elasticity, int k, int l, int r, int s)
 {
   return elasticity[getElasticityEntryNo(k,l,r,s)];

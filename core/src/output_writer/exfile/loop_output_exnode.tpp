@@ -35,17 +35,17 @@ outputExnode(CurrentFieldVariableType currentFieldVariable, const OutputFieldVar
              std::ofstream &file)
 {
   // if mesh name is the specified meshName
-  if (currentFieldVariable->mesh()->meshName() == meshName)
+  if (currentFieldVariable->functionSpace()->meshName() == meshName)
   {
-    // here we have the type of the mesh with meshName (which is typedef to BasisOnMesh)
-    typedef typename CurrentFieldVariableType::element_type::BasisOnMesh BasisOnMesh;
+    // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
+    typedef typename CurrentFieldVariableType::element_type::FunctionSpace FunctionSpace;
    
     // count number of field variables for the particular mesh
     int nFieldVariablesInMesh = 0;
     LoopOverTuple::loopCountNFieldVariablesOfMesh(fieldVariables, meshName, nFieldVariablesInMesh);
     
     // call exfile writer to output all field variables with the meshName
-    ExfileWriter<BasisOnMesh, OutputFieldVariablesType>::outputExnode(file, fieldVariables, meshName, currentFieldVariable->mesh(), nFieldVariablesInMesh);
+    ExfileWriter<FunctionSpace, OutputFieldVariablesType>::outputExnode(file, fieldVariables, meshName, currentFieldVariable->functionSpace(), nFieldVariablesInMesh);
    
     return true;  // break iteration
   }

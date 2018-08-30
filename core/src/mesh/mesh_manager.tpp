@@ -9,7 +9,7 @@ namespace Mesh
 {
 
 //! return previously created mesh or create on the fly
-template<typename BasisOnMeshType>
+template<typename FunctionSpaceType>
 std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 {
   // if mesh was already created earlier
@@ -19,26 +19,26 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
     if (hasMesh(meshName))
     {
       LOG(DEBUG) << "Mesh with meshName \"" <<meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
-      return std::static_pointer_cast<BasisOnMeshType>(meshes_[meshName]);
+      return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
     }
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
       LOG(DEBUG) << "Mesh configuration for \"" <<meshName << "\" found and requested, will be created now. "
-        << "Type is " << typeid(BasisOnMeshType).name() << ".";
+        << "Type is " << typeid(FunctionSpaceType).name() << ".";
       
       // get mesh configuration that was parsed earlier
       PyObject *meshConfiguration = meshConfiguration_.at(meshName);
       
       // create new mesh and initialize
-      std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, meshConfiguration);
+      std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, meshConfiguration);
       mesh->setMeshName(meshName);
       mesh->initialize();
       
       // store mesh under its name
       meshes_[meshName] = mesh;
       LOG(DEBUG) << "Stored under key \"" <<meshName << "\".";
-      return std::static_pointer_cast<BasisOnMeshType>(meshes_[meshName]);
+      return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
     }
     else
     {
@@ -55,10 +55,10 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   // create new mesh, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
-  LOG(DEBUG) << "Create new mesh with type " << typeid(BasisOnMeshType).name() << " and name \"" <<anonymousName.str() << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, settings);
+  std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, settings);
   mesh->setMeshName(anonymousName.str());
   mesh->initialize();
 
@@ -71,7 +71,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 
 //! create a mesh not from python config but directly by calling an appropriate construtor. 
 //! With this e.g. meshes from node positions can be created.
-template<typename BasisOnMeshType, typename ...Args>
+template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
 {
   if (this->hasMesh(name))
@@ -80,10 +80,10 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   }
  
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " << typeid(BasisOnMeshType).name() << " and name \"" <<name << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, std::forward<Args>(args)...);
+  std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
 
   mesh->setMeshName(name);
   mesh->initialize();

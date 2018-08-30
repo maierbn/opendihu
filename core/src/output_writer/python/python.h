@@ -34,7 +34,7 @@ private:
 /** Helper class that creates a python object out of a tuple of field variables.
  *  OutputFieldVariablesType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables that will be output.
   */
-template<typename BasisOnMeshType, typename OutputFieldVariablesType>
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 class Python
 {};
 
@@ -42,11 +42,11 @@ class Python
  *
  */
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+class Python<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
   public PythonBase<OutputFieldVariablesType>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
@@ -55,11 +55,11 @@ public:
 
 // specialization for StructuredDeformable
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+class Python<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
   public PythonBase<OutputFieldVariablesType>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,
@@ -68,11 +68,11 @@ public:
 
 // specialization for UnstructuredDeformable
 template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-class Python<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
+class Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,OutputFieldVariablesType> :
   public PythonBase<OutputFieldVariablesType>
 {
 public:
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> BasisOnMeshType;
+  typedef FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! call python callback
   static PyObject *buildPyDataObject(OutputFieldVariablesType fieldVariables,

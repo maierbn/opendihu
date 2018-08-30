@@ -9,8 +9,8 @@
 namespace OutputWriter
 {
 
-template<typename BasisOnMeshType, typename OutputFieldVariablesType>
-void PythonCallbackWriter<BasisOnMeshType,OutputFieldVariablesType>::
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+void PythonCallbackWriter<FunctionSpaceType,OutputFieldVariablesType>::
 callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
              int timeStepNo, double currentTime, bool onlyNodalValues)
 {
@@ -54,7 +54,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
     // }
 
     // build python object for data
-    PyObject *pyData = Python<BasisOnMeshType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
+    PyObject *pyData = Python<FunctionSpaceType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
     
     // set entry in list
     PyList_SetItem(pyDataList, (Py_ssize_t)meshIndex, pyData);    // steals reference to pyData

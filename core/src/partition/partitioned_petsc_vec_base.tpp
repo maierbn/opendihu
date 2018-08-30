@@ -1,29 +1,29 @@
 #include "partition/partitioned_petsc_vec_base.h"
 
-template<typename BasisOnMeshType>
-PartitionedPetscVecBase<BasisOnMeshType>::
-PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> meshPartition, std::string name) :
+template<typename FunctionSpaceType>
+PartitionedPetscVecBase<FunctionSpaceType>::
+PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name) :
   name_(name), meshPartition_(meshPartition)
 {
 }
 
-template<typename BasisOnMeshType>
-std::vector<PetscInt> &PartitionedPetscVecBase<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+std::vector<PetscInt> &PartitionedPetscVecBase<FunctionSpaceType>::
 localDofNos()
 {
   return this->meshPartition_->localDofNos();
 }
 
 //! get the meshPartition
-template<typename BasisOnMeshType>
-const std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> PartitionedPetscVecBase<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+const std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> PartitionedPetscVecBase<FunctionSpaceType>::
 meshPartition()
 {
   return this->meshPartition_;
 }
 
-template<typename BasisOnMeshType>
-std::string PartitionedPetscVecBase<BasisOnMeshType>::
+template<typename FunctionSpaceType>
+std::string PartitionedPetscVecBase<FunctionSpaceType>::
 name()
 {
   return this->name_;

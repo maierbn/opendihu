@@ -1,18 +1,27 @@
 #pragma once
 
 #include "spatial_discretization/finite_element_method/02_boundary_conditions.h"
+#include "equation/type_traits.h"
 
 namespace SpatialDiscretization
 {
 
-
-
-/** base class for baseRhs
+/** specialisation for RegularFixed not linear Lagrange, and other meshes of any dimension D (do proper integration of rhs)
+ *
+ * Class that sets the right hand side vector by integrating the integrand over the elements.
+ * What to integrate is given by the class template Term.
  */
 template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename=Term>
 class AssembleRightHandSide :
   public BoundaryConditions<BasisOnMeshType, QuadratureType, Term>
 {
+public:
+  // use constructor of base class
+  using BoundaryConditions<BasisOnMeshType, QuadratureType, Term>::BoundaryConditions;
+
+protected:
+  //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
+  void multiplyRightHandSideWithMassMatrix();
 };
 
 /** specialization for linear Lagrange, 1D regular mesh (uses stencils)
@@ -64,7 +73,7 @@ protected:
  *
  * Class that sets the right hand side vector by integrating the integrand over the elements.
  * What to integrate is given by the class template Term.
- */
+ *//*
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
 class AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term,
     Equation::doesNotUseStencils<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh,Term>> :
@@ -77,7 +86,7 @@ public:
 protected:
   //! Transform values in rhs vector into FEM discretized values by multiplying them with the integrate basis functions
   void multiplyRightHandSideWithMassMatrix();
-};
+};*/
 
 /**
  * Partial specialization for solid mechanics, mixed formulation

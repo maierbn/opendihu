@@ -401,7 +401,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  LOG(TRACE) << "loadPythonScript(" <<text.substr(0,std::min(std::size_t(80),text.length())) << ")";
+  LOG(TRACE) << "loadPythonScript(" << text.substr(0,std::min(std::size_t(80),text.length())) << ")";
 
   // execute python code
   int ret = 0;

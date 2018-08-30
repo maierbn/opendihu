@@ -25,11 +25,11 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" <<timeSpan<< ", timeStepWidth=" <<timeStepWidth
-    << " n steps: " <<this->numberTimeSteps_;
+  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << timeStepWidth
+    << " n steps: " << this->numberTimeSteps_;
   
   int nEntries;
-  VecGetSize(this->data_->solution().values(), &nEntries);
+  VecGetSize(this->data_->solution().valuesGlobal(), &nEntries);
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -38,53 +38,21 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" <<currentTime;
-    
-    /*
-    PetscErrorCode ierr;
-    double val_get;
-    for (int i=0;i<nEntries;i++)
     {
-      ierr=VecGetValues(this->data_->solution().values(),1,&i,&val_get);
-      LOG(INFO) << "val_get solution before solve " << i << ": " << val_get;   
+      std::stringstream threadNumberMessage;
+      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
+      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
-    */
-
-    //prepare rhs for the variant 1 of the implicit Euler
-    //this->discretizableInTime_.evaluateTimesteppingRightHandSideImplicit(this->data_->solution().values(),this->data_->rhs().values(),timeStepNo, currentTime);
-    
-    /*
-    ierr=VecCopy(this->data_->solution().values(), this->data_->rhs().values());
-    // initialize with 0
-    ierr = VecSet(this->data_->solution().values(), 0.0); CHKERRV(ierr);
-    */
-    
-    /*
-    for (int i=0;i<nEntries;i++)
-    {
-      ierr=VecGetValues(this->data_->rhs().values(),1,&i,&val_get);
-      LOG(INFO) << "val_get:rhs " << val_get;   
-    } 
-    */
-    
-    // computed value
-    this->discretizableInTime_.solveLinearSystem(this->data_->solution().values(), this->data_->solution().values());
-    //Variant 1 of the implicit Euler
-    //this->discretizableInTime_.solveLinearSystem(this->data_->rhs().values(), this->data_->solution().values());
-    
-    /*
-    for (int i=0;i<nEntries;i++)
-    {
-      ierr=VecGetValues(this->data_->solution().values(),1,&i,&val_get);
-      LOG(INFO) << "val_get solution after solve " << i << ": " << val_get;   
-    }
-    */
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().values());
+    // advance computed value
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix
+    this->discretizableInTime_.evaluateTimesteppingRightHandSideImplicit(
+      this->data_->solution().valuesGlobal(), this->data_->solution().valuesGlobal(), timeStepNo, currentTime);
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 

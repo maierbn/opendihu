@@ -101,6 +101,13 @@ setMesh(std::shared_ptr<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfD
   this->mesh_ = mesh;
 }
 
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+setGeometryField(bool isGeometryField)
+{
+  this->isGeometryField_ = isGeometryField;
+}
+
 //! get the number of elements
 template<int D, typename BasisFunctionType, int nComponents>
 element_no_t FieldVariableData<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::

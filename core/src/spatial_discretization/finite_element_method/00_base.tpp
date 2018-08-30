@@ -95,7 +95,11 @@ solve()
 
   // if equation was set to none, do not solve the problem (this is for unit tests that don't test for solution)
   if (std::is_same<Term,Equation::None>::value)
-   return;
+  {
+    // set solution to zero
+    data_.solution().zeroEntries();
+    return;
+  }
 
   // get stiffness matrix
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix = data_.stiffnessMatrix();

@@ -23,14 +23,15 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 
   // for geometry field compute information
   node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithGhosts(0);
-  node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
-  node_no_t nLocalNodesInZDirection = this->mesh_->nNodesLocalWithGhosts(2);
+  node_no_t nLocalNodesInYDirection = 1;
+  node_no_t nLocalNodesInZDirection = 1;
 
   const int D = BasisOnMeshType::dim();
-  if (D < 2)
-    nLocalNodesInYDirection = 1;
-  if (D < 3)
-    nLocalNodesInZDirection = 1;
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithGhosts(1);
+
+  if (D >= 3)
+    nLocalNodesInZDirection = this->mesh_->nNodesLocalWithGhosts(2);
 
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
@@ -64,14 +65,28 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
         else if (componentNo == 1)  // "y"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-            + nodeY * this->mesh_->meshWidth();
+          if (D < 2)
+          {
+            values[vectorIndex++] = 0;
+          }
+          else
+          {
+            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+              + nodeY * this->mesh_->meshWidth();
+          }
         }
         else  // "z"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-            + nodeZ * this->mesh_->meshWidth();
+          if (D < 3)
+          {
+            values[vectorIndex++] = 0;
+          }
+          else
+          {
+            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+              + nodeZ * this->mesh_->meshWidth();
+          }
         }
 
         // set derivative of Hermite to 0 for geometry field
@@ -103,14 +118,15 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 
   // for geometry field compute information
   node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
-  node_no_t nLocalNodesInZDirection = this->mesh_->nNodesLocalWithoutGhosts(2);
+  node_no_t nLocalNodesInYDirection = 1;
+  node_no_t nLocalNodesInZDirection = 1;
 
   const int D = BasisOnMeshType::dim();
-  if (D < 2)
-    nLocalNodesInYDirection = 1;
-  if (D < 3)
-    nLocalNodesInZDirection = 1;
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+
+  if (D >= 3)
+    nLocalNodesInZDirection = this->mesh_->nNodesLocalWithoutGhosts(2);
 
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
@@ -144,14 +160,28 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
         else if (componentNo == 1)  // "y"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-            + nodeY * this->mesh_->meshWidth();
+          if (D < 2)
+          {
+            values[vectorIndex++] = 0;
+          }
+          else
+          {
+            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+              + nodeY * this->mesh_->meshWidth();
+          }
         }
         else  // "z"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-            + nodeZ * this->mesh_->meshWidth();
+          if (D < 3)
+          {
+            values[vectorIndex++] = 0;
+          }
+          else
+          {
+            values[vectorIndex++] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+              + nodeZ * this->mesh_->meshWidth();
+          }
         }
 
         // set derivative of Hermite to 0 for geometry field
@@ -182,8 +212,13 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   }
   
   // for geometry field compute information, this does not work for ghost dofs!
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInYDirection = 1;
+
+  const int D = BasisOnMeshType::dim();
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // loop over entries in values to be filled
@@ -207,13 +242,27 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
       }
       else if (componentNo == 1)   // y direction
       {
-        values[i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-        + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        if (D < 2)
+        {
+          values[i] = 0;
+        }
+        else
+        {
+          values[i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        }
       }
       else  // z direction
       {
-        values[i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-        + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        if (D < 3)
+        {
+          values[i] = 0;
+        }
+        else
+        {
+          values[i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        }
       }
     }
   }
@@ -232,8 +281,12 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   }
 
   // for geometry field compute information, this does not work for ghost dofs!
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInYDirection = 1;
+
+  const int D = BasisOnMeshType::dim();
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // resize result vector
@@ -262,13 +315,27 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
       }
       else if (componentNo == 1)   // y direction
       {
-        values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-        + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        if (D < 2)
+        {
+          values[previousSize+i] = 0;
+        }
+        else
+        {
+          values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+        }
       }
       else  // z direction
       {
-        values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-        + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        if (D < 3)
+        {
+          values[previousSize+i] = 0;
+        }
+        else
+        {
+          values[previousSize+i] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+        }
       }
     }
   }
@@ -289,8 +356,12 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   }
 
   // for geometry field compute the entries, this does not work for ghost dofs
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInYDirection = 1;
+
+  const int D = BasisOnMeshType::dim();
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   // loop over entries in values to be filled
@@ -314,12 +385,26 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
         + (nodeLocalNo % nLocalNodesInXDirection) * this->mesh_->meshWidth();
 
       // y direction
-      values[i][1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-        + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+      if (D < 2)
+      {
+        values[i][1] = 0;
+      }
+      else
+      {
+        values[i][1] = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+      }
 
       // z direction
-      values[i][2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-        + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+      if (D < 3)
+      {
+        values[i][2] = 0;
+      }
+      else
+      {
+        values[i][2] = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+      }
     }
   }
 }
@@ -384,8 +469,13 @@ getValue(int componentNo, node_no_t dofLocalNo)
   assert(dofLocalNo < this->mesh_->meshPartition()->nDofsLocalWithoutGhosts());
     
   // for geometry field compute information, this does not work for ghost dofs
-  const node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
-  const node_no_t nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+  node_no_t nLocalNodesInXDirection = this->mesh_->nNodesLocalWithoutGhosts(0);
+  node_no_t nLocalNodesInYDirection = 1;
+
+  const int D = BasisOnMeshType::dim();
+  if (D >= 2)
+    nLocalNodesInYDirection = this->mesh_->nNodesLocalWithoutGhosts(1);
+
   const int nDofsPerNode = BasisOnMeshType::nDofsPerNode();
 
   double value = 0;
@@ -401,13 +491,27 @@ getValue(int componentNo, node_no_t dofLocalNo)
     }
     else if (componentNo == 1)   // y direction
     {
-      value = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth() 
-        + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+      if (D < 2)
+      {
+        value = 0;
+      }
+      else
+      {
+        value = this->mesh_->meshPartition()->beginNodeGlobal(1) * this->mesh_->meshWidth()
+          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->mesh_->meshWidth();
+      }
     }
     else     // z direction
     {
-      value = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth() 
-        + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+      if (D < 3)
+      {
+        value = 0;
+      }
+      else
+      {
+        value = this->mesh_->meshPartition()->beginNodeGlobal(2) * this->mesh_->meshWidth()
+          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->mesh_->meshWidth();
+      }
     }
   }
   return value;

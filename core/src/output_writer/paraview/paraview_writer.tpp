@@ -166,7 +166,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
     node_no_t nNodes = extent[dimensionNo] + 1;
     
-    LOG(DEBUG) << "dimension " <<dimensionNo<< ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
+    LOG(DEBUG) << "dimension " <<dimensionNo << ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
 
     coordinates[dimensionNo].resize(nNodes);
 
@@ -394,7 +394,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
   file << ">" << std::endl;
     
-  ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat);
+  ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, false);
   
 
   file << std::string(3, '\t') << "</PointData>" << std::endl

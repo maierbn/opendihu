@@ -18,7 +18,7 @@ void FiniteElementMethodMatrix<BasisOnMeshType,QuadratureType,Term,Dummy1,Dummy2
 setStiffnessMatrix()
 {
   const int D = BasisOnMeshType::dim();
-  LOG(TRACE) << "setStiffnessMatrix " << D << "D, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
+  LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, BasisOnMeshType: " << typeid(BasisOnMeshType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
 
   // get prefactor value
   const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);

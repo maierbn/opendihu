@@ -44,7 +44,7 @@ parseExelemFile(std::string exelemFilename)
     this->elementToNodeMapping_ = std::make_shared<FieldVariable::ElementToNodeMapping>();
   this->elementToNodeMapping_->setNumberElements(this->nElements_);
 
-  VLOG(1) << "nElements: " <<this->nElements_;
+  VLOG(1) << "nElements: " << this->nElements_;
 
   // reset file stream
   file_exelem.clear();
@@ -294,14 +294,26 @@ parseExnodeFile(std::string exnodeFilename)
   std::string content( (std::istreambuf_iterator<char>(file_exnode) ),
                        (std::istreambuf_iterator<char>()    ) );
 
+  // parse geometry field
+  if (this->geometryField_)
+  {
+    // set all values to 0.0
+    this->geometryField_->zeroEntries();
+
+    // parse file and values
+    this->geometryField_->parseFromExnodeFile(content);
+  }
+
   for(auto &fieldVariable : this->fieldVariable_)
   {
     // set all values to 0.0
-    fieldVariable.second->setValues(0.0);
+    fieldVariable.second->zeroEntries();
 
     // parse file and values
     fieldVariable.second->parseFromExnodeFile(content);
   }
+
+
 }
 
 template<int D,typename BasisFunctionType>
@@ -342,6 +354,7 @@ remapFieldVariables(PyObject *settings)
     {
       this->geometryField_ = std::static_pointer_cast<FieldVariable::FieldVariable<BasisOnMeshType,3>>(
          this->fieldVariable_.at("geometry"));
+      this->geometryField_->setGeometryField();
       this->fieldVariable_.erase("geometry");
     }
   }

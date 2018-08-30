@@ -30,7 +30,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
-  LOG(TRACE) << "setStiffnessMatrix 1D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 1D for Mesh::RegularFixed using stencils";
 
   typedef typename BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -105,7 +105,7 @@ template<typename QuadratureType, typename Term>
 void FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
-  LOG(TRACE) << "setStiffnessMatrix 2D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 2D for Mesh::RegularFixed using stencils";
 
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
@@ -323,7 +323,7 @@ setStiffnessMatrix()
 {
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> BasisOnMeshType;
 
-  LOG(TRACE) << "setStiffnessMatrix 3D for Mesh::RegularFixed";
+  LOG(TRACE) << "setStiffnessMatrix 3D for Mesh::RegularFixed using stencils";
 
   // get settings values
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());

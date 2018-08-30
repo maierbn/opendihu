@@ -32,10 +32,19 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents> &rhs, std
   this->mesh_ = rhs.mesh();
 
   assert(this->mesh_);
-  assert(rhs.partitionedPetscVec());
   
+
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+  if (rhs.partitionedPetscVec())
+  {
+    // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+  }
+  else
+  {
+    // else create new values vector
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+  }
 }
 
 //! contructor as data copy with a different name and different components
@@ -54,10 +63,18 @@ FieldVariableDataStructured(FieldVariable<BasisOnMeshType,nComponents2> &rhs, st
   this->mesh_ = rhs.mesh();
 
   assert(this->mesh_);
-  assert(rhs.partitionedPetscVec());
   
   // create new distributed petsc vec as copy of rhs values vector
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+  if (rhs.partitionedPetscVec())
+  {
+    // if rhs is not a geometry field an therefore has a partitionedPetscVec, use that
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(*rhs.partitionedPetscVec(), name);
+  }
+  else
+  {
+    // else create new values vector
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+  }
 }
 
 //! constructor with mesh, name and components
@@ -81,8 +98,17 @@ FieldVariableDataStructured(std::shared_ptr<BasisOnMeshType> mesh, std::string n
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
    << ", components: " << nComponents;
 
+  bool usesStencils = (std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
+    || std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<2>>::value
+    || std::is_same<typename BasisOnMeshType::Mesh, Mesh::StructuredRegularFixedOfDimension<3>>::value) &&
+    std::is_same<typename BasisOnMeshType::BasisFunction, BasisFunction::LagrangeOfOrder<1>>::value;
+
   // create a new values vector for the new field variable
-  this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+  if (!this->isGeometryField_ || !usesStencils)
+  {
+    LOG(DEBUG) << "create a geometry field without values_ vector";
+    this->values_ = std::make_shared<PartitionedPetscVec<BasisOnMeshType,nComponents>>(this->mesh_->meshPartition(), name);
+  }
 }
 
 template<typename BasisOnMeshType, int nComponents>
@@ -256,7 +282,10 @@ output(std::ostream &stream) const
   {
     stream << "\"" << componentName << "\", ";
   }
-  stream << *values_;
+  if (values_)
+    stream << *values_;
+  else
+    stream << "(values not set)";
 }
 
 };

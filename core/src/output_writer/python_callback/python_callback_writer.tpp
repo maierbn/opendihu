@@ -14,7 +14,7 @@ void PythonCallbackWriter<BasisOnMeshType,OutputFieldVariablesType>::
 callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
              int timeStepNo, double currentTime, bool onlyNodalValues)
 {
-  LOG(TRACE) << "callCallback timeStepNo=" <<timeStepNo<< ", currentTime=" << currentTime;
+  LOG(TRACE) << "callCallback timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
   if (callback == NULL)
   {

@@ -64,9 +64,8 @@ std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionT
 createFieldVariable(std::string name, std::vector<std::string> componentNames)
 {
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> fieldVariable
-    = std::make_shared<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>>();
+    = std::make_shared<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>>(this->geometryField(), name, componentNames);
 
-  fieldVariable->initializeFromFieldVariable(this->geometryField(), name, componentNames);
   return fieldVariable;
 }
 

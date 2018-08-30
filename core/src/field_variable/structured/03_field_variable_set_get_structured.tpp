@@ -206,6 +206,7 @@ setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vect
 {
   assert(dofNosLocal.size() >= nValues);
   assert(values.size() == nValues);
+  assert(this->values_);
 
   std::vector<double> valuesBuffer(nValues);
 
@@ -229,6 +230,8 @@ template<typename BasisOnMeshType, int nComponents>
 void FieldVariableSetGetStructured<BasisOnMeshType,nComponents>::
 setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
 {
+  assert(this->values_);
+
   // prepare lookup indices for PETSc vector values_
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {

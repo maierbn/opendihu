@@ -86,7 +86,7 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
     double meshWidth = mesh->meshWidth();
     double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
 
-    LOG(DEBUG) << "dimension " <<dimensionNo<< ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
+    LOG(DEBUG) << "dimension " <<dimensionNo << ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
 
     coordinates[dimensionNo].resize(nElements+1);
 

@@ -14,8 +14,8 @@ namespace SpatialDiscretization
 {
 
 // 1D,2D,3D rhs vector of Deformable mesh
-template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Equation::doesNotUseStencils<typename BasisOnMeshType::BasisFunction,typename BasisOnMeshType::Mesh,Term>>::
+template<typename BasisOnMeshType, typename QuadratureType, typename Term, typename Dummy>
+void AssembleRightHandSide<BasisOnMeshType, QuadratureType, Term, Dummy>::
 multiplyRightHandSideWithMassMatrix()
 {
   const int D = BasisOnMeshType::dim();

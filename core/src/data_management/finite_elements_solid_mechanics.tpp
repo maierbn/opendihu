@@ -119,7 +119,7 @@ createPetscObjects()
   dof_no_t tangentStiffnessMatrixNRows = this->getTangentStiffnessMatrixNRows();
 
   LOG(DEBUG) << "FiniteElementsSolidMechanics<BasisOnMeshType,Term>::createPetscObjects, "
-    << "dimension of tangent stiffness matrix: " <<tangentStiffnessMatrixNRows << "x" <<tangentStiffnessMatrixNRows << "";
+    << "dimension of tangent stiffness matrix: " << tangentStiffnessMatrixNRows << "x" << tangentStiffnessMatrixNRows << "";
 
   // PETSc MatCreateAIJ parameters
   int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
@@ -129,7 +129,7 @@ createPetscObjects()
   diagonalNonZeros = std::min(diagonalNonZeros, tangentStiffnessMatrixNRows);
   offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
 
-  LOG(DEBUG) << "d=" <<this->mesh_->dimension()
+  LOG(DEBUG) << "d=" << this->mesh_->dimension()
     << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros; 
   const int dimension = BasisOnMeshType::dim();
     

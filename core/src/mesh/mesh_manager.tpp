@@ -18,7 +18,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
     std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
     if (hasMesh(meshName))
     {
-      LOG(DEBUG) << "Mesh with meshName \"" <<meshName << "\" requested and found, type is " <<typeid(meshes_[meshName]).name();
+      LOG(DEBUG) << "Mesh with meshName \"" <<meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
       return std::static_pointer_cast<BasisOnMeshType>(meshes_[meshName]);
     }
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
@@ -55,7 +55,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   // create new mesh, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousMeshes_++;
-  LOG(DEBUG) << "Create new mesh with type " <<typeid(BasisOnMeshType).name() << " and name \"" <<anonymousName.str() << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(BasisOnMeshType).name() << " and name \"" <<anonymousName.str() << "\".";
   
   // create mesh and initialize
   std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, settings);
@@ -80,7 +80,7 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   }
  
   // create new mesh
-  LOG(DEBUG) << "Create new mesh with type " <<typeid(BasisOnMeshType).name() << " and name \"" <<name << "\".";
+  LOG(DEBUG) << "Create new mesh with type " << typeid(BasisOnMeshType).name() << " and name \"" <<name << "\".";
   
   // create mesh and initialize
   std::shared_ptr<BasisOnMeshType> mesh = std::make_shared<BasisOnMeshType>(this->partitionManager_, std::forward<Args>(args)...);

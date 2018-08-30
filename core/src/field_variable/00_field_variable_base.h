@@ -85,6 +85,9 @@ public:
   //! set all values to a specific value
   virtual void setValues(double value) = 0;
 
+  //! set all entries to 0.0
+  virtual void zeroEntries() = 0;
+
 protected:
  
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information

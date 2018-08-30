@@ -26,8 +26,11 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan=" <<timeSpan<< ", timeStepWidth=" <<timeStepWidth
-    << " n steps: " <<this->numberTimeSteps_;
+  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << timeStepWidth
+    << " n steps: " << this->numberTimeSteps_;
+
+  // debugging output of matrices
+  //this->data_->print();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -37,13 +40,17 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     {
       std::stringstream threadNumberMessage;
       threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
+
+    VLOG(1) << "starting from solution: " << this->data_->solution();
 
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       this->data_->solution().valuesGlobal(), this->data_->increment().valuesGlobal(), timeStepNo, currentTime);
+
+    VLOG(1) << "computed increment: " << this->data_->increment();
 
     // integrate, y += dt * delta_u
     VecAXPY(this->data_->solution().valuesGlobal(), timeStepWidth, this->data_->increment().valuesGlobal());
@@ -52,11 +59,10 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
+    VLOG(1) << "solution after integration: " << this->data_->solution();
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
-
-    //this->data_->print();
   }
 }
 

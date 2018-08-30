@@ -13,7 +13,7 @@ namespace OutputWriter
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
-  LOG(DEBUG) << "Generic::prepareWrite timeStepNo=" <<timeStepNo<< ", currentTime=" << currentTime;
+  LOG(DEBUG) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
   if (!data.mesh())
   {
@@ -59,6 +59,12 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   }
   outputFileNo_++;
   
+  // add rank no to file name base
+  if (data.mesh()->meshPartition()->nRanks() > 1)
+  {
+    appendRankNo(s, data.mesh()->meshPartition()->nRanks(), data.mesh()->meshPartition()->ownRankNo());
+  }
+
   filename_ = s.str();
   return true;
 }

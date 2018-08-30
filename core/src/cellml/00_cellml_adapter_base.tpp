@@ -85,7 +85,7 @@ template<int nStates>
 bool CellmlAdapterBase<nStates>::
 setInitialValues(Vec& initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_=" <<this->sourceFilename_;
+  LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";

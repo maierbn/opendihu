@@ -93,7 +93,7 @@ createPetscObjects()
 
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
-  LOG(DEBUG) << "d=" <<this->mesh_->dimension()
+  LOG(DEBUG) << "d=" << this->mesh_->dimension()
     << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
   int nComponents = 1;
@@ -230,7 +230,6 @@ initializeSystemMatrix(Mat &systemMatrix)
 
   // the PETSc matrix object is created outside by MatMatMult
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
-  const int nComponents = 1;
   this->systemMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, systemMatrix, "systemMatrix");
 }
 

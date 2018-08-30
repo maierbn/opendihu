@@ -262,7 +262,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
   std::ifstream sourceFile(this->sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "Could not open source file \"" <<this->sourceFilename_<< "\" for reading!";
+    LOG(ERROR) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
     return false;
   }
   else
@@ -335,7 +335,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         
         if (line.find("void computeCellMLRightHandSide") != std::string::npos)
         {
-          LOG(WARNING) << "The given source file \"" <<this->sourceFilename_<< "\" already contains a simd version of the rhs routine. "
+          LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" already contains a simd version of the rhs routine. "
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }

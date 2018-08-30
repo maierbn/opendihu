@@ -59,8 +59,9 @@ setInverseLumpedMassMatrix()
   LOG(TRACE) << "setInverseLumpedMassMatrix";
 
   std::shared_ptr<BasisOnMeshType> mesh = std::static_pointer_cast<BasisOnMeshType>(this->data_.mesh());
-  Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->globalValues();
-  Mat &massMatrix = this->data_.massMatrix()->globalValues();
+  Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->valuesGlobal();
+  Mat &massMatrix = this->data_.massMatrix()->valuesGlobal();
+  this->data_.massMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
   PetscErrorCode ierr;
   
@@ -75,7 +76,7 @@ setInverseLumpedMassMatrix()
   ierr = MatGetRowSum(massMatrix, rowSum->valuesGlobal()); CHKERRV(ierr);
 
   // for the inverse matrix, replace each entry in rowSum by its reciprocal
-  ierr = VecReciprocal(rowSum); CHKERRV(ierr);
+  ierr = VecReciprocal(rowSum->valuesGlobal()); CHKERRV(ierr);
 
   // set the values on the diagonal
   ierr = MatDiagonalSet(inverseLumpedMassMatrix, rowSum->valuesGlobal(), INSERT_VALUES); CHKERRV(ierr);
@@ -93,8 +94,8 @@ setSystemMatrix(double timeStepWidth)
 
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
 
-  Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->globalValues();
-  Mat &stiffnessMatrix = this->data_.stiffnessMatrix()->globalValues();
+  Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->valuesGlobal();
+  Mat &stiffnessMatrix = this->data_.stiffnessMatrix()->valuesGlobal();
   Mat systemMatrix;
   
   PetscErrorCode ierr;
@@ -105,12 +106,12 @@ setSystemMatrix(double timeStepWidth)
   this->data_.initializeSystemMatrix(systemMatrix);
   
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
-  ierr = MatScale(this->data_.systemMatrix().valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(this->data_.systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
 
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K
-  ierr = MatShift(this->data_.systemMatrix().valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(this->data_.systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
 
-  this->data_.systemMatrix().assembly(MAT_FINAL_ASSEMBLY);
+  this->data_.systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
 
   VLOG(1) << *this->data_.systemMatrix();
 }

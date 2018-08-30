@@ -62,16 +62,9 @@ public:
   //! set the internal mesh
   void setMesh(std::shared_ptr<BasisOnMeshType> mesh);
 
-/*
-  //! get the number of elements
-  element_no_t nElementsLocal() const;
+  //! set the property to be geometry field to this field variable
+  void setGeometryField(bool isGeometryField=true);
 
-  //! get the number of nodes
-  node_no_t nNodesLocalWithGhosts() const;
-
-  //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nDofsLocalWithGhosts() const;
-*/
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;
 
@@ -113,8 +106,6 @@ public:
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
-
-  //friend class BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>;
 
   //! resize internal representation variable to number of elements
   void setNumberElements(element_no_t nElements);

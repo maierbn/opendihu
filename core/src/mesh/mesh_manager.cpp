@@ -119,7 +119,7 @@ mesh<None>(PyObject *settings)
 
     // set type to be 1D regular fixed mesh with linear lagrange basis
     typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-    LOG(DEBUG) << "Create new mesh with type " <<typeid(NewBasisOnMesh).name() << " and name \"" <<anonymousName.str() << "\".";
+    LOG(DEBUG) << "Create new mesh with type " << typeid(NewBasisOnMesh).name() << " and name \"" <<anonymousName.str() << "\".";
 
     std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, settings);
     mesh->setMeshName(anonymousName.str());
@@ -134,7 +134,7 @@ mesh<None>(PyObject *settings)
   std::array<double, 1> physicalExtent {1.0};
 
   typedef BasisOnMesh::BasisOnMesh<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewBasisOnMesh;
-  LOG(DEBUG) << "Create new 1-node mesh with type " <<typeid(NewBasisOnMesh).name() << ", not stored.";
+  LOG(DEBUG) << "Create new 1-node mesh with type " << typeid(NewBasisOnMesh).name() << ", not stored.";
 
   std::shared_ptr<NewBasisOnMesh> mesh = std::make_shared<NewBasisOnMesh>(this->partitionManager_, nElements, physicalExtent);
   mesh->setMeshName(std::string("anonymous"));

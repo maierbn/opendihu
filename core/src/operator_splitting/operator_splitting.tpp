@@ -37,8 +37,8 @@ initialize()
 
   TimeSteppingScheme::initialize();
 
-  LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" <<this->startTime_<< "," <<this->endTime_<< "]"
-    << ", n steps: " <<this->numberTimeSteps_;
+  LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
+    << ", n steps: " << this->numberTimeSteps_;
 
   // initialize time stepping objects, if only one knows its MeshType, initialize that first
   //(e.g. CellML-adapter does not know, because it is independent of the type of a mesh)

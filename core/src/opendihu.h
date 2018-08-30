@@ -29,7 +29,7 @@
 
 #include "finite_element_method_time_stepping/05_finite_element_method_time_stepping.h"
 
-#include "model_order_reduction/pod.h"
+#include "model_order_reduction/mor.h"
 #include "postprocessing/streamline_tracer.h"
 
 #include "cellml/03_cellml_adapter.h"

@@ -13,7 +13,6 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
 {
   for(auto &outputWriter : this->outputWriter_)
   {
-    LOG(DEBUG) << "select outputWriter";
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);

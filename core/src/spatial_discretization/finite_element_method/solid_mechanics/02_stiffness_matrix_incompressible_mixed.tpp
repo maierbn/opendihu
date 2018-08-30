@@ -17,7 +17,7 @@ namespace SpatialDiscretization
 
 // set stiffness matrix for a u-p mixed formulation in which the pressure is not condensed out
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -285,7 +285,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderBasisOnMeshType>
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-const dof_no_t FiniteElementMethodStiffnessMatrix<
+const dof_no_t FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -307,7 +307,7 @@ getPressureDofOffset()
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -366,7 +366,7 @@ setFromSolverVariableSolution(Vec &solverVariableSolution)
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -380,7 +380,7 @@ evaluateNonlinearFunction(Vec &result)
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -516,7 +516,7 @@ computeIncompressibilityConstraint(Vec &result)
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -530,7 +530,7 @@ preparePressureInterpolation(element_no_t elementNo)
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-double FiniteElementMethodStiffnessMatrix<
+double FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,
@@ -548,7 +548,7 @@ getPressure(double deformationGradientDeterminant, VecD<HighOrderBasisOnMeshType
 }
 
 template<typename LowOrderBasisOnMeshType, typename HighOrderBasisOnMeshType, typename MixedQuadratureType, typename Term>
-const int FiniteElementMethodStiffnessMatrix<
+const int FiniteElementMethodMatrix<
   BasisOnMesh::Mixed<LowOrderBasisOnMeshType,HighOrderBasisOnMeshType>,
   MixedQuadratureType,
   Term,

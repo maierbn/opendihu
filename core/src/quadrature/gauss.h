@@ -4,7 +4,7 @@
 #include <array>
 #include <type_traits>
 
-#include "quadrature/integrator.h"
+#include "quadrature/quadrature.h"
 
 namespace Quadrature
 {

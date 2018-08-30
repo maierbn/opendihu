@@ -179,7 +179,7 @@ solve()
     for(int i=0; i<vectorSize; i++)
     {
       res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
-      LOG(DEBUG) << i << ". solution=" <<solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
+      LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
     }
 
     LOG(DEBUG) << "res=" << res;

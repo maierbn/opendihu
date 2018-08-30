@@ -667,7 +667,7 @@ parseFromExnodeFile(std::string content)
         int subBlockStartIndex = pair.second;
         int componentNo = this->findComponent(componentName);
 
-        VLOG(2) << "  componentName=[" << componentName<< "], subBlockStartIndex=" << subBlockStartIndex
+        VLOG(2) << "  componentName=[" << componentName << "], subBlockStartIndex=" << subBlockStartIndex
           << " n values: " << blockValues.size() << " previousNodeNo=" << previousNodeNo;
 
         // store data at component

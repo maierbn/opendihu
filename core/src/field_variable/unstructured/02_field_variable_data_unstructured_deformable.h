@@ -102,7 +102,7 @@ public:
   //! get the internal values vector
   Vec &valuesGlobal();
 
-  //! get the number of scale factors, TODO: local no
+  //! get the number of scale factors
   int getNumberScaleFactors(element_no_t elementGlobalNo) const;
 
   //! write a exelem file header to a stream, for a particular element

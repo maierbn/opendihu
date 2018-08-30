@@ -8,7 +8,15 @@
 #include "output_writer/manager.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 
-/** todo 
+/** This is the base class of the CellmlAdapter, that handles common functionality.
+ * nStates: number of states in one instance of the CellML problem
+ * 
+ *  Naming:
+ *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
+ *   Parameter (opendihu, OpenCMISS) = KNOWN (OpenCMISS), in OpenCOR also algebraic
+ *   Constant - these are constants that are only present in the source files
+ *   State: state variable
+ *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
 template <int nStates>
 class CellmlAdapterBase
@@ -39,12 +47,15 @@ public:
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
 
+  //! get a vector with the names of the states
+  void getStateNames(std::vector<std::string> &stateNames);
+  
   typedef BasisOnMesh::BasisOnMesh<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> BasisOnMesh;   ///< BasisOnMesh type
 
 protected:
 
-  //! scan the given cellml source file for initial values that are given by dummy assignments
-  bool scanInitialValues(std::string sourceFilename, std::vector<double> &statesInitialValues);
+  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
+  virtual bool scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialValues) = 0;
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
@@ -52,17 +63,24 @@ protected:
 
   std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
 
-  //int nStates_;           ///< number of states in one instance of the CellML problem (template parameter)
-  int nInstances_;        ///< number of instances of the CellML problem, equals number of mesh nodes
-  int nParameters_;       ///< number of parameters (=CellML name "known") in one instance of the CellML problem
-  int nIntermediates_;    ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
+  int nInstances_;         ///< number of instances of the CellML problem, equals number of mesh nodes
+  int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem
+  int nIntermediates_ = 0; ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
+  int nConstants_ = 0;     ///< number of entries in the "CONSTANTS" array
    
-  //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine
-  //std::vector<double> rates_;     ///< vector of rates, that are computed by rhsRoutine
+  //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
+  //std::vector<double> rates_;     ///< vector of rates, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
   std::vector<double> parameters_; ///< vector of values that will be provided to CellML by the code, given by python config, CellML name: known
   std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
-
+  std::vector<double> statesInitialValues_;  ///< initial values of the states for one instances, as parsed from source file
+  
+  std::vector<int> parametersUsedAsIntermediate_;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
+  std::vector<int> parametersUsedAsConstant_;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants 
+  
+  std::vector<std::string> stateNames_;    ///< the specifier for the states as given in the input source file
+  
   std::string sourceFilename_; ///<file name of provided CellML right hand side routine
+  bool inputFileTypeOpenCMISS_;   ///< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

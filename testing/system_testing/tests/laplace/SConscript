@@ -39,7 +39,7 @@ testcases = [
   "laplace_3d_unstructured_deformable_hermite",
 ]
 
-#testcases = ["laplace_2d_unstructured_deformable_quadratic"]
+#testcases = ["laplace_2d_structured_deformable_linear"]
 
 for testcase in testcases:
   env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

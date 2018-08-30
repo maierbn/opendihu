@@ -378,7 +378,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
   std::ifstream file(filename);
   if (!file.is_open())
   {
-    LOG(ERROR) << "Could not open settings file \"" <<filename<< "\".";
+    LOG(ERROR) << "Could not open settings file \"" <<filename << "\".";
   }
   else
   {
@@ -393,7 +393,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
     // read in file contents
     file.read(&fileContents[0], fileSize);
 
-    LOG(INFO) << "File \"" <<filename<< "\" loaded.";
+    LOG(INFO) << "File \"" <<filename << "\" loaded.";
 
     loadPythonScript(fileContents);
   }

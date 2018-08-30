@@ -3,10 +3,9 @@
 #include "control/dihu_context.h"
 #include "data_management/solution_vector_mapping.h"
 #include "data_management/time_stepping.h"
+#include "discretizable_in_time/discretizable_in_time.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "data_management/data.h"
-
-#include "time_stepping_scheme/time_stepping_scheme.h"
 
 namespace TimeSteppingScheme
 {
@@ -35,13 +34,12 @@ public:
 
   //! return the Petsc solution vector
   typename Data::FieldVariableType &solution();
-  //Vec &solution();
 
   //! return the data object
   Data &data();
 
   //! initialize discretizableInTime
-  void initialize();
+  virtual void initialize();
   
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);

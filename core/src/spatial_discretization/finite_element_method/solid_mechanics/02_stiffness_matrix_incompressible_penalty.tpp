@@ -18,7 +18,7 @@ namespace SpatialDiscretization
 
 // general implementation for solid mechanics penalty
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
@@ -57,7 +57,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffne
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
@@ -82,7 +82,7 @@ setFromSolverVariableSolution(Vec &solverSolutionVariable)
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
@@ -96,7 +96,7 @@ evaluateNonlinearFunction(Vec &result)
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-void FiniteElementMethodStiffnessMatrix<
+void FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
@@ -110,7 +110,7 @@ preparePressureInterpolation(element_no_t elementNo)
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-double FiniteElementMethodStiffnessMatrix<
+double FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,
@@ -127,7 +127,7 @@ getPressure(double deformationGradientDeterminant, VecD<BasisOnMeshType::dim()> 
 }
 
 template<typename BasisOnMeshType, typename QuadratureType, typename Term>
-const int FiniteElementMethodStiffnessMatrix<
+const int FiniteElementMethodMatrix<
   BasisOnMeshType,
   QuadratureType,
   Term,

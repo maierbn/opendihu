@@ -42,7 +42,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     // advance computed value
     // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
+    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       this->data_->solution().valuesGlobal(), this->data_->increment().valuesGlobal(), timeStepNo, currentTime);
 
     // integrate, y += dt * delta_u
@@ -54,7 +54,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
     // write current output values
-    //this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
     //this->data_->print();
   }

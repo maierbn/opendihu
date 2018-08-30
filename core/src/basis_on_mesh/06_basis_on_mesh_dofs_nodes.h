@@ -20,7 +20,6 @@ class BasisOnMesh;
 template<typename MeshType,typename BasisFunctionType>
 class BasisOnMeshDofsNodes
 {
-protected:
 };
 
 /** Partial specialization for RegularFixed mesh
@@ -70,7 +69,7 @@ public:
   BasisOnMeshDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
 
   typedef FieldVariable::FieldVariable<BasisOnMesh<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
-  
+
   //! initialize geometry
   virtual void initialize();
   

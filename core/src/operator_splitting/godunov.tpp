@@ -34,7 +34,7 @@ advanceTimeSpan()
     LOG(INFO) << threadNumberMessage.str() << ": Timestep " <<timeStepNo<< "/" <<this->numberTimeSteps_<< ", t=" << currentTime;
     LOG(DEBUG) << "  Godunov: time step " <<timeStepNo<< ", t: " << currentTime;
 
-    LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan [" << currentTime<< ", " << currentTime+timeStepWidth<< "]";
+    LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan [" << currentTime << ", " << currentTime+timeStepWidth<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, currentTime+timeStepWidth);
 
@@ -49,7 +49,7 @@ advanceTimeSpan()
     this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution().valuesGlobal(),
       this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution().valuesGlobal());
 
-    LOG(DEBUG) << "  Godunov: timeStepping2 setTimeSpan [" << currentTime<< ", " << currentTime+timeStepWidth<< "]";
+    LOG(DEBUG) << "  Godunov: timeStepping2 setTimeSpan [" << currentTime << ", " << currentTime+timeStepWidth<< "]";
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+timeStepWidth);
 

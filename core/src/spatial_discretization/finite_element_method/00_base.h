@@ -45,6 +45,12 @@ protected:
 
   //! setup stiffness matrix
   virtual void setStiffnessMatrix() = 0;
+  
+  //! setup mass matrix
+  virtual void setMassMatrix() = 0;
+  
+  //! setup inverse of the lumped mass matrix
+  //virtual void setInverseLumpedMassMatrix()=0;
 
   //! solve finite element linear system
   virtual void solve();

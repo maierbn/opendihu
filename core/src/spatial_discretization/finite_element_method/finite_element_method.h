@@ -3,11 +3,11 @@
 #include "equation/type_traits.h"
 
 #include "spatial_discretization/spatial_discretization.h"
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/01_matrix.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.h"
 //#include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
-#include "spatial_discretization/finite_element_method/05_rhs.h"
-#include "spatial_discretization/finite_element_method/06_timestepping.h"
+#include "spatial_discretization/finite_element_method/04_rhs.h"
+#include "spatial_discretization/finite_element_method/05_time_stepping.h"
 #include "basis_on_mesh/basis_on_mesh.h"
 #include "basis_on_mesh/mixed_basis_on_mesh.h"
 #include "basis_function/mixed.h"
@@ -22,7 +22,7 @@ namespace SpatialDiscretization
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term, typename = Term, typename = BasisFunctionType>
 class FiniteElementMethod :
-  public FiniteElementMethodStiffnessMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
+  public FiniteElementMethodMatrix<BasisOnMesh::BasisOnMesh<MeshType, BasisFunctionType>, QuadratureType, Term>
 {
 public:
 };
@@ -62,7 +62,7 @@ protected:
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for poisson equation/solid mechanics/everything that is static and has a rhs
- * use inheritage hierarchy until file 05_rhs.h
+ * use inheritage hierarchy until file 04_rhs.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::hasRhsNoTimestepping<Term>, BasisFunction::isNotMixed<BasisFunctionType>> :

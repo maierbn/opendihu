@@ -44,7 +44,7 @@ PyObject *PythonFile::openPythonFileStream(std::string filename, std::string wri
 
   if (!file)
   {
-    LOG(ERROR) << "Could not open file \"" <<filename<< "\" for output of python object.";
+    LOG(ERROR) << "Could not open file \"" <<filename << "\" for output of python object.";
     return NULL;
   }
 

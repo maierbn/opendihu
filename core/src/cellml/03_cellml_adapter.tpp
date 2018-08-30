@@ -17,8 +17,7 @@
 template<int nStates>
 CellmlAdapter<nStates>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates>(context),
-  DiscretizableInTime(SolutionVectorMapping(true))
+  CallbackHandler<nStates>(context)
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
@@ -48,8 +47,14 @@ initialize()
   // in methods that use the result of this method, e.g. in operator splittings.
   // These are all values of a single STATE with number outputStateIndex from settings.
   // The data layout is for e.g. 3 instances like this: STATE[0] STATE[0] STATE[0] STATE[1] STATE[1] STATE[1] STATE[2]...
-  solutionVectorMapping_.setOutputRange(this->nInstances_*outputStateIndex, this->nInstances_*(outputStateIndex+1));
-  solutionVectorMapping_.setScalingFactor(prefactor);
+  this->solutionVectorMapping_.setOutputRange(this->nInstances_*outputStateIndex, this->nInstances_*(outputStateIndex+1));
+  this->solutionVectorMapping_.setScalingFactor(prefactor);
+}
+
+template<int nStates>
+void CellmlAdapter<nStates>::
+initialize(double timeStepWidth)
+{
 }
 
 template<int nStates>
@@ -60,7 +65,7 @@ void CellmlAdapter<nStates>::setRankSubset(Partition::RankSubset rankSubset)
 
 template<int nStates>
 void CellmlAdapter<nStates>::
-evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, double currentTime)
+evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
@@ -80,9 +85,10 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
-  if(this->rhsRoutineSimd_)
-  { 
-    this->rhsRoutineSimd_((void *)this, states, rates, this->intermediates_.data(), this->parameters_.data());
+  if(this->rhsRoutine_)
+  {
+    // call actual rhs routine from cellml code
+    this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
   }
 
   // handle intermediates, call callback function of python config
@@ -104,6 +110,12 @@ evaluateTimesteppingRightHandSide(Vec& input, Vec& output, int timeStepNo, doubl
   VecRestoreArray(output, &rates);
 }
 
+template<int nStates>
+void CellmlAdapter<nStates>::
+evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
+{
+}
+
 //! return false because the object is independent of mesh type
 template<int nStates>
 bool CellmlAdapter<nStates>::
@@ -112,8 +124,14 @@ knowsMeshType()
   return CellmlAdapterBase<nStates>::knowsMeshType();
 }
 
-//! return the mesh
+template<int nStates>
+void CellmlAdapter<nStates>::
+getComponentNames(std::vector<std::string> &stateNames)
+{
+  this->getStateNames(stateNames);
+}
 
+//! return the mesh
 template<int nStates>
 std::shared_ptr<Mesh::Mesh> CellmlAdapter<nStates>::
 mesh()

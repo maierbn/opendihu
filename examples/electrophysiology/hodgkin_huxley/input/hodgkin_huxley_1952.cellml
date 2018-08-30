@@ -1,0 +1,946 @@
+<?xml version='1.0'?>
+<model cmeta:id="hodgkin_huxley_squid_axon_1952" name="hodgkin_huxley_squid_axon_1952" xmlns="http://www.cellml.org/cellml/1.0#" xmlns:cellml="http://www.cellml.org/cellml/1.0#" xmlns:cmeta="http://www.cellml.org/metadata/1.0#">
+    <units name="millisecond">
+        <unit prefix="milli" units="second"/>
+    </units>
+    <units name="per_millisecond">
+        <unit exponent="-1" prefix="milli" units="second"/>
+    </units>
+    <units name="millivolt">
+        <unit prefix="milli" units="volt"/>
+    </units>
+    <units name="per_millivolt_millisecond">
+        <unit exponent="-1" units="millivolt"/>
+        <unit exponent="-1" prefix="milli" units="second"/>
+    </units>
+    <units name="milliS_per_cm2">
+        <unit prefix="milli" units="siemens"/>
+        <unit exponent="-2" prefix="centi" units="metre"/>
+    </units>
+    <units name="microF_per_cm2">
+        <unit prefix="micro" units="farad"/>
+        <unit exponent="-2" prefix="centi" units="metre"/>
+    </units>
+    <units name="microA_per_cm2">
+        <unit prefix="micro" units="ampere"/>
+        <unit exponent="-2" prefix="centi" units="metre"/>
+    </units>
+    <component name="environment">
+        <variable cmeta:id="environment_time" name="time" public_interface="out" units="millisecond"/>
+    </component>
+    <component cmeta:id="id_00007" name="membrane">
+        <variable cmeta:id="membrane_V" initial_value="-75" name="V" public_interface="out" units="millivolt"/>
+        <variable initial_value="-75" name="E_R" public_interface="out" units="millivolt"/>
+        <variable initial_value="1" name="Cm" units="microF_per_cm2"/>
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <variable name="i_Na" public_interface="in" units="microA_per_cm2"/>
+        <variable name="i_K" public_interface="in" units="microA_per_cm2"/>
+        <variable name="i_L" public_interface="in" units="microA_per_cm2"/>
+        <variable initial_value="0" name="i_Stim" units="microA_per_cm2"/>
+        <!--i_Stim = sel
+    case (time >= 10{millisecond}) and (time <= 10.5{millisecond}):
+        20{microA_per_cm2};
+    otherwise:
+        0{microA_per_cm2};
+endsel;-->
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>V</ci>
+                </apply>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <plus/>
+                            <apply>
+                                <minus/>
+                                <ci>i_Stim</ci>
+                            </apply>
+                            <ci>i_Na</ci>
+                            <ci>i_K</ci>
+                            <ci>i_L</ci>
+                        </apply>
+                    </apply>
+                    <ci>Cm</ci>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00001" name="sodium_channel">
+        <variable cmeta:id="sodium_channel_i_Na" name="i_Na" public_interface="out" units="microA_per_cm2"/>
+        <variable initial_value="120" name="g_Na" units="milliS_per_cm2"/>
+        <variable name="E_Na" units="millivolt"/>
+        <variable name="time" private_interface="out" public_interface="in" units="millisecond"/>
+        <variable name="V" private_interface="out" public_interface="in" units="millivolt"/>
+        <variable name="E_R" public_interface="in" units="millivolt"/>
+        <variable name="m" private_interface="in" units="dimensionless"/>
+        <variable name="h" private_interface="in" units="dimensionless"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>E_Na</ci>
+                <apply>
+                    <plus/>
+                    <ci>E_R</ci>
+                    <cn cellml:units="millivolt">115</cn>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>i_Na</ci>
+                <apply>
+                    <times/>
+                    <ci>g_Na</ci>
+                    <apply>
+                        <power/>
+                        <ci>m</ci>
+                        <cn cellml:units="dimensionless">3</cn>
+                    </apply>
+                    <ci>h</ci>
+                    <apply>
+                        <minus/>
+                        <ci>V</ci>
+                        <ci>E_Na</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00002" name="sodium_channel_m_gate">
+        <variable initial_value="0.05" name="m" public_interface="out" units="dimensionless"/>
+        <variable name="alpha_m" units="per_millisecond"/>
+        <variable name="beta_m" units="per_millisecond"/>
+        <variable name="V" public_interface="in" units="millivolt"/>
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>alpha_m</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <times/>
+                        <apply>
+                            <minus/>
+                            <cn cellml:units="per_millivolt_millisecond">0.1</cn>
+                        </apply>
+                        <apply>
+                            <plus/>
+                            <ci>V</ci>
+                            <cn cellml:units="millivolt">50</cn>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <exp/>
+                            <apply>
+                                <divide/>
+                                <apply>
+                                    <minus/>
+                                    <apply>
+                                        <plus/>
+                                        <ci>V</ci>
+                                        <cn cellml:units="millivolt">50</cn>
+                                    </apply>
+                                </apply>
+                                <cn cellml:units="millivolt">10</cn>
+                            </apply>
+                        </apply>
+                        <cn cellml:units="dimensionless">1</cn>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>beta_m</ci>
+                <apply>
+                    <times/>
+                    <cn cellml:units="per_millisecond">4</cn>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <minus/>
+                                <apply>
+                                    <plus/>
+                                    <ci>V</ci>
+                                    <cn cellml:units="millivolt">75</cn>
+                                </apply>
+                            </apply>
+                            <cn cellml:units="millivolt">18</cn>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>m</ci>
+                </apply>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <times/>
+                        <ci>alpha_m</ci>
+                        <apply>
+                            <minus/>
+                            <cn cellml:units="dimensionless">1</cn>
+                            <ci>m</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <ci>beta_m</ci>
+                        <ci>m</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00003" name="sodium_channel_h_gate">
+        <variable initial_value="0.6" name="h" public_interface="out" units="dimensionless"/>
+        <variable name="alpha_h" units="per_millisecond"/>
+        <variable name="beta_h" units="per_millisecond"/>
+        <variable name="V" public_interface="in" units="millivolt"/>
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>alpha_h</ci>
+                <apply>
+                    <times/>
+                    <cn cellml:units="per_millisecond">0.07</cn>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <minus/>
+                                <apply>
+                                    <plus/>
+                                    <ci>V</ci>
+                                    <cn cellml:units="millivolt">75</cn>
+                                </apply>
+                            </apply>
+                            <cn cellml:units="millivolt">20</cn>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>beta_h</ci>
+                <apply>
+                    <divide/>
+                    <cn cellml:units="per_millisecond">1</cn>
+                    <apply>
+                        <plus/>
+                        <apply>
+                            <exp/>
+                            <apply>
+                                <divide/>
+                                <apply>
+                                    <minus/>
+                                    <apply>
+                                        <plus/>
+                                        <ci>V</ci>
+                                        <cn cellml:units="millivolt">45</cn>
+                                    </apply>
+                                </apply>
+                                <cn cellml:units="millivolt">10</cn>
+                            </apply>
+                        </apply>
+                        <cn cellml:units="dimensionless">1</cn>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>h</ci>
+                </apply>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <times/>
+                        <ci>alpha_h</ci>
+                        <apply>
+                            <minus/>
+                            <cn cellml:units="dimensionless">1</cn>
+                            <ci>h</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <ci>beta_h</ci>
+                        <ci>h</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00004" name="potassium_channel">
+        <variable cmeta:id="potassium_channel_i_K" name="i_K" public_interface="out" units="microA_per_cm2"/>
+        <variable initial_value="36" name="g_K" units="milliS_per_cm2"/>
+        <variable name="E_K" units="millivolt"/>
+        <variable name="time" private_interface="out" public_interface="in" units="millisecond"/>
+        <variable name="V" private_interface="out" public_interface="in" units="millivolt"/>
+        <variable name="E_R" public_interface="in" units="millivolt"/>
+        <variable name="n" private_interface="in" units="dimensionless"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>E_K</ci>
+                <apply>
+                    <minus/>
+                    <ci>E_R</ci>
+                    <cn cellml:units="millivolt">12</cn>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>i_K</ci>
+                <apply>
+                    <times/>
+                    <ci>g_K</ci>
+                    <apply>
+                        <power/>
+                        <ci>n</ci>
+                        <cn cellml:units="dimensionless">4</cn>
+                    </apply>
+                    <apply>
+                        <minus/>
+                        <ci>V</ci>
+                        <ci>E_K</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00005" name="potassium_channel_n_gate">
+        <variable initial_value="0.325" name="n" public_interface="out" units="dimensionless"/>
+        <variable name="alpha_n" units="per_millisecond"/>
+        <variable name="beta_n" units="per_millisecond"/>
+        <variable name="V" public_interface="in" units="millivolt"/>
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>alpha_n</ci>
+                <apply>
+                    <divide/>
+                    <apply>
+                        <times/>
+                        <apply>
+                            <minus/>
+                            <cn cellml:units="per_millivolt_millisecond">0.01</cn>
+                        </apply>
+                        <apply>
+                            <plus/>
+                            <ci>V</ci>
+                            <cn cellml:units="millivolt">65</cn>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <minus/>
+                        <apply>
+                            <exp/>
+                            <apply>
+                                <divide/>
+                                <apply>
+                                    <minus/>
+                                    <apply>
+                                        <plus/>
+                                        <ci>V</ci>
+                                        <cn cellml:units="millivolt">65</cn>
+                                    </apply>
+                                </apply>
+                                <cn cellml:units="millivolt">10</cn>
+                            </apply>
+                        </apply>
+                        <cn cellml:units="dimensionless">1</cn>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>beta_n</ci>
+                <apply>
+                    <times/>
+                    <cn cellml:units="per_millisecond">0.125</cn>
+                    <apply>
+                        <exp/>
+                        <apply>
+                            <divide/>
+                            <apply>
+                                <plus/>
+                                <ci>V</ci>
+                                <cn cellml:units="millivolt">75</cn>
+                            </apply>
+                            <cn cellml:units="millivolt">80</cn>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>n</ci>
+                </apply>
+                <apply>
+                    <minus/>
+                    <apply>
+                        <times/>
+                        <ci>alpha_n</ci>
+                        <apply>
+                            <minus/>
+                            <cn cellml:units="dimensionless">1</cn>
+                            <ci>n</ci>
+                        </apply>
+                    </apply>
+                    <apply>
+                        <times/>
+                        <ci>beta_n</ci>
+                        <ci>n</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <component cmeta:id="id_00006" name="leakage_current">
+        <variable cmeta:id="leakage_current_i_L" name="i_L" public_interface="out" units="microA_per_cm2"/>
+        <variable initial_value="0.3" name="g_L" units="milliS_per_cm2"/>
+        <variable name="E_L" units="millivolt"/>
+        <variable name="time" public_interface="in" units="millisecond"/>
+        <variable name="V" public_interface="in" units="millivolt"/>
+        <variable name="E_R" public_interface="in" units="millivolt"/>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>E_L</ci>
+                <apply>
+                    <plus/>
+                    <ci>E_R</ci>
+                    <cn cellml:units="millivolt">10.613</cn>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>i_L</ci>
+                <apply>
+                    <times/>
+                    <ci>g_L</ci>
+                    <apply>
+                        <minus/>
+                        <ci>V</ci>
+                        <ci>E_L</ci>
+                    </apply>
+                </apply>
+            </apply>
+        </math>
+    </component>
+    <group>
+        <relationship_ref relationship="containment"/>
+        <component_ref cmeta:id="id_00009" component="membrane">
+            <component_ref cmeta:id="id_00010" component="sodium_channel">
+                <component_ref cmeta:id="id_00011" component="sodium_channel_m_gate"/>
+                <component_ref cmeta:id="id_00012" component="sodium_channel_h_gate"/>
+            </component_ref>
+            <component_ref cmeta:id="id_00016" component="potassium_channel">
+                <component_ref cmeta:id="id_00017" component="potassium_channel_n_gate"/>
+            </component_ref>
+            <component_ref cmeta:id="id_00008" component="leakage_current"/>
+        </component_ref>
+    </group>
+    <group>
+        <relationship_ref relationship="encapsulation"/>
+        <component_ref cmeta:id="id_00013" component="sodium_channel">
+            <component_ref cmeta:id="id_00014" component="sodium_channel_m_gate"/>
+            <component_ref cmeta:id="id_00015" component="sodium_channel_h_gate"/>
+        </component_ref>
+        <component_ref cmeta:id="id_00018" component="potassium_channel">
+            <component_ref cmeta:id="id_00019" component="potassium_channel_n_gate"/>
+        </component_ref>
+    </group>
+    <connection>
+        <map_components component_1="membrane" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="sodium_channel" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="potassium_channel" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="leakage_current" component_2="environment"/>
+        <map_variables variable_1="time" variable_2="time"/>
+    </connection>
+    <connection>
+        <map_components component_1="membrane" component_2="sodium_channel"/>
+        <map_variables variable_1="V" variable_2="V"/>
+        <map_variables variable_1="E_R" variable_2="E_R"/>
+        <map_variables variable_1="i_Na" variable_2="i_Na"/>
+    </connection>
+    <connection>
+        <map_components component_1="membrane" component_2="potassium_channel"/>
+        <map_variables variable_1="V" variable_2="V"/>
+        <map_variables variable_1="E_R" variable_2="E_R"/>
+        <map_variables variable_1="i_K" variable_2="i_K"/>
+    </connection>
+    <connection>
+        <map_components component_1="membrane" component_2="leakage_current"/>
+        <map_variables variable_1="V" variable_2="V"/>
+        <map_variables variable_1="E_R" variable_2="E_R"/>
+        <map_variables variable_1="i_L" variable_2="i_L"/>
+    </connection>
+    <connection>
+        <map_components component_1="sodium_channel" component_2="sodium_channel_m_gate"/>
+        <map_variables variable_1="m" variable_2="m"/>
+        <map_variables variable_1="time" variable_2="time"/>
+        <map_variables variable_1="V" variable_2="V"/>
+    </connection>
+    <connection>
+        <map_components component_1="sodium_channel" component_2="sodium_channel_h_gate"/>
+        <map_variables variable_1="h" variable_2="h"/>
+        <map_variables variable_1="time" variable_2="time"/>
+        <map_variables variable_1="V" variable_2="V"/>
+    </connection>
+    <connection>
+        <map_components component_1="potassium_channel" component_2="potassium_channel_n_gate"/>
+        <map_variables variable_1="n" variable_2="n"/>
+        <map_variables variable_1="time" variable_2="time"/>
+        <map_variables variable_1="V" variable_2="V"/>
+    </connection>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Upnot2">
+            <rdf:first xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Vpnot2"/>
+            </rdf:first>
+            <rdf:rest xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"/>
+            </rdf:rest>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Vpnot2">
+            <maximumStepSize xmlns="http://www.cellml.org/metadata/simulation/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">0.1</maximumStepSize>
+            <endingValue xmlns="http://www.cellml.org/metadata/simulation/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">30</endingValue>
+            <pointDensity xmlns="http://www.cellml.org/metadata/simulation/1.0#nonstandard-" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">50000</pointDensity>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Tpnot2">
+            <boundIntervals xmlns="http://www.cellml.org/metadata/simulation/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Upnot2"/>
+            </boundIntervals>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#9402b850-7050-4483-9cc7-a84fe2f91be2">
+            <Family xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Hodgkin</Family>
+            <Given xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">A</Given>
+            <Other xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">L</Other>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#2f069a61-06ba-4782-a877-f31e770cdf0d">
+            <Pubmed_id xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">12991237</Pubmed_id>
+            <JournalArticle xmlns="http://www.cellml.org/bqs/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#6a5c1370-80c1-4b42-aead-44170b5e073e"/>
+            </JournalArticle>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#6a5c1370-80c1-4b42-aead-44170b5e073e">
+            <creator xmlns="http://purl.org/dc/elements/1.1/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#5aa345d1-498a-40fe-852c-be5a6c19cb10"/>
+            </creator>
+            <title xmlns="http://purl.org/dc/elements/1.1/" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">A quantitative description of membrane current and its application to conductance and excitation in nerve</title>
+            <last_page xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">544</last_page>
+            <volume xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">117</volume>
+            <issued xmlns="http://purl.org/dc/terms/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#957446e8-2852-4457-a3f6-0e87906f21b9"/>
+            </issued>
+            <first_page xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">500</first_page>
+            <Journal xmlns="http://www.cellml.org/bqs/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#eee0af8e-5256-4021-9426-80fe492518bc"/>
+            </Journal>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#5aa345d1-498a-40fe-852c-be5a6c19cb10">
+            <rdf:type xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#Seq"/>
+            </rdf:type>
+            <rdf:_2 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#3e67593e-eafa-479e-8369-1879d475ea1a"/>
+            </rdf:_2>
+            <rdf:_1 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#51a60dc9-2f70-4eb6-845a-1dafe7feb919"/>
+            </rdf:_1>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#957446e8-2852-4457-a3f6-0e87906f21b9">
+            <W3CDTF xmlns="http://purl.org/dc/terms/" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">1952-01-01</W3CDTF>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#eee0af8e-5256-4021-9426-80fe492518bc">
+            <title xmlns="http://purl.org/dc/elements/1.1/" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Journal of Physiology</title>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#3e67593e-eafa-479e-8369-1879d475ea1a">
+            <rdf:type xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://www.cellml.org/bqs/1.0#Person"/>
+            </rdf:type>
+            <N xmlns="http://www.w3.org/2001/vcard-rdf/3.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#0f72a1b1-ef97-4005-ad81-81353e3383ef"/>
+            </N>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#51a60dc9-2f70-4eb6-845a-1dafe7feb919">
+            <rdf:type xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://www.cellml.org/bqs/1.0#Person"/>
+            </rdf:type>
+            <N xmlns="http://www.w3.org/2001/vcard-rdf/3.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#9402b850-7050-4483-9cc7-a84fe2f91be2"/>
+            </N>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#6d8cd909-915e-4a88-96ee-33dcda056c46">
+            <FN xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Warren Hedley</FN>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#0f72a1b1-ef97-4005-ad81-81353e3383ef">
+            <Family xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Huxley</Family>
+            <Given xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">A</Given>
+            <Other xmlns="http://www.w3.org/2001/vcard-rdf/3.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">F</Other>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#66bca445-cdee-4030-81ee-ed5b822bf666">
+            <creator xmlns="http://purl.org/dc/elements/1.1/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#6d8cd909-915e-4a88-96ee-33dcda056c46"/>
+            </creator>
+            <rdf:value xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">This is the CellML description of Hodgkin and Huxley's inspirational work on a mathematical description of currents through the membrane of a nerve fibre (axon) in a giant squid, and their application to the modelling of excitation in the nerve. It is generally regarded as the first example of a mathematical model of biology.</rdf:value>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#34d6c118-3d31-4355-90dc-a2cb5ef18374">
+            <rdf:value xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#e9e44e76-9801-4440-a074-6509ae83c1b7"/>
+            </rdf:value>
+            <subject_type xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">keyword</subject_type>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#e9e44e76-9801-4440-a074-6509ae83c1b7">
+            <rdf:type xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#Bag"/>
+            </rdf:type>
+            <rdf:_2 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">giant axon</rdf:_2>
+            <rdf:_1 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Neuron</rdf:_1>
+            <rdf:_3 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">electrophysiology</rdf:_3>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#hodgkin_huxley_squid_axon_1952">
+            <Pubmed_id xmlns="http://www.cellml.org/bqs/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">12991237</Pubmed_id>
+            <title xmlns="http://purl.org/dc/elements/1.1/" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">The Classic Hodgkin-Huxley 1952 Model of A Squid Axon.</title>
+            <cmeta:comment xmlns:cmeta="http://www.cellml.org/metadata/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#66bca445-cdee-4030-81ee-ed5b822bf666"/>
+            </cmeta:comment>
+            <simulation xmlns="http://www.cellml.org/metadata/simulation/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#$Tpnot2"/>
+            </simulation>
+            <cmeta:species xmlns:cmeta="http://www.cellml.org/metadata/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Squid</cmeta:species>
+            <cmeta:bio_entity xmlns:cmeta="http://www.cellml.org/metadata/1.0#" xml:lang="en" xmlns:xml="http://www.w3.org/XML/1998/namespace">Neuron</cmeta:bio_entity>
+            <reference xmlns="http://www.cellml.org/bqs/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#2f069a61-06ba-4782-a877-f31e770cdf0d"/>
+            </reference>
+            <reference xmlns="http://www.cellml.org/bqs/1.0#">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#c1c62bec-a4f9-4b41-91ab-bbc81d473192"/>
+            </reference>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#c1c62bec-a4f9-4b41-91ab-bbc81d473192">
+            <subject xmlns="http://purl.org/dc/elements/1.1/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="rdf:#34d6c118-3d31-4355-90dc-a2cb5ef18374"/>
+            </subject>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00001">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00002">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00003">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00004">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0006813"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00005">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0006813"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00006">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022841"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022840"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022832"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00007">
+            <encodes xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0042391"/>
+            </encodes>
+            <encodes xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0060075"/>
+            </encodes>
+            <encodes xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0030322"/>
+            </encodes>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00008">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022841"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022840"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0022832"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00009">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0042391"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0060075"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0030322"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00010">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00011">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00012">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00013">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00014">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00015">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0001518"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005248"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034706"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005272"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00016">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00017">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00018">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="#id_00019">
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0008076"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005249"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0034705"/>
+            </isVersionOf>
+            <isVersionOf xmlns="http://biomodels.net/biology-qualifiers/">
+                <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="http://identifiers.org/go/GO:0005267"/>
+            </isVersionOf>
+        </rdf:Description>
+    </rdf:RDF>
+</model>

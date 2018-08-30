@@ -25,6 +25,10 @@ public:
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition, 
                       int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
  
+  //! constructor, use provided global matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition,
+                      Mat &globalMatrix, std::string name);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   
@@ -60,6 +64,9 @@ protected:
   //! create a distributed Petsc matrix, according to the given partition
   void createMatrix(int diagonalNonZeros, int offdiagonalNonZeros);
 
+  //! set the global to local mapping at the global matrix and create the local submatrix
+  void createLocalMatrix();
+
   Mat globalMatrix_;   ///< the global Petsc matrix, access using MatSetValuesLocal() with local indices (not used here) or via the localMatrix (this one is used)
   Mat localMatrix_;    ///< a local submatrix that holds all rows and columns for the local dofs with ghosts
   
@@ -74,10 +81,14 @@ class PartitionedPetscMat<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableO
   public PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>
 {
 public:
-  //! constructor
-  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition, 
+  //! constructor, create matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
                       int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
- 
+
+  //! constructor, use provided global matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
+                      Mat &globalMatrix, std::string name);
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   

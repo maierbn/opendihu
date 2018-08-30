@@ -352,7 +352,7 @@ setStiffnessMatrix()
     {
       for (int j=0; j<nDofsUPerElement; j++)
       {
-        VLOG(2) << "  dof pair (" << i<< "," <<j<< "), evaluations: " <<evaluations<< ", integrated value: " <<QuadratureU::computeIntegral(evaluations);
+        VLOG(2) << "  dof pair (" << i<< "," <<j<< "), evaluations: " << evaluations << ", integrated value: " <<QuadratureU::computeIntegral(evaluations);
 
         double value = schurComplementValues[i*nDofsUPerElement+j];
         ierr = MatSetValue(stiffnessMatrix, dofUNo[i], dofUNo[j], value, ADD_VALUES); CHKERRV(ierr);

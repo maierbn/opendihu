@@ -29,6 +29,30 @@ A classical solution $u: \Omega \to \R$ fulfills \eqref{eq:laplace}. For a uniqu
 \end{equation}
 where the homogeneous Neumann-type boundary conditions for $\bfx \in \Gamma_N$ set the flux over the boundary in normal direction $\bfn$ to zero and the Dirichlet-type boundary conditions on $\Gamma_D$ prescribe a value for $u$ on the boundary.
 
+\subsection{Analytical solution}
+%
+The solution for a 1D case on $\Omega = [0,l]$ with $u_0(0)=a$, $u_0(l)=b$, simply is
+\begin{equation*}
+  \begin{array}{lll}
+    u(x) = a + (b-a)\,x/l.
+  \end{array}
+\end{equation*}
+For the 2D case on $\Omega = [0,1]^2$ with Dirichlet boundary conditions
+\begin{equation*}
+  \begin{array}{lll}
+    u_0(x_1,1) = \sin(k\,\pi\,x_1), \quad k \in \N  \qquad &\text{\say{top}},\\[4mm]
+    u_0(x_1,0) = u_0(0,x_2) = u_0(1,x_2) = 0  \quad &\text{\say{left, right and bottom}},\\[4mm]
+  \end{array}
+\end{equation*}
+we have the solution
+\begin{equation*}
+  \begin{array}{lll}
+    u(x_1,x_2) = c_1\,\sin(k\,\pi\,x_1)\,e^{k\,\pi\,x_2} + c_2\,\sin(k\,\pi\,x_1)\,e^{-k\,\pi\,x_2}, \qquad \text{where}\\[4mm]
+    c_1 = 1/\big(2\,\sinh(k\,\pi)\big), \quad c_2=-1/\big(2\,\sinh(k\,\pi)\big).
+  \end{array}
+\end{equation*}
+Also see exercise in \say{Grundlagen des Wissenschaftlichen Rechnens} (2013 3.2d).
+
 \subsection{Finite Element formulation}
 
 By multiplication of a testfunction $\phi\in H^1_0(\Omega)$ and integration follows the weak formulation of \eqref{eq:laplace}:
@@ -703,7 +727,7 @@ For the weak solutions $u$ of the problems we do not need to request $\CC^2(\Ome
 
 The Hilbert space $H^1(\Omega)$ is the Sobolev space $\W^{1,2}(\Omega)$ which is defined using weak derivatives. The concept of weak derivatives generalizes the classical derivatives.
 
-Let $u,v\in \Lloc(\Omega)$ and $\alpha \in \N^d_0$ a multi-index. Then $v$ is called \emph{weak derivative} of $u$ of order $\alpha$ iff
+Let $u,v\in \Lloc(\Omega)$ and $\alpha \in \N^d_0$ a multi-index. Then $v$ is called \emph{weak derivative} of $u$ of order $\alpha$ if
 \begin{equation}
   \begin{array}{ll}
     \i{\Omega}{}u(\bfx) \D^\alpha \phi(\bfx) \,\d \bfx = (-1)^{|\alpha|} \i{\Omega}{} v(\bfx)\,\phi(\bfx)\,\d \bfx
@@ -893,7 +917,7 @@ For the remaining integral, $\int_{\Omega} \phi_i\cdot \phi_j\,\d\bfxi$ node ste
 %
 The Laplace equation $Δu=0$ describes steady-state matter-/heat-/current flow where the computed quantity $u$ designates the potential that induces the flow $\bfF$, which can be modelled as being directed against the potential gradient, $\bfF = -∇u$. In terms of heat transfer this is \emph{Fick's law}. By considering the conservation law of the flowing quantity we assume $∇\cdot \bfF = 0$ which leads directly to the Laplace equation. 
 
-If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -AΔu$ and the resulting equation is called generalized Laplace equation, reading
+If the medium in which the flow occurs is non-isotropic this can be modelled by adjusting the relationship between the negative potential gradient, $-∇u$, and the induced flow direction, $F$. By applying a linear map $A$ onto the negative gradient vector which can be thought of being the sum of contributions in coordinate directions, each contribution vector of a coordinate direction gets scaled and projected to a new direction. The flow is then $\bfF = -A∇u$ and the resulting equation is called generalized Laplace equation, reading
 \begin{equation*}
   \begin{array}{lll}
     ∇\cdot (A ∇u) = 0.
@@ -965,18 +989,47 @@ Substituting into \eqref{eq:diffusion_derivation1} yields:
     \Leftrightarrow\quad & -\s{i=1}{N} u^{(t)}_i \ds\int_Ω ∇\phi_i \cdot ∇\phi_j\,\d\bfx = \dfrac{1}{dt}\s{i=1}{N}(u_i^{(t+1)} - u_i^{(t)})\ds\int_Ω \phi_i \cdot \phi_j\,\d\bfx\qquad \text{for }j = 1,\dots, N.
   \end{array}
 \end{equation*}
-In Matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$, and the vectors of the degrees of freedom for time $t$, $u^{t}$, we get:
+We use the matrix notation with the stiffness matrix, $\bfK$, and the mass matrix, $\bfM$. For the explicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t,u^{(t)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    -\bfK\bfu = \dfrac1{dt} \bfM\Big(u^{(t+1)} - u^{(t)}\Big).
+    \bfK\bfu^{(t)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+    \bfu^{(t+1)} &= \bfu^{(t)} + dt \,\bfM^{-1}\bfK\bfu^{(t)}\\[4mm]
+                 &= \Big(\bfI + dt \,\bfM^{-1}\bfK\Big)\bfu^{(t)}
+                .
   \end{array}
 \end{equation*}
-Solving for $u^{(t+1)}$ yields:
+For an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we get 
 \begin{equation*}
   \begin{array}{lll}
-    u^{(t+1)} = u^{(t)} - dt \,\bfM^{-1}\bfK\bfu.
+    \bfK\bfu^{(t+1)} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+     (I - dt\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}\\[1em] \textrm{or}\\[1em]
+     \displaystyle(\bfK-\frac{\bfM}{dt})\bfu^{(t+1)}&=\,\displaystyle -\frac{\bfM}{dt}\bfu^{(t)}
   \end{array}
 \end{equation*}
+The second form may be beneficial in case of variable time step.
+\subsection{Lumped Mass Matrix}
+For linear or bilinear basis functions
+\begin{equation*}
+\left\{
+  \begin{array}{ll}
+    m'_{i,j}=0 &i\ne j\\
+    m'_{i,i}=S(i) &i=1,...,n
+  \end{array},
+\right.
+\end{equation*}
+where $S(i)=\sum_{j=1}^{n}m_{i,j}$ for $i=1,...,n$.\\[0.5em]
+For orders of basis greater than two suggested from Hinton et al. \cite{hinton_rock_zienkiewicz_1976}:
+\begin{equation}
+\left\{
+  \begin{array}{ll}
+	m'_{i,j}=0 &i\ne j\\
+	m'_{i,i}=\frac{S}{D} m_{i,i} & i=1,...,n
+  \end{array}
+\right.
+\end{equation}
+where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m_{i,j}$ and $D=\sum_{i=1}^{n}m_{i,i}$.
+
+
 \subsection{Analytical Solution}
 The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
 \begin{equation*}

@@ -15,6 +15,7 @@ template<int nStates>
 CallbackHandler<nStates>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates>(context),
+  DiscretizableInTime(SolutionVectorMapping(true)),
   setParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL)

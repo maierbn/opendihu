@@ -386,7 +386,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     {
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
-      LOG(DEBUG) << "list with " <<listNEntries<< " entries" << std::endl;
+      LOG(DEBUG) << "list with " << listNEntries << " entries" << std::endl;
 
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
@@ -400,7 +400,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING) << "Only using first value " <<result<< " of list of length " <<listNEntries
+          LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
                         << " at Key \"" <<keyString<< "\"." << std::endl;
         }
       }
@@ -428,7 +428,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result <= 0.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
-        <<defaultValue<< ".";
+        <<defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -436,7 +436,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result < 0.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
-        <<defaultValue<< ".";
+        <<defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -444,13 +444,13 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result < 1.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
-        <<defaultValue<< ".";
+        <<defaultValue << ".";
       result = defaultValue;
     }
     else if (result > 3.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
-        <<defaultValue<< ".";
+        <<defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -482,7 +482,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     {
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
-      LOG(DEBUG) << "list with " <<listNEntries<< " entries" << std::endl;
+      LOG(DEBUG) << "list with " << listNEntries << " entries" << std::endl;
 
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
@@ -496,7 +496,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING) << "Only using first value " <<result<< " of list of length " <<listNEntries
+          LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
             << " at Key \"" <<keyString<< "\"." << std::endl;
         }
       }
@@ -522,7 +522,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result <= 0)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
-          <<defaultValue<< ".";
+          <<defaultValue << ".";
         result = defaultValue;
       }
       break;
@@ -530,7 +530,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result < 0)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
-          <<defaultValue<< ".";
+          <<defaultValue << ".";
         result = defaultValue;
       }
       break;
@@ -538,13 +538,13 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result < 1)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
-          <<defaultValue<< ".";
+          <<defaultValue << ".";
         result = defaultValue;
       }
       else if (result > 3)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
-          <<defaultValue<< ".";
+          <<defaultValue << ".";
         result = defaultValue;
       }
       break;
@@ -576,7 +576,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
     {
       // type is a list, determine how many entries it contains
       int listNEntries = PyList_Size(value);
-      LOG(DEBUG) << "list with " <<listNEntries<< " entries" << std::endl;
+      LOG(DEBUG) << "list with " << listNEntries << " entries" << std::endl;
 
       // if there are multiple entries, use the first
       if (listNEntries >= 1)
@@ -590,7 +590,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
         // print a warning if there are further entries
         if (listNEntries > 1)
         {
-          LOG(WARNING) << "Only using first value " <<result<< " of list of length " <<listNEntries
+          LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
             << " at Key \"" <<keyString<< "\"." << std::endl;
         }
       }
@@ -883,52 +883,6 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values)
-{
-  if (settings)
-  {
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
-    {
-      // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
-      {
-        // it is a list
-        int listNEntries = PyList_Size(value);
-        
-        // do nothing if it is an empty list
-        if (listNEntries == 0)
-          return;
-
-        // get the first value from the list
-        double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
-        
-        // loop over other values
-        for (;
-            !PythonUtility::getOptionListEnd(settings, keyString);
-            PythonUtility::getOptionListNext<double>(settings, keyString, value))
-        {
-          values.push_back(value);
-        }
-      }
-      else
-      {
-        // not a list, but a different entry (only 1 entry)
-        double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
-        values.push_back(value);
-      }
-    }
-    else
-    {
-      // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file.";
-    }
-    Py_CLEAR(key);
-  }
-}
-
 void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values)
 {
   if (settings)
@@ -966,6 +920,52 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // not a list, but a different entry (only 1 entry)
         int value = PythonUtility::getOptionInt(settings, keyString, 0);
+        values.push_back(value);
+      }
+    }
+    else
+    {
+      // this is no warning
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    }
+    Py_CLEAR(key);
+  }
+}
+
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values)
+{
+  if (settings)
+  {
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+    if(PyDict_Contains((PyObject *)settings, key))
+    {
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+        int listNEntries = PyList_Size(value);
+        
+        // do nothing if it is an empty list
+        if (listNEntries == 0)
+          return;
+
+        // get the first value from the list
+        double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
+        
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString);
+            PythonUtility::getOptionListNext<double>(settings, keyString, value))
+        {
+          values.push_back(value);
+        }
+      }
+      else
+      {
+        // not a list, but a different entry (only 1 entry)
+        double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
         values.push_back(value);
       }
     }

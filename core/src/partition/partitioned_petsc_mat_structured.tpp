@@ -10,8 +10,23 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisO
   PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name), nComponents_(nComponents)
 {
   VLOG(1) << "create PartitionedPetscMat<structured> with " << nComponents_ << " components from meshPartition " << meshPartition;
-  
+
   createMatrix(diagonalNonZeros, offdiagonalNonZeros);
+}
+
+//! constructor, use provided global matrix
+template<typename MeshType, typename BasisFunctionType>
+PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>> meshPartition,
+                    Mat &globalMatrix, std::string name) :
+  PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>>(meshPartition, name), nComponents_(1)
+{
+  VLOG(1) << "create PartitionedPetscMat<structured> from existing matrix, " << nComponents_ << " components from meshPartition " << meshPartition;
+
+  assert(this->meshPartition_);
+  this->globalMatrix_ = globalMatrix;
+
+  createLocalMatrix();
 }
 
 //! create a distributed Petsc matrix, according to the given partition
@@ -49,13 +64,21 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   // sparse matrix: preallocation of internal data structure
   ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
   ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
-  
+
+  createLocalMatrix();
+}
+
+template<typename MeshType, typename BasisFunctionType>
+void PartitionedPetscMat<BasisOnMesh::BasisOnMesh<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+createLocalMatrix()
+{
   VLOG(1) << "set local to global mapping for matrix: " << (ISLocalToGlobalMapping)this->meshPartition_->localToGlobalMappingDofs();
-  
+
+  PetscErrorCode ierr;
   ierr = MatSetLocalToGlobalMapping(this->globalMatrix_, this->meshPartition_->localToGlobalMappingDofs(), this->meshPartition_->localToGlobalMappingDofs()); CHKERRV(ierr);
-  
+
   // output size of create matrix
-  int nRows, nColumns, nColumnsLocal;
+  int nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   LOG(DEBUG) << "matrix created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;

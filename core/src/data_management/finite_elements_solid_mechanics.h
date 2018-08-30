@@ -26,7 +26,7 @@ public:
   FiniteElementsSolidMechanics(DihuContext context);
 
   //! destructor
-  ~FiniteElementsSolidMechanics();
+  virtual ~FiniteElementsSolidMechanics();
 
   //! initialize the object, create all stored data
   virtual void initialize() override;

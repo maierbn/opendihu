@@ -63,8 +63,7 @@ class Python(Package):
             '$export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${PREFIX}/lib',
             'cd ${PREFIX}/include && echo "#define PYTHON_HOME_DIRECTORY \\"${PREFIX}\\"\n" > python_home.h',
           ])
-          # cd /store/software/opendihu/dependencies/python/src && chmod +x ./configure && ./configure --enable-shared --prefix=/store/software/opendihu/dependencies/python/install               LDFLAGS="-Wl,--rpath=/store/software/opendihu/dependencies/python/install/lib -L/store/software/opendihu/dependencies/bzip2/install/lib"               CFLAGS="-I/store/software/opendihu/dependencies/bzip2/install/include"
-          self.number_output_lines = 9468
+          self.number_output_lines = 9823
         else:       
           print("gcc has no --enable-plugin, compile python without optimizations")
           self.set_build_handler([

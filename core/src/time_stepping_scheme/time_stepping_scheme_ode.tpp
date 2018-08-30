@@ -55,13 +55,6 @@ solutionVectorMapping()
 {
   return discretizableInTime_.solutionVectorMapping();
 }
-/*
-template<typename DiscretizableInTimeType>
-Vec &TimeSteppingSchemeOde<DiscretizableInTimeType>::
-solution()
-{
-  return data_->solution().values();
-}*/
 
 template<typename DiscretizableInTimeType>
 typename TimeSteppingSchemeOde<DiscretizableInTimeType>::Data::FieldVariableType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
@@ -98,11 +91,18 @@ initialize()
   TimeSteppingScheme::initialize();
   LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
 
-  // initialize underlying DiscretizableInTime object
+  // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
+  discretizableInTime_.initialize(this->timeStepWidth_);
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   data_->setMesh(std::static_pointer_cast<typename DiscretizableInTimeType::BasisOnMesh>(mesh));
+  
+  // set component names in data
+  std::vector<std::string> componentNames;
+  discretizableInTime_.getComponentNames(componentNames);
+  data_->setComponentNames(componentNames);
+  
   data_->initialize();
 
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
@@ -115,6 +115,7 @@ initialize()
   {
     this->setInitialValues();
   }
+  
   data_->print();
   
   initialized_ = true;

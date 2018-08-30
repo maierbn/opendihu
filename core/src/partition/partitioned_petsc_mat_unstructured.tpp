@@ -3,13 +3,24 @@
 //! constructor
 template<int D, typename BasisFunctionType>
 PartitionedPetscMat<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition, 
+PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
                     int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
   PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>(meshPartition, name), nComponents_(nComponents)
 {
-  typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType> BasisOnMeshType;
-  
   createMatrix(diagonalNonZeros, offdiagonalNonZeros);
+}
+
+//! constructor, use provided global matrix
+template<int D, typename BasisFunctionType>
+PartitionedPetscMat<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
+                      Mat &globalMatrix, std::string name) :
+  PartitionedPetscMatBase<BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>(meshPartition, name), nComponents_(1)
+{
+  VLOG(1) << "create PartitionedPetscMat<unstructured> from existing matrix, " << nComponents_ << " components from meshPartition " << meshPartition;
+
+  assert(this->meshPartition_);
+  this->matrix_ = globalMatrix;
 }
 
 //! create a distributed Petsc matrix, according to the given partition

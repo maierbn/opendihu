@@ -18,7 +18,10 @@
 #define ANSI_COLOR_LIGHT_WHITE    "\x1b[97m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
+namespace PetscUtility
+{
+
+void getMatrixEntries(const Mat &matrix, std::vector<double> &matrixValues)
 {
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
@@ -34,7 +37,7 @@ void PetscUtility::getMatrixEntries(const Mat &matrix, std::vector<double> &matr
   MatGetValues(matrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
 }
 
-void PetscUtility::getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
+void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues)
 {
   int nEntries;
   VecGetLocalSize(vector, &nEntries);
@@ -46,7 +49,7 @@ void PetscUtility::getVectorEntries(const Vec &vector, std::vector<double> &vect
   VecGetValues(vector, nEntries, indices.data(), vectorValues.data());
 }
 
-void PetscUtility::setVector(const std::vector<double> &vectorValues, Vec& vector)
+void setVector(const std::vector<double> &vectorValues, Vec& vector)
 {
   std::vector<int> indices(vectorValues.size());
   std::iota(indices.begin(), indices.end(), 0);
@@ -59,7 +62,7 @@ void PetscUtility::setVector(const std::vector<double> &vectorValues, Vec& vecto
   VecGetSize(vector, &size);
 }
 
-void PetscUtility::createVector(Vec& vector, int nEntries, std::string name)
+void createVector(Vec& vector, int nEntries, std::string name)
 {
   PetscErrorCode ierr;
   // create PETSc vector object
@@ -77,7 +80,7 @@ void PetscUtility::createVector(Vec& vector, int nEntries, std::string name)
   ierr = VecSetFromOptions(vector);  CHKERRV(ierr);
 }
 
-std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& vector)
+std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
   std::string name;
   char *cName;
@@ -88,36 +91,36 @@ std::string PetscUtility::getStringMatrixVector(const Mat& matrix, const Vec& ve
   MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<double> matrixValues, vectorValues;
-  PetscUtility::getMatrixEntries(matrix, matrixValues);
-  PetscUtility::getVectorEntries(vector, vectorValues);
+  getMatrixEntries(matrix, matrixValues);
+  getVectorEntries(vector, vectorValues);
 
   std::stringstream s;
-  s<< std::endl<< "    ";
+  s << std::endl<< "    ";
   for (int j=0; j<nColumns; j++)
   {
-    s<< std::setw(5) << std::setfill('_') <<j;
+    s << std::setw(5) << std::setfill('_') <<j;
   }
-  s<< std::string(5,'_') << " | " <<name;
-  s<< std::endl;
+  s << std::string(5,'_') << " | " <<name;
+  s << std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<< std::setw(3) << std::setfill(' ') <<i<< "| ";
+    s << std::setw(3) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
       if(matrixValues[i*nRows + j] == 0.0)
-        s<< std::string(5, ' ');
+        s << std::string(5, ' ');
       else
-        s<< std::setw(4) << std::setfill(' ') <<matrixValues[i*nRows + j]<< " ";
+        s << std::setw(4) << std::setfill(' ') <<matrixValues[i*nRows + j]<< " ";
     }
-    s<< std::string(5, ' ') << "| " <<vectorValues[i];
-    s<< std::endl;
+    s << std::string(5, ' ') << "| " <<vectorValues[i];
+    s << std::endl;
   }
-  s<< std::endl;
+  s << std::endl;
 
   return s.str();
 }
 
-std::string PetscUtility::getStringMatrix(const Mat& matrix)
+std::string getStringMatrix(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
@@ -125,12 +128,12 @@ std::string PetscUtility::getStringMatrix(const Mat& matrix)
   MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
 
   std::vector<double> matrixValues;
-  PetscUtility::getMatrixEntries(matrix, matrixValues);
+  getMatrixEntries(matrix, matrixValues);
 
   return getStringMatrix(matrixValues, nRows, nColumns, nRowsGlobal, nColumnsGlobal);
 }
 
-std::string PetscUtility::getStringMatrix(std::vector<double> &matrixValues, int nRows, int nColumns, int nRowsGlobal, int nColumnsGlobal)
+std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nColumns, int nRowsGlobal, int nColumnsGlobal)
 {
   const double zeroTolerance = 1e-15;
 
@@ -142,32 +145,32 @@ std::string PetscUtility::getStringMatrix(std::vector<double> &matrixValues, int
     << "    ";
   for (int j=0; j<nColumns; j++)
   {
-    s<< std::setw(6) << std::setfill('_') <<j;
+    s << std::setw(6) << std::setfill('_') <<j;
   }
-  s<< std::string(6,'_');
-  s<< std::endl;
+  s << std::string(6,'_');
+  s << std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<< std::setw(4) << std::setfill(' ') <<i<< "| ";
+    s << std::setw(4) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
       if(fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
-        s<< std::string(6, ' ');
+        s << std::string(6, ' ');
       else
-        s<< std::showpos<< std::setw(5) << std::setfill(' ') << std::setprecision(3) <<matrixValues[i*nRows + j]<< " ";
+        s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) <<matrixValues[i*nRows + j]<< " ";
     }
-    s<< std::string(6, ' ');
-    s<< std::endl;
+    s << std::string(6, ' ');
+    s << std::endl;
   }
-  s<< std::endl;
+  s << std::endl;
 
   return s.str();
 }
 
-std::string PetscUtility::getStringVector(const Vec& vector)
+std::string getStringVector(const Vec& vector)
 {
   std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(vector, vectorValues);
+  getVectorEntries(vector, vectorValues);
 
   int nEntries;
   VecGetLocalSize(vector, &nEntries);
@@ -185,43 +188,59 @@ std::string PetscUtility::getStringVector(const Vec& vector)
   return s.str();
 }
 
-std::string PetscUtility::getStringSparsityPattern(const Mat& matrix)
+std::string getStringSparsityPattern(const Mat& matrix)
 {
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
 
   std::vector<double> matrixValues;
-  PetscUtility::getMatrixEntries(matrix, matrixValues);
+  getMatrixEntries(matrix, matrixValues);
 
   std::stringstream s;
-  s<< " ";
+  s << " ";
   for (int j=0; j<nColumns; j++)
   {
     if (j%10 == 0)
-      s<< "|";
+      s << "|";
     else if (j%2 == 0)
-      s<< ".";
+      s << ".";
     else
-      s<< " ";
+      s << " ";
   }
-  s<< std::endl;
+  s << std::endl;
   for (int i=0; i<nRows; i++)
   {
-    s<< " ";
+    s << " ";
     for (int j=0; j<nColumns; j++)
     {
       if(matrixValues[i*nRows + j] == 0.0)
-        s<< " ";
+        s << " ";
       else
-        s<< "*";
+        s << "*";
     }
-    s<< std::endl;
+    s << std::endl;
   }
-  s<< std::endl;
+  s << std::endl;
   return s.str();
 }
 
-std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason convergedReason)
+void checkDimensionsMatrixVector(Mat &matrix, Vec &input)
+{
+#ifndef NDEBUG
+  int nRows, nColumns;
+  MatGetSize(matrix, &nRows, &nColumns);
+  int nEntries;
+  VecGetSize(input, &nEntries);
+  if (nColumns != nEntries)
+  {
+    LOG(ERROR) << "Matrix dimension " << nRows << "x" << nColumns << " does not match input vector (" << nEntries << ")!";
+  }
+  assert(nColumns == nEntries);
+#endif
+}
+
+
+std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 {
 
 
@@ -292,7 +311,7 @@ std::string PetscUtility::getStringLinearConvergedReason(KSPConvergedReason conv
   return s.str();
 }
 
-std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason convergedReason)
+std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReason)
 {
 
   // source: http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/SNES/SNESConvergedReason.html#SNESConvergedReason
@@ -352,3 +371,5 @@ std::string PetscUtility::getStringNonlinearConvergedReason(SNESConvergedReason 
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
+
+}; // namespace

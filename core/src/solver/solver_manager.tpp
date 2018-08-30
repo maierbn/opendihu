@@ -29,23 +29,23 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings)
     if (hasSolver(solverName))
     {
      
-      LOG(DEBUG) << omp_get_thread_num() << ": Solver with solverName \"" <<solverName<< "\" requested and found, type is " <<typeid(solvers_[solverName]).name();
-      VLOG(1) << "Solver with solverName \"" <<solverName<< "\" requested and found, type is " <<typeid(solvers_[solverName]).name();
+      LOG(DEBUG) << omp_get_thread_num() << ": Solver with solverName \"" << solverName << "\" requested and found, type is " <<typeid(solvers_[solverName]).name();
+      VLOG(1) << "Solver with solverName \"" << solverName << "\" requested and found, type is " <<typeid(solvers_[solverName]).name();
       return std::static_pointer_cast<SolverType>(solvers_[solverName]);
     }
     else if(solverConfiguration_.find(solverName) != solverConfiguration_.end())
     {
       // solver was preconfigured, do nothing specific here, created standard solver with 1 node
-      LOG(DEBUG) << "Solver configuration for \"" <<solverName<< "\" found and requested, will be created now. "
+      LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" found and requested, will be created now. "
         << "Type is " << typeid(SolverType).name() << ".";
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_[solverName]);
       solvers_[solverName] = solver;
-      LOG(DEBUG) << "Stored under key \"" <<solverName<< "\".";
+      LOG(DEBUG) << "Stored under key \"" << solverName << "\".";
       return std::static_pointer_cast<SolverType>(solvers_[solverName]);
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to solver with solverName \"" <<solverName<< "\" but no such solver was defined.";
+      LOG(ERROR) << "Config contains reference to solver with solverName \"" << solverName << "\" but no such solver was defined.";
     }
   }
   else

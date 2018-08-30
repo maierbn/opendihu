@@ -75,7 +75,7 @@
 %\usepackage{framed}         % Rahmen um Text
 %\usepackage{mdframed}       % Rahmen um Text und Gleichungen
 %%\usepackage{arydshln}      % gestrichelte Linie in Tabelle mit \hdashline
-%\usepackage{dirtytalk}          % \say{...} erzeugt (deutsche) Anführungszeichen
+\usepackage{dirtytalk}          % \say{...} erzeugt (deutsche) Anführungszeichen
 
 \usepackage{tipa}
 \usepackage{transparent}    % needed for inkscape generated pdf_tex files
@@ -84,7 +84,8 @@
 \usepackage{verbatimbox}    % \begin{verbbox}
 \usepackage{booktabs}
 \usepackage{morefloats}
-\usepackage{multimedia}     % \movie
+%\usepackage{multimedia}     % \movie
+\usepackage{movie15}        % \animation{x.mp4}
 
 %\newsavebox\lstbox
 %\mdfdefinestyle{MyFrame}{%
@@ -204,6 +205,12 @@
         \label{fig:#1}%
     \end{figure}%
 }
+
+\newcommand{\animation}[1]{%
+   \includemovie[poster,controls]{\textwidth}{\textwidth}{#1}
+}
+
+
 
 %%%%%%%%%%%%%%%%   Abkürzungen   %%%%%%%%%%%%%%%%%%
 

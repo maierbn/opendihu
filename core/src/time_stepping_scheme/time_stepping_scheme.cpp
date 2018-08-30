@@ -22,6 +22,8 @@ void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
 {
   numberTimeSteps_ = numberTimeSteps;
+  timeStepWidth_ = (endTime_ - startTime_) / numberTimeSteps;
+  LOG(DEBUG) << "timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
 }
 
 void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
@@ -52,7 +54,7 @@ void TimeSteppingScheme::initialize()
   if (PythonUtility::hasKey(specificSettings_, "endTime"))
     endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
 
-  LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime=" <<endTime_;
+  LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime=" << endTime_;
 
   if (PythonUtility::hasKey(specificSettings_, "timeStepWidth"))
   {
@@ -65,7 +67,7 @@ void TimeSteppingScheme::initialize()
 
     if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
     {
-      numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
+      numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);      
       isTimeStepWidthSignificant_ = false;
       LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
     }
@@ -76,12 +78,14 @@ void TimeSteppingScheme::initialize()
   }
   else
   {
-    numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
-    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps_=" <<numberTimeSteps_;
+    int numberTimeSteps = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
+    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps: " << numberTimeSteps;
+    setNumberTimeSteps(numberTimeSteps);
   }
 
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
-    << ", time step width: " << (endTime_ - startTime_) / numberTimeSteps_;
+    << ", time step width: " << timeStepWidth_;
+    
   initialized_ = true;
 }
 

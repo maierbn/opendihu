@@ -49,7 +49,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     // open file
     std::ofstream file = Paraview::openFile(s.str());
 
-    LOG(DEBUG) << "Write PRectilinearGrid, file \"" <<s.str() << "\".";
+    LOG(DEBUG) << "Write PRectilinearGrid, file \"" << s.str() << "\".";
 
     // extent
     std::vector<node_no_t> extent = {0,0,0};   // global number of elements (not nodes!) in x, y and z direction
@@ -147,7 +147,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write RectilinearGrid, file \"" <<s.str() << "\".";
+  LOG(DEBUG) << "Write RectilinearGrid, file \"" << s.str() << "\".";
 
   // extent
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
@@ -173,7 +173,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       double coordinate = nodeNo * meshWidth;
-      VLOG(1) << "coordinate: " << coordinate<< ", nodeNo=" <<nodeNo;
+      VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" <<nodeNo;
       coordinates[dimensionNo][nodeNo] = coordinate;
     }
   }
@@ -274,12 +274,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // write a StructuredGrid
   // determine file name
   std::stringstream s;
-  s<<filename<< ".vts";
+  s <<filename << ".vts";
 
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write StructuredGrid, file \"" <<s.str() << "\".";
+  LOG(DEBUG) << "Write StructuredGrid, file \"" << s.str() << "\".";
 
   // extent
   std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
@@ -296,6 +296,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
   bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
 
+  // avoid bug in paraview when reading binary encoded (base64) values for 1D meshes
+  if (D == 1 && extent[0] > 1 && binaryOutput)
+     extent[0] -= 1;
+  
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
@@ -325,7 +329,6 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
   ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, false);
   
-
   file << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl
     << std::string(3, '\t') << "</CellData>" << std::endl
@@ -355,7 +358,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   // open file
   std::ofstream file = Paraview::openFile(s.str());
 
-  LOG(DEBUG) << "Write UnstructuredGrid, file \"" <<s.str() << "\".";
+  LOG(DEBUG) << "Write UnstructuredGrid, file \"" << s.str() << "\".";
 
   // get type of geometry field
   typedef BasisOnMesh::BasisOnMesh<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType> BasisOnMesh;

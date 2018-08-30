@@ -1,4 +1,4 @@
-# Diffusion 2D
+# Laplace 2D
 #
 # command arguments: <name> <number elements>
 
@@ -17,10 +17,15 @@ if len(sys.argv) > 1:
     nx = int(np.sqrt(n))
     ny = nx+1
     
+    if "fixed" in name:
+      ny = nx
+    
     print("name: \"{}\", nx,ny: {},{}".format(name, nx, ny))
 
 # boundary conditions
 bc = {}
+n_nodes_x = 6
+n_nodes_y = 6
 if "linear" in name or "hermite" in name:
   n_nodes_x = nx + 1
   n_nodes_y = ny + 1
@@ -33,17 +38,19 @@ stride = 1
 if "hermite" in name:
   stride = 4
 
+k = 1  # mode number
+
 for ix in range(int(n_nodes_x)):
   # x position
   x = float(ix)/(n_nodes_x-1)
   
   # bottom
   i = ix
-  bc[stride*i] = np.sin(x*np.pi)
+  bc[stride*i] = 0.0
   
   # top
   i = n_nodes_x*(n_nodes_y-1) + ix
-  bc[stride*i] = np.sin(x*np.pi)
+  bc[stride*i] = np.sin(k*np.pi*x)
   
   # left
   i = ix*n_nodes_x
@@ -53,10 +60,10 @@ for ix in range(int(n_nodes_x)):
   i = ix*n_nodes_x+(n_nodes_x-1)
   bc[stride*i] = 0.0
 
-physicalExtent = [4.0, 3.0]
+physicalExtent = [1.0, 1.0]
 
-if "fixed" in name:
-  physicalExtent = [nx, ny]
+#if "fixed" in name:
+#  physicalExtent = [nx, ny]
 
 hx = physicalExtent[0]/(n_nodes_x-1.0)
 hy = physicalExtent[1]/(n_nodes_y-1.0)
@@ -100,14 +107,13 @@ elif "quadratic" in name:
       
       elements.append([i0, i1, i2, i3, i4, i5, i6, i7, i8])
       
-print ("elements: ",elements)
-      
 config = {
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "nodePositions": node_positions,
     "elements": elements,
     "physicalExtent": physicalExtent,
+    "prefactor": 0.6,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
     "maxIterations": 500000,

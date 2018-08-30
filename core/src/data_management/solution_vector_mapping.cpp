@@ -24,7 +24,7 @@ void SolutionVectorMapping::setScalingFactor(double factor)
 void SolutionVectorMapping::transfer(Vec &solution1, SolutionVectorMapping& solutionVectorMapping2, Vec &solution2)
 {
   VLOG(1) << "solution vector mapping (1): [" <<outputIndexBegin_<< "," <<outputIndexEnd_<< "] (2): "
-    << "[" << solutionVectorMapping2.outputIndexBegin_<< "," <<solutionVectorMapping2.outputIndexEnd_<< "]";
+    << "[" << solutionVectorMapping2.outputIndexBegin_<< "," << solutionVectorMapping2.outputIndexEnd_<< "]";
     
   if(canProvideInternalContiguousSolutionPointer_
     && solutionVectorMapping2.canProvideInternalContiguousSolutionPointer_)

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <array>
 
-#include "quadrature/integrator.h"
+#include "quadrature/quadrature.h"
 
 namespace Quadrature
 {

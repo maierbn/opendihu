@@ -56,17 +56,15 @@ void ParaviewWriter::writeSolutionDim(DataType &data)
 template <typename Mesh, typename DataType>
 void ParaviewWriter::writeRectilinearGrid(DataType& data)
 {
- //TODO: remove dependency on solution
- 
   // determine file name
   std::stringstream s;
-  s<<filename_<< ".vtr";
+  s <<filename_<< ".vtr";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write RectilinearGrid, file \"" <<filename<< "\".";
+  LOG(DEBUG) << "Write RectilinearGrid, file \"" <<filename << "\".";
 
   // determine values
   std::shared_ptr<Mesh> mesh = std::dynamic_pointer_cast<Mesh>(data.mesh());
@@ -95,7 +93,7 @@ void ParaviewWriter::writeRectilinearGrid(DataType& data)
     for(int nodeNo = 0; nodeNo < nElements+1; nodeNo++)
     {
       double coordinate = nodeNo * meshWidth;
-      LOG(DEBUG) << "coordinate: " << coordinate<< ", nodeNo=" <<nodeNo;
+      LOG(DEBUG) << "coordinate: " << coordinate << ", nodeNo=" <<nodeNo;
       coordinates[dimensionNo][nodeNo] = coordinate;
     }
   }
@@ -201,13 +199,13 @@ void ParaviewWriter::writeStructuredGrid(DataType& data)
 {/*
   // determine file name
   std::stringstream s;
-  s<<filename_<< ".vts";
+  s <<filename_<< ".vts";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write StructuredGrid, file \"" <<filename<< "\".";
+  LOG(DEBUG) << "Write StructuredGrid, file \"" <<filename << "\".";
 
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());
@@ -290,13 +288,13 @@ void ParaviewWriter::writeUnstructuredGrid(DataType& data)
 {/*
   // determine file name
   std::stringstream s;
-  s<<filename_<< ".vtu";
+  s <<filename_<< ".vtu";
   std::string filename = s.str();
 
   // open file
   std::ofstream file = openFile(filename);
 
-  LOG(DEBUG) << "Write UnstructuredGrid, file \"" <<filename<< "\".";
+  LOG(DEBUG) << "Write UnstructuredGrid, file \"" <<filename << "\".";
 
   typedef typename DataType::BasisOnMesh MeshType;
   std::shared_ptr<MeshType> mesh = std::static_pointer_cast<MeshType>(data.mesh());

@@ -138,7 +138,6 @@ setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
   for(int dofIndex = 0; dofIndex < nodeDofInformation.dofs.size(); dofIndex++, valuesBegin++)
   {
     dof_no_t dofGlobalNo = nodeDofInformation.dofs[dofIndex];
-    //TODO: global to local
     double value = *valuesBegin;
     PetscInt vectorIndex = dofGlobalNo;
 

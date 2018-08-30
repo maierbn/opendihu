@@ -57,6 +57,19 @@ createFieldVariable(std::string name)
   return fieldVariable;
 }
 
+//! create a non-geometry field field variable with no values being set, with given number of components and component names
+template<typename MeshType, typename BasisFunctionType>
+template <int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::
+createFieldVariable(std::string name, std::vector<std::string> componentNames)
+{
+  std::shared_ptr<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>> fieldVariable
+    = std::make_shared<FieldVariable::FieldVariable<BasisOnMesh<MeshType,BasisFunctionType>,nComponents>>();
+
+  fieldVariable->initializeFromFieldVariable(this->geometryField(), name, componentNames);
+  return fieldVariable;
+}
+
 //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
 template<typename MeshType, typename BasisFunctionType>
 int BasisOnMeshFieldVariable<MeshType,BasisFunctionType>::

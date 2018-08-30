@@ -1,5 +1,5 @@
 all:
-	latexmk presentation.tex -pdf
+	-latexmk presentation.tex -pdf
 	mv presentation.pdf ../../test_results_slides.pdf 
 clean:
 	rm *.aux *.fdb_latexmk *.log *.out

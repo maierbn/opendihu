@@ -60,7 +60,7 @@ public:
   //! write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header. For parallel program execution this writes headers for the local exelem files on every rank.
   void outputHeaderExelem(std::ostream &file, element_no_t currentElementGlobalNo, int fieldVariableNo=-1);
 
-  //! write a exelem file header to a stream, for a particular node, TODO: local to globalFor parallel program execution this writes headers for the local exnodes files on every rank.
+  //! write a exelem file header to a stream, for a particular node, for parallel program execution this writes headers for the local exnodes files on every rank.
   void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1);
 
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions

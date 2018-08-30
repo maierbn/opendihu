@@ -63,7 +63,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
 
     for(int i=0; i<8; i++)
     {
-      file<< c[i];
+      file << c[i];
     }
   }
 
@@ -82,7 +82,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   if (0)
   {
     std::ofstream scriptFile("convert.py");
-    scriptFile<< converterScript.str();
+    scriptFile << converterScript.str();
     scriptFile.close();
     int ret = system("python convert.py");
     if (ret)

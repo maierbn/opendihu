@@ -15,7 +15,6 @@ import collections
 import copy
 import scipy.spatial
 import os
-import pymp
 import pickle
 
 import stl

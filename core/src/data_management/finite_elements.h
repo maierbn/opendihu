@@ -28,13 +28,10 @@ public:
   FiniteElements(DihuContext context);
 
   //! destructor
-  ~FiniteElements();
+  virtual ~FiniteElements();
 
   //! initialize the object, create all stored data
   virtual void initialize() override;
-
-  //! return reference to a stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix();
 
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   FieldVariable::FieldVariable<BasisOnMeshType,1> &rightHandSide();
@@ -47,16 +44,28 @@ public:
 
   //! print all stored data to stdout
   void print();
-
-  //! if the discretization matrix is already initialized
-  bool massMatrixInitialized();
-
+  
   //! create PETSc matrix
   void initializeMassMatrix();
 
-  //! return a reference to the discretization matrix
+  //! create the inverse of the lumped mass matrix
+  void initializeInverseLumpedMassMatrix();
+
+  //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
+  void initializeSystemMatrix(Mat &systemMatrix);
+
+  //! return reference to a stiffness matrix
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix();
+
+  //! get the mass matrix
   std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix();
 
+  //! get the system matrix, corresponding to the specific time integration. (I - d*tM^(-1)*K) for the implicit Euler scheme.
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> systemMatrix();
+
+  //! get the inversed lumped mass matrix
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> inverseLumpedMassMatrix();
+  
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,3>>,  // geometry
@@ -75,14 +84,14 @@ private:
   //! get maximum number of expected non-zeros in stiffness matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix_;     ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
+  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
+
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> rhs_;                 ///< the rhs vector in weak formulation
   std::shared_ptr<FieldVariable::FieldVariable<BasisOnMeshType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-  std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> massMatrix_;  ///< a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
 
-  bool massMatrixInitialized_ = false;    ///< if the discretization matrix was initialized
-
-  protected:
 };
 
 /*

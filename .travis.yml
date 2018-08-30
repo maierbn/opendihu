@@ -2,33 +2,40 @@ language: cpp
 script: scons
 compiler: g++-5
 
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-5
-      - gfortran-5
+services:
+  - docker
+
+#addons:
+#  apt:
+#    sources:
+#      - ubuntu-toolchain-r-test
+#    packages:
+#      - g++-5
+#      - gfortran-5
       
 sudo: required
 
 before_install:
-  - sudo apt-get install tree
-  - sudo apt-get install gcc-5
-  - sudo apt-get install gfortran-5
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5
-  - export CC=gcc-5
-  - export CXX=g++-5
-  - export FC=gfortran-5
-  - sudo update-alternatives --config gcc
-  - gcc --version
-  - g++ --version
-  - gfortran --version
+#  - sudo apt-get install tree
+#  - sudo apt-get install gcc-5
+#  - sudo apt-get install gfortran-5
+#  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5
+#  - export CC=gcc-5
+#  - export CXX=g++-5
+#  - export FC=gfortran-5
+#  - sudo update-alternatives --config gcc
+#  - gcc --version
+#  - g++ --version
+#  - gfortran --version
+  - docker pull maierbn/opendihu:2017_07_17
 
-after_failure:
-  - tree -L 4 dependencies
-  - cat config.log
+script:
+  - docker run maierbn/opendihu:2017_07_17 bash -c "cd opendihu && git pull && make" 
+
+#after_failure:
+#  - tree -L 4 dependencies
+#  - cat config.log
   
-cache:
-  directories:
-    - dependencies
+#cache:
+#  directories:
+#    - dependencies

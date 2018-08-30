@@ -82,7 +82,8 @@
 \usepackage{cleveref}
 \usepackage{mathrsfs}       % mathscr
 
-\usepackage{multimedia}     % \movie
+%\usepackage{multimedia}     % \movie
+\usepackage{movie15}    % \animation{x.mp4}
 
 \newsavebox\lstbox
 \mdfdefinestyle{MyFrame}{%
@@ -205,6 +206,10 @@
         \caption{#3}%
         \label{fig:#1}%
     \end{figure}%
+}
+
+\newcommand{\animation}[1]{%
+   \includemovie[poster,controls]{0.7\textwidth}{0.5\textwidth}{#1}
 }
 
 %%%%%%%%%%%%%%%%   Abkürzungen   %%%%%%%%%%%%%%%%%%

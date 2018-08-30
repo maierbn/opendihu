@@ -5,7 +5,7 @@
 #include "spatial_discretization/finite_element_method/00_base.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_utility.h"
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_boundary_conditions.h"
-#include "spatial_discretization/finite_element_method/02_stiffness_matrix.h"
+#include "spatial_discretization/finite_element_method/01_matrix.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/type_traits.h"
 #include "mesh/face_t.h"

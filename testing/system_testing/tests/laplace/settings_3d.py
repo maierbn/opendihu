@@ -152,9 +152,10 @@ config = {
     "nodePositions": node_positions,
     "elements": elements,
     "physicalExtent": physicalExtent,
+    "prefactor": 0.6,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
-    "maxIterations": 500000,
+    "maxIterations": 50000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/"+name, "binaryOutput": "false", "fixedFormat": False},
       {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},

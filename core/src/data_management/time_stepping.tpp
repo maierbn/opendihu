@@ -39,12 +39,21 @@ template<typename BasisOnMeshType,int nComponents>
 void TimeStepping<BasisOnMeshType,nComponents>::
 createPetscObjects()
 {
-  LOG(DEBUG) << "TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects(" <<nComponents<< ")" << std::endl;
+  LOG(DEBUG) << "TimeStepping<BasisOnMeshType,nComponents>::createPetscObjects(" <<nComponents << ")" << std::endl;
   assert(this->mesh_);
-  
-  // create field variables on local partition
-  this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
-  this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
+
+  if (componentNames_.empty())
+  {
+    this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution");
+    this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment");
+  }
+  else 
+  {
+    // if there are component names stored, use them for construction of the field variables 
+    this->solution_ = this->mesh_->template createFieldVariable<nComponents>("solution", componentNames_);
+    this->increment_ = this->mesh_->template createFieldVariable<nComponents>("increment", componentNames_);
+  }
+
 }
 
 template<typename BasisOnMeshType,int nComponents>
@@ -95,6 +104,13 @@ print()
   VLOG(4) << "======================";
 }
 
+template<typename BasisOnMeshType,int nComponents>
+void TimeStepping<BasisOnMeshType,nComponents>::
+setComponentNames(std::vector<std::string> componentNames)
+{
+  componentNames_ = componentNames;
+}
+  
 template<typename BasisOnMeshType,int nComponents>
 typename TimeStepping<BasisOnMeshType,nComponents>::OutputFieldVariables TimeStepping<BasisOnMeshType,nComponents>::
 getOutputFieldVariables()

@@ -238,7 +238,7 @@ if dimension == 2:
       
       # pick a subset of the data to be used for testing
       test_index_subset = []
-      for i in range(10):
+      for i in range(2):
         test_index_subset.append(int(len(xdata)*i/10.))
             
       xdata_subset = xdata[test_index_subset]
@@ -287,106 +287,108 @@ if dimension == 2:
         
       f.write("{}: {}\n".format(datetime.datetime.today().strftime('%d.%m.%Y %H:%M:%S'),message))
     
-  # prepare animation
-  fig = plt.figure()
+  # animation is disabled here because it is done by the plot.py script
+  if False:
+    # prepare animation
+    fig = plt.figure()
 
-  margin = abs(max_value - min_value) * 0.1
-  ax = fig.add_subplot(111, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
-  
-  surface_numerical = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=2, label='numerical',rstride=1,cstride=1)
-  surface_analytical = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=1, label='analytical',rstride=1,cstride=1)
-  
-  text = plt.figtext(0.2,0.7,"timestep",size=15)
-  ax.set_xlabel('X')
-  ax.set_ylabel('Y')
-  ax.set_zlabel('Z')
-  
-  # create mesh
-  if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed":
+    margin = abs(max_value - min_value) * 0.1
+    ax = fig.add_subplot(111, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
     
-    print("basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"]))
+    surface_numerical = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=2, label='numerical',rstride=1,cstride=1)
+    surface_analytical = ax.plot_surface([], [], [], cmap=cm.coolwarm, linewidth=1, label='analytical',rstride=1,cstride=1)
     
-    if data[0]["basisFunction"] == "Lagrange":
-      nEntries = dimension * [0]
-      for i in range(dimension):
-        nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
-    
-    x_positions = py_reader.get_values(data[0], "geometry", "x")
-    y_positions = py_reader.get_values(data[0], "geometry", "y")
-    
-    nEntries = nEntries[::-1]   # reverse list
-    
-    X = np.reshape(x_positions, nEntries)
-    Y = np.reshape(y_positions, nEntries)
-    
-    #print("x_positions shape: {}".format(len(x_positions)))
-    
-  elif data[0]["meshType"] == "StructuredDeformable":
-    pass
-  
-  def init():
-    surface_numerical.set_verts([])
-    surface_analytical.set_verts([])
-    text.set_text("timestep {}".format(0))
-    return surface_numerical,
-
-  def animate(i):
-    
-    # extract timestep and time
-    if 'timeStepNo' in data[i]:
-      timestep = data[i]['timeStepNo']
-    if 'currentTime' in data[i]:
-      current_time = data[i]['currentTime']
-      t = current_time
-    
-    # clear old figure
-    ax.clear()
-    
-    # get data for time step
-    x_positions = py_reader.get_values(data[i], "geometry", "x")
-    y_positions = py_reader.get_values(data[i], "geometry", "y")
-    
-    xdata = np.reshape(x_positions, nEntries)
-    ydata = np.reshape(y_positions, nEntries)
-    
-    fdata_numerical = py_reader.get_values(data[i], "solution", "0")
-    
-    # compute analytical solution, this takes very long
-    fdata_analytical = [analytic_solution_2d(x,y,t) for y in y_positions for x in x_positions]
-    
-    # reshape arrays
-    fdata_numerical = np.reshape(fdata_numerical, nEntries)
-    fdata_analytical = np.reshape(fdata_analytical, nEntries)
-    
-    #print("xdata: ",xdata)
-    #print("ydata: ",ydata)
-    #print("fdata_numerical: ",fdata_numerical)
-    #print("x shape: {}, y shape: {}, z shape: {}".format(xdata.shape, ydata.shape, fdata_numerical.shape))
-    
-    # plot 2D functions
-    surface_numerical = ax.plot_surface(xdata, ydata, fdata_numerical, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
-    surface_analytical = ax.plot_wireframe(xdata, ydata, fdata_analytical, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
-    ax.set_zlim(min_value-margin, max_value+margin)
+    text = plt.figtext(0.2,0.7,"timestep",size=15)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     
-    # display timestep
-    max_timestep = len(data)-1
-    text.set_text("timestep {}/{}\nt = {}\nabs. error: {}".format(timestep, max_timestep, current_time, error_absolute_timestep[i]))
+    # create mesh
+    if data[0]["meshType"] == "StructuredRegularFixed" or data[0]["meshType"] == "RegularFixed":
+      
+      print("basisfunction: [{}], basisOrder: [{}]".format(data[0]["basisFunction"], data[0]["basisOrder"]))
+      
+      if data[0]["basisFunction"] == "Lagrange":
+        nEntries = dimension * [0]
+        for i in range(dimension):
+          nEntries[i] = data[0]["basisOrder"] * data[0]["nElements"][i] + 1
+      
+      x_positions = py_reader.get_values(data[0], "geometry", "x")
+      y_positions = py_reader.get_values(data[0], "geometry", "y")
+      
+      nEntries = nEntries[::-1]   # reverse list
+      
+      X = np.reshape(x_positions, nEntries)
+      Y = np.reshape(y_positions, nEntries)
+      
+      #print("x_positions shape: {}".format(len(x_positions)))
+      
+    elif data[0]["meshType"] == "StructuredDeformable":
+      pass
     
-    return text,
-    
-  interval = 5000.0 / len(data)
-        
-  # call the animator.  blit=True means only re-draw the parts that have changed.
-  anim = animation.FuncAnimation(fig, animate, init_func=init,
-             frames=len(data),
-             interval=interval, blit=False)
+    def init():
+      surface_numerical.set_verts([])
+      surface_analytical.set_verts([])
+      text.set_text("timestep {}".format(0))
+      return surface_numerical,
 
-  anim.save("numerical_analytical.mp4")
-  if show_plot:
-    plt.show()
+    def animate(i):
+      
+      # extract timestep and time
+      if 'timeStepNo' in data[i]:
+        timestep = data[i]['timeStepNo']
+      if 'currentTime' in data[i]:
+        current_time = data[i]['currentTime']
+        t = current_time
+      
+      # clear old figure
+      ax.clear()
+      
+      # get data for time step
+      x_positions = py_reader.get_values(data[i], "geometry", "x")
+      y_positions = py_reader.get_values(data[i], "geometry", "y")
+      
+      xdata = np.reshape(x_positions, nEntries)
+      ydata = np.reshape(y_positions, nEntries)
+      
+      fdata_numerical = py_reader.get_values(data[i], "solution", "0")
+      
+      # compute analytical solution, this takes very long
+      fdata_analytical = [analytic_solution_2d(x,y,t) for y in y_positions for x in x_positions]
+      
+      # reshape arrays
+      fdata_numerical = np.reshape(fdata_numerical, nEntries)
+      fdata_analytical = np.reshape(fdata_analytical, nEntries)
+      
+      #print("xdata: ",xdata)
+      #print("ydata: ",ydata)
+      #print("fdata_numerical: ",fdata_numerical)
+      #print("x shape: {}, y shape: {}, z shape: {}".format(xdata.shape, ydata.shape, fdata_numerical.shape))
+      
+      # plot 2D functions
+      surface_numerical = ax.plot_surface(xdata, ydata, fdata_numerical, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+      surface_analytical = ax.plot_wireframe(xdata, ydata, fdata_analytical, cmap=cm.coolwarm, linewidth=1,rstride=1,cstride=1)
+      ax.set_zlim(min_value-margin, max_value+margin)
+      ax.set_xlabel('X')
+      ax.set_ylabel('Y')
+      ax.set_zlabel('Z')
+      
+      # display timestep
+      max_timestep = len(data)-1
+      text.set_text("timestep {}/{}\nt = {}\nabs. error: {}".format(timestep, max_timestep, current_time, error_absolute_timestep[i]))
+      
+      return text,
+      
+    interval = 5000.0 / len(data)
+          
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+               frames=len(data),
+               interval=interval, blit=False)
+
+    anim.save("numerical_analytical.mp4")
+    if show_plot:
+      plt.show()
   
   
   

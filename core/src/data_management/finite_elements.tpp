@@ -23,7 +23,6 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 FiniteElements(DihuContext context) : Data<BasisOnMeshType>(context)
 {
-  LOG(TRACE) << "Data::FiniteElements constructor";
   //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
@@ -31,17 +30,14 @@ template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename
 FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 ~FiniteElements()
 {
-  // free PETSc objects
-  //if (this->initialized_)
-  //{
-    //ierr = MatDestroy(&this->stiffnessMatrix_); CHKERRV(ierr);
-  //}
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initialize()
 {
+  LOG(DEBUG) << "FiniteElements::initialize";
+  
   Data<BasisOnMeshType>::initialize();
 
   // set up diffusion tensor if there is any
@@ -98,7 +94,7 @@ createPetscObjects()
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
   LOG(DEBUG) << "d=" <<this->mesh_->dimension()
-    << ", number of diagonal non-zeros: " <<diagonalNonZeros<< ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
+    << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
   int nComponents = 1;
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
@@ -110,14 +106,45 @@ finalAssembly()
 {
   this->stiffnessMatrix_->assembly(MAT_FINAL_ASSEMBLY);
   
+  if (this->massMatrix_)
+    this->massMatrix_->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (this->systemMatrix_)
+    this->systemMatrix_->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (this->inverseLumpedMassMatrix_)
+    this->inverseLumpedMassMatrix_->assembly(MAT_FINAL_ASSEMBLY);
+
   LOG(DEBUG) << "finalAssembly";
 }
+
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+massMatrix()
+{
+  return this->massMatrix_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+systemMatrix()
+{
+  return this->systemMatrix_;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+inverseLumpedMassMatrix()
+{
+  return this->inverseLumpedMassMatrix_;
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
@@ -135,13 +162,6 @@ solution()
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<BasisOnMeshType>> FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
-massMatrix()
-{
-  return this->massMatrix_;
-}
-
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 print()
 {
@@ -152,34 +172,41 @@ print()
   VLOG(4) << *this->stiffnessMatrix_;
   VLOG(4) << *this->rhs_;
   VLOG(4) << *this->solution_;
+
+  if (this->massMatrix_)
+    VLOG(4) << *this->massMatrix_;
+
+  if (this->inverseLumpedMassMatrix_)
+    VLOG(4) << *this->inverseLumpedMassMatrix_;
+
+  if (this->systemMatrix_)
+    VLOG(4) << *this->systemMatrix_;
+
   VLOG(4) << this->mesh_->geometryField();
   
   MatInfo info;
   MatGetInfo(this->stiffnessMatrix_->valuesGlobal(), MAT_LOCAL, &info);
 
   VLOG(4) << "stiffnessMatrix info: " << std::endl
-    << "block_size: " <<info.block_size<< std::endl
+    << "block_size: " <<info.block_size << std::endl
     << "number of nonzeros: allocated: " <<info.nz_allocated<< ", used: " <<info.nz_used<< ", unneeded: " <<info.nz_unneeded<< std::endl
     << "memory allocated: " <<info.memory<< std::endl
-    << "number of matrix assemblies called: " <<info.assemblies<< std::endl
-    << "number of mallocs during MatSetValues(): " <<info.mallocs<< std::endl
+    << "number of matrix assemblies called: " <<info.assemblies << std::endl
+    << "number of mallocs during MatSetValues(): " <<info.mallocs << std::endl
     << "fill ratio for LU/ILU: given: " <<info.fill_ratio_given<< ", needed: " <<info.fill_ratio_needed<< std::endl
-    << "number of mallocs during factorization: " <<info.factor_mallocs<< std::endl;
+    << "number of mallocs during factorization: " <<info.factor_mallocs << std::endl;
 
   VLOG(4) << "======================";
-}
-
-template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-bool FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
-massMatrixInitialized()
-{
-  return this->massMatrixInitialized_;
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
 initializeMassMatrix()
 {
+  // if the massMatrix is already initialized do not initialize again
+  if (this->massMatrix_)
+    return;
+
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
@@ -191,8 +218,41 @@ initializeMassMatrix()
   std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
   const int nComponents = 1;
   this->massMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
-  
-  this->massMatrixInitialized_ = true;
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+initializeSystemMatrix(Mat &systemMatrix)
+{
+  // if the systemMatrix_ is already initialized do not initialize again
+  if (this->systemMatrix_)
+    return;
+
+  // the PETSc matrix object is created outside by MatMatMult
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
+  const int nComponents = 1;
+  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, systemMatrix, "systemMatrix");
+}
+
+template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>
+void FiniteElements<BasisOnMeshType,Term,DummyForTraits,DummyForTraits2>::
+initializeInverseLumpedMassMatrix()
+{
+  // if the inverseLumpedMassMatrix_ is already initialized do not initialize again
+  if (this->inverseLumpedMassMatrix_)
+    return;
+
+  // create PETSc matrix object
+
+  // PETSc MatCreateAIJ parameters
+  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+
+  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+
+  std::shared_ptr<Partition::MeshPartition<BasisOnMeshType>> partition = this->mesh_->meshPartition();
+  const int nComponents = 1;
+  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<BasisOnMeshType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
 }
 
 template<typename BasisOnMeshType,typename Term,typename DummyForTraits,typename DummyForTraits2>

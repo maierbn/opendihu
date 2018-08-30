@@ -140,16 +140,16 @@ std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bo
 void Paraview::writeVTKMasterFile()
 {
 
-  file<< "<?xml version=\"1.0\"?>" <<endl
-    << "<VTKFile type=\"PRectilinearGrid\">" <<endl
+  file << "<?xml version=\"1.0\"?>" << endl
+    << "<VTKFile type=\"PRectilinearGrid\">" << endl
     << "<PRectilinearGrid WholeExtent=\"0 " << comm->get_global_dimension()[0]<< " 0 "
       << comm->get_global_dimension()[1]<< " 0 0\" GhostLevel=\"0\">"
-      <<endl
-    << "<PCoordinates>" <<endl
-    << "<PDataArray type=\"Float64\"/>" <<endl
-    << "<PDataArray type=\"Float64\"/>" <<endl
-    << "<PDataArray type=\"Float64\"/>" <<endl
-    << "</PCoordinates>" <<endl;
+      << endl
+    << "<PCoordinates>" << endl
+    << "<PDataArray type=\"Float64\"/>" << endl
+    << "<PDataArray type=\"Float64\"/>" << endl
+    << "<PDataArray type=\"Float64\"/>" << endl
+    << "</PCoordinates>" << endl;
 
     MultiIndexType n_subareas = comm->get_n_subareas();
 
@@ -165,42 +165,42 @@ void Paraview::writeVTKMasterFile()
         {
             local_dimension = comm->get_local_dimension(x, y);
 
-            os<< "<Piece Extent=\""
+            os << "<Piece Extent=\""
               <<x_begin<< " " <<x_begin+local_dimension[0]<< " "
               <<y_begin<< " " <<y_begin+local_dimension[1]<< " 0 0\" "
-              << "Source=\"field_" <<step<< "_processor_" <<y<< "_" <<x<< ".vtr\"/>" <<endl;
+              << "Source=\"field_" << step<< "_processor_" <<y<< "_" <<x<< ".vtr\"/>" << endl;
 
             x_begin += local_dimension[0];
         }
         y_begin += local_dimension[1];
     }
 
-  os<< "<PPointData Vectors=\"field\" Scalars=\"p, vorticity, stream\">" <<endl;
-  os<< "<PDataArray type=\"Float64\" NumberOfComponents=\"3\" Name=\"field\"     format=\"ascii\"/>" <<endl;
-  os<< "<PDataArray type=\"Float64\"                          Name=\"p\"         format=\"ascii\"/>" <<endl;
-  os<< "<PDataArray type=\"Float64\"                          Name=\"vorticity\" format=\"ascii\"/>" <<endl;
-  os<< "<PDataArray type=\"Float64\"                          Name=\"stream\"    format=\"ascii\"/>" <<endl;
-    os<< "<PDataArray type=\"Float64\"                          Name=\"rhs\"       format=\"ascii\"/>" <<endl;
-    os<< "<PDataArray type=\"Float64\"                          Name=\"partitioning\"    format=\"ascii\"/>" <<endl;
-  os<< "</PPointData>" <<endl;
+  os << "<PPointData Vectors=\"field\" Scalars=\"p, vorticity, stream\">" << endl;
+  os << "<PDataArray type=\"Float64\" NumberOfComponents=\"3\" Name=\"field\"     format=\"ascii\"/>" << endl;
+  os << "<PDataArray type=\"Float64\"                          Name=\"p\"         format=\"ascii\"/>" << endl;
+  os << "<PDataArray type=\"Float64\"                          Name=\"vorticity\" format=\"ascii\"/>" << endl;
+  os << "<PDataArray type=\"Float64\"                          Name=\"stream\"    format=\"ascii\"/>" << endl;
+    os << "<PDataArray type=\"Float64\"                          Name=\"rhs\"       format=\"ascii\"/>" << endl;
+    os << "<PDataArray type=\"Float64\"                          Name=\"partitioning\"    format=\"ascii\"/>" << endl;
+  os << "</PPointData>" << endl;
 
-  os<< "</PRectilinearGrid>" <<endl;
+  os << "</PRectilinearGrid>" << endl;
 
-    os<< "<PUnstructuredGrid GhostLevel=\"0\">" <<endl;
-    os<< "<PPointData></PPointData>" <<endl;
-    os<< "<PCellData>" <<endl;
-    os<< "<DataArray type=\"Float32\" Name=\"particles\" format=\"ascii\">" <<endl;
-    os<< "</DataArray>" <<endl;
-    os<< "</PCellData>" <<endl;
-    os<< "<PPoints>" <<endl;
-    os<< "<PDataArray NumberOfComponents=\"3\">" <<endl;
-    os<< "</PDataArray>" <<endl;
-    os<< "</PPoints>" <<endl;
-    os<< "<Piece Source=\"particles_" <<step<< ".vtu\"/>" <<endl;
+    os << "<PUnstructuredGrid GhostLevel=\"0\">" << endl;
+    os << "<PPointData></PPointData>" << endl;
+    os << "<PCellData>" << endl;
+    os << "<DataArray type=\"Float32\" Name=\"particles\" format=\"ascii\">" << endl;
+    os << "</DataArray>" << endl;
+    os << "</PCellData>" << endl;
+    os << "<PPoints>" << endl;
+    os << "<PDataArray NumberOfComponents=\"3\">" << endl;
+    os << "</PDataArray>" << endl;
+    os << "</PPoints>" << endl;
+    os << "<Piece Source=\"particles_" << step<< ".vtu\"/>" << endl;
 
-    os<< "</PUnstructuredGrid> " <<endl;
+    os << "</PUnstructuredGrid> " << endl;
 
-  os<< "</VTKFile>" <<endl;
+  os << "</VTKFile>" << endl;
 }
 
 void Paraview::writeVTKSlaveFile()

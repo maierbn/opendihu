@@ -13,7 +13,7 @@ namespace FieldVariable
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
@@ -36,7 +36,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
  
@@ -60,7 +60,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
+getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -78,7 +78,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
+getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -88,7 +88,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const
 {
   std::array<double,N*nComponents> result;   // temporary result buffer
 
@@ -112,7 +112,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getElementValues(int componentNo, element_no_t elementNo,
-                 std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+                 std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -134,7 +134,7 @@ getElementValues(int componentNo, element_no_t elementNo,
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getElementValues(element_no_t elementNo, 
-                 std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
+                 std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   
@@ -172,7 +172,7 @@ getElementValues(element_no_t elementNo,
 //! for a specific component, get a single value from local dof no.
 template<typename FunctionSpaceType, int nComponents>
 double FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValue(int componentNo, node_no_t dofLocalNo)
+getValue(int componentNo, node_no_t dofLocalNo) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   

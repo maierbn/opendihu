@@ -43,11 +43,10 @@ initialize()
   int outputStateIndex = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
   double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
 
-  // The solutionVectorMapping_ object stores the information which range of values of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splittings.
-  // These are all values of a single STATE with number outputStateIndex from settings.
-  // The data layout is for e.g. 3 instances like this: STATE[0] STATE[0] STATE[0] STATE[1] STATE[1] STATE[1] STATE[2]...
-  this->solutionVectorMapping_.setOutputRange(this->nInstances_*outputStateIndex, this->nInstances_*(outputStateIndex+1));
+  // The solutionVectorMapping_ object stores the information which component of the solution will be further used
+  // in methods that use the result of this method, e.g. in operator splitting.
+  // The solutionVectorMapping object also scales the solution after transfer.
+  this->solutionVectorMapping_.setOutputComponentNo(outputStateIndex);
   this->solutionVectorMapping_.setScalingFactor(prefactor);
 }
 
@@ -69,8 +68,16 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 {
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
-  VecGetArray(input, &states);    // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
-  VecGetArray(output, &rates);
+  PetscErrorCode ierr;
+  ierr = VecGetArray(input, &states); CHKERRV(ierr);   // get r/w pointer to contiguous array of the data, VecRestoreArray() needs to be called afterwards
+  ierr = VecGetArray(output, &rates); CHKERRV(ierr);
+
+  int nStatesInput, nRates;
+  ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
+  ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
+  VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates: " << nStatesInput << ", output nRates: " << nRates;
+  assert (nStatesInput == nStates*this->nInstances_);
+  assert (nRates == nStates*this->nInstances_);
 
   //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates=" << nStates;
   
@@ -87,6 +94,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //              this          STATES, RATES, WANTED,                KNOWN
   if(this->rhsRoutine_)
   {
+    VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
+
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
   }
@@ -106,8 +115,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   //PetscUtility::setVector(rates_, output);
   // give control of data back to Petsc
-  VecRestoreArray(input, &states);
-  VecRestoreArray(output, &rates);
+  ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
+  ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
 }
 
 template<int nStates>
@@ -140,8 +149,9 @@ mesh()
 }
 
 template<int nStates>
+template<typename FunctionSpaceType>
 bool CellmlAdapter<nStates>::
-setInitialValues(Vec &initialValues)
+setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues)
 {
-  return CellmlAdapterBase<nStates>::setInitialValues(initialValues);
+  return CellmlAdapterBase<nStates>::template setInitialValues<FunctionSpaceType>(initialValues);
 }

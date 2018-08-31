@@ -89,11 +89,19 @@ public:
   //! get the number of dofs
   dof_no_t nDofs() const;
   
-  //! get the internal values vector
-  Vec &valuesLocal();
+  //! get the internal PETSc values vector
+  Vec &valuesLocal(int componentNo = 0);
 
-  //! get the internal values vector
-  Vec &valuesGlobal();
+  //! get the internal PETSc values vector
+  Vec &valuesGlobal(int componentNo = 0);
+
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+  Vec &getContiguousValuesGlobal();
+
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreContiguousValuesGlobal();
 
   //! get the number of scale factors
   int getNumberScaleFactors(element_no_t elementGlobalNo) const;

@@ -72,20 +72,20 @@ public:
 
   //! get all values
   //! @param onlyNodalValues: if this is true for Hermite only the non-derivative values are returned
-  void getValues(std::vector<double> &values, bool onlyNodalValues=false);
+  void getValues(std::vector<double> &values, bool onlyNodalValues=false) const;
 
   //! get values from their global dof no.s
   template<int N>
-  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values);
+  void getValues(std::array<dof_no_t,N> dofGlobalNo, std::array<double,N> &values) const;
 
   //! get values from their global dof no.s
-  void getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values);
+  void getValues(std::vector<dof_no_t> dofGlobalNo, std::vector<double> &values) const;
 
   //! get the values corresponding to all element-local dofs
-  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
   //! get a single value from global dof no.
-  double getValue(node_no_t dofGlobalNo);
+  double getValue(node_no_t dofGlobalNo) const;
 
   //! get the number of scale factors for a given node
   int getNumberScaleFactors(node_no_t nodeGlobalNo) const;

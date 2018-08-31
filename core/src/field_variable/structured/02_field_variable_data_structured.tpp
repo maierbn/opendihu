@@ -134,16 +134,30 @@ nDofsLocalWithoutGhosts() const
 
 template<typename FunctionSpaceType, int nComponents>
 Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-valuesLocal()
+valuesLocal(int componentNo)
 {
-  return this->values_->valuesLocal();
+  return this->values_->valuesLocal(componentNo);
 }
 
 template<typename FunctionSpaceType, int nComponents>
 Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-valuesGlobal()
+valuesGlobal(int componentNo)
 {
-  return this->values_->valuesGlobal();
+  return this->values_->valuesGlobal(componentNo);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+getContiguousValuesGlobal()
+{
+  return this->values_->getContiguousValuesGlobal();
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
+restoreContiguousValuesGlobal()
+{
+  this->values_->restoreContiguousValuesGlobal();
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -152,6 +166,8 @@ partitionedPetscVec()
 {
   return this->values_; 
 }
+
+
 /*
  * why is this needed?
 template<typename FunctionSpaceType, int nComponents>

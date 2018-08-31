@@ -70,6 +70,8 @@ void TimeSteppingScheme::initialize()
       numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);      
       isTimeStepWidthSignificant_ = false;
       LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
+
+      setNumberTimeSteps(numberTimeSteps_);
     }
     else
     {

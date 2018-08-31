@@ -31,6 +31,26 @@ public:
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
 
+  //! check if there are NaNs or high values in the current variable, if yes output a warning
+  void checkNansInfs(int componentNo = 0) const;
+
+  //! get the number of dofs
+  dof_no_t nDofsLocalWithoutGhosts() const;
+
+  //! get the internal PETSc values vector
+  virtual Vec &valuesLocal(int componentNo = 0) = 0;
+
+  //! get the internal PETSc values vector
+  virtual Vec &valuesGlobal(int componentNo = 0) = 0;
+
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+  virtual Vec &getContiguousValuesGlobal() = 0;
+
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  virtual void restoreContiguousValuesGlobal() = 0;
+
   //! set the functionSpace
   virtual void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace) {LOG(FATAL) << "this is unused";}
   
@@ -80,13 +100,17 @@ public:
   virtual void outputHeaderExnode(std::ostream &file, node_no_t currentNodeGlobalNo, int &valueIndex, int fieldVariableNo=-1) = 0;
 
   //! for a specific component, get a single value from global dof no.
-  virtual double getValue(int componentNo, node_no_t dofGlobalNo) = 0;
+  virtual double getValue(int componentNo, node_no_t dofGlobalNo) const = 0;
 
   //! set all values to a specific value
   virtual void setValues(double value) = 0;
 
   //! set all entries to 0.0
   virtual void zeroEntries() = 0;
+
+  //! for a specific component, get all values
+  //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
+  virtual void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const = 0;
 
 protected:
  

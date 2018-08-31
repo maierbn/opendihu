@@ -23,7 +23,7 @@ public:
   using FieldVariableSetGetRegularFixed<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
 
   //! get a single value from local dof no. for all components
-  std::array<double,nComponents> getValue(node_no_t dofLocalNo);
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo) const;
 };
 
 /** Partial specialization for single component field variable

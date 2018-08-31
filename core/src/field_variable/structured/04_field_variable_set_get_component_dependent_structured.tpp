@@ -11,7 +11,7 @@ namespace FieldVariable
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
-getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   VLOG(2) << "getElementValues element " << elementNo << ", 1 component";
 
@@ -26,7 +26,7 @@ getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nD
 //! get a single value from local dof no. for the single component
 template<typename FunctionSpaceType>
 double FieldVariableSetGetComponent<FunctionSpaceType,1>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   double result;
   this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
@@ -37,7 +37,7 @@ getValue(node_no_t dofLocalNo)
 //! get a single value from local dof no. for all components
 template<typename FunctionSpaceType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   std::array<double,nComponents> result;
 
@@ -53,7 +53,7 @@ getValue(node_no_t dofLocalNo)
 //! get all stored local values, for 1 component
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
-getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithGhosts(0, values, onlyNodalValues);
 }
@@ -61,7 +61,7 @@ getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
 //! get all stored local values, for 1 component
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
-getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues)
+getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithoutGhosts(0, values, onlyNodalValues);
 }

@@ -52,11 +52,19 @@ public:
   //! tell if 2 elements have the same exfile representation, i.e. same number of versions
   bool haveSameExfileRepresentation(element_no_t element1, element_no_t element2);
 
-  //! get the internal PETSc vector values, the local vector
-  Vec &valuesLocal();
+  //! get the internal PETSc vector values, the local vector for the specified component
+  Vec &valuesLocal(int componentNo = 0);
 
-  //! get the internal PETSc vector values, the global vector
-  Vec &valuesGlobal();
+  //! get the internal PETSc vector values, the global vector for the specified component
+  Vec &valuesGlobal(int componentNo = 0);
+
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+  Vec &getContiguousValuesGlobal();
+
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreContiguousValuesGlobal();
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;

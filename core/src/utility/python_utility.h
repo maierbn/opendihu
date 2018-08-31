@@ -127,9 +127,16 @@ public:
   //! create a python list out of the int vector
   static PyObject *convertToPythonList(std::vector<int> &data);
 
+  //! create a python list out of the bool vector
+  static PyObject *convertToPythonList(std::vector<bool> &data);
+
   //! create a python list out of the long array
   template<int D>
   static PyObject *convertToPythonList(std::array<long,D> &data);
+
+  //! create a python list out of the bool array
+  template<int D>
+  static PyObject *convertToPythonList(std::array<bool,D> &data);
 
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);

@@ -3,16 +3,9 @@
 #include <vector>
 #include "easylogging++.h"
 
-SolutionVectorMapping::SolutionVectorMapping(bool canProvideInternalContiguousSolutionPointer) :
-  scalingFactor_(1.0), canProvideInternalContiguousSolutionPointer_(canProvideInternalContiguousSolutionPointer)
+SolutionVectorMapping::SolutionVectorMapping() :
+  scalingFactor_(1.0)
 {
-}
-
-void SolutionVectorMapping::setOutputRange(int outputIndexBegin, int outputIndexEnd)
-{
-  outputIndexBegin_ = outputIndexBegin;
-  outputIndexEnd_ = outputIndexEnd;
-  outputSize_ = outputIndexEnd_ - outputIndexBegin_;
 }
 
 void SolutionVectorMapping::setScalingFactor(double factor)
@@ -20,7 +13,21 @@ void SolutionVectorMapping::setScalingFactor(double factor)
   scalingFactor_ = factor;
 }
 
+//! set the component no
+void SolutionVectorMapping::setOutputComponentNo(int outputComponentNo)
+{
+  outputComponentNo_ = outputComponentNo;
+}
 
+/*
+void SolutionVectorMapping::setOutputRange(int outputIndexBegin, int outputIndexEnd)
+{
+  outputIndexBegin_ = outputIndexBegin;
+  outputIndexEnd_ = outputIndexEnd;
+  outputSize_ = outputIndexEnd_ - outputIndexBegin_;
+}
+*/
+/*
 void SolutionVectorMapping::transfer(Vec &solution1, SolutionVectorMapping& solutionVectorMapping2, Vec &solution2)
 {
   VLOG(1) << "solution vector mapping (1): [" <<outputIndexBegin_<< "," <<outputIndexEnd_<< "] (2): "
@@ -129,5 +136,7 @@ void SolutionVectorMapping::copyFromSolutionToDataPointer(Vec& solution, double*
 
   // do scaling
 }
+
+*/
 
 

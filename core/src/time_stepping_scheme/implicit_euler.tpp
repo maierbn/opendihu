@@ -23,9 +23,8 @@ void ImplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
-  double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << timeStepWidth
+  LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
   
   int nEntries;

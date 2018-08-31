@@ -42,7 +42,10 @@ struct Interface
   //void setValue(dof_no_t dofGlobalNo, std::array<double,nComponents> &value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different FunctionSpaceTypes)
-  virtual Vec &valuesLocal() = 0;
+  virtual Vec &valuesLocal(int componentNo = 0) = 0;
+
+  //! get the internal PETSc vector values. The meaning of the values is instance-dependent (different for different FunctionSpaceTypes)
+  virtual Vec &valuesGlobal(int componentNo = 0) = 0;
 
   //! get the names of the components
   //virtual std::array<std::string, nComponents> componentNames() const = 0;

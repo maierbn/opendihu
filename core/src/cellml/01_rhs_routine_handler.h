@@ -48,7 +48,7 @@ protected:
 protected:
 
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
-  bool scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialValues);
+  bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
 
   std::vector<std::string> constantAssignments_;
   

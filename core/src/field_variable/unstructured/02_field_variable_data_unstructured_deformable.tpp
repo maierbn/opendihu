@@ -788,16 +788,30 @@ nodeToDofMapping() const
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-valuesLocal()
+valuesLocal(int componentNo)
 {
-  return this->values_->valuesLocal();
+  return this->values_->valuesLocal(componentNo);
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-valuesGlobal()
+valuesGlobal(int componentNo)
 {
-  return this->values_->valuesGlobal();
+  return this->values_->valuesGlobal(componentNo);
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+getContiguousValuesGlobal()
+{
+  return this->values_->getContiguousValuesGlobal();
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+restoreContiguousValuesGlobal()
+{
+  this->values_->restoreContiguousValuesGlobal();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

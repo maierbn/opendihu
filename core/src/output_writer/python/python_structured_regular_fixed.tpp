@@ -57,7 +57,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   PyObject *pyNElementsLocal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(nElementsPerCoordinateDirectionLocalArray);
 
   std::array<long, FunctionSpaceType::dim()> beginNodeGlobal;
-  std::array<long, FunctionSpaceType::dim()> hasFullNumberOfNodes;
+  std::array<bool, FunctionSpaceType::dim()> hasFullNumberOfNodes;
 
   for (int i = 0; i < FunctionSpaceType::dim(); i++)
   {

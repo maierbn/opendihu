@@ -6,6 +6,8 @@
 #
 
 import pickle, json
+import copy
+import numpy as np
 
 def get_values(data, field_variable_name, component_name):
   """
@@ -61,31 +63,153 @@ def load_data(filenames):
     :param filenames: a list with the filenames
     :return: a list of dicts from the files
   """
-  data = []
+  loaded_data = []
 
-  # load py files
+  # group parallel files
+  grouped_filenames = []  # each item is [<base_filename>, [<filename0>, <filename1>, ...]]
   for filename in filenames:
-
-    # try to load file content using json, this works if it is an ascii file
-    try:
-      with open(filename,'r') as f:
-        dict_from_file = json.load(f)
-    except Exception as e:
-      # try to load file contents using pickle, this works for binary files
-      try: 
-        with open(filename,'rb') as f:
-          dict_from_file = pickle.load(f)
-      except:
-        
-        # loading did not work either way
-        dict_from_file = {}
-        print("Could not parse file \"{}\"".format(filename))
-        continue
+    rank_no = 0
+    pos_last_point = filename.rfind(".py")
+    pos_2ndlast_point = filename.rfind(".", 0, pos_last_point)
     
-    #print "file: {}, dict: {}".format(filename,dict_from_file)
+    bucket_found = False
+    base_filename = filename
+    if pos_last_point != -1 and pos_2ndlast_point != -1:      
+      base_filename = filename[0:pos_2ndlast_point]
+      rank_str = filename[pos_2ndlast_point+1:pos_last_point]
+      print "filename: {}, base_filename: {}, rank_str: {}".format(filename, base_filename, rank_str)
+      rank_no = (int)(rank_str)
+    
+      # find bucket in grouped_filenames with matching base_filename
+      for i in range(len(grouped_filenames)):
+        if grouped_filenames[i][0] == base_filename:
+          grouped_filenames[i][1].append(filename)
+          bucket_found = True
+          break
+    if not bucket_found:
+      grouped_filenames.append([base_filename, [filename]])
+    
+  # loop over groups of filenames, one group is the files from different rank but from same scenario/time step
+  for file_group in grouped_filenames:
+    filenames = file_group[1]
+      
+    group_data = []
+      
+    # load py files of current group
+    for filename in filenames:
 
-    data.append(dict_from_file)
-  return data
+      # try to load file content using json, this works if it is an ascii file
+      try:
+        with open(filename,'r') as f:
+          dict_from_file = json.load(f)
+      except Exception as e:
+        # try to load file contents using pickle, this works for binary files
+        try: 
+          with open(filename,'rb') as f:
+            dict_from_file = pickle.load(f)
+        except:
+          
+          # loading did not work either way
+          dict_from_file = {}
+          print("Could not parse file \"{}\"".format(filename))
+          continue
+      
+      #print "file: {}, dict: {}".format(filename,dict_from_file)
+      group_data.append(dict_from_file)
+   
+    # merge group data
+    merged_data = copy.deepcopy(group_data[0])
+    del merged_data['beginNodeGlobal']
+    del merged_data['hasFullNumberOfNodes']
+    del merged_data['nElementsLocal']
+    del merged_data['ownRankNo']
+    n_ranks = merged_data['nRanks']
+    dimension = merged_data['dimension']
+
+    # determine number of nodes
+    average_n_nodes_per_element_1d = 1
+    if merged_data['basisFunction'] == 'Lagrange':
+      average_n_nodes_per_element_1d = merged_data['basisOrder']
+    elif merged_data['basisFunction'] == 'Hermite':
+      average_n_nodes_per_element_1d = 1
+
+    # determine global size of arrays
+    n_nodes_global = []
+    n_nodes_total = 1
+    for i in range(dimension):
+      n_nodes_global_direction = merged_data['nElementsGlobal'][i]*average_n_nodes_per_element_1d + 1
+      n_nodes_global.append(n_nodes_global_direction)
+      n_nodes_total *= n_nodes_global_direction
+  
+    #print "n_nodes_global: ",n_nodes_global
+  
+    merged_data['nElements'] = merged_data['nElementsGlobal']
+    del merged_data['nElementsGlobal']
+
+    # loop over data fields
+    for field_variable_index,field_variable in enumerate(merged_data['data']):
+      for component_index,component in enumerate(field_variable['components']):
+        
+        # resize array
+        merged_data['data'][field_variable_index]['components'][component_index]['values'] = np.zeros(n_nodes_total)
+
+        # loop over ranks / input files
+        for data in group_data:
+          
+          # compute local size
+          n_nodes_local = []
+          for i in range(dimension):
+            n_nodes_local_direction = data['nElementsLocal'][i]*average_n_nodes_per_element_1d
+            if data['hasFullNumberOfNodes'][i]:
+              n_nodes_local_direction += 1
+            n_nodes_local.append(n_nodes_local_direction)
+            
+          #print ""
+          #print field_variable["name"],component["name"]
+          #print "data: ",data
+          #print "rank {}, n_nodes_local: {}, data: {}".format(data["ownRankNo"], n_nodes_local,data['data'][field_variable_index]['components'][component_index]['values']) 
+          
+          # set local portion in global array
+          indices_begin = []
+          indices_end = []
+          for i in range(dimension):
+            begin_node_global = data['beginNodeGlobal'][i]
+            indices_begin.append(begin_node_global)
+            indices_end.append(begin_node_global+n_nodes_local[i])
+          
+          if dimension == 1:
+            for x in range(indices_begin[0],indices_end[0]):
+              index_in = x-indices_begin[0]
+              index_result = x
+              
+              #print "x: {}, index_in: {}, index_result: {}".format(x, index_in, index_result)
+              
+              merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
+                = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
+          
+          elif dimension == 2:
+            for y in range(indices_begin[1],indices_end[1]):
+              for x in range(indices_begin[0],indices_end[0]):
+                index_in = (y-indices_begin[1])*n_nodes_local[0] + (x-indices_begin[0])
+                index_result = y*n_nodes_global[0] + x
+                
+                #print "x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result)
+                
+                merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
+                  = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
+          
+          elif dimension == 3:
+            for z in range(indices_begin[2],indices_end[2]):
+              for y in range(indices_begin[1],indices_end[1]):
+                for x in range(indices_begin[0],indices_end[0]):
+                  index_in = (z-indices_begin[2])*n_nodes_local[1]*n_nodes_local[0] \
+                    + (y-indices_begin[1])*n_nodes_local[0] + (x-indices_begin[0])
+                  index_result = z*n_nodes_global[1]*n_nodes_global[0] + y*n_nodes_global[0] + x
+                  merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
+                    = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
+
+    loaded_data.append(merged_data)
+  return loaded_data
 
 
 def get_field_variable_names(data):

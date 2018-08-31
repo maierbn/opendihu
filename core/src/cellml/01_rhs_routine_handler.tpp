@@ -91,7 +91,12 @@ initializeRhsRoutine()
      
       std::stringstream compileCommand;
       // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
+#ifdef NDEBUG
       compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+#else
+      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+#endif
+
       int ret = system(compileCommand.str().c_str());
       if (ret != 0)
       {
@@ -575,7 +580,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
 template<int nStates>
 bool RhsRoutineHandler<nStates>::
-scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialValues)
+scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";
   
@@ -598,8 +603,6 @@ scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialVal
     std::stringstream source;
     source << sourceFile.rdbuf();
     sourceFile.close();
-
-    statesInitialValues.resize(nStates);
 
     // step through lines of simd file
     while(!source.eof())

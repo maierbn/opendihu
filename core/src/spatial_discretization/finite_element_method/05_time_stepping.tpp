@@ -24,12 +24,11 @@ template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 FiniteElementMethodTimeStepping(DihuContext context)
   : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context),
-  DiscretizableInTime(SolutionVectorMapping(true)), linearSolver_(nullptr), ksp_(nullptr)
+  DiscretizableInTime(SolutionVectorMapping()), linearSolver_(nullptr), ksp_(nullptr)
 {
-  // The solutionVectorMapping_ object stores the information which range of values of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splittings. Since there are no internal values
-  // in this FEM, set the range to all values.
-  solutionVectorMapping_.setOutputRange(0, this->data_.functionSpace()->nNodesLocalWithoutGhosts());   // without ghosts because CellML vectors do not have ghost nodes
+  // The solutionVectorMapping_ object stores the information which component of the solution will be further used.
+  // Because the FEM only has one solution component, set componentNo to 0.
+  solutionVectorMapping_.setOutputComponentNo(0);
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
@@ -81,6 +80,16 @@ reset()
 {
   linearSolver_ = nullptr;
   ksp_ = nullptr;
+}
+
+//! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,1> &initialValues)
+{
+  // Do not set initial values from within the "FiniteElements" section of the config. (therefore return false)
+  // The initial values are set by the time stepping scheme under its section.
+  return false;
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

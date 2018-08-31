@@ -62,11 +62,19 @@ public:
   //! set all entries to zero, wraps VecZeroEntries
   void zeroEntries();
   
-  //! get the local Vector of a specified component
+  //! get the internal PETSc vector values, the local vector for the specified component
   Vec &valuesLocal(int componentNo = 0);
 
-  //! get the global Vector of a specified component
+  //! get the internal PETSc vector values, the global vector for the specified component
   Vec &valuesGlobal(int componentNo = 0);
+
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+  Vec &getContiguousValuesGlobal();
+
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreContiguousValuesGlobal();
 
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
@@ -77,6 +85,7 @@ protected:
   void createVector();
   
   std::array<Vec,nComponents> values_;  // the (serial) Petsc vectors that contains all the data, one for each component
+  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
 };
 
 /** This is the partial specialization for structured meshes.
@@ -141,6 +150,14 @@ public:
   //! get the global Vector of a specified component
   Vec &valuesGlobal(int componentNo = 0);
   
+  //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+  Vec &getContiguousValuesGlobal();
+
+  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+  //! this has to be called
+  void restoreContiguousValuesGlobal();
+
   //! get a vector of local dof nos (from meshPartition), without ghost dofs
   std::vector<PetscInt> &localDofNosWithoutGhosts();
   
@@ -157,6 +174,7 @@ protected:
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
+  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
 };
 
 

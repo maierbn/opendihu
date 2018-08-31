@@ -16,7 +16,7 @@ using namespace StringUtility;
 //! get a single value from local dof no. for all components
 template<int D, typename BasisFunctionType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   std::array<double,nComponents> resultVector;
 
@@ -32,7 +32,7 @@ getValue(node_no_t dofLocalNo)
 //! get the values corresponding to all element-local dofs for all components
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   
@@ -47,7 +47,7 @@ getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nD
 //! get a single value from local dof no. for the single component
 template<int D, typename BasisFunctionType>
 double FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   double result;
   this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
@@ -57,7 +57,7 @@ getValue(node_no_t dofLocalNo)
 //! get all stored local values
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithGhosts(0, values, onlyNodalValues);
 }
@@ -65,7 +65,7 @@ getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues)
 //! get all stored local values
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
-getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues)
+getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithoutGhosts(0, values, onlyNodalValues);
 }

@@ -10,7 +10,7 @@ namespace FieldVariable
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -105,7 +105,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -201,7 +201,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
+getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -270,7 +270,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
 //! for a specific component, get values from their local dof no.s, as vector
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
+getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -345,7 +345,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -412,7 +412,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -435,7 +435,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Func
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)
@@ -458,7 +458,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 //! for a specific component, get a single value from local dof no.
 template<typename FunctionSpaceType, int nComponents>
 double FieldVariableSetGetRegularFixed<FunctionSpaceType,nComponents>::
-getValue(int componentNo, node_no_t dofLocalNo)
+getValue(int componentNo, node_no_t dofLocalNo) const
 {
   if (!this->isGeometryField_)
   {

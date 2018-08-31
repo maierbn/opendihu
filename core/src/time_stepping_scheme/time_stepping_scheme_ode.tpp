@@ -109,10 +109,11 @@ initialize()
 
   // set initial values from settings
 
-  Vec &solution = data_->solution().valuesLocal();
-
-  if (!discretizableInTime_.setInitialValues(solution))
+  // load initial values as specified in config under the "CellML" section
+  if (!discretizableInTime_.setInitialValues(data_->solution()))
   {
+    // if it did not initialize it,
+    // load initial values from config under the timestepping section
     this->setInitialValues();
   }
   

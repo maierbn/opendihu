@@ -16,7 +16,7 @@ using namespace StringUtility;
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values)
+getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const
 {
   assert(this->values_);
   
@@ -41,7 +41,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -51,7 +51,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
 //! for a specific component, get all values
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues)
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
 }
@@ -60,7 +60,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values)
+getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -70,7 +70,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values)
+getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -80,7 +80,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
 //! for a specific component, get a single value from local dof no.
 template<typename FunctionSpaceType, int nComponents>
 double FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValue(int componentNo, node_no_t dofLocalNo)
+getValue(int componentNo, node_no_t dofLocalNo) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   return this->component_[componentNo].getValue(dofLocalNo);
@@ -89,7 +89,7 @@ getValue(int componentNo, node_no_t dofLocalNo)
 //! for a specific component, get the values corresponding to all element-local dofs
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(int componentNo, element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
@@ -100,7 +100,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Func
 //! get the values corresponding to all element-local dofs for all components
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(this->values_);

@@ -328,6 +328,94 @@ valuesGlobal(int componentNo)
   return vectorGlobal_[componentNo];
 }
 
+//! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+//! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+getContiguousValuesGlobal()
+{
+  if (nComponents == 1)
+  {
+    return vectorGlobal_[0];
+  }
+
+  PetscErrorCode ierr;
+
+  // create contiguos vector if it does not exist yet
+  if (valuesContiguous_ == PETSC_NULL)
+  {
+    ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    ierr = PetscObjectSetName((PetscObject) valuesContiguous_, this->name_.c_str()); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    // initialize size of vector
+    int nEntriesLocal = this->meshPartition_->nDofsLocalWithoutGhosts() * nComponents;
+    int nEntriesGlobal = nEntriesLocal;
+    ierr = VecSetSizes(valuesContiguous_, nEntriesLocal, nEntriesGlobal); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    // set sparsity type and other options
+    ierr = VecSetFromOptions(valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    LOG(DEBUG) << "\"" << this->name_ << "\" (structured) create valuesContiguous_, nComponents = " << nComponents
+      << ", nEntriesLocal = " << nEntriesLocal << ", nEntriesGlobal = " << nEntriesGlobal;
+  }
+
+  double *valuesDataContiguous;
+  ierr = VecGetArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // copy values from component vectors to contiguous vector
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    const double *valuesDataComponent;
+    ierr = VecGetArrayRead(vectorLocal_[componentNo], &valuesDataComponent); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to contiguous array";
+    memcpy(
+      valuesDataContiguous + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts(),
+      valuesDataComponent,
+      this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+    );
+
+    ierr = VecRestoreArrayRead(vectorLocal_[componentNo], &valuesDataComponent); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  }
+
+  ierr = VecRestoreArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  return valuesContiguous_;
+}
+
+//! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+//! this has to be called
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+restoreContiguousValuesGlobal()
+{
+  if (nComponents == 1)
+    return;
+
+  assert(valuesContiguous_ != PETSC_NULL);
+
+  PetscErrorCode ierr;
+  const double *valuesDataContiguous;
+  ierr = VecGetArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
+
+  // copy values from component vectors to contiguous vector
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    double *valuesDataComponent;
+    ierr = VecGetArray(vectorLocal_[componentNo], &valuesDataComponent); CHKERRV(ierr);
+
+    VLOG(1) << "  component " << componentNo << ", copy " << this->meshPartition_->nDofsLocalWithoutGhosts() << " values, " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes from contiguous array";
+    memcpy(
+      valuesDataComponent,
+      valuesDataContiguous + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts(),
+      this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+    );
+
+    ierr = VecRestoreArray(vectorLocal_[componentNo], &valuesDataComponent); CHKERRV(ierr);
+  }
+
+  ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
+}
+
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 std::vector<PetscInt> &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::

@@ -30,4 +30,42 @@ isGeometryField() const
   return this->isGeometryField_;
 }
 
+template<typename FunctionSpaceType>
+void FieldVariableBase<FunctionSpaceType>::
+checkNansInfs(int componentNo) const
+{
+  // get all local values without ghosts for the given componentNo
+  std::vector<double> values;
+  getValuesWithoutGhosts(componentNo, values);
+
+  // determine if there are nans or high values
+  int nNans = 0;
+  int nHighValues = 0;
+  for(int i = 0; i < values.size(); i++)
+  {
+    if (std::isnan(values[i]))
+      nNans++;
+    else if (fabs(values[i]) > 1e100)
+      nHighValues++;
+  }
+
+  if (nNans > 0)
+  {
+    LOG(WARNING) << "Solution contains " << nNans << " Nans";
+  }
+
+  if (nHighValues > 0)
+  {
+    LOG(WARNING) << "Solution contains " << nHighValues << " high values with absolute value > 1e100";
+  }
+}
+
+//! get the number of dofs
+template<typename FunctionSpaceType>
+dof_no_t FieldVariableBase<FunctionSpaceType>::
+nDofsLocalWithoutGhosts() const
+{
+  return this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+}
+
 } // namespace

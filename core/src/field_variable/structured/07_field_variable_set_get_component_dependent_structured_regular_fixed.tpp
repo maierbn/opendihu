@@ -10,7 +10,7 @@ namespace FieldVariable
 //! get a single value from local dof no. for all components
 template<int D,typename BasisFunctionType,int nComponents>
 std::array<double,nComponents> FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,nComponents>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   // if this is not a geometry field get the stored values
   if (!this->isGeometryField_)

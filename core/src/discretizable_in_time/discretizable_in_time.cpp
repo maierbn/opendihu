@@ -10,11 +10,6 @@ int DiscretizableInTime::nComponentsNode()
   return 1;
 }
 
-bool DiscretizableInTime::setInitialValues(Vec& initialValues)
-{
-  return false;
-}
-
 SolutionVectorMapping& DiscretizableInTime::solutionVectorMapping()
 {
   return solutionVectorMapping_;

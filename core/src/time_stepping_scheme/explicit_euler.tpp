@@ -24,13 +24,15 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
-  double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << timeStepWidth
+  LOG(DEBUG) << "ExplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // debugging output of matrices
   //this->data_->print();
+
+  Vec &solution = this->data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &increment = this->data_->increment().getContiguousValuesGlobal();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -48,22 +50,28 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     // advance computed value
     // compute next delta_u = f(u)
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      this->data_->solution().valuesGlobal(), this->data_->increment().valuesGlobal(), timeStepNo, currentTime);
+      solution, increment, timeStepNo, currentTime);
 
+    this->data_->increment().startVectorManipulation();
+    this->data_->increment().finishVectorManipulation();
     VLOG(1) << "computed increment: " << this->data_->increment();
 
     // integrate, y += dt * delta_u
-    VecAXPY(this->data_->solution().valuesGlobal(), timeStepWidth, this->data_->increment().valuesGlobal());
+    VecAXPY(solution, this->timeStepWidth_, increment);
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
+    this->data_->solution().startVectorManipulation();
+    this->data_->solution().finishVectorManipulation();
     VLOG(1) << "solution after integration: " << this->data_->solution();
 
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
   }
+
+  this->data_->solution().restoreContiguousValuesGlobal();
 }
 
 template<typename DiscretizableInTime>

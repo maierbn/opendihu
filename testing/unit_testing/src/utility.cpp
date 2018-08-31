@@ -7,6 +7,8 @@
 #include "gtest/gtest.h"
 #include "easylogging++.h"
 
+int nFails = 0;   // global number of test failures
+
 double parseNumber(std::string::iterator &iterFileContents, std::string::iterator iterFileContentsEnd)
 {
   if (iterFileContents == iterFileContentsEnd)

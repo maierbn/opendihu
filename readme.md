@@ -7,6 +7,14 @@ It serves as a code base to solve static and dynamic problems, where the Finite 
 Due to its modular nature it is supposed to be adaptible for future problems.
 
 # Installation
+There is a docker container that contains a full installation of opendihu. With it you can use the framework directly without having to build and install everything.
+If you have docker installed, you can start a shell in the container with
+```
+docker run -it maierbn/opendihu_system_testing:latest bash
+```
+Then run `git pull` and `make` to get the latest code.
+
+For developing the code, it is necessary to clone this repo locally and build and install the framework.
 If you're impatient, type `make` in the top level directory and see what happens. If there are error messages, look into the log file `config.log`. 
 
 But please read the following instructions first.

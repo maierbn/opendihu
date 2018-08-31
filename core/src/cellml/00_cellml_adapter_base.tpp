@@ -78,19 +78,22 @@ initialize()
   // allocate data vectors
   intermediates_.resize(nIntermediates_*nInstances_);
   parameters_.resize(nParameters_*nInstances_);
-  LOG(DEBUG) << "size of parameters: " <<parameters_.size();
+  LOG(DEBUG) << "parameters.size: " << parameters_.size() << ", intermediates.size: " << intermediates_.size();
 }
 
+
 template<int nStates>
+template<typename FunctionSpaceType>
 bool CellmlAdapterBase<nStates>::
-setInitialValues(Vec& initialValues)
+setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
-    PythonUtility::getOptionVector(this->specificSettings_, "statesInitialValues", nStates, statesInitialValues_);
+    // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
+    statesInitialValues_ = PythonUtility::getOptionArray<double,nStates>(this->specificSettings_, "statesInitialValues", 0);
   }
   else if(this->sourceFilename_ != "")
   {
@@ -100,12 +103,12 @@ setInitialValues(Vec& initialValues)
   else
   {
     LOG(DEBUG) << "initialize to zero";
-    statesInitialValues_.resize(nStates*nInstances_, 0);
+    statesInitialValues_.fill(0.0);
   }
 
   if(PythonUtility::hasKey(specificSettings_, "parametersInitialValues"))
   {
-    LOG(DEBUG) << "load parametersInitialValues also from config";
+    LOG(DEBUG) << "load parametersInitialValues from config";
 
     std::vector<double> parametersInitial;
     PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", nStates, parametersInitial);
@@ -132,27 +135,20 @@ setInitialValues(Vec& initialValues)
     LOG(DEBUG) << "Config does not contain key \"parametersInitialValues\"";
   }
 
-  std::vector<double> statesAllInstances(nStates*nInstances_);
-  for(int j=0; j<nStates; j++)
-  {
-    for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
-    {
-      statesAllInstances[j*nInstances_ + instanceNo] = statesInitialValues_[j];
-    }
-  }
 
-  PetscUtility::setVector(statesAllInstances, initialValues);
+  // Here we have the initial values for the states in the statesInitialValues_ vector, only for one instance.
+  VLOG(1) << "statesInitialValues_: " << statesInitialValues_;
 
-  if (VLOG_IS_ON(2))
-  {
-    VLOG(2) << "initial values were set as follows: ";
-    for(auto value : statesAllInstances)
-      VLOG(2) << "  " << value;
-  }
+  const std::vector<std::array<double,nStates>> statesAllInstances(nInstances_, statesInitialValues_);
+
+  VLOG(1) << "statesAllInstances: " << statesAllInstances;
+
+  initialValues.setValuesWithoutGhosts(statesAllInstances);
+
+  VLOG(1) << "initialValues: " << initialValues;
   return true;
 
   LOG(DEBUG) << "do not set initial values";
-
   return false;
 }
 

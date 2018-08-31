@@ -1,5 +1,7 @@
 # Electrophysiology
-# Monodomain with either Hodgkin-Huxley model as rhs
+# Monodomain with Hodgkin-Huxley model as rhs
+#
+# parameters: [<n_elements> [<end_time>]]
 
 end_time = 200.0   # [ms] end time of simulation
 n_elements = 500
@@ -20,11 +22,25 @@ dt_3D = 1e-1                      # overall timestep width of splitting scheme
 output_timestep = 1e-1            # timestep for output files
 
 # import needed packages
+import sys
 import numpy as np
 import matplotlib 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+# read number of elements from command line
+if len(sys.argv) > 0:
+  try:
+    n_elements = int(sys.argv[0])
+  except:
+    print("could not parse n_elements {}".format(n_elements))
+if len(sys.argv) > 1:
+  try:
+    end_time = float(sys.argv[1])
+  except:
+    print("could not parse end_time {}".format(end_time))
+
+print("n elements: {}, end time: {}".format(n_elements,end_time))
 print("prefactor: ",Conductivity/(Am*Cm))
 
 # determine if fibre gets stimulation at given time
@@ -163,7 +179,7 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ImplicitEuler" : {
+      "ExplicitEuler" : {
         #"initialValues": [2,2,4,5,2,2],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,

@@ -55,7 +55,8 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  bool setInitialValues(Vec &initialValues);
+  template<typename FunctionSpaceType>
+  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;

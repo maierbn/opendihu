@@ -36,7 +36,8 @@ public:
   void initialize();
   
   ///! set initial values as given in python config
-  bool setInitialValues(Vec& initialValues);
+  template<typename FunctionSpaceType>
+  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
 
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
@@ -55,7 +56,7 @@ public:
 protected:
 
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
-  virtual bool scanSourceFile(std::string sourceFilename, std::vector<double> &statesInitialValues) = 0;
+  virtual bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues) = 0;
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
@@ -63,7 +64,7 @@ protected:
 
   std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
 
-  int nInstances_;         ///< number of instances of the CellML problem, equals number of mesh nodes
+  int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem
   int nIntermediates_ = 0; ///< number of intermediate values (=CellML name "wanted") in one instance of the CellML problem
   int nConstants_ = 0;     ///< number of entries in the "CONSTANTS" array
@@ -72,7 +73,7 @@ protected:
   //std::vector<double> rates_;     ///< vector of rates, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
   std::vector<double> parameters_; ///< vector of values that will be provided to CellML by the code, given by python config, CellML name: known
   std::vector<double> intermediates_;    ///< vector of intermediate values in DAE system. These can be computed directly from the actual states at any time. Gets computed by rhsRoutine from states, together with rates. OpenCMISS name is intermediate, CellML name: wanted
-  std::vector<double> statesInitialValues_;  ///< initial values of the states for one instances, as parsed from source file
+  std::array<double,nStates> statesInitialValues_;  ///< initial values of the states for one instances, as parsed from source file
   
   std::vector<int> parametersUsedAsIntermediate_;  ///< explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array
   std::vector<int> parametersUsedAsConstant_;  ///< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants 

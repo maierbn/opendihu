@@ -22,9 +22,8 @@ void MultidomainSolver<DiscretizableInTime>::advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
-  double timeStepWidth = timeSpan / this->numberTimeSteps_;
 
-  LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << timeStepWidth
+  LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // loop over time steps

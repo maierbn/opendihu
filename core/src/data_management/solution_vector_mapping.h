@@ -19,25 +19,33 @@ class SolutionVectorMapping
 {
 public:
   //! constructor
-  SolutionVectorMapping(bool canProvideInternalContiguousSolutionPointer);
+  SolutionVectorMapping();
+
+  //! set the component no
+  void setOutputComponentNo(int outputComponentNo);
 
   //! set the index range of the solution vector to be considered for transfor
-  void setOutputRange(int outputIndexBegin, int outputIndexEnd);
+  //void setOutputRange(int outputIndexBegin, int outputIndexEnd);
 
   //! set a scaling factor by which the result will be scaled when transferring
   void setScalingFactor(double factor);
 
   //! transfer data from solution1 to solution2, where solution1 corresponds to "this" object, solution2 corresponds to solutionVectorMapping2
-  void transfer(Vec &solution1, SolutionVectorMapping &solutionVectorMapping2, Vec &solution2);
+  template<typename FieldVariable1, typename FieldVariable2>
+  void transfer(FieldVariable1 &solution1, SolutionVectorMapping &solutionVectorMapping2, FieldVariable2 &solution2);
 
-  void copyFromSolutionToDataPointer(Vec &solution, double *data);
-  void copyFromDataPointerToSolution(const double *data, Vec &solution);
+  //void copyFromSolutionToDataPointer(Vec &solution, double *data);
+  //void copyFromDataPointerToSolution(const double *data, Vec &solution);
 private:
 
- int outputIndexBegin_;
- int outputIndexEnd_;
- int outputSize_;
+ //int outputIndexBegin_;
+ //int outputIndexEnd_;
+ //int outputSize_;
  double scalingFactor_;   ///< the prefactor with which the results is scaled when transferring from solution1 to solution2
 
- bool canProvideInternalContiguousSolutionPointer_;
+ int outputComponentNo_;  ///< the component of the solution vector which should be transferred to the other solution vector
+
+ //bool canProvideInternalContiguousSolutionPointer_;
 };
+
+#include "solution_vector_mapping.tpp"

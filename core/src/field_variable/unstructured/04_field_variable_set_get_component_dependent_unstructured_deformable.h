@@ -29,7 +29,7 @@ public:
   using FieldVariableSetGetUnstructured<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::getValue;
 
   //! get a single value from local dof no. for all components
-  std::array<double,nComponents> getValue(node_no_t dofLocalNo);
+  std::array<double,nComponents> getValue(node_no_t dofLocalNo) const;
 
 };
 
@@ -56,16 +56,16 @@ public:
   using FieldVariableSetGetUnstructured<FunctionSpaceType,1>::setValuesWithoutGhosts;
 
   //! get the values corresponding to all element-local dofs for all components
-  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values);
+  void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
   //! get a single value from local dof no. for all components
-  double getValue(node_no_t dofLocalNo);
+  double getValue(node_no_t dofLocalNo) const;
 
   //! get all stored local values
-  void getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues=false);
+  void getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues=false) const;
   
   //! get all stored local values
-  void getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues=false);
+  void getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues=false) const;
   
   //! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);

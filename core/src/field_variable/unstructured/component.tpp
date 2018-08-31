@@ -208,19 +208,22 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
 }
 
 template<typename FunctionSpaceType,int nComponents>
-dof_no_t Component<FunctionSpaceType,nComponents>::nDofsLocal() const
+dof_no_t Component<FunctionSpaceType,nComponents>::
+nDofsLocal() const
 {
   return this->elementToDofMapping_->nDofsLocal();
 }
 
 template<typename FunctionSpaceType,int nComponents>
-element_no_t Component<FunctionSpaceType,nComponents>::nElementsLocal() const
+element_no_t Component<FunctionSpaceType,nComponents>::
+nElementsLocal() const
 {
   return this->nElements_;
 }
 
 template<typename FunctionSpaceType,int nComponents>
-std::string Component<FunctionSpaceType,nComponents>::name() const
+std::string Component<FunctionSpaceType,nComponents>::
+name() const
 {
   return this->name_;
 }
@@ -234,7 +237,7 @@ getDofNo(element_no_t elementNo, int dofIndex) const
 
 template<typename FunctionSpaceType,int nComponents>
 void Component<FunctionSpaceType,nComponents>::
-getValues(std::vector<double> &values, bool onlyNodalValues)
+getValues(std::vector<double> &values, bool onlyNodalValues) const
 {
   const dof_no_t nDofs = this->nDofsLocal();
 
@@ -264,7 +267,7 @@ getValues(std::vector<double> &values, bool onlyNodalValues)
 template<typename FunctionSpaceType,int nComponents>
 template<int N>
 void Component<FunctionSpaceType,nComponents>::
-getValues(std::array<dof_no_t,N> dofNosLocal, std::array<double,N> &values)
+getValues(std::array<dof_no_t,N> dofNosLocal, std::array<double,N> &values) const
 {
   assert (values_);
   values_->getValues(componentIndex_, N, dofNosLocal.data(), values.data());
@@ -272,7 +275,7 @@ getValues(std::array<dof_no_t,N> dofNosLocal, std::array<double,N> &values)
 
 template<typename FunctionSpaceType,int nComponents>
 void Component<FunctionSpaceType,nComponents>::
-getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values)
+getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values) const
 {
   const int nValues = dofNosLocal.size();
 
@@ -293,7 +296,7 @@ getValues(std::vector<dof_no_t> dofNosLocal, std::vector<double> &values)
 
 template<typename FunctionSpaceType,int nComponents>
 double Component<FunctionSpaceType,nComponents>::
-getValue(node_no_t dofLocalNo)
+getValue(node_no_t dofLocalNo) const
 {
   double value;
   std::array<int,1> indices{(int)(dofLocalNo)};
@@ -309,7 +312,7 @@ getValue(node_no_t dofLocalNo)
 
 template<typename FunctionSpaceType,int nComponents>
 void Component<FunctionSpaceType,nComponents>::
-getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values)
+getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   const std::vector<dof_no_t> &elementDofs = elementToDofMapping_->getElementDofs(elementNo);
 

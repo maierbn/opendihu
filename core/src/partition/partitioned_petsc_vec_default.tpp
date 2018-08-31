@@ -241,6 +241,94 @@ valuesGlobal(int componentNo)
   return values_[componentNo];
 }
 
+//! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+//! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+Vec &PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+getContiguousValuesGlobal()
+{
+  if (nComponents == 1)
+  {
+    return values_[0];
+  }
+
+  PetscErrorCode ierr;
+
+  // create contiguos vector if it does not exist yet
+  if (valuesContiguous_ == PETSC_NULL)
+  {
+    ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    ierr = PetscObjectSetName((PetscObject) valuesContiguous_, this->name_.c_str()); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    // initialize size of vector
+    int nEntriesLocal = this->meshPartition_->nDofs() * nComponents;
+    int nEntriesGlobal = nEntriesLocal;
+    ierr = VecSetSizes(valuesContiguous_, nEntriesLocal, nEntriesGlobal); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    // set sparsity type and other options
+    ierr = VecSetFromOptions(valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    LOG(DEBUG) << "\"" << this->name_ << "\" (unstructured) create valuesContiguous_, nComponents = " << nComponents
+      << ", nEntriesLocal = " << nEntriesLocal << ", nEntriesGlobal = " << nEntriesGlobal;
+  }
+
+  double *valuesDataContiguous;
+  ierr = VecGetArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // copy values from component vectors to contiguous vector
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    const double *valuesDataComponent;
+    ierr = VecGetArrayRead(values_[componentNo], &valuesDataComponent); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    VLOG(1) << "  copy " << this->meshPartition_->nDofs()*sizeof(double) << " bytes to contiguous array";
+    memcpy(
+      valuesDataContiguous + componentNo*this->meshPartition_->nDofs(),
+      valuesDataComponent,
+      this->meshPartition_->nDofs()*sizeof(double)
+    );
+
+    ierr = VecRestoreArrayRead(values_[componentNo], &valuesDataComponent); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  }
+
+  ierr = VecRestoreArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  return valuesContiguous_;
+}
+
+//! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
+//! this has to be called
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+restoreContiguousValuesGlobal()
+{
+  if (nComponents == 1)
+    return;
+
+  assert(valuesContiguous_ != PETSC_NULL);
+
+  PetscErrorCode ierr;
+  const double *valuesDataContiguous;
+  ierr = VecGetArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
+
+  // copy values from component vectors to contiguous vector
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    double *valuesDataComponent;
+    ierr = VecGetArray(values_[componentNo], &valuesDataComponent); CHKERRV(ierr);
+
+    VLOG(1) << "  component " << componentNo << ", copy " << this->meshPartition_->nDofs() << " values, " << this->meshPartition_->nDofs()*sizeof(double) << " bytes from contiguous array";
+    memcpy(
+      valuesDataComponent,
+      valuesDataContiguous + componentNo*this->meshPartition_->nDofs(),
+      this->meshPartition_->nDofs()*sizeof(double)
+    );
+
+    ierr = VecRestoreArray(values_[componentNo], &valuesDataComponent); CHKERRV(ierr);
+  }
+
+  ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
+}
+
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 output(std::ostream &stream)
@@ -256,8 +344,8 @@ output(std::ostream &stream)
     // get global size of matrix 
     int nRows, nColumns, nRowsLocal, nColumnsLocal;
     PetscErrorCode ierr;
-    ierr = MatGetSize(values_[componentNo], &nRows, &nColumns); CHKERRV(ierr);
-    ierr = MatGetLocalSize(values_[componentNo], &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
+    ierr = MatGetSize(values_[componentNo], &nRows, &nColumns); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    ierr = MatGetLocalSize(values_[componentNo], &nRowsLocal, &nColumnsLocal); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
     
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();

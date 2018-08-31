@@ -33,7 +33,9 @@ public:
   virtual int nComponentsNode();
 
   //! set initial values and return true or don't do anything and return false
-  virtual bool setInitialValues(Vec &initialValues);
+  // this could use std::any (c++17)
+  //template<typename FieldVariableType>
+  //virtual bool setInitialValues(FieldVariableType &initialValues);
 
   //! get the names of components to be used for the solution variable
   virtual void getComponentNames(std::vector<std::string> &componentNames);

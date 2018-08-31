@@ -116,8 +116,8 @@ applyBoundaryConditionsWeakForm()
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
       {
-        global_no_t elementNoGlobal = functionSpace->meshPartition()->getElementNoGlobal(elementNoLocal);
-        nodeNo = functionSpace->getNodeNoGlobal(elementNoGlobal, nodeIndex);
+        global_no_t elementNoGlobalNatural = functionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+        nodeNo = functionSpace->getNodeNoGlobalNatural(elementNoGlobalNatural, nodeIndex);
       }
       else
       {

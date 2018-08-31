@@ -42,7 +42,6 @@ advanceTimeSpan()
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
     
-    
     LOG(DEBUG) << "  Godunov: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
     this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),

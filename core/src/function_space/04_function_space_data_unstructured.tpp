@@ -82,12 +82,12 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   return this->elementToNodeMapping_->getElement(elementNo).nodeGlobalNo[nodeIndex];
 }
 
-//! return the global node number of element-local node nodeIndex of element with global no elementNoGlobal
+//! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
 template<int D,typename BasisFunctionType>
 global_no_t FunctionSpaceDataUnstructured<D,BasisFunctionType>::
-getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
 {
-  return this->getNodeNo(elementNoGlobal, nodeIndex);
+  return this->getNodeNo(elementNoGlobalNatural, nodeIndex);
 }
 
 template<int D,typename BasisFunctionType>

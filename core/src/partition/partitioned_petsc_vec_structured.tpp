@@ -59,7 +59,7 @@ void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType
 createVector()
 {
   VLOG(2) << "\"" << this->name_ << "\" createVector with " << nComponents << " components, size local: " << this->meshPartition_->nNodesLocalWithoutGhosts() 
-    << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghost dof global nos: " << this->meshPartition_->ghostDofGlobalNos();
+    << ", global: " << this->meshPartition_->nNodesGlobal() << ", ghost dof nos global/petsc: " << this->meshPartition_->ghostDofNosGlobalPetsc();
   PetscErrorCode ierr;
   
   // The local vector contains the nodal/dof values for the local portion of the current rank. This includes ghost nodes.
@@ -73,7 +73,7 @@ createVector()
   {
     const dof_no_t nGhostDofs = this->meshPartition_->nDofsLocalWithGhosts() - this->meshPartition_->nDofsLocalWithoutGhosts();
     ierr = VecCreateGhost(this->meshPartition_->mpiCommunicator(), this->meshPartition_->nDofsLocalWithoutGhosts(),
-                          this->meshPartition_->nDofsGlobal(), nGhostDofs, this->meshPartition_->ghostDofGlobalNos().data(), &vectorGlobal_[componentNo]); CHKERRV(ierr);
+                          this->meshPartition_->nDofsGlobal(), nGhostDofs, this->meshPartition_->ghostDofNosGlobalPetsc().data(), &vectorGlobal_[componentNo]); CHKERRV(ierr);
     
     
     /*ierr = DMCreateGlobalVector(*dm_, &vectorGlobal_[componentNo]); CHKERRV(ierr);
@@ -184,7 +184,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
+getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   // this wraps the standard PETSc VecGetValues on the global vector
   PetscErrorCode ierr;
@@ -194,7 +194,7 @@ getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], Petsc
   if (VLOG_IS_ON(3))
   {
     std::stringstream str;
-    str << "\"" << this->name_ << "\" getValuesGlobalIndexing(componentNo=" << componentNo << ", indices=";
+    str << "\"" << this->name_ << "\" getValuesGlobalPetscIndexing(componentNo=" << componentNo << ", indices=";
     for (int i = 0; i < ni; i++)
     {
       str << ix[i] << " ";
@@ -435,7 +435,10 @@ output(std::ostream &stream)
   MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
   MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
   
-  startVectorManipulation();
+  bool vectorManipulationStartedPreviousState = vectorManipulationStarted_;
+
+  if (!vectorManipulationStartedPreviousState)
+    startVectorManipulation();
 
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -454,6 +457,8 @@ output(std::ostream &stream)
     
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
+    // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+    // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
     MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
     
     int maxLocalSize;
@@ -490,6 +495,8 @@ output(std::ostream &stream)
     }
   }  // componentNo
 
-  finishVectorManipulation();
+  if (!vectorManipulationStartedPreviousState)
+    finishVectorManipulation();
+
 #endif
 }

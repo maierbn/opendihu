@@ -56,8 +56,8 @@ public:
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
-  //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
-  void getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
+  //! wrapper to the PETSc VecGetValues, on the global vector with global/Petsc indexing. This is not the global natural numbering!
+  void getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
   //! set all entries to zero, wraps VecZeroEntries
   void zeroEntries();
@@ -135,8 +135,8 @@ public:
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
-  //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
-  void getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
+  //! wrapper to the PETSc VecGetValues, on the global vector with global/Petsc indexing. This is not the global natural numbering!
+  void getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
   
   //! get all locally stored values, i.e. with ghosts
   void getLocalValues(int componentNo, std::vector<double> &values);

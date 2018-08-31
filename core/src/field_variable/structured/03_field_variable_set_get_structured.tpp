@@ -41,7 +41,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
   assert(componentNo >= 0 && componentNo < nComponents);
  
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
-  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
   if (onlyNodalValues)
   {
     const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();

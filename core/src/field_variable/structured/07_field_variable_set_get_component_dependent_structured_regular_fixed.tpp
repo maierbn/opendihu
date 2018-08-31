@@ -46,15 +46,15 @@ getValue(node_no_t dofLocalNo) const
   else
   {
     // x direction
-    value[0] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+    value[0] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
       + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
 
     // y direction
-    value[1] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+    value[1] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
       + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
 
     // z direction
-    value[2] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+    value[2] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
       + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
   }
   

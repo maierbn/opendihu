@@ -119,7 +119,7 @@ def load_data(filenames):
    
     # merge group data
     merged_data = copy.deepcopy(group_data[0])
-    del merged_data['beginNodeGlobal']
+    del merged_data['beginNodeGlobalNatural']
     del merged_data['hasFullNumberOfNodes']
     del merged_data['nElementsLocal']
     del merged_data['ownRankNo']
@@ -173,7 +173,7 @@ def load_data(filenames):
           indices_begin = []
           indices_end = []
           for i in range(dimension):
-            begin_node_global = data['beginNodeGlobal'][i]
+            begin_node_global = data['beginNodeGlobalNatural'][i]
             indices_begin.append(begin_node_global)
             indices_end.append(begin_node_global+n_nodes_local[i])
           

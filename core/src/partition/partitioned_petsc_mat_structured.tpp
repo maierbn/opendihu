@@ -193,7 +193,7 @@ assembly(MatAssemblyType type)
 
 template<typename MeshType, typename BasisFunctionType>
 void PartitionedPetscMat<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[])
+getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[])
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
   PetscErrorCode ierr;

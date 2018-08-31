@@ -59,7 +59,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
         if (componentNo == 0)  // "x"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
             + nodeX * this->functionSpace_->meshWidth();
         }
         else if (componentNo == 1)  // "y"
@@ -71,7 +71,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
           }
           else
           {
-            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
               + nodeY * this->functionSpace_->meshWidth();
           }
         }
@@ -84,7 +84,7 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
           }
           else
           {
-            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
               + nodeZ * this->functionSpace_->meshWidth();
           }
         }
@@ -154,7 +154,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
         if (componentNo == 0)  // "x"
         {
           assert(vectorIndex < values.size());
-          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+          values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
             + nodeX * this->functionSpace_->meshWidth();
         }
         else if (componentNo == 1)  // "y"
@@ -166,7 +166,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
           }
           else
           {
-            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
               + nodeY * this->functionSpace_->meshWidth();
           }
         }
@@ -179,7 +179,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
           }
           else
           {
-            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+            values[vectorIndex++] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
               + nodeZ * this->functionSpace_->meshWidth();
           }
         }
@@ -237,7 +237,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
     {
       if (componentNo == 0)   // x direction
       {
-        values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
         + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
       }
       else if (componentNo == 1)   // y direction
@@ -248,7 +248,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
             + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
         }
       }
@@ -260,7 +260,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
             + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
         }
       }
@@ -310,7 +310,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
     {
       if (componentNo == 0)   // x direction
       {
-        values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+        values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
         + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
       }
       else if (componentNo == 1)   // y direction
@@ -321,7 +321,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
             + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
         }
       }
@@ -333,7 +333,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
             + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
         }
       }
@@ -381,7 +381,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
     else
     {
       // x direction
-      values[i][0] = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+      values[i][0] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
         + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
 
       // y direction
@@ -391,7 +391,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][1] = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+        values[i][1] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
           + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
       }
 
@@ -402,7 +402,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][2] = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+        values[i][2] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
           + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
       }
     }
@@ -486,7 +486,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   {
     if (componentNo == 0)   // x direction
     {
-      value = this->functionSpace_->meshPartition()->beginNodeGlobal(0) * this->functionSpace_->meshWidth()
+      value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
         + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
     }
     else if (componentNo == 1)   // y direction
@@ -497,7 +497,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
       }
       else
       {
-        value = this->functionSpace_->meshPartition()->beginNodeGlobal(1) * this->functionSpace_->meshWidth()
+        value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
           + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
       }
     }
@@ -509,7 +509,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
       }
       else
       {
-        value = this->functionSpace_->meshPartition()->beginNodeGlobal(2) * this->functionSpace_->meshWidth()
+        value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
           + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
       }
     }

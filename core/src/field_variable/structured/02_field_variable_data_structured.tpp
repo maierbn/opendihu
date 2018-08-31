@@ -98,16 +98,19 @@ FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, st
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
    << ", components: " << nComponents;
 
-  bool usesStencils = (std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
+  bool isStructuredRegularFixed = std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
     || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<2>>::value
-    || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<3>>::value) &&
-    std::is_same<typename FunctionSpaceType::BasisFunction, BasisFunction::LagrangeOfOrder<1>>::value;
+    || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<3>>::value;
 
   // create a new values vector for the new field variable
-  if (!this->isGeometryField_ || !usesStencils)
+  if (!this->isGeometryField_ || !isStructuredRegularFixed)
   {
-    LOG(DEBUG) << "create a geometry field without values_ vector";
+    LOG(DEBUG) << "create a field variable with values_ vector";
     this->values_ = std::make_shared<PartitionedPetscVec<FunctionSpaceType,nComponents>>(this->functionSpace_->meshPartition(), name);
+  }
+  else
+  {
+    LOG(DEBUG) << "create a geometry field variable without values_ vector (because it isStructuredRegularFixed)";
   }
 }
 
@@ -291,17 +294,30 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 output(std::ostream &stream) const
 {
-  stream << "\"" << this->name_ << "\""
-    << ", isGeometryField: " << std::boolalpha << isGeometryField_
-    << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
-  for (auto &componentName : this->componentNames_)
+  // only output if on rank 0
+  if (this->functionSpace_->meshPartition()->ownRankNo() == 0)
   {
-    stream << "\"" << componentName << "\", ";
+    stream << "\"" << this->name_ << "\""
+      << ", isGeometryField: " << std::boolalpha << isGeometryField_
+      << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
+    for (auto &componentName : this->componentNames_)
+    {
+      stream << "\"" << componentName << "\", ";
+    }
   }
+
   if (values_)
+  {
+    // the values have to be output from all ranks
     stream << *values_;
+  }
   else
-    stream << "(values not set)";
+  {
+    if (this->functionSpace_->meshPartition()->ownRankNo() == 0)
+    {
+      stream << "(values not set)";
+    }
+  }
 }
 
 };

@@ -39,13 +39,13 @@ if not env['no_tests']:
   print ""
   print "WARNING: only compiling tests ",src_files
 
-  program = env.Program('1_rank_tests', source=src_files)
+  #program = env.Program('1_rank_tests', source=src_files)
   #Depends(test, program)
   #env.Install(variant_directory, program)
 
   # add command that runs the tests after build
-  test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests')
-  AlwaysBuild(test)
+  #test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests')
+  #AlwaysBuild(test)
 
 
   # ---- parallel unit tests ----

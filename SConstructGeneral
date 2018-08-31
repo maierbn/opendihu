@@ -174,7 +174,7 @@ elif env["BUILD_TYPE"] == "preprocess":
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build
-  env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 

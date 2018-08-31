@@ -34,7 +34,7 @@ public:
   virtual void getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const = 0;
 
   //! get entries from the matrix that are locally stored, uses the global indexing
-  virtual void getValuesGlobalIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) = 0;
+  virtual void getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) = 0;
   
   //! get a reference to the local PETSc matrix
   virtual Mat &valuesLocal() = 0;

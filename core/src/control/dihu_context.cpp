@@ -408,11 +408,16 @@ void DihuContext::loadPythonScript(std::string text)
   LOG(INFO) << std::string(80, '-');
   try
   {
-    LOG(DEBUG) << "run python script";
+    // check if numpy module could be loaded
     PyObject *numpyModule = PyImport_ImportModule("numpy");
     if (numpyModule == NULL)
-      LOG(DEBUG) << "failed to import numpy";
+    {
+      LOG(ERROR) << "Failed to import numpy.";
+    }
+
+    // execute config script
     ret = PyRun_SimpleString(text.c_str());
+
     if (PyErr_Occurred())
     {
       PyErr_Print();
@@ -430,12 +435,14 @@ void DihuContext::loadPythonScript(std::string text)
     {
       // print error message and exit
       PyErr_Print();
-      exit(0);
+      LOG(FATAL) << "An error occured in the python config.";
     }
-    exit(0);
+
+    PyErr_Print();
+    LOG(FATAL) << "An error occured in the python config.";
   }
 
-  // load main module
+  // load main module and extract config
   PyObject *mainModule = PyImport_AddModule("__main__");
   pythonConfig_ = PyObject_GetAttrString(mainModule, "config");
   VLOG(4) << "create pythonConfig_ (initialize ref to 1)";

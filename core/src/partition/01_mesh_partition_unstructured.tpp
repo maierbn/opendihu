@@ -96,7 +96,7 @@ nDofs() const
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getElementNoGlobal(element_no_t elementNoLocal) const
+getElementNoGlobalNatural(element_no_t elementNoLocal) const
 {
   return (global_no_t)(elementNoLocal);
 }
@@ -104,7 +104,7 @@ getElementNoGlobal(element_no_t elementNoLocal) const
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalNodes(std::vector<T> &vector, int nComponents) const
+extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents) const
 {
   
 }

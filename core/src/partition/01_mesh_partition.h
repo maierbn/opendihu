@@ -87,8 +87,8 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithGhosts(int coordinateDirection) const;
   
-  //! number of nodes in the local partition
-  node_no_t nNodesLocalWithoutGhosts(int coordinateDirection) const;
+  //! number of nodes in the partition specified by partitionIndex or the current partition if partitionIndex == -1
+  node_no_t nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex = -1) const;
   
   //! number of elments in the local partition
   node_no_t nElementsLocal(int coordinateDirection) const;
@@ -99,15 +99,16 @@ public:
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
-  //! global no of first local node in current partition
-  node_no_t beginNodeGlobal(int coordinateDirection) const;
+  //! global no of first local node in the partition specified by partitionIndex or the current partition if partitionIndex == -1
+  global_no_t beginNodeGlobalNatural(int coordinateDirection, int partitionIndex = -1) const;
     
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
   //! get if there are nodes on both borders in the given coordinate direction
-  //! this is the case if the local partition touches the right/top/back border
-  bool hasFullNumberOfNodes(int coordinateDirection) const;
+  //! this is the case if the partition touches the right/top/back border
+  //! Consider the partition specified by partitionIndex or the current partition if partitionIndex == -1.
+  bool hasFullNumberOfNodes(int coordinateDirection, int partitionIndex = -1) const;
   
   //! get a vector with the local sizes on every rank
   const std::vector<element_no_t> &localSizesOnRanks(int coordinateDirection) const;
@@ -116,13 +117,13 @@ public:
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
   //! get the global element no for a local element no
-  global_no_t getElementNoGlobal(element_no_t elementNoLocal) const;
+  global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
 
-  //! from a vector of values of global node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
+  //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
-  void extractLocalNodes(std::vector<T> &vector, int nComponents=1) const;
+  void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;
   
-  //! from a vector of values of global dofs remove all that are non-local
+  //! from a vector of values of global/natural dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
   
   //! output to stream for debugging
@@ -133,7 +134,7 @@ public:
   const std::vector<PetscInt> &dofNosLocal(bool onlyNodalValues=false) const;
   
   //! get the global dof nos of the ghost dofs in the local partition
-  const std::vector<PetscInt> &ghostDofGlobalNos() const;
+  const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
 protected:
   
@@ -145,21 +146,29 @@ protected:
   
   //! fill the dofLocalNo vectors
   void createLocalDofOrderings();
+
+  //! determine the values of ownRankPartitioningIndex_
+  void setOwnRankPartitioningIndex();
   
+  //! get the index in terms of partitions of the partition that contains the given node no
+  std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural);
+
   std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
   
   std::array<int,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
   std::array<node_no_t,MeshType::dim()> nElementsLocal_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion (including ghost elements)
   std::array<global_no_t,MeshType::dim()> nElementsGlobal_;    ///< global number of elements in the coodinate directions
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
- 
-  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks_;  ///< the local sizes on the ranks
+  std::array<int,MeshType::dim()> ownRankPartitioningIndex_;   ///< the index in terms of partitions of the own partition
+
+  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks_;  ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnRanks_[0] is (width partition #0, width partition #1, ...)
+
   std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;   ///< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
   
   std::vector<dof_no_t> onlyNodalDofLocalNos_;   ///< vector of local nos of the dofs, not including derivatives for Hermite
-  std::vector<dof_no_t> ghostDofGlobalNos_;   ///< vector of global dof nos of the ghost dofs which are stored on the local partition
+  std::vector<dof_no_t> ghostDofNosGlobalPetsc_;   ///< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition
   
-  ISLocalToGlobalMapping localToGlobalMappingDofs_;   ///< local to global mapping for dofs
+  ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   ///< local to global mapping for dofs
 };
 
 /** Partial specialization for unstructured meshes 
@@ -201,14 +210,14 @@ public:
   global_no_t nDofs() const;
   
   //! get the global element no for a local element no, this only has an effect for structured meshes, not for unstructured meshes
-  global_no_t getElementNoGlobal(element_no_t elementNoLocal) const;
+  global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
 
   //! get the local to global mapping for the current partition
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
   //! from a vector of values of global node numbers remove all that are non-local, nComponents consecutive components are assumed for each dof
   template <typename T>
-  void extractLocalNodes(std::vector<T> &vector, int nComponents=1) const;
+  void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;
   
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;

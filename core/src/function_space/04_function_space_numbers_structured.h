@@ -39,8 +39,8 @@ public:
   //! return the local node number of element-local node nodeIndex of element with local no elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -71,8 +71,8 @@ public:
   //! return the local node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -103,8 +103,8 @@ public:
   //! return the local node number of element-local node nodeIndex of element elementNo
   node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
 
-  //! return the global node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;

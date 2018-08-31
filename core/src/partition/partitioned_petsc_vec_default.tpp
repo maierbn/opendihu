@@ -196,7 +196,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 //! wrapper to the PETSc VecGetValues, on the global vector with global indexing
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
-getValuesGlobalIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
+getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   getValues(componentNo, ni, ix, y);
 }
@@ -353,18 +353,23 @@ output(std::ostream &stream)
     
     VecGetValuesLocal(values_[componentNo], nDofsLocal, this->meshPartition_->dofNosLocal(), localValues.data());
     
+    // gather the local sizes of the vectors to rank 0
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
-    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), nRanks, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+    // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
+    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
     
+    // determine the maximum size/number of vector entries on any rank
     int maxLocalSize;
     MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
     
+    // gather all values to rank 0
     std::vector<double> recvBuffer(maxLocalSize*nRanks);
     std::vector<double> sendBuffer(maxLocalSize,0.0);
     std::copy(localSizes.begin(), localSizes.end(), sendBuffer.begin());
     
-    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize*nRanks, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
     
     if (ownRankNo == 0)
     {

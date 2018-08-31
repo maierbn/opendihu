@@ -277,11 +277,11 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
         nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
       }
 
-      offsetX = this->meshPartition_->beginNodeGlobal(0);
+      offsetX = this->meshPartition_->beginNodeGlobalNatural(0);
       if (D >= 2)
-        offsetY = this->meshPartition_->beginNodeGlobal(1);
+        offsetY = this->meshPartition_->beginNodeGlobalNatural(1);
       if (D >= 3)
-        offsetZ = this->meshPartition_->beginNodeGlobal(2);
+        offsetZ = this->meshPartition_->beginNodeGlobalNatural(2);
     }
     
     global_no_t nodeX, nodeY, nodeZ; // helper variables
@@ -317,7 +317,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
   // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
   if (inputMeshIsGlobal)
   {
-    this->meshPartition_->extractLocalNodes(localNodePositions_, 3);
+    this->meshPartition_->extractLocalNodesWithoutGhosts(localNodePositions_, 3);
   }
 }
 
@@ -326,7 +326,7 @@ template<int D,typename BasisFunctionType>
 void FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 setGeometryFieldValues()
 {
-  LOG(DEBUG) << " FunctionSpace StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
+  LOG(DEBUG) << " Mesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
 
   // compute number of (local) dofs
   dof_no_t nDofsLocal = this->nDofsLocalWithoutGhosts();
@@ -362,7 +362,7 @@ setGeometryFieldValues()
 
   this->setHermiteDerivatives();
 
-  LOG(DEBUG) << "setGeometryField, geometryValues: " << geometryValues.size();
+  VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
 
 };  // namespace

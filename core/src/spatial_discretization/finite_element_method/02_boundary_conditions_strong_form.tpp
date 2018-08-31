@@ -22,7 +22,7 @@ void BoundaryConditions<FunctionSpaceType,Quadrature::None,Term,Term>::
 applyBoundaryConditionsStrongForm()
 {
   // This sets rows and columns in stiffness matrix to 0 and diagonal to 1 for BC dofs.
-  // This only works in serial, because getValuesGlobalIndexing does not work for distributed matrices
+  // This only works in serial, because getValuesGlobalPetscIndexing does not work for distributed matrices
   // PETSc Mat object for stiffness matrix needs to be assembled for this.
 
   LOG(TRACE) << "applyBoundaryConditionsStrongForm";
@@ -98,7 +98,7 @@ applyBoundaryConditionsStrongForm()
 
     std::vector<double> coefficients(nDofsLocal);
 
-    stiffnessMatrix->getValuesGlobalIndexing(nDofsLocal, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
+    stiffnessMatrix->getValuesGlobalPetscIndexing(nDofsLocal, rowIndices.data(), 1, columnIndices.data(), coefficients.data());
 
     // set values of row and column of the DOF to zero and diagonal entry to 1
     int matrixIndex = (int)boundaryConditionDofNo;

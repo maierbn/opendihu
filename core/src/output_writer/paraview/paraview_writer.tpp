@@ -116,7 +116,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       std::array<node_no_t,6> extent = {0};
       for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
       {
-        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobal(dimensionNo);
+        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo);
         extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithoutGhosts(dimensionNo);
       }
 

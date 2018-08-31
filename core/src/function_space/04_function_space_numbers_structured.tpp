@@ -338,15 +338,15 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
 // element-local nodeIndex of global element to global nodeNo for 1D
 template<typename MeshType,typename BasisFunctionType>
 global_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>> ::
-getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
 {
-  return FunctionSpaceFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNoGlobal + nodeIndex;
+  return FunctionSpaceFunction<MeshType,BasisFunctionType>::averageNNodesPerElement() * elementNoGlobalNatural + nodeIndex;
 }
 
 // element-local nodeIndex of global element to global nodeNo for 2D
 template<typename MeshType,typename BasisFunctionType>
 global_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>> ::
-getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
 {
   const std::array<global_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionGlobal_;
   int averageNNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
@@ -354,8 +354,8 @@ getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
 
   // the number of non-ghost nodes in different rows
   global_no_t nodesPerRow = averageNNodesPerElement1D * nElements[0] + 1;
-  element_no_t elementX = element_no_t(elementNoGlobal % nElements[0]);
-  element_no_t elementY = element_no_t(elementNoGlobal / nElements[0]);
+  element_no_t elementX = element_no_t(elementNoGlobalNatural % nElements[0]);
+  element_no_t elementY = element_no_t(elementNoGlobalNatural / nElements[0]);
   dof_no_t localX = nodeIndex % nNodesPerElement1D;
   dof_no_t localY = dof_no_t(nodeIndex / nNodesPerElement1D);
 
@@ -366,7 +366,7 @@ getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
 // element-local nodeIndex of global element to global nodeNo for 3D
 template<typename MeshType,typename BasisFunctionType>
 global_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>> ::
-getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
+getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
 {
   const std::array<global_no_t, MeshType::dim()> &nElements = this->nElementsPerCoordinateDirectionGlobal_;
   int averageNNodesPerElement1D = FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
@@ -374,9 +374,9 @@ getNodeNoGlobal(global_no_t elementNoGlobal, int nodeIndex) const
   global_no_t nodesPerRow0 = averageNNodesPerElement1D * nElements[0] + 1;
   global_no_t nodesPerPlane = (averageNNodesPerElement1D * nElements[1] + 1) * nodesPerRow0;
 
-  element_no_t elementZ = element_no_t(elementNoGlobal / (nElements[0] * nElements[1]));
-  element_no_t elementY = element_no_t((elementNoGlobal % (nElements[0] * nElements[1])) / nElements[0]);
-  element_no_t elementX = elementNoGlobal % nElements[0];
+  element_no_t elementZ = element_no_t(elementNoGlobalNatural / (nElements[0] * nElements[1]));
+  element_no_t elementY = element_no_t((elementNoGlobalNatural % (nElements[0] * nElements[1])) / nElements[0]);
+  element_no_t elementX = elementNoGlobalNatural % nElements[0];
   node_no_t localZ = node_no_t(nodeIndex / MathUtility::sqr(nNodesPerElement1D));
   node_no_t localY = node_no_t((nodeIndex % MathUtility::sqr(nNodesPerElement1D)) / nNodesPerElement1D);
   node_no_t localX = nodeIndex % nNodesPerElement1D;

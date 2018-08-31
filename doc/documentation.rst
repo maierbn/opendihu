@@ -44,6 +44,15 @@ Consistent naming of local and global quantities:
 <x>Global
 E.g. nNodesLocalWithGhosts() or nDofsGlobal()
 
+Numbering Schemes:
+1. Global natural numbering, starting at 0 at the front left bottom corner, then continuing in x-direction, then y-direction, then z-direction (if in 3D)
+   This numbering is used for global input of Dirichlet boundary conditions or right hand side values
+2. Local numbering, per partition, starting from 0 to nDofsLocalWithoutGhosts-1, only numbering the non-ghost local dofs, in the same order as the global natural numbering but in the local partition.
+   Then from nDofsLocalWithoutGhosts to nDofsLocalWithGhosts-1 the ghost dofs are numbered, again in the order given by the global natural numering.
+   This numbering is used for accessing local vectors and matrices. One can access all values including ghosts by using the whole range or only access the non-ghost values by using the range [0,nDofsLocalWithoutGhosts-1]
+3. Global Petsc numbering, starts at 0 on rank 0 and follows the local numbering for the non-ghost dofs, then it continues on rank 1 and follows the non-ghost dofs there and so on.
+   This is the numbering that has to be used for accessing global Petsc vectors and matrices, however this is not needed because one can access these vectors and matrices through the local vectors and matrices.
+   It is needed for the creation of the Vecs and Mats.
 
 Howto debug:
 1.GDB

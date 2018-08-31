@@ -55,16 +55,16 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   std::copy(nElementsPerCoordinateDirectionLocal.begin(), nElementsPerCoordinateDirectionLocal.end(), nElementsPerCoordinateDirectionLocalArray.begin());
   PyObject *pyNElementsLocal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(nElementsPerCoordinateDirectionLocalArray);
 
-  std::array<long, FunctionSpaceType::dim()> beginNodeGlobal;
+  std::array<long, FunctionSpaceType::dim()> beginNodeGlobalNatural;
   std::array<bool, FunctionSpaceType::dim()> hasFullNumberOfNodes;
 
   for (int i = 0; i < FunctionSpaceType::dim(); i++)
   {
-    beginNodeGlobal[i] = mesh->meshPartition()->beginNodeGlobal(i);
+    beginNodeGlobalNatural[i] = mesh->meshPartition()->beginNodeGlobalNatural(i);
     hasFullNumberOfNodes[i] = mesh->meshPartition()->hasFullNumberOfNodes(i);
   }
 
-  PyObject *pyBeginNodeGlobal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(beginNodeGlobal);
+  PyObject *pyBeginNodeGlobal = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(beginNodeGlobalNatural);
   PyObject *pyHasFullNumberOfNodes = PythonUtility::convertToPythonList<FunctionSpaceType::dim()>(hasFullNumberOfNodes);
 
   // convert basis function information
@@ -83,7 +83,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   PyObject *data = Py_BuildValue("{s s, s i, s O, s O, s O, s O, s s, s i, s O, s i, s i, s O, s i, s d}",
                                  "meshType", "StructuredDeformable",
                                  "dimension", D, "nElementsGlobal", pyNElementsGlobal, "nElementsLocal", pyNElementsLocal,
-                                 "beginNodeGlobal", pyBeginNodeGlobal, "hasFullNumberOfNodes", pyHasFullNumberOfNodes,
+                                 "beginNodeGlobalNatural", pyBeginNodeGlobal, "hasFullNumberOfNodes", pyHasFullNumberOfNodes,
                                  "basisFunction", basisFunction.c_str(), "basisOrder", basisOrder,
                                  "onlyNodalValues", onlyNodalValues ? Py_True: Py_False,
                                  "nRanks", nRanks, "ownRankNo", ownRankNo,

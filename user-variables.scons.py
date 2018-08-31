@@ -67,7 +67,7 @@ GOOGLETEST_DOWNLOAD=True
 
 # SEMT
 SEMT_DOWNLOAD=True
-#SEMT_REDOWNLOAD=True
+SEMT_REDOWNLOAD=True  # you can comment out this, once it has reinstalled SEMT. This is only needed for the travis CI test cases which use an older docker container for the builds.
 
 # EasyLoggingPP
 EASYLOGGINGPP_DOWNLOAD=True

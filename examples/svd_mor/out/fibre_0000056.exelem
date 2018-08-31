@@ -1,0 +1,91 @@
+ Group name: MeshFibre
+ Shape. Dimension=1, line
+ #Scale factor sets=0
+ #Nodes=2
+ #Fields=2
+ 1) geometry, coordinate, rectangular cartesian, #Components=3
+ x.   l.Lagrange, no modify, standard node based.
+   #Nodes= 2
+   1.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+   2.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+ y.   l.Lagrange, no modify, standard node based.
+   #Nodes= 2
+   1.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+   2.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+ z.   l.Lagrange, no modify, standard node based.
+   #Nodes= 2
+   1.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+   2.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+ 2) solution, field, rectangular cartesian, #Components=1
+ 0.   l.Lagrange, no modify, standard node based.
+   #Nodes= 2
+   1.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+   2.  #Values=1
+      Value indices:  1      Scale factor indices: 0
+ Element:            1 0 0
+   Nodes:
+        1        2
+ Element:            2 0 0
+   Nodes:
+        2        3
+ Element:            3 0 0
+   Nodes:
+        3        4
+ Element:            4 0 0
+   Nodes:
+        4        5
+ Element:            5 0 0
+   Nodes:
+        5        6
+ Element:            6 0 0
+   Nodes:
+        6        7
+ Element:            7 0 0
+   Nodes:
+        7        8
+ Element:            8 0 0
+   Nodes:
+        8        9
+ Element:            9 0 0
+   Nodes:
+        9       10
+ Element:            10 0 0
+   Nodes:
+       10       11
+ Element:            11 0 0
+   Nodes:
+       11       12
+ Element:            12 0 0
+   Nodes:
+       12       13
+ Element:            13 0 0
+   Nodes:
+       13       14
+ Element:            14 0 0
+   Nodes:
+       14       15
+ Element:            15 0 0
+   Nodes:
+       15       16
+ Element:            16 0 0
+   Nodes:
+       16       17
+ Element:            17 0 0
+   Nodes:
+       17       18
+ Element:            18 0 0
+   Nodes:
+       18       19
+ Element:            19 0 0
+   Nodes:
+       19       20
+ Element:            20 0 0
+   Nodes:
+       20       21

@@ -72,14 +72,14 @@ createVector()
 //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
-startVectorManipulation()
+startGhostManipulation()
 {
 }
 
 //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
-finishVectorManipulation()
+finishGhostManipulation()
 {
   assert(values_.size() == nComponents);
   
@@ -153,7 +153,7 @@ setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs)
 {
   assert(values_.size() == nComponents);
   
-  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startGhostManipulation()";
   
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)

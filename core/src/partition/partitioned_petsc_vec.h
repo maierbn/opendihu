@@ -39,10 +39,10 @@ public:
   PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name);
   
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-  void startVectorManipulation();
+  void startGhostManipulation();
   
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-  void finishVectorManipulation();
+  void finishGhostManipulation();
   
   //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
   void setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora);
@@ -112,10 +112,10 @@ public:
   PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
  
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-  void startVectorManipulation();
+  void startGhostManipulation();
   
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
-  void finishVectorManipulation();
+  void finishGhostManipulation();
   
   //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
   void setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora);
@@ -170,9 +170,9 @@ protected:
   void createVector();
   
   std::shared_ptr<DM> dm_;    ///< PETSc DMDA object that stores topology information and everything needed for communication of ghost values
-  bool vectorManipulationStarted_;   ///< if startVectorManipulation() was called but not yet finishVectorManipulation(). This indicates that finishVectorManipulation() can be called next without giving an error.
+  bool ghostManipulationStarted_;   ///< if startGhostManipulation() was called but not yet finishGhostManipulation(). This indicates that finishGhostManipulation() can be called next without giving an error.
   
-  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startVectorManipulation and can the be manipulated, afterwards the results need to get copied back by finishVectorManipulation
+  std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
 };

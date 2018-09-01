@@ -6,17 +6,17 @@ namespace FieldVariable
 //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that the current state of the vector is fetched from the global vector
 template<typename FunctionSpaceType,int nComponents>
 void FieldVariable<FunctionSpaceType,nComponents>::
-startVectorManipulation()
+startGhostManipulation()
 {
-  this->values_->startVectorManipulation();
+  this->values_->startGhostManipulation();
 }
   
 //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that operations on different partitions are merged by Petsc
 template<typename FunctionSpaceType,int nComponents>
 void FieldVariable<FunctionSpaceType,nComponents>::
-finishVectorManipulation()
+finishGhostManipulation()
 {
-  this->values_->finishVectorManipulation();
+  this->values_->finishGhostManipulation();
 }
 
 };  // namespace

@@ -209,9 +209,13 @@ ny = 2   # number of elements in y direction
 bc = {}
 for i in range(int(nx+1)):
   x = i/(nx+1.)
-  bc[i] = np.sin(x*np.pi)
+  #bc[i] = np.sin(x*np.pi)
+  bc[i] = i
   i2 = (nx+1)*ny + i
-  bc[i2] = np.sin(x*np.pi)
+  #bc[i2] = np.sin(x*np.pi)
+  bc[i2] = 10*i
+
+print("{} x {} nodes, Dirichlet boundary conditions: {}".format(nx+1,ny+1,bc))
 
 config = {
   "FiniteElementMethod": {

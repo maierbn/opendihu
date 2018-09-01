@@ -52,8 +52,6 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    this->data_->increment().startVectorManipulation();
-    this->data_->increment().finishVectorManipulation();
     VLOG(1) << "computed increment: " << this->data_->increment();
 
     // integrate, y += dt * delta_u
@@ -63,8 +61,6 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    this->data_->solution().startVectorManipulation();
-    this->data_->solution().finishVectorManipulation();
     VLOG(1) << "solution after integration: " << this->data_->solution();
 
     // write current output values

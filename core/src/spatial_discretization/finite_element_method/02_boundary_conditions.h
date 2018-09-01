@@ -23,6 +23,18 @@ protected:
 
   //! apply boundary conditions in weak form by adding a term to the rhs
   void applyBoundaryConditionsWeakForm();
+
+  //! parse config and fill local member variables
+  void parseBoundaryConditions();
+
+  struct ElementWithNodes
+  {
+    element_no_t elementNoLocal;   ///< local element no
+    std::vector<std::pair<int,double>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
+  };
+  std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
+  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
+  std::vector<double> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
 };
 
 /**

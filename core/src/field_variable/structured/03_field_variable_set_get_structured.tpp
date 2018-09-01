@@ -183,7 +183,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   return result;
 }
   
-//! set values for all components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
@@ -196,10 +196,10 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
   assert(dofNosLocal.size() == values.size());
 
   setValues(values.size(), dofNosLocal, values, petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
-//! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
@@ -222,10 +222,10 @@ setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vect
     this->values_->setValues(componentIndex, nValues, dofNosLocal.data(), valuesBuffer.data(), petscInsertMode);
   }
 
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
-//! set a single dof (all components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, InsertMode petscInsertMode)
@@ -238,7 +238,7 @@ setValue(dof_no_t dofLocalNo, const std::array<double,nComponents> &value, Inser
     this->values_->setValues(componentIndex, 1, &dofLocalNo, value.data()+componentIndex, petscInsertMode);
   }
 
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
 //! set value for all dofs
@@ -258,7 +258,7 @@ setValues(double value)
   }
 }
 
-//! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
@@ -270,7 +270,7 @@ setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMo
   this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
-//! set values for the specified component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode)
@@ -308,12 +308,4 @@ zeroEntries()
 {
   this->values_->zeroEntries();
 }
-  
-template<typename FunctionSpaceType, int nComponents>
-void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-finishVectorManipulation()
-{
-  this->values_->finishVectorManipulation();
-}
-
 };

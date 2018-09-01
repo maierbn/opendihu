@@ -38,7 +38,7 @@ multiplyRightHandSideWithMassMatrix()
   FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startVectorManipulation();
+  rightHandSide.startGhostManipulation();
   
   // stencil values
   // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
@@ -62,10 +62,6 @@ multiplyRightHandSideWithMassMatrix()
 
     rightHandSide.setValue(dofNo, value, INSERT_VALUES);
   }
-  
-  rightHandSide.finishVectorManipulation();
-  rightHandSide.startVectorManipulation();
-  
   
   // set entries for boundary nodes on edges
   // left boundary (x=0)
@@ -107,7 +103,7 @@ multiplyRightHandSideWithMassMatrix()
   rightHandSide.setValue(dofNo, value, ADD_VALUES);
 */
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishVectorManipulation();
+  rightHandSide.finishGhostManipulation();
 }
 
 // 2D rhs
@@ -130,7 +126,7 @@ multiplyRightHandSideWithMassMatrix()
   FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startVectorManipulation();
+  rightHandSide.startGhostManipulation();
   
   // stencil values
 
@@ -182,9 +178,6 @@ multiplyRightHandSideWithMassMatrix()
     }
   }
 
-  rightHandSide.finishVectorManipulation();
-  rightHandSide.startVectorManipulation();
-  
   // set entries for boundary nodes on edges
   // left boundary (x=0)
   for (int y=1; y<nNodes1-1; y++)
@@ -335,7 +328,7 @@ multiplyRightHandSideWithMassMatrix()
   rightHandSide.setValue(dofNo, value, ADD_VALUES);
 
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishVectorManipulation();
+  rightHandSide.finishGhostManipulation();
 }
 
 // 3D rhs
@@ -360,7 +353,7 @@ multiplyRightHandSideWithMassMatrix()
   FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startVectorManipulation();
+  rightHandSide.startGhostManipulation();
   
   // stencil values
 
@@ -451,9 +444,6 @@ multiplyRightHandSideWithMassMatrix()
     }
   }
 
-  rightHandSide.finishVectorManipulation();
-  rightHandSide.startVectorManipulation();
-  
   // set entries for boundary nodes on surface boundaries
   // left boundary (x = 0)
   for (int z=1; z<nNodes2-1; z++)
@@ -1055,7 +1045,7 @@ multiplyRightHandSideWithMassMatrix()
   rightHandSide.setValue(dofNo, value, ADD_VALUES);
 
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishVectorManipulation();
+  rightHandSide.finishGhostManipulation();
 }
 
 };

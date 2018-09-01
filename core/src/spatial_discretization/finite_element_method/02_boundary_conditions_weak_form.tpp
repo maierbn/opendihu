@@ -15,13 +15,27 @@ template<typename FunctionSpaceType,typename QuadratureType,typename Term,typena
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
+  if (VLOG_IS_ON(4))
+  {
+    VLOG(4) << "Finite element data before applyBoundaryConditions";
+    this->data_.print();
+  }
+
   applyBoundaryConditionsWeakForm();
+
+  if (VLOG_IS_ON(4))
+  {
+    VLOG(4) << "Finite element data after applyBoundaryConditions";
+    this->data_.print();
+  }
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
-applyBoundaryConditionsWeakForm()
+parseBoundaryConditions()
 {
+  LOG(TRACE) << "parseBoundaryConditions";
+
   std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
 
   // add weak form of Dirichlet BC to rhs
@@ -29,22 +43,6 @@ applyBoundaryConditionsWeakForm()
 
   // determine if the BC indices in the config are given for global or local dof nos
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
-  int nDofs = 0;
-  if (inputMeshIsGlobal)
-  {
-    nDofs = functionSpace->nDofsGlobal();
-  }
-  else
-  {
-    nDofs = functionSpace->nDofsLocalWithoutGhosts();
-  }
-
-  LOG(TRACE) << "applyBoundaryConditionsWeakForm";
-
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
-
-  rightHandSide.startVectorManipulation();
 
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
   // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.
@@ -67,6 +65,15 @@ applyBoundaryConditionsWeakForm()
   // To specifiy u=0 on the bottom, you would set:
   // bc[0] = 0, bc[2] = 0, bc[4] = 0
 
+  int nDofs = 0;
+  if (inputMeshIsGlobal)
+  {
+    nDofs = functionSpace->nDofsGlobal();
+  }
+  else
+  {
+    nDofs = functionSpace->nDofsLocalWithoutGhosts();
+  }
 
   // parse all boundary conditions that are given in config
   std::vector<std::pair<int,double>> boundaryConditions;  /// (index, value) pairs
@@ -75,6 +82,7 @@ applyBoundaryConditionsWeakForm()
   for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "DirichletBoundaryCondition");
           PythonUtility::getOptionDictNext<int, double>(this->specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
   {
+    // for negative indices add number of dofs such that -1 is the last dof, -2 is the second-last etc.
     if (boundaryCondition.first < 0)
     {
       boundaryCondition.first += nDofs;
@@ -83,29 +91,22 @@ applyBoundaryConditionsWeakForm()
   }
   if (boundaryConditions.empty())
   {
-    LOG(DEBUG) << "no boundary conditions found";
+    LOG(DEBUG) << "no boundary conditions specified";
     return;
   }
 
-  // sort all parsed boundary conditions for their element no
-  std::sort(boundaryConditions.begin(), boundaryConditions.end(), [](const std::pair<int,double> &item1, const std::pair<int,double> &item2){return item1.first < item2.first;});
-
-  // determine elements with nodes that have prescribed Dirichlet boundary conditions, store them in the vector boundaryConditionElements, which is organized by local elements
-  struct ElementWithNodes
+  // sort all parsed boundary conditions for their index no
+  auto compareFunction = [](const std::pair<int,double> &item1, const std::pair<int,double> &item2)
   {
-    element_no_t elementNoLocal;   ///< local element no
-    std::vector<std::pair<int,double>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
+    return item1.first < item2.first;
   };
-  std::vector<ElementWithNodes> boundaryConditionElements;   ///< nodes grouped by elements on which boundary conditions are specified
-  std::vector<dof_no_t> boundaryConditionDofLocalNos;        ///< vector of all local boundary condition dofs
-  std::vector<double> boundaryConditionValues;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos
+  std::sort(boundaryConditions.begin(), boundaryConditions.end(), compareFunction);
 
+  // determine elements with nodes that have prescribed Dirichlet boundary conditions, store them in the vector boundaryConditionElements_,
+  // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
 
-  // get the first dirichlet boundary condition from the list
-  std::vector<std::pair<int, double>>::const_iterator boundaryConditionIter = boundaryConditions.begin();
-
-  // loop over local elements
+  // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
     // loop over the nodes of this element
@@ -124,31 +125,50 @@ applyBoundaryConditionsWeakForm()
         nodeNo = functionSpace->getNodeNo(elementNoLocal, nodeIndex);
       }
 
-      // loop over dofs of node
+      // loop over dofs of node and thus over the elemental dofs
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, elementalDofIndex++)
       {
+        global_no_t indexForBoundaryCondition = nodeNo*nDofsPerNode + nodalDofIndex;
+
         // check if a dirichlet boundary condition for the current node is given
-        while (boundaryConditionIter->first < nodeNo*nDofsPerNode + nodalDofIndex && boundaryConditionIter != boundaryConditions.end())
+        bool boundaryConditionForDofFound = false;
+
+        // loop over all stored boundary conditions
+        double boundaryConditionValue;
+        for (std::vector<std::pair<int, double>>::const_iterator boundaryConditionIter = boundaryConditions.begin();
+             boundaryConditionIter != boundaryConditions.end(); boundaryConditionIter++)
         {
-          boundaryConditionIter++;
+          if (boundaryConditionIter->first == indexForBoundaryCondition)
+          {
+            boundaryConditionValue = boundaryConditionIter->second;
+            boundaryConditionForDofFound = true;
+            break;
+          }
+          if (boundaryConditionIter->first >= indexForBoundaryCondition)
+            break;
         }
 
+        // here boundaryConditionIter->first is equal to indexForBoundaryCondition (then the current element/node/dof matches the boundary condition)
+        // or boundaryConditionIter->first > indexForBoundaryCondition then the current dofIndex does not have any boundary condition
+        // or boundaryConditionIter == boundaryConditions.end() then, too
+
         // if the currently considered boundaryCondition entry from config matches the current nodeNo and nodalDofIndex
-        if (boundaryConditionIter->first == nodeNo*nDofsPerNode + nodalDofIndex)
+        if (boundaryConditionForDofFound)
         {
           // if there is not yet an entry in boundaryConditionElements with the current element, create one
           if (elementNoLocal != lastBoundaryConditionElement)
           {
             // add current element
-            boundaryConditionElements.emplace_back();
-            boundaryConditionElements.back().elementNoLocal = elementNoLocal;
+            boundaryConditionElements_.emplace_back();
+            boundaryConditionElements_.back().elementNoLocal = elementNoLocal;
 
             lastBoundaryConditionElement = elementNoLocal;
           }
 
           // add current node and boundary condition value to list of boundary conditions for current element
-          ElementWithNodes &boundaryConditionElement = boundaryConditionElements.back();
+          ElementWithNodes &boundaryConditionElement = boundaryConditionElements_.back();
 
+          /*
           // check if elementalDofIndex already contains the entry for elementalDofIndex
           bool dofIndexAlreadyContained = false;
           for (int i = 0; i < boundaryConditionElement.elementalDofIndex.size(); i++)
@@ -162,40 +182,63 @@ applyBoundaryConditionsWeakForm()
 
           // add current node and boundary condition value to list of boundary conditions for current element
           if (!dofIndexAlreadyContained)
-          {
-            boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionIter->second));
-          }
+          {*/
+            boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionValue));
+          //}
 
           // also store localDofNo
           dof_no_t dofLocalNo = functionSpace->getDofNo(elementNoLocal, elementalDofIndex);
-          boundaryConditionDofLocalNos.push_back(dofLocalNo);
-          boundaryConditionValues.push_back(boundaryConditionIter->second);
+
+          if (dofLocalNo < functionSpace->nDofsLocalWithoutGhosts())
+          {
+            // check if dofLocalNo is already contained in boundaryConditionNonGhostDofLocalNos_
+            bool dofLocalNoIsAlreadyContained = false;
+            for (auto dofNo : boundaryConditionNonGhostDofLocalNos_)
+            {
+              if (dofNo == dofLocalNo)
+              {
+                dofLocalNoIsAlreadyContained = true;
+              }
+            }
+            if (!dofLocalNoIsAlreadyContained)
+            {
+              boundaryConditionNonGhostDofLocalNos_.push_back(dofLocalNo);
+              boundaryConditionValues_.push_back(boundaryConditionValue);
+            }
+          }
         }
-
-        // if there are no more boundary conditions, break the loop
-        if (boundaryConditionIter == boundaryConditions.end())
-          break;
       }
-
-      // if there are no more boundary conditions, break the loop
-      if (boundaryConditionIter == boundaryConditions.end())
-        break;
     }
-
-    // if there are no more boundary conditions, break the loop
-    if (boundaryConditionIter == boundaryConditions.end())
-      break;
   }
 
   if (VLOG_IS_ON(1))
   {
-    VLOG(1) << "dofsLocal of BC: " << boundaryConditionDofLocalNos << " with prescribed values: " << boundaryConditionValues;
+    VLOG(1) << "parsed boundary conditions:";
+    VLOG(1) << "  dofsLocal of BC: " << boundaryConditionNonGhostDofLocalNos_ << " with prescribed values: " << boundaryConditionValues_;
 
-    for (auto boundaryConditionElement: boundaryConditionElements)
+    for (auto boundaryConditionElement: boundaryConditionElements_)
     {
-      VLOG(1) << "elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
+      VLOG(1) << "  elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
     }
   }
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+applyBoundaryConditionsWeakForm()
+{
+
+  LOG(TRACE) << "applyBoundaryConditionsWeakForm";
+
+  // parse boundary conditions from config and store them in boundaryConditionElements_, boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
+  parseBoundaryConditions();
+
+  // get abbreviations
+  std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
+  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+
+  rightHandSide.startGhostManipulation();
 
   const int D = FunctionSpaceType::dim();
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
@@ -209,8 +252,8 @@ applyBoundaryConditionsWeakForm()
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
-  // loop over elements that have nodes with prescribed boundary conditions
-  for (typename std::vector<ElementWithNodes>::const_iterator iter = boundaryConditionElements.cbegin(); iter != boundaryConditionElements.cend(); iter++)
+  // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
+  for (typename std::vector<ElementWithNodes>::const_iterator iter = boundaryConditionElements_.cbegin(); iter != boundaryConditionElements_.cend(); iter++)
   {
     element_no_t elementNoLocal = iter->elementNoLocal;
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
@@ -219,7 +262,7 @@ applyBoundaryConditionsWeakForm()
     std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
     functionSpace->getElementGeometry(elementNoLocal, geometry);
 
-    // compute integral
+    // compute integral numerically
     for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
     {
       // evaluate function to integrate at samplingPoint
@@ -237,7 +280,7 @@ applyBoundaryConditionsWeakForm()
     // integrate all values for the (i,j) dof pairs at once
     EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
-    // perform integration and add to entry of stiffness matrix
+    // perform integration
     for (std::vector<std::pair<int,double>>::const_iterator dofsIter1 = iter->elementalDofIndex.begin(); dofsIter1 != iter->elementalDofIndex.end(); dofsIter1++)
     {
       int elementalDofIndex1 = dofsIter1->first;
@@ -249,7 +292,7 @@ applyBoundaryConditionsWeakForm()
         double integratedValue = integratedValues(elementalDofIndex1, j);
         double value = boundaryConditionValue * integratedValue;
 
-        // the formula for boundary conditions is rhs = -sum_{over BC-dofs} u_{0,i} * integral_Omega ∇phi_i • ∇phi_j dx  for equation j=1,...,N
+        // the formula for boundary conditions is rhs = -sum_{over BC-dofs i} u_{0,i} * integral_Omega ∇phi_i • ∇phi_j dx  for equation j=1,...,N
 
         VLOG(2) << "  dof pair (" << elementalDofIndex1 << "," << j << ") dofs (" << dofNosLocal[elementalDofIndex1] << "," << dofNosLocal[j]
           << "), integrated value: " << integratedValue << ", boundaryConditionValue: " << boundaryConditionValue << ", value: " << value;
@@ -259,14 +302,17 @@ applyBoundaryConditionsWeakForm()
     }
   }
 
-  // set boundary condition dofs to prescribed values
-  rightHandSide.setValues(boundaryConditionDofLocalNos,
-                          boundaryConditionValues, INSERT_VALUES);
-  rightHandSide.finishVectorManipulation();
+  // Scatter the ghost values to their actual place, with ADD_VALUES,
+  // so the ghost value on one rank and the non-ghost value on the other rank are added.
+  rightHandSide.finishGhostManipulation();
+
+  // set boundary condition dofs to prescribed values, only non-ghost dofs
+  rightHandSide.setValues(boundaryConditionNonGhostDofLocalNos_,
+                          boundaryConditionValues_, INSERT_VALUES);
 
   // zero entries in stiffness matrix that correspond to dirichlet dofs
   // set values of row and column of the dofs to zero and diagonal entry to 1
-  stiffnessMatrix->zeroRowsColumns(boundaryConditionDofLocalNos.size(), boundaryConditionDofLocalNos.data(), 1.0);
+  stiffnessMatrix->zeroRowsColumns(boundaryConditionNonGhostDofLocalNos_.size(), boundaryConditionNonGhostDofLocalNos_.data(), 1.0);
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 
 }

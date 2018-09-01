@@ -358,7 +358,7 @@ setGeometryFieldValues()
 
   // set values for node positions as geometry field 
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
-  this->geometryField_->finishVectorManipulation();
+  this->geometryField_->finishGhostManipulation();
 
   this->setHermiteDerivatives();
 

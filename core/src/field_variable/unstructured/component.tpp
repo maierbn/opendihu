@@ -182,7 +182,7 @@ setNodeValuesFromBlock(node_no_t nodeGlobalNo, std::vector<double>::iterator val
       VLOG(2) << " element " << elementGlobalNo << " nodeIdx " << nodeIdx << ", node has the following valueIndices: " << exfileElement->getNode(nodeIdx).valueIndices;
 
       // loop over block indices
-      for (unsigned int i = 0; i < exfileElement->getNode(nodeIdx).valueIndices.size(); i++)
+      for (int i = 0; i < exfileElement->getNode(nodeIdx).valueIndices.size(); i++)
       {
         int blockIndex = exfileElement->getNode(nodeIdx).valueIndices[i];
         VLOG(2) << "  block index " << blockIndex;

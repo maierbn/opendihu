@@ -260,7 +260,7 @@ setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctio
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]);
+    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
   
   startGhostManipulation();

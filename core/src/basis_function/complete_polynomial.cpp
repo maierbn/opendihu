@@ -66,6 +66,7 @@ phi(int dofIndex, std::array<double,1> xi)
   case 1:
     return xi[0];
   }
+  return 0.0;   // should not be reached
 }
 
 // 2D
@@ -82,6 +83,7 @@ phi(int dofIndex, std::array<double,2> xi)
   case 2:
     return xi[1];
   }
+  return 0.0;   // should not be reached
 }
 
 // 3D
@@ -100,6 +102,7 @@ phi(int dofIndex, std::array<double,3> xi)
   case 3:
     return xi[2];
   }
+  return 0.0;   // should not be reached
 }
 
 // order 1 dphi_dxi
@@ -115,6 +118,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,1> xi)
   case 1:
     return 1;
   }
+  return 0.0;   // should not be reached
 }
 
 // 2D
@@ -131,6 +135,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,2> xi)
   case 2:
     return (derivativeIdx == 1? 1 : 0);
   }
+  return 0.0;   // should not be reached
 }
 
 // 3D
@@ -149,6 +154,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   case 3:
     return (derivativeIdx == 2? 1 : 0);
   }
+  return 0.0;   // should not be reached
 }
 
 // order 2 phi
@@ -166,6 +172,7 @@ phi(int dofIndex, std::array<double,1> xi)
   case 2:
     return xi[0]*xi[0];
   }
+  return 0.0;   // should not be reached
 }
 
 // 2D
@@ -188,6 +195,7 @@ phi(int dofIndex, std::array<double,2> xi)
   case 5:
     return xi[1]*xi[1];
   }
+  return 0.0;   // should not be reached
 }
 
 // 3D
@@ -218,6 +226,7 @@ phi(int dofIndex, std::array<double,3> xi)
   case 9:
     return xi[2]*xi[2];
   }
+  return 0.0;   // should not be reached
 }
 
 // order 2 dphi_dxi
@@ -235,6 +244,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,1> xi)
   case 2:
     return 2*xi[0];
   }
+  return 0.0;   // should not be reached
 }
 
 // 2D
@@ -257,6 +267,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,2> xi)
   case 5:
     return (derivativeIdx == 1? 2*xi[1] : 0);
   }
+  return 0.0;   // should not be reached
 }
 
 // 3D
@@ -311,6 +322,7 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   case 9:
     return (derivativeIdx == 2? 2*xi[2] : 0);
   }
+  return 0.0;   // should not be reached
 }
 
 };  //namespace

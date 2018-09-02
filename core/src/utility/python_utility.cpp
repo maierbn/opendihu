@@ -419,7 +419,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << defaultValue << ".";
   }
 
   switch(validityCriterion)
@@ -513,7 +513,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << defaultValue << ".";
   }
 
   switch(validityCriterion)
@@ -607,7 +607,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << std::boolalpha << defaultValue << ".";
   }
   Py_CLEAR(key);
   return result;
@@ -635,7 +635,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value \"" << defaultValue << "\".";
   }
 
   Py_CLEAR(key);
@@ -817,7 +817,7 @@ bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keySt
 
 void PythonUtility::getOptionVector(const PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
 {
-  values.resize(nEntries);
+  values.resize(nEntries, 0.0);
 
   if (settings)
   {
@@ -877,7 +877,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
     }
     else
     {
-      LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+      LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file, assuming list with " << nEntries << " zeros";
     }
     Py_CLEAR(key);
   }
@@ -926,7 +926,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
     }
     Py_CLEAR(key);
   }
@@ -972,7 +972,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
     }
     Py_CLEAR(key);
   }

@@ -8,7 +8,7 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> vector1, con
 {
   std::array<T,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] - vector2[i];
@@ -22,7 +22,7 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1)
 {
   std::array<T,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = -vector1[i];
@@ -36,7 +36,7 @@ std::array<double,nComponents> operator+(const std::array<double,nComponents> ve
 {
   std::array<double,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] + vector2[i];
@@ -48,7 +48,7 @@ std::array<double,nComponents> operator+(const std::array<double,nComponents> ve
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vector1, const std::array<double,nComponents> vector2)
 {
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     vector1[i] += vector2[i];
@@ -60,7 +60,7 @@ std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vecto
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vector1, double lambda)
 {
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     vector1[i] *= lambda;
@@ -72,7 +72,7 @@ std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vecto
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vector1, double lambda)
 {
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     vector1[i] /= lambda;
@@ -86,7 +86,7 @@ std::array<double,nComponents> operator*(double lambda, const std::array<double,
 {
   std::array<double,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = lambda * vector[i];
@@ -100,7 +100,7 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
 {
   std::array<double,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = lambda * vector[i];
@@ -114,7 +114,7 @@ std::array<double,nComponents> operator*(const std::array<double,nComponents> ve
 {
   std::array<double,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] * vector2[i];
@@ -132,7 +132,7 @@ std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix,
   for (int j = 0; j < N; j++)
   {
     // row index
-    #pragma simd
+    #pragma omp simd
     for (int i = 0; i < M; i++)
     {
       result[i] += matrix[j][i] * vector[j];
@@ -147,7 +147,7 @@ std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, con
 {
   std::array<T,nComponents> result;
 
-  #pragma simd
+  #pragma omp simd
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] / vector2[i];

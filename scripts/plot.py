@@ -59,6 +59,7 @@ solution_py_files = list(np.extract(np.array(list(map(solution_py_condition, fil
 # sort files by number in file name
 solution_py_files = sorted(solution_py_files)
 
+# output file names
 if len(solution_py_files) == 1:
   print("1 file: {}".format(solution_py_files[0]))
 elif len(solution_py_files) <= 4:
@@ -66,6 +67,7 @@ elif len(solution_py_files) <= 4:
 else:
   print("{} files: {}, {}, {}, ..., {}".format(len(solution_py_files), solution_py_files[0],solution_py_files[1],solution_py_files[2],solution_py_files[-1]))
 
+# load data
 data = py_reader.load_data(solution_py_files)
 
 if len(data) == 0:

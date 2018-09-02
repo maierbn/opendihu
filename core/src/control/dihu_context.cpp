@@ -317,15 +317,15 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   
   if (solverManagerForThread_.find(threadId) == solverManagerForThread_.end())
   {
-    LOG(INFO) << "create solver manager for thread " << threadId;
+    LOG(DEBUG) << "create solver manager for thread " << threadId;
     // create solver manager
     solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
     
-    LOG(INFO) << "(done)";
+    LOG(DEBUG) << "(done)";
   }
   else 
   {
-    LOG(INFO) << "solver manager for thread " << threadId << " exists";
+    LOG(DEBUG) << "solver manager for thread " << threadId << " exists";
   }
   
   return solverManagerForThread_[threadId];

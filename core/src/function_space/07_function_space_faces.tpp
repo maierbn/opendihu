@@ -22,6 +22,10 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<0,BasisF
   case Mesh::face0Plus:
     dofIndices[0] = FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement()-1;
     break;
+
+  default:
+    assert(false);
+    break;
   }
 }
 

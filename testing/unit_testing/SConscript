@@ -8,6 +8,8 @@ if not env['no_tests']:
 
   if env["BUILD_TYPE"] == "debug":
     variant_directory = "build_debug"
+  elif env["BUILD_TYPE"] == "releasewithdebuginfo":
+    variant_directory = "build_release_with_debug_info"
   else:
     variant_directory = "build_release"
 
@@ -33,19 +35,16 @@ if not env['no_tests']:
                'src/utility.cpp']
   
   #src_files = ['src/1_rank/diffusion.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
-  
-  
-  
-  print ""
-  print "WARNING: only compiling tests ",src_files
+  #print ""
+  #print "WARNING: only compiling tests ",src_files
 
-  #program = env.Program('1_rank_tests', source=src_files)
+  program = env.Program('1_rank_tests', source=src_files)
   #Depends(test, program)
   #env.Install(variant_directory, program)
 
   # add command that runs the tests after build
-  #test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests')
-  #AlwaysBuild(test)
+  test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo ./1_rank_tests -on_error_attach_debugger')
+  AlwaysBuild(test)
 
 
   # ---- parallel unit tests ----

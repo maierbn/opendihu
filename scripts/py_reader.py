@@ -59,7 +59,8 @@ def get_min_max(data, field_variable_name, component_name):
   
 def load_data(filenames):
   """
-    load raw data structures from opendihu *.py output files
+    Load raw data structures from opendihu *.py output files.
+    If there are multiple files from different processes with appropriate ending, merge the data in these files.
     :param filenames: a list with the filenames
     :return: a list of dicts from the files
   """
@@ -68,6 +69,8 @@ def load_data(filenames):
   # group parallel files
   grouped_filenames = []  # each item is [<base_filename>, [<filename0>, <filename1>, ...]]
   for filename in filenames:
+    if filename is None:
+      continue
     rank_no = 0
     pos_last_point = filename.rfind(".py")
     pos_2ndlast_point = filename.rfind(".", 0, pos_last_point)
@@ -77,7 +80,7 @@ def load_data(filenames):
     if pos_last_point != -1 and pos_2ndlast_point != -1:      
       base_filename = filename[0:pos_2ndlast_point]
       rank_str = filename[pos_2ndlast_point+1:pos_last_point]
-      print "filename: {}, base_filename: {}, rank_str: {}".format(filename, base_filename, rank_str)
+      #print("filename: {}, base_filename: {}, rank_str: {}".format(filename, base_filename, rank_str))
       rank_no = (int)(rank_str)
     
       # find bucket in grouped_filenames with matching base_filename
@@ -110,12 +113,13 @@ def load_data(filenames):
         except:
           
           # loading did not work either way
-          dict_from_file = {}
+          dict_from_file = None
           print("Could not parse file \"{}\"".format(filename))
           continue
       
-      #print "file: {}, dict: {}".format(filename,dict_from_file)
-      group_data.append(dict_from_file)
+      #print("file: {}, dict: {}".format(filename,dict_from_file))
+      if dict_from_file is not None:
+        group_data.append(dict_from_file)
    
     # merge group data
     merged_data = copy.deepcopy(group_data[0])
@@ -141,7 +145,7 @@ def load_data(filenames):
       n_nodes_global.append(n_nodes_global_direction)
       n_nodes_total *= n_nodes_global_direction
   
-    #print "n_nodes_global: ",n_nodes_global
+    #print("n_nodes_global: ",n_nodes_global)
   
     merged_data['nElements'] = merged_data['nElementsGlobal']
     del merged_data['nElementsGlobal']
@@ -164,10 +168,10 @@ def load_data(filenames):
               n_nodes_local_direction += 1
             n_nodes_local.append(n_nodes_local_direction)
             
-          #print ""
-          #print field_variable["name"],component["name"]
-          #print "data: ",data
-          #print "rank {}, n_nodes_local: {}, data: {}".format(data["ownRankNo"], n_nodes_local,data['data'][field_variable_index]['components'][component_index]['values']) 
+          #print("")
+          #print(field_variable["name"],component["name"])
+          #print("data: ",data)
+          #print("rank {}, n_nodes_local: {}, data: {}".format(data["ownRankNo"], n_nodes_local,data['data'][field_variable_index]['components'][component_index]['values']) )
           
           # set local portion in global array
           indices_begin = []
@@ -182,7 +186,7 @@ def load_data(filenames):
               index_in = x-indices_begin[0]
               index_result = x
               
-              #print "x: {}, index_in: {}, index_result: {}".format(x, index_in, index_result)
+              #print("x: {}, index_in: {}, index_result: {}".format(x, index_in, index_result))
               
               merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
                 = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
@@ -193,7 +197,7 @@ def load_data(filenames):
                 index_in = (y-indices_begin[1])*n_nodes_local[0] + (x-indices_begin[0])
                 index_result = y*n_nodes_global[0] + x
                 
-                #print "x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result)
+                #print("x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result))
                 
                 merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
                   = data['data'][field_variable_index]['components'][component_index]['values'][index_in]

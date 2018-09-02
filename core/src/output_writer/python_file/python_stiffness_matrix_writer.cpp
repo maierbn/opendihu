@@ -49,7 +49,7 @@ void NumpyFileWriter::writeToNumpyFile(std::vector<double> &data, std::string fi
   for(auto value : data)
   {
     union {
-      double d;
+      double d = 0.0;
       char c[8];
     };
 

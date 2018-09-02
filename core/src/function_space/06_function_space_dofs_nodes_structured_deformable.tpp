@@ -246,7 +246,6 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     // compute absolute node positions
     global_no_t nNodesInXDirection = 0;
     global_no_t nNodesInYDirection = 0;
-    global_no_t nNodesInZDirection = 0;
     
     global_no_t offsetX = 0;
     global_no_t offsetY = 0;
@@ -255,26 +254,18 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     // initialize variables
     if (inputMeshIsGlobal)
     {
-      switch(D)
+      nNodesInXDirection = this->nNodesGlobal(0);
+      if (D >= 2)
       {
-      case 3:
-        nNodesInZDirection = this->nNodesGlobal(2);
-      case 2:
         nNodesInYDirection = this->nNodesGlobal(1);
-      case 1:
-        nNodesInXDirection = this->nNodesGlobal(0);
       }
     }
     else 
     {
-      switch(D)
+      nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
+      if (D >= 2)
       {
-      case 3:
-        nNodesInZDirection = this->nNodesLocalWithoutGhosts(2);
-      case 2:
         nNodesInYDirection = this->nNodesLocalWithoutGhosts(1);
-      case 1:
-        nNodesInXDirection = this->nNodesLocalWithoutGhosts(0);
       }
 
       offsetX = this->meshPartition_->beginNodeGlobalNatural(0);

@@ -64,7 +64,7 @@ global_no_t FunctionSpaceDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal() const
 {
   assert(this->meshPartition_);
-  this->meshPartition_->nNodesGlobal();
+  return this->meshPartition_->nNodesGlobal();
 }
 
 template<typename MeshType,typename BasisFunctionType>

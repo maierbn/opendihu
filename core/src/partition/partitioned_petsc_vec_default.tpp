@@ -153,12 +153,13 @@ setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs)
 {
   assert(values_.size() == nComponents);
   
-  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startGhostManipulation()";
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\")";
   
+  // copy the global vectors
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), values_[componentNo]);
+    ierr = VecCopy(rhs.valuesGlobal(componentNo), values_[componentNo]); CHKERRV(ierr);
   }
 }
 

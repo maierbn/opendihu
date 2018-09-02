@@ -121,7 +121,7 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
     }
     else
     {
-      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
+      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in config file.";
     }
 
     Py_CLEAR(key);
@@ -263,7 +263,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     }
     else
     {
-      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in dict in config file" << std::endl;
+      LOG(WARNING) << "Warning: key \"" <<keyString<< "\" not found in config, assuming default values " << defaultValue << ".";
 
       Py_CLEAR(key);
       return defaultValue;

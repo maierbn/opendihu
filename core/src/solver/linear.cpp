@@ -5,7 +5,7 @@
 namespace Solver
 {
 
-Linear::Linear(PyObject *specificSettings) :
+Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator) :
   Solver(specificSettings)
 {
   // parse options
@@ -15,7 +15,7 @@ Linear::Linear(PyObject *specificSettings) :
   // set up KSP object
   //KSP *ksp;
   ksp_ = std::make_shared<KSP>();
-  PetscErrorCode ierr = KSPCreate (PETSC_COMM_WORLD, ksp_.get()); CHKERRV(ierr);
+  PetscErrorCode ierr = KSPCreate (mpiCommunicator, ksp_.get()); CHKERRV(ierr);
 
   // set options from command line as specified by PETSc
   KSPSetFromOptions(*ksp_);

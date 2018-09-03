@@ -47,7 +47,7 @@ template<typename DiscretizableInTimeType>
 bool PODBase<DiscretizableInTimeType>::
 setInitialValues(Vec &initialValues)
 {
-  problem_.setInitialValues(initialValues);
+  return problem_.setInitialValues(initialValues);
 }
 
 //! return whether the object has a specified mesh type and is not independent of the mesh type

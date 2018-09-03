@@ -172,7 +172,7 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
       {
         std::stringstream s;
         s << "(";
-        for (unsigned int i = 0; i < nodeDofInformation.elementsOfVersion[versionIdx].size(); i++)
+        for (int i = 0; i < nodeDofInformation.elementsOfVersion[versionIdx].size(); i++)
         {
           s << nodeDofInformation.elementsOfVersion[versionIdx][i].elementGlobalNo << "." << nodeDofInformation.elementsOfVersion[versionIdx][i].nodeIdx << " ";
         }

@@ -51,7 +51,7 @@ MultipleInstances(DihuContext context) :
   
   VLOG(1) << "MultipleInstances constructor, create Partitioning for " << nInstances_ << " instances";
   
-  MPIUtility::gdbParallelDebuggingBarrier();
+  //MPIUtility::gdbParallelDebuggingBarrier();
   
   // create all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
@@ -70,6 +70,8 @@ MultipleInstances(DihuContext context) :
       std::vector<int> ranks;
       PythonUtility::getOptionVector(instanceConfig, "ranks", ranks);
       
+      VLOG(1) << "instance " << instanceConfigNo << " on ranks: " << ranks;
+
       // check if own rank is part of ranks list
       int thisRankNo = this->context_.partitionManager()->rankNoCommWorld();
       bool computeOnThisRank = false;
@@ -82,12 +84,14 @@ MultipleInstances(DihuContext context) :
         }
       }
       
-      if (!computeOnThisRank)
-        continue;
-      
+      VLOG(1) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
+
       // create rank subset
       std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks);
       
+      if (!computeOnThisRank)
+        continue;
+
       // store the rank subset containing only the own rank for the mesh of the current instance
       this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
       
@@ -125,8 +129,10 @@ template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
+  LOG(TRACE) << "MultipleInstances::initialize()";
   for (int i = 0; i < nInstancesLocal_; i++)
   {
+    LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
   }
   

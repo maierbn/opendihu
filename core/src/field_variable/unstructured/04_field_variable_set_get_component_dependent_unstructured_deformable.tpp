@@ -70,25 +70,25 @@ getValuesWithoutGhosts(std::vector<double> &values, bool onlyNodalValues) const
   this->getValuesWithoutGhosts(0, values, onlyNodalValues);
 }
 
-//! set a single dof (one components) , after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set a single dof (one components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
-//! set values for one components for dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for one components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   this->values_->setValues(0, dofNosLocal.size(), (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
-  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishVectorManipulation must be called
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
-//! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
@@ -96,7 +96,7 @@ setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMod
   this->values_->setValues(0, values, petscInsertMode);
 }
 
-//! set values for the single component for all local dofs, after all calls to setValue(s), finishVectorManipulation has to be called to apply the cached changes
+//! set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)

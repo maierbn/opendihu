@@ -64,7 +64,7 @@ global_no_t FunctionSpaceDofsNodesStructured<MeshType,BasisFunctionType>::
 nNodesGlobal() const
 {
   assert(this->meshPartition_);
-  this->meshPartition_->nNodesGlobal();
+  return this->meshPartition_->nNodesGlobal();
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -111,8 +111,6 @@ setHermiteDerivatives()
   // for Hermite set derivatives as distances between nodes
   if (std::is_same<BasisFunctionType,BasisFunction::Hermite>::value)
   {
-    this->geometryField_->startVectorManipulation();
-
     // loop over nodes
     dof_no_t localDofNo = 0;
     for (node_no_t nodeNoLocal = 0; nodeNoLocal < this->nNodesLocalWithoutGhosts(); nodeNoLocal++)
@@ -310,8 +308,6 @@ setHermiteDerivatives()
         localDofNo++;
       }
     }
-
-    this->geometryField_->finishVectorManipulation();
   }
 }
 

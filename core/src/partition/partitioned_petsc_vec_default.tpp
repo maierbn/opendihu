@@ -47,13 +47,13 @@ template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 createVector()
 {
-  PetscErrorCode ierr;
-  
   assert(this->meshPartition_);
   
   dof_no_t nEntriesLocal = this->meshPartition_->nDofs();
   dof_no_t nEntriesGlobal = nEntriesLocal;
   
+  PetscErrorCode ierr;
+
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -72,14 +72,14 @@ createVector()
 //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
-startVectorManipulation()
+startGhostManipulation()
 {
 }
 
 //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
-finishVectorManipulation()
+finishGhostManipulation()
 {
   assert(values_.size() == nComponents);
   
@@ -153,12 +153,13 @@ setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs)
 {
   assert(values_.size() == nComponents);
   
-  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startVectorManipulation()";
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\")";
   
+  // copy the global vectors
   PetscErrorCode ierr;
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), values_[componentNo]);
+    ierr = VecCopy(rhs.valuesGlobal(componentNo), values_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -336,8 +337,8 @@ output(std::ostream &stream)
 #ifndef NDEBUG  
   // this method gets all values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
-  MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
+  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
+  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
     
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {

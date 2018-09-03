@@ -375,7 +375,7 @@ setStiffnessMatrix()
   }  // elementNo
 
   // assemble data in rhs vector
-  this->data_.f().finishVectorManipulation();
+  this->data_.f().finishGhostManipulation();
 }
 
 

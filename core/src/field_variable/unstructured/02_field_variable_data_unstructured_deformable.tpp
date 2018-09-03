@@ -724,7 +724,7 @@ parseFromExnodeFile(std::string content)
   }
 
   // finalize Petsc vectors
-  this->finishVectorManipulation();
+  this->finishGhostManipulation();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

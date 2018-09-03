@@ -5,14 +5,14 @@
 namespace Solver
 {
 
-Nonlinear::Nonlinear(PyObject *specificSettings) : Solver(specificSettings)
+Nonlinear::Nonlinear(PyObject *specificSettings, MPI_Comm mpiCommunicator) : Solver(specificSettings)
 {
   // parse options
   relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);
 
   // set up SNES object
   snes_ = std::make_shared<SNES>();
-  PetscErrorCode ierr = SNESCreate (PETSC_COMM_WORLD, snes_.get()); CHKERRV(ierr);
+  PetscErrorCode ierr = SNESCreate (mpiCommunicator, snes_.get()); CHKERRV(ierr);
 
   // set options from command line as specified by PETSc
   SNESSetFromOptions(*snes_);

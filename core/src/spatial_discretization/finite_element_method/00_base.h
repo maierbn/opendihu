@@ -65,6 +65,7 @@ protected:
   Data data_;     ///< data object that holds all PETSc vectors and matrices
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  bool initialized_;     ///< if initialize was already called on this object, then further calls to initialize() have no effect
 };
 
 };  // namespace

@@ -9,9 +9,15 @@ Manager::Manager(PyObject *specificSettings) :
   storePreconfiguredSolvers();
 }
 
-bool Manager::hasSolver(std::string solverName)
+bool Manager::hasSolver(std::string solverName, MPI_Comm mpiCommunicator)
 {
-  return solvers_.find(solverName) != solvers_.end();
+  // check if solvers for the given mpiCommuncator exist
+  if (solvers_.find(mpiCommunicator) == solvers_.end())
+  {
+    return false;
+  }
+
+  return solvers_[mpiCommunicator].find(solverName) != solvers_[mpiCommunicator].end();
 }
 
 void Manager::storePreconfiguredSolvers()

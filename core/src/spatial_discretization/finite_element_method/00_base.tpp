@@ -25,16 +25,10 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 FiniteElementMethodBase(DihuContext context) :
-  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"])
+  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), initialized_(false)
 {
   specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(specificSettings_);
-
-  if (VLOG_IS_ON(2))
-  {
-    VLOG(2) << "FiniteElementMethodBase::FiniteElementMethodBase querying meshManager for mesh, specificSettings_:";
-    PythonUtility::printDict(specificSettings_);
-  }
 
   // Create mesh or retrieve existing mesh from meshManager. This does not yet create meshPartition, it is done later in data_.initialize().
   std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->mesh<FunctionSpaceType>(specificSettings_);
@@ -68,11 +62,17 @@ template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 initialize()
 {
+  // do not initialize if it was called already
+  if (initialized_)
+    return;
+
   data_.initialize();
   setStiffnessMatrix();
   setRightHandSide();
   data_.finalAssembly();
   this->applyBoundaryConditions();
+
+  initialized_ = true;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
@@ -108,7 +108,8 @@ solve()
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
   
   // get linear solver context from solver manager
-  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
+  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(
+    this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
   std::shared_ptr<KSP> ksp = linearSolver->ksp();
   assert(ksp != nullptr);
 

@@ -4,6 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
+#include <thread>
+
 #include "gtest/gtest.h"
 #include "easylogging++.h"
 
@@ -48,6 +51,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
 {
   // read in generated exnode file 
   std::ifstream file(filename);
+
+  // wait a bit for the files being ready to be opened
+  std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
   LOG(DEBUG) << "assertFileMatchesContent: Parse file \"" << filename << "\"";
   ASSERT_TRUE(file.is_open()) << "could not open output file"; 
@@ -137,4 +143,56 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches!";
   }
   
+}
+
+void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFilesToCheck)
+{
+  // command line version
+  std::stringstream command;
+  command << "../../../scripts/validate_parallel.py ";
+  for (auto filename : outputFilesToCheck)
+  {
+    command << filename << " ";
+  }
+  int returnValue = system(command.str().c_str());
+  ASSERT_EQ(returnValue, 0);
+  return;
+
+  // read in python code
+  std::ifstream validationScriptFile("../../../scripts/validate_parallel.py");
+  ASSERT_TRUE(validationScriptFile.is_open()) << "Could not load validation script";
+
+  std::stringstream source;
+  source << validationScriptFile.rdbuf();
+  validationScriptFile.close();
+
+  // prepare command line arguments
+  int nCommandLineArguments = outputFilesToCheck.size() + 1;
+  wchar_t *argvWChar[nCommandLineArguments];
+  argvWChar[0] = Py_DecodeLocale(std::string("validate_parallel.py").c_str(), NULL);
+  for (int i = 0; i < outputFilesToCheck.size(); i++)
+  {
+    argvWChar[i+1] = Py_DecodeLocale(outputFilesToCheck[i].c_str(), NULL);
+  }
+
+  PySys_SetArgvEx(nCommandLineArguments, argvWChar, 0);
+
+  // wait a bit until files are ready to be opened by the python script
+  std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+  // execute python script
+  int ret = PyRun_SimpleString(source.str().c_str());
+  if (ret != 0)
+    LOG(INFO) << "return value of PyRun_SimpleString is " << ret;
+
+  if (PyErr_Occurred())
+  {
+    PyErr_Print();
+  }
+
+  // load main module and extract config
+  PyObject *mainModule = PyImport_AddModule("__main__");
+  PyObject *resultVariable = PyObject_GetAttrString(mainModule, "all_tests_successful");
+
+  ASSERT_EQ (resultVariable, Py_True) << "Parallel and serial output do not match!";
 }

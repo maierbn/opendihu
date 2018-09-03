@@ -38,18 +38,26 @@ template<typename FunctionSpaceType,typename BaseTimesteppingType>
 void MultipleInstances<FunctionSpaceType,BaseTimesteppingType>::
 setInstancesData(std::vector<BaseTimesteppingType> &instances)
 {
+  LOG(TRACE) << "setInstancesData for " << instances.size() << " instances";
+
   instancesData_.clear();
   instancesData_.reserve(instances.size());
   
   for (typename std::vector<BaseTimesteppingType>::iterator iter = instances.begin(); iter != instances.end(); iter++)
   {
+    VLOG(1) << "MultipleInstancesData: push_back pointer to instance data";
     instancesData_.push_back(std::make_shared<BaseDataType>((*iter).data()));
   }
 
-  // set mesh
-  this->setFunctionSpace(instances[0].data().functionSpace());
+  // set functionSpace
+  this->functionSpace_ = nullptr;
+  if (!instances.empty())
+  {
+    VLOG(1) << " set Function space from instance data to MultipleInstances data";
+    this->setFunctionSpace(instances[0].data().functionSpace());
   
-  assert(this->functionSpace() != nullptr);
+    assert(this->functionSpace() != nullptr);
+  }
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>

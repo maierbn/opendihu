@@ -436,7 +436,8 @@ solve()
   }
 
   // create nonlinear solver PETSc context (snes)
-  std::shared_ptr<Solver::Nonlinear> nonlinearSolver = this->context_.solverManager()->template solver<Solver::Nonlinear>(this->specificSettings_);
+  std::shared_ptr<Solver::Nonlinear> nonlinearSolver = this->context_.solverManager()->template solver<Solver::Nonlinear>(
+    this->specificSettings_, this->functionSpace_->meshPartition()->mpiCommunicator());
   std::shared_ptr<SNES> snes = nonlinearSolver->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver->ksp();
 

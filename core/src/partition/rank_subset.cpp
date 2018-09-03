@@ -4,12 +4,16 @@
 #include <algorithm>
 
 #include "utility/mpi_utility.h"
+#include "utility/vector_operators.h"
+#include "easylogging++.h"
 
 namespace Partition 
 {
   
 RankSubset::RankSubset() : ownRankNo_(-1)
 {
+  VLOG(1) << "RankSubset empty constructor";
+
   // create copy MPI_COMM_WORLD
   MPIUtility::handleReturnValue(MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_), "MPI_Comm_dup");
  
@@ -44,15 +48,19 @@ RankSubset::RankSubset(std::vector<int> &ranks) : rankNo_(ranks), ownRankNo_(-1)
 {
   // get the own current MPI rank
   int currentRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &currentRank);
+  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &currentRank), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
   
   // if currentRank is contained in rank subset
   if (std::find(ranks.begin(),ranks.end(),currentRank) != ranks.end())
     color = 1;
   
+  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", currentRank=" << currentRank << ", color=" << color;
+
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+
+  VLOG(1) << "RankSubset constructor done";
 }
 
 std::vector<int>::const_iterator RankSubset::begin()

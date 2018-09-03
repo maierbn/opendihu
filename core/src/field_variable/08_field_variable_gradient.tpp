@@ -10,7 +10,7 @@ computeGradientField(FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()> 
 {
   // initialize gradient field variable to 0
   gradientField.zeroEntries();
-  gradientField.startVectorManipulation();
+  gradientField.startGhostManipulation();
 
   // define constants
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
@@ -71,8 +71,7 @@ computeGradientField(FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()> 
     }  // dofIndex
   }  // elementNo
 
-  gradientField.finishVectorManipulation();
-  gradientField.startVectorManipulation();
+  gradientField.finishGhostManipulation();
 
   // divide by number of summands
   for (dof_no_t localDofNo = 0; localDofNo < nDofs; localDofNo++)
@@ -86,8 +85,6 @@ computeGradientField(FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()> 
 
     gradientField.setValue(localDofNo, value, INSERT_VALUES);
   }
-
-  gradientField.finishVectorManipulation();
 }
 
 };  // namespace

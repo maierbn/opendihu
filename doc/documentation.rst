@@ -1,3 +1,4 @@
+# config
 Mesh
   "nElements": n,
   "nodeDimension": 1,
@@ -24,7 +25,7 @@ Mesh
     "OutputWriter" : [],
   
 
-Common names:
+# Commonly used names:
 Element: has several nodes
 Node: has several dofs, for Lagrange ansatz functions there is one dof per node, for cubic Hermite there are 2^D dofs per node (e.g. 1D: 2 dofs per node for value and derivative)
 Dof: "Degree of freedom", an element of the function space that is spanned by the basis functions on the mesh. Dofs are located on the nodes, every node has at least 1 dof or more.
@@ -44,7 +45,7 @@ Consistent naming of local and global quantities:
 <x>Global
 E.g. nNodesLocalWithGhosts() or nDofsGlobal()
 
-Numbering Schemes:
+# Numbering Schemes:
 1. Global natural numbering, starting at 0 at the front left bottom corner, then continuing in x-direction, then y-direction, then z-direction (if in 3D)
    This numbering is used for global input of Dirichlet boundary conditions or right hand side values
 2. Local numbering, per partition, starting from 0 to nDofsLocalWithoutGhosts-1, only numbering the non-ghost local dofs, in the same order as the global natural numbering but in the local partition.
@@ -54,7 +55,7 @@ Numbering Schemes:
    This is the numbering that has to be used for accessing global Petsc vectors and matrices, however this is not needed because one can access these vectors and matrices through the local vectors and matrices.
    It is needed for the creation of the Vecs and Mats.
 
-Howto debug:
+# Howto debug:
 1.GDB
 define the following alias:
   alias gdb='gdb -ex=run --args '
@@ -96,3 +97,51 @@ continue
 For segmentation faults that cannot be debugged with gdb, you can use valgrind with memcheck:
 valgrind --tool=memcheck ./executable
 There are a lot of "false positives" at the beginning while the python settings script is run. This is due to the python library overloading functions of memory management. Watch out for errors after these big outputs.
+
+# Working with parallel vectors
+The objects that represent parallel vectors in opendihu are of type FieldVariable. A field variable is a vector with one entry for each dof in the FunctionSpace. Each entry has a number of components, so the actual "size" of a field variable is nDofsGlobal*nComponents. Examples for the use of components are the geometryField, which stores x,y,z values for each dofs and thus has nComponents=3.
+To access the values of a field variable, there are methods like
+  getValue, getValues    ... get the values for specified dof numbers and components
+  getElementValues       ... get all the values that correspond to the dofs of an element
+  getValuesWithGhosts    ... get all locally stored values, including ghost values
+  getValuesWithoutGhosts ... same, but without ghost values
+(Read actual signatures in field_variable/structured/03_field_variable_set_get_structured.h)
+
+To set values in the vector, there are similar methods
+  setValue, setValues, zeroEntries, setValuesWithGhosts, setValuesWithoutGhosts
+
+It is most efficient to get/set multiple values at once instead of calling getValue/setValue for every single update.
+The described methods work fully with the local dof numbering and only modify local or ghost values.
+
+To work with these vectors using Petsc there is the valuesGlobal() method that returns a global Petsc vector that can be used with e.g. MatMult(matrix->globalValues(), fieldVariable->globalValues(), result); etc.
+Do not use Petsc routines to get and set values (VecGetValues, VecSetValues) with the obtained Petsc vectors! Rather use the described setValues/getValues methods, because they take care of the correct indexing (local vs. global numbering) and perform sanity checks for indices (of course only when compiled for debug target). The field variables
+
+There is also a more low-level vector class, PartitionedPetscVec which wraps the Petsc Vec's and handles creation of the Vec's and ghost values exchange. This class is used by FieldVariable internally and there should be no need to use it directly. However, there you can see how numbering/ghost exchange etc. is implemented.
+
+One important thing when working with field variables, i.e. parallel vectors, is the correct ghost value manipulation.
+Each rank only has local memory to store its non-ghost and ghost values.
+Before you can read and write to locally stored ghost values, call 
+fieldVariable->startGhostManipulation()
+This fills the local ghost value buffer with the actual values from the corresponding other ranks and overwrites what was previously in the local ghost value buffer. After that you can read out the ghost values and also write to the local buffer. Calls with INSERT_VALUES and ADD_VALUES can be mixed without further consideration, because everything is only updated locally. For example you could do
+  
+fieldVariable->setValues(<vector of local dof nos for some non-ghosts and ghosts>, <some values>, INSERT_VALUES);
+fieldVariable->setValues(<some other dof nos>, <some other values>, ADD_VALUES);
+fieldVariable->getValues(<again some dof nos with possibly ghosts>, <output vector>);
+
+After that for each ghost dof the ghost value on the rank where it is a ghost and the actual value on the rank where it is not a ghost need to be added. This is done by 
+fieldVariable->finishGhostManipulation()
+After that the two values are added and stored only on the rank where the dof is not the ghost. To also get the updated value to the rank where it is a ghost you need to call fieldVariable->startGhostManipulation() again. For every  startGhostManipulation there has to be a matching finishGhostManipulation later.
+
+Note, the following is wrong:
+fieldVariable->startGhostManipulation()
+// setValues which manipulates local ghost values
+fieldVariable->finishGhostManipulation()  // everything good up to here, now every rank has the correct local non-ghost values
+
+fieldVariable->startGhostManipulation()  // still okay, now every rank also has correct ghost values (#)
+// setValues which only manipulate non-ghost values
+fieldVariable->finishGhostManipulation()  // unexpected result, some local values (those that are ghosts on other ranks) will get ghost-buffer values added, that are still in the ghost buffers on an other rank. (#)
+
+The correction for the example would be to remove (#) lines or set the ghost buffers to zero (but then the start/finishGhostManipulation calls would be useless anyway)
+
+So take-away message is, if you want to read ghost values, call startGhostManipulation() beforehand, 
+if you want to write ghost values, wrap the setValues code with startGhostManipulation() and finishGhostManipulation(). Else do not use the two calls.

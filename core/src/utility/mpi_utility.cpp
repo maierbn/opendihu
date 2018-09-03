@@ -16,7 +16,7 @@ void handleReturnValue(int returnValue, std::string descriptor)
   if (returnValue == MPI_SUCCESS)
     return;
   
-  char *errorString;
+  char *errorString = nullptr;
   int stringLength;
   MPI_Error_string(returnValue, errorString, &stringLength);
   

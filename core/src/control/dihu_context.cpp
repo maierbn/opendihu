@@ -32,18 +32,22 @@ std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThr
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
 
 bool DihuContext::initialized_ = false;
+int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 
 // copy-constructor
 DihuContext::DihuContext(const DihuContext &rhs)
 {
+  nObjects_++;
+  doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
   pythonConfig_ = rhs.pythonConfig_;
   VLOG(4) << "Py_XINCREF(pythonConfig_)";
   Py_XINCREF(pythonConfig_);
 }
 
-DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
-  pythonConfig_(NULL)
+DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
+  pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
+  nObjects_++;
   LOG(TRACE) << "DihuContext constructor";
 
   if (!initialized_)
@@ -270,8 +274,10 @@ DihuContext::DihuContext(int argc, char *argv[], bool settingsFromFile) :
   }
 }
 
-DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings) : DihuContext(argc, argv, false)
+DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
+  DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
+  nObjects_++;
   loadPythonScript(pythonSettings);
   if (VLOG_IS_ON(1))
   {
@@ -317,15 +323,15 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   
   if (solverManagerForThread_.find(threadId) == solverManagerForThread_.end())
   {
-    LOG(INFO) << "create solver manager for thread " << threadId;
+    LOG(DEBUG) << "create solver manager for thread " << threadId;
     // create solver manager
     solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
     
-    LOG(INFO) << "(done)";
+    LOG(DEBUG) << "(done)";
   }
   else 
   {
-    LOG(INFO) << "solver manager for thread " << threadId << " exists";
+    LOG(DEBUG) << "solver manager for thread " << threadId << " exists";
   }
   
   return solverManagerForThread_[threadId];
@@ -335,7 +341,7 @@ DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;
   char **argv = NULL;
-  DihuContext dihuContext(argc, argv);
+  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_);
 
   // if requested child context exists in config
   if (PythonUtility::hasKey(pythonConfig_, keyString))
@@ -579,6 +585,27 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
 DihuContext::~DihuContext()
 {
+  nObjects_--;
+
+  VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
+  if (nObjects_ == 1)
+  {
+
+    // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
+    // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.
+    // In this case, do not finalize MPI, but call MPI_Barrier instead which also syncs the ranks.
+
+    if (doNotFinalizeMpi_)
+    {
+      LOG(INFO) << "MPI_Barrier";
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+    else
+    {
+      LOG(INFO) << "MPI_Finalize";
+      MPI_Finalize();
+    }
+  }
   // do not clear pythonConfig_ here, because it crashes
   //VLOG(4) << "PY_CLEAR(PYTHONCONFIG_)";  // note: calling VLOG in a destructor is critical and can segfault
   //Py_CLEAR(pythonConfig_);

@@ -36,7 +36,7 @@ multiplyRightHandSideWithMassMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
 
   // merge local changes on the partitioned vector
-  rightHandSide.startVectorManipulation();
+  rightHandSide.startGhostManipulation();
   
   // get all entries
   std::vector<double> rhsValues;
@@ -99,7 +99,7 @@ multiplyRightHandSideWithMassMatrix()
   }  // elementNo
 
   // merge local changes on the vector, parallel assembly
-  rightHandSide.finishVectorManipulation();
+  rightHandSide.finishGhostManipulation();
  
 }
 

@@ -23,10 +23,10 @@ public:
 
   //! return previously created solver or create on the fly
   template<typename SolverType>
-  std::shared_ptr<SolverType> solver(PyObject *settings);
+  std::shared_ptr<SolverType> solver(PyObject *settings, MPI_Comm mpiCommunicator);
 
-  //! check if a solver with the given name is stored
-  bool hasSolver(std::string solverName);
+  //! check if a solver with the given name and mpiCommunicator is stored
+  bool hasSolver(std::string solverName, MPI_Comm mpiCommunicator);
 
 private:
   //! store settings for all solvers that are specified in specificSettings_
@@ -36,7 +36,7 @@ private:
   int numberAnonymousSolvers_;     ///< how many inline solvers without a given name in the python config are contained in solvers_. These have a key "anonymous<no>"
 
   std::map<std::string, PyObject *> solverConfiguration_;         ///< the python dicts for the solvers that were defined under "Solvers"
-  std::map<std::string, std::shared_ptr<Solver>> solvers_;    ///< the solvers with their string key
+  std::map<MPI_Comm, std::map<std::string, std::shared_ptr<Solver>>> solvers_;    ///< for the mpi communcator the solvers with their string key
 };
 
 };  // namespace

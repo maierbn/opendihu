@@ -32,7 +32,11 @@ setInitialValues()
   bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
+    assert(this->data_);
+    assert(this->data_->functionSpace());
     const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
+    LOG(DEBUG) << "nDofsGlobal = " << nDofsGlobal;
+
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
     //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
@@ -93,7 +97,7 @@ initialize()
 
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
-  discretizableInTime_.initialize(this->timeStepWidth_);
+  discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   data_->setFunctionSpace(std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh));

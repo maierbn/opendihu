@@ -14,42 +14,54 @@ if not env['no_tests']:
     variant_directory = "build_release"
 
   # ---- serial unit tests ----
-  # define the source files
-  src_files = Glob('src/1_rank/*.cpp')
+  if True:
+    # define the source files
+    src_files = Glob('src/1_rank/*.cpp')
 
-  #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
-  #src_files = ['src/poisson.cpp', 'src/main.cpp', 'src/utility.cpp']
-  # all src files:
-  src_files = ['src/1_rank/diffusion.cpp',
-               'src/1_rank/faces.cpp',
-               'src/1_rank/field_variable.cpp',
-               'src/1_rank/laplace.cpp',
-               'src/1_rank/main.cpp',
-               'src/1_rank/mesh.cpp',
-               'src/1_rank/numerical_integration.cpp',
-               'src/1_rank/operator_splitting.cpp',
-               'src/1_rank/output.cpp',
-               'src/1_rank/poisson.cpp',
-               'src/1_rank/solid_mechanics.cpp',
-               'src/1_rank/unstructured_deformable.cpp',
-               'src/utility.cpp']
-  
-  #src_files = ['src/1_rank/diffusion.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
-  #print ""
-  #print "WARNING: only compiling tests ",src_files
+    #src_files = ['src/solid_mechanics.cpp', 'src/main.cpp']
+    #src_files = ['src/poisson.cpp', 'src/main.cpp', 'src/utility.cpp']
+    # all src files:
+    src_files = ['src/1_rank/diffusion.cpp',
+                'src/1_rank/faces.cpp',
+                'src/1_rank/field_variable.cpp',
+                'src/1_rank/laplace.cpp',
+                'src/1_rank/main.cpp',
+                'src/1_rank/mesh.cpp',
+                'src/1_rank/numerical_integration.cpp',
+                'src/1_rank/operator_splitting.cpp',
+                'src/1_rank/output.cpp',
+                'src/1_rank/poisson.cpp',
+                'src/1_rank/solid_mechanics.cpp',
+                'src/1_rank/unstructured_deformable.cpp',
+                'src/utility.cpp']
 
-  #program = env.Program('1_rank_tests', source=src_files)
+    #src_files = ['src/1_rank/diffusion.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #print ""
+    #print "WARNING: only compiling tests ",src_files
 
-  # add command that runs the tests after build
-  #test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo ./1_rank_tests -on_error_attach_debugger')
-  #AlwaysBuild(test)
+    program = env.Program('1_rank_tests', source=src_files)
+
+    # add command that runs the tests after build
+    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo ./1_rank_tests -on_error_attach_debugger')
+    AlwaysBuild(test)
 
 
-  # ---- parallel unit tests ----
-  src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+  # ---- parallel unit tests: 2 ranks ----
+  if True:
+    src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
 
-  program = env.Program('2_ranks_tests', source=src_files)
+    program = env.Program('2_ranks_tests', source=src_files)
 
-  # add command that runs the tests after build
-  test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && rm -f SUCCESS && mpirun -n 2 --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS" ]')
-  AlwaysBuild(test)
+    # add command that runs the tests after build
+    test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && rm -f SUCCESS && mpirun -n 2 -quiet --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS" ]')
+    AlwaysBuild(test)
+
+  # ---- parallel unit tests: 6 ranks ----
+  if True:
+    src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
+
+    program = env.Program('6_ranks_tests', source=src_files)
+
+    # add command that runs the tests after build
+    test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && rm -f SUCCESS && mpirun -n 6 -quiet --allow-run-as-root ./6_ranks_tests || [ -f "SUCCESS" ]')
+    AlwaysBuild(test)

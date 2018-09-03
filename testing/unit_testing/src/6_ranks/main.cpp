@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include <mpi.h>
+#include <petsc.h>
 
 #include "easylogging++.h"
 #include "../utility.h"
@@ -26,6 +27,8 @@ int main(int argc_, char **argv_) {
     std::ofstream outfile("SUCCESS");
     outfile.close();
   }
+
+  ierr = MPI_Barrier(MPI_COMM_WORLD); CHKERRQ(ierr);
 
   return nFails;
 }

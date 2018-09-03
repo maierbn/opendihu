@@ -39,9 +39,12 @@ class MeshPartition
  *  }
  * 
  *  To iterate only over non-ghost dofs:
- *  for (std::vector<dof_no_t>::const_iterator localDof = meshPartition_->nonGhostDofsBegin(); localDof != meshPartition_->nonGhostDofsEnd(); localDof++)
+ *  for (node_no_t localNodeNo = 0; localNodeNo < meshPartition_->nNodesLocalWithoutGhosts(); localNodeNo++)
  *  {
- *     
+ *    for (int dofIndex = 0; dofIndex < nDofsPerNode; dofIndex++)
+ *    {
+ *      dof_no_t dofLocalNo = localNodeNo*nDofsPerNode + dofIndex;
+ *    }
  *  }
  */
 template<typename MeshType, typename BasisFunctionType>
@@ -116,8 +119,14 @@ public:
   //! get the local to global mapping for the current partition, for the dof numbering
   ISLocalToGlobalMapping localToGlobalMappingDofs();
   
-  //! get the global element no for a local element no
+  //! get the global natural element no for a local element no
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
+
+  //! get the global natural node no for the global coordinates of this node, this can be combined with getNodeNoGlobalCoordinates
+  global_no_t getNodeNoGlobalNatural(std::array<int,MeshType::dim()> coordinates) const;
+
+  //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
+  std::array<int,MeshType::dim()> getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const;
 
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
@@ -152,6 +161,10 @@ protected:
   
   //! get the index in terms of partitions of the partition that contains the given node no
   std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural);
+
+  //! get the number of nodes in the globalPetsc ordering that in partitions prior to the one given by partitionIndex
+  global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
+
 
   std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
   

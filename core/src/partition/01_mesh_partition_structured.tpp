@@ -624,6 +624,39 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
   return partitioningIndex;
 }
 
+template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return beginNodeGlobalNatural(0,partitionIndex[0]);
+  }
+  else if (MeshType::dim() == 2)
+  {
+    //  _ _   globalNatural nos in the partitions before current partition
+    // |_|_L_    <- (2)
+    // |_|_|_|   <- (1)
+    // |_|_|_|
+
+    VLOG(1) << "beginNodeGlobalNatural: " << beginNodeGlobalNatural(0,partitionIndex[0]) << " " << beginNodeGlobalNatural(1,partitionIndex[1]);
+    VLOG(1) << "nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << " " << nNodesLocalWithoutGhosts(1,partitionIndex[1]);
+
+    // compute globalNatural no from globalPetsc no (i,j)
+    return beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
+      + beginNodeGlobalNatural(0,partitionIndex[0])*nNodesLocalWithoutGhosts(1,partitionIndex[1]);   // (2)
+  }
+  else if (MeshType::dim() == 3)
+  {
+    VLOG(1) << "beginNodeGlobalNatural: " << beginNodeGlobalNatural(0,partitionIndex[0]) << " " << beginNodeGlobalNatural(1,partitionIndex[1]) << " " << beginNodeGlobalNatural(2,partitionIndex[2]);
+    VLOG(1) << "nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << " " << nNodesLocalWithoutGhosts(1,partitionIndex[1]) << " " << nNodesLocalWithoutGhosts(2,partitionIndex[2]);
+
+    return beginNodeGlobalNatural(2,partitionIndex[2])*nNodesGlobal(1)*nNodesGlobal(0)
+      + nNodesLocalWithoutGhosts(2,partitionIndex[2])*beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
+      + nNodesLocalWithoutGhosts(2,partitionIndex[2])*nNodesLocalWithoutGhosts(1,partitionIndex[1])*beginNodeGlobalNatural(0,partitionIndex[0]);   //(2)
+  }
+}
+
 //! fill the dofLocalNo vectors
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -678,23 +711,15 @@ createLocalDofOrderings()
         if (isAtXPlus || isAtYPlus)
         {
 
-          //  _ _   globalNatural nos in the partitions before current partition
-          // |_|_L_    <- (2)
-          // |_|_|_|   <- (1)
-          // |_|_|_|
-
           std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural;
           nodeNoGlobalNatural[0] = i;
           nodeNoGlobalNatural[1] = j;
           std::array<int,MeshType::dim()> partitionIndex = getPartitioningIndex(nodeNoGlobalNatural);
 
           VLOG(1) << "nodeNoGlobalNatural: " << nodeNoGlobalNatural << ", partitionIndex: " << partitionIndex;
-          VLOG(1) << "beginNodeGlobalNatural: " << beginNodeGlobalNatural(0,partitionIndex[0]) << " " << beginNodeGlobalNatural(1,partitionIndex[1]);
-          VLOG(1) << "nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << " " << nNodesLocalWithoutGhosts(1,partitionIndex[1]);
 
           // compute globalNatural no from globalPetsc no (i,j)
-          global_no_t nodeNoGlobalPetsc = beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
-            + beginNodeGlobalNatural(0,partitionIndex[0])*nNodesLocalWithoutGhosts(1,partitionIndex[1])                  // (2)
+          global_no_t nodeNoGlobalPetsc = nNodesGlobalPetscInPreviousPartitions(partitionIndex)
             + (j-beginNodeGlobalNatural(1,partitionIndex[1])) * nNodesLocalWithoutGhosts(0,partitionIndex[0])
             + (i-beginNodeGlobalNatural(0,partitionIndex[0]));   // in-partition local no
 
@@ -733,7 +758,6 @@ createLocalDofOrderings()
           // if node (i,j,k) is a ghost node
           if (isAtZPlus || isAtYPlus || isAtXPlus)
           {
-
             std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural;
 
             nodeNoGlobalNatural[0] = i;
@@ -746,10 +770,7 @@ createLocalDofOrderings()
             VLOG(1) << "nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << " " << nNodesLocalWithoutGhosts(1,partitionIndex[1]) << " " << nNodesLocalWithoutGhosts(2,partitionIndex[2]);
 
             // compute globalNatural no from globalPetsc no (i,j,k)
-            global_no_t nodeNoGlobalPetsc =
-              beginNodeGlobalNatural(2,partitionIndex[2])*nNodesGlobal(1)*nNodesGlobal(0)
-              + nNodesLocalWithoutGhosts(2,partitionIndex[2])*beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
-              + nNodesLocalWithoutGhosts(2,partitionIndex[2])*nNodesLocalWithoutGhosts(1,partitionIndex[1])*beginNodeGlobalNatural(0,partitionIndex[0])   //(2)
+            global_no_t nodeNoGlobalPetsc = nNodesGlobalPetscInPreviousPartitions(partitionIndex)
               + (k-beginNodeGlobalNatural(2,partitionIndex[2]))*nNodesLocalWithoutGhosts(1,partitionIndex[1])*nNodesLocalWithoutGhosts(0,partitionIndex[0])
               + (j-beginNodeGlobalNatural(1,partitionIndex[1]))*nNodesLocalWithoutGhosts(0,partitionIndex[0]) + (i-beginNodeGlobalNatural(0,partitionIndex[0]));   // in-partition local no
 
@@ -807,6 +828,247 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
     return (beginElementGlobal_[2] + elementZ) * nElementsGlobal_[0] * nElementsGlobal_[1]
       + (beginElementGlobal_[1] + elementY) * nElementsGlobal_[0]
       + beginElementGlobal_[0] + elementX;
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return std::array<int,MeshType::dim()>({(int)beginNodeGlobalNatural(0) + (int)nodeNoLocal});
+  }
+  else if (MeshType::dim() == 2)
+  {
+    std::array<int,MeshType::dim()> coordinates;
+    if (nodeNoLocal < nNodesLocalWithoutGhosts())
+    {
+      coordinates[0] = beginNodeGlobalNatural(0) + nodeNoLocal % nNodesLocalWithoutGhosts(0);
+      coordinates[1] = beginNodeGlobalNatural(1) + nodeNoLocal / nNodesLocalWithoutGhosts(0);
+    }
+    else
+    {
+      if (hasFullNumberOfNodes(0))
+      {
+        if (hasFullNumberOfNodes(1))
+        {
+          // domain has no ghost nodes, should be handled by other if branch
+          assert(false);
+        }
+        else
+        {
+          // domain has top ghost nodes
+          int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+          coordinates[0] = beginNodeGlobalNatural(0) + ghostNo;
+          coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+        }
+      }
+      else
+      {
+        if (hasFullNumberOfNodes(1))
+        {
+          // domain has right ghost nodes
+          int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+          coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+          coordinates[1] = beginNodeGlobalNatural(1) + ghostNo;
+        }
+        else
+        {
+          // domain has right and top ghost nodes
+          if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(1))
+          {
+            // node is on right row of ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+            coordinates[1] = beginNodeGlobalNatural(1) + ghostNo;
+          }
+          else
+          {
+            // node is on top row of ghost nodes
+            int ghostNo = nodeNoLocal - (nNodesLocalWithoutGhosts() + nNodesLocalWithGhosts(1) - 1);
+            coordinates[0] = beginNodeGlobalNatural(0) + ghostNo;
+            coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+          }
+        }
+      }
+    }
+
+    return coordinates;
+  }
+  else if (MeshType::dim() == 3)
+  {
+    std::array<int,MeshType::dim()> coordinates;
+    if (nodeNoLocal < nNodesLocalWithoutGhosts())
+    {
+      coordinates[0] = beginNodeGlobalNatural(0) + nodeNoLocal % nNodesLocalWithoutGhosts(0);
+      coordinates[1] = beginNodeGlobalNatural(1) + (nodeNoLocal % (nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1))) / nNodesLocalWithoutGhosts(0);
+      coordinates[2] = beginNodeGlobalNatural(2) + nodeNoLocal / (nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1));
+    }
+    else
+    {
+      if (hasFullNumberOfNodes(0))
+      {
+        if (hasFullNumberOfNodes(1))
+        {
+          if (hasFullNumberOfNodes(2))
+          {
+            // domain has no ghost nodes, should be handled by other if branch
+            assert(false);
+          }
+          else
+          {
+            // domain has only top (z+) ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithGhosts(0);
+            coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithGhosts(0);
+            coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;
+          }
+        }
+        else
+        {
+          if (hasFullNumberOfNodes(2))
+          {
+            // domain has y+ ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithGhosts(0);
+            coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+            coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesLocalWithGhosts(0);
+          }
+          else
+          {
+            // domain has back (y+) and top (z+) ghost nodes
+            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1))
+            {
+              // ghost is on back plane
+              int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+              coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithoutGhosts(0);
+              coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+              coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesLocalWithoutGhosts(0);
+            }
+            else
+            {
+              // ghost is on top plane
+              int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1);
+              coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithoutGhosts(0);
+              coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithoutGhosts(0);
+              coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;
+            }
+          }
+        }
+      }
+      else
+      {
+        if (hasFullNumberOfNodes(1))
+        {
+          if (hasFullNumberOfNodes(2))
+          {
+            // domain has only right (x+) ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+            coordinates[1] = beginNodeGlobalNatural(1) + ghostNo % nNodesLocalWithoutGhosts(1);
+            coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesLocalWithoutGhosts(1);
+          }
+          else
+          {
+            // domain has right (x+) and top (z+) ghost nodes
+            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(1)*nNodesLocalWithoutGhosts(2))
+            {
+              // ghost node is on right plane
+              int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+              coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+              coordinates[1] = beginNodeGlobalNatural(1) + ghostNo % nNodesLocalWithoutGhosts(1);
+              coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesLocalWithoutGhosts(1);
+            }
+            else
+            {
+              // ghost node is on top plane
+              int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(1)*nNodesLocalWithoutGhosts(2);
+              coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithGhosts(0);
+              coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithGhosts(0);
+              coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;
+            }
+          }
+        }
+        else
+        {
+          if (hasFullNumberOfNodes(2))
+          {
+            // domain has right (x+) and back (y+) ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            int nNodesPerL = (nNodesLocalWithoutGhosts(1) + nNodesLocalWithGhosts(0));
+            int ghostOnZPlaneNo = ghostNo % nNodesPerL;
+            if (ghostOnZPlaneNo < nNodesLocalWithoutGhosts(1))
+            {
+              // ghost node is on right plane
+              coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+              coordinates[1] = beginNodeGlobalNatural(1) + ghostOnZPlaneNo;
+              coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesPerL;
+            }
+            else
+            {
+              // ghost node is on back (y+) plane
+              int ghostNoOnYPlane = ghostOnZPlaneNo - nNodesLocalWithoutGhosts(1);
+              coordinates[0] = beginNodeGlobalNatural(0) + ghostNoOnYPlane;
+              coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+              coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesPerL;
+            }
+          }
+          else
+          {
+            // domain has right (x+), back (y+) and top (z+) ghost nodes
+            int ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
+            int nNodesPerL = (nNodesLocalWithoutGhosts(1) + nNodesLocalWithGhosts(0));
+            if (ghostNo >= nNodesPerL * nNodesLocalWithoutGhosts(2))
+            {
+              // ghost node is on top plane
+              ghostNo = ghostNo - nNodesPerL * nNodesLocalWithoutGhosts(2);
+              coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithGhosts(0);
+              coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithGhosts(0);
+              coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;
+            }
+            else
+            {
+              int ghostOnLNo = ghostNo % nNodesPerL;
+              if (ghostOnLNo < nNodesLocalWithoutGhosts(1))
+              {
+                // ghost node is on right plane
+                coordinates[0] = beginNodeGlobalNatural(0) + nNodesLocalWithGhosts(0) - 1;
+                coordinates[1] = beginNodeGlobalNatural(1) + ghostOnLNo;
+                coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesPerL;
+              }
+              else
+              {
+                // ghost node is on back (y+) plane
+                int ghostNoOnYPlane = ghostOnLNo - nNodesLocalWithoutGhosts(1);
+                coordinates[0] = beginNodeGlobalNatural(0) + ghostNoOnYPlane;
+                coordinates[1] = beginNodeGlobalNatural(1) + nNodesLocalWithGhosts(1) - 1;
+                coordinates[2] = beginNodeGlobalNatural(2) + ghostNo / nNodesPerL;
+              }
+            }
+          }
+        }
+      }
+    }
+    return coordinates;
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getNodeNoGlobalNatural(std::array<int,MeshType::dim()> coordinates) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return coordinates[0];
+  }
+  else if (MeshType::dim() == 2)
+  {
+    return coordinates[1]*nNodesGlobal(0) + coordinates[0];
+  }
+  else if (MeshType::dim() == 3)
+  {
+    return coordinates[2]*nNodesGlobal(0)*nNodesGlobal(1) + coordinates[1]*nNodesGlobal(0) + coordinates[0];
   }
 }
 

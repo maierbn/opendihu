@@ -51,10 +51,10 @@ def check_files(base_filename, serial_filename, parallel_filenames):
       
       for i, (value_serial, value_parallel) in enumerate(zip(component_serial['values'],component_parallel['values'])):
         diff = abs(value_serial - value_parallel)
-        tolerance = 1e-12
+        tolerance = 1e-2
         if diff > tolerance:
-          print("{}: mismatch in \"{}\".{}[{}]: serial={} != parallel={}".\
-            format(base_filename, field_variable_serial['name'], component_serial['name'], i, value_serial, value_parallel))
+          print("{}: mismatch in \"{}\".{}[{}]: serial={} != parallel={} (|diff|={})".\
+            format(base_filename, field_variable_serial['name'], component_serial['name'], i, value_serial, value_parallel, diff))
           files_are_equal = False
      
   if files_are_equal:

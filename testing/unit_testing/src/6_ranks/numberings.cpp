@@ -9,7 +9,7 @@
 #include "opendihu.h"
 #include "../utility.h"
 
-/*
+
 TEST(NumberingsTest, DofNodeNumberingDeformableLinear1D)
 {
   // methods that are tested in this test case:
@@ -741,7 +741,7 @@ config = {
   }
 }
 
-*/
+
 // ---------- 3D ---------------
 TEST(NumberingsTest, DofNodeNumberingDeformableLinear3D)
 {

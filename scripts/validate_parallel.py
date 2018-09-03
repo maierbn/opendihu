@@ -9,8 +9,11 @@ import sys, os
 import numpy as np
 import py_reader    # reader utility for opendihu *.py files
 
+all_tests_successful = True
+
 # check if the files given in the list parallel_filenames  and the single serial_filename have the same values
 def check_files(base_filename, serial_filename, parallel_filenames):
+  global all_tests_successful
   #print("{}: check_files {} {}".format(base_filename, serial_filename, parallel_filenames))
   
   if serial_filename is None:
@@ -56,7 +59,8 @@ def check_files(base_filename, serial_filename, parallel_filenames):
      
   if files_are_equal:
     print("{} ({} parallel files): match".format(base_filename, len(parallel_filenames)))
-  
+  else:
+    all_tests_successful = False
   #[{u'timeStepNo': -1, u'basisFunction': u'Lagrange', 'nElements': [3, 2], u'nRanks': 2, u'meshType': u'StructuredDeformable', 
   #u'basisOrder': 1, u'currentTime': 0.0, u'onlyNodalValues': True, u'data': [{u'name': u'geometry', u'components': [{u'values': array([ 0.,  2.,  4.,  6.,  0.,  2.,  4.,  6.,  0.,  2.,  4.,  6.]), u'name': u'x'}, {u'values': array([ 0.,  0.,  0.,  0.,  2.,  2.,  2.,  2.,  4.,  4.,  4.,  4.]), u'name': u'y'}, {u'values': array([ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]), u'name': u'z'}]}, {u'name': u'solution', u'components': [{u'values': array([  0.        ,   1.        ,   2.        ,   3.        ,
   #       4.24285714,   5.97142857,  10.52857143,  12.25714286,
@@ -64,7 +68,6 @@ def check_files(base_filename, serial_filename, parallel_filenames):
   #      -3.66666667, -11.        , -22.        , -12.83333333,
   #       0.        ,  10.        ,  20.        ,  30.        ]), u'name': u'0'}]}], u'dimension': 2}]
 
-  
 files = ""
 
 if len(sys.argv) > 1:
@@ -131,3 +134,7 @@ for filename in solution_py_files:
 
 check_files(current_timestep_base_filename, current_timestep_serial_filename, current_timestep_parallel_filenames)
 
+if all_tests_successful:
+  sys.exit(0)
+else:
+  sys.exit("Files are not equal.")

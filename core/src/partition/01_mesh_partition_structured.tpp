@@ -817,27 +817,32 @@ output(std::ostream &stream)
   stream << "MeshPartition<structured>, nElementsGlobal: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nElementsGlobal_[i] << ",";
-  
+
   stream << " nElementsLocal: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nElementsLocal_[i] << ",";
-  
+
   stream << " nRanks: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nRanks_[i] << ",";
-  
+
   stream << " beginElementGlobal: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << beginElementGlobal_[i] << ",";
-  
+
   stream << " hasFullNumberOfNodes: " ;
   for (int i = 0; i < MeshType::dim(); i++)
     stream << hasFullNumberOfNodes_[i] << ",";
-  
+
   stream << " localSizesOnRanks: ";
   for (int i = 0; i < MeshType::dim(); i++)
-    stream << localSizesOnRanks_[i] << ",";
-  
+  {
+    stream << "(";
+    for (int j = 0; j < localSizesOnRanks_[i].size(); j++)
+      stream << localSizesOnRanks_[i][j] << ",";
+    stream << ")";
+  }
+
   stream << " nNodesGlobal: ";
   for (int i = 0; i < MeshType::dim(); i++)
     stream << nNodesGlobal(i) << ",";
@@ -853,10 +858,11 @@ output(std::ostream &stream)
     stream << nNodesLocalWithoutGhosts(i) << ",";
   stream << "total " << nNodesLocalWithoutGhosts()
     << ", dofNosLocal: [";
+
   for (int i = 0; i < this->dofNosLocal_.size(); i++)
     stream << this->dofNosLocal_[i] << " ";
   stream << "], ghostDofNosGlobalPetsc: [";
-    
+
   for (int i = 0; i < ghostDofNosGlobalPetsc_.size(); i++)
     stream << ghostDofNosGlobalPetsc_[i] << " ";
   stream << "], localToGlobalPetscMappingDofs_: " << localToGlobalPetscMappingDofs_;

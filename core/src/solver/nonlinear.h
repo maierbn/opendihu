@@ -17,7 +17,7 @@ class Nonlinear : public Solver
 {
 public:
   //! construct solver from python settings
-  Nonlinear(PyObject *specificSettings);
+  Nonlinear(PyObject *specificSettings, MPI_Comm mpiCommunicator);
 
   //! return the SNES object that is used for solving (nonlinear solver context)
   std::shared_ptr<SNES> snes();

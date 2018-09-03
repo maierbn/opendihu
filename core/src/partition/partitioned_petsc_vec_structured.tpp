@@ -435,8 +435,8 @@ output(std::ostream &stream)
 #ifndef NDEBUG  
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
-  MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
+  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
+  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
   
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)

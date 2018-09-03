@@ -188,8 +188,8 @@ output(std::ostream &stream) const
 {
   // this method gets all values and outputs them to stream
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNo);
-  MPI_Comm_size(PETSC_COMM_WORLD, &nRanks);
+  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
+  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
   
   // get global size of matrix 
   int nRows, nColumns;

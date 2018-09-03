@@ -19,7 +19,7 @@ void getVectorEntries(const Vec &vector, std::vector<double> &vectorValues);
 //! fills an already existing petsc vector that has the proper size with values
 void setVector(const std::vector<double> &vectorValues, Vec &vector);
 
-//! create a Vec Petsc object
+//! create a Vec Petsc object, this function is to be removed, currently only needed because of solid mechanics
 void createVector(Vec &vector, int nEntries, std::string name="");
 
 //! return a string of the matrix that can be printed

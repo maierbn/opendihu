@@ -102,6 +102,8 @@ parseBoundaryConditions()
   };
   std::sort(boundaryConditions.begin(), boundaryConditions.end(), compareFunction);
 
+  LOG(DEBUG) << "read in boundary conditions from config: " << boundaryConditions;
+
   // determine elements with nodes that have prescribed Dirichlet boundary conditions, store them in the vector boundaryConditionElements_,
   // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
@@ -109,10 +111,14 @@ parseBoundaryConditions()
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
+    VLOG(1) << "elementNoLocal: " << elementNoLocal;
+
     // loop over the nodes of this element
     int elementalDofIndex = 0;
     for (int nodeIndex = 0; nodeIndex < FunctionSpaceType::nNodesPerElement(); nodeIndex++)
     {
+      VLOG(1) << "nodeInedx: " << nodeIndex;
+
       // get global or local nodeNo of current node (depending on inputMeshIsGlobal)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
@@ -128,6 +134,8 @@ parseBoundaryConditions()
       // loop over dofs of node and thus over the elemental dofs
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, elementalDofIndex++)
       {
+        VLOG(1) << "nodalDofInedx: " << nodalDofIndex << ", nodeNo: " << nodeNo << ", elementalDofInedx: " << elementalDofIndex;
+
         global_no_t indexForBoundaryCondition = nodeNo*nDofsPerNode + nodalDofIndex;
 
         // check if a dirichlet boundary condition for the current node is given
@@ -148,6 +156,8 @@ parseBoundaryConditions()
             break;
         }
 
+        VLOG(1) << "boundaryConditionForDofFound: " << boundaryConditionForDofFound;
+
         // here boundaryConditionIter->first is equal to indexForBoundaryCondition (then the current element/node/dof matches the boundary condition)
         // or boundaryConditionIter->first > indexForBoundaryCondition then the current dofIndex does not have any boundary condition
         // or boundaryConditionIter == boundaryConditions.end() then, too
@@ -155,6 +165,8 @@ parseBoundaryConditions()
         // if the currently considered boundaryCondition entry from config matches the current nodeNo and nodalDofIndex
         if (boundaryConditionForDofFound)
         {
+          VLOG(1) << "elementNoLocal: " << elementNoLocal << ", lastBoundaryConditionElement: " << lastBoundaryConditionElement;
+
           // if there is not yet an entry in boundaryConditionElements with the current element, create one
           if (elementNoLocal != lastBoundaryConditionElement)
           {
@@ -163,6 +175,8 @@ parseBoundaryConditions()
             boundaryConditionElements_.back().elementNoLocal = elementNoLocal;
 
             lastBoundaryConditionElement = elementNoLocal;
+
+            VLOG(1) << "add empty entry for elementNoLocal " << elementNoLocal;
           }
 
           // add current node and boundary condition value to list of boundary conditions for current element
@@ -183,6 +197,7 @@ parseBoundaryConditions()
           // add current node and boundary condition value to list of boundary conditions for current element
           if (!dofIndexAlreadyContained)
           {*/
+          VLOG(1) << " add (el-dof, value)" << std::pair<int,double>(elementalDofIndex, boundaryConditionValue) << ", to boundaryConditionElement of element " << boundaryConditionElement.elementNoLocal;
             boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionValue));
           //}
 
@@ -206,6 +221,16 @@ parseBoundaryConditions()
               boundaryConditionValues_.push_back(boundaryConditionValue);
             }
           }
+
+
+
+          VLOG(1) << "currently parsed boundary conditions:";
+          for (auto boundaryConditionElement: boundaryConditionElements_)
+          {
+            VLOG(1) << "  elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
+          }
+
+
         }
       }
     }

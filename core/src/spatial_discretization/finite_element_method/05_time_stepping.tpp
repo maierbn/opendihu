@@ -110,7 +110,7 @@ initializeLinearSolver()
     LOG(DEBUG) << s.str() << ": FiniteElementMethodTimeStepping: initialize linearSolver";
     
     // retrieve linear solver
-    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
+    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_, this->functionSpace_->meshPartition()->mpiCommunicator());
     ksp_ = linearSolver_->ksp();
   }
   else 

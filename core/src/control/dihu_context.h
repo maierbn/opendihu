@@ -19,10 +19,10 @@ class DihuContext
 {
 public:
   ///! constructor, initialize context, parse command line parameters and input file
-  DihuContext(int argc, char *argv[], bool settingsFromFile=true);
+  DihuContext(int argc, char *argv[], bool doNotFinalizeMpi=false, bool settingsFromFile=true);
 
   ///! constructor for test cases
-  DihuContext(int argc, char *argv[], std::string pythonSettings);
+  DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi=true);
 
   ///! copy-constructor
   DihuContext(const DihuContext &rhs);
@@ -67,4 +67,6 @@ private:
   static std::shared_ptr<Partition::Manager> partitionManager_;  ///< partition manager object that creates and manages partitionings
   
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
+  static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
+  bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 };

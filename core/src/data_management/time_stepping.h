@@ -10,6 +10,7 @@
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
 #include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat.h"
 
 namespace Data
 {
@@ -42,9 +43,18 @@ public:
   //FieldVariableType &rhs();
 
   // virtual FieldVariableType &intermediateIncrement() = 0; 
+  
+  //! get the system matrix
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();
+  
+  //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
+  void initializeSystemMatrix(Mat &systemMatrix);
 
   //! set the names of the components for the solution field variable
   void setComponentNames(std::vector<std::string> componentNames);
+  
+  //! perform the final assembly of petsc
+  void finalAssembly();
   
   //! print all stored data to stdout
   virtual void print();
@@ -76,6 +86,8 @@ protected:
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
   //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
+  
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
   
   std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   

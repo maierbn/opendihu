@@ -1,4 +1,4 @@
-#include "time_stepping_scheme/implicit_euler.h"
+#include "time_stepping_scheme/time_stepping_implicit.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -11,8 +11,8 @@
 namespace TimeSteppingScheme
 {
 
-  template<typename DiscretizableInTimeType>
-ImplicitEuler<DiscretizableInTimeType>::ImplicitEuler(DihuContext context) :
+template<typename DiscretizableInTimeType>
+TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext context) :
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, "ImplicitEuler")
 {
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
@@ -22,7 +22,7 @@ TimeSteppingSchemeOde<DiscretizableInTimeType>(context, "ImplicitEuler")
 }
 
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
+void TimeSteppingImplicit<DiscretizableInTimeType>::advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
@@ -36,13 +36,14 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   // loop over time steps
   double currentTime = this->startTime_;
   
-  this->setSystemMatrix(this->timeStepWidth_);;
+  this->setSystemMatrix(this->timeStepWidth_);
+  Mat &systemMatrix = this->data_.systemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr;
   
   // set matrix used for linear system and preconditioner to ksp context
   assert(this->ksp_);
-  ierr = KSPSetOperators (*ksp_, systemMatrix_, systemMatrix_); CHKERRV(ierr);
+  ierr = KSPSetOperators (*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
   
   
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
@@ -71,16 +72,17 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::run()
+void TimeSteppingImplicit<DiscretizableInTimeType>::run()
 {
   TimeSteppingSchemeOde<DiscretizableInTimeType>::run();
 }
 
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::
+void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
+  Mat &systemMatrix = this->data_.systemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
@@ -100,8 +102,9 @@ solveLinearSystem(Vec &input, Vec &output)
   << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 
+/*
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::
+void TimeSteppingImplicit<DiscretizableInTimeType>::
 setSystemMatrix(double timeStepWidth)
 {
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
@@ -131,31 +134,10 @@ setSystemMatrix(double timeStepWidth)
   
   VLOG(1) << *this->data_.systemMatrix();
 }
-
-/*
-template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::
-initializeSystemMatrix()
-{
-  // if the systemMatrix_ is already initialized do not initialize again
-  if (this->systemMatrix_)
-    return;
-  
-  // the PETSc matrix object is created outside by MatMatMult
-  std::shared_ptr<Partition::MeshPartition<DiscretizableInTimeType::FunctionSpace>> partition = this->functionSpace_->meshPartition();
-  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<DiscretizableInTimeType::FunctionSpace>>(partition, systemMatrix, "systemMatrix");
-}
 */
 
 template<typename DiscretizableInTimeType>
-std::shared_ptr<PartitionedPetscMat<typename DiscretizableInTimeType::FunctionSpace>> ImplicitEuler<DiscretizableInTimeType>::
-systemMatrix()
-{
-  return this->systemMatrix_;
-}
-
-template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::
+void TimeSteppingImplicit<DiscretizableInTimeType>::
 initializeLinearSolver()
 { 
   if (linearSolver_ == nullptr)

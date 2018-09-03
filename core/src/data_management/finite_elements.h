@@ -52,7 +52,7 @@ public:
   void initializeInverseLumpedMassMatrix();
 
   //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
-  void initializeSystemMatrix(Mat &systemMatrix);
+  //void initializeSystemMatrix(Mat &systemMatrix);
 
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();

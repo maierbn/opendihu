@@ -18,6 +18,7 @@
 
 namespace SpatialDiscretization
 {
+/*  
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
@@ -31,6 +32,7 @@ evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepN
   
   VLOG(1) << PetscUtility::getStringVector(output);
 }
+*/
 /*
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
@@ -86,6 +88,7 @@ setInverseLumpedMassMatrix()
   VLOG(2) << *this->data_.inverseLumpedMassMatrix();
 }
 
+/*
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 setSystemMatrix(double timeStepWidth)
@@ -115,7 +118,9 @@ setSystemMatrix(double timeStepWidth)
 
   VLOG(1) << *this->data_.systemMatrix();
 }
+*/
 
+/*
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 solveLinearSystem(Vec &input, Vec &output)
@@ -144,5 +149,6 @@ solveLinearSystem(Vec &input, Vec &output)
   VLOG(1) << "Linear system of implicit time stepping solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
+*/
 
 } // namespace SpatialDiscretization

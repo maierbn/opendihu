@@ -5,18 +5,19 @@
 #include "control/runnable.h"
 #include "data_management/time_stepping.h"
 #include "control/dihu_context.h"
-#include "model_order_reduction/pod.h"
 
 namespace TimeSteppingScheme
 {
 
 /** The implicit Euler integration scheme (backward Euler), u_{t+1} = u_{t} + dt*f(t+1)
   */
-template<typename DiscretizableInTime>
+template<typename DiscretizableInTimeType>
 class ImplicitEuler :
-  public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
+  public TimeSteppingSchemeOde<DiscretizableInTimeType>, public Runnable
 {
 public:
+  
+  typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
 
   //! constructor
   ImplicitEuler(DihuContext context);
@@ -26,6 +27,25 @@ public:
   
   //! run the simulation
   void run();
+  
+  //! get the system matrix, corresponding to the specific time integration. (I - d*tM^(-1)*K) for the implicit Euler scheme.
+  std::shared_ptr<PartitionedPetscMat<FunctionSpace>> systemMatrix();
+   
+protected:
+  
+  //! precomputes the integration matrix for example A=I-dtM^(-1)K for the implicit euler scheme
+  void setSystemMatrix(double timeStepWidth);
+  
+  //! initialize the linear solve that is needed for the solution of the implicit timestepping system
+  void initializeLinearSolver();
+  
+  //! solves the linear system of equations resulting from the Implicit Euler method time discretization
+  void solveLinearSystem(Vec &input, Vec &output);
+  
+  std::shared_ptr<PartitionedPetscMat<FunctionSpace>> systemMatrix_;     ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
+  std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
+  std::shared_ptr<KSP> ksp_; 
+  
 };
 
 }  // namespace

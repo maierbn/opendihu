@@ -63,7 +63,7 @@ protected:
   void setInverseLumpedMassMatrix();
 
   //! compute the system matrix for implicit timestepping, A=I-dt*M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
-  void setSystemMatrix(double timeStepWidth);
+  //void setSystemMatrix(double timeStepWidth);
 /*
   //! precomputes the system matrix A=M/dt-K for variant 1 of the implicit Euler
   void precomputeSystemMatrix1();

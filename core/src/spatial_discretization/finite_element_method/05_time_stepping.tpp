@@ -71,7 +71,7 @@ initialize(double timeStepWidth)
   setInverseLumpedMassMatrix();
 
   // initialize and compute the system matrix
-  setSystemMatrix(timeStepWidth);
+  //setSystemMatrix(timeStepWidth);
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

@@ -44,8 +44,11 @@ public:
 
   // virtual FieldVariableType &intermediateIncrement() = 0; 
   
-  //! get the system matrix
+  //! get the system matrix required by the implicit time stepping
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();
+  
+  //! get the integration matrix if required for the implicit time stepping
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide();
   
   //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
   void initializeSystemMatrix(Mat &systemMatrix);
@@ -87,7 +90,8 @@ protected:
   //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
   
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;  ///< the system matrix for implicit time stepping
+  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide_; ///< the integration matrix for the right hand side if required by the implicit time stepping
   
   std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   

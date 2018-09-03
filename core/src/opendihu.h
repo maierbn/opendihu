@@ -21,9 +21,9 @@
 
 #include "discretizable_in_time/discretizable_in_time.h"
 
-#include "time_stepping_scheme/crank_nicholson.h"
+#include "time_stepping_scheme/crank_nicolson.h"
 #include "time_stepping_scheme/explicit_euler.h"
-#include "time_stepping_scheme/time_stepping_implicit_euler.h"
+#include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"

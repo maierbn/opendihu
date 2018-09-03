@@ -9,7 +9,7 @@
 namespace TimeSteppingScheme
 {
 
-/** The implicit time integration scheme for example (backward Euler), u_{t+1} = u_{t} + dt*f(t+1)
+/** The implicit time integration scheme
   */
 template<typename DiscretizableInTimeType>
 class TimeSteppingImplicit :
@@ -23,16 +23,19 @@ public:
   TimeSteppingImplicit(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  virtual void advanceTimeSpan();
   
   //! run the simulation
   void run();
+  
+  //! set the system matrix
+  virtual void initialize();
    
 protected:
   
-  //! precomputes the integration matrix for example A=I-dtM^(-1)K for the implicit euler scheme
+  //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme
   virtual void setSystemMatrix(double timeStepWidth);
-  
+   
   //! initialize the linear solve that is needed for the solution of the implicit timestepping system
   void initializeLinearSolver();
   

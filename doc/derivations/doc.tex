@@ -1006,7 +1006,14 @@ For an implicit Euler scheme $u^{(t+1)} = u^{(t)} + dt\,f(t+1,u^{(t+1)})$, we ge
      \displaystyle(\bfK-\frac{\bfM}{dt})\bfu^{(t+1)}&=\,\displaystyle -\frac{\bfM}{dt}\bfu^{(t)}
   \end{array}
 \end{equation*}
-The second form may be beneficial in case of variable time step.
+The second form may be beneficial in case of variable time step.\\[1em]
+For the Crank-Nicolson scheme $u^{(t+1)} = u^{(t)} + dt\,(f(t+1,u^{(t+1)})+f(t,u^{(t)}))/2$, we get
+\begin{equation*}
+	\begin{array}{lll}
+		\dfrac{\bfK(\bfu^{(t+1)}+\bfu^{(t)})}{2} &= \dfrac1{dt} \bfM\Big(\bfu^{(t+1)} - \bfu^{(t)}\Big)\\[4mm]
+		(I - \dfrac{dt}{2}\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}(I + \dfrac{dt}{2}\,\bfM^{-1}\bfK)
+	\end{array}
+\end{equation*} 
 \subsection{Lumped Mass Matrix}
 For linear or bilinear basis functions
 \begin{equation*}

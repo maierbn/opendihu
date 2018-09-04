@@ -12,7 +12,8 @@ int main(int argc, char *argv[])
   
   TimeSteppingScheme::Heun<
     SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<2>,
+      //Mesh::StructuredRegularFixedOfDimension<2>,
+      Mesh::StructuredDeformableOfDimension<2>,
       BasisFunction::LagrangeOfOrder<1>,
       Quadrature::Gauss<3>,
       Equation::Dynamic::IsotropicDiffusion

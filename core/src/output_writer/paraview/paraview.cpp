@@ -49,9 +49,9 @@ std::string Paraview::encodeBase64(const std::vector<double> &vector)
   assert(sizeof(float) == 4);
   
   int rawLength = vector.size()*sizeof(float);
-  int encodedLength = Base64::EncodedLength(rawLength);
+  int encodedLength = Base64::EncodedLength(4+rawLength);
 
-  char raw[rawLength];
+  char raw[4+rawLength];
   for (unsigned int i=0; i<vector.size(); i++)
   {
     union {
@@ -59,12 +59,21 @@ std::string Paraview::encodeBase64(const std::vector<double> &vector)
       char c[4];
     };
     d = vector[i];
-    memcpy(raw+i*sizeof(float), c, 4);
+    memcpy(raw+4+i*sizeof(float), c, 4);
   }
+
+  // prepend number of bytes as uint32
+  union {
+    uint32_t i;
+    char c[4];
+  };
+  i = rawLength;
+
+  memcpy(raw, c, 4);
 
   char encoded[encodedLength+1];
   //Base64::Encode(reinterpret_cast<char *>(vector.data()), rawLength, encoded, encodedLength);
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw, rawLength+4, encoded, encodedLength);
   if (!success)
     LOG(WARNING) << "encoding failed";
 
@@ -79,9 +88,9 @@ std::string Paraview::encodeBase64(const std::vector<element_no_t> &vector)
   assert(sizeof(element_no_t) == 4);
   
   int rawLength = vector.size()*sizeof(element_no_t);
-  int encodedLength = Base64::EncodedLength(rawLength);
+  int encodedLength = Base64::EncodedLength(4+rawLength);
 
-  char raw[rawLength];
+  char raw[4+rawLength];
   for (unsigned int i=0; i<vector.size(); i++)
   {
     union {
@@ -89,12 +98,21 @@ std::string Paraview::encodeBase64(const std::vector<element_no_t> &vector)
       char c[4];
     };
     integer = vector[i];
-    memcpy(raw+i*sizeof(element_no_t), c, 4);
+    memcpy(raw+4+i*sizeof(element_no_t), c, 4);
   }
+
+  // prepend number of bytes as uint32
+  union {
+    uint32_t i;
+    char c[4];
+  };
+  i = rawLength;
+
+  memcpy(raw, c, 4);
 
   char encoded[encodedLength+1];
   //Base64::Encode(reinterpret_cast<char *>(vector.data()), rawLength, encoded, encodedLength);
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw, rawLength+4, encoded, encodedLength);
   if (!success)
     LOG(WARNING) << "encoding failed";
 

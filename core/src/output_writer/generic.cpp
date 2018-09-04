@@ -48,7 +48,7 @@ std::ofstream Generic::openFile(std::string filename)
 
 void Generic::appendRankNo(std::stringstream &str, int nRanks, int ownRankNo)
 {
-  int nCharacters = 1 + int(std::log(nRanks));
+  int nCharacters = 1 + int(std::log10(nRanks));
 
   str << "." << std::setw(nCharacters) << std::setfill('0') << ownRankNo;
 }

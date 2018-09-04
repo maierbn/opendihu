@@ -44,6 +44,9 @@ public:
   //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs (only for structured mesh)e
   const std::vector<PetscInt> &dofNosLocal() const;
   
+  //! get a vector of local dof nos including ghost dofs, in the natural ordering
+  virtual const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
+
   //! get a PETSc IS (index set) with the same information as dofNosLocal_
   const IS &dofNosLocalIS() const;
   

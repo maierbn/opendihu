@@ -81,6 +81,80 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace)
+{
+  if (dofNosLocalNaturalOrdering_.empty())
+  {
+
+    // resize the vector to hold number of localWithGhosts dofs
+    dofNosLocalNaturalOrdering_.resize(nDofsLocalWithGhosts());
+
+    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+    int index = 0;
+    if (MeshType::dim() == 1)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+      {
+        std::array<int,MeshType::dim()> coordinates({nodeX});
+
+        // loop over dofs of node
+        for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+        {
+          dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+          dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+        }
+      }
+    }
+    else if (MeshType::dim() == 2)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeY = 0; nodeY < nNodesLocalWithGhosts(1); nodeY++)
+      {
+        for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+        {
+          std::array<int,MeshType::dim()> coordinates;
+          coordinates[0] = nodeX;
+          coordinates[1] = nodeY;
+
+          // loop over dofs of node
+          for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+          {
+            dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+            dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+          }
+        }
+      }
+    }
+    else if (MeshType::dim() == 3)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeZ = 0; nodeZ < nNodesLocalWithGhosts(2); nodeZ++)
+      {
+        for (node_no_t nodeY = 0; nodeY < nNodesLocalWithGhosts(1); nodeY++)
+        {
+          for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+          {
+            std::array<int,MeshType::dim()> coordinates;
+            coordinates[0] = nodeX;
+            coordinates[1] = nodeY;
+            coordinates[2] = nodeZ;
+
+            // loop over dofs of node
+            for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+            {
+              dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+              dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 createDmElements()
 {
   dmElements_ = std::make_shared<DM>();
@@ -442,7 +516,20 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
 
   if (coordinateDirection == 0)
   {
-//TODO
+    return rankNo % nRanks_[0];
+  }
+  else if (coordinateDirection == 1)
+  {
+    // example: nRanks: 1,2   localSizesOnRanks_: ((20),(10,10))
+    return (rankNo % (nRanks_[0]*nRanks_[1])) / nRanks_[0];
+  }
+  else if (coordinateDirection == 2)
+  {
+    return rankNo / (nRanks_[0]*nRanks_[1]);
+  }
+  else
+  {
+    assert(false);
   }
 }
   
@@ -590,6 +677,13 @@ const std::vector<PetscInt> &MeshPartition<FunctionSpace::FunctionSpace<MeshType
 ghostDofNosGlobalPetsc() const
 {
   return ghostDofNosGlobalPetsc_;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+const std::vector<dof_no_t> &MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+dofNosLocalNaturalOrdering() const
+{
+  return dofNosLocalNaturalOrdering_;
 }
 
 //! determine the values of ownRankPartitioningIndex_

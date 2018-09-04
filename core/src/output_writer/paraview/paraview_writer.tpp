@@ -126,8 +126,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       std::array<node_no_t,6> extent = {0};
       for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
       {
-        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, rankNo);
-        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, rankNo)-1;
+        int partitionIndex = mesh->meshPartition()->convertRankNoToPartitionIndex(dimensionNo, rankNo);
+        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, partitionIndex);
+        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, partitionIndex)-1;
       }
 
       LOG(DEBUG) << "extent: " << extent;
@@ -260,13 +261,13 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       << std::string(5, '\t') << Paraview::convertToAscii(coordinates[0], fixedFormat) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl
       << std::string(4, '\t') << "<DataArray "
-        << "type=\"Float64\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" "
         << "format=\"ascii\" >" << std::endl
       << std::string(5, '\t') << Paraview::convertToAscii(coordinates[1], fixedFormat) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl
       << std::string(4, '\t') << "<DataArray "
-        << "type=\"Float64\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" "
         << "format=\"ascii\" >" << std::endl
       << std::string(5, '\t') << Paraview::convertToAscii(coordinates[2], fixedFormat) << std::endl
@@ -386,8 +387,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       std::array<node_no_t,6> extent = {0};
       for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
       {
-        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, rankNo);
-        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, rankNo)-1;
+        int partitionIndex = mesh->meshPartition()->convertRankNoToPartitionIndex(dimensionNo, rankNo);
+        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, partitionIndex);
+        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, partitionIndex)-1;
       }
 
       file << std::string(2, '\t') << "<Piece Extent=\"" << extent[0];
@@ -396,7 +398,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
       std::stringstream pieceFilename;
       Generic::appendRankNo(pieceFilename, mesh->meshPartition()->nRanks(), rankNo);
-      file << "\" Source=\"" << filenameBase << pieceFilename.str() << ".vtr\" />" << std::endl;
+      file << "\" Source=\"" << filenameBase << pieceFilename.str() << ".vts\" />" << std::endl;
     }
 
     file << std::string(1, '\t') << "</PStructuredGrid>" << std::endl

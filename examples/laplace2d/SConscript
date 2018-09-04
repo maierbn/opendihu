@@ -10,11 +10,7 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
     
-  # define the source files
-  src_files = Split(
-  """
-    laplace_example_2d.cpp
-  """)
-
   # create the main executable
-  env.Program(target = 'laplace_example', source = src_files)
+  env.Program(target = 'laplace_structured', source = "src/laplace_structured.cpp")
+  env.Program(target = 'laplace_regular', source = "src/laplace_regular.cpp")
+  env.Program(target = 'laplace_hermite', source = "src/laplace_hermite.cpp")

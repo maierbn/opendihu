@@ -23,47 +23,59 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   std::vector<std::string> namesScalars, namesVectors;
   ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
 
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
+  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  {
+    LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
+  }
+  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
   bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
 
   // determine file name
   std::stringstream s;
-  if (mesh->meshPartition()->nRanks() > 1)
+  if (mesh->meshPartition()->nRanks() > 1 && mesh->meshPartition()->ownRankNo() == 0)
   {
     // this is a parallel run, write master file, "parallel dataset element"
 
     // extract filename base
-    std::string filenameBase;
+    std::string filenameBase, filenameBaseWithPath;
     std::size_t pos1 = filename.rfind(".");
     if (pos1 != std::string::npos)
     {
-      filenameBase = filename.substr(0, pos1);
+      filenameBaseWithPath = filename.substr(0, pos1);
     }
     else
     {
-      filenameBase = filename;
+      filenameBaseWithPath = filename;
     }
 
-    s << filename << ".pvtr";
+    pos1 = filename.rfind("/");
+    if (pos1 != std::string::npos)
+    {
+      filenameBase = filenameBaseWithPath.substr(pos1+1);
+    }
+    else
+    {
+      filenameBase = filenameBaseWithPath;
+    }
+
+    s << filenameBaseWithPath << ".pvtr";
 
     // open file
     std::ofstream file = Paraview::openFile(s.str());
 
     LOG(DEBUG) << "Write PRectilinearGrid, file \"" << s.str() << "\".";
 
-    // extent
-    std::vector<node_no_t> extent = {0,0,0};   // global number of elements (not nodes!) in x, y and z direction
+    std::array<node_no_t,6> globalExtent = {0};
     for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
     {
-      extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionGlobal(dimensionNo)
-        * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+      globalExtent[dimensionNo] = mesh->meshPartition()->nNodesGlobal(dimensionNo) - 1;
     }
 
     // write file
     file << "<?xml version=\"1.0\"?>" << std::endl
       << "<VTKFile type=\"PRectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
       << std::string(1, '\t') << "<PRectilinearGrid "
-        << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\" GhostLevel=\"0\"> " << std::endl ;
+      << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
 
     file << std::string(2, '\t') << "<PPointData ";
     // output first name of scalar fields, this is the default field to be displayed
@@ -98,34 +110,34 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       << "type=\"Float32\" "
       << "NumberOfComponents=\"1\" "
       << "format=\"" << format << "\" />" << std::endl
-      << std::string(3, '\t') << "<DataArray "
+      << std::string(3, '\t') << "<PDataArray "
       << "type=\"Float32\" "
       << "NumberOfComponents=\"1\" "
       << "format=\"" << format << "\" />" << std::endl
-      << std::string(3, '\t') << "</DataArray>" << std::endl
-      << std::string(3, '\t') << "<DataArray "
+      << std::string(3, '\t') << "<PDataArray "
       << "type=\"Float32\" "
       << "NumberOfComponents=\"1\" "
       << "format=\"" << format << "\" />" << std::endl
-      << std::string(3, '\t') << "</DataArray>" << std::endl
       << std::string(2, '\t') << "</PCoordinates>" << std::endl;
 
     for (int rankNo = 0; rankNo < mesh->meshPartition()->nRanks(); rankNo++)
     {
-      // extent
+      // extent is number nodes-1 (not number elements)
       std::array<node_no_t,6> extent = {0};
       for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
       {
-        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo);
-        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithoutGhosts(dimensionNo);
+        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, rankNo);
+        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, rankNo)-1;
       }
+
+      LOG(DEBUG) << "extent: " << extent;
 
       file << std::string(2, '\t') << "<Piece Extent=\"" << extent[0];
       for (int i = 1; i < 6; i++)
         file << " " << extent[i];
 
       std::stringstream pieceFilename;
-      Generic::appendRankNo(pieceFilename, mesh->meshPartition()->nRanks(), mesh->meshPartition()->ownRankNo());
+      Generic::appendRankNo(pieceFilename, mesh->meshPartition()->nRanks(), rankNo);
       file << "\" Source=\"" << filenameBase << pieceFilename.str() << ".vtr\" />" << std::endl;
     }
 
@@ -150,11 +162,13 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   LOG(DEBUG) << "Write RectilinearGrid, file \"" << s.str() << "\".";
 
   // extent
-  std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
+  std::array<node_no_t,6> localExtent = {0};
+  std::array<node_no_t,6> globalExtent = {0};
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
-    extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
-      * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+    localExtent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo);
+    localExtent[2*dimensionNo + 1] = localExtent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo)-1;
+    globalExtent[dimensionNo] = mesh->meshPartition()->nNodesGlobal(dimensionNo) - 1;
   }
 
   // coordinates of grid
@@ -163,17 +177,16 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   for (; dimensionNo < D; dimensionNo++)
   {
     double meshWidth = mesh->meshWidth();
-    double nElements = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo);
-    node_no_t nNodes = extent[dimensionNo] + 1;
+    node_no_t nNodes = mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo);
     
-    LOG(DEBUG) << "dimension " <<dimensionNo << ", meshWidth: " <<meshWidth<< ", nElements: " <<nElements;
+    LOG(DEBUG) << "dimension " << dimensionNo << ", meshWidth: " << meshWidth;
 
     coordinates[dimensionNo].resize(nNodes);
 
     for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
-      double coordinate = nodeNo * meshWidth;
-      VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" <<nodeNo;
+      double coordinate = (mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo) + nodeNo) * meshWidth;
+      VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" << nodeNo;
       coordinates[dimensionNo][nodeNo] = coordinate;
     }
   }
@@ -185,15 +198,17 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     coordinates[dimensionNo][0] = 0.0;
   }
   
-  // name of value field
-
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"RectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<RectilinearGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
-    << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
+    << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
+    << std::string(2, '\t') << "<Piece Extent=\"" << localExtent[0];
+
+  for (int i = 1; i < 6; i++)
+    file << " " << localExtent[i];
+
+  file << "\"> " << std::endl;
 
   file << std::string(3, '\t') << "<PointData ";
   // output first name of scalar fields, this is the default field to be displayed
@@ -272,9 +287,131 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
            int nFieldVariablesOfMesh, PyObject *specificSettings)
 {
   // write a StructuredGrid
+  // collect field variable names that are defined on the current mesh
+  std::vector<std::string> namesScalars, namesVectors;
+  ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
+
+  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  {
+    LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
+  }
+  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
+  bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
+
   // determine file name
   std::stringstream s;
-  s <<filename << ".vts";
+  if (mesh->meshPartition()->nRanks() > 1 && mesh->meshPartition()->ownRankNo() == 0)
+  {
+    // this is a parallel run, write master file, "parallel dataset element"
+
+    // extract filename base
+    std::string filenameBase, filenameBaseWithPath;
+    std::size_t pos1 = filename.rfind(".");
+    if (pos1 != std::string::npos)
+    {
+      filenameBaseWithPath = filename.substr(0, pos1);
+    }
+    else
+    {
+      filenameBaseWithPath = filename;
+    }
+
+    pos1 = filename.rfind("/");
+    if (pos1 != std::string::npos)
+    {
+      filenameBase = filenameBaseWithPath.substr(pos1+1);
+    }
+    else
+    {
+      filenameBase = filenameBaseWithPath;
+    }
+
+    s << filenameBaseWithPath << ".pvts";
+
+    // open file
+    std::ofstream file = Paraview::openFile(s.str());
+
+    LOG(DEBUG) << "Write PStructuredGrid, file \"" << s.str() << "\".";
+
+    std::array<node_no_t,6> globalExtent = {0};
+    for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
+    {
+      globalExtent[dimensionNo] = mesh->meshPartition()->nNodesGlobal(dimensionNo) - 1;
+    }
+
+    // write file
+    file << "<?xml version=\"1.0\"?>" << std::endl
+      << "<VTKFile type=\"PStructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
+      << std::string(1, '\t') << "<PStructuredGrid "
+      << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
+
+    file << std::string(2, '\t') << "<PPointData ";
+    // output first name of scalar fields, this is the default field to be displayed
+    if (!namesScalars.empty())
+    {
+      file << "Scalars=\"" << namesScalars[0] << "\" ";
+    }
+      // output first name of vector fields, this is the default field to be displayed
+    if (!namesVectors.empty())
+    {
+      file << "Vectors=\"" << namesVectors[0] << "\" ";
+    }
+    file << ">" << std::endl;
+
+    ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, true);
+
+    file << std::string(2, '\t') << "</PPointData>" << std::endl
+      << std::string(2, '\t') << "<PCellData>" << std::endl
+      << std::string(2, '\t') << "</PCellData>" << std::endl
+      << std::string(2, '\t') << "<PPoints>" << std::endl;
+
+    std::string format;
+    if (binaryOutput)
+    {
+      format = "binary";
+    }
+    else
+    {
+      format = "ascii";
+    }
+    file << std::string(3, '\t') << "<PDataArray "
+      << "type=\"Float32\" "
+      << "NumberOfComponents=\"3\" "
+      << "format=\"" << format << "\" />" << std::endl
+      << std::string(2, '\t') << "</PPoints>" << std::endl;
+
+    for (int rankNo = 0; rankNo < mesh->meshPartition()->nRanks(); rankNo++)
+    {
+      // extent is number nodes-1 (not number elements)
+      std::array<node_no_t,6> extent = {0};
+      for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
+      {
+        extent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo, rankNo);
+        extent[2*dimensionNo + 1] = extent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo, rankNo)-1;
+      }
+
+      file << std::string(2, '\t') << "<Piece Extent=\"" << extent[0];
+      for (int i = 1; i < 6; i++)
+        file << " " << extent[i];
+
+      std::stringstream pieceFilename;
+      Generic::appendRankNo(pieceFilename, mesh->meshPartition()->nRanks(), rankNo);
+      file << "\" Source=\"" << filenameBase << pieceFilename.str() << ".vtr\" />" << std::endl;
+    }
+
+    file << std::string(1, '\t') << "</PStructuredGrid>" << std::endl
+      << "</VTKFile>" << std::endl;
+
+    file.close();
+
+    // write serial slave file
+    s.str("");
+    s << filename << ".vts";
+  }
+  else
+  {
+    s << filename << ".vts";
+  }
 
   // open file
   std::ofstream file = Paraview::openFile(s.str());
@@ -282,35 +419,33 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   LOG(DEBUG) << "Write StructuredGrid, file \"" << s.str() << "\".";
 
   // extent
-  std::vector<node_no_t> extent = {0,0,0};   // number of elements (not nodes!) in x, y and z direction
+  std::array<node_no_t,6> localExtent = {0};
+  std::array<node_no_t,6> globalExtent = {0};
   for (int dimensionNo = 0; dimensionNo < D; dimensionNo++)
   {
-    extent[dimensionNo] = mesh->nElementsPerCoordinateDirectionLocal(dimensionNo) 
-      * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+    localExtent[2*dimensionNo + 0] = mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo);
+    localExtent[2*dimensionNo + 1] = localExtent[2*dimensionNo + 0] + mesh->meshPartition()->nNodesLocalWithGhosts(dimensionNo)-1;
+    globalExtent[dimensionNo] = mesh->meshPartition()->nNodesGlobal(dimensionNo) - 1;
   }
-  
+
   // get type of geometry field
   typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
 
-  // name of value field
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
-  bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
-
   // avoid bug in paraview when reading binary encoded (base64) values for 1D meshes
-  if (D == 1 && extent[0] > 1 && binaryOutput)
-     extent[0] -= 1;
+  //if (D == 1 && extent[0] > 1 && binaryOutput)
+  //   extent[0] -= 1;
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
-      << "WholeExtent=\"" << "0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl     // dataset element
-    << std::string(2, '\t') << "<Piece "
-      << "Extent=\"0 " << extent[0] << " 0 " << extent[1] << " 0 " << extent[2] << "\"> " << std::endl;
-    
-  // collect field variable names that are defined on the current mesh
-  std::vector<std::string> namesScalars, namesVectors;
-  ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
+    << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
+    << std::string(2, '\t') << "<Piece Extent=\"" << localExtent[0];
+
+  for (int i = 1; i < 6; i++)
+    file << " " << localExtent[i];
+
+  file << "\"> " << std::endl;
   
   
   file << std::string(3, '\t') << "<PointData ";
@@ -366,7 +501,11 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   
   // name of value field
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binaryOutput", true);
+  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  {
+    LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
+  }
+  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
   bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
 
   // write file

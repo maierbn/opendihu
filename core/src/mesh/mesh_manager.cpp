@@ -64,7 +64,7 @@ void Manager::storePreconfiguredMeshes()
 
 bool Manager::hasMesh(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh(" <<meshName << ")";
+  LOG(DEBUG) << "hasMesh(" << meshName << ")";
   LOG(DEBUG) << "meshes size: " << meshes_.size();
 
   return meshes_.find(meshName) != meshes_.end();
@@ -78,7 +78,7 @@ mesh<None>(PyObject *settings)
   if (PythonUtility::hasKey(settings, "meshName"))
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    LOG(DEBUG) << "Config contains meshName \"" <<meshName << "\".";
+    LOG(DEBUG) << "Config contains meshName \"" << meshName << "\".";
 
     if (hasMesh(meshName))
     {
@@ -87,7 +87,7 @@ mesh<None>(PyObject *settings)
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
-      LOG(DEBUG) << "Mesh configuration for \"" <<meshName << "\" found and requested, will be created now. "
+      LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
       typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
       
@@ -97,12 +97,12 @@ mesh<None>(PyObject *settings)
       // store mesh
       mesh->setMeshName(meshName);
       meshes_[meshName] = mesh;
-      LOG(DEBUG) << "Stored under key \"" <<meshName << "\".";
+      LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
       return std::static_pointer_cast<Mesh>(meshes_[meshName]);
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \"" <<meshName << "\" but no such mesh was defined.";
+      LOG(ERROR) << "Config contains reference to mesh with meshName \"" << meshName << "\" but no such mesh was defined.";
     }
   }
   else

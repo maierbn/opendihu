@@ -139,7 +139,10 @@ if dimension == 1:
       ax1 = plt.gca()
     
     # prepare main plot
-    line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
+    if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite
+      line_2D, = ax1.plot([], [], '-', color="b", lw=2)
+    else:
+      line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
     margin = abs(max_s - min_s) * 0.1
     ax1.set_xlim(min_x, max_x)
     ax1.set_ylim(min_s - margin, max_s + margin)
@@ -218,6 +221,51 @@ if dimension == 1:
     # display data
     xdata = py_reader.get_values(data[i], "geometry", geometry_component)
     sdata = py_reader.get_values(data[i], "solution", "0")
+
+    # handle Hermite that have derivative values saved
+    if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
+      
+      def hermite0(xi):
+        return 1 - 3*xi*xi + 2*xi*xi*xi
+        
+      def hermite1(xi):
+        return xi * (xi-1) * (xi-1)
+
+      def hermite2(xi):
+        return xi*xi * (3 - 2*xi)
+
+      def hermite3(xi):
+        return xi*xi * (xi-1)
+      
+      n_elements = data[i]["nElements"][0]
+      
+      n = 20
+      new_xdata = np.zeros(n_elements*n)
+      new_sdata = np.zeros(n_elements*n)
+      
+      #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
+      #print("xdata: {}".format(xdata))
+      
+      for el_no in range(n_elements):
+        c0 = sdata[2*el_no+0]
+        c1 = sdata[2*el_no+1]
+        c2 = sdata[2*el_no+2]
+        c3 = sdata[2*el_no+3]
+        
+        #print("parsed coefficients: {} {} {} {}".format(c0,c1,c2,c3))
+        
+        for j in range(n):
+          xi = float(j)/n
+          x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
+          
+          #print("xi={}, x={}".format(xi,x))
+          
+          new_xdata[el_no*n+j] = x
+          new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
+        
+      xdata = new_xdata
+      sdata = new_sdata
+      
     
     line_2D.set_data(xdata,sdata)
     ##################

@@ -87,8 +87,8 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithoutGhosts() const;
   
-  //! number of nodes in the local partition
-  node_no_t nNodesLocalWithGhosts(int coordinateDirection) const;
+  //! number of nodes in the local partition specified by partitionIndex or the current partition if partitionIndex == -1
+  node_no_t nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex = -1) const;
   
   //! number of nodes in the partition specified by partitionIndex or the current partition if partitionIndex == -1
   node_no_t nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex = -1) const;
@@ -135,6 +135,9 @@ public:
   //! from a vector of values of global/natural dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
   
+  //! get the partition index in a given coordinate direction from the rankNo
+  int convertRankNoToPartitionIndex(int coordinateDirection, int rankNo);
+
   //! output to stream for debugging
   void output(std::ostream &stream);
   
@@ -181,6 +184,8 @@ protected:
   std::vector<dof_no_t> onlyNodalDofLocalNos_;   ///< vector of local nos of the dofs, not including derivatives for Hermite
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;   ///< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition
   
+  //std::vector<dof_no_t> localNaturalToLocalMapping_;  ///< for every local natural number, i.e. local numbering according to coordinates, the local dof no
+
   ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   ///< local to global mapping for dofs
 };
 

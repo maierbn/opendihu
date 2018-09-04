@@ -278,12 +278,31 @@ nNodesLocalWithoutGhosts() const
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithGhosts(int coordinateDirection) const
+nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
   
-  return this->nElementsLocal_[coordinateDirection] * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  const int nNodesPer1DElement = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+
+  if (partitionIndex == -1)
+  {
+    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), nElementsLocal_: " << nElementsLocal_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+      << ", result: " << this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
+
+    // if partitionIndex was given as -1, it means return the the value for the own partition
+    return this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
+  }
+  else
+  {
+    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), localSizesOnRanks: " << localSizesOnRanks_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+      << ", result: " << this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+
+    // get the value for the given partition with index partitionIndex
+    return this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+  }
 }
 
 //! number of nodes in the local partition
@@ -356,11 +375,15 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 
   if (partitionIndex == -1)
   {
+    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), beginElementGlobal: " << beginElementGlobal_ << ", result: " << beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
+
     // if partitionIndex was given as -1, it means return the global natural no of the beginNode for the current partition
     return beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
   }
   else
   {
+
     // compute the global natural no of the beginNode for partition with partitionIndex in coordinateDirection
     global_no_t nodeNoGlobalNatural = 0;
     // loop over all partitions in the given coordinateDirection that are before the partition with partitionIndex
@@ -369,6 +392,10 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
       // sum up the number of nodes on these previous partitions
       nodeNoGlobalNatural += (localSizesOnRanks_[coordinateDirection][i]) * nNodesPer1DElement;
     }
+
+    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), localSizesOnRanks_: " << localSizesOnRanks_ << ", result: " << nodeNoGlobalNatural;
+
     return nodeNoGlobalNatural;
   }
 }
@@ -402,6 +429,20 @@ hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
   {
     // determine if the local partition is at the x+/y+/z+ border of the global domain
     return (partitionIndex == nRanks_[coordinateDirection]-1);
+  }
+}
+
+//! get the partition index in a given coordinate direction from the rankNo
+template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
+{
+  assert(0 <= coordinateDirection);
+  assert(coordinateDirection < MeshType::dim());
+
+  if (coordinateDirection == 0)
+  {
+//TODO
   }
 }
   

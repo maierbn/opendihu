@@ -236,7 +236,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
         meshWidth[dimNo] = physicalExtent[dimNo] /
           (this->nElementsPerCoordinateDirectionLocal(dimNo) * (FunctionSpaceBaseDim<1,BasisFunctionType>::nNodesPerElement()-1));
       }
-      LOG(DEBUG) << "meshWidth[" <<dimNo << "] = " <<meshWidth[dimNo];
+      LOG(DEBUG) << "meshWidth[" << dimNo << "] = " << meshWidth[dimNo];
     }
    
     VLOG(1) << "specificSettings has no \"nodePositions\", use physicalExtent: " << physicalExtent << ", meshWidth: " << meshWidth;
@@ -351,7 +351,12 @@ setGeometryFieldValues()
   this->geometryField_->setValuesWithoutGhosts(geometryValues);
   this->geometryField_->finishGhostManipulation();
 
-  this->setHermiteDerivatives();
+  // initialize Hermite derivative dofs such that geometry fields becomes "even"
+  bool setHermiteDerivatives = PythonUtility::getOptionBool(this->specificSettings_, "setHermiteDerivatives", false);
+  if (setHermiteDerivatives)
+  {
+    this->setHermiteDerivatives();
+  }
 
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }

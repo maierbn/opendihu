@@ -117,7 +117,7 @@ setStiffnessMatrix()
         double integratedValue = integratedValues(i,j);
         double value = -prefactor * integratedValue;
 
-        VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" <<dofNosLocal[i]<< "," <<dofNosLocal[j]<< "), prefactor: " << prefactor << ", integrated value: " <<integratedValue;
+        VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), prefactor: " << prefactor << ", integrated value: " <<integratedValue;
 
         stiffnessMatrix->setValue(dofNosLocal[i], dofNosLocal[j], value, ADD_VALUES);
       }  // j

@@ -130,7 +130,7 @@ createPetscObjects()
   offdiagonalNonZeros = std::min(offdiagonalNonZeros, tangentStiffnessMatrixNRows);
 
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
-    << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros; 
+    << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros; 
   const int dimension = FunctionSpaceType::dim();
     
   const int nComponents = dimension;

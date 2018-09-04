@@ -19,6 +19,7 @@ std::array<double,nComponents> FieldVariableSetGet<FunctionSpace::FunctionSpace<
 getValue(node_no_t dofLocalNo) const
 {
   std::array<double,nComponents> resultVector;
+  assert(this->values_);
 
   for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -35,6 +36,7 @@ void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformab
 getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
+  assert(this->values_);
   
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const std::vector<dof_no_t> &elementDofs = this->elementToDofMapping_->getElementDofs(elementNo);
@@ -49,6 +51,7 @@ template<int D, typename BasisFunctionType>
 double FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 getValue(node_no_t dofLocalNo) const
 {
+  assert(this->values_);
   double result;
   this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
   return result;
@@ -75,6 +78,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
@@ -84,6 +88,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, dofNosLocal.size(), (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
@@ -93,6 +98,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, values, petscInsertMode);
 }
 
@@ -101,6 +107,7 @@ template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
 setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, values, petscInsertMode);
 }
 

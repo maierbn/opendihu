@@ -21,15 +21,15 @@ void checkSymmetry(double Cbar[3][3][3][3], std::string name)
           {
             if (fabs(Cbar[a][b][c][d] - Cbar[b][a][c][d]) > errorTolerance)
             {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" <<d<< "] != " << name << "[" <<b<< "][" <<a<< "][" << c<< "][" <<d<< "] (" <<Cbar[b][a][c][d]<< " != " <<Cbar[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
+              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" <<b<< "][" <<a<< "][" << c<< "][" << d<< "] (" <<Cbar[b][a][c][d]<< " != " <<Cbar[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
             }
             if (fabs(Cbar[a][b][c][d] - Cbar[a][b][d][c]) > errorTolerance)
             {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" <<d<< "] != " << name << "[" <<a<< "][" <<b<< "][" <<d<< "][" << c<< "] (" <<Cbar[a][b][d][c]<< " != " <<Cbar[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
+              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" <<a<< "][" <<b<< "][" << d<< "][" << c<< "] (" <<Cbar[a][b][d][c]<< " != " <<Cbar[a][b][c][d]<< ") - minor symmetry violated" << std::endl;
             }
             if (fabs(Cbar[a][b][c][d] - Cbar[c][d][a][b]) > errorTolerance)
             {
-              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" <<d<< "] != " << name << "[" << c<< "][" <<d<< "][" <<a<< "][" <<b<< "] (" <<Cbar[c][d][a][b]<< " != " <<Cbar[a][b][c][d]<< ") - major symmetry violated" << std::endl;
+              LOG(ERROR) << name << "[" <<a<< "][" <<b<< "][" << c<< "][" << d<< "] != " << name << "[" << c<< "][" << d<< "][" <<a<< "][" <<b<< "] (" <<Cbar[c][d][a][b]<< " != " <<Cbar[a][b][c][d]<< ") - major symmetry violated" << std::endl;
             }
           }
         }

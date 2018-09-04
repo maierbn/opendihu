@@ -110,7 +110,7 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
       if(matrixValues[i*nRows + j] == 0.0)
         s << std::string(5, ' ');
       else
-        s << std::setw(4) << std::setfill(' ') <<matrixValues[i*nRows + j]<< " ";
+        s << std::setw(4) << std::setfill(' ') << matrixValues[i*nRows + j]<< " ";
     }
     s << std::string(5, ' ') << "| " <<vectorValues[i];
     s << std::endl;
@@ -157,7 +157,7 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
       if(fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
         s << std::string(6, ' ');
       else
-        s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) <<matrixValues[i*nRows + j]<< " ";
+        s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) << matrixValues[i*nRows + j]<< " ";
     }
     s << std::string(6, ' ');
     s << std::endl;

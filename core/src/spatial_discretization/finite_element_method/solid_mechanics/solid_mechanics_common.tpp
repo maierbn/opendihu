@@ -109,7 +109,7 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Fu
               dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
               dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-              VLOG(3) << " initialize tangentStiffnessMatrix ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")), dofs (" << dofNosLocal[aDof] << "," <<dofNosLocal[bDof]<< "), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
+              VLOG(3) << " initialize tangentStiffnessMatrix ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")), dofs (" << dofNosLocal[aDof] << "," << dofNosLocal[bDof]<< "), entry ( " << matrixRowIndex << "," << matrixColumnIndex << ") (no. " << cntr++ << ")";
               ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, 0.0, INSERT_VALUES); CHKERRV(ierr);
             }
           }
@@ -455,8 +455,8 @@ setStiffnessMatrixEntriesForDisplacements(std::shared_ptr<PartitionedPetscMat<Fu
             dof_no_t matrixRowIndex = dofNosLocal[aDof]*D + aComponent;
             dof_no_t matrixColumnIndex = dofNosLocal[bDof]*D + bComponent;
 
-            //VLOG(2) << "  pair ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")) = (" <<i<< "," <<j<< "), dofs (" << dofNosLocal[aDof] << "," <<dofNosLocal[bDof]<< ")";
-            //VLOG(2) << "      matrix indices (" <<matrixRowIndex<< "," <<matrixColumnIndex<< "), integrated value: " <<integratedValue;
+            //VLOG(2) << "  pair ((" <<aDof<< "," <<aComponent<< "),(" <<bDof<< "," <<bComponent<< ")) = (" <<i<< "," <<j<< "), dofs (" << dofNosLocal[aDof] << "," << dofNosLocal[bDof]<< ")";
+            //VLOG(2) << "      matrix indices (" << matrixRowIndex<< "," << matrixColumnIndex<< "), integrated value: " <<integratedValue;
 
             ierr = MatSetValue(tangentStiffnessMatrix, matrixRowIndex, matrixColumnIndex, integratedValue, ADD_VALUES); CHKERRV(ierr);
 

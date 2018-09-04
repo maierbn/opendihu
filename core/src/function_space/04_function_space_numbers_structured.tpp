@@ -678,4 +678,165 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
   }
 }
 
+// get local node no from the coordinates (x), may be a ghost node, for 1D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<1,MeshType>>::
+getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
+{
+  return coordinateLocal[0];
+}
+
+// get local node no from the coordinates (x,y), may be a ghost node, for 2D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<2,MeshType>>::
+getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
+{
+  dof_no_t localX = coordinateLocal[0];
+  dof_no_t localY = coordinateLocal[1];
+
+  VLOG(1) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
+    << ", nNodesLocalWithoutGhosts: (" << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << ")";
+
+  if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0))   // point is on right ghost row
+  {
+    if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1))  // point is on top ghost row
+    {
+      // top right ghost point
+      VLOG(1) << "  a: " << this->meshPartition()->nNodesLocalWithGhosts()-1;
+      return this->meshPartition()->nNodesLocalWithGhosts()-1;
+    }
+    else
+    {
+      // on right ghost row
+      VLOG(1) << "  b: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
+      return this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
+    }
+  }
+  else
+  {
+    if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1))   // point is on top ghost row
+    {
+      // on top ghost row
+      if (this->meshPartition()->hasFullNumberOfNodes(0))
+      {
+        // there are only ghost on the top (y+)
+        VLOG(1) << "  c: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localX;
+        return this->meshPartition()->nNodesLocalWithoutGhosts() + localX;
+      }
+      else
+      {
+        // there are ghosts on the right (x+) and top (y+)
+        VLOG(1) << "  d: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
+        return this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
+      }
+    }
+    else
+    {
+      // point is in interior
+      VLOG(1) << " e: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      return this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+    }
+  }
+}
+
+// get local node no from the coordinates (x,y,z), may be a ghost node, for 3D
+template<typename MeshType,typename BasisFunctionType>
+node_no_t FunctionSpaceNumbers<MeshType,BasisFunctionType,Mesh::isStructuredWithDim<3,MeshType>>::
+getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
+{
+  dof_no_t localX = coordinateLocal[0];
+  dof_no_t localY = coordinateLocal[1];
+  dof_no_t localZ = coordinateLocal[2];
+
+  VLOG(1) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
+    << ", nNodesLocalWithoutGhosts: (" << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(2) << ")"
+    << ", hasFullNumberOfNodes: (" << this->meshPartition()->hasFullNumberOfNodes(0) << "," << this->meshPartition()->hasFullNumberOfNodes(1) << "," << this->meshPartition()->hasFullNumberOfNodes(2) << ")";
+
+  if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0))   // point is on right ghost row (x+)
+  {
+    if (this->meshPartition()->hasFullNumberOfNodes(1)) // there is no ghosts at y+
+    {
+      // there are only ghosts at x+
+      return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(1)*localZ + localY;
+    }
+    else  // there are ghosts at y+
+    {
+      const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
+      if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1))  // point is on back ghost row (y+)
+      {
+        // ghost is at right back vertical edge
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + nNodesPerL*localZ + this->meshPartition()->nNodesLocalWithoutGhosts(1) + this->meshPartition()->nNodesLocalWithoutGhosts(0);
+      }
+      else
+      {
+        // there are ghosts at x+ and y+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+            + nNodesPerL*localZ + localY;
+      }
+    }
+  }
+  else if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1))  // point is on back ghost row (y+)
+  {
+    if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
+    {
+      // there are only ghosts at y+
+      return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localZ + localX;
+    }
+    else  // there are ghosts at x+
+    {
+      // there are ghosts at x+ and y+
+      const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
+      return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + nNodesPerL*localZ + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
+    }
+  }
+  else if (localZ == this->meshPartition()->nNodesLocalWithoutGhosts(2))  // point is on top ghost row
+  {
+    if (this->meshPartition()->hasFullNumberOfNodes(1)) // there is no ghosts at y+
+    {
+      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
+      {
+        // there are only ghosts at z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      }
+      else  // there are ghosts at x+
+      {
+        // there are ghosts at x+ and z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(1)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
+      }
+    }
+    else  // there are ghosts at y+
+    {
+      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
+      {
+        // there are ghosts at y+ and z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      }
+      else  // there are ghosts at x+
+      {
+        // there are ghosts at x+, y+ and z+ and point is at z+
+        const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + nNodesPerL*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
+      }
+    }
+  }
+  else
+  {
+    // ghost is in interior
+    return this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(1)*localZ
+      + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+  }
+}
+
+
 };  // namespace

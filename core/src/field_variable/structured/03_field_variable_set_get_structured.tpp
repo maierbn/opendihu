@@ -81,7 +81,8 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  
+  assert(this->values_);
+
   this->values_->getValues(componentNo, N, (PetscInt *)dofLocalNo.data(), values.data());
 }
 
@@ -90,6 +91,7 @@ template<int N>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nComponents>,N> &values) const
 {
+  assert(this->values_);
   std::array<double,N*nComponents> result;   // temporary result buffer
 
   // prepare lookup indices for PETSc vector values_
@@ -116,6 +118,7 @@ getElementValues(int componentNo, element_no_t elementNo,
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
   
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
@@ -137,6 +140,7 @@ getElementValues(element_no_t elementNo,
                  std::array<std::array<double,nComponents>,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   assert(elementNo >= 0 && elementNo < this->functionSpace_->nElementsLocal());
+  assert(this->values_);
   
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   std::array<PetscInt,nDofsPerElement> indices;
@@ -175,6 +179,7 @@ double FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValue(int componentNo, node_no_t dofLocalNo) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
   
   PetscInt index = dofLocalNo;
 
@@ -265,6 +270,7 @@ setValuesWithGhosts(int componentNo, const std::vector<double> &values, InsertMo
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
+  assert(this->values_);
  
   // set the values
   this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
@@ -277,6 +283,7 @@ setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, Inser
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(this->values_);
  
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
   this->values_->setValues(componentNo, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
@@ -306,6 +313,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 zeroEntries()
 {
+  assert(this->values_);
   this->values_->zeroEntries();
 }
 };

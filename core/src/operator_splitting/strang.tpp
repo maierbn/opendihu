@@ -45,7 +45,7 @@ advanceTimeSpan()
     LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     LOG(DEBUG) << "  Strang: time step " << timeStepNo << ", t: " << currentTime;
 
-    LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan [" << currentTime << ", " <<midTime << "]";
+    LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan [" << currentTime << ", " << midTime << "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, midTime);
 
@@ -71,7 +71,7 @@ advanceTimeSpan()
     this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(),
       this->timeStepping1_.solutionVectorMapping(), this->timeStepping1_.solution());
 
-    LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" <<midTime << ", " << currentTime+this->timeStepWidth_<< "]";
+    LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" << midTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(midTime,currentTime+this->timeStepWidth_);
 

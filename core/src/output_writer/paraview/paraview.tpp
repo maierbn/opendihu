@@ -81,7 +81,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
 
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      fieldVariable.getValuesWithoutGhosts(componentNo, componentValues[componentNo], true);
+      fieldVariable.getValuesWithGhosts(componentNo, componentValues[componentNo], true);
     }
     values.reserve(componentValues[0].size()*nComponents);
 

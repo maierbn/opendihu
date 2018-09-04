@@ -164,7 +164,7 @@ config = {
       "diffusionTensor": [5.0],
     },
     "OutputWriter" : [
-      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
       {"format": "PythonFile", "filename": "out_diffusion1d", "outputInterval": 1, "binary":False}
     ]
   },

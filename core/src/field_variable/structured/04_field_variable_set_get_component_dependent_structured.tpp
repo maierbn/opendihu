@@ -14,6 +14,7 @@ void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const
 {
   VLOG(2) << "getElementValues element " << elementNo << ", 1 component";
+  assert(this->values_);
 
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
@@ -28,6 +29,7 @@ template<typename FunctionSpaceType>
 double FieldVariableSetGetComponent<FunctionSpaceType,1>::
 getValue(node_no_t dofLocalNo) const
 {
+  assert(this->values_);
   double result;
   this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
   return result;
@@ -39,6 +41,7 @@ template<typename FunctionSpaceType, int nComponents>
 std::array<double,nComponents> FieldVariableSetGetComponent<FunctionSpaceType,nComponents>::
 getValue(node_no_t dofLocalNo) const
 {
+  assert(this->values_);
   std::array<double,nComponents> result;
 
   // prepare lookup indices for PETSc vector values_
@@ -71,6 +74,7 @@ template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
@@ -80,6 +84,7 @@ template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values, InsertMode petscInsertMode)
 {
+  assert(this->values_);
   this->values_->setValues(0, dofNosLocal.size(), (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
@@ -90,6 +95,7 @@ void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
+  assert(this->values_);
   
   this->values_->setValues(0, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
@@ -100,6 +106,7 @@ void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+  assert(this->values_);
   
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
   this->values_->setValues(0, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);

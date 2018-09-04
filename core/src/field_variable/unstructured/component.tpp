@@ -143,7 +143,7 @@ setNodeValues(node_no_t nodeGlobalNo, std::vector<double>::iterator valuesBegin)
 
     VLOG(2) << " component " << name_ << ", set value: " << value << " at nodeGlobalNo: " << nodeGlobalNo
       << ", componentIndex: " << componentIndex_ << ", nComponents: " << nComponents
-      << ", dofGlobalNo: " <<dofGlobalNo << " -> set at vectorIndex: " << vectorIndex;
+      << ", dofGlobalNo: " << dofGlobalNo << " -> set at vectorIndex: " << vectorIndex;
 
     values_->setValue(componentIndex_, vectorIndex, value, INSERT_VALUES);
   }

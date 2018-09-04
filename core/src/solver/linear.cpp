@@ -8,6 +8,14 @@ namespace Solver
 Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator) :
   Solver(specificSettings)
 {
+  if (VLOG_IS_ON(1))
+  {
+    int size;
+    PetscErrorCode ierr;
+    ierr = MPI_Comm_size(mpiCommunicator, &size); CHKERRV(ierr);
+    VLOG(1) << "Create linear solver on " << size << (size == 1? " rank." : " ranks.");
+  }
+
   // parse options
   relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);
   maxIterations_ = PythonUtility::getOptionDouble(specificSettings, "maxIterations", 10000, PythonUtility::Positive);

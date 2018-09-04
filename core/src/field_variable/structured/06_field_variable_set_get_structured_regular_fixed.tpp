@@ -211,14 +211,8 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
     return;
   }
   
-  // for geometry field compute information, this does not work for ghost dofs!
-  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
-  node_no_t nLocalNodesInYDirection = 1;
-
+  // for geometry field compute information
   const int D = FunctionSpaceType::dim();
-  if (D >= 2)
-    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
-  
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // loop over entries in values to be filled
@@ -226,8 +220,9 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   {
     assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
     
-    int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
+    int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
+    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -237,8 +232,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
     {
       if (componentNo == 0)   // x direction
       {
-        values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
+        values[i] = coordinates[0] * this->functionSpace_->meshWidth();;
       }
       else if (componentNo == 1)   // y direction
       {
@@ -248,8 +242,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
-            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
+          values[i] = coordinates[1] * this->functionSpace_->meshWidth();;
         }
       }
       else  // z direction
@@ -260,8 +253,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
         }
         else
         {
-          values[i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
-            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
+          values[i] = coordinates[2] * this->functionSpace_->meshWidth();;
         }
       }
     }
@@ -280,13 +272,8 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
     return;
   }
 
-  // for geometry field compute information, this does not work for ghost dofs!
-  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
-  node_no_t nLocalNodesInYDirection = 1;
-
+  // for geometry field compute information
   const int D = FunctionSpaceType::dim();
-  if (D >= 2)
-    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // resize result vector
@@ -299,8 +286,9 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   {
     assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
     
-    int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
+    int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
+    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -310,8 +298,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
     {
       if (componentNo == 0)   // x direction
       {
-        values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
+        values[previousSize+i] = coordinates[0] * this->functionSpace_->meshWidth();
       }
       else if (componentNo == 1)   // y direction
       {
@@ -321,8 +308,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
-            + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
+          values[previousSize+i] = coordinates[1] * this->functionSpace_->meshWidth();
         }
       }
       else  // z direction
@@ -333,8 +319,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
         }
         else
         {
-          values[previousSize+i] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
-            + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
+          values[previousSize+i] = coordinates[2] * this->functionSpace_->meshWidth();
         }
       }
     }
@@ -355,22 +340,16 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
     return;
   }
 
-  // for geometry field compute the entries, this does not work for ghost dofs
-  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
-  node_no_t nLocalNodesInYDirection = 1;
-
-  const int D = FunctionSpaceType::dim();
-  if (D >= 2)
-    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
+  // for geometry field compute the entries
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+  const int D = FunctionSpaceType::dim();
 
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
-    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
-    
-    int nodeLocalNo = int(dofLocalNo[i] / nDofsPerNode);
+    int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
+    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -381,8 +360,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
     else
     {
       // x direction
-      values[i][0] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
+      values[i][0] = coordinates[0] * this->functionSpace_->meshWidth();
 
       // y direction
       if (D < 2)
@@ -391,8 +369,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][1] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
-          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
+        values[i][1] = coordinates[1] * this->functionSpace_->meshWidth();
       }
 
       // z direction
@@ -402,8 +379,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       }
       else
       {
-        values[i][2] = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
-          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
+        values[i][2] = coordinates[2] * this->functionSpace_->meshWidth();
       }
     }
   }
@@ -465,29 +441,21 @@ getValue(int componentNo, node_no_t dofLocalNo) const
     return FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
       getValue(componentNo, dofLocalNo);
   }
-
-  assert(dofLocalNo < this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
     
-  // for geometry field compute information, this does not work for ghost dofs
-  node_no_t nLocalNodesInXDirection = this->functionSpace_->nNodesLocalWithoutGhosts(0);
-  node_no_t nLocalNodesInYDirection = 1;
-
+  // for geometry field compute information
   const int D = FunctionSpaceType::dim();
-  if (D >= 2)
-    nLocalNodesInYDirection = this->functionSpace_->nNodesLocalWithoutGhosts(1);
-
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
-
-  double value = 0;
-  int nodeLocalNo = int(dofLocalNo / nDofsPerNode);
+  int nodeNoLocal = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
 
+  std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+
+  double value = 0;
   if (nodeLocalDofIndex == 0)   // if this is not a derivative of Hermite (in which case it would be set to 0)
   {
     if (componentNo == 0)   // x direction
     {
-      value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(0) * this->functionSpace_->meshWidth()
-        + (nodeLocalNo % nLocalNodesInXDirection) * this->functionSpace_->meshWidth();
+      value = coordinates[0] * this->functionSpace_->meshWidth();
     }
     else if (componentNo == 1)   // y direction
     {
@@ -497,8 +465,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
       }
       else
       {
-        value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(1) * this->functionSpace_->meshWidth()
-          + (int(nodeLocalNo / nLocalNodesInXDirection) % nLocalNodesInYDirection) * this->functionSpace_->meshWidth();
+        value = coordinates[1] * this->functionSpace_->meshWidth();
       }
     }
     else     // z direction
@@ -509,8 +476,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
       }
       else
       {
-        value = this->functionSpace_->meshPartition()->beginNodeGlobalNatural(2) * this->functionSpace_->meshWidth()
-          + int(nodeLocalNo / (nLocalNodesInXDirection*nLocalNodesInYDirection)) * this->functionSpace_->meshWidth();
+        value = coordinates[2] * this->functionSpace_->meshWidth();
       }
     }
   }

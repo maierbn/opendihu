@@ -97,6 +97,12 @@ finishGhostManipulation()
   }
 }
 
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+zeroGhostBuffer()
+{
+}
+
 //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::

@@ -23,6 +23,7 @@ class FunctionSpace;
  * *
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
  *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented. (It will never be)
+ *  This means some of the methods here have no effect.
  */
 template<typename FunctionSpaceType, int nComponents, typename = typename FunctionSpaceType::Mesh>
 class PartitionedPetscVec : 
@@ -45,6 +46,9 @@ public:
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void finishGhostManipulation();
   
+  //! zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the "old" ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.
+  void zeroGhostBuffer();
+
   //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
   void setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora);
   

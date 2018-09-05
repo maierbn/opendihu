@@ -129,7 +129,7 @@ TEST(FaceTest, faceDofsLinearLagrange3D)
   
 config = {
   "FiniteElementMethod" : {
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
   }
 }
 )";

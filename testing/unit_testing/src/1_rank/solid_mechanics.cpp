@@ -23,7 +23,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [2,2,2],   # 8 elements
     "physicalExtent": [4.0,4.0,4.0],
-    "DirichletBoundaryCondition": {0:1.0},
+    "dirichletBoundaryConditions": {0:1.0},
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "PythonFile", "filename" : "out_txt", "binary" : False},

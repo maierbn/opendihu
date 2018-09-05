@@ -777,7 +777,7 @@ void PythonUtility::printDict(PyObject *dict)
 {
   if (dict == NULL)
   {
-    VLOG(1) << "dict is NULL!";
+    VLOG(2) << "dict is NULL!";
     return;
   }
 
@@ -786,11 +786,11 @@ void PythonUtility::printDict(PyObject *dict)
   
   if (!PyDict_Check(dict))
   {
-    VLOG(1) << "Object is not a dict!";
+    VLOG(2) << "Object is not a dict!";
     return;
   }
 
-  VLOG(1) << getString(dict);
+  VLOG(2) << getString(dict);
 }
 
 bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString)

@@ -33,7 +33,7 @@ config = {
     
     "OutputWriter" : [
       #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
-      #{"format": "Paraview", "filename": "out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
+      #{"format": "Paraview", "filename": "out", "binary": "false", "fixedFormat": False, "outputInterval": 1},
       {"format": "PythonFile", "filename": "out/N_TBR/cell", "outputInterval": opiv, "binary": True} #0.01eTBR 
     ],
 

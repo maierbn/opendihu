@@ -35,7 +35,7 @@ setInitialValues()
     assert(this->data_);
     assert(this->data_->functionSpace());
     const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
-    LOG(DEBUG) << "nDofsGlobal = " << nDofsGlobal;
+    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
 
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
@@ -47,10 +47,12 @@ setInitialValues()
     const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsLocal, localValues);
   }
-  //LOG(DEBUG) << "set initial values to " << values;
+  VLOG(1) << "set initial values to " << localValues;
 
   // set the first component of the solution variable by the given values
   data_->solution().setValuesWithoutGhosts(0, localValues);
+
+  VLOG(1) << data_->solution();
 }
 
 template<typename DiscretizableInTimeType>
@@ -116,9 +118,15 @@ initialize()
   // load initial values as specified in config under the "CellML" section
   if (!discretizableInTime_.setInitialValues(data_->solution()))
   {
+    LOG(DEBUG) << "initial values were not set by DiscretizableInTime, set now";
+
     // if it did not initialize it,
     // load initial values from config under the timestepping section
     this->setInitialValues();
+  }
+  else
+  {
+    LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   
   data_->print();

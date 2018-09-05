@@ -188,7 +188,7 @@ config = {
       "prefactor": c
     },
     "OutputWriter" : [
-      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
       #{"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
       {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
     ]

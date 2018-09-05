@@ -101,25 +101,6 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
-finalAssembly()
-{
-  this->stiffnessMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-  
-  if (this->massMatrix_)
-    this->massMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  if (this->systemMatrix_)
-    this->systemMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  if (this->inverseLumpedMassMatrix_)
-    this->inverseLumpedMassMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  LOG(DEBUG) << "finalAssembly";
-}
-
-
-template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {

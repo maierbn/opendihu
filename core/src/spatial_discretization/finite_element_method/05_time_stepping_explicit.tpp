@@ -30,7 +30,7 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   PetscErrorCode ierr;
 
   // create linear solver context
-  VLOG(1) << omp_get_thread_num() << ": computeInverseMassMatrixTimesRightHandSide";
+  VLOG(1) << "computeInverseMassMatrixTimesRightHandSide";
   initializeLinearSolver();
 
   // set matrix used for linear system and preconditioner to ksp context
@@ -43,7 +43,7 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   ierr = KSPSetInitialGuessNonzero(*ksp_, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
-  // solve the system
+  // solve the system, KSP assumes the initial guess is to be zero (and thus zeros it out before solving)
   ierr = KSPSolve(*ksp_, rightHandSide, result); CHKERRV(ierr);
 
   int numberOfIterations = 0;

@@ -37,7 +37,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -90,7 +90,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}

@@ -61,7 +61,7 @@ setInverseLumpedMassMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
   Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->valuesGlobal();
   Mat &massMatrix = this->data_.massMatrix()->valuesGlobal();
-  this->data_.massMatrix()->assembly(MAT_FINAL_ASSEMBLY);
+  //this->data_.massMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
   PetscErrorCode ierr;
   

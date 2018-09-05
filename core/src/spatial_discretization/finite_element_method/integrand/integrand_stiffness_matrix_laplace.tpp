@@ -39,7 +39,7 @@ template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,Term,Equation::hasLaplaceOperator<Term>>::
 evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
 {
-  VLOG(1) << "evaluateIntegrand LAPLACE";
+  VLOG(3) << "evaluateIntegrand laplace operator 2D";
 
   EvaluationsType evaluations;
 

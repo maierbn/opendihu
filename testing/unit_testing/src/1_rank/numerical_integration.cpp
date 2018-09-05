@@ -28,7 +28,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -78,7 +78,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -132,7 +132,7 @@ config = {
     "prefactor": 6,
     "nElements": [n,n],
     "physicalExtent": [4.0,4.0],
-    #"DirichletBoundaryCondition": bc,
+    #"dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -183,7 +183,7 @@ config = {
     "prefactor": 12,
     "nElements": [n,n,n],
     "physicalExtent": [3.0,3.0,3.0],
-    #"DirichletBoundaryCondition": bc,
+    #"dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -234,7 +234,7 @@ config = {
     "prefactor": 12,
     "nElements": [n,n,n],
     "physicalExtent": [2.0,2.0,2.0],
-    #"DirichletBoundaryCondition": bc,
+    #"dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -410,7 +410,7 @@ config = {
     "prefactor": 12,
     "nElements": [n,n,n],
     "physicalExtent": [2.0,2.0,2.0],
-    #"DirichletBoundaryCondition": bc,
+    #"dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -516,7 +516,7 @@ config = {
     "prefactor": 12,
     "nElements": [n,n,n],
     "physicalExtent": [2.0,2.0,2.0],
-    #"DirichletBoundaryCondition": bc,
+    #"dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }

@@ -69,7 +69,6 @@ initialize()
   data_.initialize();
   setStiffnessMatrix();
   setRightHandSide();
-  data_.finalAssembly();
   this->applyBoundaryConditions();
 
   initialized_ = true;

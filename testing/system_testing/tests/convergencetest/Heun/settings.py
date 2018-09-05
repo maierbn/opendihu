@@ -27,7 +27,7 @@ config = {
     
     "OutputWriter" : [
       #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
-      #{"format": "Paraview", "filename": "out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
+      #{"format": "Paraview", "filename": "out", "binary": "false", "fixedFormat": False, "outputInterval": 1},
       {"format": "PythonFile", "filename": "out/cell_h", "outputInterval": 2.5e1, "binary": True}
     ],
 

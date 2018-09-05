@@ -74,7 +74,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   
   if (nRanksSubsetCommunicator != nRanksTotal)
   {
-    LOG(ERROR) << "Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << " = " << nRanksTotal << ".";
+    LOG(ERROR) << "Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
   }
   
   std::array<int,3> rankGridCoordinate({0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks

@@ -56,13 +56,18 @@ applyBoundaryConditionsStrongForm()
   // bc[0] = 0, bc[2] = 0, bc[4] = 0
 
 
+  if (PythonUtility::hasKey(this->specificSettings_, "DirichletBoundaryCondition"))
+  {
+    LOG(ERROR) << "Option \"DirichletBoundaryCondition\" was renamed to \"dirichletBoundaryConditions\".";
+  }
+
   // get the first dirichlet boundary condition from the list
   std::pair<node_no_t, double> boundaryCondition
-  = PythonUtility::getOptionDictBegin<node_no_t, double>(this->specificSettings_, "DirichletBoundaryCondition");
+  = PythonUtility::getOptionDictBegin<node_no_t, double>(this->specificSettings_, "dirichletBoundaryConditions");
 
   // loop over Dirichlet boundary conditions
-  for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "DirichletBoundaryCondition");
-  PythonUtility::getOptionDictNext<node_no_t, double>(this->specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
+  for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "dirichletBoundaryConditions");
+  PythonUtility::getOptionDictNext<node_no_t, double>(this->specificSettings_, "dirichletBoundaryConditions", boundaryCondition))
   {
     dof_no_t boundaryConditionIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;

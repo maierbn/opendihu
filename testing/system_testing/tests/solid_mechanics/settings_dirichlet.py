@@ -35,13 +35,13 @@ config = {
     "nElements": [nx,ny,nz],
     "nodeDimension": 1,
     "physicalExtent": [2.*nx,2.*ny,2.*nz],
-    "DirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
+    "dirichletBoundaryConditions": dirichletBC,  # displacement Dirichlet bc
     "relativeTolerance": 1e-15,
     "materialParameters": [6.352e-10, 3.627, 100],  # c0, c1, kappa
     "analyticJacobian": False,   # False = compute Jacobian by finite differences
   },
   "OutputWriter" : [
-    #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+    #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
     {"format": "ExFile", "filename": "out/"+name, "outputInterval": 1},
     {"format": "PythonFile", "filename": "out/"+name, "outputInterval": 5, "binary":False, "onlyNodalValues":True},
   ]

@@ -39,9 +39,6 @@ public:
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,1> &solution();
 
-  //! perform the final assembly of petsc
-  void finalAssembly();
-
   //! print all stored data to stdout
   void print();
   

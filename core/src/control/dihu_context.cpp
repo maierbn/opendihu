@@ -88,7 +88,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
       }
       else
       {
-        LOG(INFO) << "First command line argument does not have suffix *.py, not considering it as config file!";
+        LOG(ERROR) << "First command line argument does not have suffix *.py, not considering it as config file!";
       }
     }
 
@@ -278,6 +278,28 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
   nObjects_++;
+  // This constructor is called when creating the context object from unit tests.
+
+  // set the command line arguments to be the mpi rank no
+  // get own rank no and number of ranks
+  int rankNo, nRanks;
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
+
+  // convert to wchar_t
+  std::stringstream rankNoStr, nRanksStr;
+  rankNoStr << rankNo;
+  nRanksStr << nRanks;
+  const char *argument[2];
+  argument[0] = rankNoStr.str().c_str();
+  argument[1] = nRanksStr.str().c_str();
+  wchar_t *argumentWChar[2];
+  argumentWChar[0] = Py_DecodeLocale(argument[0], NULL);
+  argumentWChar[1] = Py_DecodeLocale(argument[1], NULL);
+
+  // set as arguments
+  PySys_SetArgvEx(2, argumentWChar, 0);
+
   loadPythonScript(pythonSettings);
   if (VLOG_IS_ON(1))
   {

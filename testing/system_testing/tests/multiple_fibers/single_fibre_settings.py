@@ -206,11 +206,11 @@ def get_instance_config(i):
             "relativeTolerance": 1e-10,
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
-            "DirichletBoundaryCondition": bc,
+            "dirichletBoundaryConditions": bc,
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_bin", "binaryOutput": True, "fixedFormat": False},
-            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binaryOutput": False, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_bin", "binary": True, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
             {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
           ]
@@ -272,7 +272,7 @@ config = {
   "Meshes": meshes,
   "instances": [get_instance_config(i) for i in range(nInstances)],
   "OutputWriter" : [
-    #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+    #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
     #{"format": "ExFile", "filename": "out/single_fibre_"+str(i), "outputInterval": 1},
     #{"format": "PythonFile", "filename": "out/single_fibre"+str(i), "binary":True, "onlyNodalValues":True},
   ]

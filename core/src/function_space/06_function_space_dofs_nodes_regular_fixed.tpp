@@ -26,11 +26,13 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyO
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
-  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, nullptr), physicalExtent_(physicalExtent)
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, nullptr),
+  physicalExtent_(physicalExtent)
 {
   // compute mesh width from physical extent and number of elements in the coordinate directions
   // note for quadratic elements the mesh width is the distance between the nodes, not length of elements
   this->meshWidth_ = 0;
+  std::copy(nElements.begin(), nElements.end(), this->nElementsPerCoordinateDirectionGlobal_.begin());
 }
 
 template<int D,typename BasisFunctionType>

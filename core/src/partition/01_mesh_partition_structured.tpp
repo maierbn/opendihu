@@ -968,6 +968,10 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
       + (beginElementGlobal_[1] + elementY) * nElementsGlobal_[0]
       + beginElementGlobal_[0] + elementX;
   }
+  else
+  {
+    assert(false);
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType>

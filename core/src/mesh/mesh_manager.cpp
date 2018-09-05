@@ -142,4 +142,29 @@ mesh<None>(PyObject *settings)
   return mesh;
 }
 
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> Manager::
+createGenericFieldVariable(int nEntries, std::string name)
+{
+  assert(nEntries > 1);
+
+  // create generic field variable
+
+  // constructor is declared in function_space/06_function_space_dofs_nodes.h
+  // FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+
+  std::array<element_no_t, 1> nElements({nEntries - 1});
+  std::array<double, 1> physicalExtent({0.0});
+  std::stringstream meshName;
+  meshName << "meshForFieldVariable" << name;
+  std::shared_ptr<Mesh> mesh = createMesh<FunctionSpace::Generic>(meshName.str(), nElements, physicalExtent);
+
+  LOG(DEBUG) << "create generic field variable with " << nEntries << " entries.";
+  std::shared_ptr<FunctionSpace::Generic> functionSpace = std::static_pointer_cast<FunctionSpace::Generic>(mesh);
+
+  // createFieldVariable is declared in function_space/09_function_space_field_variable.h
+  //template <int nComponents>
+  //std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
+  return functionSpace->template createFieldVariable<1>(name);
+}
+
 };  // namespace

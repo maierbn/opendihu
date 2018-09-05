@@ -41,6 +41,11 @@ public:
   template<typename FunctionSpaceType, typename ...Args>
   std::shared_ptr<Mesh> createMesh(std::string name, Args && ...args);
   
+  //! Create a field variable without logical mesh representation, e.g. for MOR reduced vectors.
+  //! The vector contains nEntries entries, the partitioning is done by the partition manager.
+  //! \param name is the name of the Petsc Vec, used for debugging output.
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
+
   friend class NodePositionsTester;    ///< a class used for testing
 
 private:

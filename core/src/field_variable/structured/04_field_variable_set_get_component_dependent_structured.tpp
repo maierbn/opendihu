@@ -75,6 +75,8 @@ void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
 {
   assert(this->values_);
+  assert(dofLocalNo < this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
+
   this->values_->setValues(0, 1, (PetscInt*)&dofLocalNo, &value, petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }

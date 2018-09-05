@@ -790,6 +790,10 @@ nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionI
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*nNodesLocalWithoutGhosts(1,partitionIndex[1])*beginNodeGlobalNatural(0,partitionIndex[0]);   //(2)
   }
+  else
+  {
+    assert(false);
+  }
 }
 
 //! fill the dofLocalNo vectors
@@ -1187,6 +1191,10 @@ getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const
     }
     return coordinates;
   }
+  else
+  {
+    assert(false);
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1204,6 +1212,10 @@ getNodeNoGlobalNatural(std::array<int,MeshType::dim()> coordinates) const
   else if (MeshType::dim() == 3)
   {
     return coordinates[2]*nNodesGlobal(0)*nNodesGlobal(1) + coordinates[1]*nNodesGlobal(0) + coordinates[0];
+  }
+  else
+  {
+    assert(false);
   }
 }
 

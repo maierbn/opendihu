@@ -54,6 +54,11 @@ const std::vector<PetscInt> &MeshPartitionBase::dofNosLocal() const
   return dofNosLocal_;
 }
 
+const std::vector<dof_no_t> &MeshPartitionBase::dofNosLocalNaturalOrdering() const
+{
+  return dofNosLocal_;
+}
+
 //! get a PETSc IS (index set) with the same information as dofNosLocal_
 const IS &MeshPartitionBase::dofNosLocalIS() const
 {

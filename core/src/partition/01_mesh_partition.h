@@ -87,8 +87,8 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithoutGhosts() const;
   
-  //! number of nodes in the local partition
-  node_no_t nNodesLocalWithGhosts(int coordinateDirection) const;
+  //! number of nodes in the local partition specified by partitionIndex or the current partition if partitionIndex == -1
+  node_no_t nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex = -1) const;
   
   //! number of nodes in the partition specified by partitionIndex or the current partition if partitionIndex == -1
   node_no_t nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex = -1) const;
@@ -135,6 +135,9 @@ public:
   //! from a vector of values of global/natural dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
   
+  //! get the partition index in a given coordinate direction from the rankNo
+  int convertRankNoToPartitionIndex(int coordinateDirection, int rankNo);
+
   //! output to stream for debugging
   void output(std::ostream &stream);
   
@@ -145,6 +148,13 @@ public:
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
+  //! Initialize the vector dofNosLocalNaturalOrdering_, this needs the functionSpace and has to be called before dofNosLocalNaturalOrdering() can be used.
+  //! If the vector is already initialized by a previous call to this method, it has no effect.
+  void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace);
+
+  //! Get a vector of local dof nos in local natural ordering, initializeDofNosLocalNaturalOrdering has to be called beforehand.
+  const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
+
 protected:
   
   //! initialize the values of hasFullNumberOfNodes_ variable
@@ -165,7 +175,6 @@ protected:
   //! get the number of nodes in the globalPetsc ordering that in partitions prior to the one given by partitionIndex
   global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
 
-
   std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
   
   std::array<int,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
@@ -181,6 +190,8 @@ protected:
   std::vector<dof_no_t> onlyNodalDofLocalNos_;   ///< vector of local nos of the dofs, not including derivatives for Hermite
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;   ///< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition
   
+  std::vector<dof_no_t> dofNosLocalNaturalOrdering_;  ///< for every local natural number, i.e. local numbering according to coordinates, the local dof no
+
   ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   ///< local to global mapping for dofs
 };
 
@@ -234,7 +245,10 @@ public:
   
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
-  
+
+  //! this does nothing for unstructured meshes, only for structured meshes
+  void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};
+
   //! output to stream for debugging
   void output(std::ostream &stream);
   

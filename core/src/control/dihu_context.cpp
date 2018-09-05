@@ -384,7 +384,7 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
   std::ifstream file(filename);
   if (!file.is_open())
   {
-    LOG(ERROR) << "Could not open settings file \"" <<filename << "\".";
+    LOG(FATAL) << "Could not open settings file \"" <<filename << "\".";
   }
   else
   {

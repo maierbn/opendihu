@@ -34,7 +34,7 @@ void ParaviewWriter::write(DataType& data, int timeStepNo, double currentTime)
 template <int dimension, typename DataType>
 void ParaviewWriter::writeSolutionDim(DataType &data)
 {
-  LOG(TRACE) << "writeMesh<" <<dimension<< ">()";
+  LOG(TRACE) << "writeMesh<" << dimension<< ">()";
 
   if (std::dynamic_pointer_cast<Mesh::StructuredRegularFixedOfDimension<dimension>>(data.functionSpace()) != NULL)
   {

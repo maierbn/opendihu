@@ -428,7 +428,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result <= 0.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
-        <<defaultValue << ".";
+        << defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -436,7 +436,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result < 0.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
-        <<defaultValue << ".";
+        << defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -444,13 +444,13 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     if (result < 1.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
-        <<defaultValue << ".";
+        << defaultValue << ".";
       result = defaultValue;
     }
     else if (result > 3.0)
     {
       LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
-        <<defaultValue << ".";
+        << defaultValue << ".";
       result = defaultValue;
     }
     break;
@@ -522,7 +522,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result <= 0)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
-          <<defaultValue << ".";
+          << defaultValue << ".";
         result = defaultValue;
       }
       break;
@@ -530,7 +530,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result < 0)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
-          <<defaultValue << ".";
+          << defaultValue << ".";
         result = defaultValue;
       }
       break;
@@ -538,13 +538,13 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
       if (result < 1)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
-          <<defaultValue << ".";
+          << defaultValue << ".";
         result = defaultValue;
       }
       else if (result > 3)
       {
         LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
-          <<defaultValue << ".";
+          << defaultValue << ".";
         result = defaultValue;
       }
       break;

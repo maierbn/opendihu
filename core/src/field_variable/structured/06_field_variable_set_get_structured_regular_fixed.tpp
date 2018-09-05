@@ -218,8 +218,6 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   // loop over entries in values to be filled
   for (int i=0; i<N; i++)
   {
-    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
-    
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
     std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
@@ -284,8 +282,6 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   // loop over entries in values to be filled
   for (int i=0; i<nValues; i++)
   {
-    assert(dofLocalNo[i] < this->functionSpace_->nDofsLocalWithoutGhosts());
-    
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
     std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);

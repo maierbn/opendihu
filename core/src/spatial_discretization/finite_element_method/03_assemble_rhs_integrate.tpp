@@ -91,7 +91,7 @@ multiplyRightHandSideWithMassMatrix()
         double integratedValue = integratedValues(i,j);
 
         double value = integratedValue * rhsValues[dofNosLocal[j]];
-        VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue << ", rhsValue[" <<dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
+        VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue << ", rhsValue[" << dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
 
         rightHandSide.setValue(dofNosLocal[i], value, ADD_VALUES);
       }  // j

@@ -12,7 +12,69 @@
 
 namespace Testing
 {
-  
+
+TEST(FieldVariableTest, GenericFieldVariable)
+{
+  std::string pythonConfig = R"(
+config = {
+  "FiniteElementMethod" : {
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+
+  SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredDeformableOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<2>,
+    Equation::None
+  > finiteElementMethod(settings);
+  finiteElementMethod.run();
+
+
+  // std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic>> createGenericFieldVariable(std::shared_ptr<Partition::Manager> partitionManager, int nEntries, std::string name);
+
+  // get mesh manager object that are stored in the DihuContext object
+  std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
+
+  // create the field variable with name "test"
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> fieldVariable = meshManager->createGenericFieldVariable(5, "test");
+
+  // set all values to 0
+  fieldVariable->zeroEntries();
+
+  // set test[0] = 10, test[4] = 20
+  std::vector<dof_no_t> dofNos{0, 4};
+  std::vector<double> values{10.0, 20.0};
+  fieldVariable->setValues(dofNos, values);
+
+  // set test[2] = 4
+  fieldVariable->setValue(2, 4);
+
+  // add +10 to test[4]
+  fieldVariable->setValue(4, 10, ADD_VALUES);
+
+  // add +1 to all values by Petsc function
+  PetscErrorCode ierr;
+  ierr = VecShift(fieldVariable->valuesGlobal(), 1); CHKERRV(ierr);
+
+  // print field variable
+  LOG(DEBUG) << *fieldVariable;
+
+  // get all values
+  std::vector<double> vectorValues;
+  fieldVariable->getValuesWithoutGhosts(vectorValues);
+
+  // because this test case is run serially, we get all 5 values
+  ASSERT_EQ(vectorValues[0], 11.0);
+  ASSERT_EQ(vectorValues[1], 1.0);
+  ASSERT_EQ(vectorValues[2], 5.0);
+  ASSERT_EQ(vectorValues[3], 1.0);
+  ASSERT_EQ(vectorValues[4], 31.0);
+
+}
+
 TEST(FieldVariableTest, StructuredDeformable)
 {
   // explicit mesh with node positions

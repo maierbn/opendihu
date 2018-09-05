@@ -280,7 +280,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
        if (result[i] <= 0.0)
        {
          LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not positive). Using default value "
-           <<defaultValue[i]<< ".";
+           << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }
@@ -290,7 +290,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
        if (result[i] < 0.0)
        {
          LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
-           <<defaultValue[i]<< ".";
+           << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }
@@ -302,7 +302,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
        if (result[i] < 1.0 || result[i] > 3.0)
        {
          LOG(WARNING) << "Warning: value " <<result[i]<< " of key \"" <<keyString<< "\" is invalid (not between 1 and 3). Using default value "
-           <<defaultValue[i]<< ".";
+           << defaultValue[i]<< ".";
          result[i] = defaultValue[i];
        }
       }

@@ -34,7 +34,7 @@ config = {
     "relativeTolerance": 1e-15,
   },
   "OutputWriter" : [
-    {"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+    {"format": "Paraview", "interval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
     #{"format": "Python", "filename": "p"}
   ]
 }

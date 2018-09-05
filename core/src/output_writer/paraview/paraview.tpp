@@ -79,12 +79,35 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     std::vector<double> values;
     std::array<std::vector<double>, nComponents> componentValues;
 
+    // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
+    fieldVariable.functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(fieldVariable.functionSpace());
+
+    // ensure that ghost values are in place
+    fieldVariable.startGhostManipulation();
+
+    // get all local values including ghosts for the components
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
-      fieldVariable.getValuesWithoutGhosts(componentNo, componentValues[componentNo], true);
+      std::vector<double> retrievedLocalValues;
+      fieldVariable.getValues(componentNo, fieldVariable.functionSpace()->meshPartition()->dofNosLocalNaturalOrdering(),
+                              retrievedLocalValues);
+
+      const int nDofsPerNode = FieldVariableType::FunctionSpace::nDofsPerNode();
+      const node_no_t nNodesLocal = fieldVariable.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
+
+      // for Hermite only extract the non-derivative values
+      componentValues[componentNo].resize(nNodesLocal);
+
+      int index = 0;
+      for (int i = 0; i < nNodesLocal; i++)
+      {
+        componentValues[componentNo][i] = retrievedLocalValues[index];
+        index += nDofsPerNode;
+      }
     }
     values.reserve(componentValues[0].size()*nComponents);
 
+    // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
     {
       for (int componentNo = 0; componentNo < nComponents; componentNo++)

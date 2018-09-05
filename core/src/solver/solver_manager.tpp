@@ -37,7 +37,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings, MPI_Comm mpiComm
     else if(solverConfiguration_.find(solverName) != solverConfiguration_.end())
     {
       // solver was preconfigured, do nothing specific here, created standard solver
-      LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, solver will get created now. "
+      LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
         << "Type is " << typeid(SolverType).name() << ".";
 
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_[solverName], mpiCommunicator);

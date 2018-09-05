@@ -94,7 +94,7 @@ createPetscObjects()
   getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
 
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
-    << ", number of diagonal non-zeros: " <<diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
+    << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
 
   int nComponents = 1;
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");

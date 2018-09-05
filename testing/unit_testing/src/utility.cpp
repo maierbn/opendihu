@@ -21,7 +21,7 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
 
   // parse number in file Contents
   std::string numberFileContents;
-  while ((isdigit(*iterFileContents) || *iterFileContents == '.') && iterFileContents != iterFileContentsEnd)
+  while ((isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-') && iterFileContents != iterFileContentsEnd)
   {
     numberFileContents += *iterFileContents;
     iterFileContents++;
@@ -50,10 +50,15 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
 void assertFileMatchesContent(std::string filename, std::string referenceContents, std::string referenceContents2)
 {
   // read in generated exnode file 
-  std::ifstream file(filename);
+  std::ifstream file;
 
-  // wait a bit for the files being ready to be opened
-  std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  file.open(filename);
+  for (int i = 0; !file.is_open() && i < 5; i++)
+  {
+    // wait a bit for the files being ready to be opened
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    file.open(filename);
+  }
 
   LOG(DEBUG) << "assertFileMatchesContent: Parse file \"" << filename << "\"";
   ASSERT_TRUE(file.is_open()) << "could not open output file"; 
@@ -78,7 +83,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
     //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
-    if (isdigit(*iterFileContents))
+    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
       double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());
@@ -92,6 +97,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     {
       if(*iterFileContents != *iterReferenceContents)
       {
+        msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -108,7 +114,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     iterReferenceContents = referenceContents2.begin(); 
     for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents2.end();)
     {
-      if (isdigit(*iterFileContents))
+      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
       {
         double numberFileContents = parseNumber(iterFileContents, fileContents.end());
         double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents2.end());
@@ -122,6 +128,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       {
         if (*iterFileContents, *iterReferenceContents)
         {
+          msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
           referenceContent2Matches = false;
         }
         iterFileContents++;

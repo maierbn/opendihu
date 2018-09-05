@@ -13,6 +13,7 @@ template<int D,typename BasisFunctionType,int nComponents>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents> &rhs)
 {
+  assert(this->values_);
   this->values_->setValues(*rhs.partitionedPetscVec());
 }
 

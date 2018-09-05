@@ -1,18 +1,16 @@
 import numpy as np
 
-n = 20.
+n = 4
 m = n
 
 # boundary conditions
 bc = {}
 for i in range(int(n+1)):
   x = i/(n+1.)
-  bc[i] = np.sin(x*np.pi)
-  i2 = (n+1)*m + i
-  bc[(n+1)*m+i] = np.sin(x*np.pi)
+  bc[4*i] = np.sin(x*np.pi)
+  i2 = int((n+1)*m + i)
+  bc[4*i2] = np.sin(x*np.pi)
   
-  print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
-
 config = {
   "FiniteElementMethod" : {
     "nElements": [n, m],
@@ -21,9 +19,9 @@ config = {
     "prefactor": 1,
     "DirichletBoundaryCondition": bc,
     "relativeTolerance": 1e-15,
-    "maxIterations": 10000,
+    "maxIterations": 1e6,
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True},
       {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
     ]
   },

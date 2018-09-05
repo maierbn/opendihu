@@ -137,15 +137,21 @@ def load_data(filenames):
     elif merged_data['basisFunction'] == 'Hermite':
       average_n_nodes_per_element_1d = 1
 
+    # determine number of dofs per node
+    n_dofs_per_node = 1
+    if merged_data['basisFunction'] == 'Hermite' and not merged_data['onlyNodalValues']:
+      n_dofs_per_node = 2**dimension
+
     # determine global size of arrays
-    n_nodes_global = []
-    n_nodes_total = 1
+    n_dofs_global = []
+    n_dofs_total = 1
     for i in range(dimension):
       n_nodes_global_direction = merged_data['nElementsGlobal'][i]*average_n_nodes_per_element_1d + 1
-      n_nodes_global.append(n_nodes_global_direction)
-      n_nodes_total *= n_nodes_global_direction
+      n_dofs_global_direction = n_nodes_global_direction*n_dofs_per_node
+      n_dofs_global.append(n_dofs_global_direction)
+      n_dofs_total *= n_dofs_global_direction
   
-    #print("n_nodes_global: ",n_nodes_global)
+    #print("n_dofs_global: ",n_dofs_global)
   
     merged_data['nElements'] = merged_data['nElementsGlobal']
     del merged_data['nElementsGlobal']
@@ -155,31 +161,35 @@ def load_data(filenames):
       for component_index,component in enumerate(field_variable['components']):
         
         # resize array
-        merged_data['data'][field_variable_index]['components'][component_index]['values'] = np.zeros(n_nodes_total)
+        merged_data['data'][field_variable_index]['components'][component_index]['values'] = np.zeros(n_dofs_total)
 
         # loop over ranks / input files
         for data in group_data:
           
           # compute local size
           n_nodes_local = []
+          n_dofs_local = []
           for i in range(dimension):
             n_nodes_local_direction = data['nElementsLocal'][i]*average_n_nodes_per_element_1d
             if data['hasFullNumberOfNodes'][i]:
               n_nodes_local_direction += 1
             n_nodes_local.append(n_nodes_local_direction)
+            n_dofs_local.append(n_nodes_local_direction*n_dofs_per_node)
             
           #print("")
           #print(field_variable["name"],component["name"])
           #print("data: ",data)
-          #print("rank {}, n_nodes_local: {}, data: {}".format(data["ownRankNo"], n_nodes_local,data['data'][field_variable_index]['components'][component_index]['values']) )
+          #print("rank {}, n_dofs_local: {}, data: {}".format(data["ownRankNo"], n_dofs_local,data['data'][field_variable_index]['components'][component_index]['values']) )
           
           # set local portion in global array
           indices_begin = []
           indices_end = []
           for i in range(dimension):
             begin_node_global = data['beginNodeGlobalNatural'][i]
-            indices_begin.append(begin_node_global)
-            indices_end.append(begin_node_global+n_nodes_local[i])
+            indices_begin.append(begin_node_global*n_dofs_per_node)
+            indices_end.append(begin_node_global*n_dofs_per_node+n_dofs_local[i])
+          
+          #print("indices {} - {}".format(indices_begin, indices_end))
           
           if dimension == 1:
             for x in range(indices_begin[0],indices_end[0]):
@@ -194,8 +204,8 @@ def load_data(filenames):
           elif dimension == 2:
             for y in range(indices_begin[1],indices_end[1]):
               for x in range(indices_begin[0],indices_end[0]):
-                index_in = (y-indices_begin[1])*n_nodes_local[0] + (x-indices_begin[0])
-                index_result = y*n_nodes_global[0] + x
+                index_in = (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
+                index_result = y*n_dofs_global[0] + x
                 
                 #print("x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result))
                 
@@ -206,9 +216,9 @@ def load_data(filenames):
             for z in range(indices_begin[2],indices_end[2]):
               for y in range(indices_begin[1],indices_end[1]):
                 for x in range(indices_begin[0],indices_end[0]):
-                  index_in = (z-indices_begin[2])*n_nodes_local[1]*n_nodes_local[0] \
-                    + (y-indices_begin[1])*n_nodes_local[0] + (x-indices_begin[0])
-                  index_result = z*n_nodes_global[1]*n_nodes_global[0] + y*n_nodes_global[0] + x
+                  index_in = (z-indices_begin[2])*n_dofs_local[1]*n_dofs_local[0] \
+                    + (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
+                  index_result = z*n_dofs_global[1]*n_dofs_global[0] + y*n_dofs_global[0] + x
                   merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
                     = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
 

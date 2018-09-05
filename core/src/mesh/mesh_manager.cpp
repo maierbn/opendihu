@@ -64,7 +64,7 @@ void Manager::storePreconfiguredMeshes()
 
 bool Manager::hasMesh(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh(" <<meshName << ")";
+  LOG(DEBUG) << "hasMesh(" << meshName << ")";
   LOG(DEBUG) << "meshes size: " << meshes_.size();
 
   return meshes_.find(meshName) != meshes_.end();
@@ -78,7 +78,7 @@ mesh<None>(PyObject *settings)
   if (PythonUtility::hasKey(settings, "meshName"))
   {
     meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    LOG(DEBUG) << "Config contains meshName \"" <<meshName << "\".";
+    LOG(DEBUG) << "Config contains meshName \"" << meshName << "\".";
 
     if (hasMesh(meshName))
     {
@@ -87,7 +87,7 @@ mesh<None>(PyObject *settings)
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
-      LOG(DEBUG) << "Mesh configuration for \"" <<meshName << "\" found and requested, will be created now. "
+      LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
         << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
       typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
       
@@ -97,12 +97,12 @@ mesh<None>(PyObject *settings)
       // store mesh
       mesh->setMeshName(meshName);
       meshes_[meshName] = mesh;
-      LOG(DEBUG) << "Stored under key \"" <<meshName << "\".";
+      LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
       return std::static_pointer_cast<Mesh>(meshes_[meshName]);
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \"" <<meshName << "\" but no such mesh was defined.";
+      LOG(ERROR) << "Config contains reference to mesh with meshName \"" << meshName << "\" but no such mesh was defined.";
     }
   }
   else
@@ -140,6 +140,31 @@ mesh<None>(PyObject *settings)
   mesh->setMeshName(std::string("anonymous"));
   mesh->initialize();
   return mesh;
+}
+
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> Manager::
+createGenericFieldVariable(int nEntries, std::string name)
+{
+  assert(nEntries > 1);
+
+  // create generic field variable
+
+  // constructor is declared in function_space/06_function_space_dofs_nodes.h
+  // FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+
+  std::array<element_no_t, 1> nElements({nEntries - 1});
+  std::array<double, 1> physicalExtent({0.0});
+  std::stringstream meshName;
+  meshName << "meshForFieldVariable" << name;
+  std::shared_ptr<Mesh> mesh = createMesh<FunctionSpace::Generic>(meshName.str(), nElements, physicalExtent);
+
+  LOG(DEBUG) << "create generic field variable with " << nEntries << " entries.";
+  std::shared_ptr<FunctionSpace::Generic> functionSpace = std::static_pointer_cast<FunctionSpace::Generic>(mesh);
+
+  // createFieldVariable is declared in function_space/09_function_space_field_variable.h
+  //template <int nComponents>
+  //std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
+  return functionSpace->template createFieldVariable<1>(name);
 }
 
 };  // namespace

@@ -304,6 +304,22 @@ output(std::ostream &stream) const
       stream << s << std::endl;
     }
   }
+
+  PetscViewer viewer;
+  static int counter = 0;
+  std::stringstream matrixOutputFilename;
+  matrixOutputFilename << "matrix_" << counter++ << ".txt";
+  ierr = PetscViewerASCIIOpen(this->meshPartition_->mpiCommunicator(), matrixOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
+  ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_DENSE); CHKERRV(ierr);
+  ierr = MatView(this->globalMatrix_, viewer); CHKERRV(ierr);
+
+  if (ownRankNo == 0)
+  {
+    stream << "(Dense matrix also written to \"" << matrixOutputFilename.str() << "\".)";
+  }
+
+  //ierr = MatView(this->globalMatrix_, PETSC_VIEWER_STDOUT_(this->meshPartition_->mpiCommunicator())); CHKERRV(ierr);
+
 #endif
 }
 

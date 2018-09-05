@@ -18,13 +18,13 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
     std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
     if (hasMesh(meshName))
     {
-      LOG(DEBUG) << "Mesh with meshName \"" <<meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
+      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
       return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
     }
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
-      LOG(DEBUG) << "Mesh configuration for \"" <<meshName << "\" found and requested, will be created now. "
+      LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
         << "Type is " << typeid(FunctionSpaceType).name() << ".";
       
       // get mesh configuration that was parsed earlier
@@ -37,12 +37,12 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       
       // store mesh under its name
       meshes_[meshName] = mesh;
-      LOG(DEBUG) << "Stored under key \"" <<meshName << "\".";
+      LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
       return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
     }
     else
     {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \"" <<meshName << "\" but no such mesh was defined.";
+      LOG(ERROR) << "Config contains reference to mesh with meshName \"" << meshName << "\" but no such mesh was defined.";
     }
   }
   else

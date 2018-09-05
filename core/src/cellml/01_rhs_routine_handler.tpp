@@ -250,7 +250,7 @@ loadRhsLibrary(std::string libraryFilename)
   }
   else
   {
-    LOG(FATAL) << "Could not load dynamic library \"" << libraryFilename << "\". Reason: " <<dlerror();
+    LOG(FATAL) << "Could not load dynamic library \"" << libraryFilename << "\". Reason: " << dlerror();
   } 
 }
 

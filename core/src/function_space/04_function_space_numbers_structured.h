@@ -53,6 +53,9 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
+
+  //! get node local no from the local coordinate in natural local numbering
+  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=2
@@ -85,6 +88,9 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
+
+  //! get node local no from the local coordinate in natural local numbering
+  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=3
@@ -117,6 +123,9 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
+
+  //! get node local no from the local coordinate in natural local numbering
+  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
 

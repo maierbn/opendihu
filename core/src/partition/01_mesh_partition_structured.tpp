@@ -81,6 +81,80 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace)
+{
+  if (dofNosLocalNaturalOrdering_.empty())
+  {
+
+    // resize the vector to hold number of localWithGhosts dofs
+    dofNosLocalNaturalOrdering_.resize(nDofsLocalWithGhosts());
+
+    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+    int index = 0;
+    if (MeshType::dim() == 1)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+      {
+        std::array<int,MeshType::dim()> coordinates({nodeX});
+
+        // loop over dofs of node
+        for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+        {
+          dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+          dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+        }
+      }
+    }
+    else if (MeshType::dim() == 2)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeY = 0; nodeY < nNodesLocalWithGhosts(1); nodeY++)
+      {
+        for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+        {
+          std::array<int,MeshType::dim()> coordinates;
+          coordinates[0] = nodeX;
+          coordinates[1] = nodeY;
+
+          // loop over dofs of node
+          for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+          {
+            dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+            dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+          }
+        }
+      }
+    }
+    else if (MeshType::dim() == 3)
+    {
+      // loop over local nodes in local natural numbering
+      for (node_no_t nodeZ = 0; nodeZ < nNodesLocalWithGhosts(2); nodeZ++)
+      {
+        for (node_no_t nodeY = 0; nodeY < nNodesLocalWithGhosts(1); nodeY++)
+        {
+          for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
+          {
+            std::array<int,MeshType::dim()> coordinates;
+            coordinates[0] = nodeX;
+            coordinates[1] = nodeY;
+            coordinates[2] = nodeZ;
+
+            // loop over dofs of node
+            for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+            {
+              dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+              dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 createDmElements()
 {
   dmElements_ = std::make_shared<DM>();
@@ -278,12 +352,31 @@ nNodesLocalWithoutGhosts() const
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-nNodesLocalWithGhosts(int coordinateDirection) const
+nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 {
   assert(0 <= coordinateDirection);
   assert(coordinateDirection < MeshType::dim());
   
-  return this->nElementsLocal_[coordinateDirection] * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
+  const int nNodesPer1DElement = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement();
+
+  if (partitionIndex == -1)
+  {
+    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), nElementsLocal_: " << nElementsLocal_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+      << ", result: " << this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
+
+    // if partitionIndex was given as -1, it means return the the value for the own partition
+    return this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
+  }
+  else
+  {
+    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), localSizesOnRanks: " << localSizesOnRanks_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+      << ", result: " << this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+
+    // get the value for the given partition with index partitionIndex
+    return this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+  }
 }
 
 //! number of nodes in the local partition
@@ -356,11 +449,15 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 
   if (partitionIndex == -1)
   {
+    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), beginElementGlobal: " << beginElementGlobal_ << ", result: " << beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
+
     // if partitionIndex was given as -1, it means return the global natural no of the beginNode for the current partition
     return beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
   }
   else
   {
+
     // compute the global natural no of the beginNode for partition with partitionIndex in coordinateDirection
     global_no_t nodeNoGlobalNatural = 0;
     // loop over all partitions in the given coordinateDirection that are before the partition with partitionIndex
@@ -369,6 +466,10 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
       // sum up the number of nodes on these previous partitions
       nodeNoGlobalNatural += (localSizesOnRanks_[coordinateDirection][i]) * nNodesPer1DElement;
     }
+
+    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+      << "), localSizesOnRanks_: " << localSizesOnRanks_ << ", result: " << nodeNoGlobalNatural;
+
     return nodeNoGlobalNatural;
   }
 }
@@ -402,6 +503,33 @@ hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
   {
     // determine if the local partition is at the x+/y+/z+ border of the global domain
     return (partitionIndex == nRanks_[coordinateDirection]-1);
+  }
+}
+
+//! get the partition index in a given coordinate direction from the rankNo
+template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
+{
+  assert(0 <= coordinateDirection);
+  assert(coordinateDirection < MeshType::dim());
+
+  if (coordinateDirection == 0)
+  {
+    return rankNo % nRanks_[0];
+  }
+  else if (coordinateDirection == 1)
+  {
+    // example: nRanks: 1,2   localSizesOnRanks_: ((20),(10,10))
+    return (rankNo % (nRanks_[0]*nRanks_[1])) / nRanks_[0];
+  }
+  else if (coordinateDirection == 2)
+  {
+    return rankNo / (nRanks_[0]*nRanks_[1]);
+  }
+  else
+  {
+    assert(false);
   }
 }
   
@@ -551,6 +679,13 @@ ghostDofNosGlobalPetsc() const
   return ghostDofNosGlobalPetsc_;
 }
 
+template<typename MeshType,typename BasisFunctionType>
+const std::vector<dof_no_t> &MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+dofNosLocalNaturalOrdering() const
+{
+  return dofNosLocalNaturalOrdering_;
+}
+
 //! determine the values of ownRankPartitioningIndex_
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -654,6 +789,10 @@ nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionI
     return beginNodeGlobalNatural(2,partitionIndex[2])*nNodesGlobal(1)*nNodesGlobal(0)
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*beginNodeGlobalNatural(1,partitionIndex[1])*nNodesGlobal(0)  // (1)
       + nNodesLocalWithoutGhosts(2,partitionIndex[2])*nNodesLocalWithoutGhosts(1,partitionIndex[1])*beginNodeGlobalNatural(0,partitionIndex[0]);   //(2)
+  }
+  else
+  {
+    assert(false);
   }
 }
 
@@ -828,6 +967,10 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
     return (beginElementGlobal_[2] + elementZ) * nElementsGlobal_[0] * nElementsGlobal_[1]
       + (beginElementGlobal_[1] + elementY) * nElementsGlobal_[0]
       + beginElementGlobal_[0] + elementX;
+  }
+  else
+  {
+    assert(false);
   }
 }
 
@@ -1052,6 +1195,10 @@ getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const
     }
     return coordinates;
   }
+  else
+  {
+    assert(false);
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1069,6 +1216,10 @@ getNodeNoGlobalNatural(std::array<int,MeshType::dim()> coordinates) const
   else if (MeshType::dim() == 3)
   {
     return coordinates[2]*nNodesGlobal(0)*nNodesGlobal(1) + coordinates[1]*nNodesGlobal(0) + coordinates[0];
+  }
+  else
+  {
+    assert(false);
   }
 }
 

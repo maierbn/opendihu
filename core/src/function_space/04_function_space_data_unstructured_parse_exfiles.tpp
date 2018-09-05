@@ -82,7 +82,7 @@ parseExelemFile(std::string exelemFilename)
     {
       int dimension = getNumberAfterString(line, "Dimension=");
 
-      VLOG(1) << "dimension=" <<dimension;
+      VLOG(1) << "dimension=" << dimension;
       if (dimension == D)
       {
         lineType = elementsFollow;

@@ -92,6 +92,13 @@ parseBoundaryConditions()
     {
       boundaryCondition.first += nDofs;
     }
+    if (boundaryCondition.first > functionSpace->nDofsLocalWithoutGhosts())
+    {
+      node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
+      node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
+      LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
+        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes)";
+    }
     boundaryConditions.push_back(boundaryCondition);
   }
   if (boundaryConditions.empty())

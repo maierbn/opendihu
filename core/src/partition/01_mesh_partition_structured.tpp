@@ -49,7 +49,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
   for (int i = 0; i < MeshType::dim(); i++)
   {
     MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT, 
-      localSizesOnRanks_[i].data(), rankSubset->size(), MPI_INT, rankSubset->mpiCommunicator()));
+      localSizesOnRanks_[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
   }
   VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
 
@@ -361,18 +361,18 @@ nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 
   if (partitionIndex == -1)
   {
-    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-      << "), nElementsLocal_: " << nElementsLocal_ << ", nNodesPer1DElement: " << nNodesPer1DElement
-      << ", result: " << this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
+    //VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+    //  << "), nElementsLocal_: " << nElementsLocal_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+    //  << ", result: " << this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
 
     // if partitionIndex was given as -1, it means return the the value for the own partition
     return this->nElementsLocal_[coordinateDirection] * nNodesPer1DElement + 1;
   }
   else
   {
-    VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-      << "), localSizesOnRanks: " << localSizesOnRanks_ << ", nNodesPer1DElement: " << nNodesPer1DElement
-      << ", result: " << this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+    //VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+    //  << "), localSizesOnRanks: " << localSizesOnRanks_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+    //  << ", result: " << this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
 
     // get the value for the given partition with index partitionIndex
     return this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
@@ -449,8 +449,8 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 
   if (partitionIndex == -1)
   {
-    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-      << "), beginElementGlobal: " << beginElementGlobal_ << ", result: " << beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
+    //VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+    //  << "), beginElementGlobal: " << beginElementGlobal_ << ", result: " << beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
 
     // if partitionIndex was given as -1, it means return the global natural no of the beginNode for the current partition
     return beginElementGlobal_[coordinateDirection] * nNodesPer1DElement;
@@ -467,8 +467,8 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
       nodeNoGlobalNatural += (localSizesOnRanks_[coordinateDirection][i]) * nNodesPer1DElement;
     }
 
-    VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-      << "), localSizesOnRanks_: " << localSizesOnRanks_ << ", result: " << nodeNoGlobalNatural;
+    //VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
+    //  << "), localSizesOnRanks_: " << localSizesOnRanks_ << ", result: " << nodeNoGlobalNatural;
 
     return nodeNoGlobalNatural;
   }

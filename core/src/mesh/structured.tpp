@@ -27,6 +27,10 @@ Structured<D>::Structured(PyObject *specificSettings) :
     this->nElementsPerCoordinateDirectionLocal_ = PythonUtility::getOptionArray<element_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
     LOG(DEBUG) << "set local number of elements from settings: " << this->nElementsPerCoordinateDirectionLocal_;
     
+    if (!PythonUtility::hasKey(specificSettings, "nRanks"))
+    {
+      LOG(ERROR) << "Config does not specifiy \"nRanks\", a list of the number of ranks in each coordinate direction.";
+    }
     this->nRanks_ = PythonUtility::getOptionArray<int, D>(specificSettings, "nRanks", 1, PythonUtility::Positive);
     LOG(DEBUG) << "set number of ranks in the directions from settings: " << this->nRanks_;
   }

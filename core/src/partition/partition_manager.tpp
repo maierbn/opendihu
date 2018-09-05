@@ -66,10 +66,10 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   int nRanksSubsetCommunicator;
   MPIUtility::handleReturnValue(MPI_Comm_rank(rankSubset->mpiCommunicator(), &rankNoSubsetCommunicator));
   MPIUtility::handleReturnValue(MPI_Comm_size(rankSubset->mpiCommunicator(), &nRanksSubsetCommunicator));
-  int nRanksTotal = 0;
+  int nRanksTotal = 1;
   for (int i = 0; i < D; i++)
   {
-    nRanksTotal += nRanks[i];
+    nRanksTotal *= nRanks[i];
   }
   
   if (nRanksSubsetCommunicator != nRanksTotal)
@@ -88,6 +88,8 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     rankGridCoordinate[2] = int(rankNoSubsetCommunicator / (nRanks[0]*nRanks[1]));
   }
+
+  LOG(DEBUG) << "rankGridCoordinate: " << rankGridCoordinate;
   
   // expand nRanks to 3 entries where not valid entries are set to 1
   std::array<int,3> nRanks3({1});
@@ -149,6 +151,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   // now broadcast globalSizeMpi value to all ranks
   MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPI_INT, 0, rankSubset->mpiCommunicator()));
   
+
+  LOG(DEBUG) << "globalSizeMpi: " << globalSizeMpi;
+
   // compute beginGlobal values by prefix sum
   std::array<PetscInt, D> beginGlobal({0});
   MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[0], &beginGlobal[0], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[0]));

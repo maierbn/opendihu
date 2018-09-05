@@ -118,8 +118,6 @@ config = {
   nFails += ::testing::Test::HasFailure();
 }
 
-/*
-
 TEST(PoissonTest, SerialEqualsParallelLocalInput)
 {
   // run serial problem
@@ -198,7 +196,7 @@ for i in range(int(nx+1)):
     #bc[i] = np.sin(x*np.pi)
     bc[i] = i
   if rankNo == 1:
-    i2 = (nx+1)*ny + i
+    i2 = (nx+1)*1 + i
     #bc[i2] = np.sin(x*np.pi)
     bc[i2] = 10*i
 
@@ -223,6 +221,7 @@ config = {
         "dirichletBoundaryConditions": bc,
         "rightHandSide": rhs,
         "nElements": nElements,
+        "nRanks": [1,2],
         "physicalExtent": physicalExtent,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -244,5 +243,3 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
-*/

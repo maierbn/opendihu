@@ -101,25 +101,6 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
-finalAssembly()
-{
-  this->stiffnessMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-  
-  if (this->massMatrix_)
-    this->massMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  //if (this->systemMatrix_)
-    //this->systemMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  if (this->inverseLumpedMassMatrix_)
-    this->inverseLumpedMassMatrix_->assembly(MAT_FINAL_ASSEMBLY);
-
-  LOG(DEBUG) << "finalAssembly";
-}
-
-
-template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 stiffnessMatrix()
 {
@@ -132,15 +113,6 @@ massMatrix()
 {
   return this->massMatrix_;
 }
-
-/*
-template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
-systemMatrix()
-{
-  return this->systemMatrix_;
-}
-*/
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
@@ -181,9 +153,6 @@ print()
   if (this->inverseLumpedMassMatrix_)
     VLOG(4) << *this->inverseLumpedMassMatrix_;
 
-  //if (this->systemMatrix_)
-    //VLOG(4) << *this->systemMatrix_;
-
   VLOG(4) << this->functionSpace_->geometryField();
   
   MatInfo info;
@@ -221,21 +190,6 @@ initializeMassMatrix()
   const int nComponents = 1;
   this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
 }
-
-/*
-template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
-initializeSystemMatrix(Mat &systemMatrix)
-{
-  // if the systemMatrix_ is already initialized do not initialize again
-  if (this->systemMatrix_)
-    return;
-
-  // the PETSc matrix object is created outside by MatMatMult
-  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, systemMatrix, "systemMatrix");
-}
-*/
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
 void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::

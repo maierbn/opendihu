@@ -694,7 +694,7 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
   dof_no_t localX = coordinateLocal[0];
   dof_no_t localY = coordinateLocal[1];
 
-  VLOG(1) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
+  VLOG(3) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
     << ", nNodesLocalWithoutGhosts: (" << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << ")";
 
   if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0))   // point is on right ghost row
@@ -702,13 +702,13 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
     if (localY == this->meshPartition()->nNodesLocalWithoutGhosts(1))  // point is on top ghost row
     {
       // top right ghost point
-      VLOG(1) << "  a: " << this->meshPartition()->nNodesLocalWithGhosts()-1;
+      VLOG(3) << "  a: " << this->meshPartition()->nNodesLocalWithGhosts()-1;
       return this->meshPartition()->nNodesLocalWithGhosts()-1;
     }
     else
     {
       // on right ghost row
-      VLOG(1) << "  b: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
+      VLOG(3) << "  b: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
       return this->meshPartition()->nNodesLocalWithoutGhosts() + localY;
     }
   }
@@ -720,20 +720,20 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
       if (this->meshPartition()->hasFullNumberOfNodes(0))
       {
         // there are only ghost on the top (y+)
-        VLOG(1) << "  c: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localX;
+        VLOG(3) << "  c: " << this->meshPartition()->nNodesLocalWithoutGhosts() + localX;
         return this->meshPartition()->nNodesLocalWithoutGhosts() + localX;
       }
       else
       {
         // there are ghosts on the right (x+) and top (y+)
-        VLOG(1) << "  d: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
+        VLOG(3) << "  d: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
         return this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
       }
     }
     else
     {
       // point is in interior
-      VLOG(1) << " e: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      VLOG(3) << " e: " << this->meshPartition()->nNodesLocalWithoutGhosts() + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
       return this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
     }
   }
@@ -748,7 +748,7 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
   dof_no_t localY = coordinateLocal[1];
   dof_no_t localZ = coordinateLocal[2];
 
-  VLOG(1) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
+  VLOG(3) << "getNodeNo(" << coordinateLocal << "), nNodesLocalWithoutGhosts: " << this->meshPartition()->nNodesLocalWithoutGhosts()
     << ", nNodesLocalWithoutGhosts: (" << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(2) << ")"
     << ", hasFullNumberOfNodes: (" << this->meshPartition()->hasFullNumberOfNodes(0) << "," << this->meshPartition()->hasFullNumberOfNodes(1) << "," << this->meshPartition()->hasFullNumberOfNodes(2) << ")";
 

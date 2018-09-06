@@ -41,9 +41,13 @@ multiplyRightHandSideWithMassMatrix()
   // get all entries
   std::vector<double> rhsValues;
   rightHandSide.getValuesWithGhosts(rhsValues);
+  VLOG(1) << "extracted rhsValues (with ghosts): " << rhsValues;
 
   // initialize values to zero
   rightHandSide.zeroEntries();
+
+  // also zero out the ghost buffer
+  rightHandSide.zeroGhostBuffer();
 
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();

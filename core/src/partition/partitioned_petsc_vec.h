@@ -16,12 +16,14 @@ class FunctionSpace;
 };
 
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
- *  A local Vec is stored that holds all values 
- *  Global numbering: such that each rank has its own contiguous subset of the total range.
- *  Local numbering: starting with 0, including ghost elements
+ *  For each component a local Vec is stored that holds all values of that component.
+ *  Global Petsc numbering: such that each rank has its own contiguous subset in this numbering of the total range.
+ *  Global Natural numbering: normal indexing proceeding fastest in x, then in y, then in z direction, over the whole domain.
+ *  Local numbering: starting with 0, first all non-ghost values, then the ghost indices.
  * *
  *  This particular standard specialization is for non-structured meshes or no meshes and currently completely serial, 
- *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented.
+ *  it is the placeholder as long as the partial specialization for unstructured meshes is not implemented. (It will never be)
+ *  This means some of the methods here have no effect.
  */
 template<typename FunctionSpaceType, int nComponents, typename = typename FunctionSpaceType::Mesh>
 class PartitionedPetscVec : 
@@ -44,6 +46,9 @@ public:
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void finishGhostManipulation();
   
+  //! zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the "old" ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.
+  void zeroGhostBuffer();
+
   //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
   void setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora);
   
@@ -117,6 +122,9 @@ public:
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
   void finishGhostManipulation();
   
+  //! zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the "old" ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.
+  void zeroGhostBuffer();
+
   //! wrapper to the PETSc VecSetValues, acting only on the local data, the indices ix are the local dof nos
   void setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora);
   
@@ -179,7 +187,7 @@ protected:
 
 
 template<typename FunctionSpaceType, int nComponents>
-std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &matrix);
+std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &vector);
 
 #include "partition/partitioned_petsc_vec_default.tpp"
 #include "partition/partitioned_petsc_vec_structured.tpp"

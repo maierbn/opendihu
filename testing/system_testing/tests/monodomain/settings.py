@@ -156,7 +156,7 @@ config = {
     "outputData2": False,
 
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_splitting", "binaryOutput": True, "fixedFormat": False},
+      {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre_splitting", "binary": True, "fixedFormat": False},
       {"format": "ExFile", "filename": "out/fibre_splitting", "outputInterval": 1e5, "sphereSize": "2*2*2"},
     ],
     "Term1": {      # CellML
@@ -204,7 +204,7 @@ config = {
         },
         "OutputWriter" : [
           {"format": "PythonFile", "outputInterval": 1e5, "filename": "out/vm_"+name, "binary": True},
-          {"format": "Paraview", "outputInterval": 1e5, "filename": "out/vm_"+name, "binaryOutput": True, "fixedFormat": False},
+          {"format": "Paraview", "outputInterval": 1e5, "filename": "out/vm_"+name, "binary": True, "fixedFormat": False},
           {"format": "ExFile", "filename": "out/vm_"+name, "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

@@ -28,7 +28,7 @@ config = {
   "FiniteElementMethod": {
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   }
 }
@@ -80,7 +80,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 0.5,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   },
 }
@@ -254,7 +254,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [n, m],
     "physicalExtent": [6.0, 9.0],
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   },
 }
@@ -767,7 +767,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "solverName": "linearSolver"
   }
 }

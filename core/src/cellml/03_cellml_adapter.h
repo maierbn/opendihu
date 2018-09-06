@@ -43,7 +43,7 @@ public:
   void evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
   //! evaluate rhs
-  void evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
+  //void evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime);
   
   //! return false because the object is independent of mesh type
   bool knowsMeshType();

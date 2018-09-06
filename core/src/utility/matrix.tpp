@@ -65,7 +65,7 @@ operator*(const std::array<double,nColumns> &vector)
   std::array<double,nRows> result({0});
   for (int columnIndex = 0; columnIndex < nColumns; columnIndex++)
   {
-#pragma omp simd
+//#pragma omp simd
     for (int rowIndex = 0; rowIndex < nRows; rowIndex++)
     {
       result[rowIndex] += this->operator()(rowIndex, columnIndex) * vector[columnIndex];

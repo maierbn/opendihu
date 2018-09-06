@@ -56,6 +56,7 @@ setMassMatrix()
       }
     }
   }
+  massMatrix->assembly(MAT_FLUSH_ASSEMBLY);
 
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();

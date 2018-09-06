@@ -38,6 +38,8 @@ initialize()
   
   PetscErrorCode ierr;
   
+  initializeLinearSolver();
+  
   // set matrix used for linear system and preconditioner to ksp context
   assert(this->ksp_);
   ierr = KSPSetOperators (*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
@@ -81,7 +83,8 @@ initializeLinearSolver()
     LOG(DEBUG) << s.str() << ": ImplicitEuler: initialize linearSolver";
     
     // retrieve linear solver
-    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(this->specificSettings_);
+    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+      this->specificSettings_, this->data_->functionSpace()->meshPartition()->mpiCommunicator());
     ksp_ = linearSolver_->ksp();
   }
   else 

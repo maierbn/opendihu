@@ -97,7 +97,7 @@ setStiffnessMatrix()
   }
   
   // call MatAssemblyBegin, MatAssemblyEnd
-  //stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
+  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }
 
 // 2D stiffness matrix
@@ -316,7 +316,7 @@ setStiffnessMatrix()
     }
   }
   
-  //stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
+  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }
 
 // 3D stiffness matrix
@@ -975,7 +975,7 @@ setStiffnessMatrix()
     }
   }
   
-  //stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
+  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }
 
 

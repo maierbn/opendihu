@@ -5,7 +5,8 @@
 namespace FieldVariable
 {
 
-/** General field variable
+/** General field variable, this is a vector with as many entries as there are unknowns in the function space.
+ *  It uses a PartitionedPetscVec at data container which is a wrapper for Petsc Vec.
  */
 template<typename FunctionSpaceType,int nComponents>
 class FieldVariable :
@@ -20,8 +21,13 @@ public:
   //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that the current state of the vector is fetched from the global vector
   void startGhostManipulation();
   
+  //! zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the "old" ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.
+  void zeroGhostBuffer();
+
   //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that operations on different partitions are merged by Petsc
+  //! It sums up the values in the ghost buffer and the actual nodal value.
   void finishGhostManipulation();
+
 };
 
 

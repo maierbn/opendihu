@@ -55,6 +55,13 @@ E.g. nNodesLocalWithGhosts() or nDofsGlobal()
    This is the numbering that has to be used for accessing global Petsc vectors and matrices, however this is not needed because one can access these vectors and matrices through the local vectors and matrices.
    It is needed for the creation of the Vecs and Mats.
 
+# Unit test
+The unit tests are located in testing/unit_testing/src. They are automatically compiled after the library. There are tests for 1 rank, 2 ranks and 6 ranks. All of the respective tests are compiled as one executable, that runs all tests and fails if any test fails.
+The executable can be run manually e.g. in testing/unit_testing/build_debug/1_rank_tests. To only run a single test, use the "--gtest_filter=<test name>" command. It also supports wild cards (*), e.g.
+  ./1_rank_tests --gtest_filter=LaplaceTest.*Structured* -v
+This runs the tests 
+When working on unit tests, you can temporarily only enable the test you are working on in the file `testing/unit_testing/SConscript`. There you can set the file names to be included in the executable and fully enable/disable the 1_rank/2_ranks/6_ranks tests. This reduces compile time.
+
 # Howto debug:
 1.GDB
 define the following alias:
@@ -141,7 +148,20 @@ fieldVariable->startGhostManipulation()  // still okay, now every rank also has 
 // setValues which only manipulate non-ghost values
 fieldVariable->finishGhostManipulation()  // unexpected result, some local values (those that are ghosts on other ranks) will get ghost-buffer values added, that are still in the ghost buffers on an other rank. (#)
 
-The correction for the example would be to remove (#) lines or set the ghost buffers to zero (but then the start/finishGhostManipulation calls would be useless anyway)
+The correction for the example would be to remove (#) lines or set the ghost buffers to zero fieldVariable->zeroGhostBuffer() (but then the start/finishGhostManipulation calls would be useless anyway)
 
-So take-away message is, if you want to read ghost values, call startGhostManipulation() beforehand, 
-if you want to write ghost values, wrap the setValues code with startGhostManipulation() and finishGhostManipulation(). Else do not use the two calls.
+So if you want to read ghost values, call startGhostManipulation() beforehand, 
+if you want to write all ghost values, wrap the setValues code with startGhostManipulation() and finishGhostManipulation(). 
+If you want to write some ghost values, call startGhostManipulation(), save the ghost values you need (by fieldVariable->getVaules()), zeroGhostBuffer(), finishGhostManipulation()
+
+# Using output data
+The python output data in *.py files can be viewed by the script `catpy.py <files>` and plotted by `plot.py <files>`. The scripts are located in the `scripts` folder. It is convenient to add this folder to PATH, e.g. in ~/.bashrc with 
+export PATH=$PATH:/store/software/opendihu/scripts   # (adjust to your path)
+There are also shortcuts `plot` and `catpy`. Example usage:
+```
+catpy                   # without arguments, displays contents of all files in the current directory with `*.py` suffix.
+plot                    # without arguments, plots everything from the `*.py`files in the current directory.
+plot out*               # plot all out* files
+validate_parallel.py    # without arguments, checks if the content of all files with corresponding names matches, where some files are serial files like `out.py` and some are parallel files like `out.0.py`, `out.1.py` etc.
+validate_parallel.py out.py out.0.py out.1.py   # do the same but with explicit specification of which files to use.
+```

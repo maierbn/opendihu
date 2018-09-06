@@ -127,11 +127,11 @@ config = {
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
-      "DirichletBoundaryCondition": bc,
+      "dirichletBoundaryConditions": bc,
       "prefactor": 1.0,
     },
     "OutputWriter" : [
-      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
       {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
     ]

@@ -25,7 +25,7 @@ config = {
     "inputMeshIsGlobal": True,
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
@@ -71,7 +71,7 @@ config = {
     "inputMeshIsGlobal": True,
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
@@ -117,7 +117,7 @@ config = {
     "inputMeshIsGlobal": True,
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
@@ -164,7 +164,7 @@ config = {
     "inputMeshIsGlobal": True,
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
@@ -221,7 +221,7 @@ config = {
     "inputMeshIsGlobal": True,
     "nElements": [nx, ny],
     "physicalExtent": [6.0, 4.0],
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "filename": "out2d_p2", "outputInterval": 1, "binary": False},
@@ -282,7 +282,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out2d_p1", "outputInterval": 1, "binary": False},
@@ -345,7 +345,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out2d_p1", "outputInterval": 1, "binary": False},
@@ -406,7 +406,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -460,7 +460,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "Paraview", "filename": "out", "outputInterval": 1, "binary": False},
@@ -519,7 +519,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -572,7 +572,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -622,7 +622,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -671,7 +671,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [2*nx, 2*ny],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -728,7 +728,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -782,7 +782,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -840,7 +840,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -893,7 +893,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -943,7 +943,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -992,7 +992,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny],
         "physicalExtent": [6.0, 4.0],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1047,7 +1047,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1099,7 +1099,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1159,7 +1159,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1214,7 +1214,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1269,7 +1269,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1323,7 +1323,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1379,7 +1379,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1431,7 +1431,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1491,7 +1491,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1546,7 +1546,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
@@ -1601,7 +1601,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [
@@ -1655,7 +1655,7 @@ config = {
         "inputMeshIsGlobal": True,
         "nElements": [nx, ny, nz],
         "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "DirichletBoundaryCondition": bc,
+        "dirichletBoundaryConditions": bc,
         "maxIterations": 1e5,
         "relativeTolerance": 1e-15,
         "OutputWriter" : [

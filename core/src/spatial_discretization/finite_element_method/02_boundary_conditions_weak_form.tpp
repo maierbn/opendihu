@@ -75,17 +75,29 @@ parseBoundaryConditions()
     nDofs = functionSpace->nDofsLocalWithoutGhosts();
   }
 
+  if (PythonUtility::hasKey(this->specificSettings_, "DirichletBoundaryCondition"))
+  {
+    LOG(ERROR) << "Option \"DirichletBoundaryCondition\" was renamed to \"dirichletBoundaryConditions\".";
+  }
+
   // parse all boundary conditions that are given in config
   std::vector<std::pair<int,double>> boundaryConditions;  /// (index, value) pairs
 
-  std::pair<int, double> boundaryCondition = PythonUtility::getOptionDictBegin<int, double>(this->specificSettings_, "DirichletBoundaryCondition");
-  for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "DirichletBoundaryCondition");
-          PythonUtility::getOptionDictNext<int, double>(this->specificSettings_, "DirichletBoundaryCondition", boundaryCondition))
+  std::pair<int, double> boundaryCondition = PythonUtility::getOptionDictBegin<int, double>(this->specificSettings_, "dirichletBoundaryConditions");
+  for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "dirichletBoundaryConditions");
+          PythonUtility::getOptionDictNext<int, double>(this->specificSettings_, "dirichletBoundaryConditions", boundaryCondition))
   {
-    // for negative indices add number of dofs such that -1 is the last dof, -2 is the second-last etc.
+    // for negative indices add number of dofs such that -1 is the last dof, -2 is the econd-last etc.
     if (boundaryCondition.first < 0)
     {
       boundaryCondition.first += nDofs;
+    }
+    if (boundaryCondition.first > functionSpace->nDofsLocalWithoutGhosts())
+    {
+      node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
+      node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
+      LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
+        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes)";
     }
     boundaryConditions.push_back(boundaryCondition);
   }
@@ -264,6 +276,7 @@ applyBoundaryConditionsWeakForm()
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   rightHandSide.startGhostManipulation();
+  rightHandSide.zeroGhostBuffer();
 
   const int D = FunctionSpaceType::dim();
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;

@@ -56,7 +56,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     //PyDict_SetItemString(pyData, "a", PyLong_FromLong(5));
     //PyDict_SetItemString(pyData,"b", PyUnicode_FromString("hi"));
 
-    LOG(DEBUG) << "in python_file.tpp, data to write: " ;
+    VLOG(2) << "in python_file.tpp, data to write: " ;
     PythonUtility::printDict(pyData);
 
     // open file, to see if directory needs to be created

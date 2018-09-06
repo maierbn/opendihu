@@ -23,7 +23,7 @@ public:
   TimeSteppingImplicit(DihuContext context, const std::string name);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-  virtual void advanceTimeSpan();
+  virtual void advanceTimeSpan()=0;
   
   //! run the simulation
   void run();
@@ -34,7 +34,7 @@ public:
 protected:
   
   //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme
-  virtual void setSystemMatrix(double timeStepWidth);
+  virtual void setSystemMatrix(double timeStepWidth)=0;
    
   //! initialize the linear solve that is needed for the solution of the implicit timestepping system
   void initializeLinearSolver();

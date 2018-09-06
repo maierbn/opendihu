@@ -156,6 +156,24 @@ finishGhostManipulation()
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+zeroGhostBuffer()
+{
+  VLOG(2) << "\"" << this->name_ << "\" zeroGhostBuffer";
+
+  // set local ghost values to 0
+  int nValues = this->meshPartition_->nDofsLocalWithGhosts() - this->meshPartition_->nDofsLocalWithoutGhosts();
+  const PetscInt *indices = this->meshPartition_->dofNosLocal().data() + this->meshPartition_->nDofsLocalWithoutGhosts();
+  std::vector<double> values(nValues, 0.0);
+
+  PetscErrorCode ierr;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    ierr = VecSetValues(vectorLocal_[componentNo], nValues, indices, values.data(), INSERT_VALUES); CHKERRV(ierr);
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   // this wraps the standard PETSc VecGetValues on the local vector

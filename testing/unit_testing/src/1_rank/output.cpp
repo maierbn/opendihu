@@ -37,7 +37,7 @@ config = {
     "nElements": n,
     "physicalExtent": 4.0,
     "initialValues": [0],
-    "DirichletBoundaryCondition": {0:1.0},
+    "dirichletBoundaryConditions": {0:1.0},
     "relativeTolerance": 1e-15,
     "nodePositions": [[0,0,0], [1,0], [2,0,0], [0,1], [1,1], [2,1], [0,2], [1,2], [2,2]],  # 3x3 nodes, 4 elements
     "elements": [[0, 1, 3, 4], [1, 2, 4, 5], [3, 4, 6, 7], [4, 5, 7, 8]],   # each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0
@@ -92,7 +92,7 @@ config = {
   "disablePrinting": False,
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
-    "DirichletBoundaryCondition": {0:1.0},
+    "dirichletBoundaryConditions": {0:1.0},
     "initialValues": [0],
     "relativeTolerance": 1e-15,
     "nElements": [2,2],
@@ -149,7 +149,7 @@ config = {
   "disablePrinting": False,
   "disableMatrixPrinting": False,
   "FiniteElementMethod" : {
-    "DirichletBoundaryCondition": {0:1.0},
+    "dirichletBoundaryConditions": {0:1.0},
     "initialValues": [0],
     "relativeTolerance": 1e-15,
     "nElements": [2,2],
@@ -210,7 +210,7 @@ config = {
     "nElements": [4, 4],
     "physicalExtent": [4.0, 4.0],
     "initialValues": [0],
-    "DirichletBoundaryCondition": {0:1.0},
+    "dirichletBoundaryConditions": {0:1.0},
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "PythonFile", "filename" : "out_binary", "binary" : True},

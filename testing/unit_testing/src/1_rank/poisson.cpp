@@ -30,7 +30,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   },
   "OutputWriter" : [
@@ -86,7 +86,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 0.5,
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   },
 }
@@ -206,7 +206,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [n, m],
     "physicalExtent": [6.0, 9.0],
-    "DirichletBoundaryCondition": bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
   },
 }
@@ -485,7 +485,7 @@ config = {
     "nElements": [4, 5],
     "physicalExtent": [1.0, 2.0, 3.0],
     "rightHandSide": [1, 4.0, 5, 9.0, 0.0, 0, 5, 7, 3],
-    "DirichletBoundaryCondition": {0:0},
+    "dirichletBoundaryConditions": {0:0},
     "relativeTolerance": 1e-15,
   },
 }
@@ -500,7 +500,7 @@ config = {
     "nElements": [4, 5],
     "physicalExtent": [1.0, 2.0],
     "rightHandSide": {2:5, 7:7.0, 3:9, "8":3, 0:1, 1:4, 6.0:5, "10":0},
-    "DirichletBoundaryCondition": {0:0},
+    "dirichletBoundaryConditions": {0:0},
     "relativeTolerance": 1e-15,
   },
 }

@@ -194,7 +194,7 @@ def get_instance_config(i):
             "relativeTolerance": 1e-10,
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
-            "DirichletBoundaryCondition": bc,
+            dirichletBoundaryConditions: bc,
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_bin", "binaryOutput": True, "fixedFormat": False},

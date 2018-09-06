@@ -20,7 +20,7 @@ public:
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
 
   //! constructor
-  TimeSteppingImplicit(DihuContext context);
+  TimeSteppingImplicit(DihuContext context, const std::string name);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   virtual void advanceTimeSpan();

@@ -13,12 +13,8 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 CrankNicolson<DiscretizableInTimeType>::CrankNicolson(DihuContext context) :
-TimeSteppingImplicit<DiscretizableInTimeType>(context)
+TimeSteppingImplicit<DiscretizableInTimeType>(context, "CrankNicolson")
 {
-  //this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit scheme
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CrankNicolson");
-  this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTimeType>

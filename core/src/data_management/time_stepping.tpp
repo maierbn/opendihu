@@ -13,6 +13,7 @@
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
 #include "partition/01_mesh_partition.h"
+#include "partition/partitioned_petsc_mat.h"
 
 namespace Data
 {
@@ -57,6 +58,17 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+finalAssembly()
+{
+    
+  if (this->systemMatrix_)
+    this->systemMatrix_->assembly(MAT_FINAL_ASSEMBLY); 
+  
+  LOG(DEBUG) << "finalAssembly";
+}
+
+template<typename FunctionSpaceType,int nComponents>
 FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeStepping<FunctionSpaceType,nComponents>::
 solution()
 {
@@ -68,6 +80,26 @@ FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeStepping<Functi
 increment()
 {
   return *this->increment_;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> TimeStepping<FunctionSpaceType,nComponents>::
+systemMatrix()
+{
+  return this->systemMatrix_;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+initializeSystemMatrix(Mat &systemMatrix)
+{
+  // if the systemMatrix_ is already initialized do not initialize again
+  if (this->systemMatrix_)
+    return;
+  
+  // the PETSc matrix object is created outside by MatMatMult
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
+  this->systemMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, systemMatrix, "systemMatrix");
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -101,6 +133,8 @@ print()
   VLOG(4) << "======================";
   VLOG(4) << *this->increment_;
   VLOG(4) << *this->solution_;
+  if (this->systemMatrix_)
+    VLOG(4) << *this->systemMatrix_;
   VLOG(4) << "======================";
 }
 

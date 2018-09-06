@@ -27,7 +27,7 @@ public:
   virtual void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime) = 0;
   
   //! timestepping rhs function f of equation u_t = f(u,t), computed in an implicit time step with equation Au^{t+1}=f^{t} where A=(I-dt*M^{-1}K). This is called when implicit Euler is used.
-  virtual void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime) = 0;
+  //virtual void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime) = 0;
 
   //! get the number of degrees of freedom per node which is 1 by default
   virtual int nComponentsNode();

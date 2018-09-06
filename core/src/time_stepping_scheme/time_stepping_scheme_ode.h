@@ -21,7 +21,7 @@ public:
   typedef Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
 
   //! constructor
-  TimeSteppingSchemeOde(DihuContext context, const std::string name);
+  TimeSteppingSchemeOde(DihuContext context, std::string name);
 
   //! destructor
   virtual ~TimeSteppingSchemeOde() {}

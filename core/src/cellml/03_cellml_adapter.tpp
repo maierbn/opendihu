@@ -119,11 +119,13 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
 }
 
+/*
 template<int nStates>
 void CellmlAdapter<nStates>::
 evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
 }
+*/
 
 //! return false because the object is independent of mesh type
 template<int nStates>

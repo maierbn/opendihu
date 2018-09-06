@@ -25,7 +25,7 @@ public:
   void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
   //! timestepping rhs of equation Au^(t+1)=Rhs^(t), used for the case (M/dt-K)u^(t+1)=M/dtu^(t)
-  void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
+  //void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
 
   //! initialize for use with timestepping
   void initialize();
@@ -63,7 +63,7 @@ protected:
   void setInverseLumpedMassMatrix();
 
   //! compute the system matrix for implicit timestepping, A=I-dt*M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
-  void setSystemMatrix(double timeStepWidth);
+  //void setSystemMatrix(double timeStepWidth);
 /*
   //! precomputes the system matrix A=M/dt-K for variant 1 of the implicit Euler
   void precomputeSystemMatrix1();

@@ -10,7 +10,7 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 TimeSteppingSchemeOde<DiscretizableInTimeType>::
-TimeSteppingSchemeOde(DihuContext context, const std::string name) :
+TimeSteppingSchemeOde(DihuContext context, std::string name) :
   TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
 }

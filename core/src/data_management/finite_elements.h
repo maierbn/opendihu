@@ -48,17 +48,11 @@ public:
   //! create the inverse of the lumped mass matrix
   void initializeInverseLumpedMassMatrix();
 
-  //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
-  void initializeSystemMatrix(Mat &systemMatrix);
-
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
 
   //! get the mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix();
-
-  //! get the system matrix, corresponding to the specific time integration. (I - d*tM^(-1)*K) for the implicit Euler scheme.
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();
 
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
@@ -83,7 +77,6 @@ private:
 
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;         ///< the system matrix for implicit time stepping, (I - dt*M^-1*K)
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rhs_;                 ///< the rhs vector in weak formulation

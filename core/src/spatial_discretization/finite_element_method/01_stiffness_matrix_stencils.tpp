@@ -177,7 +177,6 @@ setStiffnessMatrix()
         for (int j=-1; j<=1; j++) // y
         {
           value = stencilCenter[center+i][center+j]*integralFactor;
-          //                 matrix           row    column
           stiffnessMatrix->setValue(dofNo, dofIndex(x+i, y+j), value, INSERT_VALUES);
         }
       }

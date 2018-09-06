@@ -37,7 +37,7 @@ sconsconfig.select(
     packages.MPI(required=True),
     packages.LAPACK(required=True),
     packages.PETSc(required=True),
-    packages.bzip2(required=False),
+    #packages.bzip2(required=False),
     packages.Python(required=True),
     packages.Cython(required=False),
     packages.NumpyC(required=False),
@@ -49,7 +49,7 @@ sconsconfig.select(
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
     packages.SEMT(required=True),
-    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included
+    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included, because it contains a source (.c) file to be compiled
 )
 
 # By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
@@ -148,7 +148,9 @@ except: pass
 Progress(progress_function, interval=env["node_count_interval"])
 
 # -----------------------------------------------
-# depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
+# Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
+# All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0. 
+# When using a different compiler that supports C++14, add some ifs to the next section.
 if env["BUILD_TYPE"] == "debug":
   
   # debug build

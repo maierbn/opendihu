@@ -40,7 +40,6 @@ DihuContext::DihuContext(const DihuContext &rhs)
   nObjects_++;
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
   pythonConfig_ = rhs.pythonConfig_;
-  VLOG(4) << "Py_XINCREF(pythonConfig_)";
   Py_XINCREF(pythonConfig_);
 }
 
@@ -93,22 +92,14 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     }
 
     LOG(TRACE) << "initialize python";
-#if 1
 
     // set program name of python script
     char const *programName = "opendihu";
-    VLOG(4) << "Py_SetProgramName(" << std::string(programName) << ")";
 
-#if PY_MAJOR_VERSION >= 3
     wchar_t *programNameWChar = Py_DecodeLocale(programName, NULL);
     Py_SetProgramName(programNameWChar);  /* optional but recommended */
-#else
-    Py_SetProgramName((char *)programName);  /* optional but recommended */
-#endif
 
-#if PY_MAJOR_VERSION >= 3
     // set python home and path, apparently this is not needed
-#if 1
     VLOG(1) << "python home directory: \"" << PYTHON_HOME_DIRECTORY << "\"";
     std::string pythonSearchPath = PYTHON_HOME_DIRECTORY;
     //std::string pythonSearchPath = std::string("/store/software/opendihu/dependencies/python/install");
@@ -118,56 +109,15 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     //std::string pythonPath = ".:" PYTHON_HOME_DIRECTORY "/lib/python3.6:" PYTHON_HOME_DIRECTORY "/lib/python3.6/site-packages";
     //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
     //Py_SetPath((wchar_t *)pythonPathWChar);
-#endif
-
-#else   // python 2.7
-
-    // set python home and path
-
-    // find location where libpython2.7.a is located and extract the beginning of the path until '/lib' is encountered
-    // this serves as the PYTHONHOME value that will be set via Py_SetPythonHome.
-    // possible examples:
-    //  /usr/lib/x86_64-linux-gnu   -> PYTHONHOME=/usr
-    //  /usr/lib/python2.7/config-x86_64-linux-gnu -> PYTHONHOME=/usr
-    // explanation of the command:
-    //   printf %s $(..): print without newline
-    //   find /usr -name "libpython*.a": search for libpython*.a under the /usr directory
-    //   head -n 1: take first line
-    //   sed 's/\/lib.*//': remove everything after "/lib" is found
-    //   > tmp: write to file "tmp"
-    //int ret = system("printf %s $(find /usr -name \"libpython*.a\" | head -n 1 | sed 's/\\/lib.*//') > tmp");
-
-    int ret = 0;
-    if (ret == 0)
-    {
-      std::ifstream f("tmp");
-      std::stringstream s;
-      s << f.rdbuf();
-      std::remove("tmp");
-
-      std::string pythonHome = s.str();
-      if (pythonHome.empty())
-        pythonHome = "/usr";
-
-      const char *pythonSearchPath = pythonHome.c_str();
-      LOG(DEBUG) << "Set python search path to \"" <<pythonSearchPath<< "\".";
-
-      VLOG(4) << "Py_SetPythonHome(" << pythonHome << ")";
-    }
-    Py_SetPythonHome((char *)pythonSearchPath);
-#endif
 
     // initialize python
-    VLOG(4) << "Py_Initialize()";
     Py_Initialize();
-    
-    VLOG(4) << "PyEval_InitThreads()";
+
     PyEval_InitThreads();
     
     //VLOG(4) << "PyEval_ReleaseLock()";
     //PyEval_ReleaseLock();
 
-    VLOG(4) << "Py_SetStandardStreamEncoding()";
     Py_SetStandardStreamEncoding(NULL, NULL);
 
     // pass on command line arguments to python config script
@@ -176,33 +126,42 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // always remove the first argument, which is the name of the executable
     int numberArgumentsToRemove = (explicitConfigFileGiven? 2: 1);
 
-    int argcReduced = argc - numberArgumentsToRemove;
-    VLOG(4) << "argcReduced: " << argcReduced << ", numberArgumentsToRemove: " << numberArgumentsToRemove;
+    // add the own rank no and the number of ranks at the end as command line arguments
 
-    char **argvReduced = new char *[argcReduced];
-#if PY_MAJOR_VERSION >= 3
-    wchar_t **argvReducedWChar = new wchar_t *[argcReduced];
-#endif
+    int nArgumentsToConfig = argc - numberArgumentsToRemove + 2;
+    VLOG(4) << "nArgumentsToConfig: " << nArgumentsToConfig << ", numberArgumentsToRemove: " << numberArgumentsToRemove;
 
-    for (int i=0; i<argcReduced; i++)
+    char **argvReduced = new char *[nArgumentsToConfig];
+    wchar_t **argumentToConfigWChar = new wchar_t *[nArgumentsToConfig];
+
+    // set given command line arguments
+    for (int i=0; i<nArgumentsToConfig-2; i++)
     {
       argvReduced[i] = argv[i+numberArgumentsToRemove];
-      LOG(DEBUG) << "argv[" << i << "]=" << argvReduced[i];
-#if PY_MAJOR_VERSION >= 3
-      argvReducedWChar[i] = Py_DecodeLocale(argvReduced[i], NULL);
-#endif
+      argumentToConfigWChar[i] = Py_DecodeLocale(argvReduced[i], NULL);
+    }
+
+    // add rank no and nRanks
+    // get own rank no and number of ranks
+    int rankNo, nRanks;
+    MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+    MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
+
+    // convert to wchar_t
+    std::stringstream rankNoStr, nRanksStr;
+    rankNoStr << rankNo;
+    nRanksStr << nRanks;
+    argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
+    argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);
+
+    if (VLOG_IS_ON(1))
+    {
+      PythonUtility::printDict(pythonConfig_);
     }
 
     // pass reduced list of command line arguments to python script
-#if PY_MAJOR_VERSION >= 3
-    PySys_SetArgvEx(argcReduced, argvReducedWChar, 0);
-#else
-    PySys_SetArgvEx(argcReduced, argvReduced, 0);
-#endif
+    PySys_SetArgvEx(nArgumentsToConfig, argumentToConfigWChar, 0);
 
-
-
-#if PY_MAJOR_VERSION >= 3
     // check different python setting for debugging
     wchar_t *homeWChar = Py_GetPythonHome();
     char *home = Py_EncodeLocale(homeWChar, NULL);
@@ -235,11 +194,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     const char *buildInfo = Py_GetBuildInfo();
     VLOG(2) << "python buildInfo: " << buildInfo;
-#else
-    // check python home directory for debugging output
-    char *home = Py_GetPythonHome();
-    VLOG(2) << "Python home: " << home;
-#endif
 
     // load python script
     if(settingsFromFile)
@@ -247,7 +201,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
       loadPythonScriptFromFile(filename);
     }
 
-#endif
     initialized_ = true;
   }
   
@@ -280,26 +233,7 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   nObjects_++;
   // This constructor is called when creating the context object from unit tests.
 
-  // set the command line arguments to be the mpi rank no
-  // get own rank no and number of ranks
-  int rankNo, nRanks;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-  MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
-
-  // convert to wchar_t
-  std::stringstream rankNoStr, nRanksStr;
-  rankNoStr << rankNo;
-  nRanksStr << nRanks;
-  const char *argument[2];
-  argument[0] = rankNoStr.str().c_str();
-  argument[1] = nRanksStr.str().c_str();
-  wchar_t *argumentWChar[2];
-  argumentWChar[0] = Py_DecodeLocale(argument[0], NULL);
-  argumentWChar[1] = Py_DecodeLocale(argument[1], NULL);
-
-  // set as arguments
-  PySys_SetArgvEx(2, argumentWChar, 0);
-
+  // load python config script as given by parameter
   loadPythonScript(pythonSettings);
   if (VLOG_IS_ON(1))
   {
@@ -369,14 +303,12 @@ DihuContext DihuContext::operator[](std::string keyString)
   if (PythonUtility::hasKey(pythonConfig_, keyString))
   {
     dihuContext.pythonConfig_ = PythonUtility::getOptionPyObject(pythonConfig_, keyString);
-    VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
     Py_XINCREF(dihuContext.pythonConfig_);
   }
   else
   {
     // if config does not contain the requested child dict, create the needed context from the same level in config
     dihuContext.pythonConfig_ = pythonConfig_;
-    VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
     Py_XINCREF(dihuContext.pythonConfig_);
     LOG(WARNING) << "Dict does not contain key \"" <<keyString<< "\".";
   }
@@ -392,12 +324,10 @@ DihuContext DihuContext::createSubContext(PyObject *settings)
   DihuContext dihuContext(argc, argv);
 
   dihuContext.pythonConfig_ = settings;
-  VLOG(4) << "Py_XINCREF(dihuContext.pythonConfig_)";
   Py_XINCREF(dihuContext.pythonConfig_);
 
   return dihuContext;
 }
-
 
 void DihuContext::loadPythonScriptFromFile(std::string filename)
 {

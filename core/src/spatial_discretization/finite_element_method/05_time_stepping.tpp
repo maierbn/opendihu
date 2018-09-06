@@ -110,6 +110,7 @@ initializeLinearSolver()
     LOG(DEBUG) << s.str() << ": FiniteElementMethodTimeStepping: initialize linearSolver";
     
     // retrieve linear solver
+    // The mpiCommunicator is needed such that the solver knowns which ranks to use (it could be a subset of all ranks).
     linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
       this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
     ksp_ = linearSolver_->ksp();

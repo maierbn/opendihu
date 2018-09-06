@@ -391,6 +391,19 @@ output(std::ostream &stream)
       }
       stream << std::endl; 
     }
+
+    PetscViewer viewer;
+    static int counter = 0;
+    std::stringstream vectorOutputFilename;
+    vectorOutputFilename << "vector_" << counter++ << ".txt";
+    ierr = PetscViewerASCIIOpen(this->meshPartition_->mpiCommunicator(), vectorOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
+    ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_INDEX); CHKERRV(ierr);
+    ierr = VecView(values_[componentNo], viewer); CHKERRV(ierr);
+
+    if (ownRankNo == 0)
+    {
+      stream << "(Vector also written to \"" << vectorOutputFilename.str() << "\".)";
+    }
   }
 #endif
 }

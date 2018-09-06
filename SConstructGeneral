@@ -34,22 +34,22 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 # Select the packages we want to use in the configuration.
 #
 sconsconfig.select(
-    packages.MPI(required=True),
-    packages.LAPACK(required=True),
-    packages.PETSc(required=True),
+    packages.MPI(required=True),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
+    packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
+    packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS
     #packages.bzip2(required=False),
-    packages.Python(required=True),
-    packages.Cython(required=False),
-    packages.NumpyC(required=False),
-    packages.SciPy(required=False),
-    packages.Matplotlib(required=False),
-    packages.Base64(required=True),
-    packages.googletest(required=True),
+    packages.Python(required=True),  # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
+    packages.Cython(required=False), # Cython is a dependency for the numpy C API
+    packages.NumpyC(required=False), # The numpy C API. Numpy is needed such that the python config files that are parsed by opendihu can load the numpy package. This needs to be compiled from source and linked to the same LAPACK/BLAS package that also opendihu uses, otherwise there will be errors.
+    packages.SciPy(required=False),  # Scipy to also make it available in the config python files. This just installs from a whl using pip, so no extra compilation.
+    packages.Matplotlib(required=False),   # Matplotlib, again to make it available in the config python files, where you could generate plots in callbacks as the simulation is running. This also installs from a whl using pip, so no extra compilation.
+    packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
+    packages.googletest(required=True),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=True),
-    packages.EasyLoggingPP(required=True),      # this has to be the last package to be included, because it contains a source (.c) file to be compiled
+    packages.SEMT(required=True),    # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
 # By default set the packages' location to the dependency directory. This can be overridden in 'user-variables.scons.py'.
@@ -103,14 +103,14 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
   env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
 
-# add basic linker flags
+# add basic linker flags for linux
 ldflags = "-lpthread -ldl -lutil -lm"
 env.MergeFlags(ldflags)
            
-# Create our configuration environment, passing the set of custom tests.
+# Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
-# Run our custom tests with any options needed.
+# Run custom tests with any options needed.
 sconsconfig.check(sconf)
 
 # Finish the configuration and save it to file.
@@ -150,11 +150,11 @@ Progress(progress_function, interval=env["node_count_interval"])
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
 # All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0. 
-# When using a different compiler that supports C++14, add some ifs to the next section.
+# When using a different compiler that supports C++14, add some 'if's to the next section.
+
 if env["BUILD_TYPE"] == "debug":
-  
   # debug build
-  variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
+  variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -fopenmp -std=c++14 -Werror -Wall -Wno-sign-compare -Wno-error=sign-compare -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
@@ -168,14 +168,12 @@ elif env["BUILD_TYPE"] == "releasewithdebuginfo":
 
 elif env["BUILD_TYPE"] == "preprocess":
   # only the preprocessing step
-  variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # folder of build
+  variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # output folder for build
   env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -fopenmp  -E -C -P ')   # gcc flags, will be sorted automatically into linker and compiler flags
-  env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
-  env.Prepend(LIBS = ['opendihud'])
-
+  
 else:
   # release build
-  variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # folder of build
+  variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
   env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
@@ -184,7 +182,6 @@ env.MergeFlags('-Wunused-variable')
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
-#env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/petsc/install/include')])
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,

@@ -156,7 +156,7 @@ void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFiles
 {
   // command line version
   std::stringstream command;
-  command << "../../../scripts/validate_parallel.py ";
+  command << "../../../dependencies/python/install/bin/python3 ../../../scripts/validate_parallel.py ";
   for (auto filename : outputFilesToCheck)
   {
     command << filename << " ";

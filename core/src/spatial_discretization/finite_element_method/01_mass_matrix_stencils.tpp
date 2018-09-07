@@ -168,10 +168,10 @@ setMassMatrix()
     {2./36, 1./36}
   };
 
-  auto dofIndex = [&nNodes0, &nNodes1](int x, int y){
-    return y*nNodes0 + x;
+  auto dofIndex = [&functionSpace](int x, int y)
+  {
+    return functionSpace->getNodeNo(std::array<int,2>({x,y}));  // nDofsPerNode == 1
   };
-
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int y=1; y<nNodes1-1; y++)
@@ -401,10 +401,10 @@ setMassMatrix()
     {4./216, 8./216}},    //center
   };
 
-  auto dofIndex = [&nNodes0, &nNodes1](int x, int y, int z){
-    return z*nNodes0*nNodes1 + y*nNodes0 + x;
+  auto dofIndex = [&functionSpace](int x, int y, int z)
+  {
+    return functionSpace->getNodeNo(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
   };
-
   double value;
   node_no_t dofNo;
 

@@ -6,6 +6,7 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_tests was given, quit the script
 if not env['no_tests']:
 
+  # choose the variant directory depending on the build target
   if env["BUILD_TYPE"] == "debug":
     variant_directory = "build_debug"
   elif env["BUILD_TYPE"] == "releasewithdebuginfo":
@@ -53,13 +54,14 @@ if not env['no_tests']:
 
     program = env.Program('2_ranks_tests', source=src_files)
 
-    # add command that runs the tests after build
+    # Add command that runs the tests after build, there is a construction that some MPI ranks can fail after they are successfully done because they are aborted because MPI_Finalize cannot be called in unit tests because after that MPI_Init cannot be called again and this would be needed to run multiple unit tests in one executable.
     test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && rm -f SUCCESS && mpirun -n 2 -quiet --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS" ]')
     AlwaysBuild(test)
 
   # ---- parallel unit tests: 6 ranks ----
   if True:
-    src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
+    src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/diffusion.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
 
     program = env.Program('6_ranks_tests', source=src_files)
 

@@ -495,20 +495,79 @@ output(std::ostream &stream)
     {
       if (componentNo == 0)
       {
-        stream << "vector \"" << this->name_ << "\" (" << nEntries << " global entries per component)" << std::endl;
+        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component))" << std::endl;
       }
 
-      stream << "\"" << this->name_ << "\" component " << componentNo << ": [";
+      stream << "\"" << this->name_ << "\" component " << componentNo << ": local ordering: [";
+      std::vector<double> globalValues(this->meshPartition_->nDofsGlobal());
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {
         if (rankNo != 0)
           stream << ",";
-        for (int i = 0; i < localSizes[rankNo]; i++)
+        for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
-          stream << "  " << recvBuffer[rankNo*maxLocalSize + i];
+          double value = recvBuffer[rankNo*maxLocalSize + dofNoLocal];
+          stream << "  " << value;
+
         }
       }
-      stream << "]" << std::endl;
+      stream << "]," << std::endl;
+    }
+
+    stream << "locally stored values: [";
+    // retrieve local values
+    int nDofsLocalWithGhosts = this->meshPartition_->nDofsLocalWithGhosts();
+    std::vector<double> localValuesWithGhosts(nDofsLocalWithGhosts);
+
+    VecGetValues(vectorLocal_[componentNo], nDofsLocalWithGhosts, this->meshPartition_->dofNosLocal().data(), localValuesWithGhosts.data());
+    //VLOG(1) << "localValues: " << localValues;
+
+    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal++)
+    {
+      double value = localValuesWithGhosts[dofNoLocal];
+
+      // store value for global dof no
+      node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
+      int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
+
+      std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+      global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
+
+      global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
+
+      stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
+    }
+    stream << "], ghosts: [";
+
+    for (dof_no_t dofNoLocal = this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal < this->meshPartition_->nDofsLocalWithGhosts(); dofNoLocal++)
+    {
+      double value = localValuesWithGhosts[dofNoLocal];
+
+      // store value for global dof no
+      node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
+      int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
+
+      std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+      global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
+
+      global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
+
+      stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
+    }
+    stream << "]";
+
+    PetscViewer viewer;
+    static int counter = 0;
+    std::stringstream vectorOutputFilename;
+    vectorOutputFilename << "vector_" << counter++ << ".txt";
+    ierr = PetscViewerASCIIOpen(this->meshPartition_->mpiCommunicator(), vectorOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
+    ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_INDEX); CHKERRV(ierr);
+    ierr = VecView(vectorGlobal_[componentNo], viewer); CHKERRV(ierr);
+
+    if (ownRankNo == 0)
+    {
+      stream << "(Vector also written to \"" << vectorOutputFilename.str() << "\".)";
     }
   }  // componentNo
 

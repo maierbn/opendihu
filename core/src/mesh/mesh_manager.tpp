@@ -16,7 +16,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   if (PythonUtility::hasKey(settings, "meshName"))
   {
     std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    if (hasMesh(meshName))
+    if (hasMeshOfType<FunctionSpaceType>(meshName))
     {
       LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
       return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
@@ -30,6 +30,14 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // get mesh configuration that was parsed earlier
       PyObject *meshConfiguration = meshConfiguration_.at(meshName);
       
+      if (hasMesh(meshName))
+      {
+        std::stringstream newMeshName;
+        newMeshName << meshName << "_2";
+        meshName = newMeshName.str();
+        LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
+      }
+
       // create new mesh and initialize
       std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, meshConfiguration);
       mesh->setMeshName(meshName);
@@ -74,7 +82,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
 template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
 {
-  if (this->hasMesh(name))
+  if (hasMeshOfType<FunctionSpaceType>(name))
   {
     LOG(ERROR) << "Mesh with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
@@ -93,6 +101,28 @@ std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
   VLOG(1) << "mesh nNodes: (local without ghosts: " << mesh->nNodesLocalWithoutGhosts() << ", with ghosts: " << mesh->nNodesLocalWithGhosts() << ")";
 
   return mesh;
+}
+
+template<typename FunctionSpaceType>
+bool Manager::hasMeshOfType(std::string meshName)
+{
+  LOG(DEBUG) << "hasMesh(" << meshName << "): " << (meshes_.find(meshName) != meshes_.end());
+  LOG(DEBUG) << "meshes size: " << meshes_.size();
+
+  if (meshes_.find(meshName) != meshes_.end()) // if mesh is found by name
+  {
+    if (std::dynamic_pointer_cast<FunctionSpaceType>(meshes_[meshName]))
+    {
+      return true;
+    }
+    else
+    {
+      LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from " << typeid(FunctionSpaceType).name() << ". A new mesh will be created instead.";
+      // This warning could be if in an operator splitting setup for Cellml adapter the functionType is set differently from the one in the FEM.
+    }
+  }
+
+  return false;
 }
 
 }   // namespace

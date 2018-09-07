@@ -97,12 +97,23 @@ initialize()
   TimeSteppingScheme::initialize();
   LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
 
+  LOG(DEBUG) << "discretizableInTime_.initialize()";
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
   discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
 
+  LOG(DEBUG) << "get mesh from discretizableInTime_";
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-  data_->setFunctionSpace(std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh));
+
+  LOG(DEBUG) << " try to convert to " << typeid(typename DiscretizableInTimeType::FunctionSpace).name()
+    << ", success: " << (std::dynamic_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh) != nullptr);
+
+  std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace = std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh);
+
+  LOG(DEBUG) << "meshPartition:";
+  LOG(DEBUG) << *(functionSpace->meshPartition());
+
+  data_->setFunctionSpace(functionSpace);
   
   // set component names in data
   std::vector<std::string> componentNames;

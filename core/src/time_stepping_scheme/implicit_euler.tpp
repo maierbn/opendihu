@@ -90,4 +90,4 @@ setSystemMatrix(double timeStepWidth)
   VLOG(1) << *this->data_->systemMatrix();
 }
 
-} // namespace TimeSteppingScheme
+} // namespace TimegSteppingScheme

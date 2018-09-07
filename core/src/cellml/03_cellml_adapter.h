@@ -21,11 +21,14 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
-  public CallbackHandler<nStates>
+  public CallbackHandler<nStates,FunctionSpaceType>
 {
 public:
+
+  ///! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
+  typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
 
   ///! constructor
   CellmlAdapter(DihuContext context);
@@ -55,8 +58,8 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  template<typename FunctionSpaceType>
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
+  template<typename FunctionSpaceType2>
+  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;

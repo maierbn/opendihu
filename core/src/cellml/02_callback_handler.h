@@ -22,9 +22,9 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates>,
+  public RhsRoutineHandler<nStates,FunctionSpaceType>,
   public DiscretizableInTime
 {
 public:

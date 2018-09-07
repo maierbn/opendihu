@@ -14,26 +14,27 @@
 
 //#include <libcellml>    // libcellml not used here
 
-template<int nStates>
-CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+CellmlAdapter<nStates,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates>(context)
+  CallbackHandler<nStates,FunctionSpaceType>(context)
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
 
-template<int nStates>
-void CellmlAdapter<nStates>::reset()
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
+reset()
 {
 }
   
-template<int nStates>
-void CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapter<nStates>::initialize";
+  LOG(TRACE) << "CellmlAdapter<nStates,FunctionSpaceType>::initialize";
 
-  CellmlAdapterBase<nStates>::initialize();
+  CellmlAdapterBase<nStates,FunctionSpaceType>::initialize();
   
   // load rhs routine
   this->initializeRhsRoutine();
@@ -50,20 +51,21 @@ initialize()
   this->solutionVectorMapping_.setScalingFactor(prefactor);
 }
 
-template<int nStates>
-void CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
 initialize(double timeStepWidth)
 {
 }
 
-template<int nStates>
-void CellmlAdapter<nStates>::setRankSubset(Partition::RankSubset rankSubset)
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
+setRankSubset(Partition::RankSubset rankSubset)
 {
   // do nothing because we don't have stored data here (the data on which the computation is performed comes in evaluateTimesteppingRightHandSide from parameters) 
 }
 
-template<int nStates>
-void CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
   //PetscUtility::getVectorEntries(input, states_);
@@ -76,6 +78,10 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates: " << nStatesInput << ", output nRates: " << nRates;
+  if (nStatesInput != nStates*this->nInstances_)
+  {
+    LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates=" << nStates << ", nInstances=" << this->nInstances_;
+  }
   assert (nStatesInput == nStates*this->nInstances_);
   assert (nRates == nStates*this->nInstances_);
 
@@ -125,40 +131,40 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 }
 
 /*
-template<int nStates>
-void CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
 }
 */
 
 //! return false because the object is independent of mesh type
-template<int nStates>
-bool CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool CellmlAdapter<nStates,FunctionSpaceType>::
 knowsMeshType()
 {
-  return CellmlAdapterBase<nStates>::knowsMeshType();
+  return CellmlAdapterBase<nStates,FunctionSpaceType>::knowsMeshType();
 }
 
-template<int nStates>
-void CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapter<nStates,FunctionSpaceType>::
 getComponentNames(std::vector<std::string> &stateNames)
 {
   this->getStateNames(stateNames);
 }
 
 //! return the mesh
-template<int nStates>
-std::shared_ptr<Mesh::Mesh> CellmlAdapter<nStates>::
+template<int nStates, typename FunctionSpaceType>
+std::shared_ptr<Mesh::Mesh> CellmlAdapter<nStates,FunctionSpaceType>::
 mesh()
 {
-  return CellmlAdapterBase<nStates>::mesh();
+  return CellmlAdapterBase<nStates,FunctionSpaceType>::mesh();
 }
 
-template<int nStates>
-template<typename FunctionSpaceType>
-bool CellmlAdapter<nStates>::
-setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues)
+template<int nStates, typename FunctionSpaceType>
+template<typename FunctionSpaceType2>
+bool CellmlAdapter<nStates,FunctionSpaceType>::
+setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues)
 {
-  return CellmlAdapterBase<nStates>::template setInitialValues<FunctionSpaceType>(initialValues);
+  return CellmlAdapterBase<nStates,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
 }

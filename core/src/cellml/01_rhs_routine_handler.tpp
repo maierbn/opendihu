@@ -15,12 +15,12 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates>
+template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
 
 
-template<int nStates>
-void RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   // 1) if simdSourceFilename is given, use that source to compile the library
@@ -150,8 +150,8 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
  
@@ -194,7 +194,7 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates> *cellmlAdapter = (CellmlAdapter<nStates> *)context;
+        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
@@ -255,8 +255,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -579,8 +579,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
   return true;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";

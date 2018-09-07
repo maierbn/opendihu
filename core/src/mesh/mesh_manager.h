@@ -30,10 +30,14 @@ public:
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
   
   //! return previously created mesh or create on the fly
-  template<typename FunctionSpaceType=None>
+  template<typename FunctionSpaceType=FunctionSpace::Generic>
   std::shared_ptr<Mesh> mesh(PyObject *settings);
 
-  //! check if a mesh with the given name is stored
+  //! check if a mesh with the given name and type is stored
+  template<typename FunctionSpaceType>
+  bool hasMeshOfType(std::string meshName);
+
+  //! check if a mesh with the specified name is stored, the type is not checked
   bool hasMesh(std::string meshName);
 
   //! create a mesh not from python config but directly by calling an appropriate construtor. 
@@ -60,10 +64,6 @@ private:
   std::map<std::string, PyObject *> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> meshes_;    ///< the managed meshes with their string key
 };
-
-template<>
-std::shared_ptr<Mesh> Manager::
-mesh<None>(PyObject *settings);
 
 };    // namespace
 

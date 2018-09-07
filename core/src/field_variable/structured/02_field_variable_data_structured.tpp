@@ -63,6 +63,7 @@ FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, 
   this->functionSpace_ = rhs.functionSpace();
 
   assert(this->functionSpace_);
+  assert(this->functionSpace_->meshPartition());
   
   // create new distributed petsc vec as copy of rhs values vector
   if (rhs.partitionedPetscVec())

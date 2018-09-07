@@ -14,8 +14,18 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
   
-  this->createDmElements();
-  this->createLocalDofOrderings();
+  if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
+  {
+    initialize1NodeMesh();
+  }
+  else
+  {
+    // determine partitioning of elements
+    this->createDmElements();
+
+    // initialize dof vectors
+    this->createLocalDofOrderings();
+  }
   
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_;
@@ -38,25 +48,32 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     << "nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal 
     << ", beginElementGlobal: " << beginElementGlobal << ", nRanks: " << nRanks << ", rankSubset: " << *rankSubset;
     
-  initializeHasFullNumberOfNodes();
-  
-  // determine localSizesOnRanks_
-  for (int i = 0; i < MeshType::dim(); i++)
+  if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
-    localSizesOnRanks_[i].resize(rankSubset->size());
+    initialize1NodeMesh();
   }
-  
-  for (int i = 0; i < MeshType::dim(); i++)
+  else
   {
-    MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT, 
-      localSizesOnRanks_[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
-  }
-  VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
+    initializeHasFullNumberOfNodes();
 
-  this->createLocalDofOrderings();
-  
+    // determine localSizesOnRanks_
+    for (int i = 0; i < MeshType::dim(); i++)
+    {
+      localSizesOnRanks_[i].resize(rankSubset->size());
+    }
+
+    for (int i = 0; i < MeshType::dim(); i++)
+    {
+      MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT,
+        localSizesOnRanks_[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
+    }
+    VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
+
+    this->createLocalDofOrderings();
+  }
+
   LOG(DEBUG) << *this;
-  
+
   for (int i = 0; i < MeshType::dim(); i++)
   {
     LOG(DEBUG) << "  beginNodeGlobalNatural(" << i << "): " << beginNodeGlobalNatural(i);
@@ -151,6 +168,43 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
       }
     }
   }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initialize1NodeMesh()
+{
+  // We initialize for a mesh with 0 elements but 1 node and dof, this is needed e.g. for a single CellML problem.
+  if (rankSubset_->size() > 1)
+  {
+    LOG(FATAL) << "Cannot run a 1-node problem on multiple (" << rankSubset_->size() << ") ranks.";
+  }
+
+  LOG(DEBUG) << "initialize mesh partition for mesh with 1 dof";
+
+  dmElements_ = nullptr;
+  beginElementGlobal_[0] = 0;
+  nElementsLocal_[0] = 0;
+  nElementsGlobal_[0] = 0;
+  nRanks_[0] = 1;   // 1 rank
+  ownRankPartitioningIndex_[0] = 0;
+  localSizesOnRanks_[0].resize(1);
+  localSizesOnRanks_[0][0] = 1;
+  hasFullNumberOfNodes_[0] = true;
+
+  onlyNodalDofLocalNos_.resize(1);
+  onlyNodalDofLocalNos_[0] = 0;
+
+  dofNosLocalNaturalOrdering_.resize(1);
+  dofNosLocalNaturalOrdering_[0] = 0;
+  localToGlobalPetscMappingDofs_ = NULL;
+
+  this->dofNosLocal_.resize(1);
+  this->dofNosLocal_[0] = 0;
+
+  PetscErrorCode ierr;
+  PetscInt index = 0;
+  ierr = ISLocalToGlobalMappingCreate(rankSubset_->mpiCommunicator(), 1, 1, &index, PETSC_COPY_VALUES, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1278,7 +1332,15 @@ output(std::ostream &stream)
 
   for (int i = 0; i < ghostDofNosGlobalPetsc_.size(); i++)
     stream << ghostDofNosGlobalPetsc_[i] << " ";
-  stream << "], localToGlobalPetscMappingDofs_: " << localToGlobalPetscMappingDofs_;
+  stream << "], localToGlobalPetscMappingDofs_: ";
+  if (localToGlobalPetscMappingDofs_)
+  {
+    stream << localToGlobalPetscMappingDofs_;
+  }
+  else
+  {
+    stream << "(none)";
+  }
 } 
 
 }  // namespace

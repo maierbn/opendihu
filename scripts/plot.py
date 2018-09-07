@@ -89,6 +89,7 @@ if dimension == 1:
   
   show_geometry = True     # if the fibre geometry should be displayed in a 3D plot in a separate axis (ax2) on top of the solution plot
   show_components = False  # if all the components of the solution should be displayed
+  plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
   
   def init():
     global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, scaling_factors
@@ -119,8 +120,14 @@ if dimension == 1:
       geometry_component = "y"
     else:
       geometry_component = "z"
-      
-    min_x, max_x = py_reader.get_min_max(data, "geometry", geometry_component)
+    
+    if plot_over_time:
+      # x-axis is time
+      min_x = data[0]['currentTime']
+      max_x = data[-1]['currentTime']
+    else:  
+      # x-axis is geometry
+      min_x, max_x = py_reader.get_min_max(data, "geometry", geometry_component)
     
     print( "value range: [{}, {}]".format(min_s, max_s))
     if show_geometry:
@@ -140,17 +147,22 @@ if dimension == 1:
     
     # prepare main plot
     if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite
-      line_2D, = ax1.plot([], [], '-', color="b", lw=2)
+      line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
     else:
-      line_2D, = ax1.plot([], [], '+-', color="b", lw=2)
+      line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label=solution_components[0])
     margin = abs(max_s - min_s) * 0.1
     ax1.set_xlim(min_x, max_x)
     ax1.set_ylim(min_s - margin, max_s + margin)
     top_text = ax1.text(0.5,0.95,"",size=20,horizontalalignment='center',transform=ax1.transAxes)
     
     xlabel = geometry_component
-    ax1.set_xlabel(xlabel.upper())
+    if plot_over_time:
+      ax1.set_xlabel('t')
+    else:
+      ax1.set_xlabel(xlabel.upper())
     ax1.set_ylabel('Solution')
+    if solution_components[0] != "0":
+      ax1.legend()
     
     # prepare geometry plot
     if show_geometry:
@@ -206,11 +218,16 @@ if dimension == 1:
         #print "   min_value: {} -> {}, max_value: {} -> {}".format(min_comp*scaling_factor, min_value, max_comp*scaling_factor, max_value)
       
       ax3.set_xlim(min_x, max_x)
+      if plot_over_time:
+        ax3.set_xlabel('t')
       margin = abs(max_value - min_value) * 0.1
       ax3.set_ylim(min_value - margin, max_value + margin)
       ax3.set_ylabel('Other components')
-      ax3.legend(prop={'size': 6})
-    
+      if len(solution_components) > 5:
+        ncol = len(solution_components)/10
+        ax3.legend(prop={'size': 6, }, ncol=ncol)
+      else:
+        ax3.legend()
     return top_text,
 
   def animate(i):
@@ -219,54 +236,68 @@ if dimension == 1:
     ##################
     # 2D plot of main solution component
     # display data
-    xdata = py_reader.get_values(data[i], "geometry", geometry_component)
-    sdata = py_reader.get_values(data[i], "solution", "0")
-
-    # handle Hermite that have derivative values saved
-    if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
-      
-      def hermite0(xi):
-        return 1 - 3*xi*xi + 2*xi*xi*xi
-        
-      def hermite1(xi):
-        return xi * (xi-1) * (xi-1)
-
-      def hermite2(xi):
-        return xi*xi * (3 - 2*xi)
-
-      def hermite3(xi):
-        return xi*xi * (xi-1)
-      
-      n_elements = data[i]["nElements"][0]
-      
-      n = 20
-      new_xdata = np.zeros(n_elements*n)
-      new_sdata = np.zeros(n_elements*n)
-      
-      #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
-      #print("xdata: {}".format(xdata))
-      
-      for el_no in range(n_elements):
-        c0 = sdata[2*el_no+0]
-        c1 = sdata[2*el_no+1]
-        c2 = sdata[2*el_no+2]
-        c3 = sdata[2*el_no+3]
-        
-        #print("parsed coefficients: {} {} {} {}".format(c0,c1,c2,c3))
-        
-        for j in range(n):
-          xi = float(j)/n
-          x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
-          
-          #print("xi={}, x={}".format(xi,x))
-          
-          new_xdata[el_no*n+j] = x
-          new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
-        
-      xdata = new_xdata
-      sdata = new_sdata
-      
     
+    # plot over time instead of geometry (for cellml single instance)
+    if plot_over_time:
+      xdata = []
+      sdata = []
+      if plot_over_time:
+        for d in data:
+          solution_values = py_reader.get_values(d, "solution", "0")
+          
+          xdata.append(d['currentTime'])
+          sdata.append(solution_values[0])
+    
+    else:
+      # plot over geometry
+      xdata = py_reader.get_values(data[i], "geometry", geometry_component)
+      sdata = py_reader.get_values(data[i], "solution", "0")
+
+      # handle Hermite that have derivative values saved
+      if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
+        
+        def hermite0(xi):
+          return 1 - 3*xi*xi + 2*xi*xi*xi
+          
+        def hermite1(xi):
+          return xi * (xi-1) * (xi-1)
+
+        def hermite2(xi):
+          return xi*xi * (3 - 2*xi)
+
+        def hermite3(xi):
+          return xi*xi * (xi-1)
+        
+        n_elements = data[i]["nElements"][0]
+        
+        n = 20
+        new_xdata = np.zeros(n_elements*n)
+        new_sdata = np.zeros(n_elements*n)
+        
+        #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
+        #print("xdata: {}".format(xdata))
+        
+        for el_no in range(n_elements):
+          c0 = sdata[2*el_no+0]
+          c1 = sdata[2*el_no+1]
+          c2 = sdata[2*el_no+2]
+          c3 = sdata[2*el_no+3]
+          
+          #print("parsed coefficients: {} {} {} {}".format(c0,c1,c2,c3))
+          
+          for j in range(n):
+            xi = float(j)/n
+            x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
+            
+            #print("xi={}, x={}".format(xi,x))
+            
+            new_xdata[el_no*n+j] = x
+            new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
+          
+        xdata = new_xdata
+        sdata = new_sdata
+        
+    # refresh the line object that is the graph of the curve
     line_2D.set_data(xdata,sdata)
     ##################
     # 3D plot of geometry
@@ -294,24 +325,39 @@ if dimension == 1:
         # do not plot main component
         if j == 0:
           continue
-        data_comp = py_reader.get_values(data[i], "solution", component_name)
+            
+        # plot over time instead of geometry
+        if plot_over_time:
+          xdata = []
+          data_comp = []
+          if plot_over_time:
+            for d in data:
+              solution_values = py_reader.get_values(d, "solution", component_name)
+              
+              xdata.append(d['currentTime'])
+              data_comp.append(solution_values[0])
+        else:
+          data_comp = py_reader.get_values(data[i], "solution", component_name)
+          
+        # refresh the line object that is the graph of the curve
         line_comp[j].set_data(xdata,np.array(data_comp)*scaling_factors[j])
         
     # display timestep
-    if 'timeStepNo' in data[i]:
-      timestep = data[i]['timeStepNo']
-    if 'currentTime' in data[i]:
-      current_time = data[i]['currentTime']
+    if not plot_over_time:
+      if 'timeStepNo' in data[i]:
+        timestep = data[i]['timeStepNo']
+      if 'currentTime' in data[i]:
+        current_time = data[i]['currentTime']
+        
+      max_timestep = len(data)-1
+        
+      top_text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
       
-    max_timestep = len(data)-1
-      
-    top_text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
-    
     return top_text,
     
   interval = 5000.0 / len(data)
         
-  if len(data) == 1:
+  if len(data) == 1 or plot_over_time:
     init()
     animate(0)
     plt.savefig("fig.pdf")

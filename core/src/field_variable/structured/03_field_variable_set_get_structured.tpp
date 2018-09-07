@@ -209,6 +209,10 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (dofNosLocal.size() < nValues)
+  {
+    LOG(ERROR) << "dofNosLocal.size()=" << dofNosLocal.size() << ", nValues=" << nValues;
+  }
   assert(dofNosLocal.size() >= nValues);
   assert(values.size() == nValues);
   assert(this->values_);

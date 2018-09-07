@@ -128,6 +128,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
     }
     VLOG(3) << str.str();
   }
+  assert(!valuesContiguousInUse_);
   
   // this wraps the standard PETSc VecSetValues on the local vector
   PetscErrorCode ierr;
@@ -142,7 +143,8 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
   assert(componentNo >= 0);
   assert(componentNo < values_.size());
   assert(values_.size() == nComponents);
-  
+  assert(!valuesContiguousInUse_);
+
   // debugging output
   VLOG(3) << "\"" << this->name_ << "\" setValue(componentNo=" << componentNo << ", row=" << row << ", value=" << value 
     << (mode == INSERT_VALUES? "(INSERT_VALUES)": "(ADD_VALUES)") << ")";
@@ -158,7 +160,8 @@ void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs)
 {
   assert(values_.size() == nComponents);
-  
+  assert(!valuesContiguousInUse_);
+
   VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\")";
   
   // copy the global vectors
@@ -177,7 +180,8 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
   assert(componentNo >= 0);
   assert(componentNo < values_.size());
   assert(values_.size() == nComponents);
-  
+  //assert(!valuesContiguousInUse_); // allow getValues even if valuesContiguousInUse is set
+
   // this wraps the standard PETSc VecGetValues on the local vector
   PetscErrorCode ierr;
   ierr = VecGetValues(values_[componentNo], ni, ix, y); CHKERRV(ierr); 
@@ -214,7 +218,8 @@ void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 zeroEntries()
 {
   assert(values_.size() == nComponents);
-  
+  assert(!valuesContiguousInUse_);
+
   VLOG(3) << "\"" << this->name_ << "\" zeroEntries";
   
   PetscErrorCode ierr;
@@ -299,6 +304,7 @@ getContiguousValuesGlobal()
   }
 
   ierr = VecRestoreArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  valuesContiguousInUse_ = true;
   return valuesContiguous_;
 }
 
@@ -312,6 +318,10 @@ restoreContiguousValuesGlobal()
     return;
 
   assert(valuesContiguous_ != PETSC_NULL);
+  if (!valuesContiguousInUse_)
+  {
+    LOG(FATAL) << "Called restoreContiguousValuesGlobal() without previous getContiguousValuesGlobal()!";
+  }
 
   PetscErrorCode ierr;
   const double *valuesDataContiguous;
@@ -334,6 +344,7 @@ restoreContiguousValuesGlobal()
   }
 
   ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
+  valuesContiguousInUse_ = false;
 }
 
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
@@ -348,17 +359,15 @@ output(std::ostream &stream)
     
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-    // get global size of matrix 
-    int nRows, nColumns, nRowsLocal, nColumnsLocal;
-    PetscErrorCode ierr;
-    ierr = MatGetSize(values_[componentNo], &nRows, &nColumns); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-    ierr = MatGetLocalSize(values_[componentNo], &nRowsLocal, &nColumnsLocal); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-    
+    Vec vector = values_[componentNo];
+    if (valuesContiguous_)
+      vector = valuesContiguous_;
+
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<double> localValues(nDofsLocal);
     
-    VecGetValuesLocal(values_[componentNo], nDofsLocal, this->meshPartition_->dofNosLocal(), localValues.data());
+    VecGetValuesLocal(vector, nDofsLocal, this->meshPartition_->dofNosLocal(), localValues.data());
     
     // gather the local sizes of the vectors to rank 0
     std::vector<int> localSizes(nRanks);
@@ -396,9 +405,10 @@ output(std::ostream &stream)
     static int counter = 0;
     std::stringstream vectorOutputFilename;
     vectorOutputFilename << "vector_" << counter++ << ".txt";
+    PetscErrorCode ierr;
     ierr = PetscViewerASCIIOpen(this->meshPartition_->mpiCommunicator(), vectorOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
     ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_INDEX); CHKERRV(ierr);
-    ierr = VecView(values_[componentNo], viewer); CHKERRV(ierr);
+    ierr = VecView(vector, viewer); CHKERRV(ierr);
 
     if (ownRankNo == 0)
     {

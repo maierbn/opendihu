@@ -234,7 +234,7 @@ loadRhsLibrary(std::string libraryFilename)
           }
         }
       };
-      
+      return true;
     }
     else if (initConstsOpenCOR_)
     {
@@ -252,6 +252,7 @@ loadRhsLibrary(std::string libraryFilename)
   {
     LOG(FATAL) << "Could not load dynamic library \"" << libraryFilename << "\". Reason: " << dlerror();
   } 
+  return false;
 }
 
 template<int nStates>
@@ -379,7 +380,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         };
         std::list<entry_t> entries;
 
-        bool isExplicitParameter;   // if this is an explicit parameter, i.e. a ALGEBRAIC variable, that is overridden by a parameter
+        bool isExplicitParameter = false;   // if this is an explicit parameter, i.e. a ALGEBRAIC variable, that is overridden by a parameter
           
         VLOG(2) << "line: [" << line << "]";
 
@@ -388,7 +389,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
-          VLOG(2) << "variables: "
+          VLOG(2) << "variables (high number is string::npos and means not found): "
             << line.find("OC_STATE", currentPos) << ", "
             << line.find("OC_RATE", currentPos) << ", "
             << line.find("ALGEBRAIC", currentPos) << ", "

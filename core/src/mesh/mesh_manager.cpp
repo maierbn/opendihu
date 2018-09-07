@@ -130,7 +130,7 @@ mesh<None>(PyObject *settings)
   }
 
   // nElements was not specified, create and return anonymous standard regular mesh with 1 node, don't store it
-  std::array<element_no_t, 1> nElements {0};
+  std::array<element_no_t, 1> nElements {0};  // no elements means 1 node
   std::array<double, 1> physicalExtent {1.0};
 
   typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;

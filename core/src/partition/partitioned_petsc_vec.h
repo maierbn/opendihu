@@ -89,8 +89,9 @@ protected:
   //! create the values vectors
   void createVector();
   
-  std::array<Vec,nComponents> values_;  // the (serial) Petsc vectors that contains all the data, one for each component
+  std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  bool valuesContiguousInUse_ = false;  ///< if the current representation of the vector is in valuesContiguous, not in the values vector
 };
 
 /** This is the partial specialization for structured meshes.
@@ -183,6 +184,7 @@ protected:
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  bool valuesContiguousInUse_ = false;  ///< if the current representation of the vector is in valuesContiguous, not in the values vector
 };
 
 

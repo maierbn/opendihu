@@ -54,8 +54,6 @@ def handleResult(nInstances, timeStepNo, currentTime, states, intermediates):
     
 
 config = {
-  "disablePrinting": False,
-  "disableMatrixPrinting": False,
   "ExplicitEuler" : {
     "timeStepWidth": 1e-5,
     "endTime" : 100.0,
@@ -65,7 +63,7 @@ config = {
     "OutputWriter" : [
        #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
       #{"format": "Paraview", "filename": "out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/result", "outputInterval": 1e3}
+      {"format": "PythonFile", "filename": "out/result", "outputInterval": 1e4}
     ],
 
     "CellML" : {

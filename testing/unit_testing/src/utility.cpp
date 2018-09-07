@@ -21,7 +21,7 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
 
   // parse number in file Contents
   std::string numberFileContents;
-  while ((isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-') && iterFileContents != iterFileContentsEnd)
+  while ((isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-' || *iterFileContents == 'e') && iterFileContents != iterFileContentsEnd)
   {
     numberFileContents += *iterFileContents;
     iterFileContents++;
@@ -83,7 +83,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
     //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
-    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
+    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')   // characters with which a number can start (e.g. ".5", "-1")
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
       double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());

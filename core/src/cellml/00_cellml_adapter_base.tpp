@@ -111,7 +111,9 @@ setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initia
     LOG(DEBUG) << "load parametersInitialValues from config";
 
     std::vector<double> parametersInitial;
-    PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", nStates, parametersInitial);
+    PythonUtility::getOptionVector(specificSettings_, "parametersInitialValues", parametersInitial);
+
+    VLOG(1) << "parametersInitialValues: " << parametersInitial << ", parameters_.size(): " << parameters_.size();
 
     if (parametersInitial.size() == parameters_.size())
     {
@@ -129,6 +131,7 @@ setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initia
         }
       }
     }
+    VLOG(1) << "parameters_: " << parameters_;
   }
   else
   {
@@ -141,7 +144,7 @@ setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initia
 
   const std::vector<std::array<double,nStates>> statesAllInstances(nInstances_, statesInitialValues_);
 
-  VLOG(1) << "statesAllInstances: " << statesAllInstances;
+  VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates per instances: " << statesInitialValues_.size();
 
   initialValues.setValuesWithoutGhosts(statesAllInstances);
 

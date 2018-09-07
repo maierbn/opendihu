@@ -95,9 +95,14 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   if(this->rhsRoutine_)
   {
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
+    VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
 
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
+
+    VLOG(1) << "returned rates:";
+    for(int i=0; i<nRates; i++)
+      VLOG(1) << rates[i];
   }
 
   // handle intermediates, call callback function of python config

@@ -52,10 +52,12 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "computed increment: " << this->data_->increment();
+    VLOG(1) << "computed increment: " << this->data_->increment() << ", dt=" << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
     VecAXPY(solution, this->timeStepWidth_, increment);
+
+    VLOG(1) << "updated solution: " << this->data_->solution();
 
     // advance simulation time
     timeStepNo++;

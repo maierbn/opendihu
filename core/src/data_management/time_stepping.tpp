@@ -58,17 +58,6 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-void TimeStepping<FunctionSpaceType,nComponents>::
-finalAssembly()
-{
-    
-  if (this->systemMatrix_)
-    this->systemMatrix_->assembly(MAT_FINAL_ASSEMBLY); 
-  
-  LOG(DEBUG) << "finalAssembly";
-}
-
-template<typename FunctionSpaceType,int nComponents>
 FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeStepping<FunctionSpaceType,nComponents>::
 solution()
 {
@@ -90,6 +79,13 @@ systemMatrix()
 }
 
 template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> TimeStepping<FunctionSpaceType,nComponents>::
+integrationMatrixRightHandSide()
+{
+  return this->integrationMatrixRightHandSide_;
+}
+
+template<typename FunctionSpaceType,int nComponents>
 void TimeStepping<FunctionSpaceType,nComponents>::
 initializeSystemMatrix(Mat &systemMatrix)
 {
@@ -100,6 +96,32 @@ initializeSystemMatrix(Mat &systemMatrix)
   // the PETSc matrix object is created outside by MatMatMult
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   this->systemMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, systemMatrix, "systemMatrix");
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+initializeIntegrationMatrixRightHandSide(Mat &integrationMatrix)
+{
+  // if the integrationMatrix_ is already initialized do not initialize again
+  if (this->integrationMatrixRightHandSide_)
+    return;
+  
+  // the PETSc matrix object is created outside by MatMatMult
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
+  this->integrationMatrixRightHandSide_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, integrationMatrix, "integrationMatrix");
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+initializeMatrix(Mat &matrixIn, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> matrixOut, std::string name)
+{
+  // if the matrix is already initialized do not initialize again
+  if (matrixOut)
+    return;
+  
+  // the PETSc matrix object is created somewhere else
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
+  matrixOut = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, matrixIn, name);
 }
 
 template<typename FunctionSpaceType,int nComponents>

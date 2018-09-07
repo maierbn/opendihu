@@ -1,4 +1,4 @@
-#include "time_stepping_scheme/implicit_euler.h"
+#include "time_stepping_scheme/crank_nicolson.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -45,13 +45,15 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
+    PetscErrorCode ierr;
+    
     Vec rhs;
-    this->evaluateTimesteppingRightHandSideImplicit(this->data_->solution().valuesGlobal(), &rhs, timeStepNo, currentTime)
+    ierr=VecDuplicate(this->data_->solution().valuesGlobal(),&rhs); CHKERRV(ierr); //allocates storage but does not copy values
+    this->evaluateTimesteppingRightHandSideImplicit(this->data_->solution().valuesGlobal(), rhs, timeStepNo, currentTime);
     
     // advance computed value
-    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix
-    
-    this->solveLinearSystem(&rhs, this->data_->solution().valuesGlobal());
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix    
+    this->solveLinearSystem(rhs, this->data_->solution().valuesGlobal());
     
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
@@ -64,8 +66,13 @@ template<typename DiscretizableInTimeType>
 void CrankNicolson<DiscretizableInTimeType>::
 initialize()
 {
-  TimeSteppingImplicit<DiscretizableInTimeType>::initialize();
+  LOG(TRACE) << "CrankNicolson::initialize()";
   
+  if (this->initialized_)
+    return;
+  
+  TimeSteppingImplicit<DiscretizableInTimeType>::initialize();
+  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
   this->setIntegrationMatrixRightHandSide();
   
   this->initialized_ = true;
@@ -82,8 +89,8 @@ setSystemMatrix(double timeStepWidth)
   
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
   
-  Mat &inverseLumpedMassMatrix = this->discretizableInTime_->data_.inverseLumpedMassMatrix()->valuesGlobal();
-  Mat &stiffnessMatrix = this->discretizableInTime_->data_.stiffnessMatrix()->valuesGlobal();
+  Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
+  Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();
   Mat systemMatrix;
   
   PetscErrorCode ierr;
@@ -91,53 +98,60 @@ setSystemMatrix(double timeStepWidth)
   // compute systemMatrix = M^{-1}K
   // the result matrix is created by MatMatMult
   ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->data_.initializeSystemMatrix(systemMatrix);
+  this->data_->initializeSystemMatrix(systemMatrix);
   
   // scale systemMatrix by -dt, systemMatrix = -dt/2 *M^{-1}K
-  ierr = MatScale(this->data_.systemMatrix()->valuesGlobal(), -0.5*timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(this->data_->systemMatrix()->valuesGlobal(), -0.5*timeStepWidth); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I - dt/2 *M^{-1}K
-  ierr = MatShift(this->data_.systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(this->data_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
   
-  this->data_.systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
+  this->data_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
-  VLOG(1) << *this->data_.systemMatrix();
+  VLOG(1) << *this->data_->systemMatrix();
 }
 
 template<typename DiscretizableInTimeType>
 void CrankNicolson<DiscretizableInTimeType>::
 setIntegrationMatrixRightHandSide()
 {
-  LOG(TRACE) << "setIntegrationMatrixRightHandSideImplicit()";
+  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
   
-  Mat &systemMatrix = this->data_.systemMatrix()->valuesGlobal();
-  Mat integrationMatrix= this->data_.integrationMatrixRightHandSide()->valuesGlobal();
+  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
+  Mat integrationMatrix; 
   
   PetscErrorCode ierr;
   
   // copy integration matrix from the system matrix
-  ierr=MatDuplicate(systemMatrix, MAT_COPY_VALUES, integrationMatrix); CHKERRV(ierr); //does it initializes the object? 
+  ierr=MatConvert(systemMatrix, MATSAME, MAT_INITIAL_MATRIX, &integrationMatrix); CHKERRV(ierr); //it creates the new matrix
   
   // scale systemMatrix by -dt, systemMatrix = dt/2*M^{-1}K
-  ierr = MatScale(this->data_.integrationMatrixRightHandSide()->valuesGlobal(), -1.0); CHKERRV(ierr);
+  ierr = MatScale(integrationMatrix, -1.0); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I + dt/2*M^{-1}K
-  ierr = MatShift(this->data_.integrationMatrixRightHandSide()->valuesGlobal(), 2.0); CHKERRV(ierr);
+  ierr = MatShift(integrationMatrix, 2.0); CHKERRV(ierr);
   
-  this->data_.integrationMatrixRightHandSide()->assembly(MAT_FINAL_ASSEMBLY);
+  this->data_->initializeIntegrationMatrixRightHandSide(integrationMatrix);
   
-  VLOG(1) << *this->data_.integrationMatrixRightHandSide();
+  //this->data_->initializeMatrix(integrationMatrix, this->data_->integrationMatrixRightHandSide(), "integrationMatrixRightHandSide");
+  
+  //qierr=MatView(this->data_->integrationMatrixRightHandSide()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD); 
+  
+  this->data_->integrationMatrixRightHandSide()->assembly(MAT_FINAL_ASSEMBLY);
+  
+  VLOG(1) << *this->data_->integrationMatrixRightHandSide();
+
 }
 
-template<DiscretizableInTimeType>
-void TimeSteppingImplicit<DiscretizableInTimeType>::
+template<typename DiscretizableInTimeType>
+void CrankNicolson<DiscretizableInTimeType>::
 evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
   LOG(TRACE) << "evaluateTimesteppingRightHandSideImplicit";
   
   // this method computes output = input * (I+dt/2 M^(-1) K)= input *(-A+2I), where A=(I-dt/2 M^(-1) K) is the system matrix
   
-  Mat &integrationMatrix= this->data_.integrationMatrixRightHandSide()->valuesGlobal();
+  Mat &integrationMatrix= this->data_->integrationMatrixRightHandSide()->valuesGlobal();
   
   PetscErrorCode ierr;
   

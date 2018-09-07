@@ -2,7 +2,7 @@
 n = 20   # number of elements
 
 config = {
-  "ImplicitEuler" : {
+  "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 1000,
     "endTime": 1,

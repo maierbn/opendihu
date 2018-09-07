@@ -46,6 +46,23 @@ int main(int argc, char *argv[])
     
     return EXIT_SUCCESS;
   }
+  else if(PythonUtility::hasKey(topLevelSettings, "CrankNicolson"))
+  {
+    LOG(INFO) << "CrankNicolson";
+    
+    TimeSteppingScheme::CrankNicolson<
+    SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::None,
+    Equation::Dynamic::IsotropicDiffusion
+    >
+    > problem(settings);
+    
+    problem.run();
+    
+    return EXIT_SUCCESS;
+  }
   else
     LOG(ERROR) << "No valid time integration scheme in settings.py";
    

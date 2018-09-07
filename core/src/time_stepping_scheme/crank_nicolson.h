@@ -7,13 +7,13 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTimeType>
-class CrankNicholson :
+class CrankNicolson :
 public TimeSteppingImplicit<DiscretizableInTimeType>
 {
 public:
   
   //! constructor
-  CrankNicholson(DihuContext context);
+  CrankNicolson(DihuContext context);
   
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
@@ -36,3 +36,5 @@ private:
 };
 
 }  // namespace
+
+#include "time_stepping_scheme/crank_nicolson.tpp"

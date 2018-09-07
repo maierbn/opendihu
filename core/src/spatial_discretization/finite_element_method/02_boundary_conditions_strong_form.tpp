@@ -27,6 +27,8 @@ applyBoundaryConditionsStrongForm()
 
   LOG(TRACE) << "applyBoundaryConditionsStrongForm";
 
+  std::shared_ptr<FunctionSpaceType> functionSpace = this->data_.functionSpace();
+
   dof_no_t nDofsLocal = this->data_.functionSpace()->nDofsLocalWithoutGhosts();
   node_no_t nNodes = this->data_.functionSpace()->nNodesLocalWithoutGhosts();
 
@@ -55,6 +57,19 @@ applyBoundaryConditionsStrongForm()
   // To specifiy u=0 on the bottom, you would set:
   // bc[0] = 0, bc[2] = 0, bc[4] = 0
 
+  // determine if the BC indices in the config are given for global or local dof nos
+  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+
+  int nDofs = 0;
+  if (inputMeshIsGlobal)
+  {
+    nDofs = functionSpace->nDofsGlobal();
+  }
+  else
+  {
+    nDofs = functionSpace->nDofsLocalWithoutGhosts();
+  }
+
 
   if (PythonUtility::hasKey(this->specificSettings_, "DirichletBoundaryCondition"))
   {
@@ -63,7 +78,7 @@ applyBoundaryConditionsStrongForm()
 
   // get the first dirichlet boundary condition from the list
   std::pair<node_no_t, double> boundaryCondition
-  = PythonUtility::getOptionDictBegin<node_no_t, double>(this->specificSettings_, "dirichletBoundaryConditions");
+    = PythonUtility::getOptionDictBegin<node_no_t, double>(this->specificSettings_, "dirichletBoundaryConditions");
 
   // loop over Dirichlet boundary conditions
   for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "dirichletBoundaryConditions");
@@ -72,21 +87,21 @@ applyBoundaryConditionsStrongForm()
     dof_no_t boundaryConditionIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;
 
-    // omit negative indices
+    // for negative indices add number of dofs such that -1 is the last dof, -2 is the econd-last etc.
     if (boundaryConditionIndex < 0)
+    {
+      boundaryConditionIndex += nDofs;
+    }
+    else if (boundaryConditionIndex > nDofsLocal)
+    {
+      LOG(WARNING) << "Boundary condition specified for index " << boundaryConditionIndex
+        << ", but scenario has only " << nDofsLocal << " local unknowns, " << nNodes << " local nodes";
       continue;
+    }
 
     // translate BC index to nodeNo and dofIndex
     node_no_t boundaryConditionNodeNo = boundaryConditionIndex / FunctionSpaceType::nDofsPerNode();
     int boundaryConditionNodalDofIndex = boundaryConditionIndex - boundaryConditionNodeNo * FunctionSpaceType::nDofsPerNode();
-
-    if (boundaryConditionIndex > nDofsLocal)
-    {
-      LOG(WARNING) << "Boundary condition specified for index " << boundaryConditionIndex
-      << " (on local node " << boundaryConditionNodeNo << ", index " << boundaryConditionNodalDofIndex << ")"
-      << ", but scenario has only " << nDofsLocal << " local unknowns, " << nNodes << " local nodes";
-      continue;
-    }
 
     dof_no_t boundaryConditionDofNo = this->data_.functionSpace()->getNodeDofNo(boundaryConditionNodeNo, boundaryConditionNodalDofIndex);
 

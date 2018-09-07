@@ -35,9 +35,9 @@ if not env['no_tests']:
                 'src/1_rank/unstructured_deformable.cpp',
                 'src/utility.cpp']
 
-    src_files = ['src/1_rank/cellml.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
-    print ""
-    print "WARNING: only compiling tests ",src_files
+    #src_files = ['src/1_rank/cellml.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #print ""
+    #print "WARNING: only compiling tests ",src_files
 
     program = env.Program('1_rank_tests', source=src_files)
 
@@ -47,9 +47,9 @@ if not env['no_tests']:
 
 
   # ---- parallel unit tests: 2 ranks ----
-  if False:
+  if True:
     src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/diffusion.cpp', 'src/2_ranks/poisson.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
-    #src_files = ['src/2_ranks/poisson.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
+    #src_files = ['src/2_ranks/laplace.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
 
     program = env.Program('2_ranks_tests', source=src_files)
 
@@ -58,7 +58,7 @@ if not env['no_tests']:
     AlwaysBuild(test)
 
   # ---- parallel unit tests: 6 ranks ----
-  if False:
+  if True:
     #src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
     src_files = ['src/6_ranks/numberings.cpp', 'src/6_ranks/diffusion.cpp', 'src/6_ranks/main.cpp', 'src/utility.cpp']
 

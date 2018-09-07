@@ -149,7 +149,7 @@ config = {
       {"format": "ExFile", "filename": "out/fibre_splitting", "outputInterval": 1e5, "sphereSize": "2*2*2"},
     ],
     "Term1": {      # CellML
-      "ExplicitEuler" : {
+      "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
         "timeStepOutputInterval": 1e4,

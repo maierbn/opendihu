@@ -31,6 +31,10 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>> dataHeun
     = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
+  Vec &solution = this->data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &increment = this->data_->increment().getContiguousValuesGlobal(); 
+  Vec &heunIntermediateIncrement = dataHeun->intermediateIncrement().getContiguousValuesGlobal();
+    
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
@@ -39,29 +43,28 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
 
     //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
-
+    
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
     // we call f(u_{t}) the "increment"
-    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      this->data_->solution().valuesGlobal(), this->data_->increment().valuesGlobal(), timeStepNo, currentTime);
-
+    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
+    
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
-    VecAXPY(this->data_->solution().valuesGlobal(), this->timeStepWidth_, this->data_->increment().valuesGlobal());
-
+    VecAXPY(solution, this->timeStepWidth_, increment);
+    
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)
     // we call f(u*) the "intermediateIncrement"
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      this->data_->solution().valuesGlobal(), dataHeun->intermediateIncrement().valuesGlobal(), timeStepNo + 1, currentTime + this->timeStepWidth_);
-
+      solution, heunIntermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
+    
     // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
     // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
-    VecAXPY(dataHeun->intermediateIncrement().valuesGlobal(), -1.0, this->data_->increment().valuesGlobal());
+    VecAXPY(heunIntermediateIncrement, -1.0, increment);
     // now compute overall step as described above (#)
-    VecAXPY(this->data_->solution().valuesGlobal(), 0.5*this->timeStepWidth_, dataHeun->intermediateIncrement().valuesGlobal());
+    VecAXPY(solution, 0.5*this->timeStepWidth_, heunIntermediateIncrement);
 
     // advance simulation time
     timeStepNo++;

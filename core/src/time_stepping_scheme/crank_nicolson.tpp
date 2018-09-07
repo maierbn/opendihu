@@ -147,7 +147,7 @@ template<typename DiscretizableInTimeType>
 void CrankNicolson<DiscretizableInTimeType>::
 evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
 {
-  LOG(TRACE) << "evaluateTimesteppingRightHandSideImplicit";
+  // LOG(TRACE) << "evaluateTimesteppingRightHandSideImplicit";
   
   // this method computes output = input * (I+dt/2 M^(-1) K)= input *(-A+2I), where A=(I-dt/2 M^(-1) K) is the system matrix
   

@@ -8,7 +8,7 @@
 #include "arg.h"
 #include "opendihu.h"
 #include "../utility.h"
-
+/*
 TEST(LaplaceTest, Structured1DLinear)
 {
   std::string pythonConfig = R"(
@@ -147,7 +147,7 @@ config = {
   nFails += ::testing::Test::HasFailure();
 
 }
-
+*/
 TEST(LaplaceTest, Structured1DHermite2)
 {
   std::string pythonConfig = R"(
@@ -193,7 +193,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
+/*
 TEST(LaplaceTest, Structured2DLinear)
 {
   std::string pythonConfig = R"(
@@ -1237,6 +1237,8 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
+
+*/
 /*
  * Test does not converge and gives slightly different results
 TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
@@ -1569,6 +1571,9 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
+
+
+
 /*
  Test does not converge and gives slightly different solutions
 TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)

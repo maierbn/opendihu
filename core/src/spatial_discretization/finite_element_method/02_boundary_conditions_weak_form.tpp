@@ -92,7 +92,7 @@ parseBoundaryConditions()
     {
       boundaryCondition.first += nDofs;
     }
-    if (boundaryCondition.first > functionSpace->nDofsLocalWithoutGhosts())
+    else if (boundaryCondition.first > functionSpace->nDofsLocalWithoutGhosts())
     {
       node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
       node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();

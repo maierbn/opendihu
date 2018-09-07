@@ -52,12 +52,15 @@ public:
   
   //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
   void initializeSystemMatrix(Mat &systemMatrix);
+  
+  //! initialize the integration matrix on the rhs from a PETSc matrix that was already created, in this case by a MatConvert
+  void initializeIntegrationMatrixRightHandSide(Mat &integrationMatrix);
+  
+  //! initializes a PETSc matrix that is already created, by other PETSc routines like MatConvert or MatMatMult
+  void initializeMatrix(Mat &matrixIn, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> matrixOut, std::string name);
 
   //! set the names of the components for the solution field variable
-  void setComponentNames(std::vector<std::string> componentNames);
-  
-  //! perform the final assembly of petsc
-  void finalAssembly();
+  void setComponentNames(std::vector<std::string> componentNames); 
   
   //! print all stored data to stdout
   virtual void print();

@@ -31,6 +31,9 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initialize()
 {
+  if (this->initialized_)
+    return;
+  
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   
   this->setSystemMatrix(this->timeStepWidth_);

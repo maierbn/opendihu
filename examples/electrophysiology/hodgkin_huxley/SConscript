@@ -12,7 +12,8 @@ if not env['no_examples']:
         
   examples = [
     "hodgkin_huxley_explicit",
-    "hodgkin_huxley_implicit"
+    "hodgkin_huxley_godunov",
+    "hodgkin_huxley_strang"
   ]
 
   for example in examples:

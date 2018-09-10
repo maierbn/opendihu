@@ -748,6 +748,63 @@ dofNosLocalNaturalOrdering() const
   return dofNosLocalNaturalOrdering_;
 }
 
+//! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
+{
+
+  dof_no_t nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+  dofNosGlobalNatural.resize(nDofsLocalWithoutGhosts());
+  global_no_t resultIndex = 0;
+
+  VLOG(1) << "getDofNosGlobalNatural, nDofsLocal: " << nDofsLocalWithoutGhosts();
+
+  if (MeshType::dim() == 1)
+  {
+    for (global_no_t i = beginNodeGlobalNatural(0); i < beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0); i++)
+    {
+      for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+      {
+        dofNosGlobalNatural[resultIndex++] = i*nDofsPerNode + dofOnNodeIndex;
+      }
+    }
+  }
+  else if (MeshType::dim() == 2)
+  {
+    for (global_no_t j = beginNodeGlobalNatural(1); j < beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1); j++)
+    {
+      for (global_no_t i = beginNodeGlobalNatural(0); i < beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0); i++)
+      {
+        for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+        {
+          dofNosGlobalNatural[resultIndex++] = (j*nNodesGlobal(0) + i)*nDofsPerNode + dofOnNodeIndex;
+        }
+      }
+    }
+  }
+  else if (MeshType::dim() == 3)
+  {
+    for (global_no_t k = beginNodeGlobalNatural(2); k < beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2); k++)
+    {
+      for (global_no_t j = beginNodeGlobalNatural(1); j < beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1); j++)
+      {
+        for (global_no_t i = beginNodeGlobalNatural(0); i < beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0); i++)
+        {
+          for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
+          {
+            dofNosGlobalNatural[resultIndex++] = (k*nNodesGlobal(1)*nNodesGlobal(0) + j*nNodesGlobal(0) + i)*nDofsPerNode + dofOnNodeIndex;
+          }
+        }
+      }
+    }
+  }
+  else
+  {
+    assert(false);
+  }
+}
+
 //! determine the values of ownRankPartitioningIndex_
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::

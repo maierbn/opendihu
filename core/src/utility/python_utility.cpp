@@ -1023,11 +1023,25 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 {
   // start critical section for python API calls
   PythonUtility::GlobalInterpreterLock lock;
-  
+
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
     PyObject *item = PyLong_FromLong(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
+  }
+  return result;    // return value: new reference
+}
+
+PyObject *PythonUtility::convertToPythonList(std::vector<global_no_t> &data)
+{
+  // start critical section for python API calls
+  PythonUtility::GlobalInterpreterLock lock;
+
+  PyObject *result = PyList_New((Py_ssize_t)data.size());
+  for (unsigned int i=0; i<data.size(); i++)
+  {
+    PyObject *item = PyLong_FromLong((long)data[i]);
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference

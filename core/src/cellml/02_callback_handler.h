@@ -66,6 +66,7 @@ protected:
   PyObject *pySetParametersFunctionAdditionalParameter_;  ///< an additional python object that will be passed as last argument to the setParameters callback function
   PyObject *pyHandleResultFunctionAdditionalParameter_;   ///< an additional python object that will be passed as last argument to the handleResult callback function
 
+  PyObject *pyGlobalNaturalDofsList_;    ///< python list of global dof nos
 };
 
 #include "cellml/02_callback_handler.tpp"

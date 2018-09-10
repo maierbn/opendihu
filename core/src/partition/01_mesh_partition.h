@@ -151,7 +151,10 @@ public:
   //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs
   //! @param onlyNodalValues: if for Hermite only get every second dof such that derivatives are not returned
   const std::vector<PetscInt> &dofNosLocal(bool onlyNodalValues=false) const;
-  
+
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
@@ -226,22 +229,25 @@ public:
   global_no_t nElementsGlobal() const;
   
   //! number of dofs in the local partition
-  element_no_t nDofsLocalWithGhosts() const;
+  dof_no_t nDofsLocalWithGhosts() const;
   
   //! number of dofs in the local partition
-  element_no_t nDofsLocalWithoutGhosts() const;
+  dof_no_t nDofsLocalWithoutGhosts() const;
   
   //! number of nodes in the local partition
-  element_no_t nNodesLocalWithoutGhosts() const;
+  node_no_t nNodesLocalWithoutGhosts() const;
   
   //! number of nodes in the local partition
-  element_no_t nNodesLocalWithGhosts() const;
+  node_no_t nNodesLocalWithGhosts() const;
   
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
   //! number of dofs
   global_no_t nDofs() const;
+
+  //! number of dofs in total, same as nDofs
+  global_no_t nDofsGlobal() const;
   
   //! get the global element no for a local element no, this only has an effect for structured meshes, not for unstructured meshes
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
@@ -259,6 +265,9 @@ public:
   //! from a vector of values of global dofs remove all that are non-local, templated type
   template <typename T>
   void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
+
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
 
   //! this does nothing for unstructured meshes, only for structured meshes
   void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};

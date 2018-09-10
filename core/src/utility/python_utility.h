@@ -9,6 +9,8 @@
 #include <mutex>
 #include <omp.h>
 
+#include "control/types.h"
+
 // With python3+ PyString_* was renamed to PyBytes_*
 //(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
 #if PY_MAJOR_VERSION >= 3
@@ -137,6 +139,9 @@ public:
 
   //! create a python list out of the int vector
   static PyObject *convertToPythonList(std::vector<int> &data);
+
+  //! create a python list out of the int vector
+  static PyObject *convertToPythonList(std::vector<global_no_t> &data);
 
   //! create a python list out of the bool vector
   static PyObject *convertToPythonList(std::vector<bool> &data);

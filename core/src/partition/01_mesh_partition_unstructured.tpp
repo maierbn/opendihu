@@ -47,7 +47,7 @@ nElementsGlobal() const
 
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
-element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nNodesLocalWithGhosts() const
 {
   return nNodes_;
@@ -55,7 +55,7 @@ nNodesLocalWithGhosts() const
 
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
-element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofsLocalWithGhosts() const
 {
   return nDofs_;
@@ -63,7 +63,7 @@ nDofsLocalWithGhosts() const
 
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
-element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofsLocalWithoutGhosts() const
 {
   return nDofs_;
@@ -71,7 +71,7 @@ nDofsLocalWithoutGhosts() const
 
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
-element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nNodesLocalWithoutGhosts() const
 {
   return nNodes_;
@@ -89,6 +89,14 @@ nNodesGlobal() const
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofs() const
+{
+  return nDofs_;
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nDofsGlobal() const
 {
   return nDofs_;
 }
@@ -123,6 +131,14 @@ void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDi
 extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
 {
 
+}
+
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
+{
+  dofNosGlobalNatural.resize(nDofsLocalWithoutGhosts());
+  std::iota(dofNosGlobalNatural.begin(), dofNosGlobalNatural.end(), 0);
 }
 
 template<int D, typename BasisFunctionType>

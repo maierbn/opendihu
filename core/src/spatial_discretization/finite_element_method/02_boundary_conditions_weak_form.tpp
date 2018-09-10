@@ -85,7 +85,7 @@ parseBoundaryConditions()
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace->nElementsLocal(); elementNoLocal++)
   {
-    VLOG(1) << "elementNoLocal: " << elementNoLocal;
+    VLOG(2) << "elementNoLocal: " << elementNoLocal;
 
     // loop over the nodes of this element
     int elementalDofIndex = 0;
@@ -126,7 +126,7 @@ parseBoundaryConditions()
             break;
         }
 
-        VLOG(1) << "boundaryConditionForDofFound: " << boundaryConditionForDofFound;
+        VLOG(2) << "boundaryConditionForDofFound: " << boundaryConditionForDofFound;
 
         // here boundaryConditionIter->first is equal to indexForBoundaryCondition (then the current element/node/dof matches the boundary condition)
         // or boundaryConditionIter->first > indexForBoundaryCondition then the current dofIndex does not have any boundary condition
@@ -135,7 +135,7 @@ parseBoundaryConditions()
         // if the currently considered boundaryCondition entry from config matches the current nodeNo and nodalDofIndex
         if (boundaryConditionForDofFound)
         {
-          VLOG(1) << "elementNoLocal: " << elementNoLocal << ", lastBoundaryConditionElement: " << lastBoundaryConditionElement;
+          VLOG(2) << "elementNoLocal: " << elementNoLocal << ", lastBoundaryConditionElement: " << lastBoundaryConditionElement;
 
           // if there is not yet an entry in boundaryConditionElements with the current element, create one
           if (elementNoLocal != lastBoundaryConditionElement)
@@ -146,7 +146,7 @@ parseBoundaryConditions()
 
             lastBoundaryConditionElement = elementNoLocal;
 
-            VLOG(1) << "add empty entry for elementNoLocal " << elementNoLocal;
+            VLOG(2) << "add empty entry for elementNoLocal " << elementNoLocal;
           }
 
           // add current node and boundary condition value to list of boundary conditions for current element
@@ -167,7 +167,7 @@ parseBoundaryConditions()
           // add current node and boundary condition value to list of boundary conditions for current element
           if (!dofIndexAlreadyContained)
           {*/
-          VLOG(1) << " add (el-dof, value)" << std::pair<int,double>(elementalDofIndex, boundaryConditionValue) << ", to boundaryConditionElement of element " << boundaryConditionElement.elementNoLocal;
+          VLOG(2) << " add (el-dof, value)" << std::pair<int,double>(elementalDofIndex, boundaryConditionValue) << ", to boundaryConditionElement of element " << boundaryConditionElement.elementNoLocal;
             boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,double>(elementalDofIndex, boundaryConditionValue));
           //}
 

@@ -18,7 +18,7 @@ CallbackHandler(DihuContext context) :
   DiscretizableInTime(SolutionVectorMapping()),
   setParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
-  pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL)
+  pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {
 }
 
@@ -79,14 +79,22 @@ initializeCallbackFunctions()
 
 template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
-callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector< double >& parameters)
+callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
 {
   if (pythonSetParametersFunction_ == NULL)
     return;
   
+  // create list of global dof nos if it does not already exist
+  if (pyGlobalNaturalDofsList_ == nullptr)
+  {
+    std::vector<global_no_t> dofNosGlobalNatural;
+    this->mesh_->meshPartitionBase()->getDofNosGlobalNatural(dofNosGlobalNatural);
+    pyGlobalNaturalDofsList_ = PythonUtility::convertToPythonList(dofNosGlobalNatural);
+  }
+
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", nInstances, timeStepNo, currentTime, parametersList, pySetParametersFunctionAdditionalParameter_);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->mesh_->meshPartitionBase()->nDofsGlobal(), timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetParametersFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message

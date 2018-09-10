@@ -68,22 +68,22 @@ def fibreGetsStimulated(fibre_no, frequency, current_time):
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters_null(n_nodes, time_step_no, current_time, parameters, fibre_no):
+def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   pass
   
-def set_parameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
+def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine if fibre gets stimulated at the current time
   fibre_gets_stimulated = fibreGetsStimulated(fibre_no, stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node = int(n_nodes / 2) + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate = [innervation_node]
-  if innervation_node > 0:
-    nodes_to_stimulate.insert(0, innervation_node-1)
-  if innervation_node < n_nodes-1:
-    nodes_to_stimulate.append(innervation_node+1)
+  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+  nodes_to_stimulate_global = [innervation_node_global]
+  if innervation_node_global > 0:
+    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
+  if innervation_node_global < n_nodes_global-1:
+    nodes_to_stimulate_global.append(innervation_node_global+1)
   
   # stimulation value
   if fibre_gets_stimulated:
@@ -91,15 +91,20 @@ def set_parameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
   else:
     stimulation_current = 0.
   
-  for node_no in nodes_to_stimulate:
-    parameters[node_no] = stimulation_current
-
-  print("       setParameters at timestep {}, t={}, n_nodes={}, fibre no {}, MU {}, stimulated: {}".\
-    format(time_step_no, current_time, n_nodes, fibre_no, getMotorUnitNo(fibre_no), fibre_gets_stimulated))
+  first_dof_global = dof_nos_global[0]
+  last_dof_global = dof_nos_global[-1]
     
+  for node_no_global in nodes_to_stimulate_global:
+    if first_dof_global <= node_no_global <= last_dof_global:
+      # get local no for global no (1D)
+      dof_no_local = node_no_global - first_dof_global
+      parameters[dof_no_local] = stimulation_current
  
-  print("       set stimulation for nodes {}".format(nodes_to_stimulate))
+      print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
+  print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
+        format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), fibre_gets_stimulated))
+    
   #wait = input("Press any key to continue...")
     
 fig = plt.figure(1)
@@ -146,7 +151,10 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
     
 def get_instance_config(i):
   
-  ranks = [2*i,2*i+1]  # use 2 ranks per fibre
+  k = 3  # n ranks per fibre
+  ranks = []
+  for j in range(k):
+    ranks.append(k*i + j)
   bc = {0: -80.25667, -1: -80.25667}
   instance_config = {
     "ranks": ranks,
@@ -169,7 +177,7 @@ def get_instance_config(i):
             #"libraryFilename": "cellml_simd_lib.so",   # compiled library
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
-            "setParametersFunction": (set_parameters if rank_no == 0 else set_parameters_null),    # callback function that sets parameters like stimulation current
+            "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
             "setParametersCallInterval": 1./stimulation_frequency/dt_0D,     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             "setParametersFunctionAdditionalParameter": i,
             

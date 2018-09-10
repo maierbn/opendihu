@@ -333,7 +333,7 @@ restoreContiguousValuesGlobal()
     double *valuesDataComponent;
     ierr = VecGetArray(values_[componentNo], &valuesDataComponent); CHKERRV(ierr);
 
-    VLOG(1) << "  component " << componentNo << ", copy " << this->meshPartition_->nDofs() << " values, " << this->meshPartition_->nDofs()*sizeof(double) << " bytes from contiguous array";
+    VLOG(1) << "  \"" << this->name_ << "\", component " << componentNo << ", copy " << this->meshPartition_->nDofs() << " values, " << this->meshPartition_->nDofs()*sizeof(double) << " bytes from contiguous array";
     memcpy(
       valuesDataComponent,
       valuesDataContiguous + componentNo*this->meshPartition_->nDofs(),
@@ -365,9 +365,23 @@ output(std::ostream &stream)
 
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
+    std::vector<PetscInt> indices(nDofsLocal);
+    if (valuesContiguous_)
+    {
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+      }
+    }
+    else
+    {
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i];
+      }
+    }
     std::vector<double> localValues(nDofsLocal);
-    
-    VecGetValuesLocal(vector, nDofsLocal, this->meshPartition_->dofNosLocal(), localValues.data());
+    VecGetValues(vector, nDofsLocal, indices.data(), localValues.data());
     
     // gather the local sizes of the vectors to rank 0
     std::vector<int> localSizes(nRanks);

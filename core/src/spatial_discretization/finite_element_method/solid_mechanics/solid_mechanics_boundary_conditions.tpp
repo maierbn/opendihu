@@ -67,7 +67,7 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename F
       PythonUtility::getOptionDictNext<dof_no_t, PyObject *>(specificSettings, "dofVectors", dofVectorItem))
     {
       dof_no_t dofIndex = dofVectorItem.first;
-      VecD<D> dofVector = PythonUtility::convertFromPython<double,D>(dofVectorItem.second);
+      VecD<D> dofVector = PythonUtility::convertFromPython<std::array<double,D>>::get(dofVectorItem.second);
 
       dofVectors.push_back(std::pair<dof_no_t, VecD<D>>(dofIndex, dofVector));
     }
@@ -128,7 +128,7 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
       PythonUtility::getOptionDictNext<element_no_t, PyObject *>(specificSettings, "bodyForceReferenceConfiguration", dofVectorItem))
     {
       element_no_t elementGlobalNo = dofVectorItem.first;
-      VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>(dofVectorItem.second);
+      VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>::get(dofVectorItem.second);
 
       bodyForceReferenceConfiguration_.push_back(std::pair<element_no_t,VecD<D>>(elementGlobalNo, vector));
     }
@@ -146,7 +146,7 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
        PythonUtility::getOptionDictNext<element_no_t, PyObject *>(specificSettings, "bodyForceCurrentConfiguration", dofVectorItem))
     {
       element_no_t elementGlobalNo = dofVectorItem.first;
-      VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>(dofVectorItem.second);
+      VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>::get(dofVectorItem.second);
 
       bodyForceReferenceConfiguration_.push_back(std::pair<element_no_t,VecD<D>>(elementGlobalNo, vector));
     }

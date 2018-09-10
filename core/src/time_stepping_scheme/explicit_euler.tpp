@@ -51,6 +51,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
+    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+
     // integrate, y += dt * delta_u
     VecAXPY(solution, this->timeStepWidth_, increment);
 
@@ -59,6 +61,9 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
     VLOG(1) << "solution after integration: " << this->data_->solution();
+
+    // apply the prescribed boundary condition values
+    this->applyBoundaryConditions();
 
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);

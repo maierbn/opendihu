@@ -61,13 +61,16 @@ RankSubset::RankSubset(std::vector<int> &ranks) : rankNo_(ranks), ownRankNo_(-1)
   MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 
   // update rankNo_ vector
-  int nRanksInCommunicator;
-  MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
-  if (nRanksInCommunicator != rankNo_.size())
+  if (color == 1)
   {
-    LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
-      << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", because the program is only run with so many ranks.";
-    rankNo_.resize(nRanksInCommunicator);
+    int nRanksInCommunicator;
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
+    if (nRanksInCommunicator != rankNo_.size())
+    {
+      LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
+        << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", because the program is only run with so many ranks.";
+      rankNo_.resize(nRanksInCommunicator);
+    }
   }
 
   VLOG(1) << "RankSubset constructor done";

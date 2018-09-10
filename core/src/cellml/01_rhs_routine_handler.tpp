@@ -75,7 +75,8 @@ initializeRhsRoutine()
       }
     }
     
-    if (doCompilation)
+    int rankNo = this->context_.ownRankNo();
+    if (doCompilation && rankNo == 0)  // only recompile on rank 0
     {
      
       if (libraryFilename.find("/") != std::string::npos)
@@ -162,7 +163,13 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+  void* handle = NULL;
+  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  {
+    handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
   if (handle)
   {
     // load rhs method

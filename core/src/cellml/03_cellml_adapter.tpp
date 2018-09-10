@@ -105,10 +105,6 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
-
-    VLOG(1) << "returned rates:";
-    for(int i=0; i<nRates; i++)
-      VLOG(1) << rates[i];
   }
 
   // handle intermediates, call callback function of python config

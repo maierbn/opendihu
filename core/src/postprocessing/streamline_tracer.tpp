@@ -36,7 +36,7 @@ StreamlineTracer(DihuContext context) :
       !PythonUtility::getOptionListEnd(specificSettings_, "seedPoints");
       PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "seedPoints", pySeedPositions))
   {
-    Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>(pySeedPositions);
+    Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>::get(pySeedPositions);
     seedPositions_.push_back(seedPosition);
   }
 }

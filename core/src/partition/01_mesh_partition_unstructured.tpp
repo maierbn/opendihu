@@ -108,14 +108,23 @@ extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents) const
 {
   
 }
-  
+
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-extractLocalDofsWithoutGhosts(std::vector<double> &vector) const 
+extractLocalDofsWithoutGhosts(std::vector<double> &vector) const
 {
-  
+
 }
-  
+
+
+template<int D, typename BasisFunctionType>
+template <typename T>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
+{
+
+}
+
 template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)

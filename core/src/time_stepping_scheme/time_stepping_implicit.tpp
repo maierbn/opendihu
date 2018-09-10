@@ -36,6 +36,7 @@ initialize()
   
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   
+  // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
   Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
   

@@ -7,6 +7,7 @@
 
 #include "quadrature/tensor_product.h"
 #include "utility/vector_operators.h"
+#include "utility/boundary_conditions.h"
 
 namespace SpatialDiscretization
 {
@@ -65,47 +66,8 @@ parseBoundaryConditions()
   // To specifiy u=0 on the bottom, you would set:
   // bc[0] = 0, bc[2] = 0, bc[4] = 0
 
-  int nDofs = 0;
-  if (inputMeshIsGlobal)
-  {
-    nDofs = functionSpace->nDofsGlobal();
-  }
-  else
-  {
-    nDofs = functionSpace->nDofsLocalWithoutGhosts();
-  }
-
-  if (PythonUtility::hasKey(this->specificSettings_, "DirichletBoundaryCondition"))
-  {
-    LOG(ERROR) << "Option \"DirichletBoundaryCondition\" was renamed to \"dirichletBoundaryConditions\".";
-  }
-
-  // parse all boundary conditions that are given in config
-  std::vector<std::pair<int,double>> boundaryConditions;  /// (index, value) pairs
-
-  std::pair<int, double> boundaryCondition = PythonUtility::getOptionDictBegin<int, double>(this->specificSettings_, "dirichletBoundaryConditions");
-  for (; !PythonUtility::getOptionDictEnd(this->specificSettings_, "dirichletBoundaryConditions");
-          PythonUtility::getOptionDictNext<int, double>(this->specificSettings_, "dirichletBoundaryConditions", boundaryCondition))
-  {
-    // for negative indices add number of dofs such that -1 is the last dof, -2 is the econd-last etc.
-    if (boundaryCondition.first < 0)
-    {
-      boundaryCondition.first += nDofs;
-    }
-    else if (boundaryCondition.first > functionSpace->nDofsLocalWithoutGhosts())
-    {
-      node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
-      node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
-      LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
-        << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes)";
-    }
-    boundaryConditions.push_back(boundaryCondition);
-  }
-  if (boundaryConditions.empty())
-  {
-    LOG(DEBUG) << "no boundary conditions specified";
-    return;
-  }
+  std::vector<std::pair<int,double>> boundaryConditions;  // (index, value)
+  ::BoundaryConditions::parseBoundaryConditions(this->specificSettings_, functionSpace, boundaryConditions);
 
   // sort all parsed boundary conditions for their index no
   auto compareFunction = [](const std::pair<int,double> &item1, const std::pair<int,double> &item2)
@@ -129,8 +91,6 @@ parseBoundaryConditions()
     int elementalDofIndex = 0;
     for (int nodeIndex = 0; nodeIndex < FunctionSpaceType::nNodesPerElement(); nodeIndex++)
     {
-      VLOG(1) << "nodeInedx: " << nodeIndex;
-
       // get global or local nodeNo of current node (depending on inputMeshIsGlobal)
       global_no_t nodeNo = 0;
       if (inputMeshIsGlobal)
@@ -146,8 +106,6 @@ parseBoundaryConditions()
       // loop over dofs of node and thus over the elemental dofs
       for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++, elementalDofIndex++)
       {
-        VLOG(1) << "nodalDofInedx: " << nodalDofIndex << ", nodeNo: " << nodeNo << ", elementalDofInedx: " << elementalDofIndex;
-
         global_no_t indexForBoundaryCondition = nodeNo*nDofsPerNode + nodalDofIndex;
 
         // check if a dirichlet boundary condition for the current node is given
@@ -233,16 +191,6 @@ parseBoundaryConditions()
               boundaryConditionValues_.push_back(boundaryConditionValue);
             }
           }
-
-
-
-          VLOG(1) << "currently parsed boundary conditions:";
-          for (auto boundaryConditionElement: boundaryConditionElements_)
-          {
-            VLOG(1) << "  elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
-          }
-
-
         }
       }
     }

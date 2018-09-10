@@ -261,6 +261,13 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
+int DihuContext::ownRankNo() const
+{
+  int rankNo;
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  return rankNo;
+}
+
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager() const
 {
   return meshManager_;

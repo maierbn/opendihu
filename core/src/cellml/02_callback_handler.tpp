@@ -97,7 +97,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   for (unsigned int i=0; i<parameters.size(); i++)
   {
     PyObject *item = PyList_GetItem(parametersList, (Py_ssize_t)i);
-    parameters[i] = PythonUtility::convertFromPython<double>(item);
+    parameters[i] = PythonUtility::convertFromPython<double>::get(item);
   }
 
   // decrement reference counters for python objects

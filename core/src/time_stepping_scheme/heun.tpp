@@ -56,6 +56,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
     VecAXPY(solution, this->timeStepWidth_, increment);
 
+    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)
     // we call f(u*) the "intermediateIncrement"
@@ -69,6 +71,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     VecAXPY(intermediateIncrement, -1.0, increment);
     // now compute overall step as described above (#)
     VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
+
+    // apply the prescribed boundary condition values
+    this->applyBoundaryConditions();
 
     // advance simulation time
     timeStepNo++;

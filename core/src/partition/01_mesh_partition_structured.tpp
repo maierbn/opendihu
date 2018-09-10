@@ -647,13 +647,21 @@ extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents) const
   // store values
   vector.assign(result.begin(), result.end());
 }
-  
+
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-extractLocalDofsWithoutGhosts(std::vector<double> &vector) const 
+extractLocalDofsWithoutGhosts(std::vector<double> &vector) const
+{
+  this->template extractLocalDofsWithoutGhosts<double>(vector);
+}
+  
+template<typename MeshType,typename BasisFunctionType>
+template <typename T>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
 {
   dof_no_t nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-  std::vector<double> result(nDofsLocalWithoutGhosts());
+  std::vector<T> result(nDofsLocalWithoutGhosts());
   global_no_t resultIndex = 0;
   
   if (MeshType::dim() == 1)
@@ -1254,6 +1262,43 @@ getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const
     assert(false);
   }
 }
+
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getLocalCoordinates(global_no_t nodeGlobalNo, bool &isLocalNonGhost) const
+{
+  // TODO : proof-)read
+  std::array<int,MeshType::dim()> coordinates({0});
+  if (MeshType::dim() == 1)
+  {
+    coordinates[0] = nodeGlobalNo - beginNodeGlobalNatural(0);
+    isLocalNonGhost = (0 <= coordinates[0] && coordinates[0] < nNodesLocalWithoutGhosts(0));
+    return coordinates;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    coordinates[0] = (nodeGlobalNo % nNodesGlobal(0)) - beginNodeGlobalNatural(0);
+    coordinates[1] = (nodeGlobalNo / nNodesGlobal(0)) - beginNodeGlobalNatural(1);
+    isLocalNonGhost = (0 <= coordinates[0] && coordinates[0] < nNodesLocalWithoutGhosts(0))
+      && (0 <= coordinates[1] && coordinates[1] < nNodesLocalWithoutGhosts(1));
+    return coordinates;
+  }
+  else if (MeshType::dim() == 3)
+  {
+    coordinates[0] = (nodeGlobalNo % nNodesGlobal(0)) - beginNodeGlobalNatural(0);
+    coordinates[1] = (nodeGlobalNo % (nNodesGlobal(0)*nNodesGlobal(1)) / nNodesGlobal(0)) - beginNodeGlobalNatural(1);
+    coordinates[2] = (nodeGlobalNo / (nNodesGlobal(0)*nNodesGlobal(1))) - beginNodeGlobalNatural(2);
+    isLocalNonGhost = (0 <= coordinates[0] && coordinates[0] < nNodesLocalWithoutGhosts(0))
+      && (0 <= coordinates[1] && coordinates[1] < nNodesLocalWithoutGhosts(1))
+      && (0 <= coordinates[2] && coordinates[2] < nNodesLocalWithoutGhosts(2));
+    return coordinates;
+  }
+  else
+  {
+    assert(false);
+  }
+}
+
 
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::

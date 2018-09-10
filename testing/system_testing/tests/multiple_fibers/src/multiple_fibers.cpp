@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
   Control::MultipleInstances<
     OperatorSplitting::Strang<
       TimeSteppingScheme::Heun<
-        CellmlAdapter<57>
+        CellmlAdapter<4>  // 57 for Hodgkin-Huxley
       >,
-      TimeSteppingScheme::Heun<
+      TimeSteppingScheme::ExplicitEuler<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredDeformableOfDimension<1>,
           BasisFunction::LagrangeOfOrder<1>,

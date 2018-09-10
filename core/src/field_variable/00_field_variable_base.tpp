@@ -58,6 +58,11 @@ checkNansInfs(int componentNo) const
   {
     LOG(WARNING) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
   }
+
+  if (nNans == values.size())
+  {
+    LOG(FATAL) << "There are only Nans, abort computation.";
+  }
 }
 
 //! get the number of dofs

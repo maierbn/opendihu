@@ -3017,14 +3017,13 @@ Considering the total reduction, we get the system to be solved for the fully re
   \begin{array}{l}
 	\tilde{\mathbf{z}}^{*} =
 	\tilde{\mathbf{z}}^{(t)}+
-	\mathbf{V}_k^{\text{T}} \textbf{FG}(\mathbf{v}_\mathrm{m}^{(t)}, \mathbf{y}^{(t)}) +
-	\mathbf{V}_k^{\text{T}} \textbf{I}_{\mathrm{enh}}^{(t)} 
+	\mathbf{V}_k^{\text{T}} \textbf{FG}(\mathbf{v}_\mathrm{m}^{(t)}, \mathbf{y}^{(t)})
 	\label{e:POD_full_a},\\[0.5em]
 	\tilde{\mathbf{z}}^{(t+1)} = \tilde{\mathbf{z}}^{*}+\mathbf{V}_k^{\text{T}}
 	\textbf{A}_\mathrm{enh} \mathbf{V}_k  \tilde{\mathbf{z}}^{(t+1)},
   \end{array}
 \end{equation*}
-where $\textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y})$, $\textbf{I}_{\mathrm{enh}}$, and $ \textbf{A}_\mathrm{enh}$
+where $\textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y})$ and $ \textbf{A}_\mathrm{enh}$
 as well as the full state recovery are defined by
 \begin{equation*}
   \textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y}) := \!  \,\left[\begin{array}{c}
@@ -3037,15 +3036,6 @@ as well as the full state recovery are defined by
   	\vdots \\  	
   	\textbf{G}_n(\mathbf{v}_\mathrm{m},\mathbf{y})
   \end{array}\right],\, 
-  \textbf{I}_{\mathrm{enh}} := \left[ \begin{array}{c}
-  	\textbf{I}_{\mathrm{stm},1} \vspace{6pt}\\  	
-  	\textbf{I}_{\mathrm{stm},2} \vspace{6pt}\\
-  	\vdots \\
-  	\textbf{I}_{\mathrm{stm},n} \vspace{6pt}\\
-  	0 \\
-  	\vdots \\  	
-  	0 
-  \end{array} \right], \,
   \textbf{A}_\mathrm{enh} := \left[ \begin{array}{c}
   	\textbf{A}_1\\
   	\textbf{A}_2\\

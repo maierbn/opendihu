@@ -8,6 +8,8 @@
 Import('env')     # import Environment object from calling SConstruct
 
 testcases = [
+  "only_diffusion",
+  "no_diffusion",
   "single_fibre",
   "multiple_fibers"
 ]

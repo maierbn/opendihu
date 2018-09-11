@@ -99,6 +99,11 @@ if dimension == 1:
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
     min_s, max_s = py_reader.get_min_max(data, "solution", "0")
+    print( "value range: [{}, {}]".format(min_s, max_s))
+    if np.isinf(min_s) or np.isnan(min_s):
+      min_s = 0
+    if np.isinf(max_s) or np.isnan(max_s):
+      max_s = 0
     
     solution_components = py_reader.get_component_names(data[0], "solution")
     n_components = len(solution_components)
@@ -129,7 +134,6 @@ if dimension == 1:
       # x-axis is geometry
       min_x, max_x = py_reader.get_min_max(data, "geometry", geometry_component)
     
-    print( "value range: [{}, {}]".format(min_s, max_s))
     if show_geometry:
       print( "geometry bounding box: x:[{},{}], y:[{},{}], z:[{},{}]".format(min_x,max_x,min_y,max_y,min_z,max_z))
     

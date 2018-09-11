@@ -272,17 +272,43 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       str << y[i] << " ";
     }
     str << (iora == INSERT_VALUES? "INSERT_VALUES" : (iora == ADD_VALUES? "ADD_VALUES" : "unknown"));
-    str << ")";
+    str << ") " << (valuesContiguousInUse_? " valuesContiguousInUse" : "");
     VLOG(3) << str.str();
   }
-  assert(!valuesContiguousInUse_);
 
-  // this wraps the standard PETSc VecSetValues on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
-  
-  // Note, there is also VecSetValuesLocal which acts on the global vector but the indices must be provided in the local ordering.
-  // For this to work one has to provide the mapping in advance (VecSetLocalToGlobalMapping)
+  // depending on which data representation is active, use vectorLocal or valuesContiguous
+  if (valuesContiguousInUse_)
+  {
+    if (componentNo > 0)
+    {
+      // shift indices
+      std::vector<PetscInt> indices(ni);
+      for (int i = 0; i < ni; i++)
+      {
+        indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
+      }
+
+      // this wraps the standard PETSc VecSetValues on the local vector
+      PetscErrorCode ierr;
+      ierr = VecSetValues(valuesContiguous_, ni, indices.data(), y, iora); CHKERRV(ierr);
+    }
+    else
+    {
+      // this wraps the standard PETSc VecSetValues on the local vector
+      PetscErrorCode ierr;
+      ierr = VecSetValues(valuesContiguous_, ni, ix, y, iora); CHKERRV(ierr);
+    }
+  }
+  else
+  {
+
+    // this wraps the standard PETSc VecSetValues on the local vector
+    PetscErrorCode ierr;
+    ierr = VecSetValues(vectorLocal_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
+
+    // Note, there is also VecSetValuesLocal which acts on the global vector but the indices must be provided in the local ordering.
+    // For this to work one has to provide the mapping in advance (VecSetLocalToGlobalMapping)
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -462,7 +488,7 @@ restoreContiguousValuesGlobal()
     double *valuesDataComponent;
     ierr = VecGetArray(vectorLocal_[componentNo], &valuesDataComponent); CHKERRV(ierr);
 
-    VLOG(1) << "  component " << componentNo << ", copy " << this->meshPartition_->nDofsLocalWithoutGhosts() << " values, " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes from contiguous array";
+    VLOG(1) << "  \"" << this->name_ << "\", component " << componentNo << ", copy " << this->meshPartition_->nDofsLocalWithoutGhosts() << " values, " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes from contiguous array";
     memcpy(
       valuesDataComponent,
       valuesDataContiguous + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts(),
@@ -511,9 +537,19 @@ output(std::ostream &stream)
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<PetscInt> indices(nDofsLocal);
-    for (int i = 0; i < nDofsLocal; i++)
+    if (valuesContiguous_)
     {
-      indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+      }
+    }
+    else
+    {
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i];
+      }
     }
 
     std::vector<double> localValues(nDofsLocal);
@@ -543,7 +579,8 @@ output(std::ostream &stream)
     {
       if (componentNo == 0)
       {
-        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component))" << std::endl;
+        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component)"
+          << (valuesContiguous_? ", valuesContiguous": "") << ")" << std::endl;
       }
 
       stream << "\"" << this->name_ << "\" component " << componentNo << ": local ordering: [";
@@ -563,7 +600,7 @@ output(std::ostream &stream)
     }
   }
 
-  if (nRanks > 0)
+  if (nRanks > 1)
   {
     // loop over components
     for (int componentNo = 0; componentNo < nComponents; componentNo++)

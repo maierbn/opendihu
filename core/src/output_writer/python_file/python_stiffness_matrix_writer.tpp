@@ -13,7 +13,8 @@ template<int D,typename BasisFunctionType,typename Term>
 void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
 writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
 {
-  // TODO: change to data.OutputFieldVariables instead of data.solution
+  // This should dump debugging data, e.g. matrices in a numpy array format.
+  // But because there are issues with linking to the numpy library, it is left out.
 
  /*
   LOG(TRACE) << "writeNumpySolution RegularFixed, D=" <<D;

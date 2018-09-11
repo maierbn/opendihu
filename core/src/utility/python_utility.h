@@ -110,6 +110,17 @@ public:
   //! recursively print a single python value
   static std::string getString(PyObject *value, int indent=0, int first_indent=0);
 
+  template<typename T>
+  struct convertFromPython
+  {
+    //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+    static T get(PyObject *object, T defaultValue);
+
+    //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+    static T get(PyObject *object);
+  };
+
+  /*
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   template<typename T>
   static T convertFromPython(PyObject *object, T defaultValue);
@@ -117,7 +128,7 @@ public:
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   template<typename T>
   static T convertFromPython(PyObject *object);
-
+*/
   //! create a python list out of the double vector
   static PyObject *convertToPythonList(std::vector<double> &data);
 
@@ -140,7 +151,7 @@ public:
 
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
-
+/*
   //! convert a python list to a std::array, use default value when python list is shorter than the resulting array
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object, ValueType defaultValue);
@@ -152,7 +163,7 @@ public:
   //! convert a python list to a std::array
   template<class ValueType, int D>
   static std::array<ValueType, D> convertFromPython(PyObject *object);
-
+*/
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
 
@@ -199,3 +210,4 @@ std::ostream &operator<<(std::ostream &stream, PyObject *object);
 
 
 #include "utility/python_utility.tpp"
+#include "utility/python_utility_convert.tpp"

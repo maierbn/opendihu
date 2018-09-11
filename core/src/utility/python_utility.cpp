@@ -17,9 +17,17 @@ PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
 PyObject *PythonUtility::list = NULL;
 int PythonUtility::listIndex = 0;
+/*
+template<>
+int PythonUtility::convertFromPython<int>::
+get(PyObject *object)
+{
+  return convertFromPython<int>::get(object, 0);
+}
 
 template<>
-int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
+int PythonUtility::convertFromPython<int>::
+get(PyObject *object, int defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -56,7 +64,15 @@ int PythonUtility::convertFromPython(PyObject *object, int defaultValue)
 }
 
 template<>
-global_no_t PythonUtility::convertFromPython(PyObject *object, global_no_t defaultValue)
+global_no_t PythonUtility::convertFromPython<global_no_t>::
+get(PyObject *object)
+{
+  return convertFromPython<global_no_t>::get(object, 0);
+}
+
+template<>
+global_no_t PythonUtility::convertFromPython<global_no_t>::
+get(PyObject *object, global_no_t defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -93,7 +109,15 @@ global_no_t PythonUtility::convertFromPython(PyObject *object, global_no_t defau
 }
 
 template<>
-std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defaultValue)
+std::size_t PythonUtility::convertFromPython<std::size_t>::
+get(PyObject *object)
+{
+  return convertFromPython<std::size_t>::get(object, 0);
+}
+
+template<>
+std::size_t PythonUtility::convertFromPython<std::size_t>::
+get(PyObject *object, std::size_t defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -130,7 +154,15 @@ std::size_t PythonUtility::convertFromPython(PyObject *object, std::size_t defau
 }
 
 template<>
-double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
+double PythonUtility::convertFromPython<double>::
+get(PyObject *object)
+{
+  return convertFromPython<double>::get(object, 0.0);
+}
+
+template<>
+double PythonUtility::convertFromPython<double>::
+get(PyObject *object, double defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -156,16 +188,16 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
     std::string valueString = pyUnicodeToString(object);
     return atof(valueString.c_str());
   }
-  /*
-#ifdef HAVE_NUMPYC
-  else if (PyArray_Check(object))
-  {
-    //if (object->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
 
-    LOG(WARNING) << "convertFromPython: object is a numpy array: " << object;
-  }
-#endif
-*/
+//#ifdef HAVE_NUMPYC
+//  else if (PyArray_Check(object))
+//  {
+//    //if (object->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
+//
+//    LOG(WARNING) << "convertFromPython: object is a numpy array: " << object;
+//  }
+//#endif
+
   else
   {
     LOG(WARNING) << "convertFromPython: object is no double: " << object;
@@ -174,7 +206,15 @@ double PythonUtility::convertFromPython(PyObject *object, double defaultValue)
 }
 
 template<>
-std::string PythonUtility::convertFromPython(PyObject *object, std::string defaultValue)
+std::string PythonUtility::convertFromPython<std::string>::
+get(PyObject *object)
+{
+  return convertFromPython<std::string>::get(object, "");
+}
+
+template<>
+std::string PythonUtility::convertFromPython<std::string>::
+get(PyObject *object, std::string defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -195,25 +235,29 @@ std::string PythonUtility::convertFromPython(PyObject *object, std::string defau
 }
 
 template<>
-PyObject *PythonUtility::convertFromPython(PyObject *object, PyObject *defaultValue)
+PyObject *PythonUtility::convertFromPython<PyObject *>::
+get(PyObject *object)
+{
+  return convertFromPython<PyObject *>::get(object, nullptr);
+}
+
+template<>
+PyObject *PythonUtility::convertFromPython<PyObject *>::
+get(PyObject *object, PyObject *defaultValue)
 {
   return object;
 }
 
 template<>
-int PythonUtility::convertFromPython(PyObject *object)
+bool PythonUtility::convertFromPython<bool>::
+get(PyObject *object)
 {
-  return convertFromPython<int>(object, 0);
+  return convertFromPython<bool>::get(object, false);
 }
 
 template<>
-std::size_t PythonUtility::convertFromPython(PyObject *object)
-{
-  return convertFromPython<std::size_t>(object, 0);
-}
-
-template<>
-bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
+bool PythonUtility::convertFromPython<bool>::
+get(PyObject *object, bool defaultValue)
 {
   if(object == NULL)
     return defaultValue;
@@ -259,50 +303,33 @@ bool PythonUtility::convertFromPython(PyObject *object, bool defaultValue)
     LOG(WARNING) << "convertFromPython: object is no bool: " << object;
   }
   return defaultValue;
-}
+}*/
 
+/*
 template<>
-double PythonUtility::convertFromPython(PyObject *object)
-{
-  return convertFromPython<double>(object, 0.0);
-}
-
-template<>
-std::string PythonUtility::convertFromPython(PyObject *object)
-{
-  return convertFromPython<std::string>(object, "");
-}
-
-template<>
-PyObject *PythonUtility::convertFromPython(PyObject *object)
-{
-  return convertFromPython<PyObject *>(object, NULL);
-}
-
-template<>
-std::array<double,2> PythonUtility::convertFromPython(PyObject *object, std::array<double,2> defaultValue)
+std::array<double,2> PythonUtility::get(PyObject *object, std::array<double,2> defaultValue)
 {
   return PythonUtility::convertFromPython<double,2>(object, defaultValue);
 }
 
 template<>
-std::array<double,2> PythonUtility::convertFromPython(PyObject *object)
+std::array<double,2> PythonUtility::get(PyObject *object)
 {
-  return convertFromPython<double,2>(object);
+  return convertFromPython<>::get double,2>(object);
 }
 
 template<>
-std::array<double,3> PythonUtility::convertFromPython(PyObject *object, std::array<double,3> defaultValue)
+std::array<double,3> PythonUtility::get(PyObject *object, std::array<double,3> defaultValue)
 {
   return PythonUtility::convertFromPython<double,3>(object, defaultValue);
 }
 
 template<>
-std::array<double,3> PythonUtility::convertFromPython(PyObject *object)
+std::array<double,3> PythonUtility::get(PyObject *object)
 {
-  return convertFromPython<double,3>(object);
+  return convertFromPython<>::get double,3>(object);
 }
-
+*/
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
@@ -395,7 +422,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
 
         // convert to double
-        result = convertFromPython<double>(listEntry, defaultValue);
+        result = convertFromPython<double>::get(listEntry, defaultValue);
 
         // print a warning if there are further entries
         if (listNEntries > 1)
@@ -412,7 +439,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
     else
     {
       // convert to double or take default value
-      result = convertFromPython<double>(value, defaultValue);
+      result = convertFromPython<double>::get(value, defaultValue);
 
       //LOG(DEBUG) << "PythonUtility::getOptionDouble: Value for key \"" <<keyString<< "\" found: " <<result<< ".";
     }
@@ -491,7 +518,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
 
         // convert to int
-        result = convertFromPython<int>(listEntry, defaultValue);
+        result = convertFromPython<int>::get(listEntry, defaultValue);
 
         // print a warning if there are further entries
         if (listNEntries > 1)
@@ -508,7 +535,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     else
     {
       // convert to int or try default value
-      result = convertFromPython<int>(value, defaultValue);
+      result = convertFromPython<int>::get(value, defaultValue);
     }
   }
   else
@@ -585,7 +612,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
         PyObject *listEntry = PyList_GetItem(value, (Py_ssize_t)0);
 
         // convert to bool
-        result = convertFromPython<bool>(listEntry, defaultValue);
+        result = convertFromPython<bool>::get(listEntry, defaultValue);
 
         // print a warning if there are further entries
         if (listNEntries > 1)
@@ -602,7 +629,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
     else
     {
       // convert to bool or try default value
-      result = convertFromPython<bool>(value, defaultValue);
+      result = convertFromPython<bool>::get(value, defaultValue);
     }
   }
   else
@@ -631,7 +658,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
 
     // convert to std::string or try default value
-    result = convertFromPython<std::string>(value, defaultValue);
+    result = convertFromPython<std::string>::get(value, defaultValue);
   }
   else
   {

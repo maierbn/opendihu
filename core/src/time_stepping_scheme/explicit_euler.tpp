@@ -31,7 +31,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   // debugging output of matrices
   //this->data_->print();
 
-  Vec &solution = this->data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
+  Vec &solution = this->data_->solution().getContiguousValuesGlobal();
   Vec &increment = this->data_->increment().getContiguousValuesGlobal();
 
   // loop over time steps
@@ -40,9 +41,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
     {
-      std::stringstream threadNumberMessage;
-      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     VLOG(1) << "starting from solution: " << this->data_->solution();
@@ -52,18 +51,19 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "computed increment: " << this->data_->increment() << ", dt=" << this->timeStepWidth_;
+    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
     VecAXPY(solution, this->timeStepWidth_, increment);
-
-    VLOG(1) << "updated solution: " << this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
     VLOG(1) << "solution after integration: " << this->data_->solution();
+
+    // apply the prescribed boundary condition values
+    this->applyBoundaryConditions();
 
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);

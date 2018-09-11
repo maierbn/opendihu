@@ -62,86 +62,6 @@ void Manager::storePreconfiguredMeshes()
   }
 }
 
-bool Manager::hasMesh(std::string meshName)
-{
-  LOG(DEBUG) << "hasMesh(" << meshName << ")";
-  LOG(DEBUG) << "meshes size: " << meshes_.size();
-
-  return meshes_.find(meshName) != meshes_.end();
-}
-
-template<>
-std::shared_ptr<Mesh> Manager::
-mesh<None>(PyObject *settings)
-{
-  std::string meshName;
-  if (PythonUtility::hasKey(settings, "meshName"))
-  {
-    meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    LOG(DEBUG) << "Config contains meshName \"" << meshName << "\".";
-
-    if (hasMesh(meshName))
-    {
-      return meshes_[meshName];
-    }
-    else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
-    {
-      // mesh was preconfigured, do nothing specific here, created standard mesh with 1 node
-      LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
-        << " Type is not clear, so go for StructuredRegularFixedOfDimension<1>.";
-      typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
-      
-      std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, meshConfiguration_[meshName]);
-      mesh->initialize();
-      
-      // store mesh
-      mesh->setMeshName(meshName);
-      meshes_[meshName] = mesh;
-      LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
-      return std::static_pointer_cast<Mesh>(meshes_[meshName]);
-    }
-    else
-    {
-      LOG(ERROR) << "Config contains reference to mesh with meshName \"" << meshName << "\" but no such mesh was defined.";
-    }
-  }
-  else
-  {
-    LOG(DEBUG) << "Config does not contain meshName.";
-  }
-
-  // if nElements was specified, create standard regularFixed mesh
-  if (PythonUtility::hasKey(settings, "nElements"))
-  {
-    // create new mesh, store as anonymous object
-    std::stringstream anonymousName;
-    anonymousName << "anonymous" << numberAnonymousMeshes_++;
-
-    // set type to be 1D regular fixed mesh with linear lagrange basis
-    typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
-    LOG(DEBUG) << "Create new mesh with type " << typeid(NewFunctionSpace).name() << " and name \"" <<anonymousName.str() << "\".";
-
-    std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, settings);
-    mesh->setMeshName(anonymousName.str());
-    mesh->initialize();
-    
-    meshes_[anonymousName.str()] = mesh;
-    return mesh;
-  }
-
-  // nElements was not specified, create and return anonymous standard regular mesh with 1 node, don't store it
-  std::array<element_no_t, 1> nElements {0};  // no elements means 1 node
-  std::array<double, 1> physicalExtent {1.0};
-
-  typedef FunctionSpace::FunctionSpace<StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> NewFunctionSpace;
-  LOG(DEBUG) << "Create new 1-node mesh with type " << typeid(NewFunctionSpace).name() << ", not stored.";
-
-  std::shared_ptr<NewFunctionSpace> mesh = std::make_shared<NewFunctionSpace>(this->partitionManager_, nElements, physicalExtent);
-  mesh->setMeshName(std::string("anonymous"));
-  mesh->initialize();
-  return mesh;
-}
-
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> Manager::
 createGenericFieldVariable(int nEntries, std::string name)
 {
@@ -165,6 +85,11 @@ createGenericFieldVariable(int nEntries, std::string name)
   //template <int nComponents>
   //std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
   return functionSpace->template createFieldVariable<1>(name);
+}
+
+bool Manager::hasMesh(std::string meshName)
+{
+  return meshes_.find(meshName) != meshes_.end();
 }
 
 };  // namespace

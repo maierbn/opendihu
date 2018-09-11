@@ -49,33 +49,6 @@ protected:
   PyObject *specificSettings_;  ///< the python object of the settings for this mesh
 };
 
-/** dummy mesh to signal that no mesh was specified (meshManager will instead create a mesh with a single element)
- */
-class None : public Mesh
-{
-public:
-  using Mesh::Mesh;
-
-  //! dimensionality of the mesh
-  int dimension() const {return 0;}
-  static constexpr int dim() {return 0;}
-  
-  //! number of nodes in the mesh stored in the local partition, this also includes ghost nodes
-  node_no_t nNodesLocalWithGhosts() const {return 0;}
-  
-  //! the number of non-ghost nodes stored in the local partition
-  node_no_t nNodesLocalWithoutGhosts() const {return 0;}
-  
-  //! number of elements in the mesh stored in the current partition
-  element_no_t nElementsLocal() const {return 0;}
-  
-  //! return the MeshPartitionBase
-  std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase(){return nullptr;}
-  
-  //! initialization method
-  void initialize(){}
-};
-
 /**
  * base class for a mesh with a dimension.
  */

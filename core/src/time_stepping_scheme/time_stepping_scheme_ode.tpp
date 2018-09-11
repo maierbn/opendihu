@@ -99,10 +99,13 @@ initialize()
 
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
+
+  //TODO: pass on boundary conditions that were defined in the timestepping scheme to e.g. the FiniteElements class
   discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
-  data_->setFunctionSpace(std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh));
+  std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace = std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh);
+  data_->setFunctionSpace(functionSpace);
   
   // set component names in data
   std::vector<std::string> componentNames;
@@ -112,6 +115,9 @@ initialize()
   data_->initialize();
 
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+
+  // parse boundary conditions
+  initializeBoundaryConditions();
 
   // set initial values from settings
 

@@ -18,7 +18,7 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType>
 class CellmlAdapterBase
 {
 public:
@@ -36,8 +36,8 @@ public:
   void initialize();
   
   ///! set initial values as given in python config
-  template<typename FunctionSpaceType>
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
+  template<typename FunctionSpaceType2>
+  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues);
 
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
@@ -50,8 +50,6 @@ public:
 
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
-  
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> FunctionSpace;   ///< FunctionSpace type
 
 protected:
 

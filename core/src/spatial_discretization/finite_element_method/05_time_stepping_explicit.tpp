@@ -15,7 +15,6 @@
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 
-
 namespace SpatialDiscretization
 {
 
@@ -54,7 +53,7 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   KSPConvergedReason convergedReason;
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
 
-  VLOG(1) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm
+  VLOG(1) << "Rhs (" << this->data_.rightHandSide().nDofsGlobal() << " global dofs) recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 

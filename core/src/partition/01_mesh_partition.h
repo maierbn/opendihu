@@ -128,13 +128,20 @@ public:
   //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
   std::array<int,MeshType::dim()> getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const;
 
+  //! get the local coordinates for a global node No. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
+  std::array<int,MeshType::dim()> getLocalCoordinates(global_no_t nodeGlobalNo, bool &isLocalNonGhost) const;
+
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
   void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;
   
   //! from a vector of values of global/natural dofs remove all that are non-local
+  template <typename T>
+  void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
+
+  //! from a vector of values of global/natural dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
-  
+
   //! get the partition index in a given coordinate direction from the rankNo
   int convertRankNoToPartitionIndex(int coordinateDirection, int rankNo);
 
@@ -248,6 +255,10 @@ public:
   
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
+
+  //! from a vector of values of global dofs remove all that are non-local, templated type
+  template <typename T>
+  void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
 
   //! this does nothing for unstructured meshes, only for structured meshes
   void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};

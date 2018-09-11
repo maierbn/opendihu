@@ -15,12 +15,12 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates>
+template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
 
 
-template<int nStates>
-void RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   // 1) if simdSourceFilename is given, use that source to compile the library
@@ -75,7 +75,8 @@ initializeRhsRoutine()
       }
     }
     
-    if (doCompilation)
+    int rankNo = this->context_.ownRankNo();
+    if (doCompilation && rankNo == 0)  // only recompile on rank 0
     {
      
       if (libraryFilename.find("/") != std::string::npos)
@@ -150,8 +151,8 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
  
@@ -162,7 +163,13 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+  void* handle = NULL;
+  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  {
+    handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
   if (handle)
   {
     // load rhs method
@@ -194,7 +201,7 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates> *cellmlAdapter = (CellmlAdapter<nStates> *)context;
+        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
@@ -255,8 +262,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -579,8 +586,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
   return true;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";

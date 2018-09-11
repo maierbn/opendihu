@@ -11,10 +11,10 @@
 #include "mesh/mesh_manager.h"
 
 
-template<int nStates>
-CallbackHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+CallbackHandler<nStates,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
-  RhsRoutineHandler<nStates>(context),
+  RhsRoutineHandler<nStates,FunctionSpaceType>(context),
   DiscretizableInTime(SolutionVectorMapping()),
   setParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
@@ -22,16 +22,16 @@ CallbackHandler(DihuContext context) :
 {
 }
 
-template<int nStates>
-CallbackHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+CallbackHandler<nStates,FunctionSpaceType>::
 ~CallbackHandler()
 {
   Py_CLEAR(pythonSetParametersFunction_);
   Py_CLEAR(pythonHandleResultFunction_);
 }
 
-template<int nStates>
-void CallbackHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CallbackHandler<nStates,FunctionSpaceType>::
 initializeCallbackFunctions()
 {
   if (PythonUtility::hasKey(this->specificSettings_, "setParametersFunction"))
@@ -77,8 +77,8 @@ initializeCallbackFunctions()
   }
 }
 
-template<int nStates>
-void CallbackHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CallbackHandler<nStates,FunctionSpaceType>::
 callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector< double >& parameters)
 {
   if (pythonSetParametersFunction_ == NULL)
@@ -97,7 +97,7 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   for (unsigned int i=0; i<parameters.size(); i++)
   {
     PyObject *item = PyList_GetItem(parametersList, (Py_ssize_t)i);
-    parameters[i] = PythonUtility::convertFromPython<double>(item);
+    parameters[i] = PythonUtility::convertFromPython<double>::get(item);
   }
 
   // decrement reference counters for python objects
@@ -106,8 +106,8 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   Py_CLEAR(arglist);
 }
 
-template<int nStates>
-void CallbackHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CallbackHandler<nStates,FunctionSpaceType>::
 callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime,
                                double *states, double *intermediates)
 {

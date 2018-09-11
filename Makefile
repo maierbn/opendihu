@@ -35,7 +35,7 @@ solid_mechanics:
 	cd testing/system_testing/tests/solid_mechanics && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 multiple_fibers:
-	cd examples/multiple_fibers && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd testing/system_testing/tests/multiple_fibers && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 streamline_tracer:
 	cd testing/system_testing/tests/fibers && python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

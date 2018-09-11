@@ -10,8 +10,8 @@
 #include "utility/string_utility.h"
 #include "mesh/mesh_manager.h"
 
-template<int nStates>
-CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+CellmlAdapterBase<nStates,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context)
 {
@@ -21,14 +21,14 @@ CellmlAdapterBase(DihuContext context) :
   LOG(TRACE) << "CellmlAdapterBase constructor";
 }
 
-template<int nStates>
-CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+CellmlAdapterBase<nStates,FunctionSpaceType>::
 ~CellmlAdapterBase()
 {
 }
 
-template<int nStates>
-constexpr int CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+constexpr int CellmlAdapterBase<nStates,FunctionSpaceType>::
 nComponents()
 {
   return nStates;
@@ -36,20 +36,20 @@ nComponents()
 
 
 
-template<int nStates>
-void CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates>::initialize";
+  LOG(TRACE) << "CellmlAdapterBase<nStates,FunctionSpaceType>::initialize";
 
   if (VLOG_IS_ON(1))
   {
-    LOG(DEBUG) << "CellmlAdapterBase<nStates>::initialize querying meshManager for mesh";
+    LOG(DEBUG) << "CellmlAdapterBase<nStates,FunctionSpaceType>::initialize querying meshManager for mesh";
     LOG(DEBUG) << "specificSettings_: ";
     PythonUtility::printDict(specificSettings_);
   }
   
-  // create a mesh if there is not yet one assigned
+  // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
   mesh_ = context_.meshManager()->mesh<>(specificSettings_);
   mesh_->initialize();
   LOG(DEBUG) << "Cellml mesh has " << mesh_->nNodesLocalWithoutGhosts() << " local nodes";
@@ -82,12 +82,12 @@ initialize()
 }
 
 
-template<int nStates>
-template<typename FunctionSpaceType>
-bool CellmlAdapterBase<nStates>::
-setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues)
+template<int nStates, typename FunctionSpaceType>
+template<typename FunctionSpaceType2>
+bool CellmlAdapterBase<nStates,FunctionSpaceType>::
+setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues)
 {
-  LOG(TRACE) << "CellmlAdapterBase<nStates>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
+  LOG(TRACE) << "CellmlAdapterBase<nStates,FunctionSpaceType>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
@@ -155,15 +155,15 @@ setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initia
   return false;
 }
 
-template<int nStates>
-std::shared_ptr<Mesh::Mesh> CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+std::shared_ptr<Mesh::Mesh> CellmlAdapterBase<nStates,FunctionSpaceType>::
 mesh()
 {
   return mesh_;
 }
 
-template<int nStates>
-void CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,FunctionSpaceType>::
 getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
 {
   nInstances = nInstances_;
@@ -171,15 +171,15 @@ getNumbers(int& nInstances, int& nIntermediates, int& nParameters)
   nParameters = nParameters_;
 }
 
-template<int nStates>
-void CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->stateNames_;
 }
 
-template<int nStates>
-bool CellmlAdapterBase<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool CellmlAdapterBase<nStates,FunctionSpaceType>::
 knowsMeshType()
 {
   return false;

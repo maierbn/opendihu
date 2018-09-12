@@ -11,6 +11,7 @@ namespace ModelOrderReduction
 
 /** A class for model order reduction techniques.
  */
+<<<<<<< HEAD
 template<typename FunctionSpaceType>
 class MORBase
 {

@@ -41,6 +41,12 @@ public:
   //! initialize discretizableInTime
   virtual void initialize();
   
+  //! interval for output of time step number and time
+  int timeStepOutputInterval();
+  
+  //! discretizable in time object
+  DiscretizableInTimeType &discretizableInTime();
+  
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   

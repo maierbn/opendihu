@@ -1,19 +1,23 @@
+#pragma once
+
 #include "control/dihu_context.h"
+
 #include "data_management/solution_vector_mapping.h"
-#include "model_order_reduction/mor.h"
+#include "data_management/solution_vector_mapping.h"
+
+#include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
-
-
+#include "model_order_reduction/mor.h"
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingType>
-  class TimeSteppingSchemeOdeReduced<TimeSteppingType> : 
-    public MORBase, 
+  class TimeSteppingSchemeOdeReduced : 
+  public MORBase<FunctionSpace::Generic>, 
     public TimeSteppingScheme::TimeSteppingScheme
   {
   public:
-    typdef typename FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
+    typedef FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
     
     //! constructor
     TimeSteppingSchemeOdeReduced(DihuContext context);
@@ -42,11 +46,15 @@ namespace ModelOrderReduction
     //! reset state such that new initialization becomes necessary
     virtual void reset();
     
+    ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
+    bool knowsMeshType();
+    
   protected:
     PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+    TimeSteppingType timestepping_;
     
   private:
-    TimeSteppingType timestepping_;
+    SolutionVectorMapping solutionVectorMapping_;
     bool initialized_;     ///< if initialize() was already called
   };
   

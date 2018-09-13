@@ -70,6 +70,13 @@ solution()
 }
 
 template<typename DiscretizableInTimeType>
+DiscretizableInTimeType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+discretizableInTime()
+{
+  return this->discretizableInTime_;
+}
+
+template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
@@ -152,5 +159,11 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
+template<typename DiscretizableInTimeType>
+int TimeSteppingSchemeOde<DiscretizableInTimeType>::
+timeStepOutputInterval()
+{
+  return this->timeStepOutputInterval_;
+}
 
 } // namespace

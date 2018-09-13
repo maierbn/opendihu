@@ -24,6 +24,13 @@ setBasis()
 }
 
 template<typename FunctionSpaceType>
+Data::ModelOrderReduction<FunctionSpaceType> &MORBase<FunctionSpaceType>::
+data()
+{
+  return *data_;
+}
+
+template<typename FunctionSpaceType>
 void MORBase<FunctionSpaceType>::
 initialize()
 {   

@@ -1,6 +1,5 @@
 #pragma once
 
-
 namespace Data{
 
 template<typename FunctionSpaceType>  
@@ -29,14 +28,14 @@ public:
   //void initializeRedSysMatrix(Mat &A_R);
    
   //! solution which is of course the reduced solution
-  Vec &Solution();
+  Vec &redSolution();
    
   //! The reduced order increment
-  Vec &Increment();
+  Vec &redIncrement();
    
   virtual void initialize() override;
    
-private:
+protected:
    
   Mat basis_; // V
   Mat basisTransp_; // V^T

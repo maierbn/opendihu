@@ -1,19 +1,17 @@
+#pragma once 
+
 #include "control/dihu_context.h"
-#include "data_management/solution_vector_mapping.h"
-#include "model_order_reduction/mor.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "model_order_reduction/time_stepping_scheme_ode_reduced.h"
 
 
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingExplicitType>
-  class TimeSteppingSchemeOdeReducedExplicit <TimeSteppingExplicitType> : 
-    public MORBase, 
-    public TimeSteppingScheme::TimeSteppingScheme
+  class TimeSteppingSchemeOdeReducedExplicit : 
+  public TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>
   {
   public:
-    typdef typename FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
     
     //! constructor
     TimeSteppingSchemeOdeReducedExplicit(DihuContext context);
@@ -27,8 +25,11 @@ namespace ModelOrderReduction
     //! initialize timestepping member
     void initialize();
     
-    //! 
+    //! advance the simulation by the time step
     void advanceTimeSpan();
+    
+    //! evaluates the right hand side function 
+    virtual void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
     
   protected:
     

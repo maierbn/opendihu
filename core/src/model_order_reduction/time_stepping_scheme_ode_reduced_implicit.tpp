@@ -1,15 +1,16 @@
+#pragma once
+
 #include "model_order_reduction/time_stepping_scheme_ode_reduced_implicit.h"
 
 #include <Python.h>
 #include "utility/python_utility.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingImplicitType>
   TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
   TimeSteppingSchemeOdeReducedImplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced(context)
+  TimeSteppingSchemeOdeReduced<TimesteppingImplicitType>(context), initialized_(false)
   {
   }
   

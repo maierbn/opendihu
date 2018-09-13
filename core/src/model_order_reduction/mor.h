@@ -11,7 +11,6 @@ namespace ModelOrderReduction
 
 /** A class for model order reduction techniques.
  */
-<<<<<<< HEAD
 template<typename FunctionSpaceType>
 class MORBase
 {
@@ -25,6 +24,9 @@ public:
   
   //! Set the basis V as Petsc Mat
   void setBasis();
+  
+  //! data object for model order reduction
+  Data &data();
   
   virtual void initialize();
    

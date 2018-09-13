@@ -1,16 +1,19 @@
+#pragma once 
+
 #include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.h"
 
 #include <Python.h>
+#include<petscmat.h>
 #include "utility/python_utility.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "utility/petsc_utility.h"
+
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingExplicitType>
   TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  MORBase(context["ModelOrderReduction"]), TimeSteppingScheme(context["ModelOrderReduction"]),
-  timestepping_(context_["ModelOrderReduction"]), initialized_(false) 
+  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context), initialized_(false) 
   {
   }
   
@@ -28,65 +31,68 @@ namespace ModelOrderReduction
   
   template<typename TimeSteppingExplicitType>
   void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
+  evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
+  {
+    this->timestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);   
+  }
+   
+  template<typename TimeSteppingExplicitType>
+  void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   advanceTimeSpan()
   {
     // compute timestep width
-    double timeSpan = this->timestepping_.endTime_ - this->timestepping_.startTime_;
+    double timeSpan = this->endTime_ - this->startTime_;
     
-    LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timestepping_.timeStepWidth_
-    << " n steps: " << this->timestepping_.numberTimeSteps_;
+    LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+    << " n steps: " << this->numberTimeSteps_;
     
     // debugging output of matrices
-    //this->timestepping_.data_->print();
+    //this->timestepping_.data().print();
     
-    Vec &solution = this->timestepping_.data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec &increment = this->timestepping_.data->increment().getContiguousValuesGlobal();
-    Vec &redSolution= this->solution().getContiguousValuesGlobal();
+    Vec &solution = this->timestepping_.data().solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+    Vec &increment = this->timestepping_.data().increment().getContiguousValuesGlobal();
     
     // loop over time steps
-    double currentTime = this->timestepping_.startTime_;
-    for(int timeStepNo = 0; timeStepNo < this->timestepping_.numberTimeSteps_;)
+    double currentTime = this->startTime_;
+    for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
     {
-      if (timeStepNo % this->timestepping_.timeStepOutputInterval_ == 0)
+      if (timeStepNo % this->timestepping_.timeStepOutputInterval() == 0)
       {
         std::stringstream threadNumberMessage;
         threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-        LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->timestepping_.numberTimeSteps_<< ", t=" << currentTime;
+        LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
       }
       
-      VLOG(1) << "starting from solution: " << this->timestepping_.data_->solution();
+      VLOG(1) << "starting from solution: " << this->timestepping_.data().solution();
       
       // advance computed value
       // compute next delta_u = f(u)
-      this->timestepping_.discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        solution, increment, timeStepNo, currentTime);
+      this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
       
-      VLOG(1) << "computed increment: " << this->timestepping_.data_->increment() << ", dt=" << this->timestepping_.timeStepWidth_;
+      VLOG(1) << "computed increment: " << this->timestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
       
       PetscErrorCode ierr;
       
       // reduction step
-      ierr=MatMult(this->basisTransp(),increment,this->redIncrement_); 
+      ierr=MatMult(this->data_->basisTransp(),increment,this->data_->redIncrement()); CHKERRV(ierr); 
       
-      // integrate, y += dt * delta_u
-      VecAXPY(this->redSolution_, this->timeStepWidth_, this->redIncrement_);
+      // integrate, z += dt * delta_z
+      VecAXPY(this->data_->redSolution(), this->timeStepWidth_, this->data_->redIncrement());
       
       // full state recovery
-      ierr=MatMult(this->basis(),this->redSolution_,solution); 
-      
-      VLOG(1) << "updated solution: " << this->data_->solution();
+      ierr=MatMult(this->data_->basis(),this->data_->redSolution(),solution); CHKERRV(ierr);
       
       // advance simulation time
       timeStepNo++;
       currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
       
-      VLOG(1) << "solution after integration: " << this->data_->solution();
+      VLOG(1) << "solution after integration: " << this->timestepping_.data().solution();
       
       // write current output values
-      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+      this->outputWriterManager_.writeOutput(this->timestepping_.data(), timeStepNo, currentTime);
     }
     
-    this->data_->solution().restoreContiguousValuesGlobal();
+    this->timestepping_.data().solution().restoreContiguousValuesGlobal();
     
   }
   

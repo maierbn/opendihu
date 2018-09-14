@@ -706,6 +706,10 @@ config = {
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
   }
+  else
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));  // pause execution, such that output files can be closed
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -830,6 +834,11 @@ config = {
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
   }
+  else
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));  // pause execution, such that output files can be closed
+  }
+
   nFails += ::testing::Test::HasFailure();
 }
 
@@ -888,8 +897,6 @@ config = {
   problemSerial.run();
 
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
-
   LOG(INFO) << " =================== run parallel problem ================= ";
 
   // run parallel problem
@@ -940,6 +947,10 @@ config = {
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
+  else
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));  // pause execution, such that output files can be closed
   }
 
   nFails += ::testing::Test::HasFailure();
@@ -1165,6 +1176,10 @@ config = {
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
+  else
+  {
+
   }
 
   nFails += ::testing::Test::HasFailure();

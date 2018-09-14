@@ -69,6 +69,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     }
     VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
 
+    setOwnRankPartitioningIndex();
     this->createLocalDofOrderings();
   }
 

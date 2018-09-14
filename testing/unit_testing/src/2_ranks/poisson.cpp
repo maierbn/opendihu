@@ -120,6 +120,15 @@ config = {
 
 TEST(PoissonTest, SerialEqualsParallelLocalInput)
 {
+  typedef Control::MultipleInstances<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredDeformableOfDimension<2>,
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<2>,
+      Equation::Static::Poisson
+    >
+  > ProblemType;
+
   // run serial problem
   std::string pythonConfig = R"(
 # Poisson 2D,  3 x 4 = 12 nodes
@@ -163,26 +172,17 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  typedef Control::MultipleInstances<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<2>,
-      BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<2>,
-      Equation::Static::Poisson
-    >
-  > ProblemType;
-
   ProblemType problemSerial(settings);
   problemSerial.run();
 
   // run parallel problem
   std::string pythonConfig2 = R"(
-# Poisson 2D,  3 x 4 = 12 nodes
+# Poisson 2D,  3 x 4 = 12 nodes (parallel)
 
 # extract rankNo and nRanks from arguments
 import sys
-rankNo = (int)(sys.argv[0])
-nRanks = (int)(sys.argv[1])
+rankNo = (int)(sys.argv[-2])
+nRanks = (int)(sys.argv[-1])
 print("rankNo: {}, nRanks: {}".format(rankNo,nRanks))
 
 nx = 2   # number of elements in x direction

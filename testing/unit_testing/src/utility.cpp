@@ -154,6 +154,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
 
 void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFilesToCheck)
 {
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
+
   // command line version
   std::stringstream command;
   command << "../../../dependencies/python/install/bin/python3 ../../../scripts/validate_parallel.py ";

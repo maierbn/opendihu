@@ -28,8 +28,8 @@ TEST(DiffusionTest, SerialEqualsParallelGlobal)
 # Diffusion 2D
 
 import sys
-rankNo = (int)(sys.argv[0])
-nRanks = (int)(sys.argv[1])
+rankNo = (int)(sys.argv[-2])
+nRanks = (int)(sys.argv[-1])
 
 print(rankNo,nRanks)
 
@@ -72,6 +72,7 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+  int ownRankNo = settings.ownRankNo();
 
   ProblemType problemGlobalSettings(settings);
   problemGlobalSettings.run();
@@ -81,8 +82,8 @@ config = {
 # Diffusion 2D
 
 import sys
-rankNo = (int)(sys.argv[0])
-nRanks = (int)(sys.argv[1])
+rankNo = (int)(sys.argv[-2])
+nRanks = (int)(sys.argv[-1])
 
 print(rankNo,nRanks)
 
@@ -130,7 +131,10 @@ config = {
 
 
   std::vector<std::string> outputFilesToCheck = {"out_0000004.py", "out_0000004.0.py", "out_0000004.1.py", "out_0000004.2.py", "out_0000004.3.py", "out_0000004.4.py", "out_0000004.5.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -154,8 +158,8 @@ TEST(DiffusionTest, SerialEqualsParallelLocal)
 # Diffusion 2D
 
 import sys
-rankNo = (int)(sys.argv[0])
-nRanks = (int)(sys.argv[1])
+rankNo = (int)(sys.argv[-2])
+nRanks = (int)(sys.argv[-1])
 
 print(rankNo,nRanks)
 
@@ -198,6 +202,8 @@ config = {
 )";
 
   DihuContext settings0(argc, argv, pythonConfig0);
+  int ownRankNo = settings0.ownRankNo();
+
   ProblemType problemSerial(settings0);
   problemSerial.run();
 
@@ -206,8 +212,8 @@ config = {
 # Diffusion 2D
 
 import sys
-rankNo = (int)(sys.argv[0])
-nRanks = (int)(sys.argv[1])
+rankNo = (int)(sys.argv[-2])
+nRanks = (int)(sys.argv[-1])
 
 print(rankNo,nRanks)
 
@@ -263,7 +269,10 @@ config = {
   problemLocalSettings.run();
 
   std::vector<std::string> outputFilesToCheck = {"out_0000004.py", "out_0000004.0.py", "out_0000004.1.py", "out_0000004.2.py", "out_0000004.3.py", "out_0000004.4.py", "out_0000004.5.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }

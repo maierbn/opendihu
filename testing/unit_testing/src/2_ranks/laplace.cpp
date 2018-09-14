@@ -8,7 +8,7 @@
 #include "arg.h"
 #include "opendihu.h"
 #include "../utility.h"
-/*
+
 TEST(LaplaceTest, Structured1DLinear)
 {
   std::string pythonConfig = R"(
@@ -419,6 +419,8 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
+  int ownRankNo = settings.ownRankNo();
+
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<2>,
@@ -486,7 +488,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -531,6 +536,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -591,7 +598,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -634,6 +644,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -690,11 +702,14 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
-*/
+
 // 2D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DLinear)
 {
@@ -740,6 +755,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -807,11 +824,13 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
-
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DQuadratic)
 {
   // run serial problem
@@ -852,6 +871,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -912,7 +933,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -955,6 +979,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1011,7 +1037,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -1060,6 +1089,8 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
+  int ownRankNo = settings.ownRankNo();
+
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredDeformableOfDimension<3>,
@@ -1124,7 +1155,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -1171,6 +1205,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1233,7 +1269,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -1284,6 +1323,8 @@ config = {
 // )";
 //
 //   DihuContext settings(argc, argv, pythonConfig);
+//
+//  int ownRankNo = settings.ownRankNo();
 //
 //   typedef Control::MultipleInstances<
 //     SpatialDiscretization::FiniteElementMethod<
@@ -1345,7 +1386,10 @@ config = {
 //   problemParallel.run();
 //
 //   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-//   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//   if (ownRankNo == 0)
+//  {
+//    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//  }
 //
 //   nFails += ::testing::Test::HasFailure();
 // }
@@ -1394,6 +1438,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1459,7 +1505,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -1506,6 +1555,8 @@ config = {
 )";
 
   DihuContext settings(argc, argv, pythonConfig);
+
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1568,7 +1619,10 @@ config = {
   problemParallel.run();
 
   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  if (ownRankNo == 0)
+  {
+    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+  }
 
   nFails += ::testing::Test::HasFailure();
 }
@@ -1618,6 +1672,8 @@ config = {
 // )";
 //
 //   DihuContext settings(argc, argv, pythonConfig);
+//
+//  int ownRankNo = settings.ownRankNo();
 //
 //   typedef Control::MultipleInstances<
 //     SpatialDiscretization::FiniteElementMethod<
@@ -1679,8 +1735,10 @@ config = {
 //   problemParallel.run();
 //
 //   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-//   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//   if (ownRankNo == 0)
+//  {
+//    assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//  }
 //
 //   nFails += ::testing::Test::HasFailure();
 // }
-*/

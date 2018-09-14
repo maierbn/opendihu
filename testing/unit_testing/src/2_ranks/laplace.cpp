@@ -769,6 +769,8 @@ config = {
 
   problemSerial.run();
 
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
+
   // run parallel problem
   std::string pythonConfig2 = R"(
 # Laplace 2D, 3 x 2 (=6) elements, 4 x 3 (=12) nodes
@@ -869,7 +871,6 @@ config = {
   }
 }
 )";
-
   DihuContext settings(argc, argv, pythonConfig);
 
   int ownRankNo = settings.ownRankNo();
@@ -885,6 +886,9 @@ config = {
   ProblemType problemSerial(settings);
 
   problemSerial.run();
+
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
 
   LOG(INFO) << " =================== run parallel problem ================= ";
 
@@ -993,6 +997,9 @@ config = {
   ProblemType problemSerial(settings);
 
   problemSerial.run();
+
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
 
   // run parallel problem
   std::string pythonConfig2 = R"(

@@ -10,9 +10,9 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "Heun")
+  TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared <Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
   this->outputWriterManager_.initialize(this->specificSettings_);
@@ -32,9 +32,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
   // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
-  Vec &solution = this->data_->solution().getContiguousValuesGlobal();
-  Vec &increment = this->data_->increment().getContiguousValuesGlobal();
-  Vec &intermediateIncrement = dataHeun->intermediateIncrement().getContiguousValuesGlobal();
+  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
+  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
+  Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getContiguousValuesGlobal();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -85,9 +85,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     //this->data_->print();
   }
 
-  this->data_->solution().restoreContiguousValuesGlobal();
-  this->data_->increment().restoreContiguousValuesGlobal();
-  dataHeun->intermediateIncrement().restoreContiguousValuesGlobal();
+  this->data_->solution()->restoreContiguousValuesGlobal();
+  this->data_->increment()->restoreContiguousValuesGlobal();
+  dataHeun->intermediateIncrement()->restoreContiguousValuesGlobal();
 }
 
 template<typename DiscretizableInTime>

@@ -91,6 +91,17 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values,
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+//! set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<typename FunctionSpaceType>
+template<int nValues>
+void FieldVariableSetGetComponent<FunctionSpaceType,1>::
+setValues(const std::array<dof_no_t,nValues> dofNosLocal, std::array<double,nValues> values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+  this->values_->setValues(0, nValues, (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
+}
+
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::

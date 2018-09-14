@@ -24,11 +24,13 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-  << " n steps: " << this->numberTimeSteps_;
-  
-  int nEntries;
-  VecGetSize(this->data_->solution().valuesGlobal(), &nEntries);
-  
+    << " n steps: " << this->numberTimeSteps_;
+
+  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
+    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
+
+  Vec solution = this->data_->solution()->valuesGlobal();
+
   // loop over time steps
   double currentTime = this->startTime_;
   
@@ -36,19 +38,19 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
     {
-      std::stringstream threadNumberMessage;
-      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
+    // adjust rhs vector such that boundary conditions are satisfied
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+
     // advance computed value
-    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix
-    
-    this->solveLinearSystem(this->data_->solution().valuesGlobal(), this->data_->solution().valuesGlobal());
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
+    this->solveLinearSystem(solution, solution);
     
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);

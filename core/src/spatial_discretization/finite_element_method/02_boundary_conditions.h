@@ -1,12 +1,17 @@
 #pragma once
 
+#include <memory>
+
 #include "spatial_discretization/finite_element_method/01_matrix.h"
+#include "spatial_discretization/dirichlet_boundary_conditions.h"
 
 namespace SpatialDiscretization
 {
 
 /**
- * Class that prepares the system to enforce Dirichlet boundary conditions, regular numerical integration
+ * Class that prepares the system to enforce Dirichlet boundary conditions.
+ * It uses values from the already set up system matrix and transfers them to rhs.
+ * In this way it works for stencil based matrices as well as matrices created by regular numerical integration.
  */
 template<typename FunctionSpaceType, typename QuadratureType, typename Term, typename Dummy= Term>
 class BoundaryConditions :
@@ -21,40 +26,10 @@ protected:
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
   virtual void applyBoundaryConditions();
 
-  //! apply boundary conditions in weak form by adding a term to the rhs
-  void applyBoundaryConditionsWeakForm();
-
   //! parse config and fill local member variables
   void parseBoundaryConditions();
 
-  struct ElementWithNodes
-  {
-    element_no_t elementNoLocal;   ///< local element no
-    std::vector<std::pair<int,double>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
-  };
-  std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
-  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
-  std::vector<double> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
-};
-
-/**
- * Class that prepares the system to enforce Dirichlet boundary conditions, when Quadrature::None is given, uses values from stiffness matrix
- */
-template<typename FunctionSpaceType, typename Term>
-class BoundaryConditions<FunctionSpaceType, Quadrature::None, Term, Term> :
-  public FiniteElementMethodMatrix<FunctionSpaceType, Quadrature::None, Term>
-{
-public:
-  // use constructor of base class
-  using FiniteElementMethodMatrix<FunctionSpaceType, Quadrature::None, Term>::FiniteElementMethodMatrix;
-
-protected:
-
-  //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
-  virtual void applyBoundaryConditions();
-
-  //! Apply Dirichlet BC in strong form by setting columns and rows in stiffness matrix to zero such that Dirichlet boundary conditions are met, sets some rows/columns to 0 and the diagonal to 1, changes rhs accordingly
-  void applyBoundaryConditionsStrongForm();
+  std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to system matrix and rhs
 };
 
 /**
@@ -76,5 +51,4 @@ protected:
 
 };  // namespace
 
-#include "spatial_discretization/finite_element_method/02_boundary_conditions_strong_form.tpp"
-#include "spatial_discretization/finite_element_method/02_boundary_conditions_weak_form.tpp"
+#include "spatial_discretization/finite_element_method/02_boundary_conditions.tpp"

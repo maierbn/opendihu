@@ -22,7 +22,7 @@ setRightHandSide()
   LOG(TRACE) << "setRightHandSide";
 
   dof_no_t nUnknownsLocal = this->data_.nUnknownsLocalWithoutGhosts();     // local unknows without ghosts
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   std::vector<double> localValues;
   
@@ -42,7 +42,7 @@ setRightHandSide()
   }
 
   // assign read values to rightHandSide variable. They are now stored in "strong form" and need to be transformed to "weak form" by multiplying with mass matrix
-  rightHandSide.setValuesWithoutGhosts(localValues);
+  rightHandSide->setValuesWithoutGhosts(localValues);
 
   // transform the entries from strong form to weak form
   this->multiplyRightHandSideWithMassMatrix();

@@ -160,7 +160,7 @@ mesh()
 template<int nStates, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
 bool CellmlAdapter<nStates,FunctionSpaceType>::
-setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
 {
   return CellmlAdapterBase<nStates,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
 }

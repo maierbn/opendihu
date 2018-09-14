@@ -12,9 +12,9 @@ namespace TimeSteppingScheme
 
 /** A specialized solver for the multidomain equation, as formulated by Thomas Klotz (2017)
   */
-template<typename DiscretizableInTime>
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
 class MultidomainSolver :
-  public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
+  public TimeSteppingImplicit<FiniteElementMethodDiffusion>, public Runnable
 {
 public:
 
@@ -24,9 +24,16 @@ public:
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
+  //! initialize components of the simulation
+  void initialize();
+
   //! run the simulation
   void run();
+
 private:
+  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the initial Laplace problem that determines the fibre direction.
+  CellMLAdapter cellMLAdapter_;   ///< the cellml adapter object that solves the cellml rhs, e.g. Hodgkin-Huxley model
+
 };
 
 }  // namespace

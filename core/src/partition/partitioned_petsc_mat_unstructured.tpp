@@ -84,6 +84,7 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
     stream << "], values [";
     for (int i = 0; i < n*m; i++)
       stream << v[i] << " ";
+    stream << "]";
     VLOG(2) << stream.str();
   }
   

@@ -30,7 +30,7 @@ writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::Struc
 
   // get data of solution vector
   std::vector<double> vectorValues;
-  PetscUtility::getVectorEntries(data.solution().values(), vectorValues);
+  PetscUtility::getVectorEntries(data.solution()->values(), vectorValues);
 
   // determine number of entries in each D
   std::vector<long int> nEntries(D);
@@ -67,7 +67,7 @@ writeMatrices(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::Structured
 
   // get data of rhs vector
   int vectorSize = 0;
-  VecGetSize(data.rightHandSide().valuesLocal(), &vectorSize);
+  VecGetSize(data.rightHandSide()->valuesLocal(), &vectorSize);
 
   std::vector<int> indices(vectorSize);
   std::iota(indices.begin(), indices.end(), 0);
@@ -84,7 +84,7 @@ writeMatrices(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::Structured
   }
   std::vector<long int> singleEntry({(long)vectorValues.size()});
 
-  VecGetValues(data.rightHandSide().valuesLocal(), vectorSize, indices.data(), vectorValues.data());
+  VecGetValues(data.rightHandSide()->valuesLocal(), vectorSize, indices.data(), vectorValues.data());
 
   // write as numpy file
   writeToNumpyFile(vectorValues, filenameRhs, singleEntry);
@@ -123,7 +123,7 @@ writeNumpySolution(DataType &data, std::string filename)
 
   // get PETSc vector of values
   std::vector<double> values;
-  PetscUtility::getVectorEntries(data.solution().values(), values);
+  PetscUtility::getVectorEntries(data.solution()->values(), values);
 
   // get number of entries
   std::vector<long> nEntries(1, values.size());

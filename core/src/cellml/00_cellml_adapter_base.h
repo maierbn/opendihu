@@ -37,7 +37,7 @@ public:
   
   ///! set initial values as given in python config
   template<typename FunctionSpaceType2>
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
 
   //! return false because the object is independent of mesh type
   bool knowsMeshType();

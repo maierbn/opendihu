@@ -2,6 +2,7 @@
 
 #include "easylogging++.h"
 #include "utility/string_utility.h"
+#include "utility/python_utility.h"
 
 #include "basis_function/basis_function.h"
 #include "field_variable/factory.h"
@@ -69,8 +70,7 @@ parseFromSettings(PyObject *settings)
   {
     // get the python list that makes up the element, e.g. [[0,0], [1,0], [2,1], [3,0]]
     typedef std::array<PyObject *,this->nNodesPerElement()> PyElementNodes;
-    PyElementNodes pyElementNodes = PythonUtility::convertFromPython<PyElementNodes>::
-      get(pyElement,PyLong_FromLong(this->nNodesPerElement()));
+    PyElementNodes pyElementNodes = PythonUtility::convertFromPython<PyElementNodes>::get(pyElement);
 
     Element currentElement;
     currentElement.nodes.resize(this->nNodesPerElement());
@@ -78,7 +78,7 @@ parseFromSettings(PyObject *settings)
     for (int nodeIndex = 0; nodeIndex < this->nNodesPerElement(); nodeIndex++)
     {
        // extract the node positions, e.g. [1,0] (global node no., version no.) or just 1 (only global node no., version no. defaults to 0)
-       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], 0);
+       std::array<int,2> elementNode = PythonUtility::convertFromPython<std::array<int,2>>::get(pyElementNodes[nodeIndex], {0,0});
 
        VLOG(1) << "   elementNode " << elementNode;
 

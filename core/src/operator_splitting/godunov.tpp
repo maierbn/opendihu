@@ -27,10 +27,7 @@ advanceTimeSpan()
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    std::stringstream threadNumberMessage;
-    threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-    
-    LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     LOG(DEBUG) << "  Godunov: time step " << timeStepNo << ", t: " << currentTime;
 
     LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
@@ -44,8 +41,8 @@ advanceTimeSpan()
     
     LOG(DEBUG) << "  Godunov: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(this->timeStepping1_.solution(),
-      this->timeStepping2_.solutionVectorMapping(), this->timeStepping2_.solution());
+    this->timeStepping1_.solutionVectorMapping().transfer(*this->timeStepping1_.solution(),
+      this->timeStepping2_.solutionVectorMapping(), *this->timeStepping2_.solution());
 
     LOG(DEBUG) << "  Godunov: timeStepping2 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping2
@@ -57,8 +54,8 @@ advanceTimeSpan()
 
     LOG(DEBUG) << "  Godunov: transfer timeStepping2 -> timeStepping1";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping2_.solutionVectorMapping().transfer(this->timeStepping2_.solution(),
-      this->timeStepping1_.solutionVectorMapping(), this->timeStepping1_.solution());
+    this->timeStepping2_.solutionVectorMapping().transfer(*this->timeStepping2_.solution(),
+      this->timeStepping1_.solutionVectorMapping(), *this->timeStepping1_.solution());
 
     // advance simulation time
     timeStepNo++;

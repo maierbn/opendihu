@@ -33,7 +33,7 @@ public:
   SolutionVectorMapping &solutionVectorMapping();
 
   //! return the Petsc solution vector
-  typename Data::FieldVariableType &solution();
+  std::shared_ptr<typename Data::FieldVariableType> solution();
 
   //! return the data object
   Data &data();
@@ -55,16 +55,6 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
-  //! read dirichlet boundary conditions from config
-  void initializeBoundaryConditions();
-
-  //! set the dofs in the solution vector to the given boundary conditions
-  void applyBoundaryConditions();
-
-  std::vector<std::pair<int,std::array<double,DiscretizableInTimeType::nComponents()>>> boundaryConditions_;   ///< boundary condition values (dof no, values)
-  std::vector<dof_no_t> boundaryConditionDofs_;      ///< dofs for which boundary conditions are prescribed
-  std::vector<std::array<double,DiscretizableInTimeType::nComponents()>> boundaryConditionValues_;      ///< the values of the boundary conditions
-
   std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
 
   int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
@@ -74,4 +64,3 @@ protected:
 }  // namespace
 
 #include "time_stepping_scheme/time_stepping_scheme_ode.tpp"
-#include "time_stepping_scheme/time_stepping_scheme_ode_boundary_conditions.tpp"

@@ -35,7 +35,7 @@ public:
   //! set initial values and return true or don't do anything and return false
   // this could use std::any (c++17)
   //template<typename FieldVariableType>
-  //virtual bool setInitialValues(FieldVariableType &initialValues);
+  //virtual bool setInitialValues(std::shared_ptr<FieldVariableType> initialValues);
 
   //! get the names of components to be used for the solution variable
   virtual void getComponentNames(std::vector<std::string> &componentNames);

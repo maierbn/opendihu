@@ -50,7 +50,7 @@ setInitialValues()
   VLOG(1) << "set initial values to " << localValues;
 
   // set the first component of the solution variable by the given values
-  data_->solution().setValuesWithoutGhosts(0, localValues);
+  data_->solution()->setValuesWithoutGhosts(0, localValues);
 
   VLOG(1) << data_->solution();
 }
@@ -63,7 +63,7 @@ solutionVectorMapping()
 }
 
 template<typename DiscretizableInTimeType>
-typename TimeSteppingSchemeOde<DiscretizableInTimeType>::Data::FieldVariableType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+std::shared_ptr<typename TimeSteppingSchemeOde<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOde<DiscretizableInTimeType>::
 solution()
 {
   return data_->solution();
@@ -115,9 +115,6 @@ initialize()
   data_->initialize();
 
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
-
-  // parse boundary conditions
-  initializeBoundaryConditions();
 
   // set initial values from settings
 

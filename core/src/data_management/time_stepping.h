@@ -33,16 +33,11 @@ public:
   //! destructur
   ~TimeStepping();
 
-  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariableType &solution();
+  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariableType> solution();
 
-  //! return a reference to the increment vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariableType &increment();
-  
-  //! return a reference to the rhs vector, used for the variant 1 of the implicit Euler scheme
-  //FieldVariableType &rhs();
-
-  // virtual FieldVariableType &intermediateIncrement() = 0; 
+  //! return a reference to the increment vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariableType> increment();
   
   //! get the system matrix required by the implicit time stepping
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();

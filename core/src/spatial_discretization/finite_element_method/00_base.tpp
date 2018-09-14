@@ -96,7 +96,7 @@ solve()
   if (std::is_same<Term,Equation::None>::value)
   {
     // set solution to zero
-    data_.solution().zeroEntries();
+    data_.solution()->zeroEntries();
     return;
   }
 
@@ -119,12 +119,12 @@ solve()
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
-  ierr = VecSet(data_.solution().values(), scalar); CHKERRV(ierr);
+  ierr = VecSet(data_.solution()->values(), scalar); CHKERRV(ierr);
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
 #endif
 
   // solve the system
-  ierr = KSPSolve(*ksp, data_.rightHandSide().valuesGlobal(), data_.solution().valuesGlobal()); CHKERRV(ierr);
+  ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
 
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
@@ -134,7 +134,7 @@ solve()
   KSPConvergedReason convergedReason;
   ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
 
-  LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
+  LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 
   // check if solution is correct
@@ -142,15 +142,15 @@ solve()
   {
     // get rhs and solution from PETSc
     int vectorSize = 0;
-    VecGetSize(data_.solution().values(), &vectorSize);
+    VecGetSize(data_.solution()->values(), &vectorSize);
 
     std::vector<int> indices(vectorSize);
     std::iota(indices.begin(), indices.end(), 0);
     std::vector<double> solution(vectorSize);
     std::vector<double> rhs(vectorSize);
 
-    VecGetValues(data_.solution().values(), vectorSize, indices.data(), solution.data());
-    VecGetValues(data_.rightHandSide().values(), vectorSize, indices.data(), rhs.data());
+    VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
+    VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
 
     // get stiffness matrix
     int nRows, nColumns;

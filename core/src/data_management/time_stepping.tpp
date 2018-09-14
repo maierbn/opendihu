@@ -58,17 +58,17 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeStepping<FunctionSpaceType,nComponents>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TimeStepping<FunctionSpaceType,nComponents>::
 solution()
 {
-  return *this->solution_;
+  return this->solution_;
 }
 
 template<typename FunctionSpaceType,int nComponents>
-FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeStepping<FunctionSpaceType,nComponents>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TimeStepping<FunctionSpaceType,nComponents>::
 increment()
 {
-  return *this->increment_;
+  return this->increment_;
 }
 
 template<typename FunctionSpaceType,int nComponents>

@@ -85,7 +85,7 @@ initialize()
 template<int nStates, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
 bool CellmlAdapterBase<nStates,FunctionSpaceType>::
-setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates,FunctionSpaceType>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
   if(PythonUtility::hasKey(this->specificSettings_, "statesInitialValues"))
@@ -146,9 +146,9 @@ setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType2,nStates> &initi
 
   VLOG(1) << "statesAllInstances: " << statesAllInstances << ", nInstances: " << nInstances_ << ", nStates per instances: " << statesInitialValues_.size();
 
-  initialValues.setValuesWithoutGhosts(statesAllInstances);
+  initialValues->setValuesWithoutGhosts(statesAllInstances);
 
-  VLOG(1) << "initialValues: " << initialValues;
+  VLOG(1) << "initialValues: " << *initialValues;
   return true;
 
   LOG(DEBUG) << "do not set initial values";

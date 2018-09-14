@@ -479,7 +479,7 @@ template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typena
 Vec &SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,QuadratureType,Term>::
 rightHandSide()
 {
-  return this->data_.rightHandSide().valuesLocal();
+  return this->data_.rightHandSide()->valuesLocal();
 }
 
 template<typename FunctionSpaceType,typename FunctionSpaceTypeForUtility, typename QuadratureType, typename Term>

@@ -27,7 +27,7 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
     iterFileContents++;
   }
   
-  if (numberFileContents.empty())
+  if (numberFileContents.empty() || numberFileContents == ".")
     return 0;
   
   double number = 0;

@@ -24,11 +24,14 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   
   LOG(DEBUG) << "CrankNicolson::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-  << " n steps: " << this->numberTimeSteps_;
-  
-  int nEntries;
-  VecGetSize(this->data_->solution().valuesGlobal(), &nEntries);
-  
+    << " n steps: " << this->numberTimeSteps_;
+
+  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
+    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
+
+  Vec solution = this->data_->solution()->valuesGlobal();
+  Vec systemRightHandSide = dataTimeSteppingImplicit->systemRightHandSide()->valuesGlobal();
+
   // loop over time steps
   double currentTime = this->startTime_;
   
@@ -36,24 +39,22 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0)
     {
-      std::stringstream threadNumberMessage;
-      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
-    PetscErrorCode ierr;
-    
-    Vec rhs;
-    ierr=VecDuplicate(this->data_->solution().valuesGlobal(),&rhs); CHKERRV(ierr); //allocates storage but does not copy values
-    this->evaluateTimesteppingRightHandSideImplicit(this->data_->solution().valuesGlobal(), rhs, timeStepNo, currentTime);
-    
+    // compute systemRightHandSide = solution * integrationMatrix
+    this->evaluateTimesteppingRightHandSideImplicit(solution, systemRightHandSide, timeStepNo, currentTime);
+
+    // adjust rhs vector such that boundary conditions are satisfied
+    this->dirichletBoundaryConditions_->applyInRightHandSide(dataTimeSteppingImplicit->systemRightHandSide(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+
     // advance computed value
-    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix    
-    this->solveLinearSystem(rhs, this->data_->solution().valuesGlobal());
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
+    this->solveLinearSystem(systemRightHandSide, solution);
     
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
@@ -151,11 +152,10 @@ evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepN
   
   // this method computes output = input * (I+dt/2 M^(-1) K)= input *(-A+2I), where A=(I-dt/2 M^(-1) K) is the system matrix
   
-  Mat &integrationMatrix= this->data_->integrationMatrixRightHandSide()->valuesGlobal();
+  Mat &integrationMatrix = this->data_->integrationMatrixRightHandSide()->valuesGlobal();
   
   PetscErrorCode ierr;
-  
-  ierr = MatMult(integrationMatrix, input, output); CHKERRV(ierr);
+  ierr = MatMult(integrationMatrix, input, output); CHKERRV(ierr);    // MatMult(mat,x,y) computes y = Ax
   
   VLOG(1) << PetscUtility::getStringVector(output);
 }

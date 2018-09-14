@@ -192,7 +192,7 @@ def get_instance_config(i):
         },
       },
       "Term2": {     # Diffusion
-        "ExplicitEuler" : {
+        "CrankNicolson" : {
           #"initialValues": [2,2,4,5,2,2],
           #"numberTimeSteps": 1,
           "timeStepWidth": dt_1D,  # 1e-5

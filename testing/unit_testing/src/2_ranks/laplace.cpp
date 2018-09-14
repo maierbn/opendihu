@@ -147,7 +147,7 @@ config = {
   nFails += ::testing::Test::HasFailure();
 
 }
-*/
+
 TEST(LaplaceTest, Structured1DHermite2)
 {
   std::string pythonConfig = R"(
@@ -193,7 +193,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, Structured2DLinear)
 {
   std::string pythonConfig = R"(
@@ -694,7 +694,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
+*/
 // 2D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DLinear)
 {
@@ -811,7 +811,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-
+/*
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DQuadratic)
 {
   // run serial problem
@@ -1238,118 +1238,119 @@ config = {
   nFails += ::testing::Test::HasFailure();
 }
 
-*/
-/*
- * Test does not converge and gives slightly different results
-TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
-{
-  // run serial problem
-  std::string pythonConfig = R"(
-# Laplace 3D
-
-nx = 3   # number of elements in x direction
-ny = 2   # number of elements in y direction
-nz = 4   # number of elements in z direction
-
-# boundary conditions
-bc = {}
-for i in range(int(nx+1)):
-  for j in range(int(ny+1)):
-    x = i/(nx+1.)
-    y = j/(ny+1.)
-    bc[8*(j*(nx+1)+i)] = i
-
-    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-    bc[8*i2] = 10.*i
-
-config = {
-  "MultipleInstances": {
-    "nInstances": 1,
-    "instances": [{
-      "ranks": [0],
-      "FiniteElementMethod": {
-        "inputMeshIsGlobal": True,
-        "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "dirichletBoundaryConditions": bc,
-        "maxIterations": 1e5,
-        "relativeTolerance": 1e-15,
-        "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-        ]
-      }
-    }]
-  }
-}
-)";
-
-  DihuContext settings(argc, argv, pythonConfig);
-
-  typedef Control::MultipleInstances<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredDeformableOfDimension<3>,
-      BasisFunction::Hermite,
-      Quadrature::Gauss<2>,
-      Equation::Static::Laplace
-    >
-  > ProblemType;
-  ProblemType problemSerial(settings);
-
-  problemSerial.run();
-
-  // run parallel problem
-  std::string pythonConfig2 = R"(
-# Laplace 3D
-
-nx = 3   # number of elements in x direction
-ny = 2   # number of elements in y direction
-nz = 4   # number of elements in z direction
-
-# boundary conditions
-bc = {}
-for i in range(int(nx+1)):
-  for j in range(int(ny+1)):
-    x = i/(nx+1.)
-    y = j/(ny+1.)
-    bc[8*(j*(nx+1)+i)] = i
-
-    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-    bc[8*i2] = 10.*i
-
-config = {
-  "MultipleInstances": {
-    "nInstances": 1,
-    "instances": [{
-      "ranks": [0,1],
-      "FiniteElementMethod": {
-        "inputMeshIsGlobal": True,
-        "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "dirichletBoundaryConditions": bc,
-        "maxIterations": 1e5,
-        "relativeTolerance": 1e-15,
-        "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-        ]
-      }
-    }]
-  }
-}
-)";
 
 
-  DihuContext settings2(argc, argv, pythonConfig2);
+//  // Test does not converge and gives slightly different results
+// TEST(LaplaceTest, SerialEqualsParallelDeformable3DHermite)
+// {
+//   // run serial problem
+//   std::string pythonConfig = R"(
+// # Laplace 3D
+//
+// nx = 3   # number of elements in x direction
+// ny = 2   # number of elements in y direction
+// nz = 4   # number of elements in z direction
+//
+// # boundary conditions
+// bc = {}
+// for i in range(int(nx+1)):
+//   for j in range(int(ny+1)):
+//     x = i/(nx+1.)
+//     y = j/(ny+1.)
+//     bc[8*(j*(nx+1)+i)] = i
+//
+//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+//     bc[8*i2] = 10.*i
+//
+// config = {
+//   "MultipleInstances": {
+//     "nInstances": 1,
+//     "instances": [{
+//       "ranks": [0],
+//       "FiniteElementMethod": {
+//         "inputMeshIsGlobal": True,
+//         "nElements": [nx, ny, nz],
+//         "physicalExtent": [2*nx, 2*ny, 2*nz],
+//         "dirichletBoundaryConditions": bc,
+//         "maxIterations": 1e5,
+//         "relativeTolerance": 1e-15,
+//         "OutputWriter" : [
+//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+//         ]
+//       }
+//     }]
+//   }
+// }
+// )";
+//
+//   DihuContext settings(argc, argv, pythonConfig);
+//
+//   typedef Control::MultipleInstances<
+//     SpatialDiscretization::FiniteElementMethod<
+//       Mesh::StructuredDeformableOfDimension<3>,
+//       BasisFunction::Hermite,
+//       Quadrature::Gauss<2>,
+//       Equation::Static::Laplace
+//     >
+//   > ProblemType;
+//   ProblemType problemSerial(settings);
+//
+//   problemSerial.run();
+//
+//   // run parallel problem
+//   std::string pythonConfig2 = R"(
+// # Laplace 3D
+//
+// nx = 3   # number of elements in x direction
+// ny = 2   # number of elements in y direction
+// nz = 4   # number of elements in z direction
+//
+// # boundary conditions
+// bc = {}
+// for i in range(int(nx+1)):
+//   for j in range(int(ny+1)):
+//     x = i/(nx+1.)
+//     y = j/(ny+1.)
+//     bc[8*(j*(nx+1)+i)] = i
+//
+//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+//     bc[8*i2] = 10.*i
+//
+// config = {
+//   "MultipleInstances": {
+//     "nInstances": 1,
+//     "instances": [{
+//       "ranks": [0,1],
+//       "FiniteElementMethod": {
+//         "inputMeshIsGlobal": True,
+//         "nElements": [nx, ny, nz],
+//         "physicalExtent": [2*nx, 2*ny, 2*nz],
+//         "dirichletBoundaryConditions": bc,
+//         "maxIterations": 1e5,
+//         "relativeTolerance": 1e-15,
+//         "OutputWriter" : [
+//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+//         ]
+//       }
+//     }]
+//   }
+// }
+// )";
+//
+//
+//   DihuContext settings2(argc, argv, pythonConfig2);
+//
+//   ProblemType problemParallel(settings2);
+//
+//   problemParallel.run();
+//
+//   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+//   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//
+//   nFails += ::testing::Test::HasFailure();
+// }
 
-  ProblemType problemParallel(settings2);
 
-  problemParallel.run();
-
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
-
-  nFails += ::testing::Test::HasFailure();
-}
-*/
 // 3D structured regular fixed
 TEST(LaplaceTest, SerialEqualsParallelRegular3DLinear)
 {
@@ -1573,114 +1574,113 @@ config = {
 }
 
 
-
-/*
- Test does not converge and gives slightly different solutions
-TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)
-{
-  // run serial problem
-  std::string pythonConfig = R"(
-# Laplace 3D
-
-nx = 3   # number of elements in x direction
-ny = 2   # number of elements in y direction
-nz = 4   # number of elements in z direction
-
-# boundary conditions
-bc = {}
-for i in range(int(nx+1)):
-  for j in range(int(ny+1)):
-    x = i/(nx+1.)
-    y = j/(ny+1.)
-    bc[8*(j*(nx+1)+i)] = i
-
-    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-    bc[8*i2] = 10.*i
-
-config = {
-  "MultipleInstances": {
-    "nInstances": 1,
-    "instances": [{
-      "ranks": [0],
-      "FiniteElementMethod": {
-        "inputMeshIsGlobal": True,
-        "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "dirichletBoundaryConditions": bc,
-        "maxIterations": 1e5,
-        "relativeTolerance": 1e-15,
-        "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-        ]
-      }
-    }]
-  }
-}
-)";
-
-  DihuContext settings(argc, argv, pythonConfig);
-
-  typedef Control::MultipleInstances<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<3>,
-      BasisFunction::Hermite,
-      Quadrature::Gauss<2>,
-      Equation::Static::Laplace
-    >
-  > ProblemType;
-  ProblemType problemSerial(settings);
-
-  problemSerial.run();
-
-  // run parallel problem
-  std::string pythonConfig2 = R"(
-# Laplace 3D
-
-nx = 3   # number of elements in x direction
-ny = 2   # number of elements in y direction
-nz = 4   # number of elements in z direction
-
-# boundary conditions
-bc = {}
-for i in range(int(nx+1)):
-  for j in range(int(ny+1)):
-    x = i/(nx+1.)
-    y = j/(ny+1.)
-    bc[8*(j*(nx+1)+i)] = i
-
-    i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
-    bc[8*i2] = 10.*i
-
-config = {
-  "MultipleInstances": {
-    "nInstances": 1,
-    "instances": [{
-      "ranks": [0,1],
-      "FiniteElementMethod": {
-        "inputMeshIsGlobal": True,
-        "nElements": [nx, ny, nz],
-        "physicalExtent": [2*nx, 2*ny, 2*nz],
-        "dirichletBoundaryConditions": bc,
-        "maxIterations": 1e5,
-        "relativeTolerance": 1e-15,
-        "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
-        ]
-      }
-    }]
-  }
-}
-)";
-
-
-  DihuContext settings2(argc, argv, pythonConfig2);
-
-  ProblemType problemParallel(settings2);
-
-  problemParallel.run();
-
-  std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
-  assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
-
-  nFails += ::testing::Test::HasFailure();
-}*/
+// // Test does not converge and gives slightly different solutions
+// TEST(LaplaceTest, SerialEqualsParallelRegular3DHermite)
+// {
+//   // run serial problem
+//   std::string pythonConfig = R"(
+// # Laplace 3D
+//
+// nx = 3   # number of elements in x direction
+// ny = 2   # number of elements in y direction
+// nz = 4   # number of elements in z direction
+//
+// # boundary conditions
+// bc = {}
+// for i in range(int(nx+1)):
+//   for j in range(int(ny+1)):
+//     x = i/(nx+1.)
+//     y = j/(ny+1.)
+//     bc[8*(j*(nx+1)+i)] = i
+//
+//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+//     bc[8*i2] = 10.*i
+//
+// config = {
+//   "MultipleInstances": {
+//     "nInstances": 1,
+//     "instances": [{
+//       "ranks": [0],
+//       "FiniteElementMethod": {
+//         "inputMeshIsGlobal": True,
+//         "nElements": [nx, ny, nz],
+//         "physicalExtent": [2*nx, 2*ny, 2*nz],
+//         "dirichletBoundaryConditions": bc,
+//         "maxIterations": 1e5,
+//         "relativeTolerance": 1e-15,
+//         "OutputWriter" : [
+//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+//         ]
+//       }
+//     }]
+//   }
+// }
+// )";
+//
+//   DihuContext settings(argc, argv, pythonConfig);
+//
+//   typedef Control::MultipleInstances<
+//     SpatialDiscretization::FiniteElementMethod<
+//       Mesh::StructuredRegularFixedOfDimension<3>,
+//       BasisFunction::Hermite,
+//       Quadrature::Gauss<2>,
+//       Equation::Static::Laplace
+//     >
+//   > ProblemType;
+//   ProblemType problemSerial(settings);
+//
+//   problemSerial.run();
+//
+//   // run parallel problem
+//   std::string pythonConfig2 = R"(
+// # Laplace 3D
+//
+// nx = 3   # number of elements in x direction
+// ny = 2   # number of elements in y direction
+// nz = 4   # number of elements in z direction
+//
+// # boundary conditions
+// bc = {}
+// for i in range(int(nx+1)):
+//   for j in range(int(ny+1)):
+//     x = i/(nx+1.)
+//     y = j/(ny+1.)
+//     bc[8*(j*(nx+1)+i)] = i
+//
+//     i2 = nz*(ny+1)*(nx+1) + j*(nx+1)+i
+//     bc[8*i2] = 10.*i
+//
+// config = {
+//   "MultipleInstances": {
+//     "nInstances": 1,
+//     "instances": [{
+//       "ranks": [0,1],
+//       "FiniteElementMethod": {
+//         "inputMeshIsGlobal": True,
+//         "nElements": [nx, ny, nz],
+//         "physicalExtent": [2*nx, 2*ny, 2*nz],
+//         "dirichletBoundaryConditions": bc,
+//         "maxIterations": 1e5,
+//         "relativeTolerance": 1e-15,
+//         "OutputWriter" : [
+//           {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+//         ]
+//       }
+//     }]
+//   }
+// }
+// )";
+//
+//
+//   DihuContext settings2(argc, argv, pythonConfig2);
+//
+//   ProblemType problemParallel(settings2);
+//
+//   problemParallel.run();
+//
+//   std::vector<std::string> outputFilesToCheck = {"out.py", "out.0.py", "out.1.py"};
+//   assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
+//
+//   nFails += ::testing::Test::HasFailure();
+// }
+*/

@@ -53,6 +53,9 @@ public:
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   virtual void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const = 0;
 
+  //! get the node no in global petsc ordering from a local node no
+  virtual global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const = 0;
+
   //! get a PETSc IS (index set) with the same information as dofNosLocal_
   const IS &dofNosLocalIS() const;
   

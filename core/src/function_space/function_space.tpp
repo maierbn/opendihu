@@ -23,12 +23,27 @@ getElementDofNosLocal(element_no_t elementNo) const
 
 template<typename MeshType, typename BasisFunctionType>
 void FunctionSpace<MeshType,BasisFunctionType>::
-getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &globalDofNos) const
+getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &dofNosLocal) const
 {
-  globalDofNos.resize(FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement());
+  dofNosLocal.resize(FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement());
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    globalDofNos[dofIndex] = this->getDofNo(elementNo, dofIndex);
+    dofNosLocal[dofIndex] = this->getDofNo(elementNo, dofIndex);
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType>
+void FunctionSpace<MeshType,BasisFunctionType>::
+getElementDofNosLocalWithoutGhosts(element_no_t elementNo, std::vector<dof_no_t> &dofNosLocal) const
+{
+  dofNosLocal.reserve(FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement());
+  for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
+  {
+    dof_no_t dofNoLocal = this->getDofNo(elementNo, dofIndex);
+    if (dofNoLocal < this->meshPartition_->nDofsLocalWithoutGhosts())
+    {
+      dofNosLocal.push_back(dofNoLocal);
+    }
   }
 }
 

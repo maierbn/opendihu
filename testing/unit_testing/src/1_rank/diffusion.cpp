@@ -189,21 +189,21 @@ config = {
 }
 )";
 
-DihuContext settings(argc, argv, pythonConfig);
+  DihuContext settings(argc, argv, pythonConfig);
 
-TimeSteppingScheme::ImplicitEuler<
-SpatialDiscretization::FiniteElementMethod<
-Mesh::StructuredRegularFixedOfDimension<1>,
-BasisFunction::LagrangeOfOrder<>,
-Quadrature::None,
-Equation::Dynamic::IsotropicDiffusion
->
-> problem(settings);
+  TimeSteppingScheme::CrankNicolson<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredRegularFixedOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::None,
+      Equation::Dynamic::IsotropicDiffusion
+    >
+  > problem(settings);
 
-problem.run();
+  problem.run();
 
-std::string referenceOutput = "{\"meshType\": \"StructuredRegularFixed\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
-assertFileMatchesContent("out_diffusion1d_implicit_0000004.py", referenceOutput);
+  std::string referenceOutput = "{\"meshType\": \"StructuredRegularFixed\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
+  assertFileMatchesContent("out_diffusion1d_implicit_0000004.py", referenceOutput);
 
 }
 
@@ -385,21 +385,21 @@ config = {
 }
 )";
 
-DihuContext settings(argc, argv, pythonConfig);
+  DihuContext settings(argc, argv, pythonConfig);
 
-TimeSteppingScheme::ImplicitEuler<
-SpatialDiscretization::FiniteElementMethod<
-Mesh::StructuredDeformableOfDimension<1>,
-BasisFunction::LagrangeOfOrder<>,
-Quadrature::Gauss<2>,
-Equation::Dynamic::IsotropicDiffusion
->
-> problem(settings);
+  TimeSteppingScheme::CrankNicolson<
+    SpatialDiscretization::FiniteElementMethod<
+      Mesh::StructuredDeformableOfDimension<1>,
+      BasisFunction::LagrangeOfOrder<>,
+      Quadrature::Gauss<2>,
+      Equation::Dynamic::IsotropicDiffusion
+    >
+  > problem(settings);
 
-problem.run();
+  problem.run();
 
-std::string referenceOutput = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
-assertFileMatchesContent("out_diffusion1d_implicit_0000004.py", referenceOutput);
+  std::string referenceOutput = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
+  assertFileMatchesContent("out_diffusion1d_implicit_0000004.py", referenceOutput);
 
 }
 
@@ -407,7 +407,7 @@ TEST(DiffusionTest, Compiles2D)
 {
   std::string pythonConfig = R"(
 # Diffusion 2D
-n = 50
+n = 5
 
 # initial values
 iv = {}
@@ -418,15 +418,15 @@ for y in range(int(0.2*n), int(0.3*n)):
     iv[i] = 1.0
 
 config = {
-  "FiniteElementMethod" : {
-    "nElements": [n,n],
-    "physicalExtend": [4.0,4.0],
-    "relativeTolerance": 1e-15,
-  },
   "ExplicitEuler" : {
     "initialValues": iv,
     "numberTimeSteps": 5000,
     "endTime": 20.0,
+    "FiniteElementMethod" : {
+      "nElements": [n,n],
+      "physicalExtend": [4.0,4.0],
+      "relativeTolerance": 1e-15,
+    },
   },
   "OutputWriter" : [
     {"format": "PythonFile", "filename": "out_diffusion2d", "frequency": 100, "binary": False}

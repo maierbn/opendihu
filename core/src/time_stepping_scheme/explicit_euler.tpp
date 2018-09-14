@@ -11,7 +11,7 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
+  TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
   PyObject *topLevelSettings = this->context_.getPythonConfig();
@@ -32,8 +32,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   //this->data_->print();
 
   // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
-  Vec &solution = this->data_->solution().getContiguousValuesGlobal();
-  Vec &increment = this->data_->increment().getContiguousValuesGlobal();
+  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
+  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -54,7 +54,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
-    VecAXPY(solution, this->timeStepWidth_, increment);
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solution, this->timeStepWidth_, increment); CHKERRV(ierr);
 
     // advance simulation time
     timeStepNo++;
@@ -69,7 +70,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
   }
 
-  this->data_->solution().restoreContiguousValuesGlobal();
+  this->data_->solution()->restoreContiguousValuesGlobal();
 }
 
 template<typename DiscretizableInTime>

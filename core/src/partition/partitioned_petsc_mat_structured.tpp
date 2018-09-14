@@ -119,6 +119,7 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
     stream << "], values [";
     for (int i = 0; i < n*m; i++)
       stream << v[i] << " ";
+    stream << "]";
     VLOG(2) << stream.str();
   }
   
@@ -199,15 +200,43 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   PetscErrorCode ierr;
   
   // map the values of the localMatrix back into the global matrix
-  ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartition_->dofNosLocalIS(),
-                                  this->meshPartition_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
+  //ierr = MatRestoreLocalSubMatrix(this->globalMatrix_, this->meshPartition_->dofNosLocalIS(),
+  //                                this->meshPartition_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
   
   // assemble the global matrix
-  ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
-  ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
+  //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   
+  if (VLOG_IS_ON(1))
+  {
+    for (int i = 0; i < m; i++)
+    {
+      assert(idxm[i] < this->meshPartition_->nDofsGlobal());
+    }
+    for (int i = 0; i < n; i++)
+    {
+      assert(idxn[i] < this->meshPartition_->nDofsGlobal());
+    }
+  }
+
   // access the global matrix
   ierr = MatGetValues(this->globalMatrix_, m, idxm, n, idxn, v); CHKERRV(ierr);
+
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "\"" << this->name_ << "\" getValuesGlobalPetscIndexing, rows [";
+    for (int i = 0; i < m; i++)
+      stream << idxm[i] << " ";
+    stream << "], cols [";
+    for (int i = 0; i < n; i++)
+      stream << idxn[i] << " ";
+    stream << "], values [";
+    for (int i = 0; i < n*m; i++)
+      stream << v[i] << " ";
+    stream << "]";
+    VLOG(2) << stream.str();
+  }
 }
 
 template<typename MeshType, typename BasisFunctionType>
@@ -217,14 +246,41 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
   PetscErrorCode ierr;
 
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "\"" << this->name_ << "\" getValues, rows [";
+    for (int i = 0; i < m; i++)
+      stream << idxm[i] << " ";
+    stream << "], cols [";
+    for (int i = 0; i < n; i++)
+      stream << idxn[i] << " ";
+    stream << "], ";
+    VLOG(2) << stream.str();
+  }
   // transfer the local indices to global indices
   std::vector<int> rowIndicesGlobal(m);
   std::vector<int> columnIndicesGlobal(n);
   ierr = ISLocalToGlobalMappingApply(this->meshPartition_->localToGlobalMappingDofs(), m, idxm, rowIndicesGlobal.data()); CHKERRV(ierr);
   ierr = ISLocalToGlobalMappingApply(this->meshPartition_->localToGlobalMappingDofs(), n, idxn, columnIndicesGlobal.data()); CHKERRV(ierr);
 
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "rowIndicesGlobal: " << rowIndicesGlobal << ", columnIndicesGlobal: " << columnIndicesGlobal;
+  }
+
   // access the global matrix
   ierr = MatGetValues(this->globalMatrix_, m, rowIndicesGlobal.data(), n, columnIndicesGlobal.data(), v); CHKERRV(ierr);
+
+  if (VLOG_IS_ON(2))
+  {
+    std::stringstream stream;
+    stream << "values [";
+    for (int i = 0; i < n*m; i++)
+      stream << v[i] << " ";
+    stream << "]";
+    VLOG(2) << stream.str();
+  }
 
 }
 

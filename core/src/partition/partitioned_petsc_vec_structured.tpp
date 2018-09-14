@@ -220,6 +220,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       str << y[i] << " ";
     }
+    str << "]";
     VLOG(3) << str.str();
   }
 }
@@ -301,6 +302,18 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
   }
   else
   {
+
+#ifndef NDEBUG
+
+    for (int i = 0; i < ni; i++)
+    {
+      if (ix[i] < 0 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
+      {
+        LOG(ERROR) << "\"" << this->name_ << "\" setValues ix[" << i << "]=" << ix[i] << ", nDofsLocalWithGhosts: " << this->meshPartition_->nDofsLocalWithGhosts();
+      }
+      assert(ix[i] >= 0 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
+    }
+#endif
 
     // this wraps the standard PETSc VecSetValues on the local vector
     PetscErrorCode ierr;
@@ -631,7 +644,7 @@ output(std::ostream &stream)
         node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
         int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
 
-        std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
         global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
 
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
@@ -648,7 +661,7 @@ output(std::ostream &stream)
         node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
         int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
 
-        std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
         global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
 
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;

@@ -37,7 +37,7 @@ public:
   void reset();
 
   //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,1> &initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues);
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);

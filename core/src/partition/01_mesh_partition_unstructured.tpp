@@ -142,10 +142,54 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 }
 
 template<int D, typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+{
+  return (node_no_t)nodeNoGlobalPetsc;
+}
+
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+{
+  return (dof_no_t)dofNoGlobalPetsc;
+}
+
+template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 output(std::ostream &stream)
 {
   stream << "MeshPartition<Unstructured>, nElements_: " << nElements_ << ", nNodes_: " << nNodes_ << ", nDofs_: " << nDofs_;
+}
+
+//! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
+template<int D, typename BasisFunctionType>
+bool MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
+{
+  return true;
+}
+
+//! get the node no in global petsc ordering from a local node no
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const
+{
+  return (global_no_t)nodeNoLocal;
+}
+
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscInt> &dofNosGlobalPetsc) const
+{
+  dofNosGlobalPetsc.assign(dofNosLocal.begin(), dofNosLocal.end());
+}
+
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
+{
+  return (global_no_t)dofNoLocal;
 }
 
 }  // namespace

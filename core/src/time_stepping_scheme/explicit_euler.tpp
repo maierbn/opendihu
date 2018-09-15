@@ -14,9 +14,6 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ExplicitEuler");
-  this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTime>
@@ -39,9 +36,9 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Explicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     VLOG(1) << "starting from solution: " << this->data_->solution();

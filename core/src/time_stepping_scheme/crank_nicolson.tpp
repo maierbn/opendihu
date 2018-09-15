@@ -37,9 +37,9 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Crank Nicolson, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
     // advance simulation time

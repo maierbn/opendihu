@@ -36,9 +36,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
     //VLOG(1) << "initial solution: " << *this->data_->solution();

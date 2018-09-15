@@ -4,6 +4,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "data_management/multidomain.h"
 
 namespace TimeSteppingScheme
 {
@@ -15,9 +16,7 @@ MultidomainSolver(DihuContext context) :
   finiteElementMethodPotentialFlow_(context),
   cellMLAdapter_(context)
 {
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "MultidomainSolver");
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->data_ = std::make_shared<Data::Multidomain<typename DiscretizableInTimeType::FunctionSpace>>(context); // create data object for implicit euler
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
@@ -30,32 +29,42 @@ advanceTimeSpan()
   LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
+  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
+    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
+
+  Vec solution = this->data_->solution()->valuesGlobal();
+
   // loop over time steps
   double currentTime = this->startTime_;
+
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "Multidomain solver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    }
 
-    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_.solution()->valuesGlobal());
-
-    // advance computed value
-    // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_.solution()->valuesGlobal(), this->data_.increment()->valuesGlobal(), timeStepNo, currentTime);
-
-    // integrate, y += dt * delta_u
-    VecAXPY(this->data_.solution()->valuesGlobal(), timeStepWidth, this->data_.increment()->valuesGlobal());
+    //VLOG(1) << "initial solution: " << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_.solution()->valuesGlobal());
-    // write current output values
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    // adjust rhs vector such that boundary conditions are satisfied
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
 
-    //this->data_.print();
+    //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
+
+    // advance computed value
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
+    this->solveLinearSystem(solution, solution);
+
+    VLOG(1) << "new solution: " << *this->data_->solution();
+
+    // write current output values
+    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+
+    //this->data_->print();
   }
 }
 
@@ -63,6 +72,18 @@ template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typena
 void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
 run()
 {
+  // initialize everything
+  initialize();
+
+  // solve potential flow Laplace problem
+  finiteElementMethodPotentialFlow_.run();
+
+  // create gradient field
+
+  // compute a gradient field from the solution
+  this->data_.solution()->computeGradientField(data_.gradient());
+
+
   TimeSteppingImplicit<FiniteElementMethodDiffusion>::run();
 }
 

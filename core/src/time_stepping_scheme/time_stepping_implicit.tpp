@@ -17,10 +17,6 @@ TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext 
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
 {
   this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
-  this->outputWriterManager_.initialize(this->specificSettings_);
-
 }
 
 template<typename DiscretizableInTimeType>

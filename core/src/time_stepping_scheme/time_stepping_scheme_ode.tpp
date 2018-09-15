@@ -13,6 +13,13 @@ TimeSteppingSchemeOde<DiscretizableInTimeType>::
 TimeSteppingSchemeOde(DihuContext context, std::string name) :
   TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
+  // get python config
+  PyObject *topLevelSettings = this->context_.getPythonConfig();
+  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
+
+  // initialize output writers
+  this->outputWriterManager_.initialize(this->specificSettings_);
+
   // create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
     SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>

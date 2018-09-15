@@ -13,9 +13,6 @@ Heun<DiscretizableInTime>::Heun(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
-  this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTime>
@@ -40,9 +37,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     VLOG(1) << "starting from solution: " << this->data_->solution();

@@ -75,6 +75,7 @@ initializeRhsRoutine()
       }
     }
     
+    int rankNo = this->context_.ownRankNo();
     if (doCompilation)  //  && rankNo == 0: only recompile on rank 0, does not work, because rank 1 may need a different library than rank 0
     {
      
@@ -92,9 +93,13 @@ initializeRhsRoutine()
       std::stringstream compileCommand;
       // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
 #ifdef NDEBUG
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c "
+        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
+        << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #else
-      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c "
+        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
+        << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #endif
 
       int ret = system(compileCommand.str().c_str());

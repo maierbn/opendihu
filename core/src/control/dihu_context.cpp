@@ -530,6 +530,13 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            "FATAL: %loc %func: \n"+std::string(ANSI_COLOR_MAGENTA)+prefix+separator
            +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
 
+  // disable output for ranks != 0
+  if (rankNo > 0)
+  {
+    conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+    conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+  }
+
   //el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
 
 //#ifdef NDEBUG      // if release

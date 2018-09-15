@@ -27,7 +27,10 @@ advanceTimeSpan()
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "Godunov, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    }
     LOG(DEBUG) << "  Godunov: time step " << timeStepNo << ", t: " << currentTime;
 
     LOG(DEBUG) << "  Godunov: timeStepping1 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";

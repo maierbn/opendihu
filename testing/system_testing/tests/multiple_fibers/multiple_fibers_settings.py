@@ -100,10 +100,10 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       dof_no_local = node_no_global - first_dof_global
       parameters[dof_no_local] = stimulation_current
  
-      print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
+      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
-  print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), fibre_gets_stimulated))
+  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), fibre_gets_stimulated))
     
   #wait = input("Press any key to continue...")
     

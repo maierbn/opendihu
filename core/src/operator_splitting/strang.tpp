@@ -42,7 +42,10 @@ advanceTimeSpan()
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * this->timeStepWidth_;
 
-    LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "Strang, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    }
     LOG(DEBUG) << "  Strang: time step " << timeStepNo << ", t: " << currentTime;
 
     LOG(DEBUG) << "  Strang: timeStepping1 (first half) setTimeSpan [" << currentTime << ", " << midTime << "]";

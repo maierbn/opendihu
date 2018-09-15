@@ -152,7 +152,7 @@ run()
     {
       std::stringstream msg;
       msg << omp_get_thread_num() << ": running " << nInstancesLocal_ << " instances with " << omp_get_num_threads() << " OpenMP threads";
-      LOG(INFO) << msg.str();
+      LOG(DEBUG) << msg.str();
     }
     
     //instancesLocal_[i].reset();

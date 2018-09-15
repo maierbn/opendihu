@@ -147,7 +147,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
     
     LOG(INFO) << msg.str();
-    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches!";
+    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches! " << msg.str();
   }
   
 }

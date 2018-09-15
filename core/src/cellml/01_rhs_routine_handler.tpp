@@ -78,7 +78,6 @@ initializeRhsRoutine()
     int rankNo = this->context_.ownRankNo();
     if (doCompilation)  //  && rankNo == 0: only recompile on rank 0, does not work, because rank 1 may need a different library than rank 0
     {
-     
       if (libraryFilename.find("/") != std::string::npos)
       {
         std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
@@ -572,6 +571,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
     {
       simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
     }
+
+    // add .rankNo to simd source filename
+    s.str("");
+    int rankNo = this->context_.ownRankNo();
+    s << simdSourceFilename << "." << rankNo;
+    simdSourceFilename = s.str();
 
     std::ofstream simdSourceFile(simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())

@@ -16,6 +16,7 @@ cd build_${variant}
 
 # remove old output data
 rm -rf out
+ln -s /data/scratch/maierbn/multiple_fibres/out out
 
 export OMP_NUM_THREADS=1
 

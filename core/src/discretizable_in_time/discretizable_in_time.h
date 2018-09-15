@@ -54,7 +54,8 @@ public:
   virtual bool knowsMeshType() = 0;
 
   //! return the mesh
-  virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
+  //virtual std::shared_ptr<FunctionSpaceType> functionSpace() = 0;
+  //old: virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
 
 protected:
   SolutionVectorMapping solutionVectorMapping_;   ///< the solution vector mapping object that contains information if for further computation only a subset of the stored entries in the data_.solution vector will be needed

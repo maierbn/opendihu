@@ -17,6 +17,7 @@ TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext 
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
 {
   this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
+  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -32,18 +33,14 @@ initialize()
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
-  // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
-  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
-    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
-
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-  this->dirichletBoundaryConditions_->applyInSystemMatrix(dataTimeSteppingImplicit->systemMatrix(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+  this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
   // initialize the linear solver that is used for solving the implicit system
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
+  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   assert(this->ksp_);
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
@@ -56,7 +53,7 @@ void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
-  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
+  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);

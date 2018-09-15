@@ -151,10 +151,10 @@ getComponentNames(std::vector<std::string> &stateNames)
 
 //! return the mesh
 template<int nStates, typename FunctionSpaceType>
-std::shared_ptr<Mesh::Mesh> CellmlAdapter<nStates,FunctionSpaceType>::
-mesh()
+std::shared_ptr<FunctionSpaceType> CellmlAdapter<nStates,FunctionSpaceType>::
+functionSpace()
 {
-  return CellmlAdapterBase<nStates,FunctionSpaceType>::mesh();
+  return CellmlAdapterBase<nStates,FunctionSpaceType>::functionSpace();
 }
 
 template<int nStates, typename FunctionSpaceType>

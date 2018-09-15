@@ -26,9 +26,6 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
-  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
-    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
-
   Vec solution = this->data_->solution()->valuesGlobal();
 
   // loop over time steps
@@ -48,7 +45,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
     // adjust rhs vector such that boundary conditions are satisfied
-    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
     //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
 
@@ -59,7 +56,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     VLOG(1) << "new solution: " << *this->data_->solution();
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
     
     //this->data_->print();
   }
@@ -73,7 +70,7 @@ setSystemMatrix(double timeStepWidth)
   
   //if(!this->discretizableInTime_.invLumMassMatrixSet())
     //this->discretizableInTime_.setInverseLumpedMassMatrix();
-  
+
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
   
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
@@ -85,17 +82,17 @@ setSystemMatrix(double timeStepWidth)
   // compute systemMatrix = M^{-1}K
   // the result matrix is created by MatMatMult
   ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->data_->initializeSystemMatrix(systemMatrix);
+  this->dataImplicit_->initializeSystemMatrix(systemMatrix);
   
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
-  ierr = MatScale(this->data_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K
-  ierr = MatShift(this->data_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
   
-  this->data_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
+  this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
-  VLOG(1) << *this->data_->systemMatrix();
+  VLOG(1) << *this->dataImplicit_->systemMatrix();
 }
 
 } // namespace TimegSteppingScheme

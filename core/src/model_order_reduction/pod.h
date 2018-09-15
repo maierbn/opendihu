@@ -34,7 +34,7 @@ public:
   bool knowsMeshType();
 
   //! return the used mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  //std::shared_ptr<FunctionSpace> mesh();
 
 protected:
 

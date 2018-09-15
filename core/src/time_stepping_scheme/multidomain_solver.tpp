@@ -16,7 +16,7 @@ MultidomainSolver(DihuContext context) :
   finiteElementMethodPotentialFlow_(context),
   cellMLAdapter_(context)
 {
-  this->data_ = std::make_shared<Data::Multidomain<typename DiscretizableInTimeType::FunctionSpace>>(context); // create data object for implicit euler
+  this->data_ = std::make_shared<Data::Multidomain<FiniteElementMethodDiffusion>>(context); // create data object for implicit euler
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
@@ -28,9 +28,6 @@ advanceTimeSpan()
 
   LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
-
-  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
-    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 
   Vec solution = this->data_->solution()->valuesGlobal();
 
@@ -51,7 +48,7 @@ advanceTimeSpan()
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
     // adjust rhs vector such that boundary conditions are satisfied
-    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
     //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
 
@@ -78,26 +75,28 @@ run()
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
 
-  // create gradient field
+  // compute a gradient field from the solution of the potential flow
+  data_.flowPotential()->setValues(finiteElementMethodPotentialFlow_.data().solution());
+  finiteElementMethodPotentialFlow_.data().solution()->computeGradientField(data_.fibreDirection());
 
-  // compute a gradient field from the solution
-  this->data_.solution()->computeGradientField(data_.gradient());
-
-
-  TimeSteppingImplicit<FiniteElementMethodDiffusion>::run();
+  advanceTimeStepping();
 }
 
 template<typename DiscretizableInTime>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
 initialize()
 {
-  finiteElementMethodPotentialFlow_.initialize();
-
-  cellMLAdapter_.initialize();
-
   // TimeSteppingImplicit stores the diffusion finite element class
   TimeSteppingImplicit<FiniteElementMethodDiffusion>::initialize();
 
+  // initialize potential flow
+  finiteElementMethodPotentialFlow_.initialize();
+
+  // initialize cellml adapter
+  cellMLAdapter_.initialize();
+
+  // initialize system matrix
+  setSystemMatrix(this->timeStepWidth_);
 }
 
 template<typename DiscretizableInTime>

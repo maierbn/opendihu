@@ -31,7 +31,7 @@ public:
   
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
-  std::shared_ptr<Mesh> functionSpace(PyObject *settings);
+  std::shared_ptr<FunctionSpaceType> functionSpace(PyObject *settings);
 
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
@@ -43,7 +43,7 @@ public:
   //! create a mesh not from python config but directly by calling an appropriate construtor. 
   //! With this e.g. meshes from node positions can be created.
   template<typename FunctionSpaceType, typename ...Args>
-  std::shared_ptr<Mesh> createFunctionSpace(std::string name, Args && ...args);
+  std::shared_ptr<FunctionSpaceType> createFunctionSpace(std::string name, Args && ...args);
   
   //! Create a field variable without logical mesh representation, e.g. for MOR reduced vectors.
   //! The vector contains nEntries entries, the partitioning is done by the partition manager.

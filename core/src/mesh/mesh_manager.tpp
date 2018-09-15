@@ -10,7 +10,7 @@ namespace Mesh
 
 //! return previously created mesh or create on the fly
 template<typename FunctionSpaceType>
-std::shared_ptr<Mesh> Manager::functionSpace(PyObject *settings)
+std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
 
@@ -83,7 +83,7 @@ std::shared_ptr<Mesh> Manager::functionSpace(PyObject *settings)
 //! create a mesh not from python config but directly by calling an appropriate construtor. 
 //! With this e.g. meshes from node positions can be created.
 template<typename FunctionSpaceType, typename ...Args>
-std::shared_ptr<Mesh> Manager::createFunctionSpace(std::string name, Args && ...args)
+std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name, Args && ...args)
 {
   if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
   {

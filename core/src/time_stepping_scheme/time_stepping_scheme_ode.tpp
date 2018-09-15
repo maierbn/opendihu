@@ -50,7 +50,6 @@ setInitialValues()
 
     PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
 
-    //std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
     this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
@@ -115,10 +114,10 @@ initialize()
   discretizableInTime_.initialize();
   discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
 
-  std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
-    = std::static_pointer_cast<typename DiscretizableInTimeType::FunctionSpace>(mesh);
-  assert(functionSpace->meshPartition());   // assert that the function space was casted correctly and is a full object, not just a mesh
+    = discretizableInTime_.functionSpace();
+
+  assert(functionSpace->meshPartition());   // assert that the function space was retrieved correctly
   data_->setFunctionSpace(functionSpace);
   
   // set component names in data

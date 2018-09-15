@@ -38,8 +38,8 @@ FiniteElementMethodBase(DihuContext context) :
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
-mesh()
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+functionSpace()
 {
   return data_.functionSpace();
 }

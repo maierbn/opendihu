@@ -31,8 +31,8 @@ public:
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
-  //! get the stored mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  //! get the stored functionSpace
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get the data object
   Data &data();

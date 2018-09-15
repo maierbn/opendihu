@@ -50,11 +50,11 @@ initialize()
   }
   
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
-  mesh_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
-  LOG(DEBUG) << "Cellml mesh has " << mesh_->nNodesLocalWithoutGhosts() << " local nodes";
+  functionSpace_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
+  LOG(DEBUG) << "Cellml mesh has " << functionSpace_->nNodesLocalWithoutGhosts() << " local nodes";
 
   //store number of instances
-  nInstances_ = mesh_->nNodesLocalWithoutGhosts();
+  nInstances_ = functionSpace_->nNodesLocalWithoutGhosts();
 
   stateNames_.resize(nStates);
   sourceFilename_ = PythonUtility::getOptionString(this->specificSettings_, "sourceFilename", "");
@@ -155,10 +155,10 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
 }
 
 template<int nStates, typename FunctionSpaceType>
-std::shared_ptr<Mesh::Mesh> CellmlAdapterBase<nStates,FunctionSpaceType>::
-mesh()
+std::shared_ptr<FunctionSpaceType> CellmlAdapterBase<nStates,FunctionSpaceType>::
+functionSpace()
 {
-  return mesh_;
+  return functionSpace_;
 }
 
 template<int nStates, typename FunctionSpaceType>

@@ -146,10 +146,10 @@ knowsMeshType()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-mesh()
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+functionSpace()
 {
-  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::mesh();
+  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::functionSpace();
 }
 
 } // namespace SpatialDiscretization

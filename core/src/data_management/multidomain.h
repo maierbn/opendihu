@@ -29,8 +29,27 @@ public:
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   std::shared_ptr<GradientFieldVariableType> fibreDirection();
 
+  //! return the field variable of the potential for the Laplace potential flow problem
+  std::shared_ptr<FieldVariableType> flowPotential();
+
+  //! return the extra-cellular potential field variable
+  std::shared_ptr<FieldVariableType> extraCellularPotential();
+
+  //! return the trans-membrane potential field variable for MU compartmentNo
+  std::shared_ptr<FieldVariableType> transmembranePotential(int compartmentNo);
+
   //! print all stored data to stdout
   void print() override;
+
+  //! field variables that will be output by outputWriters
+  typedef std::tuple<
+    GradientFieldVariableType,     // fibreDirection
+    FieldVariableType,              // extra-cellular potential
+    std::vector<FunctionSpaceType>    // transmembrane potentials
+  > OutputFieldVariables;
+
+  //! get pointers to all field variables that can be written by output writers
+  OutputFieldVariables getOutputFieldVariables();
 
 private:
 
@@ -38,8 +57,10 @@ private:
   void createPetscObjects() override;
 
   int nCompartments_;     ///< number of compartments i.e. motor units
+  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibres
   std::shared_ptr<GradientFieldVariableType> fibreDirection_; ///< the direction of fibres
   std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;  ///< the Vm value for the compartments
+  std::vector<std::shared_ptr<FieldVariableType>> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
 };
 
 } // namespace Data

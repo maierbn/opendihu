@@ -52,7 +52,7 @@ public:
   bool knowsMeshType();
 
   //! return the mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);

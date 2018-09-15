@@ -26,11 +26,8 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   LOG(DEBUG) << "CrankNicolson::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
-  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
-    = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
-
   Vec solution = this->data_->solution()->valuesGlobal();
-  Vec systemRightHandSide = dataTimeSteppingImplicit->systemRightHandSide()->valuesGlobal();
+  Vec systemRightHandSide = this->dataImplicit_->systemRightHandSide()->valuesGlobal();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -50,7 +47,7 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
     this->evaluateTimesteppingRightHandSideImplicit(solution, systemRightHandSide, timeStepNo, currentTime);
 
     // adjust rhs vector such that boundary conditions are satisfied
-    this->dirichletBoundaryConditions_->applyInRightHandSide(dataTimeSteppingImplicit->systemRightHandSide(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->dataImplicit_->systemRightHandSide(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
     // advance computed value
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
@@ -86,7 +83,7 @@ void CrankNicolson<DiscretizableInTimeType>::
 setSystemMatrix(double timeStepWidth)
 {
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
-  
+
   //if(!this->discretizableInTime_.invLumMassMatrixSet())
     //this->discretizableInTime_.setInverseLumpedMassMatrix();
   
@@ -101,17 +98,17 @@ setSystemMatrix(double timeStepWidth)
   // compute systemMatrix = M^{-1}K
   // the result matrix is created by MatMatMult
   ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->data_->initializeSystemMatrix(systemMatrix);
+  this->dataImplicit_->initializeSystemMatrix(systemMatrix);
   
   // scale systemMatrix by -dt, systemMatrix = -dt/2 *M^{-1}K
-  ierr = MatScale(this->data_->systemMatrix()->valuesGlobal(), -0.5*timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -0.5*timeStepWidth); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I - dt/2 *M^{-1}K
-  ierr = MatShift(this->data_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
   
-  this->data_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
+  this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
-  VLOG(1) << *this->data_->systemMatrix();
+  VLOG(1) << *this->dataImplicit_->systemMatrix();
 }
 
 template<typename DiscretizableInTimeType>
@@ -119,14 +116,14 @@ void CrankNicolson<DiscretizableInTimeType>::
 setIntegrationMatrixRightHandSide()
 {
   LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
-  
-  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
+
+  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   Mat integrationMatrix; 
   
   PetscErrorCode ierr;
   
   // copy integration matrix from the system matrix
-  ierr=MatConvert(systemMatrix, MATSAME, MAT_INITIAL_MATRIX, &integrationMatrix); CHKERRV(ierr); //it creates the new matrix
+  ierr = MatConvert(systemMatrix, MATSAME, MAT_INITIAL_MATRIX, &integrationMatrix); CHKERRV(ierr); //it creates the new matrix
   
   // scale systemMatrix by -dt, systemMatrix = dt/2*M^{-1}K
   ierr = MatScale(integrationMatrix, -1.0); CHKERRV(ierr);
@@ -134,15 +131,15 @@ setIntegrationMatrixRightHandSide()
   // add 1 on the diagonal: systemMatrix = I + dt/2*M^{-1}K
   ierr = MatShift(integrationMatrix, 2.0); CHKERRV(ierr);
   
-  this->data_->initializeIntegrationMatrixRightHandSide(integrationMatrix);
+  this->dataImplicit_->initializeIntegrationMatrixRightHandSide(integrationMatrix);
   
-  //this->data_->initializeMatrix(integrationMatrix, this->data_->integrationMatrixRightHandSide(), "integrationMatrixRightHandSide");
+  //this->dataImplicit_->initializeMatrix(integrationMatrix, this->dataImplicit_->integrationMatrixRightHandSide(), "integrationMatrixRightHandSide");
   
-  //qierr=MatView(this->data_->integrationMatrixRightHandSide()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD); 
+  //qierr=MatView(this->dataImplicit_->integrationMatrixRightHandSide()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD);
   
-  this->data_->integrationMatrixRightHandSide()->assembly(MAT_FINAL_ASSEMBLY);
+  this->dataImplicit_->integrationMatrixRightHandSide()->assembly(MAT_FINAL_ASSEMBLY);
   
-  VLOG(1) << *this->data_->integrationMatrixRightHandSide();
+  VLOG(1) << *this->dataImplicit_->integrationMatrixRightHandSide();
 
 }
 
@@ -153,8 +150,7 @@ evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepN
   // LOG(TRACE) << "evaluateTimesteppingRightHandSideImplicit";
   
   // this method computes output = input * (I+dt/2 M^(-1) K)= input *(-A+2I), where A=(I-dt/2 M^(-1) K) is the system matrix
-  
-  Mat &integrationMatrix = this->data_->integrationMatrixRightHandSide()->valuesGlobal();
+  Mat &integrationMatrix = this->dataImplicit_->integrationMatrixRightHandSide()->valuesGlobal();
   
   PetscErrorCode ierr;
   ierr = MatMult(integrationMatrix, input, output); CHKERRV(ierr);    // MatMult(mat,x,y) computes y = Ax

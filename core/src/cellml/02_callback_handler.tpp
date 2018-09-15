@@ -88,13 +88,13 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
   if (pyGlobalNaturalDofsList_ == nullptr)
   {
     std::vector<global_no_t> dofNosGlobalNatural;
-    this->mesh_->meshPartitionBase()->getDofNosGlobalNatural(dofNosGlobalNatural);
+    this->functionSpace_->meshPartitionBase()->getDofNosGlobalNatural(dofNosGlobalNatural);
     pyGlobalNaturalDofsList_ = PythonUtility::convertToPythonList(dofNosGlobalNatural);
   }
 
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->mesh_->meshPartitionBase()->nDofsGlobal(), timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetParametersFunctionAdditionalParameter_);
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(), timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetParametersFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message

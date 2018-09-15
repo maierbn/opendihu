@@ -49,6 +49,7 @@ initializeRhsRoutine()
   {
     // compile source file to a library
     libraryFilename = "lib.so";
+    bool libraryFilenameSetWithNInstances = false;
     if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
     {
       libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
@@ -58,6 +59,7 @@ initializeRhsRoutine()
       std::stringstream s;
       s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
       libraryFilename = s.str();
+      libraryFilenameSetWithNInstances = true;
     }
 
     bool doCompilation = true;
@@ -74,8 +76,40 @@ initializeRhsRoutine()
         file.close();
       }
     }
-    
+
     int rankNo = this->context_.ownRankNo();
+    if (libraryFilenameSetWithNInstances)
+    {
+      // gather which number of instances all ranks have
+      int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
+      int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
+      std::vector<int> nInstancesRanks(nRanksCommunicator);
+
+      nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+      MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
+                                                  1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
+
+      // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
+      int i = 0;
+      int rankWhichCompilesLibrary = 0;
+      for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+      {
+        if (*iter == this->nInstances_)
+        {
+          rankWhichCompilesLibrary = i;
+          break;
+        }
+      }
+
+      // if there is a rank with lower number that has the same nInstances, this one should compile the library, not the own rank
+      if (rankWhichCompilesLibrary != ownRankNoCommunicator)
+      {
+        doCompilation = false;
+      }
+    }
+
+    
     if (doCompilation)  //  && rankNo == 0: only recompile on rank 0, does not work, because rank 1 may need a different library than rank 0
     {
       if (libraryFilename.find("/") != std::string::npos)

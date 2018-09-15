@@ -43,7 +43,7 @@ public:
   bool knowsMeshType();
 
   //! return the mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
@@ -60,7 +60,7 @@ protected:
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
-  std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
+  std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
 
   int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem

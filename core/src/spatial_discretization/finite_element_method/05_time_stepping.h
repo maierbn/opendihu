@@ -49,7 +49,7 @@ public:
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
 
   //! return the mesh that is stored in the data class
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 

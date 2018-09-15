@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "control/runnable.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping_implicit.h"
 #include "control/dihu_context.h"
 
 namespace TimeSteppingScheme
@@ -39,6 +39,7 @@ protected:
   //! solves the linear system of equations resulting from the Implicit Euler method time discretization
   void solveLinearSystem(Vec &input, Vec &output);
   
+  std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataImplicit_;  ///< a pointer to the data_ object but of type Data::TimeSteppingImplicit
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<KSP> ksp_;     ///< the ksp object of the linear solver
 

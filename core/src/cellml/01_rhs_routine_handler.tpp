@@ -76,7 +76,7 @@ initializeRhsRoutine()
     }
     
     int rankNo = this->context_.ownRankNo();
-    if (doCompilation && rankNo == 0)  // only recompile on rank 0
+    if (doCompilation)  //  && rankNo == 0: only recompile on rank 0, does not work, because rank 1 may need a different library than rank 0
     {
      
       if (libraryFilename.find("/") != std::string::npos)

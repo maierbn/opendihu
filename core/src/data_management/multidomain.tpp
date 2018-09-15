@@ -17,6 +17,15 @@ namespace Data
 {
 
 template<typename FunctionSpaceType>
+Multidomain<FunctionSpaceType>::
+Multidomain(DihuContext context, int nCompartments) :
+  Data<FunctionSpaceType>::Data(context), nCompartments_(nCompartments)
+{
+
+}
+
+
+template<typename FunctionSpaceType>
 void Multidomain<FunctionSpaceType>::
 createPetscObjects()
 {

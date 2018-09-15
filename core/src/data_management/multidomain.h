@@ -20,10 +20,11 @@ class Multidomain : public Data<FunctionSpaceType>
 {
 public:
 
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
 
-  //! constructor of base class
-  using Data<FunctionSpaceType,nComponents>::Data;
+  //! constructor
+  Multidomain(DihuContext context, int nCompartments);
 
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   std::shared_ptr<GradientFieldVariableType> fibreDirection();
@@ -36,7 +37,9 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  std::shared_ptr<FieldVariableType> fibreDirection_; ///< the direction of fibres
+  int nCompartments_;     ///< number of compartments i.e. motor units
+  std::shared_ptr<GradientFieldVariableType> fibreDirection_; ///< the direction of fibres
+  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;  ///< the Vm value for the compartments
 };
 
 } // namespace Data

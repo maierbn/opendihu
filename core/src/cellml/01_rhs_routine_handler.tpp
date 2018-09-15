@@ -94,11 +94,11 @@ initializeRhsRoutine()
 #ifdef NDEBUG
       compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c "
         << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
-        << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
+        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #else
       compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c "
         << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
-        << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
+        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #endif
 
       int ret = system(compileCommand.str().c_str());

@@ -844,6 +844,8 @@ config = {
 
 TEST(LaplaceTest, SerialEqualsParallelDeformable2DQuadratic)
 {
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));  // pause execution, such that output files can be closed
+
   // run serial problem
   std::string pythonConfig = R"(
 import numpy as np

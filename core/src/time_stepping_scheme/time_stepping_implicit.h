@@ -41,8 +41,7 @@ protected:
   
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<KSP> ksp_;     ///< the ksp object of the linear solver
-  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>> dirichletBoundaryConditions_;  ///< object that stores Dirichlet boundary condition values
-  
+
 };
 
 }  // namespace

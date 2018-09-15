@@ -20,7 +20,7 @@ TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
   this->outputWriterManager_.initialize(this->specificSettings_);
-  this->dirichletBoundaryConditions_ = std::make_shared<::SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>();
+
 }
 
 template<typename DiscretizableInTimeType>
@@ -36,16 +36,11 @@ initialize()
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
 
-  // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
-  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
-
-  // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
-
-
   // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
   std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataTimeSteppingImplicit
     = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 
+  // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->dirichletBoundaryConditions_->applyInSystemMatrix(dataTimeSteppingImplicit->systemMatrix(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
 
   // initialize the linear solver that is used for solving the implicit system
@@ -70,7 +65,7 @@ solveLinearSystem(Vec &input, Vec &output)
   PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
   
-  // solve the system
+  // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
   
   int numberOfIterations = 0;

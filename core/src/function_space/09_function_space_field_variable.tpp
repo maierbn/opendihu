@@ -19,6 +19,9 @@ createFieldVariable(std::string name, std::vector<std::string> componentNames)
   std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = FieldVariable::Factory<FunctionSpace<MeshType,BasisFunctionType>>::createFromFieldVariable(this->geometryField(), name, componentNames);
 
+  // set entries to 0
+  fieldVariable->zeroEntries();
+
   return fieldVariable;
 }
 
@@ -35,6 +38,9 @@ createFieldVariable(std::string name, int nComponents)
   }
   std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = this->createFieldVariable(name, componentNames);
+
+  // set entries to 0
+  fieldVariable->zeroEntries();
 
   return fieldVariable;
 }
@@ -54,6 +60,9 @@ createFieldVariable(std::string name)
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> fieldVariable
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>>(this->geometryField(), name, componentNames);
 
+  // set entries to 0
+  fieldVariable->zeroEntries();
+
   return fieldVariable;
 }
 
@@ -69,6 +78,9 @@ createFieldVariable(std::string name, std::vector<std::string> componentNames)
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> fieldVariable
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>>(this->geometryField(), name, componentNames);
+
+  // set entries to 0
+  fieldVariable->zeroEntries();
 
   return fieldVariable;
 }

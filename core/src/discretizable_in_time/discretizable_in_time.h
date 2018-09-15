@@ -46,6 +46,10 @@ public:
   //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
   SolutionVectorMapping &solutionVectorMapping();
 
+  //! set if the class should handle dirichlet boundary conditions. A time stepping scheme sets this to false, because for dynamic problems the time stepping scheme handles the boundary conditions, not e.g. the FiniteElementMethod.
+  //! By default it is set to true, which is needed for static problems, like Laplace.
+  virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled) = 0;
+
   //! return whether the object has a specified mesh type and is not independent of the mesh type
   virtual bool knowsMeshType() = 0;
 

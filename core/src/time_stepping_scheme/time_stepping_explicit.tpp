@@ -11,20 +11,9 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingExplicit<DiscretizableInTimeType>::
-initialize()
-{
-  TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
-
-  // parse boundary conditions, needs functionSpace set
-  dirichletBoundaryConditions_ = std::make_shared<::SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>();
-  dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
-}
-
-template<typename DiscretizableInTimeType>
-void TimeSteppingExplicit<DiscretizableInTimeType>::
 applyBoundaryConditions()
 {
-  dirichletBoundaryConditions_->applyInVector(this->data_->solution());
+  this->dirichletBoundaryConditions_->applyInVector(this->data_->solution());
 }
 
 } // namespace

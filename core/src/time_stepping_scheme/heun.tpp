@@ -69,11 +69,14 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
     VecAXPY(intermediateIncrement, -1.0, increment);
+
     // now compute overall step as described above (#)
     VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
 
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
+
+    VLOG(1) << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;

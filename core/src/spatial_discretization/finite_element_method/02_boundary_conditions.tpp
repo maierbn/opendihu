@@ -13,9 +13,28 @@ namespace SpatialDiscretization
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
+{
+  boundaryConditionHandlingEnabled_ = boundaryConditionHandlingEnabled;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
-  LOG(TRACE) << "applyBoundaryConditions";
+  if (!boundaryConditionHandlingEnabled_)
+  {
+    if (PythonUtility::hasKey(this->specificSettings_, "dirichletBoundaryConditions"))
+    {
+      LOG(WARNING) << "You have specified dirichlet boundary conditions in FiniteElementMethod via the key \"dirichletBoundaryConditions\". "
+        << "They are not used here, e.g. because the FiniteElementMethod is wrapped by a time stepping scheme. Consider only setting dirichlet boundary conditions in the time stepping scheme.";
+    }
+
+    VLOG(1) << "do not handle boundary conditions in finite element method, because boundaryConditionHandlingEnabled=false";
+    return;
+  }
+
+  LOG(TRACE) << "FiniteElementMethod::applyBoundaryConditions";
 
   if (VLOG_IS_ON(4))
   {

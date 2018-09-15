@@ -746,6 +746,7 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
   }
 
   VLOG(1) << "actions: " << action;
+  VLOG(1) << "rhs summand before: " << *boundaryConditionsRightHandSideSummand;
 
   // execute actions
   for (std::map<global_no_t, std::pair<double, std::set<global_no_t>>>::iterator actionIter = action.begin(); actionIter != action.end(); actionIter++)
@@ -766,15 +767,23 @@ applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> syst
     std::vector<double> values(rowDofNoGlobalPetsc.size());
     systemMatrix->getValuesGlobalPetscIndexing(rowDofNoGlobalPetsc.size(), rowDofNoGlobalPetsc.data(), 1, &columnDofNoGlobalPetsc, values.data());
 
+    VLOG(1) << "system matrix, col " << columnDofNoGlobalPetsc << ", rows " << rowDofNoGlobalPetsc << ", values: " << values;
+
     // scale values with -boundaryConditionValue
     for (double &v : values)
     {
       v *= -boundaryConditionValue;
     }
 
+    VLOG(1) << " multiplied with BC value " << boundaryConditionValue << ": " << values;
+
     // subtract values*boundaryConditionValue from boundaryConditionsRightHandSideSummand
     boundaryConditionsRightHandSideSummand->setValues(rowDofNosLocal, values, ADD_VALUES);
+
+    VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;
   }
+
+  VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
 
   /*
   struct GhostElement
@@ -799,7 +808,7 @@ void DirichletBoundaryConditions<FunctionSpaceType,1>::
 applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide,
                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> boundaryConditionsRightHandSideSummand)
 {
-  LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
+  //LOG(TRACE) << "DirichletBoundaryConditionsBase::applyInRightHandSide";
 
   if (rightHandSide != boundaryConditionsRightHandSideSummand)
   {

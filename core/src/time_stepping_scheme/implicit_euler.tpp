@@ -41,6 +41,8 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
       LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
+    //VLOG(1) << "initial solution: " << *this->data_->solution();
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
@@ -48,10 +50,14 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     // adjust rhs vector such that boundary conditions are satisfied
     this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), dataTimeSteppingImplicit->boundaryConditionsRightHandSideSummand());
 
+    //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
+
     // advance computed value
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(solution, solution);
     
+    VLOG(1) << "new solution: " << *this->data_->solution();
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
     

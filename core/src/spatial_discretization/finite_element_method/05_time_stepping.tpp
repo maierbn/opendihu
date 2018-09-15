@@ -33,6 +33,13 @@ FiniteElementMethodTimeStepping(DihuContext context)
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
+{
+  BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Term>::setBoundaryConditionHandlingEnabled(boundaryConditionHandlingEnabled);
+}
+
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 initialize()
 {
   LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize";

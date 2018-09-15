@@ -63,7 +63,9 @@ public:
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;
-  
+
+  //! if the class should handle Dirichlet boundary conditions, this does not apply here
+  void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
  };
 
 #include "cellml/03_cellml_adapter.tpp"

@@ -20,15 +20,10 @@ public:
   //! constructor
   using TimeSteppingSchemeOde<DiscretizableInTimeType>::TimeSteppingSchemeOde;
 
-  //! initialize discretizableInTime
-  virtual void initialize();
-
 protected:
 
   //! set the dofs in the solution vector to the given boundary conditions
   void applyBoundaryConditions();
-
-  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dirichletBoundaryConditions_; ///< the dirichlet boundary conditions object that parses, stores and applies the dirichlet boundary conditions
 };
 }  // namespace
 

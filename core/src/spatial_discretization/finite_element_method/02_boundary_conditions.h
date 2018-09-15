@@ -21,6 +21,9 @@ public:
   // use constructor of base class
   using FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodMatrix;
 
+  //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
+  virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
+
 protected:
 
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
@@ -29,6 +32,7 @@ protected:
   //! parse config and fill local member variables
   void parseBoundaryConditions();
 
+  bool boundaryConditionHandlingEnabled_ = true;   ///< if the boundary conditions should be handled in this class, if false, nothing is done here. This is the case if the FiniteElementMethod is used within a timestepping scheme. Then the time stepping scheme constructs its system matrix out of this class' stiffness matrix and applied Dirichlet boundary condition handle there.
   std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to system matrix and rhs
 };
 

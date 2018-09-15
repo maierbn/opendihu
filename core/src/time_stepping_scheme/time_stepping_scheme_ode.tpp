@@ -13,6 +13,10 @@ TimeSteppingSchemeOde<DiscretizableInTimeType>::
 TimeSteppingSchemeOde(DihuContext context, std::string name) :
   TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
+  // create dirichlet Boundary conditions object
+  this->dirichletBoundaryConditions_ = std::make_shared<
+    SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+  >();
 }
 
 template<typename DiscretizableInTimeType>
@@ -97,10 +101,11 @@ initialize()
   TimeSteppingScheme::initialize();
   LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
 
+  // disable boundary condition handling in finite element method, because Dirichlet BC have to be handled in the system matrix here
+  discretizableInTime_.setBoundaryConditionHandlingEnabled(false);
+
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
-
-  //TODO: pass on boundary conditions that were defined in the timestepping scheme to e.g. the FiniteElements class
   discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
 
   std::shared_ptr<Mesh::Mesh> mesh = discretizableInTime_.mesh();
@@ -114,7 +119,12 @@ initialize()
   discretizableInTime_.getComponentNames(componentNames);
   data_->setComponentNames(componentNames);
   
+  // create the vectors in the data object
   data_->initialize();
+
+  // parse boundary conditions, needs functionSpace set
+  // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
+  this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
 
   timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
 

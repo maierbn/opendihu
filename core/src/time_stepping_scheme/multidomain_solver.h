@@ -30,7 +30,11 @@ public:
   //! run the simulation
   void run();
 
-private:
+protected:
+
+  //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
+  void setSystemMatrix(double timeStepWidth);
+
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the initial Laplace problem that determines the fibre direction.
   CellMLAdapter cellMLAdapter_;   ///< the cellml adapter object that solves the cellml rhs, e.g. Hodgkin-Huxley model
 

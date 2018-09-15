@@ -68,7 +68,7 @@ initialize()
   
   // create empty field variable for geometry field
   std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_ = std::make_unique<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // assign values of geometry field
   this->setGeometryFieldValues();

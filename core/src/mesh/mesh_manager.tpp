@@ -10,16 +10,19 @@ namespace Mesh
 
 //! return previously created mesh or create on the fly
 template<typename FunctionSpaceType>
-std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
+std::shared_ptr<Mesh> Manager::functionSpace(PyObject *settings)
 {
+  LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
+
   // if mesh was already created earlier
   if (PythonUtility::hasKey(settings, "meshName"))
   {
     std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
-    if (hasMeshOfType<FunctionSpaceType>(meshName))
+    if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
     {
-      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested and found, type is " << typeid(meshes_[meshName]).name();
-      return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
+      LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is " << typeid(functionSpaces_[meshName]).name()
+        << ", cast to " << typeid(FunctionSpaceType).name();
+      return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
     }
     else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
@@ -30,7 +33,7 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       // get mesh configuration that was parsed earlier
       PyObject *meshConfiguration = meshConfiguration_.at(meshName);
       
-      if (hasMesh(meshName))
+      if (hasFunctionSpace(meshName))
       {
         std::stringstream newMeshName;
         newMeshName << meshName << "_2";
@@ -39,14 +42,14 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
       }
 
       // create new mesh and initialize
-      std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, meshConfiguration);
-      mesh->setMeshName(meshName);
-      mesh->initialize();
+      std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, meshConfiguration);
+      functionSpace->setMeshName(meshName);
+      functionSpace->initialize();
       
       // store mesh under its name
-      meshes_[meshName] = mesh;
+      functionSpaces_[meshName] = functionSpace;
       LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
-      return std::static_pointer_cast<FunctionSpaceType>(meshes_[meshName]);
+      return functionSpace;
     }
     else
     {
@@ -66,52 +69,53 @@ std::shared_ptr<Mesh> Manager::mesh(PyObject *settings)
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, settings);
-  mesh->setMeshName(anonymousName.str());
-  mesh->initialize();
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, settings);
+  functionSpace->setMeshName(anonymousName.str());
+  functionSpace->initialize();
 
-  meshes_[anonymousName.str()] = mesh;
+  functionSpaces_[anonymousName.str()] = functionSpace;
 
-  VLOG(1) << "mesh nNodes: (local without ghosts: " << mesh->nNodesLocalWithoutGhosts() << ", with ghosts: " << mesh->nNodesLocalWithGhosts() << ")";
+  VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts() << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << ")";
 
-  return mesh;
+  return functionSpace;
 }
 
 //! create a mesh not from python config but directly by calling an appropriate construtor. 
 //! With this e.g. meshes from node positions can be created.
 template<typename FunctionSpaceType, typename ...Args>
-std::shared_ptr<Mesh> Manager::createMesh(std::string name, Args && ...args)
+std::shared_ptr<Mesh> Manager::createFunctionSpace(std::string name, Args && ...args)
 {
-  if (hasMeshOfType<FunctionSpaceType>(name))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
   {
-    LOG(ERROR) << "Mesh with name \"" <<name << "\" already exists. Overwrite mesh.";
+    LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
  
   // create new mesh
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> mesh = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
 
-  mesh->setMeshName(name);
-  mesh->initialize();
+  functionSpace->setMeshName(name);
+  functionSpace->initialize();
   
-  meshes_[name] = mesh;
+  functionSpaces_[name] = functionSpace;
 
-  VLOG(1) << "mesh nNodes: (local without ghosts: " << mesh->nNodesLocalWithoutGhosts() << ", with ghosts: " << mesh->nNodesLocalWithGhosts() << ")";
+  VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts()
+    << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << ")";
 
-  return mesh;
+  return functionSpace;
 }
 
 template<typename FunctionSpaceType>
-bool Manager::hasMeshOfType(std::string meshName)
+bool Manager::hasFunctionSpaceOfType(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh(" << meshName << "): " << (meshes_.find(meshName) != meshes_.end());
-  LOG(DEBUG) << "meshes size: " << meshes_.size();
+  LOG(DEBUG) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
+  LOG(DEBUG) << "meshes size: " << functionSpaces_.size();
 
-  if (meshes_.find(meshName) != meshes_.end()) // if mesh is found by name
+  if (functionSpaces_.find(meshName) != functionSpaces_.end()) // if mesh is found by name
   {
-    if (std::dynamic_pointer_cast<FunctionSpaceType>(meshes_[meshName]))
+    if (std::dynamic_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]))
     {
       return true;
     }

@@ -63,6 +63,10 @@ template <int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 createFieldVariable(std::string name, std::vector<std::string> componentNames)
 {
+  assert(this->meshPartition());
+  assert(this->geometryField().functionSpace());
+  assert(this->geometryField().functionSpace()->meshPartition());
+
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> fieldVariable
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>>(this->geometryField(), name, componentNames);
 

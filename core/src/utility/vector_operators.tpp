@@ -1,6 +1,7 @@
 #include "utility/vector_operators.h"
 
 #include "utility/petsc_utility.h"
+#include "easylogging++.h"
 
 //! vector difference
 template<typename T, std::size_t nComponents>
@@ -201,8 +202,23 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   }
 
   stream << "(" << values[0];
-  for (unsigned long i=1; i<values.size(); i++)
-    stream << "," << values[i];
+
+  if (VLOG_IS_ON(1))
+  {
+    // with VLOG output all entries
+    for (unsigned long i = 1; i < values.size(); i++)
+      stream << "," << values[i];
+  }
+  else
+  {
+    // without VLOG only output the first 100 entries
+    unsigned long i = 1;
+    for (; i < std::min(100ul,values.size()); i++)
+      stream << "," << values[i];
+    if (i == 100 && i < values.size())
+      stream << "... " << values.size() << " entries total, only showing the first 100";
+  }
+
   stream << ")";
   return stream;
 }

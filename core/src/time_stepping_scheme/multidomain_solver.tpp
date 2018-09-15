@@ -79,4 +79,12 @@ initialize()
 
 }
 
+template<typename DiscretizableInTime>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+setSystemMatrix(double timeStepWidth)
+{
+
+}
+
+
 } // namespace TimeSteppingScheme

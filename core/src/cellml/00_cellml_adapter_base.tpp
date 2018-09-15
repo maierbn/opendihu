@@ -50,8 +50,7 @@ initialize()
   }
   
   // create a mesh if there is not yet one assigned, function space FunctionSpace::Generic, downcasted to Mesh::Mesh
-  mesh_ = context_.meshManager()->mesh<>(specificSettings_);
-  mesh_->initialize();
+  mesh_ = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);  // create initialized mesh
   LOG(DEBUG) << "Cellml mesh has " << mesh_->nNodesLocalWithoutGhosts() << " local nodes";
 
   //store number of instances

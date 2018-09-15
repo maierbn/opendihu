@@ -42,6 +42,7 @@ createPetscObjects()
 {
   LOG(DEBUG) << "TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects(" <<nComponents << ")" << std::endl;
   assert(this->functionSpace_);
+  assert(this->functionSpace_->meshPartition());
 
   if (componentNames_.empty())
   {

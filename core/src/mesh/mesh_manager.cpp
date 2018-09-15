@@ -76,7 +76,7 @@ createGenericFieldVariable(int nEntries, std::string name)
   std::array<double, 1> physicalExtent({0.0});
   std::stringstream meshName;
   meshName << "meshForFieldVariable" << name;
-  std::shared_ptr<Mesh> mesh = createMesh<FunctionSpace::Generic>(meshName.str(), nElements, physicalExtent);
+  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(meshName.str(), nElements, physicalExtent);
 
   LOG(DEBUG) << "create generic field variable with " << nEntries << " entries.";
   std::shared_ptr<FunctionSpace::Generic> functionSpace = std::static_pointer_cast<FunctionSpace::Generic>(mesh);
@@ -87,9 +87,9 @@ createGenericFieldVariable(int nEntries, std::string name)
   return functionSpace->template createFieldVariable<1>(name);
 }
 
-bool Manager::hasMesh(std::string meshName)
+bool Manager::hasFunctionSpace(std::string meshName)
 {
-  return meshes_.find(meshName) != meshes_.end();
+  return functionSpaces_.find(meshName) != functionSpaces_.end();
 }
 
 };  // namespace

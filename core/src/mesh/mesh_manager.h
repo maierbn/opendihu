@@ -29,21 +29,21 @@ public:
   //! store the pointer to the partition manager
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
   
-  //! return previously created mesh or create on the fly
+  //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
-  std::shared_ptr<Mesh> mesh(PyObject *settings);
+  std::shared_ptr<Mesh> functionSpace(PyObject *settings);
 
-  //! check if a mesh with the given name and type is stored
+  //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
-  bool hasMeshOfType(std::string meshName);
+  bool hasFunctionSpaceOfType(std::string meshName);
 
-  //! check if a mesh with the specified name is stored, the type is not checked
-  bool hasMesh(std::string meshName);
+  //! check if a function space with the specified name is stored, the type is not checked
+  bool hasFunctionSpace(std::string meshName);
 
   //! create a mesh not from python config but directly by calling an appropriate construtor. 
   //! With this e.g. meshes from node positions can be created.
   template<typename FunctionSpaceType, typename ...Args>
-  std::shared_ptr<Mesh> createMesh(std::string name, Args && ...args);
+  std::shared_ptr<Mesh> createFunctionSpace(std::string name, Args && ...args);
   
   //! Create a field variable without logical mesh representation, e.g. for MOR reduced vectors.
   //! The vector contains nEntries entries, the partitioning is done by the partition manager.
@@ -62,7 +62,7 @@ private:
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 
   std::map<std::string, PyObject *> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
-  std::map<std::string, std::shared_ptr<Mesh>> meshes_;    ///< the managed meshes with their string key
+  std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
 };
 
 };    // namespace

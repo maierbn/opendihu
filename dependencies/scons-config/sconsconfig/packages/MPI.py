@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
       res = self.try_link(ctx)
       
     except Exception as e: 
-      ctx.Message("MPI mpicc --showme failed: "+str(e)+", now using MPI_DIR")
+      ctx.Message("MPI mpicc --showme failed: "+str(e)+", now using MPI_DIR\n")
       
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
       self.headers = ['mpi.h']

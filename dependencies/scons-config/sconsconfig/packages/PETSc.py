@@ -64,12 +64,9 @@ class PETSc(Package):
         #self.libs = ["craypetsc_cray_real"]
           if os.environ.get("PE_ENV") == "GNU":
             self.libs = ["craypetsc_gnu_real-64"]
+            self.extra_libs = ["sci_gnu_71_mpi_mp"]
           print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
         
-        # the system tries to include one of them after other, if linking else fails
-        if os.environ.get("LIBSCI_BASE_DIR") is not None:
-          self.extra_libs = ["sci_cray_mpi_mp"]
-
         self.check_text = petsc_text
         self.static = False
         #self.set_rpath = False

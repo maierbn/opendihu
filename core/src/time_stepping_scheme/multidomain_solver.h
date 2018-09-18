@@ -35,10 +35,21 @@ protected:
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
   void setSystemMatrix(double timeStepWidth);
 
-  Data::Multidomain<typename DiscretizableInTimeType::FunctionSpace> data_;  ///< the data object of the multidomain solver which stores all field variables and matrices
-  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the initial Laplace problem that determines the fibre direction.
-  CellMLAdapter cellMLAdapter_;   ///< the cellml adapter object that solves the cellml rhs, e.g. Hodgkin-Huxley model
+  //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
+  void solveLinearSystem();
 
+  Data::Multidomain<typename DiscretizableInTimeType::FunctionSpace> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
+  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fibre directions
+  FiniteElementMethodPotentialFlow finiteElementMethodDiffusion_;   ///< the finite element object that is used for the diffusion, only the stiffness matrix is computed by this object
+  FiniteElementMethodPotentialFlow finiteElementMethodDiffusionTotal_;   ///< the finite element object that is used for the diffusion with diffusion tensor (sigma_i + sigma_e), bottom right block of system matrix
+  std::vector<CellMLAdapter> cellMLAdapters_;   ///< the cellml adapter objects that solves the cellml rhs, e.g. Hodgkin-Huxley model
+
+  int nCompartments_;   ///< the number of instances of the diffusion problem, or the number of motor units
+  Mat systemMatrix_;    ///< for now, the system matrix which has more components than dofs, later this should be placed inside the data object
+  Vec solution_;        ///< nested solution vector
+  Vec rightHandSide_;             ///< distributed rhs
+
+  std::vector<double> am_, cm_;  ///< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
 };
 
 }  // namespace

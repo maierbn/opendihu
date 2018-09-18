@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
       MeshType,
       BasisFunction::LagrangeOfOrder<1>,
       Quadrature::Gauss<3>,
-      Equation::Dynamic::AnisotropicDiffusion
+      Equation::Dynamic::DirectionalDiffusion
     >
   > problem(settings);
   

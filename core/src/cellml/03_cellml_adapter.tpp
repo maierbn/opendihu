@@ -22,6 +22,13 @@ CellmlAdapter(DihuContext context) :
   LOG(TRACE) << "CellmlAdapter constructor";
 }
 
+template<int nStates_, typename FunctionSpaceType>
+ constexpr int CellmlAdapter<nStates,FunctionSpaceType>::
+nStates()
+{
+  return nStates_;
+}
+
 template<int nStates, typename FunctionSpaceType>
 void CellmlAdapter<nStates,FunctionSpaceType>::
 reset()

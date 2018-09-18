@@ -29,5 +29,11 @@ struct AnisotropicDiffusion : public Dynamic
   static constexpr bool isSolidMechanics = false;              ///< Equations of solid mechanics
 };
 
+/** u_t - ∇•A(v)∇u = 0 where the diffusion tensor, A, depends upon a direction field, v
+  */
+struct DirectionalDiffusion : public AnisotropicDiffusion
+{
+};
+
 }  // namespace
 }  // namespace

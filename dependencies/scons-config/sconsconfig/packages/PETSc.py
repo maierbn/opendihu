@@ -63,7 +63,8 @@ class PETSc(Package):
         #if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
         #self.libs = ["craypetsc_cray_real"]
           if os.environ.get("PE_ENV") == "GNU":
-            self.libs = ["craypetsc_gnu_real-64"]
+            #self.libs = ["craypetsc_gnu_real-64"]
+            self.libs = ["craypetsc_gnu_real"]
             self.extra_libs = ["sci_gnu_71_mpi_mp"]
           print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
         

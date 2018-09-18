@@ -32,16 +32,21 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
 
   if (FunctionSpaceType::dim() == 1)
   {
-    diffusionTensor(0,0) = 1;
+    diffusionTensor = {1.0};
   }
   else if (FunctionSpaceType::dim() == 2)
   {
-    diffusionTensor(0,0) = 1;
+    diffusionTensorExtraCellular = {1.0, 0.0,
+                                    0.0, 0.0};
   }
   else if (FunctionSpaceType::dim() == 3)
   {
-    diffusionTensor(0,0) = 1;
+    diffusionTensorExtraCellular = {1.0, 0.0, 0.0,
+                                    0.0, 1.0, 0.0,
+                                    0.0, 0.0, 1.0};
   }
+
+  MathUtility::rotateMatrix(diffusionTensorExtraCellular, directionVector);
 
   if (multidomainNCompartments_ > 0)
   {
@@ -62,6 +67,8 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
                                       0.0, 1.0, 0.0,
                                       0.0, 0.0, 2.0};
     }
+
+    MathUtility::rotateMatrix(diffusionTensorExtraCellular, directionVector);
 
     // add extracellular diffusion tensor
     diffusionTensor = diffusionTensor + diffusionTensorExtraCellular;

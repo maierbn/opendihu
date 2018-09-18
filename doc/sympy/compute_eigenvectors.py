@@ -33,5 +33,4 @@ rotation_matrix = Matrix([
 
 l = symbols('l')
 print ""
-print "
 print solve([(a11-l)*v1 + a21*v2 + a31*v3, a21*v1 + (a22-l)*v2 + a32*v3, a31*v1 + a32*v2 + (a33-l)*v3], [a11,a21,a31,a21,a22,a32,a31,a32,a33])

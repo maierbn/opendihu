@@ -6,7 +6,8 @@
 #include <tuple>
 
 #include "data_management/data.h"
-#include "data_management/diffusion_tensor.h"
+#include "data_management/diffusion_tensor_field_variable.h"
+#include "data_management/diffusion_tensor_constant.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"

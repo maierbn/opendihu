@@ -3,6 +3,9 @@
 # Simply open the Python Shell inside paraview and execute
 # >>> import set_fiber_coloring
 #
+# if the scripts needs to be reloaded (after a change), execute
+# >>> reload(set_fiber_coloring)
+#
 # How to generate traces:
 # import paraview.smstate as st
 # st.smtrace.start_trace()
@@ -38,6 +41,12 @@ for key,source in sources.iteritems():
   
   # get display properties
   sourceDisplay = GetDisplayProperties(source, view=renderView1)
+  
+  # change representation type
+  sourceDisplay.SetRepresentationType('Wireframe')
+  
+  # Properties modified
+  sourceDisplay.LineWidth = 2.0
   
   # set scalar coloring
   ColorBy(sourceDisplay, ('POINTS', 'solution'))

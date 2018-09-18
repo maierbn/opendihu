@@ -37,6 +37,10 @@ int main(int argc, char* argv[])
     ctx.Message('Checking for MPI ... ')
     self.check_options(env)
 
+    # on hazel hen login node do not run MPI test program because this is not possible (only compile)
+    if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+      self.run = False
+      
     try:
       # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
       

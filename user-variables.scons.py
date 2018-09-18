@@ -15,27 +15,6 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-import lsb_release
-lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
-
-# MPI
-MPI_DIR="/usr/lib/openmpi"
-#MPI_DIR="/usr/lib64/mpich/"
-
-if lsb_info["RELEASE"] == "18.04":
-  MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
-
-# use value of environment variable 'MPI_HOME' if it is set
-import os
-if os.environ.get("MPI_HOME") is not None:
-  MPI_DIR = os.environ.get("MPI_HOME")
-  
-# for Travis CI build MPI ourselves
-if os.environ.get("TRAVIS") is not None:
-  print "Travis CI detected, del MPI_DIR"
-  del MPI_DIR
-  MPI_DOWNLOAD=True
-
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 
@@ -47,7 +26,7 @@ PETSC_DOWNLOAD=True
 PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
 PYTHON_REDOWNLOAD=False
 
-#Numpy
+# Numpy
 CYTHON_DOWNLOAD=True
 NUMPYC_DOWNLOAD=True
 
@@ -73,6 +52,28 @@ SEMT_DOWNLOAD=True
 EASYLOGGINGPP_DOWNLOAD=True
 #EASYLOGGINGPP_REDOWNLOAD=True
 
+# MPI
+# MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
+MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
+#MPI_DIR="/usr/lib64/mpich/"
+
+# automatically set MPI_DIR for ubuntu 18.04
+import lsb_release
+lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
+if "RELEASE" in lsb_info:
+  if lsb_info["RELEASE"] == "18.04":
+    MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
+
+# use value of environment variable 'MPI_HOME' if it is set
+import os
+if os.environ.get("MPI_HOME") is not None:
+  MPI_DIR = os.environ.get("MPI_HOME")
+  
+# for Travis CI build MPI ourselves
+if os.environ.get("TRAVIS") is not None:
+  print "Travis CI detected, del MPI_DIR"
+  del MPI_DIR
+  MPI_DOWNLOAD=True
 
 
 

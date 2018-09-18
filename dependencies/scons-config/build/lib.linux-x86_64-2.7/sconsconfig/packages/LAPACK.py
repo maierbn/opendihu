@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
         #if os.environ.get("LIBSCI_BASE_DIR") is not None:
         #  self.libs = ["sci_cray_mpi_mp"]
           if os.environ.get("PE_ENV") == "GNU":
-            self.libs = ["libsci_gnu_71_mpi_mp"]
+            self.libs = ["sci_gnu_71_mpi_mp"]
           print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
 
         elif False:

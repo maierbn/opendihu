@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
       res = self.try_link(ctx)
       
     except Exception as e: 
-      ctx.Message("MPI mpicc --showme failed: "+e+", now using MPI_DIR")
+      ctx.Message("MPI mpicc --showme failed: "+str(e)+", now using MPI_DIR")
 
       res = super(MPI, self).check(ctx)
     

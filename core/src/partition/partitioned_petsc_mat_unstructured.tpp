@@ -1,6 +1,6 @@
 #include "partition/partitioned_petsc_mat.h"
 
-//! constructor, create square matrix
+//! constructor, create square sparse matrix
 template<int D, typename BasisFunctionType>
 PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
@@ -8,10 +8,23 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::Func
   PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name),
   nComponents_(nComponents)
 {
-  createMatrix(diagonalNonZeros, offdiagonalNonZeros);
+  MatType matrixType = MATAIJ;  // sparse matrix type
+  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
 }
 
-//! constructor, create non-square matrix
+//! constructor, create square dense matrix
+template<int D, typename BasisFunctionType>
+PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>> meshPartition,
+                    int nComponents, std::string name) :
+  PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartition, meshPartition, name),
+  nComponents_(nComponents)
+{
+  MatType matrixType = MATDENSE;  // dense matrix type
+  createMatrix(matrixType, 0, 0);
+}
+
+//! constructor, create non-square sparse matrix
 template<int D, typename BasisFunctionType>
 PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
@@ -20,9 +33,22 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::Func
   PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartitionRows, meshPartitionColumns, name),
   nComponents_(nComponents)
 {
-  createMatrix(diagonalNonZeros, offdiagonalNonZeros);
+  MatType matrixType = MATAIJ;  // sparse matrix type
+  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
 }
 
+//! constructor, create non-square dense matrix
+template<int D, typename BasisFunctionType>
+PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
+                    std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
+                    int nComponents, std::string name) :
+  PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>(meshPartitionRows, meshPartitionColumns, name),
+  nComponents_(nComponents)
+{
+  MatType matrixType = MATDENSE;  // dense matrix type
+  createMatrix(matrixType, 0, 0);
+}
 
 //! constructor, use provided global matrix
 template<int D, typename BasisFunctionType>
@@ -42,7 +68,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::Func
 //! create a distributed Petsc matrix, according to the given partition
 template<int D, typename BasisFunctionType>
 void PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
+createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
 {
   PetscErrorCode ierr;
   
@@ -56,18 +82,31 @@ createMatrix(int diagonalNonZeros, int offdiagonalNonZeros)
   
   ierr = MatCreate(this->meshPartitionRows_->mpiCommunicator(), &this->matrix_); CHKERRV(ierr);
   ierr = MatSetSizes(this->matrix_, nRowDofs, nColumnDofs, nRowDofs, nColumnDofs); CHKERRV(ierr);
-  ierr = MatSetFromOptions(this->matrix_); CHKERRV(ierr);                        
+
+  ierr = MatSetType(this->matrix_, matrixType); CHKERRV(ierr);
+
+  //ierr = MatSetFromOptions(this->matrix_); CHKERRV(ierr);
   ierr = PetscObjectSetName((PetscObject) this->matrix_, this->name_.c_str()); CHKERRV(ierr);
   
   // allow additional non-zero entries in the stiffness matrix for UnstructuredDeformable mesh
   //MatSetOption(matrix, MAT_NEW_NONZERO_LOCATIONS, PETSC_TRUE);
 
   // dense matrix
-  //ierr = MatSetUp(this->tangentStiffnessMatrix_); CHKERRV(ierr);
-
-  // sparse matrix
-  ierr = MatMPIAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-  ierr = MatSeqAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+  // MATDENSE = "dense" - A matrix type to be used for dense matrices. This matrix type is identical to MATSEQDENSE when constructed with a single process communicator, and MATMPIDENSE otherwise.
+  if (std::string(matrixType) == MATMPIDENSE || std::string(matrixType) == MATSEQDENSE || std::string(matrixType) == MATDENSE)
+  {
+    ierr = MatSetUp(this->matrix_); CHKERRV(ierr);
+  }
+  else
+  {
+    // sparse matrix: preallocation of internal data structure
+    // http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MATAIJ.html#MATAIJ
+    // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
+    // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
+    // It is recommended that you call both of the above preallocation routines for simplicity.
+    ierr = MatMPIAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+    ierr = MatSeqAIJSetPreallocation(this->matrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+  }
 }
 
 template<int D, typename BasisFunctionType>

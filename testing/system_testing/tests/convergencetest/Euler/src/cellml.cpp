@@ -14,8 +14,7 @@ int main(int argc, char *argv[])
     CellmlAdapter<57>
   > equationDiscretized(settings);
   
-  Computation computation(settings, equationDiscretized);
-  computation.run();
+  equationDiscretized.run();
   
   return EXIT_SUCCESS;
 }

@@ -354,8 +354,8 @@ output(std::ostream &stream)
 #ifndef NDEBUG  
   // this method gets all values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
-  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
+  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
+  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
     
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -381,25 +381,34 @@ output(std::ostream &stream)
       }
     }
     std::vector<double> localValues(nDofsLocal);
-    VecGetValues(vector, nDofsLocal, indices.data(), localValues.data());
+    PetscErrorCode ierr;
+    ierr = VecGetValues(vector, nDofsLocal, indices.data(), localValues.data()); CHKERRV(ierr);
     
     // gather the local sizes of the vectors to rank 0
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
     // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
     // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
-    MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    if (ownRankNo == 0)
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (3)");
+    }
+    else
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(localSizes.data(), 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (3)");
+    }
     
     // determine the maximum size/number of vector entries on any rank
     int maxLocalSize;
-    MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
+    MPIUtility::handleReturnValue(MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
     
     // gather all values to rank 0
     std::vector<double> recvBuffer(maxLocalSize*nRanks);
     std::vector<double> sendBuffer(maxLocalSize,0.0);
     std::copy(localSizes.begin(), localSizes.end(), sendBuffer.begin());
 
-    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    VLOG(1) << "MPI_Gather (4)";
+    MPIUtility::handleReturnValue(MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (4)");
     
     if (ownRankNo == 0)
     {
@@ -419,7 +428,6 @@ output(std::ostream &stream)
     static int counter = 0;
     std::stringstream vectorOutputFilename;
     vectorOutputFilename << "vector_" << counter++ << ".txt";
-    PetscErrorCode ierr;
     ierr = PetscViewerASCIIOpen(this->meshPartition_->mpiCommunicator(), vectorOutputFilename.str().c_str(), &viewer); CHKERRV(ierr);
     ierr = PetscViewerPushFormat(viewer, PETSC_VIEWER_ASCII_INDEX); CHKERRV(ierr);
     ierr = VecView(vector, viewer); CHKERRV(ierr);

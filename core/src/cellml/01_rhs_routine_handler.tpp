@@ -77,7 +77,7 @@ initializeRhsRoutine()
       }
     }
 
-    int rankNo = this->context_.ownRankNo();
+    int rankNo = DihuContext::ownRankNo();
     if (libraryFilenameSetWithNInstances)
     {
       // gather which number of instances all ranks have
@@ -608,7 +608,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // add .rankNo to simd source filename
     s.str("");
-    int rankNo = this->context_.ownRankNo();
+    int rankNo = DihuContext::ownRankNo();
     s << simdSourceFilename << "." << rankNo;
     simdSourceFilename = s.str();
 

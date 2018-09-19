@@ -154,7 +154,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
     argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);
 
-    if (VLOG_IS_ON(1))
+    if (VLOG_IS_ON(1) && pythonConfig_)
     {
       PythonUtility::printDict(pythonConfig_);
     }
@@ -261,7 +261,7 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
-int DihuContext::ownRankNo() const
+int DihuContext::ownRankNo()
 {
   int rankNo;
   MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));

@@ -1,7 +1,7 @@
 # Electrophysiology debug
 #
 
-end_time = 100.0
+end_time = 1000.0
 
 import numpy as np
 import matplotlib 
@@ -33,8 +33,8 @@ output_timestep = 1e-1            # timestep for output files
 #fibre_file = "../input/laplace3d_structured_quadratic"
 fibre_file = "../input/laplace3d_structured_linear"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../input/MU_firing_times_real.txt"
-firing_times_file = "../input/MU_firing_times_immediately.txt"
+firing_times_file = "../input/MU_firing_times_real.txt"
+#firing_times_file = "../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
@@ -42,7 +42,7 @@ firing_times_file = "../input/MU_firing_times_immediately.txt"
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-print("rank: {}/{}".format(rank_no,n_ranks))
+#print("rank: {}/{}".format(rank_no,n_ranks))
 
 if "shorten" in cellml_file:
   parametersUsedAsIntermediate = [32]
@@ -61,7 +61,7 @@ def getMotorUnitNo(fibre_no):
 def fibreGetsStimulated(fibre_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = getMotorUnitNo(fibre_no)
+  mu_no = (int)(getMotorUnitNo(fibre_no)*0.8)
   
   # determine if fibre fires now
   index = int(current_time * frequency)
@@ -151,7 +151,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
     
 def get_instance_config(i):
   
-  k = 3  # n ranks per fibre
+  k = 1  # n ranks per fibre
   ranks = []
   for j in range(k):
     ranks.append(k*i + j)
@@ -251,15 +251,18 @@ fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
 # determine when the fibres will fire, for debugging output
-print("Debugging output about fibre firing: Taking input from file \"{}\"".format(firing_times_file))
-for fibre_no_index in range(nInstances):
-  first_stimulation = None
-  for current_time in np.linspace(0,1./stimulation_frequency*nInstances,nInstances+1):
-    if fibreGetsStimulated(fibre_no_index, stimulation_frequency, current_time):
-      first_stimulation = current_time
-      break
-
-  print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
+if rank_no == 0:
+  print("Debugging output about fibre firing: Taking input from file \"{}\"".format(firing_times_file))
+  
+  n_firing_times = np.size(firing_times,0)
+  for fibre_no_index in range(nInstances):
+    first_stimulation = None
+    for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
+      if fibreGetsStimulated(fibre_no_index, stimulation_frequency, current_time):
+        first_stimulation = current_time
+        break
+  
+    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
   "Meshes": meshes,

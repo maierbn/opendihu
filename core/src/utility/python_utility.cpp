@@ -804,7 +804,7 @@ void PythonUtility::printDict(PyObject *dict)
 {
   if (dict == NULL)
   {
-    VLOG(2) << "dict is NULL!";
+    VLOG(2) << "printDict: dict is NULL!";
     return;
   }
 
@@ -813,7 +813,7 @@ void PythonUtility::printDict(PyObject *dict)
   
   if (!PyDict_Check(dict))
   {
-    VLOG(2) << "Object is not a dict!";
+    VLOG(2) << "printDict: Object is not a dict!";
     return;
   }
 

@@ -50,7 +50,7 @@ class Matplotlib(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'http://pypi.python.org/packages/49/b8/89dbd27f2fb171ce753bb56220d4d4f6dbc5fe32b95d8edc4415782ef07f/matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl'
+            'download_url': 'https://files.pythonhosted.org/packages/9e/59/f235ab21bbe7b7c6570c4abf17ffb893071f4fa3b9cf557b09b60359ad9a/matplotlib-2.2.3-cp36-cp36m-manylinux1_x86_64.whl'
         }
         defaults.update(kwargs)
         super(Matplotlib, self).__init__(**defaults)
@@ -63,11 +63,16 @@ class Matplotlib(Package):
         self.check_text = check_text
         self.static = False
         
-        # Setup the build handler.
-        self.set_build_handler([
-#            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../matplotlib-2.2.2-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
-            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install matplotlib --prefix=${DEPENDENCIES_DIR}/python/install'
-        ])
+        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          # Setup the build handler.
+          self.set_build_handler([
+              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../matplotlib-2.2.3-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+          ])
+        else :
+          # Setup the build handler.
+          self.set_build_handler([
+              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install matplotlib --prefix=${DEPENDENCIES_DIR}/python/install'
+          ])
         
         # Matplotlib is installed in the directory tree of python, under lib/python3.6/site-packages. It is done using pip.
 

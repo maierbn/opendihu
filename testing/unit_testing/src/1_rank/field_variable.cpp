@@ -75,6 +75,71 @@ config = {
 
 }
 
+TEST(FieldVariableTest, NonSquareDenseMatrix)
+{
+  std::string pythonConfig = R"(
+config = {
+  "FiniteElementMethod" : {
+  },
+}
+)";
+
+  DihuContext settings(argc, argv, pythonConfig);
+
+  SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<2>,
+    BasisFunction::LagrangeOfOrder<>,
+    Quadrature::Gauss<2>,
+    Equation::None
+  > finiteElementMethod(settings);
+  finiteElementMethod.run();
+
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>,BasisFunction::LagrangeOfOrder<1>> FunctionSpace1;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>,BasisFunction::LagrangeOfOrder<2>> FunctionSpace2;
+
+  // get functionSpace manager object that are stored in the DihuContext object
+  std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
+
+  std::array<int,2> nElements1({2,2});
+  std::array<int,2> nElements2({3,3});
+  std::array<double,2> physicalExtent({0});
+  std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent);
+  std::shared_ptr<FunctionSpace2> functionSpace2 = meshManager->createFunctionSpace<FunctionSpace2>("functionSpace2", nElements2, physicalExtent);
+
+  // create dense matrix, 9x49
+  std::shared_ptr<PartitionedPetscMat<FunctionSpace1,FunctionSpace2>> matrix
+    = std::make_shared<PartitionedPetscMat<FunctionSpace1,FunctionSpace2>>(functionSpace1->meshPartition(), functionSpace2->meshPartition(), 1, "T");
+
+  // zero out all entries
+  matrix->zeroEntries();
+
+  // set some values in the matrix
+  std::vector<PetscInt> rowIndices    = {0, 2};
+  std::vector<PetscInt> columnIndices = {0, 48};
+  std::vector<double> values(rowIndices.size() * columnIndices.size(), 1.0);
+  matrix->setValues(rowIndices.size(), rowIndices.data(), columnIndices.size(), columnIndices.data(), values.data(), INSERT_VALUES);
+
+  matrix->assembly(MAT_FINAL_ASSEMBLY);
+
+  // get all values in the matrix
+  std::vector<PetscInt> resultRowIndices(9);
+  std::iota(resultRowIndices.begin(), resultRowIndices.end(), 0);
+  std::vector<PetscInt> resultColumnIndices(49);
+  std::iota(resultColumnIndices.begin(), resultColumnIndices.end(), 0);
+  std::vector<double> resultValues(resultRowIndices.size() * resultColumnIndices.size());
+
+  matrix->getValues(resultRowIndices.size(), resultRowIndices.data(), resultColumnIndices.size(), resultColumnIndices.data(), resultValues.data());
+
+  LOG(DEBUG) << resultValues;
+
+  // check that entries have expected values
+  ASSERT_EQ(resultValues[0], 1.0);
+  ASSERT_EQ(resultValues[1], 0.0);
+  ASSERT_EQ(resultValues[48], 1.0);
+  ASSERT_EQ(resultValues[98], 1.0);
+  ASSERT_EQ(resultValues[146], 1.0);
+}
+
 TEST(FieldVariableTest, StructuredDeformable)
 {
   // explicit functionSpace with node positions

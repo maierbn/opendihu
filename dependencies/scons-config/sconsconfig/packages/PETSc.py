@@ -59,15 +59,20 @@ class PETSc(Package):
         #self.headers = ['mysql.h']
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
 
-        if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
-          self.libs = ["craypetsc_cray_real"]
-          print("Cray environment detected, using \"craypetsc_cray_real\" for PETSc")
-
+        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        #if os.environ.get("CRAY_PETSC_PREFIX_DIR") is not None:
+        #self.libs = ["craypetsc_cray_real"]
+          if os.environ.get("PE_ENV") == "GNU":
+            #self.libs = ["craypetsc_gnu_real-64"]
+            self.libs = ["craypetsc_gnu_real"]
+            self.extra_libs = ["sci_gnu_71_mpi_mp"]
+            print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
+          else:
+            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
         
-        # the system tries to include one of them after other, if linking else fails
-        if os.environ.get("LIBSCI_BASE_DIR") is not None:
-          self.extra_libs = ["sci_cray_mpi_mp"]
-
+          # on hazel hen login node do not run MPI test program because this is not possible (only compile)
+          self.run = False
+          
         self.check_text = petsc_text
         self.static = False
         #self.set_rpath = False

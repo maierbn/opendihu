@@ -1,43 +1,51 @@
 #include "model_order_reduction/mor.h"
+#include "data_management/data.h"
+
+#include <array>
 
 namespace ModelOrderReduction
 {
 
-template<typename FunctionSpaceType>
-MORBase<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+MORBase<FullFunctionSpaceType>::
 MORBase(DihuContext context):
 initialized_(false)
-{    
+{ 
 }
 
-template<typename FunctionSpaceType>
-MORBase<FunctionSpaceType>
+template<typename FullFunctionSpaceType>
+MORBase<FullFunctionSpaceType>
 ::~MORBase()
 {    
 }
 
-template<typename FunctionSpaceType>
-void MORBase<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+void MORBase<FullFunctionSpaceType>::
 setBasis()
 {
     //to be implemented
 }
 
-template<typename FunctionSpaceType>
-Data::ModelOrderReduction<FunctionSpaceType> &MORBase<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+Data::ModelOrderReduction<FullFunctionSpaceType> &MORBase<FullFunctionSpaceType>::
 data()
 {
   return *data_;
 }
 
-template<typename FunctionSpaceType>
-void MORBase<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+void MORBase<FullFunctionSpaceType>::
 initialize()
-{   
+{  
+  if (initialized_)
+    return;
+  
+  LOG(TRACE) << "MORBase::initialize()";
+  
 }
 
-template<typename FunctionSpaceType>
-void MORBase<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+void MORBase<FullFunctionSpaceType>::
 setRedSysMatrix(Mat &A, Mat &A_R)
 {
   //to be implemented

@@ -13,7 +13,7 @@ namespace ModelOrderReduction
 {
   template<typename TimeSteppingType>
   class TimeSteppingSchemeOdeReduced : 
-  public MORBase<FunctionSpace::Generic>, 
+  public MORBase<typename TimeSteppingType::FunctionSpace>, 
     public TimeSteppingScheme::TimeSteppingScheme
   {
   public:
@@ -38,7 +38,7 @@ namespace ModelOrderReduction
     SolutionVectorMapping &solutionVectorMapping();
     
     //! return the Petsc solution vector
-    FieldVariableType &solution();
+    std::shared_ptr<FieldVariableType> &solution();
     
     //! set the subset of ranks that will compute the work
     void setRankSubset(Partition::RankSubset rankSubset);
@@ -50,7 +50,6 @@ namespace ModelOrderReduction
     bool knowsMeshType();
     
   protected:
-    PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
     TimeSteppingType timestepping_;
     
   private:

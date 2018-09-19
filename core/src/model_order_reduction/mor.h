@@ -11,12 +11,12 @@ namespace ModelOrderReduction
 
 /** A class for model order reduction techniques.
  */
-template<typename FunctionSpaceType>
+template<typename FullFunctionSpace>
 class MORBase
 {
 public:
+  typedef Data::ModelOrderReduction<FullFunctionSpace> Data; //type of Data object
   
-  typedef Data::ModelOrderReduction<FunctionSpaceType> Data; //type of Data object
   //! constructor
   MORBase(DihuContext context);
   
@@ -35,10 +35,11 @@ protected:
   virtual void setRedSysMatrix(Mat &A, Mat &A_R);
   
   std::shared_ptr<Data> data_;
-  
+  int nReducedBases_;             ///< dimension of the reduced space
   bool initialized_;
 };
 
 }  // namespace
+
 
 #include "model_order_reduction/mor.tpp"

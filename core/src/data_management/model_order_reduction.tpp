@@ -1,54 +1,51 @@
-#pragma once
+#include "data_management/model_order_reduction.h"
 
 #include <petscmat.h>
 #include "easylogging++.h"
 
-#include "data_management/model_order_reduction.h"
-
-
 namespace Data
 {
 
-template<typename FunctionSpaceType>  
-ModelOrderReduction<FunctionSpaceType>::
-ModelOrderReduction(DihuContext context): Data<FunctionSpaceType>(context)
+template<typename FullFunctionSpaceType>  
+ModelOrderReduction<FullFunctionSpaceType>::
+ModelOrderReduction(DihuContext context): Data<FullFunctionSpaceType>(context)
 {    
 }
 
-template<typename FunctionSpaceType>  
-ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>  
+ModelOrderReduction<FullFunctionSpaceType>::
 ~ModelOrderReduction()
 {    
 }
 
-template<typename FunctionSpaceType>  
-Mat &ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>  
+Mat &ModelOrderReduction<FullFunctionSpaceType>::
 basis()
 {    
   return this->basis_; 
 }
   
-template<typename FunctionSpaceType>  
-Mat &ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>  
+Mat &ModelOrderReduction<FullFunctionSpaceType>::
 basisTransp()
 {    
   return this->basisTransp_; 
 }
   
-//template<typename FunctionSpaceType>  
+//template<typename FullFunctionSpaceType>  
 //void ModelOrderReduction::setBasis()
 //{
 //}
   
-template<typename FunctionSpaceType>  
-Mat &ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>  
+Mat &ModelOrderReduction<FullFunctionSpaceType>::
 redSysMatrix()
 {    
   return this->redSysMatrix_; 
 } 
  
-template<typename FunctionSpaceType>  
-void ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>  
+void ModelOrderReduction<FullFunctionSpaceType>::
 initialize()
 {
   if (!this->initialized_)
@@ -62,17 +59,21 @@ initialize()
   }
 }
   
-template<typename FunctionSpaceType>
-void ModelOrderReduction<FunctionSpaceType>::
+template<typename FullFunctionSpaceType>
+void ModelOrderReduction<FullFunctionSpaceType>::
 createPetscObjects()
 {
   LOG(TRACE) << "ModelOrderReduction::createPetscObjects()";
   
-  // get the partitioning from the function space
-  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
-    
   // create field variables on local partition
-  this->redSolution_ = this->functionSpace_->template createFieldVariable<1>("redSolution"); 
+  this->redSolution_ = this->functionSpace_->createGenericFieldVariable("redSolution");
+  this->redIncrement_=this->functionSpace_->createGenericFieldVariable("redIncrement");
+  
+  // get the partitioning from the function space
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition_row = this->fullFunctionSpace_->meshPartition();
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition_col = this->functionSpace_->meshPartition();
+  
+  //this-> matrix = ... PetscPartitionedMat <FullFunctionSpaceType,FunctionSpace::Generic>
 }
   
 //template<typename FunctionSpcaeType>

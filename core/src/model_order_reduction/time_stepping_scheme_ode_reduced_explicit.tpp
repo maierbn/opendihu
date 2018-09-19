@@ -1,5 +1,3 @@
-#pragma once 
-
 #include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.h"
 
 #include <Python.h>

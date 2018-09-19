@@ -10,21 +10,26 @@
 /** Global numbering: such that each rank has its own contiguous subset of the total range.
  *  Local numbering: ghost elements
  */
-template<typename FunctionSpaceType, typename = typename FunctionSpaceType::Mesh>
+template<typename RowsFunctionSpaceType, typename ColumnsFunctionSpaceType = RowsFunctionSpaceType, typename = typename RowsFunctionSpaceType::Mesh>
 class PartitionedPetscMat
 {
 };
 
 /** partial specialization for structured meshes */
-template<typename MeshType, typename BasisFunctionType>
-class PartitionedPetscMat<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>> : 
-  public PartitionedPetscMatBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+class PartitionedPetscMat<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>> :
+  public PartitionedPetscMatBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>
 {
 public:
-  //! constructor
-  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition, 
+  //! constructor, create square matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                       int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
- 
+
+  //! constructor, create square non-matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
+                      std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionColumns,
+                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+
   //! constructor, use provided global matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                       Mat &globalMatrix, std::string name);
@@ -77,12 +82,20 @@ protected:
  *  (To enable for parallelism, use petsc IS, not implemented yet)
  */
 template<int D, typename BasisFunctionType>
-class PartitionedPetscMat<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>> : 
-  public PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>
+class PartitionedPetscMat<
+  FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,
+  FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,
+  Mesh::UnstructuredDeformableOfDimension<D>> :
+  public PartitionedPetscMatBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>,FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>>
 {
 public:
-  //! constructor, create matrix
+  //! constructor, create square matrix
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartition,
+                      int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
+
+  //! constructor, create non-square matrix
+  PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionRows,
+                      std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> meshPartitionColumns,
                       int nComponents, int diagonalNonZeros, int offdiagonalNonZeros, std::string name);
 
   //! constructor, use provided global matrix

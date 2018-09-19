@@ -7,7 +7,7 @@ min_z=40
 max_z=260
 
 triangulation_type=2  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom with CoG, 3 = custom with minimized distance
-parametric_space_shape=4   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = unit circle with optimized positions
+parametric_space_shape=3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = unit circle with optimized positions
 n_points_x=10   # has to be even for quadratic elements
 #n_points_x=4
 

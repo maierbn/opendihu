@@ -26,8 +26,9 @@ initializeRhsRoutine()
   // 1) if simdSourceFilename is given, use that source to compile the library
   // 2) if not 1) but sourceFilename is given, create simdSourceFilename from that and compile library
   // 3) if not 2) but libraryFilename is given, load that library, if it contains simdRhs, use that, if it contains non-simd rhs use that
+  // 4) if not 3) but gpuSourceFilename is given, use that source to compile the library
 
-  // try to load or create simd source
+  // try to create or load simd source
   std::string simdSourceFilename;
   if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
   {
@@ -142,6 +143,87 @@ initializeRhsRoutine()
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
   }
 
+  // try to create or load gpu source
+  std::string gpuSourceFilename;
+  if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
+  {
+    if (!createGPUSourceFile(gpuSourceFilename))
+      gpuSourceFilename = "";
+  }
+
+  if (gpuSourceFilename == "")
+  {
+    if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    {
+      gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
+    }
+  }
+
+  // if gpuSourceFilename is set, compile to create dynamic library
+  if (gpuSourceFilename != "")
+  {
+    // compile source file to a library
+    libraryFilename = "lib.so";
+    if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    {
+      libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+    }
+    else 
+    {
+      std::stringstream s;
+      s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
+      libraryFilename = s.str();
+    }
+
+    bool doCompilation = true;
+    forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
+    if(!forceRecompileRhs_)
+    {
+      // check if the library file already exists
+      std::ifstream file;
+      file.open(libraryFilename);
+      if (file.is_open())
+      {
+        LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists, do not recompile (set forceRecompileRhs to True to force recompilation).";
+        doCompilation = false;
+        file.close();
+      }
+    }
+
+    if (doCompilation)
+    {
+      if (libraryFilename.find("/") != std::string::npos)
+      {
+        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+        
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Could not create path \"" << path << "\".";
+        }
+      }
+     
+      std::stringstream compileCommand;
+      // hier muss ordentlich gesetzt werden. Nicht-trivial.
+#ifdef NDEBUG
+       compileCommand << "gcc -fopenmp -O3 -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
+#else
+       compileCommand << "gcc -fopenmp -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
+#endif
+
+      int ret = system(compileCommand.str().c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+        libraryFilename = "";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+      }
+    }
+  }
+
   if (libraryFilename == "")
   {
     LOG(FATAL) << "Could not create or locate dynamic library for cellml right hand side routine.";
@@ -149,6 +231,7 @@ initializeRhsRoutine()
 
   loadRhsLibrary(libraryFilename);
 }
+
 
 template<int nStates>
 bool RhsRoutineHandler<nStates>::
@@ -345,7 +428,13 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
-
+        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+	{
+	  LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
+	    << "Use the option \"gpuSourceFilename\" instead.";
+	  return false;
+	}
+	
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
         simdSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S") 
@@ -577,6 +666,32 @@ createSimdSourceFile(std::string &simdSourceFilename)
   }
   
   return true;
+}
+
+
+// given a normal cellml source file for rhs routine, create a third file for gpu acceleration. @return: if successful
+template<int nStates>
+bool RhsRoutineHandler<nStates>::
+createGPUSourceFile(std::string &gpuSourceFilename)
+{
+  /*
+  // read in source from file
+  std::ifstream sourceFile(this->sourceFilename_.c_str());
+  if (!sourceFile.is_open())
+  {
+    LOG(ERROR) << "RhsRoutineHandler: Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+    return false;
+  }
+  else
+  { // der name soll doch nicht der Inhalt sein....
+    // read whole file contents to source
+    //std::stringstream source;
+    gpuSourceFilename << sourceFile.rdbuf();
+    sourceFile.close();
+  }*/
+
+return false;
+
 }
 
 template<int nStates>

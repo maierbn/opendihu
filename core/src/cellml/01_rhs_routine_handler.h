@@ -34,6 +34,9 @@ protected:
   //! given a normal cellml source file for rhs routine create a second file for multiple instances. @return: if successful
   bool createSimdSourceFile(std::string &simdSourceFilename);
 
+  //! given a normal cellml source file for rhs routine create a third file for gpu acceloration. @return: if successful
+  bool createGPUSourceFile(std::string &gpuSourceFilename);
+
   //! initialize the rhs routine, either directly from a library or compile it
   void initializeRhsRoutine();
 
@@ -45,6 +48,8 @@ protected:
   
   void (*rhsRoutine_)(void *context, double t, double *states, double *rates, double *algebraics, double *parameters);  ///< function pointer to the rhs routine that can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer.
 
+  // void something equivalent to rhsRoutine_ ?!
+  
 protected:
 
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_

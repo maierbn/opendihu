@@ -61,7 +61,9 @@ int main(int argc, char* argv[]) {
         #  self.libs = ["sci_cray_mpi_mp"]
           if os.environ.get("PE_ENV") == "GNU":
             self.libs = ["sci_gnu_71_mpi_mp"]
-          print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
+            print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
+          else:
+            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
 
         elif False:
           # reference blas, make based, only static libraries

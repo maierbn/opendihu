@@ -66,7 +66,9 @@ class PETSc(Package):
             #self.libs = ["craypetsc_gnu_real-64"]
             self.libs = ["craypetsc_gnu_real"]
             self.extra_libs = ["sci_gnu_71_mpi_mp"]
-          print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
+            print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
+          else:
+            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
         
           # on hazel hen login node do not run MPI test program because this is not possible (only compile)
           self.run = False

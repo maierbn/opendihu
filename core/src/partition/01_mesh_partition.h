@@ -122,19 +122,41 @@ public:
   //! get the global natural element no for a local element no
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
 
-  //! get the global natural node no for the global coordinates of this node, this can be combined with getNodeNoGlobalCoordinates
-  global_no_t getNodeNoGlobalNatural(std::array<int,MeshType::dim()> coordinates) const;
+  //! get the global natural node no for the global coordinates of this node, this can be combined with getCoordinatesGlobal
+  global_no_t getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) const;
+
+  //! get the node no in global petsc ordering from a local node no
+  global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const;
+
+  //! transfer the local nos in global dof nos, using the PETSc localToGlobal mapping for the dofs
+  void getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscInt> &dofNosGlobalPetsc) const;
+
+  //! get the global petsc dof no for the local no, using the PETSc localToGlobal mapping for the dofs
+  global_no_t getDofNoGlobalPetsc(dof_no_t dofNoLocal) const;
 
   //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
-  std::array<int,MeshType::dim()> getNodeNoGlobalCoordinates(node_no_t nodeNoLocal) const;
+  std::array<global_no_t,MeshType::dim()> getCoordinatesGlobal(node_no_t nodeNoLocal) const;
+
+  //! get the local coordinates for a local node no, also for non-ghost nodes. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
+  std::array<int,MeshType::dim()> getCoordinatesLocal(node_no_t nodeNoLocal) const;
+
+  //! get the local node no for a global petsc node no, does not work for ghost nodes
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+
+  //! get the local dof no for a global petsc dof no, does not work for ghost nodes
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
 
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
   void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;
   
   //! from a vector of values of global/natural dofs remove all that are non-local
+  template <typename T>
+  void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
+
+  //! from a vector of values of global/natural dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
-  
+
   //! get the partition index in a given coordinate direction from the rankNo
   int convertRankNoToPartitionIndex(int coordinateDirection, int rankNo);
 
@@ -144,7 +166,10 @@ public:
   //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs
   //! @param onlyNodalValues: if for Hermite only get every second dof such that derivatives are not returned
   const std::vector<PetscInt> &dofNosLocal(bool onlyNodalValues=false) const;
-  
+
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
@@ -154,6 +179,10 @@ public:
 
   //! Get a vector of local dof nos in local natural ordering, initializeDofNosLocalNaturalOrdering has to be called beforehand.
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
+
+  //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
+  bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
+
 
 protected:
   
@@ -173,15 +202,18 @@ protected:
   void setOwnRankPartitioningIndex();
   
   //! get the index in terms of partitions of the partition that contains the given node no
-  std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural);
+  std::array<int,MeshType::dim()> getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural) const;
 
-  //! get the number of nodes in the globalPetsc ordering that in partitions prior to the one given by partitionIndex
+  //! get the number of nodes in the global Petsc ordering that in partitions prior to the one given by partitionIndex
   global_no_t nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionIndex) const;
+
+  //! get the node no in global petsc ordering from global coordinates
+  global_no_t getNodeNoGlobalPetsc(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) const;
 
   std::shared_ptr<DM> dmElements_;    ///< PETSc DMDA object (data management for distributed arrays) that stores topology information and everything needed for communication of ghost values. This particular object is created to get partitioning information on the element level.
   
   std::array<int,MeshType::dim()> beginElementGlobal_;   ///< global element no.s of the lower left front corner of the domain
-  std::array<node_no_t,MeshType::dim()> nElementsLocal_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion (including ghost elements)
+  std::array<node_no_t,MeshType::dim()> nElementsLocal_;     ///< local size, i.e. number of nodes in the coordinate directions of the local portion
   std::array<global_no_t,MeshType::dim()> nElementsGlobal_;    ///< global number of elements in the coodinate directions
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
   std::array<int,MeshType::dim()> ownRankPartitioningIndex_;   ///< the index in terms of partitions of the own partition
@@ -219,22 +251,25 @@ public:
   global_no_t nElementsGlobal() const;
   
   //! number of dofs in the local partition
-  element_no_t nDofsLocalWithGhosts() const;
+  dof_no_t nDofsLocalWithGhosts() const;
   
   //! number of dofs in the local partition
-  element_no_t nDofsLocalWithoutGhosts() const;
+  dof_no_t nDofsLocalWithoutGhosts() const;
   
   //! number of nodes in the local partition
-  element_no_t nNodesLocalWithoutGhosts() const;
+  node_no_t nNodesLocalWithoutGhosts() const;
   
   //! number of nodes in the local partition
-  element_no_t nNodesLocalWithGhosts() const;
+  node_no_t nNodesLocalWithGhosts() const;
   
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
   //! number of dofs
   global_no_t nDofs() const;
+
+  //! number of dofs in total, same as nDofs
+  global_no_t nDofsGlobal() const;
   
   //! get the global element no for a local element no, this only has an effect for structured meshes, not for unstructured meshes
   global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const;
@@ -249,12 +284,37 @@ public:
   //! from a vector of values of global dofs remove all that are non-local
   void extractLocalDofsWithoutGhosts(std::vector<double> &values) const;
 
+  //! from a vector of values of global dofs remove all that are non-local, templated type
+  template <typename T>
+  void extractLocalDofsWithoutGhosts(std::vector<T> &values) const;
+
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
+  //! get the local node no for a global petsc node no, does not work for ghost nodes
+  node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;
+
+  //! get the local dof no for a global petsc dof no, does not work for ghost nodes
+  dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc) const;
+
   //! this does nothing for unstructured meshes, only for structured meshes
   void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};
 
   //! output to stream for debugging
   void output(std::ostream &stream);
-  
+
+  //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
+  bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
+
+  //! get the node no in global petsc ordering from a local node no
+  global_no_t getNodeNoGlobalPetsc(element_no_t nodeNoLocal) const;
+
+  //! get the global petsc dof no for the local no, using the PETSc localToGlobal mapping for the dofs
+  global_no_t getDofNoGlobalPetsc(dof_no_t dofNoLocal) const;
+
+  //! transfer the local nos in global dof nos, using the PETSc localToGlobal mapping for the dofs
+  void getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscInt> &dofNosGlobalPetsc) const;
+
 protected:
  
   global_no_t nElements_;   ///< the global size, i.e. number of elements of the whole problem

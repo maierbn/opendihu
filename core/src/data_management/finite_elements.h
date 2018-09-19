@@ -34,10 +34,10 @@ public:
   virtual void initialize() override;
 
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide();
 
   //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &solution();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution();
 
   //! print all stored data to stdout
   void print();

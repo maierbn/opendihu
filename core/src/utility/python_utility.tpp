@@ -1,3 +1,4 @@
+#include "utility/python_utility.h"
 
 #include <Python.h>
 #include "easylogging++.h"
@@ -44,7 +45,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
             PyObject *tuple_key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
             PyObject *tuple_value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
 
-            firstEntry = std::pair<Key, Value>(convertFromPython<Key>(tuple_key), convertFromPython<Value>(tuple_value));
+            firstEntry = std::pair<Key, Value>(convertFromPython<Key>::get(tuple_key), convertFromPython<Value>::get(tuple_value));
             return firstEntry;
           }
         }
@@ -81,7 +82,7 @@ void PythonUtility::getOptionDictNext(const PyObject *settings, std::string keyS
     PyObject *key = PyTuple_GetItem(tuple, (Py_ssize_t)0);
     PyObject *value = PyTuple_GetItem(tuple, (Py_ssize_t)1);
 
-    nextPair = std::pair<Key, Value>(convertFromPython<Key>(key), convertFromPython<Value>(value));
+    nextPair = std::pair<Key, Value>(convertFromPython<Key>::get(key), convertFromPython<Value>::get(value));
 
   }
 }
@@ -109,14 +110,14 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
           PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
 
           Py_CLEAR(key);
-          return convertFromPython<Value>(item);
+          return convertFromPython<Value>::get(item);
         }
       }
       else
       {
         LOG(WARNING) << "Key \"" <<keyString<< "\" is not a list!";
         Py_CLEAR(key);
-        return convertFromPython<Value>(list);
+        return convertFromPython<Value>::get(list);
       }
     }
     else
@@ -142,95 +143,8 @@ void PythonUtility::getOptionListNext(const PyObject *settings, std::string keyS
   {
     PyObject *item = PyList_GetItem(list, (Py_ssize_t)listIndex);
 
-    value = convertFromPython<Value>(item);
+    value = convertFromPython<Value>::get(item);
   }
-}
-
-template<class ValueType, int D>
-std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue)
-{
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  initNumpy();
-
-  std::array<ValueType, D> result;
-  if (PyList_Check(object))
-  {
-    int i = 0;
-    int iEnd = std::min((int)PyList_Size(object), D);
-
-    for(;i < iEnd; i++)
-    {
-      result[i] = PythonUtility::convertFromPython<ValueType>(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
-    }
-
-    // fill rest of values with default values
-    for(;i < D; i++)
-    {
-      result[i] = defaultValue[i];
-    }
-    return result;
-  }
-  /*
-#ifdef HAVE_NUMPYC
-  else if (PyArray_Check(object))
-  {
-    LOG(DEBUG) << "object is a pyarray ";
-
-    const PyArrayObject *arrayObject = (PyArrayObject*)object;
-
-    int nElementsInNumpyArray = PyArray_Size(object);
-    int nElementsToCopy = std::min(D, nElementsInNumpyArray);
-
-    int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-
-    if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
-    {
-      PyArray_DescrFromType(typenumber)->f->copyswapn(
-       result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
-    }
-    else
-    {
-      LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
-      nElementsToCopy = 0;
-    }
-
-    // fill rest of values with default values
-    for(int i = nElementsToCopy; i < D; i++)
-    {
-      result[i] = defaultValue[i];
-    }
-    LOG(DEBUG) << "converted to " << D << " entries: " << result;
-  }
-#endif
-*/
-  else
-  {
-    ValueType valueDouble = PythonUtility::convertFromPython<ValueType>(object, defaultValue[0]);
-
-    result[0] = valueDouble;
-    std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
-
-    return result;
-  }
-  return defaultValue;
-}
-
-template<class ValueType, int D>
-std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object, ValueType defaultValue)
-{
-  std::array<ValueType, D> defaultValues;
-  defaultValues.fill(defaultValue);
-  return convertFromPython<ValueType, D>(object, defaultValues);
-}
-
-template<class ValueType, int D>
-std::array<ValueType, D> PythonUtility::convertFromPython(PyObject *object)
-{
-  std::array<ValueType, D> defaultValue;
-  defaultValue.fill(0.0);
-  return convertFromPython<ValueType, D>(object, defaultValue);
 }
 
 template<class ValueType, int D>
@@ -259,7 +173,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      result = PythonUtility::convertFromPython<ValueType, D>(value, defaultValue);
+      result = PythonUtility::convertFromPython<std::array<ValueType,D>>::get(value, defaultValue);
     }
     else
     {

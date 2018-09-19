@@ -93,6 +93,17 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &v
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+//! set values for one components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+template<int D, typename BasisFunctionType>
+template<int nValues>
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+setValues(const std::array<dof_no_t,nValues> dofNosLocal, const std::array<double,nValues> values, InsertMode petscInsertMode)
+{
+  assert(this->values_);
+  this->values_->setValues(0, nValues, (PetscInt*)dofNosLocal.data(), values.data(), petscInsertMode);
+  // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
+}
+
 //! set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::

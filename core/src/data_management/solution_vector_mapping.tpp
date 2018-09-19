@@ -11,6 +11,9 @@ transfer(FieldVariable1 &solution1, SolutionVectorMapping &solutionVectorMapping
     << outputComponentNo_ << " (" << solution1.nDofsLocalWithoutGhosts() << " dofs)"
     << " to " << solutionVectorMapping2.outputComponentNo_ << " (" << solution2.nDofsLocalWithoutGhosts() << " dofs)";
 
+  assert(solution1.nDofsLocalWithoutGhosts() == solution2.nDofsLocalWithoutGhosts());
+  assert(solution1.nDofsGlobal() == solution2.nDofsGlobal());
+
   PetscErrorCode ierr;
   ierr = VecCopy(solution1.valuesGlobal(outputComponentNo_), solution2.valuesGlobal(solutionVectorMapping2.outputComponentNo_)); CHKERRV(ierr);
 

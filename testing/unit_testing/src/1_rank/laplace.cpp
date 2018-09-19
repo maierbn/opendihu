@@ -234,7 +234,7 @@ config = {
 TEST(LaplaceTest, MatrixIsCorrect2DSmall)
 {
   std::string pythonConfig = R"(
-# Laplace 2D
+# Laplace 2D,  3x4 nodes
 n = 2.
 m = 3.
 
@@ -247,6 +247,9 @@ for i in range(int(n+1)):
   bc[int(i2)] = x
   
   print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
+
+#bc = {0: 0, 1: 1./3, 2: 2./3,
+#      9: 0, 10: 1./3, 11: 2./3}
 
 config = {
   "disablePrinting": False,

@@ -144,7 +144,7 @@ config = {
   > problem(settings);
   
   
-  std::shared_ptr<MeshType> mesh = std::static_ptr_cast<MeshType>(problem->mesh());*/
+  std::shared_ptr<MeshType> functionSpace = std::static_ptr_cast<MeshType>(problem->functionSpace());*/
   
   std::array<dof_no_t, 4> dofIndices1;
   std::array<dof_no_t, 4> dofIndices1Reference = {0, 2, 4, 6};
@@ -247,11 +247,11 @@ config = {
     Equation::None
   > problem(settings);
   
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = problem.functionSpace();
   
   {
     Vec3 xi({0.0, 0.5, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face0Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face0Minus, 0, xi);
     Vec3 normal1Reference({-1.0, 0.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -259,7 +259,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face0Minus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face0Minus, 0, xi);
     Vec3 normal2Reference({-1.0, 0.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -269,7 +269,7 @@ config = {
   
   {
     Vec3 xi({1.0, 0.5, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face0Plus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face0Plus, 0, xi);
     Vec3 normal1Reference({1.0, 0.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -277,7 +277,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face0Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face0Plus, 0, xi);
     Vec3 normal2Reference({1.0, 0.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -287,7 +287,7 @@ config = {
   
   {
     Vec3 xi({0.5, 0.0, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face1Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face1Minus, 0, xi);
     Vec3 normal1Reference({0.0, -1.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -295,7 +295,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face1Minus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face1Minus, 0, xi);
     Vec3 normal2Reference({0.0, -1.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -305,7 +305,7 @@ config = {
   
   {
     Vec3 xi({0.5, 1.0, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face1Plus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face1Plus, 0, xi);
     Vec3 normal1Reference({0.0, 1.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -313,7 +313,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face1Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face1Plus, 0, xi);
     Vec3 normal2Reference({0.0, 1.0, 0.0});
     for (int i = 0; i < 3; i++)
     {
@@ -322,7 +322,7 @@ config = {
   }
   {
     Vec3 xi({0.5, 0.5, 0.0});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face2Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face2Minus, 0, xi);
     Vec3 normal1Reference({0.0, 0.0, -1.0});
     for (int i = 0; i < 3; i++)
     {
@@ -330,7 +330,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face2Minus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face2Minus, 0, xi);
     Vec3 normal2Reference({0.0, 0.0, -1.0});
     for (int i = 0; i < 3; i++)
     {
@@ -340,7 +340,7 @@ config = {
   
   {
     Vec3 xi({0.5, 0.5, 1.0});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face2Plus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face2Plus, 0, xi);
     Vec3 normal1Reference({0.0, 0.0, 1.0});
     for (int i = 0; i < 3; i++)
     {
@@ -348,7 +348,7 @@ config = {
     }
     
     xi=Vec3({0.2, 0.4, 0.8});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face2Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face2Plus, 0, xi);
     Vec3 normal2Reference({0.0, 0.0, 1.0});
     for (int i = 0; i < 3; i++)
     {
@@ -387,11 +387,11 @@ config = {
     Equation::None
   > problem(settings);
   problem.initialize();
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(problem.functionSpace());
   
   {
     Vec3 xi({0.0, 0.5, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face0Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face0Minus, 0, xi);
     double angle = atan2(1.,-2.);
     Vec3 normal1Reference({cos(angle), 0.0, sin(angle)});
     MathUtility::normalize<3>(normal1Reference);
@@ -404,7 +404,7 @@ config = {
     }
     
     xi=Vec3({0.5, 0.0, 0.0});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face0Minus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face0Minus, 0, xi);
     double angle2 = M_PI - angle;
     double angle3 = M_PI - angle2/2.;
     
@@ -451,11 +451,11 @@ config = {
     Equation::None
   > problem(settings);
   
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(problem.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(problem.functionSpace());
   
   {
     Vec3 xi({0.0, 0.5, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face0Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face0Minus, 0, xi);
     Vec3 normal1Reference({-3.,1.,0.});
     MathUtility::normalize<3>(normal1Reference);
     LOG(DEBUG) << " 0- normal: " << normal1;
@@ -465,7 +465,7 @@ config = {
     }
     
     xi=Vec3({1.0, 0.5, 0.5});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face0Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face0Plus, 0, xi);
     Vec3 normal2Reference({2., -1.0, 0.0});
     MathUtility::normalize<3>(normal2Reference);
     
@@ -478,7 +478,7 @@ config = {
   
   {
     Vec3 xi({0.5, 0.0, 0.5});
-    Vec3 normal1 = mesh->getNormal(Mesh::face_t::face1Minus, 0, xi);
+    Vec3 normal1 = functionSpace->getNormal(Mesh::face_t::face1Minus, 0, xi);
     Vec3 normal1Reference({0.,-1.,0.});
     MathUtility::normalize<3>(normal1Reference);
     LOG(DEBUG) << " 1- normal: " << normal1;
@@ -488,7 +488,7 @@ config = {
     }
     
     xi=Vec3({0.5, 1.0, 0.5});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face1Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face1Plus, 0, xi);
     Vec3 normal2Reference({1.,2.,0.});
     MathUtility::normalize<3>(normal2Reference);
     
@@ -501,7 +501,7 @@ config = {
   
   {
     Vec3 xi=Vec3({0.5, 0.5, 1.0});
-    Vec3 normal2 = mesh->getNormal(Mesh::face_t::face2Plus, 0, xi);
+    Vec3 normal2 = functionSpace->getNormal(Mesh::face_t::face2Plus, 0, xi);
     Vec3 normal2Reference({0.,-1.,2.});
     MathUtility::normalize<3>(normal2Reference);
     

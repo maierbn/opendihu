@@ -1,6 +1,7 @@
 #include "utility/vector_operators.h"
 
 #include "utility/petsc_utility.h"
+#include "easylogging++.h"
 
 //! vector difference
 template<typename T, std::size_t nComponents>
@@ -201,8 +202,23 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   }
 
   stream << "(" << values[0];
-  for (unsigned long i=1; i<values.size(); i++)
-    stream << "," << values[i];
+
+  if (VLOG_IS_ON(1))
+  {
+    // with VLOG output all entries
+    for (unsigned long i = 1; i < values.size(); i++)
+      stream << "," << values[i];
+  }
+  else
+  {
+    // without VLOG only output the first 100 entries
+    unsigned long i = 1;
+    for (; i < std::min(100ul,values.size()); i++)
+      stream << "," << values[i];
+    if (i == 100 && i < values.size())
+      stream << "... " << values.size() << " entries total, only showing the first 100";
+  }
+
   stream << ")";
   return stream;
 }
@@ -224,6 +240,38 @@ template<typename T1, typename T2>
 std::ostream &operator<<(std::ostream &stream, const std::pair<T1,T2> &pair)
 {
   stream << "(" << pair.first << "," << pair.second << ")";
+  return stream;
+}
+
+//! output operator for maps of arbitrary type
+template<typename T1, typename T2>
+std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map)
+{
+  bool first = true;
+  for(typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
+  {
+    if (!first)
+      stream << ", ";
+    stream << "\"" << iter->first << "\": " << iter->second;
+    first = false;
+  }
+  return stream;
+}
+
+//! output operator for sets of arbitrary type
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
+{
+  stream << "{";
+  bool first = true;
+  for(typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
+  {
+    if (!first)
+      stream << ", ";
+    stream << (*iter);
+    first = false;
+  }
+  stream << "}";
   return stream;
 }
 

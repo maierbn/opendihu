@@ -37,7 +37,7 @@ public:
   //! set the mixed mesh
   void setFunctionSpace(std::shared_ptr<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>> mixedFunctionSpace);
 
-  //! get the mixed mesh, the high order mesh can be retrieved by mesh()
+  //! get the mixed mesh, the high order mesh can be retrieved by functionSpace()
   std::shared_ptr<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>> mixedMesh();
 
   //! field variables that will be output by outputWriters

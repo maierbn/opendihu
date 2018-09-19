@@ -220,7 +220,7 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
   {
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
-    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+    std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -284,7 +284,7 @@ getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double>
   {
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
-    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+    std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -345,7 +345,7 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
   {
     int nodeNoLocal = int(dofLocalNo[i] / nDofsPerNode);
     int nodeLocalDofIndex = int(dofLocalNo[i] % nDofsPerNode);
-    std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+    std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
     if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0
     {
@@ -444,7 +444,7 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   int nodeNoLocal = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
 
-  std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+  std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
   double value = 0;
   if (nodeLocalDofIndex == 0)   // if this is not a derivative of Hermite (in which case it would be set to 0)

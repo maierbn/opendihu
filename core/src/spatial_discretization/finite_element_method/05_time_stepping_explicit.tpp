@@ -15,7 +15,6 @@
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 
-
 namespace SpatialDiscretization
 {
 
@@ -24,7 +23,7 @@ void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 computeInverseMassMatrixTimesRightHandSide(Vec &result)
 {
   // massMatrix * f_strong = rhs_weak
-  Vec &rightHandSide = this->data_.rightHandSide().valuesGlobal();   // rhs in weak formulation
+  Vec &rightHandSide = this->data_.rightHandSide()->valuesGlobal();   // rhs in weak formulation
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix = this->data_.massMatrix();
 
   PetscErrorCode ierr;
@@ -54,7 +53,7 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   KSPConvergedReason convergedReason;
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
 
-  VLOG(1) << "Rhs recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm
+  VLOG(1) << "Rhs (" << this->data_.rightHandSide()->nDofsGlobal() << " global dofs) recovered in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 
@@ -64,7 +63,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepN
 {
   // this method computes output = M^{-1}*K*input
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
-  Vec &rhs = this->data_.rightHandSide().valuesGlobal();
+  Vec &rhs = this->data_.rightHandSide()->valuesGlobal();
 
   // check if matrix and vector sizes match
   PetscUtility::checkDimensionsMatrixVector(stiffnessMatrix->valuesGlobal(), input);

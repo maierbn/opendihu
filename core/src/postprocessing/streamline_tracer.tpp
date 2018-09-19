@@ -36,7 +36,7 @@ StreamlineTracer(DihuContext context) :
       !PythonUtility::getOptionListEnd(specificSettings_, "seedPoints");
       PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "seedPoints", pySeedPositions))
   {
-    Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>(pySeedPositions);
+    Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>::get(pySeedPositions);
     seedPositions_.push_back(seedPosition);
   }
 }
@@ -94,12 +94,12 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
    if (useGradientField_)
    {
      // use the precomputed gradient field
-     data_.gradient().getElementValues(elementNo, elementalGradientValues);
+     data_.gradient()->getElementValues(elementNo, elementalGradientValues);
    }
    else 
    {
      // get the local gradient value at the current position
-     problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
+     problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
 
      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
      problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
@@ -132,11 +132,11 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
        // get values for element that are later needed to compute the gradient
        if (useGradientField_)      
        {
-         data_.gradient().getElementValues(elementNo, elementalGradientValues);
+         data_.gradient()->getElementValues(elementNo, elementalGradientValues);
        }
        else 
        {
-         problem_.data().solution().getElementValues(elementNo, elementalSolutionValues);
+         problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
            
          // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
          problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
@@ -179,7 +179,7 @@ traceStreamlines()
   LOG(TRACE) << "traceStreamlines";
 
   // compute a gradient field from the solution
-  problem_.data().solution().computeGradientField(data_.gradient());
+  problem_.data().solution()->computeGradientField(data_.gradient());
  
   std::array<double,(unsigned long int)3> xi;
   const int nSeedPoints = seedPositions_.size();

@@ -2,6 +2,8 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
+#include <map>
+#include <set>
 #include <petscmat.h>
 
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.
@@ -73,6 +75,14 @@ bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2);
 //! output operator for pairs of arbitrary type
 template<typename T1, typename T2>
 std::ostream &operator<<(std::ostream &stream, const std::pair<T1,T2> &pair);
+
+//! output operator for maps of arbitrary type
+template<typename T1, typename T2>
+std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map);
+
+//! output operator for sets of arbitrary type
+template<typename T>
+std::ostream &operator<<(std::ostream &stream, const std::set<T> &set);
 
 //! output operator for PETSc matrices
 //std::ostream &operator<<(std::ostream &stream, const Mat &mat);

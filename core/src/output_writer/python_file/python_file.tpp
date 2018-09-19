@@ -117,8 +117,6 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
   //PyGILState_Release(gilState);
 #endif
 
-  LOG(DEBUG) << "writeNumpySolution";
-
   // for regular fixed also output stiffness matrix
   PythonStiffnessMatrixWriter<DataType>::writeNumpySolution(data, this->filename_);
 

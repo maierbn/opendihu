@@ -22,9 +22,9 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates>,
+  public RhsRoutineHandler<nStates,FunctionSpaceType>,
   public DiscretizableInTime
 {
 public:
@@ -66,6 +66,7 @@ protected:
   PyObject *pySetParametersFunctionAdditionalParameter_;  ///< an additional python object that will be passed as last argument to the setParameters callback function
   PyObject *pyHandleResultFunctionAdditionalParameter_;   ///< an additional python object that will be passed as last argument to the handleResult callback function
 
+  PyObject *pyGlobalNaturalDofsList_;    ///< python list of global dof nos
 };
 
 #include "cellml/02_callback_handler.tpp"

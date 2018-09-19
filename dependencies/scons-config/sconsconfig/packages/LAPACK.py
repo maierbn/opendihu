@@ -56,9 +56,12 @@ int main(int argc, char* argv[]) {
           run_in_docker = True
         
         # Setup the build handler.
-        if os.environ.get("LIBSCI_BASE_DIR") is not None:
-          self.libs = ["sci_cray_mpi_mp"]
-          print("Cray environment detected, using \"sci_cray_mpi_mp\" for LAPACK")
+        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        #if os.environ.get("LIBSCI_BASE_DIR") is not None:
+        #  self.libs = ["sci_cray_mpi_mp"]
+          if os.environ.get("PE_ENV") == "GNU":
+            self.libs = ["sci_gnu_71_mpi_mp"]
+          print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
 
         elif False:
           # reference blas, make based, only static libraries

@@ -13,7 +13,7 @@ namespace OutputWriter
 template<typename DataType>
 bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 {
-  VLOG(1) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
+  VLOG(2) << "Generic::prepareWrite timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 
   if (!data.functionSpace())
   {
@@ -34,12 +34,12 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   
   writeCallCount_++;
 
-  VLOG(1) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
+  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
   
   // if no output should be written, because of interval, return false
   if (oldWriteCallCount % outputInterval != 0) // I changed the condition to '<--this' from '(oldWriteCallCount % outputInterval != 0)'. Now it is easyer to have data output at regular times. -- Aaron 
   {
-    VLOG(1) << " do not write";
+    VLOG(2) << " do not write";
     return false;
   }
 

@@ -85,6 +85,7 @@ class SciPy(Package):
         self.static = False
         
         # Setup the build handler.
+        
         # build from source
         #self.set_build_handler([
         #    'cd ${SOURCE_DIR} && echo "[openblas]" > site.cfg',
@@ -99,11 +100,16 @@ class SciPy(Package):
         #     ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
         #])
         
-        # build from wheel
-        self.set_build_handler([
-#          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
-          '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install scipy --prefix=${DEPENDENCIES_DIR}/python/install'
-        ])
+        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          # build from wheel
+          self.set_build_handler([
+            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install ${PREFIX}/../scipy-1.1.0-cp36-cp36m-manylinux1_x86_64.whl --prefix=${DEPENDENCIES_DIR}/python/install'
+          ])
+        else:
+          # build from wheel
+          self.set_build_handler([
+            '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install scipy --prefix=${DEPENDENCIES_DIR}/python/install'
+          ])
         
         # Scipy is installed in the directory tree of python, under lib/python3.6/site-packages. It does not create any .h or .a files.
 

@@ -85,10 +85,10 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-FieldVariable::FieldVariable<FunctionSpaceType,3> &StreamlineTracer<FunctionSpaceType,BaseDataType>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> StreamlineTracer<FunctionSpaceType,BaseDataType>::
 gradient()
 {
-  return *this->gradient_;
+  return this->gradient_;
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>

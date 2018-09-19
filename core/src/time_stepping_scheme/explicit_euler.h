@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/time_stepping_explicit.h"
 #include "control/runnable.h"
 #include "data_management/time_stepping.h"
 #include "control/dihu_context.h"
@@ -13,7 +13,7 @@ namespace TimeSteppingScheme
   */
 template<typename DiscretizableInTime>
 class ExplicitEuler :
-  public TimeSteppingSchemeOde<DiscretizableInTime>, public Runnable
+  public TimeSteppingExplicit<DiscretizableInTime>, public Runnable
 {
 public:
 

@@ -11,12 +11,9 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTime>
 ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "ExplicitEuler")
+  TimeSteppingExplicit<DiscretizableInTime>(context, "ExplicitEuler")
 {
   this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context); // create data object for explicit euler
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ExplicitEuler");
-  this->outputWriterManager_.initialize(this->specificSettings_);
 }
 
 template<typename DiscretizableInTime>
@@ -31,18 +28,17 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   // debugging output of matrices
   //this->data_->print();
 
-  Vec &solution = this->data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &increment = this->data_->increment().getContiguousValuesGlobal();
+  // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
+  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
+  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
 
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      std::stringstream threadNumberMessage;
-      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Explicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
     VLOG(1) << "starting from solution: " << this->data_->solution();
@@ -52,12 +48,11 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "computed increment: " << this->data_->increment() << ", dt=" << this->timeStepWidth_;
+    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
-    VecAXPY(solution, this->timeStepWidth_, increment);
-
-    VLOG(1) << "updated solution: " << this->data_->solution();
+    PetscErrorCode ierr;
+    ierr = VecAXPY(solution, this->timeStepWidth_, increment); CHKERRV(ierr);
 
     // advance simulation time
     timeStepNo++;
@@ -65,11 +60,14 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 
     VLOG(1) << "solution after integration: " << this->data_->solution();
 
+    // apply the prescribed boundary condition values
+    this->applyBoundaryConditions();
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
   }
 
-  this->data_->solution().restoreContiguousValuesGlobal();
+  this->data_->solution()->restoreContiguousValuesGlobal();
 }
 
 template<typename DiscretizableInTime>

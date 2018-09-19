@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-def setParameters(n_instances, time_step_no, current_time, parameters, nul):
+def setParameters(n_instances, time_step_no, current_time, parameters, dof_nos_global, nul):
   #print "       > called at ",time_step_no,", time=",current_time, ", p=",parameters[0]
   
   center_node = int(n_instances / 2)

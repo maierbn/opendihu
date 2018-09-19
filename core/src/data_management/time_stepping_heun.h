@@ -29,11 +29,8 @@ public:
   //! destructur
   ~TimeSteppingHeun();
 
-  //! return a reference to the intermediate increment vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariableType &intermediateIncrement();
-
-  // ! return a reference to the intermediate solution vector, the PETSc Vec can be obtained via fieldVariable.values()
-  // FieldVariableType &intermediateSolution(); // don't need this anymore
+  //! return a reference to the intermediate increment vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariableType> intermediateIncrement();
 
   //! print all stored data to stdout
   void print() override;

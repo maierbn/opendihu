@@ -77,7 +77,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // check if the first command line argument is *.py, only then it is treated as config file
     bool explicitConfigFileGiven = false;
-    if (argc > 1)
+    if (argc > 1 && settingsFromFile)
     {
       std::string firstArgument = argv[1];
       if (firstArgument.rfind(".py") == firstArgument.size() - 3)
@@ -261,6 +261,13 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
+int DihuContext::ownRankNo() const
+{
+  int rankNo;
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  return rankNo;
+}
+
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager() const
 {
   return meshManager_;
@@ -310,7 +317,7 @@ DihuContext DihuContext::operator[](std::string keyString)
     // if config does not contain the requested child dict, create the needed context from the same level in config
     dihuContext.pythonConfig_ = pythonConfig_;
     Py_XINCREF(dihuContext.pythonConfig_);
-    LOG(WARNING) << "Dict does not contain key \"" <<keyString<< "\".";
+    LOG(FATAL) << "Dict does not contain key \"" <<keyString<< "\".";
   }
   LOG(TRACE) << "DihuContext::operator[](\"" <<keyString<< "\")";
 
@@ -520,8 +527,15 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            prefix+"ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);
 
   conf.set(el::Level::Fatal, el::ConfigurationType::Format,
-           std::string(ANSI_COLOR_MAGENTA)+prefix+"FATAL: %loc %func: \n"+separator
-           +"\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
+           "FATAL: %loc %func: \n"+std::string(ANSI_COLOR_MAGENTA)+prefix+separator
+           +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
+
+  // disable output for ranks != 0
+  if (rankNo > 0)
+  {
+    conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+    conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+  }
 
   //el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
 

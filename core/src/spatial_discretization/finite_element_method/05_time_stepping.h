@@ -37,7 +37,7 @@ public:
   void reset();
 
   //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,1> &initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues);
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -45,8 +45,11 @@ public:
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
 
+  //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
+  void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
+
   //! return the mesh that is stored in the data class
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 

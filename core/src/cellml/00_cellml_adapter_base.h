@@ -18,7 +18,7 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType>
 class CellmlAdapterBase
 {
 public:
@@ -36,22 +36,20 @@ public:
   void initialize();
   
   ///! set initial values as given in python config
-  template<typename FunctionSpaceType>
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
+  template<typename FunctionSpaceType2>
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
 
   //! return false because the object is independent of mesh type
   bool knowsMeshType();
 
   //! return the mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get number of instances, number of intermediates and number of parameters
   void getNumbers(int &nInstances, int &nIntermediates, int &nParameters);
 
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
-  
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<>> FunctionSpace;   ///< FunctionSpace type
 
 protected:
 
@@ -62,7 +60,7 @@ protected:
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
-  std::shared_ptr<Mesh::Mesh> mesh_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
+  std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
 
   int nInstances_;         ///< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int nParameters_ = 0;    ///< number of parameters (=CellML name "known") in one instance of the CellML problem

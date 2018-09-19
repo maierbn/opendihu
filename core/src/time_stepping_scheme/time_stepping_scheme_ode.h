@@ -33,7 +33,7 @@ public:
   SolutionVectorMapping &solutionVectorMapping();
 
   //! return the Petsc solution vector
-  typename Data::FieldVariableType &solution();
+  std::shared_ptr<typename Data::FieldVariableType> solution();
 
   //! return the data object
   Data &data();
@@ -66,6 +66,10 @@ protected:
   int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
   bool initialized_;     ///< if initialize() was already called
+
+  std::shared_ptr<
+    SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
+  > dirichletBoundaryConditions_;  ///< object that stores Dirichlet boundary condition values
 };
 }  // namespace
 

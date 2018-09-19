@@ -70,7 +70,7 @@ def fibreGetsStimulated(fibre_no, frequency, current_time):
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
+def setParameters(n_nodes, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine if fibre gets stimulated at the current time
   fibre_gets_stimulated = fibreGetsStimulated(fibre_no, stimulation_frequency, current_time)

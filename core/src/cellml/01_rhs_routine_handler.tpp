@@ -15,12 +15,12 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates>
+template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
 
 
-template<int nStates>
-void RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   // 1) if simdSourceFilename is given, use that source to compile the library
@@ -49,6 +49,7 @@ initializeRhsRoutine()
   {
     // compile source file to a library
     libraryFilename = "lib.so";
+    bool libraryFilenameSetWithNInstances = false;
     if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
     {
       libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
@@ -58,6 +59,7 @@ initializeRhsRoutine()
       std::stringstream s;
       s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
       libraryFilename = s.str();
+      libraryFilenameSetWithNInstances = true;
     }
 
     bool doCompilation = true;
@@ -74,10 +76,42 @@ initializeRhsRoutine()
         file.close();
       }
     }
-    
-    if (doCompilation)
+
+    int rankNo = this->context_.ownRankNo();
+    if (libraryFilenameSetWithNInstances)
     {
-     
+      // gather which number of instances all ranks have
+      int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
+      int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
+      std::vector<int> nInstancesRanks(nRanksCommunicator);
+
+      nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+      MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
+                                                  1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
+
+      // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
+      int i = 0;
+      int rankWhichCompilesLibrary = 0;
+      for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
+      {
+        if (*iter == this->nInstances_)
+        {
+          rankWhichCompilesLibrary = i;
+          break;
+        }
+      }
+
+      // if there is a rank with lower number that has the same nInstances, this one should compile the library, not the own rank
+      if (rankWhichCompilesLibrary != ownRankNoCommunicator)
+      {
+        doCompilation = false;
+      }
+    }
+
+    
+    if (doCompilation)  //  && rankNo == 0: only recompile on rank 0, does not work, because rank 1 may need a different library than rank 0
+    {
       if (libraryFilename.find("/") != std::string::npos)
       {
         std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
@@ -92,9 +126,13 @@ initializeRhsRoutine()
       std::stringstream compileCommand;
       // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
 #ifdef NDEBUG
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c "
+        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
+        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #else
-      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
+      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c "
+        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
+        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 #endif
 
       int ret = system(compileCommand.str().c_str());
@@ -150,8 +188,8 @@ initializeRhsRoutine()
   loadRhsLibrary(libraryFilename);
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
  
@@ -162,7 +200,13 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+  void* handle = NULL;
+  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  {
+    handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
   if (handle)
   {
     // load rhs method
@@ -194,7 +238,7 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates> *cellmlAdapter = (CellmlAdapter<nStates> *)context;
+        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
@@ -255,8 +299,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -562,6 +606,12 @@ createSimdSourceFile(std::string &simdSourceFilename)
       simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
     }
 
+    // add .rankNo to simd source filename
+    s.str("");
+    int rankNo = this->context_.ownRankNo();
+    s << simdSourceFilename << "." << rankNo;
+    simdSourceFilename = s.str();
+
     std::ofstream simdSourceFile(simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
     {
@@ -579,8 +629,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
   return true;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";

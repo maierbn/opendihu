@@ -1,6 +1,7 @@
 .sconsign.dblite
 *.o
 *.a
+**/*.so
 */.sconf_temp*
 config.log
 dependencies/lapack

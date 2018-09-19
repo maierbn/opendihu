@@ -10,12 +10,9 @@ namespace TimeSteppingScheme
 
 template<typename DiscretizableInTime>
 Heun<DiscretizableInTime>::Heun(DihuContext context) :
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "Heun")
+  TimeSteppingExplicit<DiscretizableInTime>(context, "Heun")
 {
-  this->data_ = std::make_shared <Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "Heun");
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
 }
 
 template<typename DiscretizableInTime>
@@ -31,51 +28,66 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>> dataHeun
     = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
-  Vec &solution = this->data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &increment = this->data_->increment().getContiguousValuesGlobal(); 
-  Vec &heunIntermediateIncrement = dataHeun->intermediateIncrement().getContiguousValuesGlobal();
-    
+  // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
+  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
+  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
+  Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getContiguousValuesGlobal();
+
   // loop over time steps
   double currentTime = this->startTime_;
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    }
 
-    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
-    
+    VLOG(1) << "starting from solution: " << this->data_->solution();
+
     // advance solution value to compute u* first
     // compute  delta_u = f(u_{t})
     // we call f(u_{t}) the "increment"
-    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
-    
+    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+      solution, increment, timeStepNo, currentTime);
+
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
     VecAXPY(solution, this->timeStepWidth_, increment);
-    
+
+    VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
+
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)
     // we call f(u*) the "intermediateIncrement"
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      solution, heunIntermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
-    
+      solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
+
     // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
     // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
     //
     // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
-    VecAXPY(heunIntermediateIncrement, -1.0, increment);
+    VecAXPY(intermediateIncrement, -1.0, increment);
+
     // now compute overall step as described above (#)
-    VecAXPY(solution, 0.5*this->timeStepWidth_, heunIntermediateIncrement);
+    VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
+
+    // apply the prescribed boundary condition values
+    this->applyBoundaryConditions();
+
+    VLOG(1) << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_->solution().valuesGlobal());
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
     //this->data_->print();
   }
+
+  this->data_->solution()->restoreContiguousValuesGlobal();
+  this->data_->increment()->restoreContiguousValuesGlobal();
+  dataHeun->intermediateIncrement()->restoreContiguousValuesGlobal();
 }
 
 template<typename DiscretizableInTime>

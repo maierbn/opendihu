@@ -33,32 +33,12 @@ public:
   //! destructur
   ~TimeStepping();
 
-  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariableType &solution();
+  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariableType> solution();
 
-  //! return a reference to the increment vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariableType &increment();
+  //! return a reference to the increment vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariableType> increment();
   
-  //! return a reference to the rhs vector, used for the variant 1 of the implicit Euler scheme
-  //FieldVariableType &rhs();
-
-  // virtual FieldVariableType &intermediateIncrement() = 0; 
-  
-  //! get the system matrix required by the implicit time stepping
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix();
-  
-  //! get the integration matrix if required for the implicit time stepping
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide();
-  
-  //! initialize the sytem matrix from a PETSc matrix that was already created, in this case by a MatMatMult
-  void initializeSystemMatrix(Mat &systemMatrix);
-  
-  //! initialize the integration matrix on the rhs from a PETSc matrix that was already created, in this case by a MatConvert
-  void initializeIntegrationMatrixRightHandSide(Mat &integrationMatrix);
-  
-  //! initializes a PETSc matrix that is already created, by other PETSc routines like MatConvert or MatMatMult
-  void initializeMatrix(Mat &matrixIn, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> matrixOut, std::string name);
-
   //! set the names of the components for the solution field variable
   void setComponentNames(std::vector<std::string> componentNames); 
   
@@ -92,10 +72,6 @@ protected:
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
   //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
   // std::shared_ptr<FieldVariableType> intermediateIncrement_;
-  
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix_;  ///< the system matrix for implicit time stepping
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> integrationMatrixRightHandSide_; ///< the integration matrix for the right hand side if required by the implicit time stepping
-  
   std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   
 private:

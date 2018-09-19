@@ -118,11 +118,12 @@ knowsMeshType()
 {
   return problem_.knowsMeshType();
 }
+/*
 template<typename DiscretizableInTimeType>
 std::shared_ptr<Mesh::Mesh> PODBase<DiscretizableInTimeType>::
 mesh()
 {
   return problem_.mesh();
 }
-
+*/
 };

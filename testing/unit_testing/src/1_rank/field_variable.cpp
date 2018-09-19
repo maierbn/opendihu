@@ -35,7 +35,7 @@ config = {
 
   // std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic>> createGenericFieldVariable(std::shared_ptr<Partition::Manager> partitionManager, int nEntries, std::string name);
 
-  // get mesh manager object that are stored in the DihuContext object
+  // get functionSpace manager object that are stored in the DihuContext object
   std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
 
   // create the field variable with name "test"
@@ -77,7 +77,7 @@ config = {
 
 TEST(FieldVariableTest, StructuredDeformable)
 {
-  // explicit mesh with node positions
+  // explicit functionSpace with node positions
   std::string pythonConfig = R"(
 # Laplace 1D
 config = {
@@ -112,15 +112,15 @@ config = {
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
-  mesh->initialize();
+  std::shared_ptr<FunctionSpaceType> functionSpace = finiteElementMethod.functionSpace();
+  functionSpace->initialize();
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = mesh->createFieldVariable("a", {"x","y"});  
-  FieldVariableBaseType bBase = mesh->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = mesh->createFieldVariable("c");
-  FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
+  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
   FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);
@@ -400,7 +400,7 @@ config = {
 
 TEST(FieldVariableTest, StructuredRegularFixed)
 {
-  // explicit mesh with node positions
+  // explicit functionSpace with node positions
   std::string pythonConfig = R"(
 # Laplace 1D
 config = {
@@ -435,14 +435,14 @@ config = {
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.functionSpace());
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = mesh->createFieldVariable("a", {"x","y"});  
-  FieldVariableBaseType bBase = mesh->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = mesh->createFieldVariable("c");
-  FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
+  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
   FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);
@@ -625,7 +625,7 @@ config = {
 
 TEST(FieldVariableTest, UnstructuredDeformable)
 {
-  // explicit mesh with node positions
+  // explicit functionSpace with node positions
   std::string pythonConfig = R"(
 # Laplace 1D
 import numpy as np
@@ -675,14 +675,14 @@ config = {
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,2>> FieldVariable2Type;
   typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> FieldVariable3Type;
   
-  std::shared_ptr<FunctionSpaceType> mesh = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.mesh());
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(finiteElementMethod.functionSpace());
   
   // 5x5 nodes, 2 dofs/node, 18 dofs/element, 50 dofs
   
-  FieldVariableBaseType aBase = mesh->createFieldVariable("a", {"x","y"});  
-  FieldVariableBaseType bBase = mesh->createFieldVariable("b", 2);
-  FieldVariableBaseType cBase = mesh->createFieldVariable("c");
-  FieldVariable3Type d = mesh->template createFieldVariable<3>("d");
+  FieldVariableBaseType aBase = functionSpace->createFieldVariable("a", {"x","y"});
+  FieldVariableBaseType bBase = functionSpace->createFieldVariable("b", 2);
+  FieldVariableBaseType cBase = functionSpace->createFieldVariable("c");
+  FieldVariable3Type d = functionSpace->template createFieldVariable<3>("d");
   
   
   FieldVariable2Type a = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,2>>(aBase);

@@ -27,8 +27,8 @@ public:
   //! destructur
   ~StreamlineTracer();
 
-  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable.values()
-  FieldVariable::FieldVariable<FunctionSpaceType,3> &gradient();
+  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient();
 
   //! print all stored data to stdout
   virtual void print();

@@ -27,7 +27,7 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
     iterFileContents++;
   }
   
-  if (numberFileContents.empty())
+  if (numberFileContents.empty() || numberFileContents == ".")
     return 0;
   
   double number = 0;
@@ -147,13 +147,15 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
     
     LOG(INFO) << msg.str();
-    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches!";
+    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches! " << msg.str();
   }
   
 }
 
 void assertParallelEqualsSerialOutputFiles(std::vector<std::string> &outputFilesToCheck)
 {
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));  // pause execution, such that output files can be closed
+
   // command line version
   std::stringstream command;
   command << "../../../dependencies/python/install/bin/python3 ../../../scripts/validate_parallel.py ";

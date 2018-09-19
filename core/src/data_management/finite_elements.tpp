@@ -122,17 +122,17 @@ inverseLumpedMassMatrix()
 }
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FieldVariable::FieldVariable<FunctionSpaceType,1> &FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 rightHandSide()
 {
-  return *this->rhs_;
+  return this->rhs_;
 }
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-FieldVariable::FieldVariable<FunctionSpaceType,1> &FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
 solution()
 {
-  return *this->solution_;
+  return this->solution_;
 }
 
 template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>

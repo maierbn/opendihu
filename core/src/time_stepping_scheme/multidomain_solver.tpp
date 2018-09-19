@@ -4,21 +4,24 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
+#include "data_management/multidomain.h"
 
 namespace TimeSteppingScheme
 {
 
-template<typename DiscretizableInTime>
-MultidomainSolver<DiscretizableInTime>::MultidomainSolver(DihuContext context) :
-  TimeSteppingSchemeOde<DiscretizableInTime>(context, "MultidomainSolver")
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
+MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+MultidomainSolver(DihuContext context) :
+  TimeSteppingImplicit<FiniteElementMethodDiffusion>(context, "MultidomainSolver"),
+  finiteElementMethodPotentialFlow_(context),
+  cellMLAdapter_(context)
 {
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "MultidomainSolver");
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->data_ = std::make_shared<Data::Multidomain<FiniteElementMethodDiffusion>>(context); // create data object for implicit euler
 }
 
-template<typename DiscretizableInTime>
-void MultidomainSolver<DiscretizableInTime>::advanceTimeSpan()
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+advanceTimeSpan()
 {
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
@@ -26,38 +29,82 @@ void MultidomainSolver<DiscretizableInTime>::advanceTimeSpan()
   LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
+  Vec solution = this->data_->solution()->valuesGlobal();
+
   // loop over time steps
   double currentTime = this->startTime_;
+
   for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0)
-     LOG(INFO) << "Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    {
+      LOG(INFO) << "Multidomain solver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+    }
 
-    //LOG(DEBUG) << "solution before integration: " << PetscUtility::getStringVector(this->data_.solution().valuesGlobal());
-
-    // advance computed value
-    // compute next delta_u = f(u)
-    this->discretizableInTime_.evaluateTimesteppingRightHandSide(
-      this->data_.solution().valuesGlobal(), this->data_.increment().valuesGlobal(), timeStepNo, currentTime);
-
-    // integrate, y += dt * delta_u
-    VecAXPY(this->data_.solution().valuesGlobal(), timeStepWidth, this->data_.increment().valuesGlobal());
+    //VLOG(1) << "initial solution: " << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    //LOG(DEBUG) << "solution after integration: " << PetscUtility::getStringVector(this->data_.solution().valuesGlobal());
-    // write current output values
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    // adjust rhs vector such that boundary conditions are satisfied
+    this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
-    //this->data_.print();
+    //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
+
+    // advance computed value
+    // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
+    this->solveLinearSystem(solution, solution);
+
+    VLOG(1) << "new solution: " << *this->data_->solution();
+
+    // write current output values
+    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+
+    //this->data_->print();
   }
 }
 
-template<typename DiscretizableInTime>
-void MultidomainSolver<DiscretizableInTime>::run()
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+run()
 {
-  TimeSteppingSchemeOde<DiscretizableInTime>::run();
+  // initialize everything
+  initialize();
+
+  // solve potential flow Laplace problem
+  finiteElementMethodPotentialFlow_.run();
+
+  // compute a gradient field from the solution of the potential flow
+  data_.flowPotential()->setValues(finiteElementMethodPotentialFlow_.data().solution());
+  finiteElementMethodPotentialFlow_.data().solution()->computeGradientField(data_.fibreDirection());
+
+  advanceTimeStepping();
 }
+
+template<typename DiscretizableInTime>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+initialize()
+{
+  // TimeSteppingImplicit stores the diffusion finite element class
+  TimeSteppingImplicit<FiniteElementMethodDiffusion>::initialize();
+
+  // initialize potential flow
+  finiteElementMethodPotentialFlow_.initialize();
+
+  // initialize cellml adapter
+  cellMLAdapter_.initialize();
+
+  // initialize system matrix
+  setSystemMatrix(this->timeStepWidth_);
+}
+
+template<typename DiscretizableInTime>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+setSystemMatrix(double timeStepWidth)
+{
+
+}
+
+
 } // namespace TimeSteppingScheme

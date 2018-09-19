@@ -21,14 +21,14 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates, typename FunctionSpaceType>
 class RhsRoutineHandler:
-  public CellmlAdapterBase<nStates>
+  public CellmlAdapterBase<nStates,FunctionSpaceType>
 {
 public:
   
   //! constructor
-  using CellmlAdapterBase<nStates>::CellmlAdapterBase;
+  using CellmlAdapterBase<nStates,FunctionSpaceType>::CellmlAdapterBase;
   
 protected:
   //! given a normal cellml source file for rhs routine create a second file for multiple instances. @return: if successful
@@ -40,15 +40,13 @@ protected:
   //! load the library (<file>.so) that was created earlier, store
   bool loadRhsLibrary(std::string libraryFilename);
   
+  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
+  bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
+
   
   bool forceRecompileRhs_;   ///< if the rhs code should be compiled even if the shared object library file exists already
   
   void (*rhsRoutine_)(void *context, double t, double *states, double *rates, double *algebraics, double *parameters);  ///< function pointer to the rhs routine that can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer.
-
-protected:
-
-  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
-  bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
 
   std::vector<std::string> constantAssignments_;
   

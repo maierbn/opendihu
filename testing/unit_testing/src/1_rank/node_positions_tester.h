@@ -19,9 +19,9 @@ public:
     std::vector<double> &referencePositions
   )
   {
-    ASSERT_TRUE(dihuContext.meshManager()->meshes_.find(meshKey) != dihuContext.meshManager()->meshes_.end()) 
+    ASSERT_TRUE(dihuContext.meshManager()->functionSpaces_.find(meshKey) != dihuContext.meshManager()->functionSpaces_.end())
      << "Mesh with key \"" << meshKey << "\" was not found.";
-    std::shared_ptr<Mesh> mesh = dihuContext.meshManager()->meshes_[meshKey];
+    std::shared_ptr<Mesh> mesh = dihuContext.meshManager()->functionSpaces_[meshKey];
     
     std::vector<double> nodePositionsVector;
     if(mesh->dimension() == 1)

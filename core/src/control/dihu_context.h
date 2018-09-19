@@ -45,6 +45,9 @@ public:
   ///! return the partition manager object that creates partitionings
   std::shared_ptr<Partition::Manager> partitionManager() const;
 
+  ///! get the own MPI rank no in the world communicator
+  int ownRankNo() const;
+
   ///! destructor
   ~DihuContext();
 

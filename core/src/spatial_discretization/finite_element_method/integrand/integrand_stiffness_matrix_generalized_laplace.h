@@ -18,9 +18,9 @@ class IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,Term,Equation
 {
 public:
   static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
-                                           const std::array<Vec3,1> &jacobian, const std::array<double,1> xi);
+                                           const std::array<Vec3,1> &jacobian, element_no_t elementNoLocal,
+                                           const std::array<double,1> xi);
 };
-
 
 /** partial specialization for generalized laplace operator, dimension 2
  */
@@ -29,7 +29,8 @@ class IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,Term,Equation
 {
 public:
   static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
-                                           const std::array<Vec3,2> &jacobian, const std::array<double,2> xi);
+                                           const std::array<Vec3,2> &jacobian, element_no_t elementNoLocal,
+                                           const std::array<double,2> xi);
 };
 
 
@@ -40,7 +41,8 @@ class IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,Term,Equation
 {
 public:
   static EvaluationsType evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data,
-                                           const std::array<Vec3,3> &jacobian, const std::array<double,3> xi);
+                                           const std::array<Vec3,3> &jacobian, element_no_t elementNoLocal,
+                                           const std::array<double,3> xi);
 };
 
 };  // namespace

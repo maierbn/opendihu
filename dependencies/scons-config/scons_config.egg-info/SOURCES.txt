@@ -27,6 +27,7 @@ sconsconfig/packages/Matplotlib.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py
+sconsconfig/packages/NumpySTL.py
 sconsconfig/packages/PETSc.py
 sconsconfig/packages/PTScotch.py
 sconsconfig/packages/Package.py
@@ -39,6 +40,7 @@ sconsconfig/packages/SOCI.py
 sconsconfig/packages/SciPy.py
 sconsconfig/packages/SkyMaker.py
 sconsconfig/packages/Sphinx.py
+sconsconfig/packages/SvgPath.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py

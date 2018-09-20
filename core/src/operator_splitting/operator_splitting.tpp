@@ -2,6 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping.h"
+#include "control/performance_measurement.h"
 
 namespace OperatorSplitting
 {
@@ -88,8 +89,15 @@ run()
   // initialize data structurures
   initialize();
 
+  // start time measurement
+  Control::PerformanceMeasurement::start("OperatorSplitting total");
+
   // run simulation
   advanceTimeSpan();
+
+  // stop time measurement and output log file
+  Control::PerformanceMeasurement::stop("OperatorSplitting total");
+  Control::PerformanceMeasurement::log("duration");
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

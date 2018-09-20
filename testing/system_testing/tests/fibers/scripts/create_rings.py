@@ -58,14 +58,14 @@ def get_intersecting_line_segment(triangle, z_value):
   #  debug = True
   
   if debug:
-    print "points: {},{},{}, z_value: {}".format(p1z,p2z,p3z,z_value)
+    print("points: {},{},{}, z_value: {}".format(p1z,p2z,p3z,z_value))
   
   # handle case where p1z = p2z
   if p2z == p1z:
     if p2z == z_value:
       return [p1, p2]
     if has_to_intersect:
-      print "fail1, points: {},{},{}, z_value: {}".format(p1,p2,p3,z_value)
+      print("fail1, points: {},{},{}, z_value: {}".format(p1,p2,p3,z_value))
     return None
   
   # function that returns a point by its barycentric coordinates, xi1 and xi2
@@ -78,7 +78,7 @@ def get_intersecting_line_segment(triangle, z_value):
   c = (z_value - p1z) / (p2z - p1z)
   
   if debug:
-    print "xi1 = m*xi2 + c with m={}, c={}".format(m,c)
+    print("xi1 = m*xi2 + c with m={}, c={}".format(m,c))
   
   # check which borders of the triangle in parameter space the line segment intersects
   intersects_xi2_equals_0 = (0 <= c <= 1)        # xi1 = c
@@ -94,15 +94,15 @@ def get_intersecting_line_segment(triangle, z_value):
     intersects_diagonal = (0 <= (c+m)/(1+m) <= 1)  # xi2 = 1-xi1  =>  xi1 = m*(1-xi1) + c  =>  c + m = (1+m)*xi1  =>  xi1 = (c+m)/(1+m)
     
   if debug:
-    print "intersects_xi1_equals_0: {}, intersects_xi2_equals_0: {}, intersects_diagonal: {}, sum: {}".format(intersects_xi1_equals_0, intersects_xi2_equals_0, intersects_diagonal, int(intersects_xi2_equals_0) + int(intersects_xi1_equals_0) + int(intersects_diagonal))
+    print("intersects_xi1_equals_0: {}, intersects_xi2_equals_0: {}, intersects_diagonal: {}, sum: {}".format(intersects_xi1_equals_0, intersects_xi2_equals_0, intersects_diagonal, int(intersects_xi2_equals_0) + int(intersects_xi1_equals_0) + int(intersects_diagonal)))
     
   # if triangle is not intersected by z plane
   if int(intersects_xi2_equals_0) + int(intersects_xi1_equals_0) + int(intersects_diagonal) != 2:
     
     if has_to_intersect:
-      print "intersects_xi1_equals_0: {}, intersects_xi2_equals_0: {}, intersects_diagonal: {}, sum: {}".format(intersects_xi1_equals_0, intersects_xi2_equals_0, intersects_diagonal, int(intersects_xi2_equals_0) + int(intersects_xi1_equals_0) + int(intersects_diagonal))
+      print("intersects_xi1_equals_0: {}, intersects_xi2_equals_0: {}, intersects_diagonal: {}, sum: {}".format(intersects_xi1_equals_0, intersects_xi2_equals_0, intersects_diagonal, int(intersects_xi2_equals_0) + int(intersects_xi1_equals_0) + int(intersects_diagonal)))
     
-      print "fail2, points: {},{},{}, z_value: {}".format(p1z,p2z,p3z,z_value)
+      print("fail2, points: {},{},{}, z_value: {}".format(p1z,p2z,p3z,z_value))
     return None
     
   # compute the intersection points
@@ -140,26 +140,26 @@ top_clip = 300.0
 n_loops = 20   # number of rings to extract
 
 if len(sys.argv) < 2:
-  print "usage: ./create_rings.py <input file> [<n rings> [<min z> <max z>]]"
+  print("usage: ./create_rings.py <input file> [<n rings> [<min z> <max z>]]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
   if os.path.isfile(sys.argv[1]):
     infile = sys.argv[1]
   else:
-    print "File \"{}\" does not exists".format(sys.argv[1])
+    print("File \"{}\" does not exists".format(sys.argv[1]))
     sys.exit(0)
   
 if len(sys.argv) >= 3:
   n_loops = int(sys.argv[2])
-  print "n loops: {}".format(n_loops)
+  print("n loops: {}".format(n_loops))
   
 if len(sys.argv) >= 5:
   bottom_clip = float(sys.argv[3])
   top_clip = float(sys.argv[4])
-  print "z range of rings: [{},{}]".format(bottom_clip, top_clip)
+  print("z range of rings: [{},{}]".format(bottom_clip, top_clip))
   
-print "Input file: \"{}\"".format(infile)
+print("Input file: \"{}\"".format(infile))
 
 stl_mesh = mesh.Mesh.from_file(infile)
 
@@ -182,7 +182,7 @@ debug = False
 # loop over z samples
 for loop_no,z_value in enumerate(z_samples):
     
-  print "loop no {}/{}".format(loop_no,len(z_samples))
+  print("loop no {}/{}".format(loop_no,len(z_samples)))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):
@@ -201,7 +201,7 @@ for loop_no,z_value in enumerate(z_samples):
     if edge is not None:
     
       if debug:
-        print "triangle ",p1,p2,p3,", found intersection edge: ", edge
+        print("triangle ",p1,p2,p3,", found intersection edge: ", edge)
       
       # check if edge is already contained in loop
       edge_is_already_in_loop = False
@@ -217,26 +217,26 @@ for loop_no,z_value in enumerate(z_samples):
       # append edge to loop
       if not edge_is_already_in_loop:
         if debug:
-          print " add edge ",edge," to loop no ", loop_no, 
-        #print ", prev: ", loops[loop_no], "->", 
+          print(" add edge ",edge," to loop no ", loop_no)
+        #print(", prev: ", loops[loop_no], "->", 
         loops[loop_no].append(edge)
-        #print loops[loop_no]
+        #print(loops[loop_no]
       else:
         if debug:
-          print "edge_is_already_in_loop"
+          print("edge_is_already_in_loop")
       
 if debug:      
-  print "-----------------"
-  print ""
-  print "loops: z values"
+  print("-----------------")
+  print("")
+  print("loops: z values")
   for l in loops:
-    print ""
-    print ""
-    print ""
-    print " -loop"
-    print ""
+    print("")
+    print("")
+    print("")
+    print(" -loop")
+    print("")
     for e in l:
-      print "  ",e,
+      print("  ",e)
     
 # sort edges of each loop
 # loop over z samples
@@ -248,9 +248,9 @@ for loop_no in range(n_loops):
     continue
 
   if debug:
-    print ""
-    print "loop "
-    print loop[0:8]
+    print("")
+    print("loop ")
+    print(loop[0:8])
 
   # find point with lowest x position as first_point
   first_edge = loop[0]
@@ -269,7 +269,7 @@ for loop_no in range(n_loops):
   new_loop = [first_point]
   
   if debug:
-    print "first point: ", first_point
+    print("first point: ", first_point)
   
   previous_end_point = first_point
   current_end_point = first_point
@@ -294,7 +294,7 @@ for loop_no in range(n_loops):
           next_point_found = True
           
           if debug:
-            print "add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1
+            print("add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
             
         elif np.allclose(current_end_point, edge[1]) and not np.allclose(previous_end_point, edge[0]):
           new_loop.append(edge[0])
@@ -303,31 +303,31 @@ for loop_no in range(n_loops):
           next_point_found = True
           
           if debug:
-            print "add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1
+            print("add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
           
       # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
       if np.allclose(current_end_point, first_point):
         if debug:
-          print "start point reached"
+          print("start point reached")
         break
         
       if not next_point_found:
         if debug: 
-          print "no point found that continues loop"
-        print "Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no])
+          print("no point found that continues loop")
+        print("Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no]))
         break
           
   # store new loop 
   loops[loop_no] = list(new_loop)
       
 if debug:
-  print "----------------"        
-  print ""
-  print "loops: ",loops
+  print("----------------")
+  print("")
+  print("loops: ",loops)
         
-print "The following rings have been extracted:"
+print("The following rings have been extracted:")
 for (loop,z_value) in zip(loops,z_samples):
-  print "at z = {}, n segments: {}".format(z_value,len(loop))
+  print("at z = {}, n segments: {}".format(z_value,len(loop)))
         
 with open('rings_created', 'wb') as f:
   pickle.dump(loops, f)
@@ -351,17 +351,17 @@ for loop in loops:
 # create output mesh
 triangles = out_triangles
 n_triangles = len(out_triangles)
-print "n_triangles: ",n_triangles
+print("n_triangles: ",n_triangles)
 
 # Create the mesh
 out_mesh = mesh.Mesh(np.zeros(n_triangles, dtype=mesh.Mesh.dtype))
 for i, f in enumerate(triangles):
   out_mesh.vectors[i] = f
   #for j in range(3):
-    #print "set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+    #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
     
 #out_mesh.update_normals()
 
 outfile = "out/mesh_01.stl"
 out_mesh.save(outfile, mode=stl.Mode.ASCII)
-print "saved {} triangles to \"{}\" (loops)".format(n_triangles,outfile)
+print("saved {} triangles to \"{}\" (loops)".format(n_triangles,outfile))

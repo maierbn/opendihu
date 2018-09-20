@@ -147,7 +147,7 @@ createLocalMatrix()
   PetscErrorCode ierr;
   ierr = MatSetLocalToGlobalMapping(this->globalMatrix_, this->meshPartitionRows_->localToGlobalMappingDofs(), this->meshPartitionColumns_->localToGlobalMappingDofs()); CHKERRV(ierr);
 
-  // output size of create matrix
+  // output size of created matrix
   int nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
@@ -375,8 +375,8 @@ output(std::ostream &stream) const
 #ifndef NDEBUG  
   // this method gets all values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(this->meshPartitionRows_->mpiCommunicator(), &ownRankNo);
-  MPI_Comm_size(this->meshPartitionRows_->mpiCommunicator(), &nRanks);
+  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartitionRows_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
+  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartitionRows_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
   
   // get global size of matrix 
   int nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
@@ -404,11 +404,18 @@ output(std::ostream &stream) const
   // exchange the lengths of the local information
   std::vector<int> localSizes(nRanks);
   localSizes[ownRankNo] = str.length();
-  MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartitionRows_->mpiCommunicator());
+  if (ownRankNo == 0)
+  {
+    MPIUtility::handleReturnValue(MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartitionRows_->mpiCommunicator()), "MPI_Gather (1)");
+  }
+  else
+  {
+    MPIUtility::handleReturnValue(MPI_Gather(localSizes.data(), 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartitionRows_->mpiCommunicator()), "MPI_Gather (1)");
+  }
   
   // determine the maximum length
   int maxLocalSize;
-  MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartitionRows_->mpiCommunicator());
+  MPIUtility::handleReturnValue(MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartitionRows_->mpiCommunicator()), "MPI_Allreduce");
   
   // send all string representations from the ranks to rank 0
   std::vector<char> recvBuffer(maxLocalSize*nRanks,0);
@@ -417,7 +424,8 @@ output(std::ostream &stream) const
   
   // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
   // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
-  MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_CHAR, recvBuffer.data(), maxLocalSize, MPI_CHAR, 0, this->meshPartitionRows_->mpiCommunicator());
+  VLOG(1) << "MPI_Gather (2)";
+  MPIUtility::handleReturnValue(MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_CHAR, recvBuffer.data(), maxLocalSize, MPI_CHAR, 0, this->meshPartitionRows_->mpiCommunicator()), "MPI_Gather (2)");
   
   if (ownRankNo == 0)
   {

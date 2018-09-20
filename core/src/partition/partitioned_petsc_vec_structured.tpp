@@ -29,7 +29,6 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,Ba
     ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[i]); CHKERRV(ierr);
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);*/
   }
-
 }
   
 //! constructor, copy from existing vector
@@ -432,6 +431,12 @@ getContiguousValuesGlobal()
     return vectorGlobal_[0];
   }
 
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    return valuesContiguous_;
+  }
+
   PetscErrorCode ierr;
 
   // create contiguos vector if it does not exist yet
@@ -515,6 +520,48 @@ restoreContiguousValuesGlobal()
   valuesContiguousInUse_ = false;
 }
 
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+{
+  PetscErrorCode ierr;
+
+  // prepare source vector
+  Vec vectorSource;
+  dof_no_t dofStart = 0;
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    vectorSource = valuesContiguous_;
+    dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
+  }
+  else
+  {
+    vectorSource = vectorLocal_[componentNo];
+  }
+
+  double *valuesSource;
+  ierr = VecGetArray(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // prepare target vector
+  assert(!extractedFieldVariable->valuesContiguousInUse_);
+
+  const double *valuesTarget;
+  ierr = VecGetArrayRead(extractedFieldVariable->vectorLocal_[0], &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes (\"" << this->name_ << "\" component " << componentNo
+    << ") to \"" << extractedFieldVariable->name() << "\"";
+  memcpy(
+    valuesTarget,
+    vectorSource + dofStart,
+    this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+  );
+
+  // restore memory
+  ierr = VecRestoreArrayRead(extractedFieldVariable->vectorLocal_[0], &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArray(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+}
+
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 std::vector<PetscInt> &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
@@ -531,8 +578,8 @@ output(std::ostream &stream)
 #ifndef NDEBUG  
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
-  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
+  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
+  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
   
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -566,17 +613,25 @@ output(std::ostream &stream)
     }
 
     std::vector<double> localValues(nDofsLocal);
-    VecGetValues(vector, nDofsLocal, indices.data(), localValues.data());
+    ierr = VecGetValues(vector, nDofsLocal, indices.data(), localValues.data()); CHKERRV(ierr);
     //VLOG(1) << "localValues: " << localValues;
     
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
     // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
-    // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
-    MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    // Note that th recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
+
+    if (ownRankNo == 0)
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (5)");
+    }
+    else
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(localSizes.data(), 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (5)");
+    }
     
     int maxLocalSize;
-    MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
+    MPIUtility::handleReturnValue(MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
     
     //VLOG(1) << "localSizes: " << localSizes << ", maxLocalSize: " << maxLocalSize << ", nRanks: " << nRanks;
 
@@ -586,7 +641,7 @@ output(std::ostream &stream)
     
     //VLOG(1) << " sendBuffer: " << sendBuffer;
 
-    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    MPIUtility::handleReturnValue(MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (6)");
     
     if (ownRankNo == 0)
     {
@@ -632,7 +687,8 @@ output(std::ostream &stream)
         indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
       }
 
-      VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), localValuesWithGhosts.data());
+      PetscErrorCode ierr;
+      ierr = VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), localValuesWithGhosts.data()); CHKERRV(ierr);
       //VLOG(1) << "localValues: " << localValues;
 
       const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();

@@ -261,7 +261,7 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
-int DihuContext::ownRankNo() const
+int DihuContext::ownRankNo()
 {
   int rankNo;
   MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));

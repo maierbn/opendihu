@@ -8,7 +8,7 @@ namespace Data
 {
 
 template <int D>
-class DiffusionTensor
+class DiffusionTensorConstant
 {
 public:
 
@@ -16,7 +16,7 @@ public:
   void initialize(PyObject *settings);
 
   //! return diffusion tensor
-  const MathUtility::Matrix<D,D> &diffusionTensor() const;
+  const MathUtility::Matrix<D,D> &diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const;
 
 private:
   MathUtility::Matrix<D,D> diffusionTensor_;  ///< the diffusion/conductivity tensor A in an equation ∇•A∇ = f
@@ -24,4 +24,4 @@ private:
 
 }  // namespace
 
-#include "data_management/diffusion_tensor.tpp"
+#include "data_management/diffusion_tensor_constant.tpp"

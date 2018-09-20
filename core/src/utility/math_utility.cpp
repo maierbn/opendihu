@@ -509,4 +509,20 @@ int permutation(int i, int j, int k)
   return 0;
 }
 
+template<>
+void rotateMatrix<1>(Tensor2<1> &matrix, Vec3 directionVector)
+{
+  // 1D case does not make sense
+  assert(false);
+}
+
+template<>
+void rotateMatrix<2>(Tensor2<2> &matrix, Vec3 directionVector)
+{
+  // normalize direction vector
+  //directionVector /= length<3>(directionVector);
+
+  //Tensor2<2> rotationMatrix = {};
+}
+
 }; // namespace

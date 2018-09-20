@@ -38,6 +38,7 @@ createPetscObjects()
   }
 
   this->fibreDirection_ = this->functionSpace_->template createFieldVariable<3>("fibreDirection");
+  this->transmembraneIncrement_ = this->functionSpace_->template createFieldVariable<1>("transmembraneIncrement");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
 }
 
@@ -68,6 +69,30 @@ transmembranePotential(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
   return this->transmembranePotential_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+transmembranePotentialNextTimeStep(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->transmembranePotentialNextTimeStep_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+transmembraneIncrementNextTimeStep(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->transmembraneIncrementNextTimeStep_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+ionicCurrentNextTimestep(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->ionicCurrentNextTimestep_[compartmentNo];
 }
 
 template<typename FunctionSpaceType>

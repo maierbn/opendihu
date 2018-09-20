@@ -127,6 +127,15 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   }
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
+{
+  std::vector<double> values;
+  this->getValuesWithoutGhosts(componentNo, values, false);
+  extractedFieldVariable->setValuesWithoutGhosts(values, INSERT_VALUES);
+}
+
 //! copy the values from another field variable of the same type
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::

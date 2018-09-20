@@ -1,11 +1,11 @@
-#include "data_management/diffusion_tensor.h"
+#include "data_management/diffusion_tensor_constant.h"
 
 namespace Data
 {
 
 
 template <int D>
-void DiffusionTensor<D>::
+void DiffusionTensorConstant<D>::
 initialize(PyObject *settings)
 {
   LOG(DEBUG) << "initialize Diffusion tensor";
@@ -35,8 +35,8 @@ initialize(PyObject *settings)
 }
 
 template <int D>
-const MathUtility::Matrix<D,D> &DiffusionTensor<D>::
-diffusionTensor() const
+const MathUtility::Matrix<D,D> &DiffusionTensorConstant<D>::
+diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const
 {
   return this->diffusionTensor_;
 }

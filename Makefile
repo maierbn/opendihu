@@ -50,7 +50,7 @@ quadrature:
 	cd examples/quadrature/own && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 fibers:
-	cd testing/system_testing/tests/fibres &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd testing/system_testing/tests/fibers &&  python ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 hodgkin_huxley:
 	cd examples/electrophysiology/hodgkin_huxley && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

@@ -80,10 +80,12 @@ initializeRhsRoutine()
     int rankNo = DihuContext::ownRankNo();
     if (libraryFilenameSetWithNInstances)
     {
-      // gather which number of instances all ranks have
+      // gather what number of instances all ranks have
       int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
       int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
       std::vector<int> nInstancesRanks(nRanksCommunicator);
+
+      LOG(DEBUG) << "Library filename was not specified, use own naming scheme. Communicator has " << nRanksCommunicator << " ranks";
 
       nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
 
@@ -102,10 +104,17 @@ initializeRhsRoutine()
         }
       }
 
+      LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
+
       // if there is a rank with lower number that has the same nInstances, this one should compile the library, not the own rank
       if (rankWhichCompilesLibrary != ownRankNoCommunicator)
       {
+        LOG(DEBUG) << "we are the wrong rank, do not compile library";
         doCompilation = false;
+      }
+      else
+      {
+        LOG(DEBUG) << "compile on this rank";
       }
     }
 
@@ -126,14 +135,18 @@ initializeRhsRoutine()
       std::stringstream compileCommand;
       // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
 #ifdef NDEBUG
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c "
-        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
-        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
+      // release version
+      std::string optimizationFlags = "-O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log";
 #else
-      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c "
-        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
-        << " && sleep " << rankNo << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
+      // debug version
+      std::string optimizationFlags = "-O0 -ggdb";
 #endif
+
+      // compile library to filename with "*.rankNo", then wait (different wait times for ranks), then rename file to without "*.rankNo"
+      compileCommand << "gcc -fPIC " << optimizationFlags << " -shared -lm -x c "
+        << "-o " << libraryFilename << "." << rankNo << " " << simdSourceFilename
+        << " && sleep " << int((rankNo%100)/10+1)
+        << " && mv " << libraryFilename << "." << rankNo << " " << libraryFilename;
 
       int ret = system(compileCommand.str().c_str());
       if (ret != 0)
@@ -171,6 +184,14 @@ initializeRhsRoutine()
         LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
       }
   #endif
+
+    }
+
+    if (libraryFilenameSetWithNInstances)
+    {
+      LOG(DEBUG) << "wait until library has been compiled";
+      // barrier to wait until the one rank that compiles the library has finished
+      MPIUtility::handleReturnValue(MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Barrier");
     }
   }
 

@@ -76,22 +76,23 @@ try:
     del MPI_DIR
     MPI_DOWNLOAD=True
 
-  # path on hazelhen
-  if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-    MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
 except:
   pass
 
 # other variables for hazelhen
+import os
 if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+  MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+  LAPACK_DOWNLOAD = False
   LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  PETSC_DOWNLOAD = False
   PETSC_DIR = os.environ.get("PETSC_DIR")
 
 # module restore opendihu
 # or 
 #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
 #   module load cray-libsci
-#   module load cray-petsc-64
+#   module load cray-petsc  (or cray-petsc-64 for big data)
 
 
 

@@ -46,7 +46,7 @@ public:
   std::shared_ptr<Partition::Manager> partitionManager() const;
 
   ///! get the own MPI rank no in the world communicator
-  int ownRankNo() const;
+  static int ownRankNo();
 
   ///! destructor
   ~DihuContext();

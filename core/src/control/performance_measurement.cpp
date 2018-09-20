@@ -48,6 +48,11 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
 
 void PerformanceMeasurement::log(std::string logFileName)
 {
+  // determine file name
+  std::stringstream filename;
+  filename << logFileName << "." << std::setw(7) << std::setfill('0') << DihuContext::ownRankNo() << ".csv";
+  logFileName = filename.str();
+
   // open log file
   std::ofstream file;
   file.open(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
@@ -70,24 +75,6 @@ void PerformanceMeasurement::log(std::string logFileName)
      << measurement.second.nErrors << std::endl;
   }
   file.close();
-
-  // write only entries of "stiffnessMatrixDisplacements" to file "quadrature.csv"
-  std::ofstream quadraturePrecisionFile("quadrature.csv", std::ios::out | std::ios::binary | std::ios::app);
-  if (!quadraturePrecisionFile.is_open())
-  {
-    LOG(WARNING) << "Could not open file \"quadrature.csv\" for writing.";
-  }
-  else
-  {
-    Measurement &measurement = measurements_["stiffnessMatrixDisplacements"];
-    quadraturePrecisionFile << "duration;error;number time spans;number error measurements" << std::endl
-     << measurement.totalDuration / measurement.nTimeSpans << ";"
-     << measurement.totalError / measurement.nErrors << ";"
-     << measurement.nTimeSpans << ";"
-     << measurement.nErrors << std::endl;
-
-    quadraturePrecisionFile.close();
-  }
 }
 
 template<>

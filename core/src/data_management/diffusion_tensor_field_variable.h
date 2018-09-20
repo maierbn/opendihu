@@ -16,7 +16,7 @@ public:
   void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments = 0);
 
   //! return diffusion tensor
-  const MathUtility::Matrix<D,D> &diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const;
+  MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const;
 
 private:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction_;   ///< direction of the diffusion tensor

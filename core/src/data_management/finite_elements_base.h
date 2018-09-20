@@ -6,7 +6,6 @@
 #include <tuple>
 
 #include "data_management/data.h"
-#include "data_management/diffusion_tensor.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
@@ -24,10 +23,10 @@ class FiniteElementsBase :
 public:
 
   //! constructor
-  FiniteElements(DihuContext context);
+  FiniteElementsBase(DihuContext context);
 
   //! destructor
-  virtual ~FiniteElements();
+  virtual ~FiniteElementsBase();
 
   //! initialize the object, create all stored data
   virtual void initialize() override;

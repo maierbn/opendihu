@@ -21,14 +21,14 @@ namespace Data
 
 template<typename FunctionSpaceType>
 FiniteElementsBase<FunctionSpaceType>::
-FiniteElements(DihuContext context) : Data<FunctionSpaceType>(context)
+FiniteElementsBase(DihuContext context) : Data<FunctionSpaceType>(context)
 {
   //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename FunctionSpaceType>
 FiniteElementsBase<FunctionSpaceType>::
-~FiniteElements()
+~FiniteElementsBase()
 {
 }
 
@@ -36,7 +36,7 @@ template<typename FunctionSpaceType>
 void FiniteElementsBase<FunctionSpaceType>::
 initialize()
 {
-  LOG(DEBUG) << "FiniteElements::initialize";
+  LOG(DEBUG) << "FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 }
 

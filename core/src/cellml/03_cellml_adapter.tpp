@@ -14,34 +14,34 @@
 
 //#include <libcellml>    // libcellml not used here
 
-template<int nStates, typename FunctionSpaceType>
-CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+CellmlAdapter<nStates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates,FunctionSpaceType>(context)
+  CallbackHandler<nStates_,FunctionSpaceType>(context)
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
 
 template<int nStates_, typename FunctionSpaceType>
- constexpr int CellmlAdapter<nStates,FunctionSpaceType>::
+constexpr int CellmlAdapter<nStates_,FunctionSpaceType>::
 nStates()
 {
   return nStates_;
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 reset()
 {
 }
   
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 initialize()
 {
-  LOG(TRACE) << "CellmlAdapter<nStates,FunctionSpaceType>::initialize";
+  LOG(TRACE) << "CellmlAdapter<nStates_,FunctionSpaceType>::initialize";
 
-  CellmlAdapterBase<nStates,FunctionSpaceType>::initialize();
+  CellmlAdapterBase<nStates_,FunctionSpaceType>::initialize();
   
   // load rhs routine
   this->initializeRhsRoutine();
@@ -58,21 +58,21 @@ initialize()
   this->solutionVectorMapping_.setScalingFactor(prefactor);
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 initialize(double timeStepWidth)
 {
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   // do nothing because we don't have stored data here (the data on which the computation is performed comes in evaluateTimesteppingRightHandSide from parameters) 
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
   //PetscUtility::getVectorEntries(input, states_);
@@ -84,15 +84,15 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   int nStatesInput, nRates;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
-  VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates: " << nStatesInput << ", output nRates: " << nRates;
-  if (nStatesInput != nStates*this->nInstances_)
+  VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+  if (nStatesInput != nStates_*this->nInstances_)
   {
-    LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates=" << nStates << ", nInstances=" << this->nInstances_;
+    LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
   }
-  assert (nStatesInput == nStates*this->nInstances_);
-  assert (nRates == nStates*this->nInstances_);
+  assert (nStatesInput == nStates_*this->nInstances_);
+  assert (nRates == nStates_*this->nInstances_);
 
-  //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates=" << nStates;
+  //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates_=" << nStates_;
   
   // get new values for parameters, call callback function of python config
   if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)
@@ -123,7 +123,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
     
-    VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << this->intermediates_.size() << " intermediates";    
+    VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << this->intermediates_.size() << " intermediates";
     this->handleResult_((void *)this, this->nInstances_, timeStepNo, currentTime, states, this->intermediates_.data());
   }
 
@@ -134,40 +134,40 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 }
 
 /*
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
 }
 */
 
 //! return false because the object is independent of mesh type
-template<int nStates, typename FunctionSpaceType>
-bool CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+bool CellmlAdapter<nStates_,FunctionSpaceType>::
 knowsMeshType()
 {
-  return CellmlAdapterBase<nStates,FunctionSpaceType>::knowsMeshType();
+  return CellmlAdapterBase<nStates_,FunctionSpaceType>::knowsMeshType();
 }
 
-template<int nStates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+void CellmlAdapter<nStates_,FunctionSpaceType>::
 getComponentNames(std::vector<std::string> &stateNames)
 {
   this->getStateNames(stateNames);
 }
 
 //! return the mesh
-template<int nStates, typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> CellmlAdapter<nStates,FunctionSpaceType>::
+template<int nStates_, typename FunctionSpaceType>
+std::shared_ptr<FunctionSpaceType> CellmlAdapter<nStates_,FunctionSpaceType>::
 functionSpace()
 {
-  return CellmlAdapterBase<nStates,FunctionSpaceType>::functionSpace();
+  return CellmlAdapterBase<nStates_,FunctionSpaceType>::functionSpace();
 }
 
-template<int nStates, typename FunctionSpaceType>
+template<int nStates_, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>
-bool CellmlAdapter<nStates,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
+bool CellmlAdapter<nStates_,FunctionSpaceType>::
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
 {
-  return CellmlAdapterBase<nStates,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+  return CellmlAdapterBase<nStates_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
 }

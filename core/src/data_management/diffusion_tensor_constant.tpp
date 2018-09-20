@@ -35,7 +35,7 @@ initialize(PyObject *settings)
 }
 
 template <int D>
-const MathUtility::Matrix<D,D> &DiffusionTensor<D>::
+const MathUtility::Matrix<D,D> &DiffusionTensorConstant<D>::
 diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const
 {
   return this->diffusionTensor_;

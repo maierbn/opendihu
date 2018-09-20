@@ -520,9 +520,9 @@ template<>
 void rotateMatrix<2>(Tensor2<2> &matrix, Vec3 directionVector)
 {
   // normalize direction vector
-  directionVector /= length<2>(directionVector);
+  //directionVector /= length<3>(directionVector);
 
-  Tensor2<2> rotationMatrix = {};
+  //Tensor2<2> rotationMatrix = {};
 }
 
 }; // namespace

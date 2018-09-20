@@ -27,6 +27,7 @@ sconsconfig/packages/Matplotlib.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py
+sconsconfig/packages/NumpySTL.py
 sconsconfig/packages/PETSc.py
 sconsconfig/packages/PTScotch.py
 sconsconfig/packages/Package.py

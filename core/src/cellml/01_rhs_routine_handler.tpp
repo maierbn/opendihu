@@ -78,7 +78,7 @@ initializeRhsRoutine()
     }
 
     int rankNo = DihuContext::ownRankNo();
-    if (libraryFilenameSetWithNInstances)
+    if (doCompilation && libraryFilenameSetWithNInstances)
     {
       // gather what number of instances all ranks have
       int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();

@@ -40,6 +40,7 @@ sconsconfig/packages/SOCI.py
 sconsconfig/packages/SciPy.py
 sconsconfig/packages/SkyMaker.py
 sconsconfig/packages/Sphinx.py
+sconsconfig/packages/SvgPath.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py

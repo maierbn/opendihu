@@ -33,10 +33,11 @@ NUMPYC_DOWNLOAD=True
 # SciPy
 SCIPY_DOWNLOAD=True
 
-# Matplotlib
+# Matplotlib and other python dependencies
 BZIP2_DOWNLOAD=True
 MATPLOTLIB_DOWNLOAD=True
 NUMPYSTL_DOWNLOAD=True
+SVGPATH_DOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True

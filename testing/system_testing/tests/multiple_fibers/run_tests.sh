@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "running example $(pwd)"
+echo "running example $(pwd) with $1 processes"
 
 workdir=$(pwd)
 variant="debug"
@@ -16,7 +16,9 @@ cd build_${variant}
 
 # remove old output data
 rm -rf out
-ln -s /data/scratch/maierbn/multiple_fibres/out out
+export output_path=/data/scratch/maierbn/multiple_fibres/out2
+mkdir -p $output_path
+ln -s $output_path out
 
 export OMP_NUM_THREADS=1
 

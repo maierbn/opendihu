@@ -38,9 +38,10 @@ config = {
     ],
 
     "CellML" : {
-      "sourceFilename": "cellmlcode.cpp",
-      "simdSourceFilename" : "simdcode.cpp",
-      "libraryFilename": "cellml_simd_lib.so",
+      #"sourceFilename": "cellmlcode.cpp",
+      "gpuSourceFilename": "gpucode.cpp",
+      #"simdSourceFilename" : "simdcode.cpp",
+      "libraryFilename": "cellml_gpu_lib.so",
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,
        #"handleResultFunction": handleResult,

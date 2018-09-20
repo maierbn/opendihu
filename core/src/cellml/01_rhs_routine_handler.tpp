@@ -143,15 +143,15 @@ initializeRhsRoutine()
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
   }
 
-  // try to create or load gpu source
+  // try to (create or) load gpu source
   std::string gpuSourceFilename;
-  if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
-  {
-    if (!createGPUSourceFile(gpuSourceFilename))
-      gpuSourceFilename = "";
-  }
+  //if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
+  //{
+  //  if (!createGPUSourceFile(gpuSourceFilename))
+  //    gpuSourceFilename = "";
+  //}
 
-  if (gpuSourceFilename == "")
+  if(true) // (gpuSourceFilename == "")
   {
     if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
     {
@@ -162,34 +162,45 @@ initializeRhsRoutine()
   // if gpuSourceFilename is set, compile to create dynamic library
   if (gpuSourceFilename != "")
   {
-    // compile source file to a library
-    libraryFilename = "lib.so";
-    if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
-    {
-      libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
-    }
-    else 
-    {
-      std::stringstream s;
-      s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
-      libraryFilename = s.str();
-    }
-
+    // check whether file named gpuSourceFilename exists
+    std::ifstream srcfile;
     bool doCompilation = true;
-    forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
-    if(!forceRecompileRhs_)
+    srcfile.open(gpuSourceFilename);
+    if(!srcfile.is_open())
     {
-      // check if the library file already exists
-      std::ifstream file;
-      file.open(libraryFilename);
-      if (file.is_open())
+      doCompilation=false;
+      LOG(ERROR) << "No file named \"" << gpuSourceFilename << "\" found.";
+    }
+    else
+    {
+      srcfile.close();
+      // compile source file to a library
+      libraryFilename = "lib.so";
+      if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
       {
-        LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists, do not recompile (set forceRecompileRhs to True to force recompilation).";
-        doCompilation = false;
-        file.close();
+        libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+      }
+      else 
+      {
+        std::stringstream s;
+        s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
+        libraryFilename = s.str();
+      }
+
+      forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
+      if(!forceRecompileRhs_)
+      {
+        // check if the library file already exists
+        std::ifstream file;
+        file.open(libraryFilename);
+        if (file.is_open())
+        {
+          LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists, do not recompile (set forceRecompileRhs to True to force recompilation).";
+          doCompilation = false;
+          file.close();
+        }
       }
     }
-
     if (doCompilation)
     {
       if (libraryFilename.find("/") != std::string::npos)
@@ -206,9 +217,9 @@ initializeRhsRoutine()
       std::stringstream compileCommand;
       // hier muss ordentlich gesetzt werden. Nicht-trivial.
 #ifdef NDEBUG
-       compileCommand << "gcc -fopenmp -O3 -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
+       compileCommand << "gcc -fPIC -fopenmp -O3 -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
 #else
-       compileCommand << "gcc -fopenmp -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
+       compileCommand << "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
 #endif
 
       int ret = system(compileCommand.str().c_str());
@@ -253,6 +264,7 @@ loadRhsLibrary(std::string libraryFilename)
     // try to load several routine names
     rhsRoutine_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSide");
     rhsRoutineOpenCMISS_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine");
+    rhsRoutineGPU_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine_gpu");
     initConstsOpenCOR_ = (void(*)(double*, double*, double*)) dlsym(handle, "initConsts");
     computeRatesOpenCOR_ = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeRates");
     computeVariablesOpenCOR_  = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeVariables");
@@ -260,14 +272,19 @@ loadRhsLibrary(std::string libraryFilename)
     LOG(DEBUG) << "Library \"" << libraryFilename << "\" loaded. "
       << "rhsRoutine_: " << (rhsRoutine_==NULL? "NULL" : "yes")
       << ", rhsRoutineOpenCMISS_: " << (rhsRoutineOpenCMISS_==NULL? "NULL" : "yes")
+      << ", rhsRoutineGPU_: " << (rhsRoutineGPU_==NULL? "NULL" : "yes")
       << ", initConstsOpenCOR_: " << (initConstsOpenCOR_==NULL? "NULL" : "yes")
-      << ", rhsRoutineOpenCMISS_: " << (rhsRoutineOpenCMISS_==NULL? "NULL" : "yes")
       << ", computeRatesOpenCOR_: " << (computeRatesOpenCOR_==NULL? "NULL" : "yes")
       << ", computeVariablesOpenCOR_: " << (computeVariablesOpenCOR_==NULL? "NULL" : "yes");
 
     if (rhsRoutine_)
     {
       // if the opendihu-generated rhs function (with openmp pragmas) is present in the library, we can directly use it and we are done in this method.
+      return true;
+    }
+    else if (rhsRoutineGPU_)
+    {
+      // if the gpu-processed rhs function (with openmp 4.5 pragmas) is present in the library, we can directly use it and we are done in this method.
       return true;
     }
     else if (rhsRoutineOpenCMISS_)

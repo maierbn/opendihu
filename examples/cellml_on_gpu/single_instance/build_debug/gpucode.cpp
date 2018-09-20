@@ -35,8 +35,9 @@ extern double multi_max(unsigned int size, ...);
 extern void NR_MINIMISE(double(*func)(double VOI, double *C, double *R, double *S, double *A),double VOI, double *C, double *R, double *S, double *A, double *V);
 
 
-/* Routine is designed for 1 instance of the CellML problem. */
-void OC_CellML_RHS_routine_gpu(void *context, double* OC_STATE, double* OC_RATE, double* OC_WANTED, double* OC_KNOWN)
+
+/* This function is designed for 1 instance of the CellML problem. */
+void OC_CellML_RHS_routine_gpu(void *context, double *OC_STATE, double *OC_RATE, double *OC_WANTED, double *OC_KNOWN)
 {
 
 double DUMMY_ASSIGNMENT;
@@ -717,908 +718,905 @@ CONSTANTS[108] =  0.0100000*CONSTANTS[105];
 /* Constant V_SR2_Eqn */
 
 CONSTANTS[109] =  0.990000*CONSTANTS[105];
-
-/* dCa1_Eqn */
 #pragma omp target
 {
+/* dCa1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[58+i] = (((( ( CONSTANTS[103]*(OC_STATE[36+i]+OC_STATE[38+i]+OC_STATE[40+i]+OC_STATE[42+i]+OC_STATE[44+i]))*((OC_STATE[60+i] - OC_STATE[58+i])/CONSTANTS[106]) -  CONSTANTS[60]*((OC_STATE[58+i]/(OC_STATE[58+i]+CONSTANTS[61]))/CONSTANTS[106]))+ CONSTANTS[62]*((OC_STATE[60+i] - OC_STATE[58+i])/CONSTANTS[106]))+ - CONSTANTS[63]*((OC_STATE[58+i] - OC_STATE[62+i])/CONSTANTS[106]))+- ( ( CONSTANTS[70]*OC_STATE[58+i])*((CONSTANTS[72]+- OC_STATE[68+i])+- OC_STATE[72+i])+ - CONSTANTS[71]*OC_STATE[68+i]))+- ( ( CONSTANTS[78]*OC_STATE[58+i])*OC_STATE[88+i]+ - CONSTANTS[79]*OC_STATE[80+i]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[29+i] = (((( ( CONSTANTS[103]*(OC_STATE[18+i]+OC_STATE[19+i]+OC_STATE[20+i]+OC_STATE[21+i]+OC_STATE[22+i]))*((OC_STATE[30+i] - OC_STATE[29+i])/CONSTANTS[106]) -  CONSTANTS[60]*((OC_STATE[29+i]/(OC_STATE[29+i]+CONSTANTS[61]))/CONSTANTS[106]))+ CONSTANTS[62]*((OC_STATE[30+i] - OC_STATE[29+i])/CONSTANTS[106]))+ - CONSTANTS[63]*((OC_STATE[29+i] - OC_STATE[31+i])/CONSTANTS[106]))+- ( ( CONSTANTS[70]*OC_STATE[29+i])*((CONSTANTS[72]+- OC_STATE[34+i])+- OC_STATE[36+i])+ - CONSTANTS[71]*OC_STATE[34+i]))+- ( ( CONSTANTS[78]*OC_STATE[29+i])*OC_STATE[44+i]+ - CONSTANTS[79]*OC_STATE[40+i]);
+  }
 
-}
 /* dCaSR1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[60+i] = ((( - ( CONSTANTS[103]*(OC_STATE[36+i]+OC_STATE[38+i]+OC_STATE[40+i]+OC_STATE[42+i]+OC_STATE[44+i]))*((OC_STATE[60+i] - OC_STATE[58+i])/CONSTANTS[108])+ CONSTANTS[60]*((OC_STATE[58+i]/(OC_STATE[58+i]+CONSTANTS[61]))/CONSTANTS[108]))+ - CONSTANTS[62]*((OC_STATE[60+i] - OC_STATE[58+i])/CONSTANTS[108]))+ - CONSTANTS[64]*((OC_STATE[60+i] - OC_STATE[64+i])/CONSTANTS[108]))+- ( ( CONSTANTS[75]*OC_STATE[60+i])*(CONSTANTS[77] - OC_STATE[76+i])+ - CONSTANTS[76]*OC_STATE[76+i]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[30+i] = ((( - ( CONSTANTS[103]*(OC_STATE[18+i]+OC_STATE[19+i]+OC_STATE[20+i]+OC_STATE[21+i]+OC_STATE[22+i]))*((OC_STATE[30+i] - OC_STATE[29+i])/CONSTANTS[108])+ CONSTANTS[60]*((OC_STATE[29+i]/(OC_STATE[29+i]+CONSTANTS[61]))/CONSTANTS[108]))+ - CONSTANTS[62]*((OC_STATE[30+i] - OC_STATE[29+i])/CONSTANTS[108]))+ - CONSTANTS[64]*((OC_STATE[30+i] - OC_STATE[32+i])/CONSTANTS[108]))+- ( ( CONSTANTS[75]*OC_STATE[30+i])*(CONSTANTS[77] - OC_STATE[38+i])+ - CONSTANTS[76]*OC_STATE[38+i]);
+  }
 
-}
 /* dCa_SR2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[64+i] = ((( CONSTANTS[60]*((OC_STATE[62+i]/(OC_STATE[62+i]+CONSTANTS[61]))/CONSTANTS[109])+ - CONSTANTS[62]*((OC_STATE[64+i]+- OC_STATE[62+i])/CONSTANTS[109]))+ CONSTANTS[64]*((OC_STATE[60+i]+- OC_STATE[64+i])/CONSTANTS[109]))+- ( ( CONSTANTS[75]*OC_STATE[64+i])*(CONSTANTS[77]+- OC_STATE[78+i])+ - CONSTANTS[76]*OC_STATE[78+i])) -  (1000.00/1.00000)*( CONSTANTS[95]*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97])*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[110+i]*OC_STATE[64+i] -  CONSTANTS[96]*OC_STATE[112+i]*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i])*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i]>0.00000 ? 1.00000 : 0.00000));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[32+i] = ((( CONSTANTS[60]*((OC_STATE[31+i]/(OC_STATE[31+i]+CONSTANTS[61]))/CONSTANTS[109])+ - CONSTANTS[62]*((OC_STATE[32+i]+- OC_STATE[31+i])/CONSTANTS[109]))+ CONSTANTS[64]*((OC_STATE[30+i]+- OC_STATE[32+i])/CONSTANTS[109]))+- ( ( CONSTANTS[75]*OC_STATE[32+i])*(CONSTANTS[77]+- OC_STATE[39+i])+ - CONSTANTS[76]*OC_STATE[39+i])) -  (1000.00/1.00000)*( CONSTANTS[95]*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97])*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[55+i]*OC_STATE[32+i] -  CONSTANTS[96]*OC_STATE[56+i]*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i])*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i]>0.00000 ? 1.00000 : 0.00000));
+  }
 
-}
 /* dCa_P1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[68+i] =  ( CONSTANTS[70]*OC_STATE[58+i])*((CONSTANTS[72]+- OC_STATE[68+i])+- OC_STATE[72+i])+ - CONSTANTS[71]*OC_STATE[68+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[34+i] =  ( CONSTANTS[70]*OC_STATE[29+i])*((CONSTANTS[72]+- OC_STATE[34+i])+- OC_STATE[36+i])+ - CONSTANTS[71]*OC_STATE[34+i];
+  }
 
-}
 /* dCa_P2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[70+i] =  ( CONSTANTS[70]*OC_STATE[62+i])*((CONSTANTS[72]+- OC_STATE[70+i])+- OC_STATE[74+i])+ - CONSTANTS[71]*OC_STATE[70+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[35+i] =  ( CONSTANTS[70]*OC_STATE[31+i])*((CONSTANTS[72]+- OC_STATE[35+i])+- OC_STATE[37+i])+ - CONSTANTS[71]*OC_STATE[35+i];
+  }
 
-}
 /* dMg_P1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[72+i] =  ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[68+i]+- OC_STATE[72+i]))*OC_STATE[92+i]+ - CONSTANTS[74]*OC_STATE[72+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[36+i] =  ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[34+i]+- OC_STATE[36+i]))*OC_STATE[46+i]+ - CONSTANTS[74]*OC_STATE[36+i];
+  }
 
-}
 /* dMP2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[74+i] =  ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[70+i]+- OC_STATE[74+i]))*OC_STATE[94+i]+ - CONSTANTS[74]*OC_STATE[74+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[37+i] =  ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[35+i]+- OC_STATE[37+i]))*OC_STATE[47+i]+ - CONSTANTS[74]*OC_STATE[37+i];
+  }
 
-}
 /* dCa_Cs1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[76+i] =  ( CONSTANTS[75]*OC_STATE[60+i])*(CONSTANTS[77]+- OC_STATE[76+i])+ - CONSTANTS[76]*OC_STATE[76+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[38+i] =  ( CONSTANTS[75]*OC_STATE[30+i])*(CONSTANTS[77]+- OC_STATE[38+i])+ - CONSTANTS[76]*OC_STATE[38+i];
+  }
 
-}
 /* dCs_Cs2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[78+i] =  ( CONSTANTS[75]*OC_STATE[64+i])*(CONSTANTS[77]+- OC_STATE[78+i])+ - CONSTANTS[76]*OC_STATE[78+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[39+i] =  ( CONSTANTS[75]*OC_STATE[32+i])*(CONSTANTS[77]+- OC_STATE[39+i])+ - CONSTANTS[76]*OC_STATE[39+i];
+  }
 
-}
 /* dCa_ATP1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[80+i] = ( ( CONSTANTS[78]*OC_STATE[58+i])*OC_STATE[88+i]+ - CONSTANTS[79]*OC_STATE[80+i])+ - CONSTANTS[82]*((OC_STATE[80+i]+- OC_STATE[82+i])/CONSTANTS[106]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[40+i] = ( ( CONSTANTS[78]*OC_STATE[29+i])*OC_STATE[44+i]+ - CONSTANTS[79]*OC_STATE[40+i])+ - CONSTANTS[82]*((OC_STATE[40+i]+- OC_STATE[41+i])/CONSTANTS[106]);
+  }
 
-}
 /* dCa_ATP2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[82+i] = ( ( CONSTANTS[78]*OC_STATE[62+i])*OC_STATE[90+i]+ - CONSTANTS[79]*OC_STATE[82+i])+ CONSTANTS[82]*((OC_STATE[80+i]+- OC_STATE[82+i])/CONSTANTS[107]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[41+i] = ( ( CONSTANTS[78]*OC_STATE[31+i])*OC_STATE[45+i]+ - CONSTANTS[79]*OC_STATE[41+i])+ CONSTANTS[82]*((OC_STATE[40+i]+- OC_STATE[41+i])/CONSTANTS[107]);
+  }
 
-}
 /* dMg_ATP1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[84+i] = ( ( CONSTANTS[80]*OC_STATE[92+i])*OC_STATE[88+i]+ - CONSTANTS[81]*OC_STATE[84+i])+ - CONSTANTS[82]*((OC_STATE[84+i]+- OC_STATE[86+i])/CONSTANTS[106]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[42+i] = ( ( CONSTANTS[80]*OC_STATE[46+i])*OC_STATE[44+i]+ - CONSTANTS[81]*OC_STATE[42+i])+ - CONSTANTS[82]*((OC_STATE[42+i]+- OC_STATE[43+i])/CONSTANTS[106]);
+  }
 
-}
 /* dMg_ATP2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[86+i] = ( ( CONSTANTS[80]*OC_STATE[94+i])*OC_STATE[90+i]+ - CONSTANTS[81]*OC_STATE[86+i])+ CONSTANTS[82]*((OC_STATE[84+i]+- OC_STATE[86+i])/CONSTANTS[107]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[43+i] = ( ( CONSTANTS[80]*OC_STATE[47+i])*OC_STATE[45+i]+ - CONSTANTS[81]*OC_STATE[43+i])+ CONSTANTS[82]*((OC_STATE[42+i]+- OC_STATE[43+i])/CONSTANTS[107]);
+  }
 
-}
 /* dATP1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[88+i] = (- ( ( CONSTANTS[78]*OC_STATE[58+i])*OC_STATE[88+i]+ - CONSTANTS[79]*OC_STATE[80+i])+- ( ( CONSTANTS[80]*OC_STATE[92+i])*OC_STATE[88+i]+ - CONSTANTS[81]*OC_STATE[84+i]))+ - CONSTANTS[82]*((OC_STATE[88+i]+- OC_STATE[90+i])/CONSTANTS[106]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[44+i] = (- ( ( CONSTANTS[78]*OC_STATE[29+i])*OC_STATE[44+i]+ - CONSTANTS[79]*OC_STATE[40+i])+- ( ( CONSTANTS[80]*OC_STATE[46+i])*OC_STATE[44+i]+ - CONSTANTS[81]*OC_STATE[42+i]))+ - CONSTANTS[82]*((OC_STATE[44+i]+- OC_STATE[45+i])/CONSTANTS[106]);
+  }
 
-}
 /* dATP2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[90+i] = (- ( ( CONSTANTS[78]*OC_STATE[62+i])*OC_STATE[90+i]+ - CONSTANTS[79]*OC_STATE[82+i])+- ( ( CONSTANTS[80]*OC_STATE[94+i])*OC_STATE[90+i]+ - CONSTANTS[81]*OC_STATE[86+i]))+ CONSTANTS[82]*((OC_STATE[88+i]+- OC_STATE[90+i])/CONSTANTS[107]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[45+i] = (- ( ( CONSTANTS[78]*OC_STATE[31+i])*OC_STATE[45+i]+ - CONSTANTS[79]*OC_STATE[41+i])+- ( ( CONSTANTS[80]*OC_STATE[47+i])*OC_STATE[45+i]+ - CONSTANTS[81]*OC_STATE[43+i]))+ CONSTANTS[82]*((OC_STATE[44+i]+- OC_STATE[45+i])/CONSTANTS[107]);
+  }
 
-}
 /* dMg1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[92+i] = (- ( ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[68+i]+- OC_STATE[72+i]))*OC_STATE[92+i]+ - CONSTANTS[74]*OC_STATE[72+i])+- ( ( CONSTANTS[80]*OC_STATE[92+i])*OC_STATE[88+i]+ - CONSTANTS[81]*OC_STATE[84+i]))+ - CONSTANTS[83]*((OC_STATE[92+i]+- OC_STATE[94+i])/CONSTANTS[106]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[46+i] = (- ( ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[34+i]+- OC_STATE[36+i]))*OC_STATE[46+i]+ - CONSTANTS[74]*OC_STATE[36+i])+- ( ( CONSTANTS[80]*OC_STATE[46+i])*OC_STATE[44+i]+ - CONSTANTS[81]*OC_STATE[42+i]))+ - CONSTANTS[83]*((OC_STATE[46+i]+- OC_STATE[47+i])/CONSTANTS[106]);
+  }
 
-}
 /* dMg2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[94+i] = (- ( ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[70+i]+- OC_STATE[74+i]))*OC_STATE[94+i]+ - CONSTANTS[74]*OC_STATE[74+i])+- ( ( CONSTANTS[80]*OC_STATE[94+i])*OC_STATE[90+i]+ - CONSTANTS[81]*OC_STATE[86+i]))+ CONSTANTS[83]*((OC_STATE[92+i]+- OC_STATE[94+i])/CONSTANTS[107]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[47+i] = (- ( ( CONSTANTS[73]*(CONSTANTS[72]+- OC_STATE[35+i]+- OC_STATE[37+i]))*OC_STATE[47+i]+ - CONSTANTS[74]*OC_STATE[37+i])+- ( ( CONSTANTS[80]*OC_STATE[47+i])*OC_STATE[45+i]+ - CONSTANTS[81]*OC_STATE[43+i]))+ CONSTANTS[83]*((OC_STATE[46+i]+- OC_STATE[47+i])/CONSTANTS[107]);
+  }
 
-}
 /* dCa_CaT2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[96+i] = (( ( CONSTANTS[67]*OC_STATE[62+i])*OC_STATE[66+i]+ - CONSTANTS[68]*OC_STATE[96+i])+ - CONSTANTS[86]*OC_STATE[96+i])+ CONSTANTS[87]*OC_STATE[102+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[48+i] = (( ( CONSTANTS[67]*OC_STATE[31+i])*OC_STATE[33+i]+ - CONSTANTS[68]*OC_STATE[48+i])+ - CONSTANTS[86]*OC_STATE[48+i])+ CONSTANTS[87]*OC_STATE[51+i];
+  }
 
-}
 /* dD_1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[100+i] = (((( CONSTANTS[67]*OC_STATE[62+i]*OC_STATE[98+i]+ - CONSTANTS[68]*OC_STATE[100+i])+ CONSTANTS[84]*OC_STATE[66+i])+ - CONSTANTS[85]*OC_STATE[100+i])+ ( - CONSTANTS[67]*OC_STATE[62+i])*OC_STATE[100+i])+ CONSTANTS[68]*OC_STATE[102+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[50+i] = (((( CONSTANTS[67]*OC_STATE[31+i]*OC_STATE[49+i]+ - CONSTANTS[68]*OC_STATE[50+i])+ CONSTANTS[84]*OC_STATE[33+i])+ - CONSTANTS[85]*OC_STATE[50+i])+ ( - CONSTANTS[67]*OC_STATE[31+i])*OC_STATE[50+i])+ CONSTANTS[68]*OC_STATE[51+i];
+  }
 
-}
 /* dD_2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[102+i] = ((((( CONSTANTS[67]*OC_STATE[62+i]*OC_STATE[100+i]+ - CONSTANTS[68]*OC_STATE[102+i])+ CONSTANTS[86]*OC_STATE[96+i])+ - CONSTANTS[87]*OC_STATE[102+i])+ - CONSTANTS[88]*OC_STATE[102+i])+ CONSTANTS[89]*OC_STATE[104+i])+ CONSTANTS[92]*OC_STATE[106+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[51+i] = ((((( CONSTANTS[67]*OC_STATE[31+i]*OC_STATE[50+i]+ - CONSTANTS[68]*OC_STATE[51+i])+ CONSTANTS[86]*OC_STATE[48+i])+ - CONSTANTS[87]*OC_STATE[51+i])+ - CONSTANTS[88]*OC_STATE[51+i])+ CONSTANTS[89]*OC_STATE[52+i])+ CONSTANTS[92]*OC_STATE[53+i];
+  }
 
-}
 /* dA_1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[104+i] = (( CONSTANTS[88]*OC_STATE[102+i]+ - CONSTANTS[89]*OC_STATE[104+i])+ CONSTANTS[91]*OC_STATE[106+i])+ - CONSTANTS[90]*OC_STATE[104+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[52+i] = (( CONSTANTS[88]*OC_STATE[51+i]+ - CONSTANTS[89]*OC_STATE[52+i])+ CONSTANTS[91]*OC_STATE[53+i])+ - CONSTANTS[90]*OC_STATE[52+i];
+  }
 
-}
 /* dA_2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[106+i] = ( - CONSTANTS[91]*OC_STATE[106+i]+ CONSTANTS[90]*OC_STATE[104+i])+ - CONSTANTS[92]*OC_STATE[106+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[53+i] = ( - CONSTANTS[91]*OC_STATE[53+i]+ CONSTANTS[90]*OC_STATE[52+i])+ - CONSTANTS[92]*OC_STATE[53+i];
+  }
 
-}
 /* dP_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[108+i] =  (0.00100000/1.00000)*( CONSTANTS[90]*OC_STATE[104+i] -  CONSTANTS[91]*OC_STATE[106+i])+ -1.00000*CONSTANTS[93]*OC_STATE[108+i]+ -1.00000*CONSTANTS[94]*((OC_STATE[108+i] - OC_STATE[110+i])/CONSTANTS[107]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[54+i] =  (0.00100000/1.00000)*( CONSTANTS[90]*OC_STATE[52+i] -  CONSTANTS[91]*OC_STATE[53+i])+ -1.00000*CONSTANTS[93]*OC_STATE[54+i]+ -1.00000*CONSTANTS[94]*((OC_STATE[54+i] - OC_STATE[55+i])/CONSTANTS[107]);
+  }
 
-}
 /* dP_SR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[110+i] =  CONSTANTS[94]*((OC_STATE[108+i] - OC_STATE[110+i])/CONSTANTS[109]) -  1.00000*( CONSTANTS[95]*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97])*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[110+i]*OC_STATE[64+i] -  CONSTANTS[96]*OC_STATE[112+i]*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i])*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i]>0.00000 ? 1.00000 : 0.00000));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[55+i] =  CONSTANTS[94]*((OC_STATE[54+i] - OC_STATE[55+i])/CONSTANTS[109]) -  1.00000*( CONSTANTS[95]*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97])*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[55+i]*OC_STATE[32+i] -  CONSTANTS[96]*OC_STATE[56+i]*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i])*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i]>0.00000 ? 1.00000 : 0.00000));
+  }
 
-}
 /* dP_C_SR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[112+i] =  1.00000*( CONSTANTS[95]*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97])*( OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[110+i]*OC_STATE[64+i] -  CONSTANTS[96]*OC_STATE[112+i]*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i])*(CONSTANTS[97] -  OC_STATE[110+i]*(0.00100000/1.00000)*OC_STATE[64+i]>0.00000 ? 1.00000 : 0.00000));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[56+i] =  1.00000*( CONSTANTS[95]*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97])*( OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i] - CONSTANTS[97]>0.00000 ? 1.00000 : 0.00000)*(0.00100000/1.00000)*OC_STATE[55+i]*OC_STATE[32+i] -  CONSTANTS[96]*OC_STATE[56+i]*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i])*(CONSTANTS[97] -  OC_STATE[55+i]*(0.00100000/1.00000)*OC_STATE[32+i]>0.00000 ? 1.00000 : 0.00000));
+  }
 
-}
 /* T_0_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[24+i] = (CONSTANTS[69]+- OC_STATE[66+i]+- OC_STATE[96+i]+- OC_STATE[98+i]+- OC_STATE[100+i]+- OC_STATE[102+i]+- OC_STATE[104+i]+- OC_STATE[106+i]>0.00000 ? CONSTANTS[69]+- OC_STATE[66+i]+- OC_STATE[96+i]+- OC_STATE[98+i]+- OC_STATE[100+i]+- OC_STATE[102+i]+- OC_STATE[104+i]+- OC_STATE[106+i] : 0.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[12+i] = (CONSTANTS[69]+- OC_STATE[33+i]+- OC_STATE[48+i]+- OC_STATE[49+i]+- OC_STATE[50+i]+- OC_STATE[51+i]+- OC_STATE[52+i]+- OC_STATE[53+i]>0.00000 ? CONSTANTS[69]+- OC_STATE[33+i]+- OC_STATE[48+i]+- OC_STATE[49+i]+- OC_STATE[50+i]+- OC_STATE[51+i]+- OC_STATE[52+i]+- OC_STATE[53+i] : 0.00000);
+  }
 
-}
 /* dCa2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[62+i] = (((( - CONSTANTS[60]*((OC_STATE[62+i]/(OC_STATE[62+i]+CONSTANTS[61]))/CONSTANTS[107])+ CONSTANTS[62]*((OC_STATE[64+i]+- OC_STATE[62+i])/CONSTANTS[107]))+ CONSTANTS[63]*((OC_STATE[58+i] - OC_STATE[62+i])/CONSTANTS[107]))+- ((((((( CONSTANTS[67]*OC_STATE[62+i]*ALGEBRAIC[24+i]+ - CONSTANTS[68]*OC_STATE[66+i])+ CONSTANTS[67]*OC_STATE[62+i]*OC_STATE[66+i])+ - CONSTANTS[68]*OC_STATE[96+i])+ CONSTANTS[67]*OC_STATE[62+i]*OC_STATE[98+i])+ - CONSTANTS[68]*OC_STATE[100+i])+ CONSTANTS[67]*OC_STATE[62+i]*OC_STATE[100+i])+ - CONSTANTS[68]*OC_STATE[102+i]))+- ( ( CONSTANTS[70]*OC_STATE[62+i])*(CONSTANTS[72]+- OC_STATE[70+i]+- OC_STATE[74+i])+ - CONSTANTS[71]*OC_STATE[70+i]))+- ( ( CONSTANTS[78]*OC_STATE[62+i])*OC_STATE[90+i]+ - CONSTANTS[79]*OC_STATE[82+i]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[31+i] = (((( - CONSTANTS[60]*((OC_STATE[31+i]/(OC_STATE[31+i]+CONSTANTS[61]))/CONSTANTS[107])+ CONSTANTS[62]*((OC_STATE[32+i]+- OC_STATE[31+i])/CONSTANTS[107]))+ CONSTANTS[63]*((OC_STATE[29+i] - OC_STATE[31+i])/CONSTANTS[107]))+- ((((((( CONSTANTS[67]*OC_STATE[31+i]*OC_WANTED[12+i]+ - CONSTANTS[68]*OC_STATE[33+i])+ CONSTANTS[67]*OC_STATE[31+i]*OC_STATE[33+i])+ - CONSTANTS[68]*OC_STATE[48+i])+ CONSTANTS[67]*OC_STATE[31+i]*OC_STATE[49+i])+ - CONSTANTS[68]*OC_STATE[50+i])+ CONSTANTS[67]*OC_STATE[31+i]*OC_STATE[50+i])+ - CONSTANTS[68]*OC_STATE[51+i]))+- ( ( CONSTANTS[70]*OC_STATE[31+i])*(CONSTANTS[72]+- OC_STATE[35+i]+- OC_STATE[37+i])+ - CONSTANTS[71]*OC_STATE[35+i]))+- ( ( CONSTANTS[78]*OC_STATE[31+i])*OC_STATE[45+i]+ - CONSTANTS[79]*OC_STATE[41+i]);
+  }
 
-}
 /* dCa_T_2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[66+i] = (((( ( CONSTANTS[67]*OC_STATE[62+i])*ALGEBRAIC[24+i]+ - CONSTANTS[68]*OC_STATE[66+i])+ ( - CONSTANTS[67]*OC_STATE[62+i])*OC_STATE[66+i])+ CONSTANTS[68]*OC_STATE[96+i])+ - CONSTANTS[84]*OC_STATE[66+i])+ CONSTANTS[85]*OC_STATE[100+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[33+i] = (((( ( CONSTANTS[67]*OC_STATE[31+i])*OC_WANTED[12+i]+ - CONSTANTS[68]*OC_STATE[33+i])+ ( - CONSTANTS[67]*OC_STATE[31+i])*OC_STATE[33+i])+ CONSTANTS[68]*OC_STATE[48+i])+ - CONSTANTS[84]*OC_STATE[33+i])+ CONSTANTS[85]*OC_STATE[50+i];
+  }
 
-}
 /* dD_0_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[98+i] = (( ( - CONSTANTS[67]*OC_STATE[62+i])*OC_STATE[98+i]+ CONSTANTS[68]*OC_STATE[100+i])+ CONSTANTS[84]*ALGEBRAIC[24+i])+ - CONSTANTS[85]*OC_STATE[98+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[49+i] = (( ( - CONSTANTS[67]*OC_STATE[31+i])*OC_STATE[49+i]+ CONSTANTS[68]*OC_STATE[50+i])+ CONSTANTS[84]*OC_WANTED[12+i])+ - CONSTANTS[85]*OC_STATE[49+i];
+  }
 
-}
 /* stress_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_WANTED[0+i] =  ((( (OC_STATE[104+i]/CONSTANTS[69])*CONSTANTS[99]+ (OC_STATE[106+i]/CONSTANTS[69])*CONSTANTS[100]) - CONSTANTS[101])/CONSTANTS[102])*(OC_KNOWN[2+i]>=0.635000&&OC_KNOWN[2+i]<=0.850000 ?  (0.700000/(0.850000 - 0.635000))*(OC_KNOWN[2+i] - 0.635000) : OC_KNOWN[2+i]>0.850000&&OC_KNOWN[2+i]<=1.17000 ? 0.700000+ (0.300000/(1.17000 - 0.850000))*(OC_KNOWN[2+i] - 0.850000) : OC_KNOWN[2+i]>1.17000&&OC_KNOWN[2+i]<=1.25500 ? 1.00000 : OC_KNOWN[2+i]>1.25500&&OC_KNOWN[2+i]<=1.97000 ? 1.00000 -  (1.00000/(1.97000 - 1.25500))*(OC_KNOWN[2+i] - 1.25500) : 0.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[0+i] =  ((( (OC_STATE[52+i]/CONSTANTS[69])*CONSTANTS[99]+ (OC_STATE[53+i]/CONSTANTS[69])*CONSTANTS[100]) - CONSTANTS[101])/CONSTANTS[102])*(OC_KNOWN[1+i]>=0.635000&&OC_KNOWN[1+i]<=0.850000 ?  (0.700000/(0.850000 - 0.635000))*(OC_KNOWN[1+i] - 0.635000) : OC_KNOWN[1+i]>0.850000&&OC_KNOWN[1+i]<=1.17000 ? 0.700000+ (0.300000/(1.17000 - 0.850000))*(OC_KNOWN[1+i] - 0.850000) : OC_KNOWN[1+i]>1.17000&&OC_KNOWN[1+i]<=1.25500 ? 1.00000 : OC_KNOWN[1+i]>1.25500&&OC_KNOWN[1+i]<=1.97000 ? 1.00000 -  (1.00000/(1.97000 - 1.25500))*(OC_KNOWN[1+i] - 1.25500) : 0.00000);
+  }
 
-}
 /* dummy_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[56+i] = OC_WANTED[0+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[28+i] = OC_WANTED[0+i];
+  }
 
-}
 /* alpha_n_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[2+i] =  CONSTANTS[16]*((OC_STATE[0+i] - CONSTANTS[21])/(1.00000 - exp(- ((OC_STATE[0+i] - CONSTANTS[21])/CONSTANTS[32]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[1+i] =  CONSTANTS[16]*((OC_STATE[0+i] - CONSTANTS[21])/(1.00000 - exp(- ((OC_STATE[0+i] - CONSTANTS[21])/CONSTANTS[32]))));
+  }
 
-}
 /* beta_n_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[28+i] =  CONSTANTS[19]*exp(- ((OC_STATE[0+i] - CONSTANTS[21])/CONSTANTS[34]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[14+i] =  CONSTANTS[19]*exp(- ((OC_STATE[0+i] - CONSTANTS[21])/CONSTANTS[34]));
+  }
 
-}
 /* dn_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[16+i] =  ALGEBRAIC[2+i]*(1.00000 - OC_STATE[16+i]) -  ALGEBRAIC[28+i]*OC_STATE[16+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[8+i] =  OC_WANTED[1+i]*(1.00000 - OC_STATE[8+i]) -  OC_WANTED[14+i]*OC_STATE[8+i];
+  }
 
-}
 /* h_K_inf_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[4+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[25])/CONSTANTS[28]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[2+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[25])/CONSTANTS[28]));
+  }
 
-}
 /* tau_h_K_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[30+i] =  1000.00*exp(- ((OC_STATE[0+i]+40.0000)/25.7500));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[15+i] =  1000.00*exp(- ((OC_STATE[0+i]+40.0000)/25.7500));
+  }
 
-}
 /* dh_K_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[18+i] = (ALGEBRAIC[4+i] - OC_STATE[18+i])/ALGEBRAIC[30+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[9+i] = (OC_WANTED[2+i] - OC_STATE[9+i])/OC_WANTED[15+i];
+  }
 
-}
 /* alpha_m_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[8+i] =  CONSTANTS[15]*((OC_STATE[0+i] - CONSTANTS[20])/(1.00000 - exp(- ((OC_STATE[0+i] - CONSTANTS[20])/CONSTANTS[31]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[4+i] =  CONSTANTS[15]*((OC_STATE[0+i] - CONSTANTS[20])/(1.00000 - exp(- ((OC_STATE[0+i] - CONSTANTS[20])/CONSTANTS[31]))));
+  }
 
-}
 /* beta_m_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[34+i] =  CONSTANTS[18]*exp(- ((OC_STATE[0+i] - CONSTANTS[20])/CONSTANTS[33]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[17+i] =  CONSTANTS[18]*exp(- ((OC_STATE[0+i] - CONSTANTS[20])/CONSTANTS[33]));
+  }
 
-}
 /* dm_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[20+i] =  ALGEBRAIC[8+i]*(1.00000 - OC_STATE[20+i]) -  ALGEBRAIC[34+i]*OC_STATE[20+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[10+i] =  OC_WANTED[4+i]*(1.00000 - OC_STATE[10+i]) -  OC_WANTED[17+i]*OC_STATE[10+i];
+  }
 
-}
 /* alpha_h_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[6+i] =  CONSTANTS[14]*exp(- ((OC_STATE[0+i] - CONSTANTS[22])/CONSTANTS[29]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[3+i] =  CONSTANTS[14]*exp(- ((OC_STATE[0+i] - CONSTANTS[22])/CONSTANTS[29]));
+  }
 
-}
 /* beta_h_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[32+i] = CONSTANTS[17]/(1.00000+exp(- ((OC_STATE[0+i] - CONSTANTS[22])/CONSTANTS[30])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[16+i] = CONSTANTS[17]/(1.00000+exp(- ((OC_STATE[0+i] - CONSTANTS[22])/CONSTANTS[30])));
+  }
 
-}
 /* dh_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[22+i] =  ALGEBRAIC[6+i]*(1.00000 - OC_STATE[22+i]) -  ALGEBRAIC[32+i]*OC_STATE[22+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[11+i] =  OC_WANTED[3+i]*(1.00000 - OC_STATE[11+i]) -  OC_WANTED[16+i]*OC_STATE[11+i];
+  }
 
-}
 /* S_inf_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[10+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[24])/CONSTANTS[27]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[5+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[24])/CONSTANTS[27]));
+  }
 
-}
 /* tau_S_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[36+i] = 8571.00/(0.200000+ 5.65000*pow((OC_STATE[0+i]+CONSTANTS[48])/100.000, 2.00000));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[18+i] = 8571.00/(0.200000+ 5.65000*pow((OC_STATE[0+i]+CONSTANTS[48])/100.000, 2.00000));
+  }
 
-}
 /* dS_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[24+i] = (ALGEBRAIC[10+i] - OC_STATE[24+i])/ALGEBRAIC[36+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[12+i] = (OC_WANTED[5+i] - OC_STATE[12+i])/OC_WANTED[18+i];
+  }
 
-}
 /* alpha_n_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[12+i] =  CONSTANTS[16]*((OC_STATE[2+i] - CONSTANTS[21])/(1.00000 - exp(- ((OC_STATE[2+i] - CONSTANTS[21])/CONSTANTS[32]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[6+i] =  CONSTANTS[16]*((OC_STATE[1+i] - CONSTANTS[21])/(1.00000 - exp(- ((OC_STATE[1+i] - CONSTANTS[21])/CONSTANTS[32]))));
+  }
 
-}
 /* beta_n_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[38+i] =  CONSTANTS[19]*exp(- ((OC_STATE[2+i] - CONSTANTS[21])/CONSTANTS[34]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[19+i] =  CONSTANTS[19]*exp(- ((OC_STATE[1+i] - CONSTANTS[21])/CONSTANTS[34]));
+  }
 
-}
 /* dn_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[26+i] =  ALGEBRAIC[12+i]*(1.00000 - OC_STATE[26+i]) -  ALGEBRAIC[38+i]*OC_STATE[26+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[13+i] =  OC_WANTED[6+i]*(1.00000 - OC_STATE[13+i]) -  OC_WANTED[19+i]*OC_STATE[13+i];
+  }
 
-}
 /* h_K_inf_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[14+i] = 1.00000/(1.00000+exp((OC_STATE[2+i] - CONSTANTS[25])/CONSTANTS[28]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[7+i] = 1.00000/(1.00000+exp((OC_STATE[1+i] - CONSTANTS[25])/CONSTANTS[28]));
+  }
 
-}
 /* tau_h_K_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[40+i] =  1.00000*exp(- ((OC_STATE[2+i]+40.0000)/25.7500));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[20+i] =  1.00000*exp(- ((OC_STATE[1+i]+40.0000)/25.7500));
+  }
 
-}
 /* dh_K_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[28+i] = (ALGEBRAIC[14+i] - OC_STATE[28+i])/ALGEBRAIC[40+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[14+i] = (OC_WANTED[7+i] - OC_STATE[14+i])/OC_WANTED[20+i];
+  }
 
-}
 /* alpha_m_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[18+i] =  CONSTANTS[15]*((OC_STATE[2+i] - CONSTANTS[20])/(1.00000 - exp(- ((OC_STATE[2+i] - CONSTANTS[20])/CONSTANTS[31]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[9+i] =  CONSTANTS[15]*((OC_STATE[1+i] - CONSTANTS[20])/(1.00000 - exp(- ((OC_STATE[1+i] - CONSTANTS[20])/CONSTANTS[31]))));
+  }
 
-}
 /* beta_m_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[44+i] =  CONSTANTS[18]*exp(- ((OC_STATE[2+i] - CONSTANTS[20])/CONSTANTS[33]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[22+i] =  CONSTANTS[18]*exp(- ((OC_STATE[1+i] - CONSTANTS[20])/CONSTANTS[33]));
+  }
 
-}
 /* dm_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[30+i] =  ALGEBRAIC[18+i]*(1.00000 - OC_STATE[30+i]) -  ALGEBRAIC[44+i]*OC_STATE[30+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[15+i] =  OC_WANTED[9+i]*(1.00000 - OC_STATE[15+i]) -  OC_WANTED[22+i]*OC_STATE[15+i];
+  }
 
-}
 /* alpha_h_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[16+i] =  CONSTANTS[14]*exp(- ((OC_STATE[2+i] - CONSTANTS[22])/CONSTANTS[29]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[8+i] =  CONSTANTS[14]*exp(- ((OC_STATE[1+i] - CONSTANTS[22])/CONSTANTS[29]));
+  }
 
-}
 /* beta_h_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[42+i] = CONSTANTS[17]/(1.00000+exp(- ((OC_STATE[2+i] - CONSTANTS[22])/CONSTANTS[30])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[21+i] = CONSTANTS[17]/(1.00000+exp(- ((OC_STATE[1+i] - CONSTANTS[22])/CONSTANTS[30])));
+  }
 
-}
 /* dh_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[32+i] =  ALGEBRAIC[16+i]*(1.00000 - OC_STATE[32+i]) -  ALGEBRAIC[42+i]*OC_STATE[32+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[16+i] =  OC_WANTED[8+i]*(1.00000 - OC_STATE[16+i]) -  OC_WANTED[21+i]*OC_STATE[16+i];
+  }
 
-}
 /* S_inf_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[20+i] = 1.00000/(1.00000+exp((OC_STATE[2+i] - CONSTANTS[24])/CONSTANTS[27]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[10+i] = 1.00000/(1.00000+exp((OC_STATE[1+i] - CONSTANTS[24])/CONSTANTS[27]));
+  }
 
-}
 /* tau_S_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[46+i] = 8571.00/(0.200000+ 5.65000*pow((OC_STATE[2+i]+CONSTANTS[48])/100.000, 2.00000));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[23+i] = 8571.00/(0.200000+ 5.65000*pow((OC_STATE[1+i]+CONSTANTS[48])/100.000, 2.00000));
+  }
 
-}
 /* dS_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[34+i] = (ALGEBRAIC[20+i] - OC_STATE[34+i])/ALGEBRAIC[46+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[17+i] = (OC_WANTED[10+i] - OC_STATE[17+i])/OC_WANTED[23+i];
+  }
 
-}
 /* k_C_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[22+i] =  0.500000*CONSTANTS[57]*exp((OC_STATE[2+i] - CONSTANTS[59])/( 8.00000*CONSTANTS[58]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[11+i] =  0.500000*CONSTANTS[57]*exp((OC_STATE[1+i] - CONSTANTS[59])/( 8.00000*CONSTANTS[58]));
+  }
 
-}
 /* k_Cm_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[48+i] =  0.500000*CONSTANTS[57]*exp((CONSTANTS[59] - OC_STATE[2+i])/( 8.00000*CONSTANTS[58]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[24+i] =  0.500000*CONSTANTS[57]*exp((CONSTANTS[59] - OC_STATE[1+i])/( 8.00000*CONSTANTS[58]));
+  }
 
-}
 /* dC_0_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[46+i] =  - CONSTANTS[54]*OC_STATE[46+i]+ CONSTANTS[55]*OC_STATE[36+i]+ -4.00000*ALGEBRAIC[22+i]*OC_STATE[46+i]+ ALGEBRAIC[48+i]*OC_STATE[48+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[23+i] =  - CONSTANTS[54]*OC_STATE[23+i]+ CONSTANTS[55]*OC_STATE[18+i]+ -4.00000*OC_WANTED[11+i]*OC_STATE[23+i]+ OC_WANTED[24+i]*OC_STATE[24+i];
+  }
 
-}
 /* dO_0_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[36+i] =  CONSTANTS[54]*OC_STATE[46+i]+ - CONSTANTS[55]*OC_STATE[36+i]+( -4.00000*ALGEBRAIC[22+i]*OC_STATE[36+i])/CONSTANTS[56]+ CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[38+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[18+i] =  CONSTANTS[54]*OC_STATE[23+i]+ - CONSTANTS[55]*OC_STATE[18+i]+( -4.00000*OC_WANTED[11+i]*OC_STATE[18+i])/CONSTANTS[56]+ CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[19+i];
+  }
 
-}
 /* dC_1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[48+i] =  4.00000*ALGEBRAIC[22+i]*OC_STATE[46+i]+ - ALGEBRAIC[48+i]*OC_STATE[48+i]+( - CONSTANTS[54]*OC_STATE[48+i])/CONSTANTS[56]+ CONSTANTS[56]*CONSTANTS[55]*OC_STATE[38+i]+ -3.00000*ALGEBRAIC[22+i]*OC_STATE[48+i]+ 2.00000*ALGEBRAIC[48+i]*OC_STATE[50+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[24+i] =  4.00000*OC_WANTED[11+i]*OC_STATE[23+i]+ - OC_WANTED[24+i]*OC_STATE[24+i]+( - CONSTANTS[54]*OC_STATE[24+i])/CONSTANTS[56]+ CONSTANTS[56]*CONSTANTS[55]*OC_STATE[19+i]+ -3.00000*OC_WANTED[11+i]*OC_STATE[24+i]+ 2.00000*OC_WANTED[24+i]*OC_STATE[25+i];
+  }
 
-}
 /* dO_1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[38+i] = ( CONSTANTS[54]*OC_STATE[48+i])/CONSTANTS[56]+ - CONSTANTS[55]*CONSTANTS[56]*OC_STATE[38+i]+( 4.00000*ALGEBRAIC[22+i]*OC_STATE[36+i])/CONSTANTS[56]+ - CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[38+i]+( -3.00000*ALGEBRAIC[22+i]*OC_STATE[38+i])/CONSTANTS[56]+ 2.00000*CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[40+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[19+i] = ( CONSTANTS[54]*OC_STATE[24+i])/CONSTANTS[56]+ - CONSTANTS[55]*CONSTANTS[56]*OC_STATE[19+i]+( 4.00000*OC_WANTED[11+i]*OC_STATE[18+i])/CONSTANTS[56]+ - CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[19+i]+( -3.00000*OC_WANTED[11+i]*OC_STATE[19+i])/CONSTANTS[56]+ 2.00000*CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[20+i];
+  }
 
-}
 /* dC_2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[50+i] =  3.00000*ALGEBRAIC[22+i]*OC_STATE[48+i]+ -2.00000*ALGEBRAIC[48+i]*OC_STATE[50+i]+( - CONSTANTS[54]*OC_STATE[50+i])/pow(CONSTANTS[56], 2.00000)+ pow(CONSTANTS[56], 2.00000)*CONSTANTS[55]*OC_STATE[40+i]+ -2.00000*ALGEBRAIC[22+i]*OC_STATE[50+i]+ 3.00000*ALGEBRAIC[48+i]*OC_STATE[52+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[25+i] =  3.00000*OC_WANTED[11+i]*OC_STATE[24+i]+ -2.00000*OC_WANTED[24+i]*OC_STATE[25+i]+( - CONSTANTS[54]*OC_STATE[25+i])/pow(CONSTANTS[56], 2.00000)+ pow(CONSTANTS[56], 2.00000)*CONSTANTS[55]*OC_STATE[20+i]+ -2.00000*OC_WANTED[11+i]*OC_STATE[25+i]+ 3.00000*OC_WANTED[24+i]*OC_STATE[26+i];
+  }
 
-}
 /* dO_2_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[40+i] = ( 3.00000*ALGEBRAIC[22+i]*OC_STATE[38+i])/CONSTANTS[56]+ -2.00000*CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[40+i]+( CONSTANTS[54]*OC_STATE[50+i])/pow(CONSTANTS[56], 2.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 2.00000)*OC_STATE[40+i]+( -2.00000*ALGEBRAIC[22+i]*OC_STATE[40+i])/CONSTANTS[56]+ 3.00000*CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[42+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[20+i] = ( 3.00000*OC_WANTED[11+i]*OC_STATE[19+i])/CONSTANTS[56]+ -2.00000*CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[20+i]+( CONSTANTS[54]*OC_STATE[25+i])/pow(CONSTANTS[56], 2.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 2.00000)*OC_STATE[20+i]+( -2.00000*OC_WANTED[11+i]*OC_STATE[20+i])/CONSTANTS[56]+ 3.00000*CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[21+i];
+  }
 
-}
 /* dC_3_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[52+i] =  2.00000*ALGEBRAIC[22+i]*OC_STATE[50+i]+ -3.00000*ALGEBRAIC[48+i]*OC_STATE[52+i]+( - CONSTANTS[54]*OC_STATE[52+i])/pow(CONSTANTS[56], 3.00000)+ CONSTANTS[55]*pow(CONSTANTS[56], 3.00000)*OC_STATE[42+i]+ - ALGEBRAIC[22+i]*OC_STATE[52+i]+ 4.00000*ALGEBRAIC[48+i]*OC_STATE[54+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[26+i] =  2.00000*OC_WANTED[11+i]*OC_STATE[25+i]+ -3.00000*OC_WANTED[24+i]*OC_STATE[26+i]+( - CONSTANTS[54]*OC_STATE[26+i])/pow(CONSTANTS[56], 3.00000)+ CONSTANTS[55]*pow(CONSTANTS[56], 3.00000)*OC_STATE[21+i]+ - OC_WANTED[11+i]*OC_STATE[26+i]+ 4.00000*OC_WANTED[24+i]*OC_STATE[27+i];
+  }
 
-}
 /* dO_3_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[42+i] = ( CONSTANTS[54]*OC_STATE[52+i])/pow(CONSTANTS[56], 3.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 3.00000)*OC_STATE[42+i]+( 2.00000*ALGEBRAIC[22+i]*OC_STATE[40+i])/CONSTANTS[56]+ -3.00000*ALGEBRAIC[48+i]*CONSTANTS[56]*OC_STATE[42+i]+( - ALGEBRAIC[22+i]*OC_STATE[42+i])/CONSTANTS[56]+ 4.00000*CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[44+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[21+i] = ( CONSTANTS[54]*OC_STATE[26+i])/pow(CONSTANTS[56], 3.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 3.00000)*OC_STATE[21+i]+( 2.00000*OC_WANTED[11+i]*OC_STATE[20+i])/CONSTANTS[56]+ -3.00000*OC_WANTED[24+i]*CONSTANTS[56]*OC_STATE[21+i]+( - OC_WANTED[11+i]*OC_STATE[21+i])/CONSTANTS[56]+ 4.00000*CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[22+i];
+  }
 
-}
 /* dC_4_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[54+i] =  ALGEBRAIC[22+i]*OC_STATE[52+i]+ -4.00000*ALGEBRAIC[48+i]*OC_STATE[54+i]+( - CONSTANTS[54]*OC_STATE[54+i])/pow(CONSTANTS[56], 4.00000)+ CONSTANTS[55]*pow(CONSTANTS[56], 4.00000)*OC_STATE[44+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[27+i] =  OC_WANTED[11+i]*OC_STATE[26+i]+ -4.00000*OC_WANTED[24+i]*OC_STATE[27+i]+( - CONSTANTS[54]*OC_STATE[27+i])/pow(CONSTANTS[56], 4.00000)+ CONSTANTS[55]*pow(CONSTANTS[56], 4.00000)*OC_STATE[22+i];
+  }
 
-}
 /* dO_4_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[44+i] = ( ALGEBRAIC[22+i]*OC_STATE[42+i])/CONSTANTS[56]+ -4.00000*CONSTANTS[56]*ALGEBRAIC[48+i]*OC_STATE[44+i]+( CONSTANTS[54]*OC_STATE[54+i])/pow(CONSTANTS[56], 4.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 4.00000)*OC_STATE[44+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[22+i] = ( OC_WANTED[11+i]*OC_STATE[21+i])/CONSTANTS[56]+ -4.00000*CONSTANTS[56]*OC_WANTED[24+i]*OC_STATE[22+i]+( CONSTANTS[54]*OC_STATE[27+i])/pow(CONSTANTS[56], 4.00000)+ - CONSTANTS[55]*pow(CONSTANTS[56], 4.00000)*OC_STATE[22+i];
+  }
 
-}
 /* J_K_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[60+i] =  OC_STATE[0+i]*((OC_STATE[6+i] -  OC_STATE[8+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[30+i] =  OC_STATE[0+i]*((OC_STATE[3+i] -  OC_STATE[4+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* E_K_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[26+i] =  (( CONSTANTS[35]*CONSTANTS[36])/CONSTANTS[6])*log(OC_STATE[8+i]/OC_STATE[6+i]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[13+i] =  (( CONSTANTS[35]*CONSTANTS[36])/CONSTANTS[6])*log(OC_STATE[4+i]/OC_STATE[3+i]);
+  }
 
-}
 /* K_R_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[72+i] =  OC_STATE[8+i]*exp( ( - CONSTANTS[41]*ALGEBRAIC[26+i])*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[36+i] =  OC_STATE[4+i]*exp( ( - CONSTANTS[41]*OC_WANTED[13+i])*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])));
+  }
 
-}
 /* g_IR_bar_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[74+i] =  CONSTANTS[40]*(pow(ALGEBRAIC[72+i], 2.00000)/(CONSTANTS[42]+pow(ALGEBRAIC[72+i], 2.00000)));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[37+i] =  CONSTANTS[40]*(pow(OC_WANTED[36+i], 2.00000)/(CONSTANTS[42]+pow(OC_WANTED[36+i], 2.00000)));
+  }
 
-}
 /* y_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[76+i] = 1.00000 - pow(1.00000+( CONSTANTS[43]*(1.00000+pow(ALGEBRAIC[72+i], 2.00000)/CONSTANTS[42]))/( pow(CONSTANTS[46], 2.00000)*exp(( 2.00000*(1.00000 - CONSTANTS[41])*OC_STATE[0+i]*CONSTANTS[6])/( CONSTANTS[35]*CONSTANTS[36]))), -1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[38+i] = 1.00000 - pow(1.00000+( CONSTANTS[43]*(1.00000+pow(OC_WANTED[36+i], 2.00000)/CONSTANTS[42]))/( pow(CONSTANTS[46], 2.00000)*exp(( 2.00000*(1.00000 - CONSTANTS[41])*OC_STATE[0+i]*CONSTANTS[6])/( CONSTANTS[35]*CONSTANTS[36]))), -1.00000);
+  }
 
-}
 /* g_IR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[78+i] =  ALGEBRAIC[74+i]*ALGEBRAIC[76+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[39+i] =  OC_WANTED[37+i]*OC_WANTED[38+i];
+  }
 
-}
 /* I_IR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[80+i] =  ALGEBRAIC[78+i]*(ALGEBRAIC[60+i]>0.00000 ? 1.00000 : 0.00000)*(ALGEBRAIC[60+i]/50.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[40+i] =  OC_WANTED[39+i]*(OC_WANTED[30+i]>0.00000 ? 1.00000 : 0.00000)*(OC_WANTED[30+i]/50.0000);
+  }
 
-}
 /* g_DR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[82+i] =  ( CONSTANTS[38]*pow(OC_STATE[16+i], 4.00000))*OC_STATE[18+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[41+i] =  ( CONSTANTS[38]*pow(OC_STATE[8+i], 4.00000))*OC_STATE[9+i];
+  }
 
-}
 /* I_DR_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[84+i] =  ALGEBRAIC[82+i]*(ALGEBRAIC[60+i]/50.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[42+i] =  OC_WANTED[41+i]*(OC_WANTED[30+i]/50.0000);
+  }
 
-}
 /* sig_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[92+i] =  (1.00000/7.00000)*(exp(OC_STATE[14+i]/67.3000) - 1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[46+i] =  (1.00000/7.00000)*(exp(OC_STATE[7+i]/67.3000) - 1.00000);
+  }
 
-}
 /* f1_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[94+i] = pow(1.00000+ 0.120000*exp( -0.100000*OC_STATE[0+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))+ 0.0400000*ALGEBRAIC[92+i]*exp(- ( OC_STATE[0+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))), -1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[47+i] = pow(1.00000+ 0.120000*exp( -0.100000*OC_STATE[0+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))+ 0.0400000*OC_WANTED[46+i]*exp(- ( OC_STATE[0+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))), -1.00000);
+  }
 
-}
 /* I_NaK_bar_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[96+i] =  CONSTANTS[6]*(CONSTANTS[47]/( pow(1.00000+CONSTANTS[44]/OC_STATE[8+i], 2.00000)*pow(1.00000+CONSTANTS[45]/OC_STATE[10+i], 3.00000)));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[48+i] =  CONSTANTS[6]*(CONSTANTS[47]/( pow(1.00000+CONSTANTS[44]/OC_STATE[4+i], 2.00000)*pow(1.00000+CONSTANTS[45]/OC_STATE[5+i], 3.00000)));
+  }
 
-}
 /* I_NaK_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[98+i] =  ALGEBRAIC[96+i]*ALGEBRAIC[94+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[49+i] =  OC_WANTED[48+i]*OC_WANTED[47+i];
+  }
 
-}
 /* dK_e_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[8+i] = (ALGEBRAIC[80+i]+ALGEBRAIC[84+i]+CONSTANTS[12]+ - 2.00000*ALGEBRAIC[98+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[5])+(OC_STATE[4+i] - OC_STATE[8+i])/CONSTANTS[10];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[4+i] = (OC_WANTED[40+i]+OC_WANTED[42+i]+CONSTANTS[12]+ - 2.00000*OC_WANTED[49+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[5])+(OC_STATE[2+i] - OC_STATE[4+i])/CONSTANTS[10];
+  }
 
-}
 /* g_Na_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[88+i] =  ( ( CONSTANTS[39]*pow(OC_STATE[20+i], 3.00000))*OC_STATE[22+i])*OC_STATE[24+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[44+i] =  ( ( CONSTANTS[39]*pow(OC_STATE[10+i], 3.00000))*OC_STATE[11+i])*OC_STATE[12+i];
+  }
 
-}
 /* J_Na_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[86+i] =  OC_STATE[0+i]*((OC_STATE[10+i] -  OC_STATE[14+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[43+i] =  OC_STATE[0+i]*((OC_STATE[5+i] -  OC_STATE[7+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* I_Na_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[90+i] =  ALGEBRAIC[88+i]*(ALGEBRAIC[86+i]/75.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[45+i] =  OC_WANTED[44+i]*(OC_WANTED[43+i]/75.0000);
+  }
 
-}
 /* dNa_e_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[14+i] = (ALGEBRAIC[90+i]+CONSTANTS[13]+ 3.00000*ALGEBRAIC[98+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[5])+(OC_STATE[12+i] - OC_STATE[14+i])/CONSTANTS[11];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[7+i] = (OC_WANTED[45+i]+CONSTANTS[13]+ 3.00000*OC_WANTED[49+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[5])+(OC_STATE[6+i] - OC_STATE[7+i])/CONSTANTS[11];
+  }
 
-}
 /* I_T_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[0+i] =  (1000.00/1.00000)*((OC_STATE[0+i] - OC_STATE[2+i])/CONSTANTS[2]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[0+i] =  (1000.00/1.00000)*((OC_STATE[0+i] - OC_STATE[1+i])/CONSTANTS[2]);
+  }
 
-}
 /* Cl_i_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[52+i] = 156.500/(5.00000+exp(( - CONSTANTS[6]*ALGEBRAIC[26+i])/( CONSTANTS[35]*CONSTANTS[36])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[26+i] = 156.500/(5.00000+exp(( - CONSTANTS[6]*OC_WANTED[13+i])/( CONSTANTS[35]*CONSTANTS[36])));
+  }
 
-}
 /* Cl_o_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[54+i] = 156.500 -  5.00000*ALGEBRAIC[52+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[27+i] = 156.500 -  5.00000*OC_WANTED[26+i];
+  }
 
-}
 /* J_Cl_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[66+i] =  OC_STATE[0+i]*((ALGEBRAIC[52+i] -  ALGEBRAIC[54+i]*exp(( CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[33+i] =  OC_STATE[0+i]*((OC_WANTED[26+i] -  OC_WANTED[27+i]*exp(( CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( CONSTANTS[6]*OC_STATE[0+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* a_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[64+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[23])/CONSTANTS[26]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[32+i] = 1.00000/(1.00000+exp((OC_STATE[0+i] - CONSTANTS[23])/CONSTANTS[26]));
+  }
 
-}
 /* g_Cl_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[68+i] =  CONSTANTS[37]*pow(ALGEBRAIC[64+i], 4.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[34+i] =  CONSTANTS[37]*pow(OC_WANTED[32+i], 4.00000);
+  }
 
-}
 /* I_Cl_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[70+i] =  ALGEBRAIC[68+i]*(ALGEBRAIC[66+i]/45.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[35+i] =  OC_WANTED[34+i]*(OC_WANTED[33+i]/45.0000);
+  }
 
-}
 /* I_ionic_s_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[100+i] = ALGEBRAIC[70+i]+ALGEBRAIC[80+i]+ALGEBRAIC[84+i]+ALGEBRAIC[90+i]+ALGEBRAIC[98+i]+- OC_KNOWN[0+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[50+i] = OC_WANTED[35+i]+OC_WANTED[40+i]+OC_WANTED[42+i]+OC_WANTED[45+i]+OC_WANTED[49+i]+- OC_KNOWN[0+i];
+  }
 
-}
 /* vS_diff_calculation */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[0+i] = - ((ALGEBRAIC[100+i]+ALGEBRAIC[0+i])/CONSTANTS[0]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[0+i] = - ((OC_WANTED[50+i]+OC_WANTED[0+i])/CONSTANTS[0]);
+  }
 
-}
 /* J_K_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[62+i] =  OC_STATE[2+i]*((OC_STATE[6+i] -  OC_STATE[4+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[31+i] =  OC_STATE[1+i]*((OC_STATE[3+i] -  OC_STATE[2+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* E_K_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[50+i] =  (( CONSTANTS[35]*CONSTANTS[36])/CONSTANTS[6])*log(OC_STATE[4+i]/OC_STATE[6+i]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[25+i] =  (( CONSTANTS[35]*CONSTANTS[36])/CONSTANTS[6])*log(OC_STATE[2+i]/OC_STATE[3+i]);
+  }
 
-}
 /* K_R_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[110+i] =  OC_STATE[4+i]*exp( ( - CONSTANTS[41]*ALGEBRAIC[50+i])*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[55+i] =  OC_STATE[2+i]*exp( ( - CONSTANTS[41]*OC_WANTED[25+i])*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])));
+  }
 
-}
 /* g_IR_bar_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[112+i] =  CONSTANTS[40]*(pow(ALGEBRAIC[110+i], 2.00000)/(CONSTANTS[42]+pow(ALGEBRAIC[110+i], 2.00000)));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[56+i] =  CONSTANTS[40]*(pow(OC_WANTED[55+i], 2.00000)/(CONSTANTS[42]+pow(OC_WANTED[55+i], 2.00000)));
+  }
 
-}
 /* y_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[114+i] = 1.00000 - pow(1.00000+( CONSTANTS[43]*(1.00000+pow(ALGEBRAIC[110+i], 2.00000)/CONSTANTS[42]))/( pow(CONSTANTS[46], 2.00000)*exp(( 2.00000*(1.00000 - CONSTANTS[41])*OC_STATE[2+i]*CONSTANTS[6])/( CONSTANTS[35]*CONSTANTS[36]))), -1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[57+i] = 1.00000 - pow(1.00000+( CONSTANTS[43]*(1.00000+pow(OC_WANTED[55+i], 2.00000)/CONSTANTS[42]))/( pow(CONSTANTS[46], 2.00000)*exp(( 2.00000*(1.00000 - CONSTANTS[41])*OC_STATE[1+i]*CONSTANTS[6])/( CONSTANTS[35]*CONSTANTS[36]))), -1.00000);
+  }
 
-}
 /* g_IR_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[116+i] =  ALGEBRAIC[112+i]*ALGEBRAIC[114+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[58+i] =  OC_WANTED[56+i]*OC_WANTED[57+i];
+  }
 
-}
 /* I_IR_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[118+i] =  CONSTANTS[50]*ALGEBRAIC[116+i]*(ALGEBRAIC[62+i]/50.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[59+i] =  CONSTANTS[50]*OC_WANTED[58+i]*(OC_WANTED[31+i]/50.0000);
+  }
 
-}
 /* g_DR_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[120+i] =  ( CONSTANTS[38]*pow(OC_STATE[26+i], 4.00000))*OC_STATE[28+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[60+i] =  ( CONSTANTS[38]*pow(OC_STATE[13+i], 4.00000))*OC_STATE[14+i];
+  }
 
-}
 /* I_DR_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[122+i] =  CONSTANTS[51]*ALGEBRAIC[120+i]*(ALGEBRAIC[62+i]/50.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[61+i] =  CONSTANTS[51]*OC_WANTED[60+i]*(OC_WANTED[31+i]/50.0000);
+  }
 
-}
 /* sig_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[130+i] =  (1.00000/7.00000)*(exp(OC_STATE[12+i]/67.3000) - 1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[65+i] =  (1.00000/7.00000)*(exp(OC_STATE[6+i]/67.3000) - 1.00000);
+  }
 
-}
 /* f1_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[132+i] = pow(1.00000+ 0.120000*exp( -0.100000*OC_STATE[2+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))+ 0.0400000*ALGEBRAIC[130+i]*exp(- ( OC_STATE[2+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))), -1.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[66+i] = pow(1.00000+ 0.120000*exp( -0.100000*OC_STATE[1+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))+ 0.0400000*OC_WANTED[65+i]*exp(- ( OC_STATE[1+i]*(CONSTANTS[6]/( CONSTANTS[35]*CONSTANTS[36])))), -1.00000);
+  }
 
-}
 /* I_NaK_bar_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[134+i] =  CONSTANTS[6]*(CONSTANTS[47]/( pow(1.00000+CONSTANTS[44]/OC_STATE[4+i], 2.00000)*pow(1.00000+CONSTANTS[45]/OC_STATE[10+i], 3.00000)));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[67+i] =  CONSTANTS[6]*(CONSTANTS[47]/( pow(1.00000+CONSTANTS[44]/OC_STATE[2+i], 2.00000)*pow(1.00000+CONSTANTS[45]/OC_STATE[5+i], 3.00000)));
+  }
 
-}
 /* I_NaK_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[136+i] =  CONSTANTS[53]*ALGEBRAIC[134+i]*ALGEBRAIC[132+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[68+i] =  CONSTANTS[53]*OC_WANTED[67+i]*OC_WANTED[66+i];
+  }
 
-}
 /* dK_i_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[6+i] =  - CONSTANTS[9]*((ALGEBRAIC[118+i]+ALGEBRAIC[122+i]+CONSTANTS[12]+ - 2.00000*ALGEBRAIC[136+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3])) - (ALGEBRAIC[80+i]+ALGEBRAIC[84+i]+CONSTANTS[12]+ -2.00000*ALGEBRAIC[98+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[4]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[3+i] =  - CONSTANTS[9]*((OC_WANTED[59+i]+OC_WANTED[61+i]+CONSTANTS[12]+ - 2.00000*OC_WANTED[68+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3])) - (OC_WANTED[40+i]+OC_WANTED[42+i]+CONSTANTS[12]+ -2.00000*OC_WANTED[49+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[4]);
+  }
 
-}
 /* dK_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[4+i] = (ALGEBRAIC[118+i]+ALGEBRAIC[122+i]+CONSTANTS[12]+ - 2.00000*ALGEBRAIC[136+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3]) - (OC_STATE[4+i] - OC_STATE[8+i])/CONSTANTS[7];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[2+i] = (OC_WANTED[59+i]+OC_WANTED[61+i]+CONSTANTS[12]+ - 2.00000*OC_WANTED[68+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3]) - (OC_STATE[2+i] - OC_STATE[4+i])/CONSTANTS[7];
+  }
 
-}
 /* g_Na_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[126+i] =  ( ( CONSTANTS[39]*pow(OC_STATE[30+i], 3.00000))*OC_STATE[32+i])*OC_STATE[34+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[63+i] =  ( ( CONSTANTS[39]*pow(OC_STATE[15+i], 3.00000))*OC_STATE[16+i])*OC_STATE[17+i];
+  }
 
-}
 /* J_Na_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[124+i] =  OC_STATE[2+i]*((OC_STATE[10+i] -  OC_STATE[12+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[62+i] =  OC_STATE[1+i]*((OC_STATE[5+i] -  OC_STATE[6+i]*exp(( -1.00000*CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( -1.00000*CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* I_Na_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[128+i] =  CONSTANTS[52]*ALGEBRAIC[126+i]*(ALGEBRAIC[124+i]/75.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[64+i] =  CONSTANTS[52]*OC_WANTED[63+i]*(OC_WANTED[62+i]/75.0000);
+  }
 
-}
 /* dNa_i_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[10+i] =  - CONSTANTS[9]*((ALGEBRAIC[128+i]+CONSTANTS[13]+ 3.00000*ALGEBRAIC[136+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3])) - (ALGEBRAIC[90+i]+CONSTANTS[13]+ 3.00000*ALGEBRAIC[98+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[4]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[5+i] =  - CONSTANTS[9]*((OC_WANTED[64+i]+CONSTANTS[13]+ 3.00000*OC_WANTED[68+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3])) - (OC_WANTED[45+i]+CONSTANTS[13]+ 3.00000*OC_WANTED[49+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[4]);
+  }
 
-}
 /* dNa_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[12+i] = (ALGEBRAIC[128+i]+CONSTANTS[13]+ 3.00000*ALGEBRAIC[136+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3]) - (OC_STATE[12+i] - OC_STATE[14+i])/CONSTANTS[8];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[6+i] = (OC_WANTED[64+i]+CONSTANTS[13]+ 3.00000*OC_WANTED[68+i])/( (1000.00/1.00000)*CONSTANTS[6]*CONSTANTS[3]) - (OC_STATE[6+i] - OC_STATE[7+i])/CONSTANTS[8];
+  }
 
-}
 /* Cl_i_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[56+i] = 156.500/(5.00000+exp(( - CONSTANTS[6]*ALGEBRAIC[50+i])/( CONSTANTS[35]*CONSTANTS[36])));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[28+i] = 156.500/(5.00000+exp(( - CONSTANTS[6]*OC_WANTED[25+i])/( CONSTANTS[35]*CONSTANTS[36])));
+  }
 
-}
 /* Cl_o_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[58+i] = 156.500 -  5.00000*ALGEBRAIC[56+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[29+i] = 156.500 -  5.00000*OC_WANTED[28+i];
+  }
 
-}
 /* J_Cl_t_eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[104+i] =  OC_STATE[2+i]*((ALGEBRAIC[56+i] -  ALGEBRAIC[58+i]*exp(( CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( CONSTANTS[6]*OC_STATE[2+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[52+i] =  OC_STATE[1+i]*((OC_WANTED[28+i] -  OC_WANTED[29+i]*exp(( CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36])))/(1.00000 - exp(( CONSTANTS[6]*OC_STATE[1+i])/( CONSTANTS[35]*CONSTANTS[36]))));
+  }
 
-}
 /* a_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[102+i] = 1.00000/(1.00000+exp((OC_STATE[2+i] - CONSTANTS[23])/CONSTANTS[26]));
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[51+i] = 1.00000/(1.00000+exp((OC_STATE[1+i] - CONSTANTS[23])/CONSTANTS[26]));
+  }
 
-}
 /* g_Cl_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[106+i] =  CONSTANTS[37]*pow(ALGEBRAIC[102+i], 4.00000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[53+i] =  CONSTANTS[37]*pow(OC_WANTED[51+i], 4.00000);
+  }
 
-}
 /* I_Cl_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[108+i] =  CONSTANTS[49]*ALGEBRAIC[106+i]*(ALGEBRAIC[104+i]/45.0000);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[54+i] =  CONSTANTS[49]*OC_WANTED[53+i]*(OC_WANTED[52+i]/45.0000);
+  }
 
-}
 /* I_ionic_t_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	ALGEBRAIC[138+i] = ALGEBRAIC[108+i]+ALGEBRAIC[118+i]+ALGEBRAIC[122+i]+ALGEBRAIC[128+i]+ALGEBRAIC[136+i];
+  for(int i = 0; i < 1; i++)
+  {
+    OC_WANTED[69+i] = OC_WANTED[54+i]+OC_WANTED[59+i]+OC_WANTED[61+i]+OC_WANTED[64+i]+OC_WANTED[68+i];
+  }
 
-}
 /* dvT_Eqn */
 #pragma omp teams distribute parallel for
-for(int i = 0; i < 1; i++)
-{
-	OC_RATE[2+i] = - ((ALGEBRAIC[138+i] - ALGEBRAIC[0+i]/CONSTANTS[1])/CONSTANTS[0]);
+  for(int i = 0; i < 1; i++)
+  {
+    OC_RATE[1+i] = - ((OC_WANTED[69+i] - OC_WANTED[0+i]/CONSTANTS[1])/CONSTANTS[0]);
+  }
+} // end #pragma omp target directive
 
-}
-
-}// end #pragma omp target directive
-
-}//OC_CellML_RHS_routine()
+}//OC_CellML_RHS_routine_gpu()
 
 ;

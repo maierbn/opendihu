@@ -23,31 +23,72 @@ template<int nStates>
 void RhsRoutineHandler<nStates>::
 initializeRhsRoutine()
 {
-  // 1) if simdSourceFilename is given, use that source to compile the library
-  // 2) if not 1) but sourceFilename is given, create simdSourceFilename from that and compile library
-  // 3) if not 2) but libraryFilename is given, load that library, if it contains simdRhs, use that, if it contains non-simd rhs use that
-  // 4) if not 3) but gpuSourceFilename is given, use that source to compile the library
-
-  // try to create or load simd source
-  std::string simdSourceFilename;
-  if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
-  {
-    if (!createSimdSourceFile(simdSourceFilename))
-      simdSourceFilename = "";
-  }
-
-  if (simdSourceFilename == "")
-  {
-    if(PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
-    {
-      simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
-    }
-  }
+  /* we have the following:
+   *   library>code (except if forceRecompileRHS_),
+   *   gpu>simd,
+   *   existing>new. 
+   * this means: "Save time where possible!"
+   */
 
   std::string libraryFilename;
-  // if simdSourceFilename is set, compile to create dynamic library
-  if (simdSourceFilename != "")
-  {
+  forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
+
+  if(!forceRecompileRhs_)
+  { //try open library file
+    if (!PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    {
+      LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file. Using default: libraryFilename=\"lib.so\".";
+      //default set in PythonUtility::getOptionString(...)
+    }     
+    libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+    loadRhsLibrary(libraryFilename);
+  }
+  else // forceRecompileRhs_ is set true
+  { // will compile lib new
+    std::string gpuSourceFilename;
+    std::string simdSourceFilename;
+    std::string compileCommandOptions;
+    std::string SourceFilenameToUse;
+    std::stringstream compileCommand;
+
+    if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    {
+      // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
+      //
+
+      // file does not exist yet or is not a matching one. create one.
+      if (!createGPUSourceFile(gpuSourceFilename))
+      {
+         LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
+      }
+      SourceFilenameToUse = gpuSourceFilename;
+#ifdef NDEBUG
+      compileCommandOptions = "gcc -fPIC -fopenmp -O3 -shared -lm -x c -o ";
+#else
+      compileCommandOptions = "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c -o ";
+#endif
+    }
+    else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config. 
+    {
+      if(!PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
+      {
+        LOG(WARNING) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
+      }
+      // todo: would like to check whether source File "simdSourceFilename" already is a matching one.
+      //
+
+      // file does not exist yet or is not a matching one. create one.
+      if (!createSimdSourceFile(simdSourceFilename))
+      {
+         LOG(ERROR) << "Could not create a simd version for CellML RHS.";
+      }
+      SourceFilenameToUse = simdSourceFilename;
+#ifdef NDEBUG
+      compileCommandOptions = "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o ";
+#else
+      compileCommandOptions = "gcc -fPIC -O0 -ggdb -shared -lm -x c -o ";
+#endif
+    }
     // compile source file to a library
     libraryFilename = "lib.so";
     if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
@@ -60,187 +101,29 @@ initializeRhsRoutine()
       s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
       libraryFilename = s.str();
     }
-
-    bool doCompilation = true;
-    forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
-    if (!forceRecompileRhs_)
+    if (libraryFilename.find("/") != std::string::npos)
     {
-      // check if the library file already exists
-      std::ifstream file;
-      file.open(libraryFilename);
-      if (file.is_open())
-      {
-        LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists, do not recompile (set forceRecompileRhs to True to force recompilation).";
-        doCompilation = false;
-        file.close();
-      }
-    }
-    
-    if (doCompilation)
-    {
-     
-      if (libraryFilename.find("/") != std::string::npos)
-      {
-        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-        int ret = system((std::string("mkdir -p ")+path).c_str());
-        
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not create path \"" << path << "\".";
-        }
-      }
-     
-      std::stringstream compileCommand;
-      // -ftree-vectorize -fopt-info-vec-missed -fopt-info-vec-optimized
-#ifdef NDEBUG
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-#else
-      compileCommand << "gcc -fPIC -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-#endif
-
-      int ret = system(compileCommand.str().c_str());
+      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+      int ret = system((std::string("mkdir -p ")+path).c_str());
+      
       if (ret != 0)
       {
-        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-        libraryFilename = "";
+        LOG(ERROR) << "Could not create path \"" << path << "\".";
       }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
-
-      // repeat compilation with different GCC vectorizer outputs
-  #if 0
-      compileCommand.str("");
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-missed=vectorizer_missed.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-      ret = system(compileCommand.str().c_str());
-      if (ret != 0)
-      {
-        LOG(DEBUG) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
-      compileCommand.str("");
-      compileCommand << "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-all=vectorizer_all.log -shared -lm -x c -o " << libraryFilename << " " << simdSourceFilename;
-      ret = system(compileCommand.str().c_str());
-      if (ret != 0)
-      {
-        LOG(DEBUG) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
-  #endif
     }
-  }
-
-  // if library is still not available, look if it was provided
-  if (libraryFilename == "")
-  {
-    libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
-  }
-
-  // try to (create or) load gpu source
-  std::string gpuSourceFilename;
-  //if (PythonUtility::hasKey(this->specificSettings_, "sourceFilename"))
-  //{
-  //  if (!createGPUSourceFile(gpuSourceFilename))
-  //    gpuSourceFilename = "";
-  //}
-
-  if(true) // (gpuSourceFilename == "")
-  {
-    if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    compileCommand << compileCommandOptions << libraryFilename << " " << SourceFilenameToUse;
+    int ret = system(compileCommand.str().c_str());
+    if (ret != 0)
     {
-      gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
-    }
-  }
-
-  // if gpuSourceFilename is set, compile to create dynamic library
-  if (gpuSourceFilename != "")
-  {
-    // check whether file named gpuSourceFilename exists
-    std::ifstream srcfile;
-    bool doCompilation = true;
-    srcfile.open(gpuSourceFilename);
-    if(!srcfile.is_open())
-    {
-      doCompilation=false;
-      LOG(ERROR) << "No file named \"" << gpuSourceFilename << "\" found.";
+      LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+      libraryFilename = "";
     }
     else
     {
-      srcfile.close();
-      // compile source file to a library
-      libraryFilename = "lib.so";
-      if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
-      {
-        libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
-      }
-      else 
-      {
-        std::stringstream s;
-        s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
-        libraryFilename = s.str();
-      }
-
-      forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
-      if(!forceRecompileRhs_)
-      {
-        // check if the library file already exists
-        std::ifstream file;
-        file.open(libraryFilename);
-        if (file.is_open())
-        {
-          LOG(DEBUG) << "Library \"" << libraryFilename << "\" already exists, do not recompile (set forceRecompileRhs to True to force recompilation).";
-          doCompilation = false;
-          file.close();
-        }
-      }
+      LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
     }
-    if (doCompilation)
-    {
-      if (libraryFilename.find("/") != std::string::npos)
-      {
-        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-        int ret = system((std::string("mkdir -p ")+path).c_str());
-        
-        if (ret != 0)
-        {
-          LOG(ERROR) << "Could not create path \"" << path << "\".";
-        }
-      }
-     
-      std::stringstream compileCommand;
-      // hier muss ordentlich gesetzt werden. Nicht-trivial.
-#ifdef NDEBUG
-       compileCommand << "gcc -fPIC -fopenmp -O3 -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
-#else
-       compileCommand << "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c -o " << libraryFilename << " " << gpuSourceFilename;
-#endif
-
-      int ret = system(compileCommand.str().c_str());
-      if (ret != 0)
-      {
-        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-        libraryFilename = "";
-      }
-      else
-      {
-        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-      }
-    }
+    loadRhsLibrary(libraryFilename);
   }
-
-  if (libraryFilename == "")
-  {
-    LOG(FATAL) << "Could not create or locate dynamic library for cellml right hand side routine.";
-  }
-
-  loadRhsLibrary(libraryFilename);
 }
 
 
@@ -264,7 +147,7 @@ loadRhsLibrary(std::string libraryFilename)
     // try to load several routine names
     rhsRoutine_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSide");
     rhsRoutineOpenCMISS_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine");
-    rhsRoutineGPU_ = (void (*)(double,double*,double*,double*,double*)) dlsym(handle, "OC_CellML_RHS_routine_gpu");
+    rhsRoutineGPU_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeGPUCellMLRightHandSide");
     initConstsOpenCOR_ = (void(*)(double*, double*, double*)) dlsym(handle, "initConsts");
     computeRatesOpenCOR_ = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeRates");
     computeVariablesOpenCOR_  = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeVariables");
@@ -691,25 +574,340 @@ template<int nStates>
 bool RhsRoutineHandler<nStates>::
 createGPUSourceFile(std::string &gpuSourceFilename)
 {
-  /*
+  // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
+  // Method creates gpuSourceFile for a freely choosable but fix  number of instances and sets name of string gpuSourceFilename
+  
+  // input source filename is this->sourceFilename_
+  bool inputFileTypeOpenCMISS = true;   //< if the input file that is being parsed is from OpenCMISS and not from OpenCOR
+  
   // read in source from file
   std::ifstream sourceFile(this->sourceFilename_.c_str());
   if (!sourceFile.is_open())
   {
-    LOG(ERROR) << "RhsRoutineHandler: Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+    LOG(ERROR) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
     return false;
   }
   else
-  { // der name soll doch nicht der Inhalt sein....
+  {
     // read whole file contents to source
-    //std::stringstream source;
-    gpuSourceFilename << sourceFile.rdbuf();
+    std::stringstream source;
+    source << sourceFile.rdbuf();
     sourceFile.close();
-  }*/
 
-return false;
+    bool discardOpenBrace = false;   // if the next line consisting of only "{" should be discarded
+    std::stringstream gpuSource;
+    
+    gpuSource << "#include <math.h>" << std::endl;
+    
+    // step through lines and create simd source file
+    while(!source.eof())
+    {
+      std::string line;
+      getline(source, line);
+      
+      if (discardOpenBrace && line == "{")
+      {
+        discardOpenBrace = false;
+        continue;
+      }
+      
+      if (line == "void")
+      {
+        std::string line2;
+        getline(source, line2);
+        line += std::string(" ") + line2;
+      }
 
+      // line contains declaration of ALGEBRAIC variable, e.g. "double CONSTANTS[110], ALGEBRAIC[70];"
+      if (line.find("double CONSTANTS") == 0 && line.find("ALGEBRAIC[") != std::string::npos)
+      {
+        size_t pos = line.find("ALGEBRAIC[");   
+        size_t posStart = line.find("[", pos)+1;
+        size_t posEnd = line.find("]", posStart);
+        int algebraicSize = atoi(line.substr(posStart).c_str());
+
+        gpuSource << line.substr(0, posStart) << algebraicSize * this->nInstances_ << line.substr(posEnd) << std::endl;
+      }
+      else if (line.find("initConsts") != std::string::npos)
+      {
+        inputFileTypeOpenCMISS = false;
+        gpuSource << line << std::endl;
+      }
+      else if (line.find("CONSTANTS[") == 0)
+      {
+        constantAssignments_.push_back(line);
+        gpuSource << line << std::endl;
+      }
+      else if (line.find("void computeVariables") != std::string::npos)
+      {
+        gpuSource << std::endl;
+        break;
+      }
+      // line contains OpenCMISS function head
+      else if (line.find("void OC_CellML_RHS_routine") != std::string::npos || line.find("computeRates") != std::string::npos)
+      {
+        if (line.find("void OC_CellML_RHS_routine") != std::string::npos)
+        {
+          inputFileTypeOpenCMISS = true;
+        }
+        else
+        {
+          inputFileTypeOpenCMISS = false; 
+        }
+        
+        if (line.find("void computeCellMLRightHandSide") != std::string::npos)
+        {
+          LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" contains a simd version of the rhs routine. "
+            << "No implementation to convert this file to gpu version.";
+          gpuSourceFilename="";
+          return false;
+        }
+        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        {
+          LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" contains already a GPU version of the rhs routine."
+            << "Use the option \"gpuSourceFilename\" instead of \"sourceFilename\" or \"simdSourceFilename\".";
+          return true;
+        }
+	
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        gpuSource << std::endl << "/* This function was created by opendihu at " << std::put_time(&tm, "%d/%m/%Y %H:%M:%S") 
+          << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem. */" << std::endl
+          << "void computeGPUCellMLRightHandSide("
+          << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl << "#pragma omp target" << std::endl << "{" << std::endl;
+        discardOpenBrace = true;
+          
+        gpuSource << "  double VOI = t;   /* current simulation time */" << std::endl;
+        if (!inputFileTypeOpenCMISS) 
+        {
+          gpuSource << std::endl << "  /* define constants */" << std::endl 
+            << "  double CONSTANTS[" << this->nConstants_ << "];" << std::endl;
+          for (std::string constantAssignmentsLine : constantAssignments_)
+          {
+            gpuSource << "  " << constantAssignmentsLine << std::endl; 
+          }
+          gpuSource << std::endl
+            << "  double ALGEBRAIC[" << this->nIntermediates_*this->nInstances_ << "];  " 
+            << "  /* " << this->nIntermediates_ << " per instance * " << this->nInstances_ << " instances */ " << std::endl;
+        }
+      }
+      // line contains OpenCMISS assignment
+      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      {
+        // parse line
+        struct entry_t
+        {
+          std::string code;
+          int arrayIndex;
+          enum {variableName, other} type;
+        };
+        std::list<entry_t> entries;
+
+        bool isExplicitParameter = false;   // if this is an explicit parameter, i.e. a ALGEBRAIC variable, that is overridden by a parameter
+          
+        VLOG(2) << "line: [" << line << "]";
+
+        size_t currentPos = 0;
+        for(int i = 0; currentPos <= line.length(); i++)
+        {
+          VLOG(2);
+          VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
+          VLOG(2) << "variables (high number is string::npos and means not found): "
+            << line.find("OC_STATE", currentPos) << ", "
+            << line.find("OC_RATE", currentPos) << ", "
+            << line.find("ALGEBRAIC", currentPos) << ", "
+            << line.find("OC_WANTED", currentPos) << ", "
+            << line.find("OC_KNOWN", currentPos) << ", "
+            << line.find("STATES", currentPos) << ", "
+            << line.find("RATES", currentPos) << ", "
+            << line.find("CONSTANTS", currentPos);
+
+          size_t posVariable = std::min({
+            line.find("OC_STATE", currentPos),    // states
+            line.find("OC_RATE", currentPos),     // rates
+            line.find("ALGEBRAIC", currentPos),   // algebraics
+            line.find("OC_WANTED", currentPos),   // algebraics
+            line.find("OC_KNOWN", currentPos),    // parameters
+            line.find("STATES", currentPos),      // states
+            line.find("RATES", currentPos),       // rates
+            line.find("CONSTANTS", currentPos)    // CONSTANTS
+          });
+
+          VLOG(2) << "posVariable: " <<posVariable;
+
+          entry_t entry;
+          if (posVariable == currentPos)
+          {
+            size_t posBracket = line.find("[", currentPos);
+            entry.code = line.substr(currentPos, posBracket-currentPos);
+            
+            // rename variable
+            if (entry.code == "OC_STATE" || entry.code == "STATES")
+              entry.code = "states";
+            else if (entry.code == "OC_RATE" || entry.code == "RATES")
+              entry.code = "rates";
+            else if (entry.code == "ALGEBRAIC" || entry.code == "OC_WANTED")
+              entry.code = "algebraics";
+            else if (entry.code == "OC_KNOWN")
+              entry.code = "parameters";
+            
+            // extract array index
+            entry.arrayIndex = atoi(line.substr(posBracket+1).c_str());
+
+            VLOG(2) << "extract variable name \"" << entry.code << "\", index " << entry.arrayIndex;
+
+            entry.type = entry_t::variableName;
+
+            // check if number of states is in bounds of template parameter nStates
+            if (entry.code == "states" && entry.arrayIndex >= nStates)
+            {
+              LOG(FATAL) << "CellML code in source file \"" << this->sourceFilename_ << "\" "
+                << "computes more states than given in the user code as template parameter "
+                << "(template parameter: " << nStates << ", CellML code: at least " << entry.arrayIndex+1 << ").";
+            }
+            
+            // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
+            if (entry.code == "algebraics" && i == 0)
+            {
+              isExplicitParameter = false;
+              for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
+              {
+                if (entry.arrayIndex == parameterUsedAsIntermediate)
+                {
+                  isExplicitParameter = true;
+                  break;
+                }
+              }
+              
+              if (isExplicitParameter)
+                break;
+            }
+            
+            // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsIntermediate
+            if (entry.code == "algebraics")
+            {
+              // loop over all parametersUsedAsIntermediate_
+              for (int j = 0; j < this->parametersUsedAsIntermediate_.size(); j++)
+              {
+                if (entry.arrayIndex == this->parametersUsedAsIntermediate_[j])
+                {
+                  entry.code = "parameters";
+                  entry.arrayIndex = j;
+                  break;
+                }
+              }
+            }
+
+            // replace constant by parameter if it is an explicit parameter set by parametersUsedAsConstant
+            if (entry.code == "CONSTANTS")
+            {
+              // loop over all parametersUsedAsConstant_
+              for (int j = 0; j < this->parametersUsedAsConstant_.size(); j++)
+              {
+                if (entry.arrayIndex == this->parametersUsedAsConstant_[j])
+                {
+                  entry.code = "parameters";
+                  entry.arrayIndex = this->parametersUsedAsIntermediate_.size() + j;
+                  break;
+                }
+              }
+            }
+
+            // advance current position
+            currentPos = line.find("]", currentPos)+1;
+            VLOG(2) << "(1)advance to " << currentPos;
+          }
+          else
+          {
+            entry.code = line.substr(currentPos, posVariable-currentPos);
+            VLOG(2) << "extract code \"" << entry.code << "\".";
+            entry.type = entry_t::other;
+
+            // advance current position
+            currentPos = posVariable;
+            VLOG(2) << "(2)advance to " << currentPos;
+          }
+          entries.push_back(entry);
+        }
+        
+        if (isExplicitParameter)
+        {
+          gpuSource << "  /* explicit parameter */" << std::endl 
+            << "  /* " << line << "*/" << std::endl;
+        }
+        else
+        { 
+          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+            << "  {" << std::endl << "    ";
+
+          VLOG(2) << "parsed " << entries.size() << " entries";
+
+          // write out parsed code with adjusted indices
+          for (auto entry : entries)
+          {
+            VLOG(2) << " entry type=" << entry.type << ", code: \"" << entry.code << "\", index: " << entry.arrayIndex;
+            switch(entry.type)
+            {
+              case entry_t::variableName:
+                if (entry.code == "CONSTANTS")
+                {
+                  // constants only exist once for all instances
+                  gpuSource << entry.code << "[" << entry.arrayIndex<< "]";
+                }
+                else 
+                {
+                  // all other variables (states, rates, intermediates, parameters) exist for every instance
+                  gpuSource << entry.code << "[" << entry.arrayIndex * this->nInstances_ << "+i]";
+                }
+                break;
+              case entry_t::other:
+                gpuSource << entry.code;
+                break;
+            }
+          }
+          gpuSource << std::endl << "  }" << std::endl;
+        }
+      }
+      // every other line
+      else
+      {
+        if(line.find("}")!= 0)
+        {
+          gpuSource << line << std::endl;
+        }
+        else
+        {
+          gpuSource << std::endl << "} // end #pragma omp target directive" << std::endl << std::endl << line << std::endl;
+        }
+      }
+    }
+
+    // write out source file
+    std::stringstream s;
+    s << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";
+    gpuSourceFilename = s.str();
+    if (PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    {
+      gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
+    }
+
+    std::ofstream gpuSourceFile(gpuSourceFilename.c_str());
+    if (!gpuSourceFile.is_open())
+    {
+      LOG(ERROR) << "Could not write to file \"" << gpuSourceFilename << "\".";
+      return false;
+    }
+    else
+    {
+      std::string fileContents = gpuSource.str();
+      gpuSourceFile << fileContents;
+      gpuSourceFile.close();
+    }
+  }
+  
+  return true;
 }
+
 
 template<int nStates>
 bool RhsRoutineHandler<nStates>::

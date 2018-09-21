@@ -1,7 +1,8 @@
 #pragma once
 
-#include "function_space/function_space.h"
 #include "partition/partitioned_petsc_mat.h"
+#include "field_variable/field_variable.h"
+#include "function_space/function_space.h"
 
 
 namespace Data{
@@ -11,7 +12,7 @@ class ModelOrderReduction:
   public Data<FunctionSpace::Generic>
 {
 public:
-  typedef FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
+  typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
   
   //! constructor
   ModelOrderReduction(DihuContext context);
@@ -19,19 +20,19 @@ public:
   virtual ~ModelOrderReduction();
   
   //! initialize the full order function space
-  virtual void setFullFunctionSpace(std::shared_ptr<FullFunctionSpaceType> mesh);
+  virtual void setFullFunctionSpace(std::shared_ptr<FullFunctionSpaceType> functionSpace);
    
   //! Basis for the reduced solution, V
-  Mat &basis();
+  std::shared_ptr<PartitionedPetscMat<FullFunctionSpaceType,::FunctionSpace::Generic>> &basis();
    
   //! Transpose of the basis, V ^T
-  Mat &basisTransp(); 
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>> &basisTransp(); 
    
   //! initializes the basis V from an already existant Petsc Mat !?
   //void initializeBasis(Mat &basis);
    
   //! Reduced system matrix, A_R
-  Mat &redSysMatrix();
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> &redSysMatrix();
    
   //! initializes the redSysMatrix from an already existant Petsc Mat !?
   //void initializeRedSysMatrix(Mat &A_R);
@@ -46,14 +47,14 @@ public:
    
 private:
    
-  Mat basis_; // V
-  Mat basisTransp_; // V^T
-  Mat redSysMatrix_;
+  std::shared_ptr<PartitionedPetscMat<FullFunctionSpaceType,::FunctionSpace::Generic>> basis_; // V
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>> basisTransp_; // V^T
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> redSysMatrix_;
    
   Vec redSolution_; //reduced solution
   Vec redIncrement_; //reduced increment
   
-  std::shared_ptr<FullFunctionSpaceType> fullFunctionspace_;
+  std::shared_ptr<FullFunctionSpaceType> fullFunctionSpace_;
   
   //! Create the matrices and vectors for model order reduction
   void createPetscObjects();

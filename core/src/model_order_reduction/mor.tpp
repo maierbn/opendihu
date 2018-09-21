@@ -23,6 +23,7 @@ template<typename FullFunctionSpaceType>
 void MORBase<FullFunctionSpaceType>::
 setBasis()
 {
+  Vec basisTransp=this->data_->basisTransp()->getContiguousValuesGlobal();
     //to be implemented
 }
 

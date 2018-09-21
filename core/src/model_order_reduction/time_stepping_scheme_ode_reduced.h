@@ -7,13 +7,14 @@
 
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
+
 #include "model_order_reduction/mor.h"
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingType>
   class TimeSteppingSchemeOdeReduced : 
-  public MORBase<typename TimeSteppingType::FunctionSpace>, 
+    public MORBase<typename TimeSteppingType::FunctionSpace>, 
     public TimeSteppingScheme::TimeSteppingScheme
   {
   public:

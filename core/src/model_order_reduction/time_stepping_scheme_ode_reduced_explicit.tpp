@@ -47,8 +47,13 @@ namespace ModelOrderReduction
     // debugging output of matrices
     //this->timestepping_.data().print();
     
-    Vec &solution = this->timestepping_.data().solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec &increment = this->timestepping_.data().increment().getContiguousValuesGlobal();
+    Vec &solution = this->timestepping_.data().solution()->getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+    Vec &increment = this->timestepping_.data().increment()->getContiguousValuesGlobal();
+    Vec &redSolution= this->data_->redSolution()->getContiguousValuesGlobal();
+    Vec &redIncrement= this->data_->redIncrement()->getContiguousValuesGlobal();
+    
+    Mat &basis = this->data_->basis()->valuesGlobal();
+    Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
     
     // loop over time steps
     double currentTime = this->startTime_;
@@ -72,13 +77,13 @@ namespace ModelOrderReduction
       PetscErrorCode ierr;
       
       // reduction step
-      ierr=MatMult(this->data_->basisTransp(),increment,this->data_->redIncrement()); CHKERRV(ierr); 
+      ierr=MatMult(basisTransp, increment, redIncrement); CHKERRV(ierr); 
       
       // integrate, z += dt * delta_z
-      VecAXPY(this->data_->redSolution(), this->timeStepWidth_, this->data_->redIncrement());
+      VecAXPY(redSolution, this->timeStepWidth_, redIncrement);
       
       // full state recovery
-      ierr=MatMult(this->data_->basis(),this->data_->redSolution(),solution); CHKERRV(ierr);
+      ierr=MatMult(basis, redSolution , solution); CHKERRV(ierr);
       
       // advance simulation time
       timeStepNo++;
@@ -90,7 +95,7 @@ namespace ModelOrderReduction
       this->outputWriterManager_.writeOutput(this->timestepping_.data(), timeStepNo, currentTime);
     }
     
-    this->timestepping_.data().solution().restoreContiguousValuesGlobal();
+    this->timestepping_.data().solution()->restoreContiguousValuesGlobal();
     
   }
   

@@ -40,13 +40,14 @@ config = {
     "CellML" : {
       "sourceFilename": "cellmlcode.cpp",
       "gpuSourceFilename": "gpucode.cpp",
-      #"simdSourceFilename" : "simdcode.cpp",
+      "simdSourceFilename" : "simdcode.cpp",
+      #"libraryFilename": "cellml_simd_lib.so",
       "libraryFilename": "cellml_gpu_lib.so",
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,
        #"handleResultFunction": handleResult,
       "handleResultCallInterval": hrciv,
-      "nElements": 501,
+      "nElements": 50,
 
       "statesInitialValues": [ -79.974, -80.2, 5.9, 150.9, 5.9, 12.7, 132.0, 133.0, 0.009466, 0.9952, 0.0358, 0.4981, 0.581, 0.009466, 0.9952, 0.0358, 0.4981, 0.581, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1500.0, 0.1, 1500.0, 25, 615.0, 615.0, 811.0, 811.0, 16900.0, 16900.0, 0.4, 0.4, 7200.0, 7200.0, 799.6, 799.6, 1000.0, 1000.0, 3.0, 0.8, 1.2, 3.0, 0.3, 0.23, 0.23, 0.23, 0.23] ,
       

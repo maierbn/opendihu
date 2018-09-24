@@ -51,8 +51,8 @@ private:
   std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FullFunctionSpaceType>> basisTransp_; // V^T
   std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> redSysMatrix_;
    
-  Vec redSolution_; //reduced solution
-  Vec redIncrement_; //reduced increment
+  std::shared_ptr<FieldVariableType> redSolution_; //reduced solution
+  std::shared_ptr<FieldVariableType> redIncrement_; //reduced increment
   
   std::shared_ptr<FullFunctionSpaceType> fullFunctionSpace_;
   

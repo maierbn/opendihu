@@ -57,3 +57,6 @@ hodgkin_huxley:
 
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+pod:
+	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

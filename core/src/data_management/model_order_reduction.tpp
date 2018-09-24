@@ -68,7 +68,25 @@ initialize()
     LOG(WARNING) << "ModelOrderReduction::Initialize(), ModelOrderReduction is already assigned";
   }
 }
+
+//! the reduced solution
+template<typename FullFunctionSpaceType>  
+std::shared_ptr<typename ModelOrderReduction<FullFunctionSpaceType>::FieldVariableType> &
+ModelOrderReduction<FullFunctionSpaceType>::
+redSolution()
+{
+  return redSolution_;
+}
   
+//! The reduced order increment
+template<typename FullFunctionSpaceType>  
+std::shared_ptr<typename ModelOrderReduction<FullFunctionSpaceType>::FieldVariableType> &
+ModelOrderReduction<FullFunctionSpaceType>::
+redIncrement()
+{
+  return redIncrement_;
+}
+
 template<typename FullFunctionSpaceType>
 void ModelOrderReduction<FullFunctionSpaceType>::
 createPetscObjects()
@@ -76,8 +94,9 @@ createPetscObjects()
   LOG(TRACE) << "ModelOrderReduction::createPetscObjects()";
   
   // create field variables on local partition
-  this->redSolution_ = this->functionSpace_->createGenericFieldVariable("redSolution");
-  this->redIncrement_=this->functionSpace_->createGenericFieldVariable("redIncrement");
+  const int nComponents = 1;
+  this->redSolution_ = this->functionSpace_->template createFieldVariable<nComponents>("redSolution");
+  this->redIncrement_ = std::static_pointer_cast<FieldVariableType>(this->functionSpace_->createFieldVariable("redIncrement", 1));
   
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FullFunctionSpaceType>> 

@@ -68,6 +68,35 @@ protected:
   bool initialized_;     ///< if initialize was already called on this object, then further calls to initialize() have no effect
 };
 
+/** class that provides extra initialize methods, depending on Term
+ */
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+class FiniteElementMethodInitializeData :
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::FiniteElementMethodBase;
+};
+
+/** special initialize for DiffusionTensorFieldVariable, for Term Equation::Dynamic::DirectionalDiffusion
+ */
+template<typename FunctionSpaceType,typename QuadratureType>
+class FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion> :
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::FiniteElementMethodBase;
+
+  //! dummy initialize method
+  virtual void initialize(){};
+
+  //! initialize with direction field for DiffusionTensorFieldVariable, this replaces the initialize() method
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments = 0);
+};
+
+
 };  // namespace
 
 #include "spatial_discretization/finite_element_method/00_base.tpp"

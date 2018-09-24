@@ -63,7 +63,7 @@ def triangle_contains_point(triangle, point):
   xi2 = xi[1]
   
   if debug:
-    print "xi: {}, {}".format(xi1,xi2)
+    print("xi: {}, {}".format(xi1,xi2))
   
   # point is inside triangle iff conditions for xi1,xi2 are fulfilled
   tol = 1e-14
@@ -71,14 +71,14 @@ def triangle_contains_point(triangle, point):
   
   if debug:
     if condition:
-      print "triangle: ({},{}) ({},{}) ({},{}), point: ({},{})".format(point0[0], point0[1], point1[0], point1[1], point2[0], point2[1], point[0], point[1])
+      print("triangle: ({},{}) ({},{}) ({},{}), point: ({},{})".format(point0[0], point0[1], point1[0], point1[1], point2[0], point2[1], point[0], point[1]))
     
-      print "dudxi: \n{}".format(dudxi)
-      print "dxidu: \n{}".format(dxidu)
-      print "p-p0: \n{}".format(point-point0)
+      print("dudxi: \n{}".format(dudxi))
+      print("dxidu: \n{}".format(dxidu))
+      print("p-p0: \n{}".format(point-point0))
       
-      print "point found"
-      print ""
+      print("point found")
+      print("")
   
   return (condition, xi)
   
@@ -101,7 +101,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
       if parametric_space_shape == 0 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit circle
         phi = np.arctan2(y,x)
         r = x / np.cos(phi)
-        if (output_xi_msg): print " (x,y) = ({},{}), (phi,r)=({}deg,{})  (check: (x,y)=({},{}))".format(x,y,phi*180./np.pi,r,r*np.cos(phi),r*np.sin(phi))
+        if (output_xi_msg): print(" (x,y) = ({},{}), (phi,r)=({}deg,{})  (check: (x,y)=({},{}))".format(x,y,phi*180./np.pi,r,r*np.cos(phi),r*np.sin(phi)))
         if abs(r) <= 1e-10:
           r_old = r
           r = 1e-4*np.sign(r)
@@ -111,7 +111,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
           y_old = y
           x = r*np.cos(phi)
           y = r*np.sin(phi)
-          if (output_xi_msg): print " [1] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+          if (output_xi_msg): print(" [1] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r))
         
         elif abs(r) >= 1.0-1e-10:
           r_old = r
@@ -122,7 +122,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
           y_old = y
           x = r*np.cos(phi)
           y = r*np.sin(phi)
-          if (output_xi_msg): print " [2] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+          if (output_xi_msg): print(" [2] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r))
         
         elif abs(r) <= 1e-4:
           r_old = r
@@ -133,7 +133,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
           y_old = y
           x = r*np.cos(phi)
           y = r*np.sin(phi)
-          if (output_xi_msg): print " [4] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+          if (output_xi_msg): print(" [4] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r))
         
         else:
           # move point a little
@@ -145,7 +145,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
           y_old = y
           x = r*np.cos(phi)
           y = r*np.sin(phi)
-          if (output_xi_msg): print " [3] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r)
+          if (output_xi_msg): print(" [3] adjust grid point (x,y) = ({},{})->({},{}), phi={}->{}, r={}->{}".format(x_old,y_old,x,y,phi_old,phi,r_old,r))
           # try again to find triangle in parametric space which contains grid point
           xi_point = None
           triangle_parameteric_space_no = None
@@ -157,13 +157,13 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
               break
       
           if xi_point is not None:
-            if (output_xi_msg): print " xi = [{},{}] found after {} tries".format(xi[0],xi[1],n_tries+1)
+            if (output_xi_msg): print(" xi = [{},{}] found after {} tries".format(xi[0],xi[1],n_tries+1))
             break
     
   if xi_point is None:
     
-    print "Error: could not find triangle in parameter space for grid point (x,y) = ({},{}), r={}".format(x,y,r)
-    print ""
+    print("Error: could not find triangle in parameter space for grid point (x,y) = ({},{}), r={}".format(x,y,r))
+    print("")
     return None
     
   if xi_point is not None:
@@ -234,8 +234,8 @@ def compute_mean_distances(grid_points_world_space):
   
       mean_distance_current_loop = np.mean(distances_current_loop)
       relative_distances_current_loop += [d / mean_distance_current_loop for d in distances_current_loop]
-      #print "distances_current_loop: {}, mean: {}".format(distances_current_loop, mean_distance_current_loop)
-      #print "relative_distances_current_loop: {}".format(relative_distances_current_loop)
+      #print("distances_current_loop: {}, mean: {}".format(distances_current_loop, mean_distance_current_loop)
+      #print("relative_distances_current_loop: {}".format(relative_distances_current_loop)
       
   return distances_current_loop,relative_distances_current_loop
 
@@ -258,7 +258,7 @@ if parametric_space_shape == 0:  # for unit circle
   
   
 if len(sys.argv) < 2:
-  print "usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x>]]]]"
+  print("usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x>]]]]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
@@ -276,11 +276,11 @@ if len(sys.argv) >= 5:
   n_grid_points_x = int(sys.argv[4])
   n_grid_points_y = n_grid_points_x
   
-print "triangulation_type: {}".format(triangulation_type)
-print "parametric_space_shape: {}".format(parametric_space_shape)
-print "n_points_x: {}".format(n_points_x)
-print "n_grid_points_x: {}".format(n_grid_points_x)
-print "n_grid_points_y: {}".format(n_grid_points_y)
+print("triangulation_type: {}".format(triangulation_type))
+print("parametric_space_shape: {}".format(parametric_space_shape))
+print("n_points_x: {}".format(n_points_x))
+print("n_grid_points_x: {}".format(n_grid_points_x))
+print("n_grid_points_y: {}".format(n_grid_points_y))
   
 # read in loops
 with open('rings', 'rb') as f:
@@ -288,7 +288,7 @@ with open('rings', 'rb') as f:
   
 debug = False  
 
-print "{} loops".format(len(loops))
+print("{} loops".format(len(loops)))
 
 # iterate over loops of points
 sorted_loops = []
@@ -327,14 +327,14 @@ for loop in loops:
     sorted_loop = sorted_loop[::-1]
     
   if debug:
-    print "loop"
-    print loop
-    print ""
+    print("loop")
+    print(loop)
+    print("")
     
-    print "sorted_loop"
-    print sorted_loop
-    print ""
-    print ""
+    print("sorted_loop")
+    print(sorted_loop)
+    print("")
+    print("")
     
   sorted_loops.append(sorted_loop)
 
@@ -367,8 +367,8 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   #if loop_no != 41:
   #  continue
     
-  print ""
-  print "Loop {}/{} with {} points, length: {}".format(loop_no, len(sorted_loops), len(loop), length)
+  print("")
+  print("Loop {}/{} with {} points, length: {}".format(loop_no, len(sorted_loops), len(loop), length))
   
   border_points = []
   n_points = 4*n_points_x
@@ -385,14 +385,14 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       # add starting point of loop as first border points
       border_points.append(loop_point)
       if debug:
-        print "add start point: ",border_points
+        print("add start point: ",border_points)
       
       t_previous_loop_point = 0
       t_next_border_point = h
       continue
     
     if debug:
-      print "current previous_loop_point: {}, t_previous_loop_point: {}".format(previous_loop_point,t_previous_loop_point) 
+      print("current previous_loop_point: {}, t_previous_loop_point: {}".format(previous_loop_point,t_previous_loop_point) )
     
     # compute current edge
     edge = -previous_loop_point + loop_point 
@@ -407,14 +407,14 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       border_points.append(border_point)
       
       if debug:
-        print "border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point)
+        print("border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point))
       
       t_next_border_point += h
       if debug:
         n_on_edge += 1
     
     if debug:
-      print "n_on_edge: ",n_on_edge
+      print("n_on_edge: ",n_on_edge)
       
       
     # move on to next edge
@@ -435,7 +435,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     border_points.append(border_point)
     
     if debug:
-      print "border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point)
+      print("border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point))
     
     t_next_border_point += h
     
@@ -443,23 +443,23 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   # if there were too many points collected, due to rounding errors
   if len(border_points) > n_points:
     if debug:
-      print "too many points: {}, n_points: {}".format(len(border_points), n_points)
+      print("too many points: {}, n_points: {}".format(len(border_points), n_points))
     border_points = border_points[:n_points]
 
   
   # triangulate surface in world space
   if debug:
-    print "border points: ",len(border_points)
-    print border_points
+    print("border points: ",len(border_points))
+    print(border_points
   
-  print "n border points: ",len(border_points)
+  print("n border points: ",len(border_points))
   
   points = np.reshape(border_points,(n_points,3))
   
   if debug:  
-    print ""
-    print "points:"
-    print points
+    print("")
+    print("points:")
+    print(points)
 
   # for debugging create markers at border points
   for point in points:
@@ -501,9 +501,9 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   projected_points = np.reshape(projected_points, (-1,2))
   
   if debug:
-    print ""
-    print "projected_points:"
-    print projected_points
+    print("")
+    print("projected_points:")
+    print(projected_points)
   
   if triangulation_type == 0:
     # delaunay triangulation of scipy, does not add new points but is not constrained (works for convex domains)
@@ -525,7 +525,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   
     max_area = extent_x * extent_y / max_area_factor
     if debug:
-      print "maximum area: ",max_area
+      print("maximum area: ",max_area)
   
     #triangulation = triangle.triangulate(data, 'pq')
     triangulation = triangle.triangulate(data, 'pqa'+str(max_area))
@@ -568,29 +568,29 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
         last_vector = None
         for projected_point in projected_points:
           vector = [-center_point_x + projected_point[0], -center_point_y + projected_point[1]]
-          #print "projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector)
+          #print("projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector))
           if last_vector is not None:
             denominator = np.sqrt(vector[0]**2 + vector[1]**2) * np.sqrt(last_vector[0]**2 + last_vector[1]**2)
             value = -(vector[0] * last_vector[1] - vector[1] * last_vector[0])/denominator
             angle = np.arcsin(value)
-            #print "value: ", value, ", angle: ", angle*180./np.pi
+            #print("value: ", value, ", angle: ", angle*180./np.pi)
             total_angle += angle
             
           last_vector = list(vector)
           
         projected_point = projected_points[0,:]
         vector = [-center_point_x + projected_point[0], -center_point_y + projected_point[1]]
-        #print "first projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector)
+        #print("first projected_point: {}, center_point: ({},{}), vector: {}, last_vector: {}".format(projected_point, center_point_x, center_point_y, vector, last_vector))
         denominator = np.sqrt(vector[0]**2 + vector[1]**2) * np.sqrt(last_vector[0]**2 + last_vector[1]**2)
         value = -(vector[0] * last_vector[1] - vector[1] * last_vector[0])/denominator
         angle = np.arcsin(value)
-        #print "angle: ", angle*180./np.pi
+        #print("angle: ", angle*180./np.pi)
         total_angle += angle
             
         return total_angle
         
       #a = rotation_angle(center_point[0], center_point[1])
-      #print "test a=",a*180./np.pi
+      #print("test a=",a*180./np.pi)
       
       
       # casadi: sudo pip install casadi
@@ -616,12 +616,12 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       result = F(x0=initial_values)
       center_point[0] = result['x'][0]
       center_point[1] = result['x'][1]
-      #print "previous_center_point: ", previous_center_point, ", optimized center point: ", center_point
+      #print("previous_center_point: ", previous_center_point, ", optimized center point: ", center_point)
     
       a = rotation_angle(center_point[0], center_point[1])
-      #print "resulting rotation_angle: ",a*180./np.pi
+      #print("resulting rotation_angle: ",a*180./np.pi)
       distance_to_cog = np.sqrt((previous_center_point[0] - center_point[0])**2+(previous_center_point[1] - center_point[1])**2)
-      #print "resulting distance to cog: ", distance_to_cog
+      #print("resulting distance to cog: ", distance_to_cog)
         
     # add center point as new point
     projected_points = np.concatenate([projected_points, np.array([[center_point[0],center_point[1]]])],axis=0)
@@ -644,15 +644,15 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     point_indices_list.append([center_point_index, n_points-2, 0])
     
     
-    #print "point_indices_list:",point_indices_list
-    #print "points:",points,points.shape
+    #print("point_indices_list:",point_indices_list)
+    #print("points:",points,points.shape)
     triangle_list = []
     for point_index_triple in point_indices_list:
       triangle_list.append(points[point_index_triple])
     
     #triangle_list = points[point_indices_list]  ## doesn't work sometimes
     
-  print "number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list)
+  print("number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
     
   # solve Laplace equation on deformed mesh
   n_dofs = n_points
@@ -748,7 +748,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   rhs_v = np.zeros((n_dofs,1))
   
   if debug:
-    print "n_dofs=",n_dofs,",n_original_points=",n_original_points
+    print("n_dofs=",n_dofs,",n_original_points=",n_original_points)
   
   # loop over boundary points, `original_points` are the points of the ring surface, `points` is a superset containing additional points created by the triangulation
   for original_point_no,original_point in enumerate(original_points):
@@ -847,12 +847,12 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       global_stiffness[i,i] = 1.0
 
     if debug:
-      print "global stiffness matrix:"
-      print global_stiffness
+      print("global stiffness matrix:")
+      print(global_stiffness)
 
-      print ""
-      print "rhs vector (u):"
-      print rhs_u
+      print("")
+      print("rhs vector (u):")
+      print(rhs_u)
 
     # solve liner system
     u = np.linalg.solve(global_stiffness, rhs_u)
@@ -876,16 +876,16 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     non_dirichlet_v = np.linalg.solve(global_stiffness_non_dirichlet, rhs_non_dirichlet_v)
     
     if debug:
-      print "rhs_non_dirichlet_u:",rhs_non_dirichlet_u
-      print "global_stiffness_non_dirichlet:",global_stiffness_non_dirichlet
-      print "non_dirichlet_u:",non_dirichlet_u
-      print "non_dirichlet_v:",non_dirichlet_v
+      print("rhs_non_dirichlet_u:",rhs_non_dirichlet_u)
+      print("global_stiffness_non_dirichlet:",global_stiffness_non_dirichlet)
+      print("non_dirichlet_u:",non_dirichlet_u)
+      print("non_dirichlet_v:",non_dirichlet_v)
     
     u = np.concatenate([dirichlet_u[0:n_original_points], non_dirichlet_u])
     v = np.concatenate([dirichlet_v[0:n_original_points], non_dirichlet_v])
     
     if debug:
-      print "u:",u
+      print("u:",u)
     
   # output solution
   for dof_no in range(n_dofs):
@@ -899,8 +899,8 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
         break
         
     if debug:
-      print "dof {}, original point no: {}, dirichlet: ({},{}), solution: ({},{}), rhs: ({},{})".\
-        format(dof_no, original_point_no, dirichlet_u[dof_no], dirichlet_v[dof_no], u[dof_no], v[dof_no], rhs_u[dof_no], rhs_v[dof_no])
+      print("dof {}, original point no: {}, dirichlet: ({},{}), solution: ({},{}), rhs: ({},{})".\
+        format(dof_no, original_point_no, dirichlet_u[dof_no], dirichlet_v[dof_no], u[dof_no], v[dof_no], rhs_u[dof_no], rhs_v[dof_no]))
       
   # store the triangles in parametric space
   triangles_parametric_space = []
@@ -1060,7 +1060,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     def objective(inner_grid_points_parametric):
           
       inner_grid_points_parametric = np.reshape(inner_grid_points_parametric, (-1,2))
-      #print "shape of inner_grid_points_parametric: ", inner_grid_points_parametric.shape
+      #print("shape of inner_grid_points_parametric: ", inner_grid_points_parametric.shape
       
       grid_points_world = np.zeros((n_grid_points_y*n_grid_points_x,3))
         
@@ -1081,10 +1081,10 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
           else:
             grid_points_world[j*n_grid_points_x+i,:] = grid_points_world_space[j*n_grid_points_x+i,:]
           
-      #print "grid_points_world:",grid_points_world
+      #print("grid_points_world:",grid_points_world
       
       distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world)
-      #print "objective, std: {}".format(np.std(relative_distances_current_loop))
+      #print("objective, std: {}".format(np.std(relative_distances_current_loop))
       return np.std(relative_distances_current_loop)
     
     
@@ -1096,13 +1096,13 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
         initial_values[j*(n_grid_points_x-2)+i,:] = grid_points_parametric_space[(j+1)*n_grid_points_x+(i+1),:]
     initial_values = np.reshape(initial_values, (-1,1))
       
-    #print "initial_values: ",initial_values
+    #print("initial_values: ",initial_values
       
     result = scipy.optimize.minimize(objective, initial_values, method='Nelder-Mead', options={"maxiter":1e4, "disp":True})
-    print result["message"]
+    print(result["message"]
     resulting_parametric_points = result["x"]
     
-    print "final objective: {}".format(objective(resulting_parametric_points))
+    print("final objective: {}".format(objective(resulting_parametric_points)))
     
     for j in range(0,n_grid_points_y):
       for i in range(0,n_grid_points_x):
@@ -1116,10 +1116,10 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
         # transform to world space
         point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list)
       
-        #print "point_world_space:",point_world_space
+        #print("point_world_space:",point_world_space
       
         if point_world_space is None:
-          #print "point_world_space is None"
+          #print("point_world_space is None"
           grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
       
         if point_world_space is not None:
@@ -1128,7 +1128,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     
 
   #distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world_space)
-  #print "transformed, std: {}".format(np.std(relative_distances_current_loop))
+  #print("transformed, std: {}".format(np.std(relative_distances_current_loop))
   
   # store grid points in world space of current loop
   loop_grid_points.append(grid_points_world_space)
@@ -1219,7 +1219,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       min_y = min(min_y, min(quadrilateral[:,1]))
       max_x = max(max_x, max(quadrilateral[:,0]))
       max_y = max(max_y, max(quadrilateral[:,1]))
-      #print "world: ",quadrilateral
+      #print("world: ",quadrilateral
       polygon = patches.Polygon(quadrilateral, True)
       patches_world.append(polygon)
       
@@ -1241,7 +1241,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
       parametric_points.append(quadrilateral[1])
       parametric_points.append(quadrilateral[2])
       parametric_points.append(quadrilateral[3])
-      #print "parametric: ",quadrilateral
+      #print("parametric: ",quadrilateral
       polygon = patches.Polygon(quadrilateral, True)
       patches_parametric.append(polygon)
       
@@ -1326,7 +1326,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
        
   distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world_space)
   
-  #print "loop {} has relative_distances_current_loop std {} from values {}".format(loop_no, np.std(relative_distances_current_loop), relative_distances_current_loop)
+  #print("loop {} has relative_distances_current_loop std {} from values {}".format(loop_no, np.std(relative_distances_current_loop), relative_distances_current_loop)
   
   relative_distances_between_world_mesh_nodes_std.append(np.std(relative_distances_current_loop))
         
@@ -1363,7 +1363,7 @@ create_quadratic_elements = True
 n_loops = len(loop_grid_points)
 if n_grid_points_x <= 2 or n_grid_points_x%2 == 0 or n_grid_points_y <= 2 or n_grid_points_y%2 == 0 or n_loops%2 == 0 or n_loops <= 2:
   create_quadratic_elements = False
-  print "Grid per ring is {} x {}, {} rings: with this it is not possible to create quadratic elements (numbers must be odd)".format(n_grid_points_x, n_grid_points_y, n_loops)
+  print("Grid per ring is {} x {}, {} rings: with this it is not possible to create quadratic elements (numbers must be odd)".format(n_grid_points_x, n_grid_points_y, n_loops))
 
 # fill list of nodes
 for grid_point_list in loop_grid_points:
@@ -1505,12 +1505,12 @@ def write_stl(triangles, outfile, description):
   for i, f in enumerate(triangles):
     out_mesh.vectors[i] = f
     #for j in range(3):
-      #print "set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+      #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
       
   out_mesh.update_normals()
 
   out_mesh.save(outfile) #, mode=stl.Mode.ASCI
-  print "saved {} triangles to \"{}\" ({})".format(n_triangles,outfile,description)
+  print("saved {} triangles to \"{}\" ({})".format(n_triangles,outfile,description))
 
 write_stl(markers_border_points_world_space,   "out/mesh_02_border_points_w.stl", "border points")
 write_stl(out_triangulation_world_space,       "out/mesh_03_triangulation_w.stl", "triangulation world space")

@@ -101,7 +101,7 @@ setStiffnessMatrix()
 
       // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
       evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_,jacobian,xi);
+        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_, jacobian, elementNo, xi);
 
     }  // function evaluations
 

@@ -10,13 +10,14 @@ namespace SpatialDiscretization
 //integrand for stiffness matrix of laplace operator, 1D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<1,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,1> &jacobian, const std::array<double,1> xi)
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,1> &jacobian,
+                  element_no_t elementNoLocal, const std::array<double,1> xi)
 {
   EvaluationsType evaluations;
 
   double s = MathUtility::norm<3>(jacobian[0]);
   double integralFactor = 1. / s;
-  double diffusionTensor = data.diffusionTensor()[0];
+  double diffusionTensor = data.diffusionTensor(elementNoLocal, xi)[0];
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
   std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
@@ -38,7 +39,8 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 //integrand for stiffness matrix of laplace operator, 2D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<2,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,2> &jacobian, const std::array<double,2> xi)
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,2> &jacobian,
+                  element_no_t elementNoLocal, const std::array<double,2> xi)
 {
   VLOG(1) << "evaluateIntegrand generalized Laplace";
 
@@ -48,7 +50,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
   const Vec3 &zetah = jacobian[1];  // second column of jacobian
 
   double integrationFactor = MathUtility::computeIntegrationFactor<2>(jacobian);
-  MathUtility::Matrix<2,2> diffusionTensor = data.diffusionTensor();
+  MathUtility::Matrix<2,2> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
   VLOG(1) << "diffusionTensor: " << diffusionTensor;
 
   double l1 = MathUtility::length<3>(zeta1);
@@ -105,11 +107,12 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
 //integrand for stiffness matrix of laplace operator, 3D
 template<typename EvaluationsType,typename FunctionSpaceType,typename Term>
 EvaluationsType IntegrandStiffnessMatrix<3,EvaluationsType,FunctionSpaceType,Term,Equation::hasGeneralizedLaplaceOperator<Term>>::
-evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,3> &jacobian, const std::array<double,3> xi)
+evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, const std::array<Vec3,3> &jacobian,
+                  element_no_t elementNoLocal, const std::array<double,3> xi)
 {
   EvaluationsType evaluations;
 
-  MathUtility::Matrix<3,3> diffusionTensor = data.diffusionTensor();
+  MathUtility::Matrix<3,3> diffusionTensor = data.diffusionTensor(elementNoLocal, xi);
 
   // compute the 3x3 transformation matrix T = J^{-1}J^{-T} and the absolute of the determinant of the jacobian
   double determinant;
@@ -140,7 +143,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
     {
 
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
-      double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
+      double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
       evaluations(i,j) = integrand;
     }
   }

@@ -18,16 +18,16 @@ int main(int argc, char *argv[])
       BasisFunction::LagrangeOfOrder<1>,
       Quadrature::Gauss<3>,
       Equation::Static::Laplace
-    >
+    >,
     CellmlAdapter<                // Hodgkin-Huxley
       4,
-      MeshType
+      FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>
     >,
     SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion
       MeshType,
       BasisFunction::LagrangeOfOrder<1>,
       Quadrature::Gauss<3>,
-      Equation::Dynamic::AnisotropicDiffusion
+      Equation::Dynamic::DirectionalDiffusion
     >
   > problem(settings);
   

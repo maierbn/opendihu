@@ -147,7 +147,7 @@ createLocalMatrix()
   PetscErrorCode ierr;
   ierr = MatSetLocalToGlobalMapping(this->globalMatrix_, this->meshPartitionRows_->localToGlobalMappingDofs(), this->meshPartitionColumns_->localToGlobalMappingDofs()); CHKERRV(ierr);
 
-  // output size of create matrix
+  // output size of created matrix
   int nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);

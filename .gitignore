@@ -4,8 +4,6 @@
 **/*.so
 */.sconf_temp*
 config.log
-dependencies/lapack
-dependencies/petsc
 build_debug
 build_release
 build_release_with_debug_info

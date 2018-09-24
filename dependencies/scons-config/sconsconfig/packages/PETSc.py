@@ -86,6 +86,7 @@ class PETSc(Package):
             CXXOPTFLAGS=-O3\
             FOPTFLAGS=-O3',
             'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
+            'echo "sleep 3 s" && sleep 3',
             'make install',
             'make test',
         ])
@@ -100,7 +101,7 @@ class PETSc(Package):
         #    'make test',
         #])
 
-        self.number_output_lines = 1924
+        self.number_output_lines = 3990
         
     def check(self, ctx):
         env = ctx.env

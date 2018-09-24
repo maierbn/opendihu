@@ -27,7 +27,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyO
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
-  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
  

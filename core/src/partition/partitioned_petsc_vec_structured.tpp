@@ -29,7 +29,6 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,Ba
     ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[i]); CHKERRV(ierr);
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);*/
   }
-
 }
   
 //! constructor, copy from existing vector
@@ -432,6 +431,12 @@ getContiguousValuesGlobal()
     return vectorGlobal_[0];
   }
 
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    return valuesContiguous_;
+  }
+
   PetscErrorCode ierr;
 
   // create contiguos vector if it does not exist yet
@@ -513,6 +518,48 @@ restoreContiguousValuesGlobal()
 
   ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
   valuesContiguousInUse_ = false;
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+{
+  PetscErrorCode ierr;
+
+  // prepare source vector
+  Vec vectorSource;
+  dof_no_t dofStart = 0;
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    vectorSource = valuesContiguous_;
+    dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
+  }
+  else
+  {
+    vectorSource = vectorLocal_[componentNo];
+  }
+
+  const double *valuesSource;
+  ierr = VecGetArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // prepare target vector
+  //assert(!extractedFieldVariable->valuesContiguousInUse());
+
+  double *valuesTarget;
+  ierr = VecGetArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes (\"" << this->name_ << "\" component " << componentNo
+    << ") to \"" << extractedFieldVariable->name() << "\"";
+  memcpy(
+    valuesTarget,
+    valuesSource + dofStart,
+    this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+  );
+
+  // restore memory
+  ierr = VecRestoreArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
 //! get a vector of local dof nos (from meshPartition), without ghost dofs

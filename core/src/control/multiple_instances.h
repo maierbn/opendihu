@@ -46,7 +46,8 @@ protected:
   PyObject *specificSettings_;    ///< config for this object
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
-  int nInstances_; ///< number of instances
+  int nInstances_; ///< number of instances that are given by config
+  int nInstancesComputedGlobally_; ///< number of instances that any process will compute
   std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   

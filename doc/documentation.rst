@@ -152,7 +152,7 @@ The correction for the example would be to remove (#) lines or set the ghost buf
 
 So if you want to read ghost values, call startGhostManipulation() beforehand, 
 if you want to write all ghost values, wrap the setValues code with startGhostManipulation() and finishGhostManipulation(). 
-If you want to write some ghost values, call startGhostManipulation(), save the ghost values you need (by fieldVariable->getVaules()), zeroGhostBuffer(), finishGhostManipulation()
+If you want to write some ghost values, call startGhostManipulation(), save the ghost values you need (by fieldVariable->getValues()), zeroGhostBuffer(), finishGhostManipulation()
 
 # Using output data
 The python output data in *.py files can be viewed by the script `catpy.py <files>` and plotted by `plot.py <files>`. The scripts are located in the `scripts` folder. It is convenient to add this folder to PATH, e.g. in ~/.bashrc with 

@@ -21,7 +21,7 @@ if len(sys.argv) > 1:
   filename = sys.argv[1]
 
 # Create a new plot
-fig = plt.figure()
+fig = plt.figure(dpi=600)
 ax = mplot3d.Axes3D(fig)
 
 # Load the STL files and add the vectors to the plot
@@ -30,7 +30,6 @@ ax.add_collection3d(mplot3d.art3d.Poly3DCollection(mesh_object.vectors))
 
 # Auto scale to the mesh size
 scale = mesh_object.points.flatten(-1)
-scale *= 0.9
 ax.auto_scale_xyz(scale, scale, scale)
 
 # Show the plot to the screen

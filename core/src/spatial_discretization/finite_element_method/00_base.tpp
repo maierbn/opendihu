@@ -191,4 +191,15 @@ solve()
 #endif  
 }
 
+template<typename FunctionSpaceType,typename QuadratureType>
+void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
+{
+  // initialize the DiffusionTensorFieldVariable object
+  this->data_.initialize(direction, multidomainNCompartments);
+
+  // call normal initialize, this does not initialize the data object again
+  FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();
+}
+
 };

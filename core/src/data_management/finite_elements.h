@@ -38,8 +38,11 @@ public:
   //! constructor from base class
   using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
 
-  // !intialize base class and diffusion tensor
-  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction);
+  //! dummy method
+  virtual void initialize(){};
+
+  // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments=0);
 };
 
 

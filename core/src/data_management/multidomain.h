@@ -25,7 +25,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStatesCellML> CellMLFieldVariableType;
 
   //! constructor
-  Multidomain(DihuContext context, int nCompartments);
+  Multidomain(DihuContext context);
 
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   std::shared_ptr<GradientFieldVariableType> fibreDirection();
@@ -51,15 +51,17 @@ public:
   //! return the transmembrane (Vm) increment field variable used for time stepping
   std::shared_ptr<FieldVariableType> transmembraneIncrement();
 
+  //! initialize and set nCompartments_
+  void initialize(int nCompartments);
 
   //! print all stored data to stdout
-  void print() override;
+  void print();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    GradientFieldVariableType,     // fibreDirection
-    FieldVariableType,              // extra-cellular potential
-    std::vector<FunctionSpaceType>    // transmembrane potentials
+    std::shared_ptr<GradientFieldVariableType>,     // fibreDirection
+    std::shared_ptr<FieldVariableType>,              // extra-cellular potential
+    std::vector<std::shared_ptr<CellMLFieldVariableType>>    // transmembrane potentials
   > OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers

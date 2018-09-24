@@ -31,7 +31,7 @@ public:
   typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
 
   //! return nStates_
-  constexpr int nStates();
+  static constexpr int nStates();
 
   ///! constructor
   CellmlAdapter(DihuContext context);

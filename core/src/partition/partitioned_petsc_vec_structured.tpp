@@ -540,26 +540,26 @@ extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSp
     vectorSource = vectorLocal_[componentNo];
   }
 
-  double *valuesSource;
-  ierr = VecGetArray(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  const double *valuesSource;
+  ierr = VecGetArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
   // prepare target vector
-  assert(!extractedFieldVariable->valuesContiguousInUse_);
+  //assert(!extractedFieldVariable->valuesContiguousInUse());
 
-  const double *valuesTarget;
-  ierr = VecGetArrayRead(extractedFieldVariable->vectorLocal_[0], &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  double *valuesTarget;
+  ierr = VecGetArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
   VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes (\"" << this->name_ << "\" component " << componentNo
     << ") to \"" << extractedFieldVariable->name() << "\"";
   memcpy(
     valuesTarget,
-    vectorSource + dofStart,
+    valuesSource + dofStart,
     this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
   );
 
   // restore memory
-  ierr = VecRestoreArrayRead(extractedFieldVariable->vectorLocal_[0], &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-  ierr = VecRestoreArray(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
 //! get a vector of local dof nos (from meshPartition), without ghost dofs

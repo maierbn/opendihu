@@ -31,12 +31,12 @@ initialize()
 
 template<typename FunctionSpaceType>
 void FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction)
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
 {
   FiniteElementsBase<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
-  DiffusionTensorFieldVariable<FunctionSpaceType>::initialize(direction);
+  DiffusionTensorFieldVariable<FunctionSpaceType>::initialize(direction, multidomainNCompartments);
 }
 
 

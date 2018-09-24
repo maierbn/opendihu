@@ -32,40 +32,54 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   MathUtility::Matrix<D,D> diffusionTensor;
   MathUtility::Matrix<D,D> diffusionTensorExtraCellular;  // sigma_e
 
+  // compute the conductivity tensor in fibre direction
   if (FunctionSpaceType::dim() == 1)
   {
-    diffusionTensor = {1.0};
+    diffusionTensor = MathUtility::Matrix<D,D>({1.0});
   }
   else if (FunctionSpaceType::dim() == 2)
   {
-    diffusionTensor = {1.0, 0.0,
-                       0.0, 0.0};
+    diffusionTensor = MathUtility::Matrix<D,D>(
+    {
+      1.0, 0.0,
+      0.0, 0.0
+    });
   }
   else if (FunctionSpaceType::dim() == 3)
   {
-    diffusionTensor = {1.0, 0.0, 0.0,
-                       0.0, 0.0, 0.0,
-                       0.0, 0.0, 0.0};
+    diffusionTensor = MathUtility::Matrix<D,D>(
+    {
+      1.0, 0.0, 0.0,
+      0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0
+    });
   }
 
   MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
+  // compute the conductivity tensor for extra-cellular diffusion
   if (multidomainNCompartments_ > 0)
   {
     if (FunctionSpaceType::dim() == 1)
     {
-      diffusionTensorExtraCellular = {1.0};
+      diffusionTensorExtraCellular = MathUtility::Matrix<D,D>({1.0});
     }
     else if (FunctionSpaceType::dim() == 2)
     {
-      diffusionTensorExtraCellular = {2.0, 0.0,
-                                      0.0, 1.0};
+      diffusionTensorExtraCellular = MathUtility::Matrix<D,D>(
+      {
+        2.0, 0.0,
+        0.0, 1.0
+      });
     }
     else if (FunctionSpaceType::dim() == 3)
     {
-      diffusionTensorExtraCellular = {2.0, 0.0, 0.0,
-                                      0.0, 1.0, 0.0,
-                                      0.0, 0.0, 1.0};
+      diffusionTensorExtraCellular = MathUtility::Matrix<D,D>(
+      {
+        2.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0
+      });
     }
 
     MathUtility::rotateMatrix(diffusionTensorExtraCellular, directionVector);

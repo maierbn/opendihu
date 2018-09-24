@@ -18,6 +18,8 @@ class FiniteElementMethodTimeStepping :
 public:
   FiniteElementMethodTimeStepping(DihuContext context);
 
+  using AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>::initialize;
+
   //! return the compile-time constant number of variable components of the solution field variable
   static constexpr int nComponents();
 

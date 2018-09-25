@@ -239,11 +239,13 @@ createDmElements()
     ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL);
     
     VLOG(1) << "nRanks_[0] = " << nRanks_[0];
+    VLOG(1) << "lxData: " << intptr_t(lxData);
     localSizesOnRanks_[0].resize(nRanks_[0]);
     for (int i = 0; i < nRanks_[0]; i++)
     {
-      VLOG(1) << "set localSizesOnRanks_[0][" << i<< "]=" << *(lxData+i);
-      localSizesOnRanks_[0][i] = *(lxData+i);
+      PetscInt l = lxData[i];
+      VLOG(1) << "set localSizesOnRanks_[0][" << i<< "]=" << l;
+      localSizesOnRanks_[0][i] = l;
     }
   }
   else if (MeshType::dim() == 2)

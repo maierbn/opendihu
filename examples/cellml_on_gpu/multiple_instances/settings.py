@@ -17,8 +17,8 @@ gamma_data = []
 vm_data = []
 
 It_value=2
-tsw=0.001*pow(2,2-It_value)
-et=0.1#1.0
+tsw=0.001*pow(2,1-It_value)
+et=0.001#1.0
 opiv=1*pow(2,It_value-2)
 hrciv=opiv
 
@@ -31,23 +31,23 @@ config = {
     "initialValues": [],
     "timeStepOutputInterval": 50e1, # ignored, see line 31 instead. --aaron
     
-    "OutputWriter" : [
+    #"OutputWriter" : [
       #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
       #{"format": "Paraview", "filename": "out", "binary": "false", "fixedFormat": False, "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/N_1/cell", "outputInterval": opiv, "binary": False} #0.01e1 
-    ],
+      #{"format": "PythonFile", "filename": "out/N_1/cell", "outputInterval": opiv, "binary": False} #0.01e1 
+    #],
 
     "CellML" : {
       "sourceFilename": "cellmlcode.cpp",
-      "gpuSourceFilename": "gpucode.cpp",
       "simdSourceFilename" : "simdcode.cpp",
-      #"libraryFilename": "cellml_simd_lib.so",
-      "libraryFilename": "cellml_gpu_lib.so",
+      "libraryFilename": "cellml_simd_lib.so",
+      #"gpuSourceFilename": "gpucode.cpp",
+      #"libraryFilename": "cellml_gpu_lib.so",
       "setParametersFunction": setParameters,
       "setParametersCallInterval": 1,
        #"handleResultFunction": handleResult,
       "handleResultCallInterval": hrciv,
-      "nElements": 50,
+      "nElements": 8000,
 
       "statesInitialValues": [ -79.974, -80.2, 5.9, 150.9, 5.9, 12.7, 132.0, 133.0, 0.009466, 0.9952, 0.0358, 0.4981, 0.581, 0.009466, 0.9952, 0.0358, 0.4981, 0.581, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 1500.0, 0.1, 1500.0, 25, 615.0, 615.0, 811.0, 811.0, 16900.0, 16900.0, 0.4, 0.4, 7200.0, 7200.0, 799.6, 799.6, 1000.0, 1000.0, 3.0, 0.8, 1.2, 3.0, 0.3, 0.23, 0.23, 0.23, 0.23] ,
       

@@ -620,7 +620,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // write out source file
     std::stringstream s;
-    s << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";
+    s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";  // standard file name for SIMD source is subfolder "src" and "_simd.c" suffix
     simdSourceFilename = s.str();
     if (PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
     {

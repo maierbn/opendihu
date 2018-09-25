@@ -92,14 +92,8 @@ run()
   // initialize data structurures
   initialize();
 
-  // start time measurement
-  Control::PerformanceMeasurement::start("OperatorSplitting total");
-
   // run simulation
   advanceTimeSpan();
-
-  // stop time measurement and output log file
-  Control::PerformanceMeasurement::stop("OperatorSplitting total");
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

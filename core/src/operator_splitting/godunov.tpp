@@ -17,6 +17,10 @@ template<typename TimeStepping1, typename TimeStepping2>
 void Godunov<TimeStepping1,TimeStepping2>::
 advanceTimeSpan()
 {
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
@@ -64,6 +68,10 @@ advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
     LOG(DEBUG) << "  Godunov: write output";
     // write current output values
     if(this->outputData1_)
@@ -76,6 +84,14 @@ advanceTimeSpan()
       LOG(DEBUG) << "write output 2";
       this->outputWriterManager_.writeOutput(this->timeStepping2_.data(), timeStepNo, currentTime);
     }
+
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 };    // namespace

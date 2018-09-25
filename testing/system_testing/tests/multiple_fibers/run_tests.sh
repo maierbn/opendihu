@@ -14,16 +14,20 @@ cd $workdir
 mkdir -p build_${variant}
 cd build_${variant}
 
+if [ -d /data/scratch/maierbn ]; then  # if the output path exists (on neon)
+  export output_path=/data/scratch/maierbn/multiple_fibres/out2
+else
+  export output_path=out2
+fi
 # remove old output data
 rm -rf out
-export output_path=/data/scratch/maierbn/multiple_fibres/out2
+
 mkdir -p $output_path
 ln -s $output_path out
 
 export OMP_NUM_THREADS=1
 
-# arguments: <fibre no> <cellml_file> <end_time>
-#./single_fibre ../single_fibre_settings.py 1 "../input/hodgkin_huxley_1952.c" 10
-mpirun -n $1 ./multiple_fibers ../multiple_fibers_settings.py
+# arguments: <n_processes_per_fiber>
+mpirun -n $1 ./multiple_fibers ../multiple_fibers_settings.py 1
 
 cd $workdir

@@ -1,0 +1,50 @@
+%===============================================================================
+%===============================================================================
+%
+\clearpage
+%
+\section{Monodomain on Biceps Brachii geometry}
+  %
+  The name of these system tests is \lstinline{multiple_fibers}, however only one fiber is simulation for this test case.
+  The monodomain equation \eqref{eq:monodomain1d} is used with the Hodgkin-Huxley model.
+  
+  The used parameters are
+  \begin{equation*}
+    \begin{array}{lll}
+      c = \text{Conductivity/(Am*Cm)},\qquad \Omega = [0,50], \qquad t_\text{end}=50.
+    \end{array}
+  \end{equation*}
+  The discretization parameters are
+  \begin{table}[h!]
+    \begin{center}
+      \begin{tabular}{l|l}
+        \textbf{Parameter} & \textbf{Value}\\
+        \hline
+        Number of elements & 1266\\
+        splitting timestep $dt_\text{3D}$ & $10^{-1}$\\
+        timestep of diffusion term $dt_\text{1D}$ & $10^{-5}$\\
+        timestep of ODEs $dt_\text{0D}$ & $5\cdot 10^{-5}$
+      \end{tabular}
+    \end{center}
+    \caption{discretization parameters}
+    \label{tab:table_monodomain2}
+  \end{table}
+
+\subsection{Result summary}
+%
+\begin{figure}[h!]
+  \animation{../tests/multiple_fibers/results/fibre_1.mp4}
+  \caption{\lstinline{fibre_1}}
+\end{figure} 
+%
+\begin{figure}[t]%
+  \centering%
+  \includegraphics[width=0.9\textwidth,keepaspectratio]{../tests/multiple_fibers/results/fibre_1.pdf}%
+  \caption{\lstinline{fibre_1}}
+\end{figure}%
+%
+
+\lstinputlisting[breaklines,basicstyle=\tiny]{../tests/multiple_fibers/results/log_recent_fibre_1.txt}
+%
+%===============================================================================
+%===============================================================================

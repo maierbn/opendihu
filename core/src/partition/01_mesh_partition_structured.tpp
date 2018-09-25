@@ -1,5 +1,6 @@
 #include "partition/01_mesh_partition.h"
 
+#include <cstdlib>
 #include "utility/vector_operators.h"
 #include "function_space/00_function_space_base_dim.h"
 
@@ -1638,8 +1639,17 @@ output(std::ostream &stream)
   stream << "total " << nNodesLocalWithoutGhosts()
     << ", dofNosLocal: [";
 
-  for (int i = 0; i < this->dofNosLocal_.size(); i++)
+  int dofNosLocalEnd = std::min(100, (int)this->dofNosLocal_.size());
+  if (VLOG_IS_ON(1))
+  {
+    dofNosLocalEnd = this->dofNosLocal_.size();
+  }
+  for (int i = 0; i < dofNosLocalEnd; i++)
+  {
     stream << this->dofNosLocal_[i] << " ";
+  }
+  if (dofNosLocalEnd < this->dofNosLocal_.size())
+    stream << " ... ( " << this->dofNosLocal_.size() << " local dof nos)";
   stream << "], ghostDofNosGlobalPetsc: [";
 
   for (int i = 0; i < ghostDofNosGlobalPetsc_.size(); i++)

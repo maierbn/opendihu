@@ -82,23 +82,23 @@ std::string Paraview::encodeBase64(const std::vector<double> &vector)
   return std::string(encoded);
 }
 
-std::string Paraview::encodeBase64(const std::vector<element_no_t> &vector)
+std::string Paraview::encodeBase64(const std::vector<int> &vector)
 {
   // encode as Paraview Int32
-  assert(sizeof(element_no_t) == 4);
-  
-  int rawLength = vector.size()*sizeof(element_no_t);
+  assert(sizeof(int) == 4);
+
+  int rawLength = vector.size()*sizeof(int);
   int encodedLength = Base64::EncodedLength(4+rawLength);
 
   char raw[4+rawLength];
   for (unsigned int i=0; i<vector.size(); i++)
   {
     union {
-      element_no_t integer;
+      int integer;
       char c[4];
     };
     integer = vector[i];
-    memcpy(raw+4+i*sizeof(element_no_t), c, 4);
+    memcpy(raw+4+i*sizeof(int), c, 4);
   }
 
   // prepend number of bytes as uint32
@@ -138,7 +138,7 @@ std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fix
   return result.str();
 }
 
-std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bool fixedFormat)
+std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedFormat)
 {
   std::stringstream result;
   for(auto value : vector)
@@ -154,77 +154,4 @@ std::string Paraview::convertToAscii(const std::vector<element_no_t> &vector, bo
   }
   return result.str();
 }
-/*
-void Paraview::writeVTKMasterFile()
-{
-
-  file << "<?xml version=\"1.0\"?>" << endl
-    << "<VTKFile type=\"PRectilinearGrid\">" << endl
-    << "<PRectilinearGrid WholeExtent=\"0 " << comm->get_global_dimension()[0]<< " 0 "
-      << comm->get_global_dimension()[1]<< " 0 0\" GhostLevel=\"0\">"
-      << endl
-    << "<PCoordinates>" << endl
-    << "<PDataArray type=\"Float64\"/>" << endl
-    << "<PDataArray type=\"Float64\"/>" << endl
-    << "<PDataArray type=\"Float64\"/>" << endl
-    << "</PCoordinates>" << endl;
-
-    MultiIndexType n_subareas = comm->get_n_subareas();
-
-    int x_begin = 0;
-    int y_begin = 0;
-
-    MultiIndexType local_dimension;
-
-    for(int y = 0; y < n_subareas[1]; y++)      // iterate over row (y-direction)
-    {
-        x_begin = 0;
-        for(int x = 0; x < n_subareas[0]; x++)      // iterate over column (x-direction)
-        {
-            local_dimension = comm->get_local_dimension(x, y);
-
-            os << "<Piece Extent=\""
-              <<x_begin<< " " <<x_begin+local_dimension[0]<< " "
-              <<y_begin<< " " <<y_begin+local_dimension[1]<< " 0 0\" "
-              << "Source=\"field_" << step<< "_processor_" <<y<< "_" <<x<< ".vtr\"/>" << endl;
-
-            x_begin += local_dimension[0];
-        }
-        y_begin += local_dimension[1];
-    }
-
-  os << "<PPointData Vectors=\"field\" Scalars=\"p, vorticity, stream\">" << endl;
-  os << "<PDataArray type=\"Float64\" NumberOfComponents=\"3\" Name=\"field\"     format=\"ascii\"/>" << endl;
-  os << "<PDataArray type=\"Float64\"                          Name=\"p\"         format=\"ascii\"/>" << endl;
-  os << "<PDataArray type=\"Float64\"                          Name=\"vorticity\" format=\"ascii\"/>" << endl;
-  os << "<PDataArray type=\"Float64\"                          Name=\"stream\"    format=\"ascii\"/>" << endl;
-    os << "<PDataArray type=\"Float64\"                          Name=\"rhs\"       format=\"ascii\"/>" << endl;
-    os << "<PDataArray type=\"Float64\"                          Name=\"partitioning\"    format=\"ascii\"/>" << endl;
-  os << "</PPointData>" << endl;
-
-  os << "</PRectilinearGrid>" << endl;
-
-    os << "<PUnstructuredGrid GhostLevel=\"0\">" << endl;
-    os << "<PPointData></PPointData>" << endl;
-    os << "<PCellData>" << endl;
-    os << "<DataArray type=\"Float32\" Name=\"particles\" format=\"ascii\">" << endl;
-    os << "</DataArray>" << endl;
-    os << "</PCellData>" << endl;
-    os << "<PPoints>" << endl;
-    os << "<PDataArray NumberOfComponents=\"3\">" << endl;
-    os << "</PDataArray>" << endl;
-    os << "</PPoints>" << endl;
-    os << "<Piece Source=\"particles_" << step<< ".vtu\"/>" << endl;
-
-    os << "</PUnstructuredGrid> " << endl;
-
-  os << "</VTKFile>" << endl;
-}
-
-void Paraview::writeVTKSlaveFile()
-{
-
-}
-*/
-
 };

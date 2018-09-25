@@ -12,6 +12,9 @@ class DiffusionTensorFieldVariable
 {
 public:
 
+  //! dummy method that does nothing
+  void initialize(){};
+
   //! initialize diffusion tensor from field variable with directional field
   void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments = 0);
 

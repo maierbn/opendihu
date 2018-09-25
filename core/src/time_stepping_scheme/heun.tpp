@@ -18,6 +18,10 @@ Heun<DiscretizableInTime>::Heun(DihuContext context) :
 template<typename DiscretizableInTime>
 void Heun<DiscretizableInTime>::advanceTimeSpan()
 {
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
@@ -79,15 +83,26 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
     //this->data_->print();
   }
 
   this->data_->solution()->restoreContiguousValuesGlobal();
   this->data_->increment()->restoreContiguousValuesGlobal();
   dataHeun->intermediateIncrement()->restoreContiguousValuesGlobal();
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
 template<typename DiscretizableInTime>

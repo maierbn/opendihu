@@ -510,19 +510,59 @@ int permutation(int i, int j, int k)
 }
 
 template<>
-void rotateMatrix<1>(Tensor2<1> &matrix, Vec3 directionVector)
+void rotateMatrix<1>(Matrix<1,1> &matrix, Vec3 directionVector)
 {
   // 1D case does not make sense
   assert(false);
 }
 
 template<>
-void rotateMatrix<2>(Tensor2<2> &matrix, Vec3 directionVector)
+void rotateMatrix<2>(Matrix<2,2> &matrix, Vec3 directionVector)
 {
-  // normalize direction vector
-  //directionVector /= length<3>(directionVector);
+  // derivation in compute_rotation_tensor.py
+  const double b1 = directionVector[0];
+  const double b2 = directionVector[1];
 
-  //Tensor2<2> rotationMatrix = {};
+  Matrix<2,2> rotationMatrix(
+  {
+    b1, -b2,
+    b2, -b1
+  });
+
+  const double determinant = (b1 - b2)*(b1 + b2);  // b1^2 - b2^2
+  Matrix<2,2> rotationMatrixInverse(
+  {
+    b1/determinant, -b2/determinant,
+    b2/determinant, -b1/determinant
+  });
+
+  matrix = rotationMatrixInverse * matrix * rotationMatrix;
+}
+
+template<>
+void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
+{
+  // derivation in compute_rotation_tensor.py
+  const double b1 = directionVector[0];
+  const double b2 = directionVector[1];
+  const double b3 = directionVector[2];
+
+  Matrix<3,3> rotationMatrix(
+  {
+    b1, -b2, -b3,
+    b2, -(b1*sqr(b2) - sqr(b3))/(sqr(b2) + sqr(b3)), -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)),
+    b3, -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)), -(b1*sqr(b3) - sqr(b2))/(sqr(b2) + sqr(b3))
+  });
+
+  const double determinant = -sqr(b1) + sqr(b2) + sqr(b3);
+  Matrix<3,3> rotationMatrixInverse(
+  {
+    -b1/determinant, b2/determinant, b3/determinant,
+    -b2/determinant, (-sqr(b1)*sqr(b3) + b1*sqr(b2) + sqr(b2)*sqr(b3) + pow(b3,4))/((sqr(b2) + sqr(b3))*determinant), b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant),
+    -b3/determinant, b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant), (-sqr(b1)*sqr(b2) + b1*sqr(b3) + pow(b2,4) + sqr(b2)*sqr(b3))/((sqr(b2) + sqr(b3))*determinant)
+  });
+
+  matrix = rotationMatrixInverse * matrix * rotationMatrix;
 }
 
 }; // namespace

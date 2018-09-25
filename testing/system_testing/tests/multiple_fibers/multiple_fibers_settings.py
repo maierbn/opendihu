@@ -1,7 +1,7 @@
 # Electrophysiology debug
 #
 
-end_time = 1000.0
+end_time = 10.0
 
 import numpy as np
 import matplotlib 

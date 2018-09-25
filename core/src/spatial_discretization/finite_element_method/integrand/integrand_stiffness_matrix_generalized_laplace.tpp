@@ -143,7 +143,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,Term> &data, cons
     {
 
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
-      double integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * fabs(determinant);
+      double integrand = MathUtility::applyTransformation(transformationMatrix, diffusionTensorGradPhiI, gradPhi[j]) * fabs(determinant);
       evaluations(i,j) = integrand;
     }
   }

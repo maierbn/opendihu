@@ -59,16 +59,11 @@ template<typename FunctionSpaceType>
 void Data<FunctionSpaceType>::
 initialize()
 {
-  if (!this->initialized_)
-  {
-    // the mesh contains the meshPartition
-    this->createPetscObjects();
-    this->initialized_ = true;
-  }
-  else
-  {
-    LOG(WARNING) << "Initialize, functionSpace is already assigned";
-  }
+  if (this->initialized_)
+    return;
+
+  this->createPetscObjects();
+  this->initialized_ = true;
 }
 
 template<typename FunctionSpaceType>

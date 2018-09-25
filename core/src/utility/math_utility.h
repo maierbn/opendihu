@@ -98,7 +98,7 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
 
 //! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
 template<int D>
-void rotateMatrix(Tensor2<D> &matrix, Vec3 directionVector);
+void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
 
 }  // namespace
 

@@ -9,7 +9,7 @@
  *  The two functions starting with loop recursively emulate the loop. One method is the break condition and does nothing, the other method does the work and calls the method without loop in the name.
  *  OutputFieldVariablesType is assumed to be of type std::tuple<...>> where the types can be (mixed) std::shared_ptr<FieldVariable> or std::vector<std::shared_ptr<FieldVariable>>.
  * 
- *  Call ParaviewWriter::outputPointData on the mesh with meshName. This outputPointDatas all field variables of the mesh to a paraview readable file.
+ *  Call ParaviewWriter::writeParaviewFieldVariable on the mesh with meshName. This outputs all field variables of the mesh to a paraview readable file.
  */
 
 namespace OutputWriter

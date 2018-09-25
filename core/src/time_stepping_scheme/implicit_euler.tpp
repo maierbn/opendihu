@@ -20,6 +20,10 @@ TimeSteppingImplicit<DiscretizableInTimeType>(context, "ImplicitEuler")
 template<typename DiscretizableInTimeType>
 void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 {
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
   
@@ -55,11 +59,22 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     
     VLOG(1) << "new solution: " << *this->data_->solution();
 
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
     
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
     //this->data_->print();
   }
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
 template<typename DiscretizableInTimeType>

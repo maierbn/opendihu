@@ -12,6 +12,9 @@ class DiffusionTensorConstant
 {
 public:
 
+  //! dummy method that does nothing
+  void initialize(){};
+
   //! read values of diffusion tensor from config
   void initialize(PyObject *settings);
 

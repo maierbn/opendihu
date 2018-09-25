@@ -6,6 +6,7 @@
 #include "data_management/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
+#include "control/performance_measurement.h"
 
 namespace Control
 {
@@ -53,6 +54,8 @@ MultipleInstances(DihuContext context) :
   
   //MPIUtility::gdbParallelDebuggingBarrier();
   
+  nInstancesComputedGlobally_ = 0;
+
   // create all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
@@ -74,9 +77,14 @@ MultipleInstances(DihuContext context) :
 
       // check if own rank is part of ranks list
       int thisRankNo = this->context_.partitionManager()->rankNoCommWorld();
+      int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
       bool computeOnThisRank = false;
       for (int rank : ranks)
       {
+        if (rank < nRanksCommWorld)
+        {
+          nInstancesComputedGlobally_++;
+        }
         if (rank == thisRankNo)
         {
           computeOnThisRank = true;
@@ -100,6 +108,9 @@ MultipleInstances(DihuContext context) :
     
     }
   }
+
+  // log the number of instances that are computed by all ranks
+  PerformanceMeasurement::setParameter("nInstancesComputedGlobally", nInstancesComputedGlobally_);
   
   nInstancesLocal_ = instancesLocal_.size();
 }
@@ -145,6 +156,9 @@ run()
 {
   initialize();
  
+  LOG(INFO) << "MultipleInstances: " << nInstancesComputedGlobally_ << " instance" << (nInstancesComputedGlobally_ != 1? "s" : "")
+    << " to be computed in total.";
+
   //#pragma omp parallel for // does not work with the python interpreter
   for (int i = 0; i < nInstancesLocal_; i++)
   {

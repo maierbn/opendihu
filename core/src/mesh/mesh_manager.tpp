@@ -43,7 +43,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
       }
 
       // create new mesh and initialize
-      std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, this->partitionManager_, meshConfiguration);
+      std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
 
       std::string logKey;
       if (PythonUtility::hasKey(meshConfiguration, "logKey"))
@@ -75,7 +75,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), this->partitionManager_, settings);
+  std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
 
   std::string logKey;
   if (PythonUtility::hasKey(settings, "logKey"))

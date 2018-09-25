@@ -121,106 +121,116 @@ def load_data(filenames):
       if dict_from_file is not None:
         group_data.append(dict_from_file)
    
-    # merge group data
-    merged_data = copy.deepcopy(group_data[0])
-    del merged_data['beginNodeGlobalNatural']
-    del merged_data['hasFullNumberOfNodes']
-    del merged_data['nElementsLocal']
-    del merged_data['ownRankNo']
-    n_ranks = merged_data['nRanks']
-    dimension = merged_data['dimension']
+    if len(group_data) == 0:
+      continue
+      
+    # unstructured meshes are not parallel and have only a single number of elements, "nElements"
+    if group_data[0]["meshType"] == "UnstructuredDeformable":
+      merged_data = group_data[0]
+      
+    # structured meshes can be parallel and have global and local numbers of elements for each coordinate direction, "nElementsGlobal", "nElementsLocal"
+    else:
+     
+      # merge group data
+      merged_data = copy.deepcopy(group_data[0])
+      del merged_data['beginNodeGlobalNatural']
+      del merged_data['hasFullNumberOfNodes']
+      del merged_data['nElementsLocal']
+      del merged_data['ownRankNo']
+      n_ranks = merged_data['nRanks']
+      dimension = merged_data['dimension']
 
-    # determine number of nodes
-    average_n_nodes_per_element_1d = 1
-    if merged_data['basisFunction'] == 'Lagrange':
-      average_n_nodes_per_element_1d = merged_data['basisOrder']
-    elif merged_data['basisFunction'] == 'Hermite':
+      # determine number of nodes
       average_n_nodes_per_element_1d = 1
+      if merged_data['basisFunction'] == 'Lagrange':
+        average_n_nodes_per_element_1d = merged_data['basisOrder']
+      elif merged_data['basisFunction'] == 'Hermite':
+        average_n_nodes_per_element_1d = 1
 
-    # determine number of dofs per node
-    n_dofs_per_node = 1
-    if merged_data['basisFunction'] == 'Hermite' and not merged_data['onlyNodalValues']:
-      n_dofs_per_node = 2**dimension
+      # determine number of dofs per node
+      n_dofs_per_node = 1
+      if merged_data['basisFunction'] == 'Hermite' and not merged_data['onlyNodalValues']:
+        n_dofs_per_node = 2**dimension
 
-    # determine global size of arrays
-    n_dofs_global = []
-    n_dofs_total = 1
-    for i in range(dimension):
-      n_nodes_global_direction = merged_data['nElementsGlobal'][i]*average_n_nodes_per_element_1d + 1
-      n_dofs_global_direction = n_nodes_global_direction*n_dofs_per_node
-      n_dofs_global.append(n_dofs_global_direction)
-      n_dofs_total *= n_dofs_global_direction
-  
-    #print("n_dofs_global: ",n_dofs_global)
-  
-    merged_data['nElements'] = merged_data['nElementsGlobal']
-    del merged_data['nElementsGlobal']
+      # determine global size of arrays
+      n_dofs_global = []
+      n_dofs_total = 1
+      for i in range(dimension):
+        n_nodes_global_direction = merged_data['nElementsGlobal'][i]*average_n_nodes_per_element_1d + 1
+        n_dofs_global_direction = n_nodes_global_direction*n_dofs_per_node
+        n_dofs_global.append(n_dofs_global_direction)
+        n_dofs_total *= n_dofs_global_direction
+    
+      #print("n_dofs_global: ",n_dofs_global)
+    
+      merged_data['nElements'] = merged_data['nElementsGlobal']
+      del merged_data['nElementsGlobal']
 
-    # loop over data fields
-    for field_variable_index,field_variable in enumerate(merged_data['data']):
-      for component_index,component in enumerate(field_variable['components']):
-        
-        # resize array
-        merged_data['data'][field_variable_index]['components'][component_index]['values'] = np.zeros(n_dofs_total)
-
-        # loop over ranks / input files
-        for data in group_data:
+      # loop over data fields
+      for field_variable_index,field_variable in enumerate(merged_data['data']):
+        for component_index,component in enumerate(field_variable['components']):
           
-          # compute local size
-          n_nodes_local = []
-          n_dofs_local = []
-          for i in range(dimension):
-            n_nodes_local_direction = data['nElementsLocal'][i]*average_n_nodes_per_element_1d
-            if data['hasFullNumberOfNodes'][i]:
-              n_nodes_local_direction += 1
-            n_nodes_local.append(n_nodes_local_direction)
-            n_dofs_local.append(n_nodes_local_direction*n_dofs_per_node)
+          # resize array
+          merged_data['data'][field_variable_index]['components'][component_index]['values'] = np.zeros(n_dofs_total)
+
+          # loop over ranks / input files
+          for data in group_data:
             
-          #print("")
-          #print(field_variable["name"],component["name"])
-          #print("data: ",data)
-          #print("rank {}, n_dofs_local: {}, data: {}".format(data["ownRankNo"], n_dofs_local,data['data'][field_variable_index]['components'][component_index]['values']) )
-          
-          # set local portion in global array
-          indices_begin = []
-          indices_end = []
-          for i in range(dimension):
-            begin_node_global = data['beginNodeGlobalNatural'][i]
-            indices_begin.append(begin_node_global*n_dofs_per_node)
-            indices_end.append(begin_node_global*n_dofs_per_node+n_dofs_local[i])
-          
-          #print("indices {} - {}".format(indices_begin, indices_end))
-          
-          if dimension == 1:
-            for x in range(indices_begin[0],indices_end[0]):
-              index_in = x-indices_begin[0]
-              index_result = x
+            # compute local size
+            n_nodes_local = []
+            n_dofs_local = []
+            for i in range(dimension):
+              n_nodes_local_direction = data['nElementsLocal'][i]*average_n_nodes_per_element_1d
+              if data['hasFullNumberOfNodes'][i]:
+                n_nodes_local_direction += 1
+              n_nodes_local.append(n_nodes_local_direction)
+              n_dofs_local.append(n_nodes_local_direction*n_dofs_per_node)
               
-              #print("x: {}, index_in: {}, index_result: {}".format(x, index_in, index_result))
-              
-              merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
-                = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
-          
-          elif dimension == 2:
-            for y in range(indices_begin[1],indices_end[1]):
+            #print("")
+            #print(field_variable["name"],component["name"])
+            #print("data: ",data)
+            #print("rank {}, n_dofs_local: {}, data: {}".format(data["ownRankNo"], n_dofs_local,data['data'][field_variable_index]['components'][component_index]['values']) )
+            
+            # set local portion in global array
+            indices_begin = []
+            indices_end = []
+            for i in range(dimension):
+              begin_node_global = data['beginNodeGlobalNatural'][i]
+              indices_begin.append(begin_node_global*n_dofs_per_node)
+              indices_end.append(begin_node_global*n_dofs_per_node+n_dofs_local[i])
+            
+            #print("indices {} - {}".format(indices_begin, indices_end))
+            
+            if dimension == 1:
               for x in range(indices_begin[0],indices_end[0]):
-                index_in = (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
-                index_result = y*n_dofs_global[0] + x
+                index_in = x-indices_begin[0]
+                index_result = x
                 
-                #print("x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result))
+                #print("x: {}, index_in: {}, index_result: {}".format(x, index_in, index_result))
                 
                 merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
                   = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
-          
-          elif dimension == 3:
-            for z in range(indices_begin[2],indices_end[2]):
+            
+            elif dimension == 2:
               for y in range(indices_begin[1],indices_end[1]):
                 for x in range(indices_begin[0],indices_end[0]):
-                  index_in = (z-indices_begin[2])*n_dofs_local[1]*n_dofs_local[0] \
-                    + (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
-                  index_result = z*n_dofs_global[1]*n_dofs_global[0] + y*n_dofs_global[0] + x
+                  index_in = (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
+                  index_result = y*n_dofs_global[0] + x
+                  
+                  #print("x: {}, y: {}, index_in: {}, index_result: {}".format(x, y, index_in, index_result))
+                  
                   merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
                     = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
+            
+            elif dimension == 3:
+              for z in range(indices_begin[2],indices_end[2]):
+                for y in range(indices_begin[1],indices_end[1]):
+                  for x in range(indices_begin[0],indices_end[0]):
+                    index_in = (z-indices_begin[2])*n_dofs_local[1]*n_dofs_local[0] \
+                      + (y-indices_begin[1])*n_dofs_local[0] + (x-indices_begin[0])
+                    index_result = z*n_dofs_global[1]*n_dofs_global[0] + y*n_dofs_global[0] + x
+                    merged_data['data'][field_variable_index]['components'][component_index]['values'][index_result] \
+                      = data['data'][field_variable_index]['components'][component_index]['values'][index_in]
 
     loaded_data.append(merged_data)
   return loaded_data

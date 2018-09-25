@@ -6,6 +6,7 @@
 #include "data_management/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
+#include "control/performance_measurement.h"
 
 namespace Control
 {
@@ -107,6 +108,9 @@ MultipleInstances(DihuContext context) :
     
     }
   }
+
+  // log the number of instances that are computed by all ranks
+  PerformanceMeasurement::setParameter("nInstancesComputedGlobally", nInstancesComputedGlobally_);
   
   nInstancesLocal_ = instancesLocal_.size();
 }
@@ -152,7 +156,8 @@ run()
 {
   initialize();
  
-  LOG(INFO) << "MultipleInstances: " << nInstancesComputedGlobally_ << " instances to be computed in total.";
+  LOG(INFO) << "MultipleInstances: " << nInstancesComputedGlobally_ << " instance" << (nInstancesComputedGlobally_ != 1? "s" : "")
+    << " to be computed in total.";
 
   //#pragma omp parallel for // does not work with the python interpreter
   for (int i = 0; i < nInstancesLocal_; i++)

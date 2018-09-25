@@ -25,6 +25,12 @@ public:
   template<typename FieldVariableType>
   static void writeParaviewFieldVariable(FieldVariableType &fieldVariable, std::ofstream &file,
                                          bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement=false);
+
+
+  //! write the a field variable indicating which ranks own which portion of the domain as VTK <DataArray> element to file, if onlyParallelDatasetElement write the <PDataArray> element
+  template<typename FieldVariableType>
+  static void writeParaviewPartitionFieldVariable(FieldVariableType &geometryField, std::ofstream &file,
+                                                  bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement=false);
   
   //! encode a Petsc vector in Base64
   static std::string encodeBase64(const Vec &vector);

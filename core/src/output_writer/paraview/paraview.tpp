@@ -131,4 +131,58 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
   }
 }
   
+template<typename FieldVariableType>
+void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryField,
+                                                   std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
+{
+  // if only the "parallel dataset element" stub which is needed in the master files, should be written
+  if (onlyParallelDatasetElement)
+  {
+    file << std::string(3, '\t') << "<PDataArray "
+        << "Name=\"partitioning\" "
+        << "type=\"Int32\" "
+        << "NumberOfComponents=\"1\" ";
+
+    if (binaryOutput)
+    {
+      file << "format=\"binary\" />" << std::endl;
+    }
+    else
+    {
+      file << "format=\"ascii\" />" << std::endl;
+    }
+  }
+  else
+  {
+    // write normal data element
+    file << std::string(4, '\t') << "<DataArray "
+        << "Name=\"partitioning\" "
+        << "type=\"Int32\" "
+        << "NumberOfComponents=\"1\" ";
+
+    std::string stringData;
+
+    // get own rank no
+    int ownRankNoCommWorld;
+    MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld));
+
+    const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
+
+    std::vector<int> values(nNodesLocal, ownRankNoCommWorld);
+
+    if (binaryOutput)
+    {
+      stringData = Paraview::encodeBase64(values);
+      file << "format=\"binary\" >" << std::endl;
+    }
+    else
+    {
+      stringData = Paraview::convertToAscii(values, fixedFormat);
+      file << "format=\"ascii\" >" << std::endl;
+    }
+    file << std::string(5, '\t') << stringData << std::endl
+      << std::string(4, '\t') << "</DataArray>" << std::endl;
+  }
+}
+
 };

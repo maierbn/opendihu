@@ -1,7 +1,7 @@
 # Electrophysiology debug
 #
 
-end_time = 1000.0
+end_time = 10.0
 
 import numpy as np
 import matplotlib 
@@ -109,49 +109,13 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     
 fig = plt.figure(1)
 #plt.ion()
-
-def handleResult(n_nodes, time_step_no, current_time, states, intermediates):
-  #print "handleResult: time step {}, t={}, n_nodes: {}, n entries states: {}".format(time_step_no, current_time, n_nodes, len(states))
-  #print "states:", states[0:n_nodes]
-  
-  xdata = []
-  vm_data = []
-  gamma_data = []
-  for i in range(n_nodes):
-    xdata.append(i)
-    vm_data.append(states[i])
-    gamma_data.append(intermediates[i])
-  
-  # write out a png file
-  plt.figure(1)
-  plt.clf()
-  plt.xlabel('position $x$')
-  ax1 = plt.gca()
-  ax1.plot(xdata, vm_data, 'go-', label='$V_m$')
-  plt.ylim(-80, 80)
-  plt.xlabel('t')
-  plt.ylabel('$V_m$')
-  ax2 = ax1.twinx()
-  ax2.plot(xdata, gamma_data, 'ro-', label='$\gamma$')
-  plt.ylabel('$\gamma$')    
-  plt.ylim(0, 1)
-  
-  # ask matplotlib for the plotted objects and their labels
-  lines, labels = ax1.get_legend_handles_labels()
-  lines2, labels2 = ax2.get_legend_handles_labels()
-  ax2.legend(lines + lines2, labels + labels2, loc=0)
-  
-  filename = "out_{:06.1f}.png".format(currentTime)
-  plt.savefig(filename)
-  #print "   saved ""{}""".format(filename)
-  #plt.draw()
     
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
   pass
     
 def get_instance_config(i):
   
-  k = 1  # n ranks per fibre
+  k = 4  # n ranks per fibre
   ranks = []
   for j in range(k):
     ranks.append(k*i + j)

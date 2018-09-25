@@ -19,6 +19,7 @@
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
+#include "control/performance_measurement.h"
 
 #include "easylogging++.h"
 #include "control/use_numpy.h"
@@ -146,6 +147,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     int rankNo, nRanks;
     MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
     MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
+
+    Control::PerformanceMeasurement::setParameter("rankNo", rankNo);
+    Control::PerformanceMeasurement::setParameter("nRanks", nRanks);
 
     // convert to wchar_t
     std::stringstream rankNoStr, nRanksStr;
@@ -416,8 +420,16 @@ void DihuContext::loadPythonScript(std::string text)
   // check if type is valid
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
   {
-    LOG(ERROR) << "Python config file does not contain a dict named \"config\".";
+    LOG(FATAL) << "Python config file does not contain a dict named \"config\".";
   }
+
+  // parse scenario name
+  std::string scenarioName = "";
+  if (PythonUtility::hasKey(pythonConfig_, "scenarioName"))
+  {
+    scenarioName = PythonUtility::getOptionString(pythonConfig_, "scenarioName", "");
+  }
+  Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
 }
 
 void DihuContext::initializeLogging(int argc, char *argv[])
@@ -556,6 +568,8 @@ DihuContext::~DihuContext()
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
   if (nObjects_ == 1)
   {
+    // write log file
+    Control::PerformanceMeasurement::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.
@@ -563,12 +577,12 @@ DihuContext::~DihuContext()
 
     if (doNotFinalizeMpi_)
     {
-      LOG(INFO) << "MPI_Barrier";
+      LOG(DEBUG) << "MPI_Barrier";
       MPI_Barrier(MPI_COMM_WORLD);
     }
     else
     {
-      LOG(INFO) << "MPI_Finalize";
+      LOG(DEBUG) << "MPI_Finalize";
       MPI_Finalize();
     }
   }

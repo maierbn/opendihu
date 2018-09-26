@@ -1,13 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
 #
 # This script extracts horizontal rings of edges from the stl mesh of biceps. The rings are not planar (but almost).
 # Use create_rings.py instead, which samples the mesh at prescribed z values and produces planar rings.
 #
 
+import datetime
+now = datetime.datetime.now()
+print(" ======= extract_rings.py =======") 
+print(now.strftime("%d/%m/%Y %H:%M:%S"))
 
 import sys
 import numpy as np
+import matplotlib
+
+havedisplay = False
+if not havedisplay:
+  print("use Agg backend")
+  matplotlib.use('Agg')
+else:
+  print("use Tk backend")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import csv
@@ -19,7 +31,6 @@ import pickle
 
 import stl
 from stl import mesh
-from sets import Set
 from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 
@@ -52,10 +63,10 @@ def get_edge_with_preferred_normal(p1, p2, p3, preferred_normal_direction):
   dot_list = [abs(dot1),abs(dot2),abs(dot3)]
     
   if debug:
-    print "preferred_normal_direction: ", preferred_normal_direction
-    print "edge 1: {}, normal: {}, dot: {}".format(edge1, normal1, dot1)
-    print "edge 2: {}, normal: {}, dot: {}".format(edge2, normal2, dot2)
-    print "edge 3: {}, normal: {}, dot: {}".format(edge3, normal3, dot3)
+    print("preferred_normal_direction: ", preferred_normal_direction)
+    print("edge 1: {}, normal: {}, dot: {}".format(edge1, normal1, dot1))
+    print("edge 2: {}, normal: {}, dot: {}".format(edge2, normal2, dot2))
+    print("edge 3: {}, normal: {}, dot: {}".format(edge3, normal3, dot3))
     
   leading_edge = None
   if np.max(dot_list) == abs(dot1):
@@ -87,14 +98,14 @@ outfile = "out.stl"
 infile = "in.stl"
 
 if len(sys.argv) < 2:
-  print "usage: extract_rings.py <input file> [<output file>]"
+  print("usage: extract_rings.py <input file> [<output file>]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
   if os.path.isfile(sys.argv[1]):
     infile = sys.argv[1]
   else:
-    print "File \"{}\" does not exists".format(sys.argv[1])
+    print("File \"{}\" does not exists".format(sys.argv[1]))
     sys.exit(0)
   
 if len(sys.argv) >= 3:
@@ -102,8 +113,8 @@ if len(sys.argv) >= 3:
 else:
   outfile = os.path.splitext(infile)[0]+"_out.stl"
 
-print "Input file: \"{}\"".format(infile)
-print "Output file: \"{}\"".format(outfile)
+print("Input file: \"{}\"".format(infile))
+print("Output file: \"{}\"".format(outfile))
 
 stl_mesh = mesh.Mesh.from_file(infile)
 
@@ -131,7 +142,7 @@ debug = False
 for (no,p) in enumerate(stl_mesh.points):
   # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
 
-  print "no {}/{}".format(no,len(stl_mesh.points))
+  print("no {}/{}".format(no,len(stl_mesh.points)))
 
   triangle = p
 
@@ -173,7 +184,7 @@ for (no,p) in enumerate(stl_mesh.points):
   # if the considered point1 is already present in a loop, do not use it as starting point for a new loop (because it is not a new loop)
   if point_exists_in_loop:
     if debug:
-      print "    point exists in loop"
+      print("    point exists in loop")
     continue
   
   # now find other points of the "ring"/loop
@@ -185,14 +196,14 @@ for (no,p) in enumerate(stl_mesh.points):
   loop_points.append(point2)
   
   if debug:
-    print "starting points of loop: ", point1, point2
+    print("starting points of loop: ", point1, point2)
   
   # loop until all points of the current loop are found
   end_of_loop = False
   while not end_of_loop:
     
     if debug:
-      print "find triangle edge with first point ",point2
+      print("find triangle edge with first point ",point2)
     triangle_found = False
     
     # loop again over all triangles, except the one from which the loop started
@@ -213,9 +224,9 @@ for (no,p) in enumerate(stl_mesh.points):
       point3,point4 = get_edge_with_preferred_normal(p1, p2, p3, preferred_normal_direction)
     
       if debug and False:
-        print "  - check triangle with points ", point3,point4
+        print("  - check triangle with points ", point3,point4)
     
-      #print "point2: ",point2," check triangle with points3,4 ",point3,point4
+      #print("point2: ",point2," check triangle with points3,4 ",point3,point4)
     
       # check if point4 is already part of this loop. If it is, the current triangle is no longer considered ('continue' statement later)
       point4_exists_in_loop = False
@@ -229,22 +240,22 @@ for (no,p) in enumerate(stl_mesh.points):
       # check if the starting point, point3, of the found edge, [point3,point4], is the same as the most recent point of the loop, point2
       if np.allclose(point2, point3):
         if debug:
-          print "yes found, point2 == point3, use next point4 ", point4, " point_start:",point_start
+          print("yes found, point2 == point3, use next point4 ", point4, " point_start:",point_start)
         
         if np.allclose(point4, point_start) and len(loop_points) == 2:
           if debug:
-            print "avoid closing loop after 2 points"
+            print("avoid closing loop after 2 points")
           continue
         
         # if the other point is already in the current loop do not further consider this edge
         # if we did not reach the starting point but any other intermediate point of this loop, do not consider triangle edge, because it is a "short-cut" to the loop
         if point4_exists_in_loop and not np.allclose(point4,point_start):
           if debug:
-            print "point exists already in loop and is not the start point"
+            print("point exists already in loop and is not the start point")
           continue
         
         if debug:
-          print "point ", point4
+          print("point ", point4)
           
         # store new point to the loop
         loop_points.append(point4)
@@ -255,7 +266,7 @@ for (no,p) in enumerate(stl_mesh.points):
         # if we again reached the starting point, the loop is closed and we're done
         if np.allclose(point4, point_start):
           if debug:
-            print "point4 == point_start"
+            print("point4 == point_start")
           end_of_loop = True
           
         # we found the triangle that continues the loop, now successfully break the for loop over all triangles
@@ -265,22 +276,22 @@ for (no,p) in enumerate(stl_mesh.points):
       # check if the starting point, point3, of the found edge, [point3,point4], is the same as the most recent point of the loop, point2
       if np.allclose(point2, point4):
         if debug:
-          print "yes found, point2 == point4, use next point3 ", point3, " point_start:",point_start
+          print("yes found, point2 == point4, use next point3 ", point3, " point_start:",point_start)
 
         if np.allclose(point3, point_start) and len(loop_points) == 2:
           if debug:
-            print "avoid closing loop after 2 points"
+            print("avoid closing loop after 2 points")
           continue
           
         # if the other point is already in the current loop do not further consider this edge
         # if we did not reach the starting point but any other intermediate point of this loop, do not consider triangle edge, because it is a "short-cut" to the loop
         if point3_exists_in_loop and not np.allclose(point3,point_start):
           if debug:
-            print "point exists already in loop and is not the start point"
+            print("point exists already in loop and is not the start point")
           continue
           
         if debug:
-          print "point ", point3    
+          print("point ", point3    )
               
         # store new point to the loop
         loop_points.append(point3)
@@ -291,7 +302,7 @@ for (no,p) in enumerate(stl_mesh.points):
         # if we again reached the starting point, the loop is closed and we're done
         if np.allclose(point3,point_start):
           if debug:
-            print "point3 == point_start"
+            print("point3 == point_start")
           end_of_loop = True
     
         # we found the triangle that continues the loop, now successfully break the for loop over all triangles
@@ -302,11 +313,11 @@ for (no,p) in enumerate(stl_mesh.points):
     if not triangle_found:
       end_of_loop = True
       if debug:
-        print "no further point found to close loop, point2: ", point2, ", point_start: ", point_start
+        print("no further point found to close loop, point2: ", point2, ", point_start: ", point_start)
     
   # store the currently collected loop to the list of loops
   if debug:
-    print "    create loop with {} points: {}".format(len(loop_points), loop_points)
+    print("    create loop with {} points: {}".format(len(loop_points), loop_points))
   loops.append(loop_points)
   
 with open('rings_extracted', 'wb') as f:
@@ -325,17 +336,17 @@ for loop in loops:
 # create output mesh
 triangles = out_triangles
 n_triangles = len(out_triangles)
-print "n_triangles: ",n_triangles
+print("n_triangles: ",n_triangles)
 
 # Create the mesh
 out_mesh = mesh.Mesh(np.zeros(n_triangles, dtype=mesh.Mesh.dtype))
 for i, f in enumerate(triangles):
   out_mesh.vectors[i] = f
   #for j in range(3):
-    #print "set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+    #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")")
     
 #out_mesh.update_normals()
 
 outfile = "mesh_01b.stl"
 out_mesh.save(outfile, mode=stl.Mode.ASCII)
-print "saved {} triangles to \"{}\" (loops)".format(n_triangles,outfile)
+print("saved {} triangles to \"{}\" (loops)".format(n_triangles,outfile))

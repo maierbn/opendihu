@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
 #
 # This script creates a hexaeder mesh out of the rings given by create_rings.py. 
@@ -16,11 +16,22 @@
 #
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x>]]]]"
 
+import datetime
+now = datetime.datetime.now()
+print(" ======= create_mesh.py =======")
+print(now.strftime("%d/%m/%Y %H:%M:%S"))
+
 import sys, os
 import numpy as np
 import matplotlib
-if os.name == 'posix' and "DISPLAY" not in os.environ:      # if there is no display, use agg backend
+
+havedisplay = False
+if not havedisplay:
+  print("use Agg backend")
   matplotlib.use('Agg')
+else:
+  print("use Tk backend")
+
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
@@ -450,9 +461,9 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
   # triangulate surface in world space
   if debug:
     print("border points: ",len(border_points))
-    print(border_points
+    print(border_points)
   
-  print("n border points: ",len(border_points))
+  print("n border points: {}".format(len(border_points)))
   
   points = np.reshape(border_points,(n_points,3))
   
@@ -1099,7 +1110,7 @@ for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     #print("initial_values: ",initial_values
       
     result = scipy.optimize.minimize(objective, initial_values, method='Nelder-Mead', options={"maxiter":1e4, "disp":True})
-    print(result["message"]
+    print(result["message"])
     resulting_parametric_points = result["x"]
     
     print("final objective: {}".format(objective(resulting_parametric_points)))
@@ -1344,13 +1355,13 @@ duration += t_stop - t_start
 
 # save mean distance
 if not os.path.isfile("mesh_quality.csv"):
-  with open("mesh_quality.csv", "wb") as f:
-    f.write("# triangulation_type; parametric_space_shape; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n");
-with open("mesh_quality.csv", "ab") as f:
+  with open("mesh_quality.csv", "w") as f:
+    f.write("# triangulation_type; parametric_space_shape; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n")
+with open("mesh_quality.csv", "a") as f:
   f.write("{};{};{};{};{};{};{};{}\n".\
   format(triangulation_type, parametric_space_shape, n_grid_points_x, n_grid_points_y, len(loops),\
     standard_deviation_distance_between_world_mesh_nodes,\
-   standard_deviation_relative_distance_between_world_mesh_nodes,duration));
+    standard_deviation_relative_distance_between_world_mesh_nodes,duration))
 
 # create 3D mesh from grid points on slices
 node_positions = []

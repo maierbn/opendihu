@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
 #
 # This script extracts horizontal rings of edges from the stl mesh of biceps. The rings are not planar (but almost).
@@ -6,6 +6,11 @@
 # Output of this script is a pickle file `rings_created` that can be read in by ./create_mesh.py
 #
 # usage: ./create_rings.py <input file> [<n rings> [<min z> <max z>]]
+
+import datetime
+now = datetime.datetime.now()
+print(" ======= create_rings.py =======") 
+print(now.strftime("%d/%m/%Y %H:%M:%S"))
 
 import sys
 import numpy as np
@@ -18,7 +23,6 @@ import pickle
 
 import stl
 from stl import mesh
-from sets import Set
 from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 

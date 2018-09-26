@@ -22,7 +22,7 @@ def run(dt_0D, dt_1D, dt_3D, output_name):
 dt_1D = 1e-6                      # timestep width of diffusion
 dt_0D = 1e-6                      # timestep width of ODEs
 dt_3D = 1e-5                      # overall timestep width of splitting
-#run(dt_0D, dt_1D, dt_3D, "reference")
+run(dt_0D, dt_1D, dt_3D, "reference")
 
 # simulations to evaluate precision
 dt_1D = 1e-6                      # timestep width of diffusion

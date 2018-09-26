@@ -58,12 +58,11 @@ echo ""
 echo "postprocessing took $(date -u -d @$DIFF +%T)"
 echo ""
 
+done
 
 # recompile documents
 cd $basedir/../document
 make
-
-done
 
 # output total duration
 END_ALL=$(date +%s.%N)

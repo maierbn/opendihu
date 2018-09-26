@@ -13,7 +13,8 @@ template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,ty
 MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
 MultidomainSolver(DihuContext context) :
   TimeSteppingImplicit<FiniteElementMethodDiffusion>(context, "MultidomainSolver"),
-  dataMultidomain_(context), finiteElementMethodPotentialFlow_(context), finiteElementMethodDiffusion_(context), finiteElementMethodDiffusionTotal_(context)
+  dataMultidomain_(context), finiteElementMethodPotentialFlow_(context["PotentialFlow"]),
+  finiteElementMethodDiffusion_(context["Activation"]), finiteElementMethodDiffusionTotal_(context["Activation"])
 {
   // parse number of motor units
   nCompartments_ = PythonUtility::getOptionInt(this->specificSettings_, "nCompartments", 1, PythonUtility::NonNegative);

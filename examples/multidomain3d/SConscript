@@ -13,8 +13,8 @@ if not env['no_examples']:
   # define the source files
   src_files = Split(
   """
-    multidomain_2d.cpp
+    multidomain.cpp
   """)
 
   # create the main executable
-  env.Program(target = 'multidomain2d', source = src_files)
+  env.Program(target = 'multidomain', source = src_files)

@@ -110,10 +110,13 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
     
 def get_instance_config(i):
 
-  # set ranks list containing the rank nos for fiber i  
-  ranks = []
-  for j in range(n_processes_per_fiber):
-    ranks.append(n_processes_per_fiber*i + j)
+  # set ranks list containing the rank nos for fiber i 
+  if n_processes_per_fiber > 0:
+    ranks = []
+    for j in range(n_processes_per_fiber):
+      ranks.append(n_processes_per_fiber*i + j)
+  else:
+    ranks = [int(i/-n_processes_per_fiber)]
 
   bc = {0: -75, -1: -75}
   instance_config = {
@@ -179,7 +182,7 @@ def get_instance_config(i):
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
           ]
         },
       },

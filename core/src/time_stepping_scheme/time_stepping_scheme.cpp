@@ -48,6 +48,8 @@ void TimeSteppingScheme::initialize()
   if (initialized_)
     return;
   
+  LOG(DEBUG) << "TimeSteppingScheme::initialize()";
+  
   // initialize time stepping values
   startTime_ = 0.0;
   endTime_ = 1.0;
@@ -89,6 +91,36 @@ void TimeSteppingScheme::initialize()
     << ", time step width: " << timeStepWidth_;
     
   initialized_ = true;
+}
+
+int TimeSteppingScheme::timeStepOutputInterval()
+{
+  return this->timeStepOutputInterval_;
+}
+
+double TimeSteppingScheme::startTime()
+{
+  return startTime_;
+}
+
+double TimeSteppingScheme::endTime()
+{
+  return endTime_;
+}
+
+double TimeSteppingScheme::numberTimeSteps()
+{
+  return numberTimeSteps_;
+}
+  
+double TimeSteppingScheme::timeStepWidth()
+{
+  return timeStepWidth_;
+}
+
+PyObject *TimeSteppingScheme::specificSettings()
+{
+  return specificSettings_;
 }
 
 };  // namespace

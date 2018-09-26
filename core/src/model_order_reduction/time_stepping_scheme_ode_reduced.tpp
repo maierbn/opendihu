@@ -10,11 +10,17 @@ namespace ModelOrderReduction
 template<typename TimeSteppingType>
 TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context):
-MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]), TimeSteppingScheme(context["ModelOrderReduction"]),
-timestepping_(context_["ModelOrderReduction"]), solutionVectorMapping_(SolutionVectorMapping()), initialized_(false)
+  MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
+  TimeSteppingScheme(context["ModelOrderReduction"]),
+  timestepping_(context["ModelOrderReduction"]), solutionVectorMapping_(SolutionVectorMapping()), initialized_(false)
 {  
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "ModelOrderReduction");
+  this->specificSettings_ = this->context_.getPythonConfig();
+  
+  // initialize output writers
+  this->outputWriterManager_.initialize(timestepping_.specificSettings());
+  
+  VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
+  PythonUtility::printDict(this->specificSettings_);
 }
 
 template<typename TimesteppingType>
@@ -42,6 +48,14 @@ initialize()
   
   this->timestepping_.initialize();
   
+  this->startTime_=timestepping_.startTime();
+  this->endTime_=timestepping_.endTime();
+  this->timeStepWidth_=timestepping_.timeStepWidth();
+  this->numberTimeSteps_=timestepping_.numberTimeSteps();
+  this->timeStepOutputInterval_=timestepping_.timeStepOutputInterval();
+  
+  LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
+  
   this->nReducedBases_ = PythonUtility::getOptionInt(specificSettings_, "nReducedBases", 10, PythonUtility::Positive);
   
   std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
@@ -51,11 +65,14 @@ initialize()
   std::shared_ptr<::FunctionSpace::Generic> functionSpaceRed 
     = context_.meshManager()->createFunctionSpace<::FunctionSpace::Generic>("functionSpaceReduced", nElements, physicalExtent);
   
+  //assert(this->data_);
   this->data_->setFunctionSpace(functionSpaceRed);
   this->data_->setFullFunctionSpace(timestepping_.discretizableInTime().data().functionSpace());
   this->data_->initialize();
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();
+    
+  initialized_=true;
 }
 
 template<typename TimeSteppingType>

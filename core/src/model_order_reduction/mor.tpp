@@ -9,7 +9,7 @@ namespace ModelOrderReduction
 template<typename FullFunctionSpaceType>
 MORBase<FullFunctionSpaceType>::
 MORBase(DihuContext context):
-initialized_(false)
+  data_(std::make_shared<Data>(context)), initialized_(false)
 { 
 }
 
@@ -23,8 +23,17 @@ template<typename FullFunctionSpaceType>
 void MORBase<FullFunctionSpaceType>::
 setBasis()
 {
-  Vec basisTransp=this->data_->basisTransp()->getContiguousValuesGlobal();
-    //to be implemented
+  Mat &basisTransp=this->data_->basisTransp()->valuesGlobal();
+  
+  PetscErrorCode ierr;
+  ierr=MatShift(basisTransp, 1); CHKERRV(ierr); //identitty matrix to check
+  
+  Mat &basis=this->data_->basis()->valuesGlobal();
+  
+  ierr=MatShift(basis, 1); CHKERRV(ierr); //identitty matrix to check
+  
+  //to be implemented
+  
 }
 
 template<typename FullFunctionSpaceType>
@@ -42,6 +51,10 @@ initialize()
     return;
   
   LOG(TRACE) << "MORBase::initialize()";
+  
+  setBasis();
+  
+  initialized_=true;
   
 }
 

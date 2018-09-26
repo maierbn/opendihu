@@ -42,7 +42,7 @@ public:
   virtual void initialize();
   
   //! interval for output of time step number and time
-  int timeStepOutputInterval();
+  //int timeStepOutputInterval();
   
   //! discretizable in time object
   DiscretizableInTimeType &discretizableInTime();
@@ -63,7 +63,7 @@ protected:
 
   std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
 
-  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+  //int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
   bool initialized_;     ///< if initialize() was already called
 

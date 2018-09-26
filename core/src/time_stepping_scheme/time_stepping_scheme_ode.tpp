@@ -180,11 +180,11 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
-template<typename DiscretizableInTimeType>
-int TimeSteppingSchemeOde<DiscretizableInTimeType>::
-timeStepOutputInterval()
-{
-  return this->timeStepOutputInterval_;
-}
+//template<typename DiscretizableInTimeType>
+//int TimeSteppingSchemeOde<DiscretizableInTimeType>::
+//timeStepOutputInterval()
+//{
+//  return this->timeStepOutputInterval_;
+//}
 
 } // namespace

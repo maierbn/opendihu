@@ -24,7 +24,9 @@ namespace ModelOrderReduction
     
     LOG(TRACE) << "TimeSteppingSchemeOdeReducedExplicit::initialize()";
     
-    // TO IMPLEMENT 
+    TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::initialize(); 
+    
+    initialized_=true;
   }
   
   template<typename TimeSteppingExplicitType>

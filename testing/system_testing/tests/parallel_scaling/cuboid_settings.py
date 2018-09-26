@@ -22,9 +22,9 @@ cellml_file = "../input/hodgkin_huxley_1952.c"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-4                      # timestep width of diffusion
-dt_0D = 5e-5                      # timestep width of ODEs
-dt_3D = 1e-4                      # overall timestep width of splitting
+dt_1D = 1e-3                      # timestep width of diffusion
+dt_0D = 3e-3                      # timestep width of ODEs
+dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 n_nodes_per_fiber = 1000             # number of nodes per fiber
 n_fibers = 10
@@ -36,7 +36,7 @@ n_fibers = 10
 n_processes_per_fiber = (int)(sys.argv[0])
 n_fibers = (int)(sys.argv[1])
 n_nodes_per_fiber = (int)(sys.argv[2])
-scenario_name = (int)(sys.argv[3])
+scenario_name = sys.argv[3]
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])

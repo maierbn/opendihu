@@ -24,9 +24,9 @@ cellml_file = "../input/hodgkin_huxley_1952.c"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-4                      # timestep width of diffusion
-dt_0D = 5e-5                      # timestep width of ODEs
-dt_3D = 1e-4                      # overall timestep width of splitting
+dt_1D = 1e-3                      # timestep width of diffusion
+dt_0D = 3e-3                      # timestep width of ODEs
+dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
 # input files

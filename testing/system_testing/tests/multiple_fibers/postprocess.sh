@@ -8,11 +8,11 @@ mkdir -p results
 # for all testcases
 
 echo ""
-echo "check single_fibre"
+echo "postprocess multiple_fibers"
 echo "----------------"
 
 # arguments to plot.py: <1=show plot window, 0=don't> <filenames>
-name=fibre_1
+name=fibre_1_
 
 # create animation "anim.mp4" and plot "fig.pdf"
 ../../../../scripts/plot.py 0 build_${variant}/out/${name}*

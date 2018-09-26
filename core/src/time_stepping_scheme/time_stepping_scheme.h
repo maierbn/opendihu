@@ -30,15 +30,30 @@ public:
 
   ///! initialize time span from specificSettings_
   void initialize();
+  
+  //! interval for output of time step number and time
+  int timeStepOutputInterval();
 
-  //! reset state such that new initialization becomes necessary
+  ///! reset state such that new initialization becomes necessary
   virtual void reset();
 
   ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
   virtual bool knowsMeshType() = 0;
 
-  ///! returns the Petsc solution vector
-  //virtual Vec &solution() = 0;
+  ///! start time of time interval to be simulated
+  double startTime();
+  
+  ///! end time of simulation
+  double endTime();
+  
+  ///! number of time steps in simulation time
+  double numberTimeSteps();
+  
+  ///! time step for simulation
+  double timeStepWidth();
+  
+  ///! python object containing the value of the python config dict with corresponding key
+  PyObject *specificSettings();
 
   ///! destructor
   virtual ~TimeSteppingScheme() {}
@@ -47,6 +62,7 @@ protected:
 
   DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
 
   double startTime_;        ///< start time of time interval to be simulated by call to advance
   double endTime_;          ///< end time of simulation

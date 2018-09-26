@@ -94,6 +94,7 @@ createPetscObjects()
 
   int nComponents = 1;
   this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
+
 }
 
 template<typename FunctionSpaceType>

@@ -17,7 +17,6 @@ class TimeSteppingSchemeOde : public TimeSteppingScheme
 {
 public:
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
-
   typedef Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
 
   //! constructor
@@ -41,6 +40,12 @@ public:
   //! initialize discretizableInTime
   virtual void initialize();
   
+  //! interval for output of time step number and time
+  //int timeStepOutputInterval();
+  
+  //! discretizable in time object
+  DiscretizableInTimeType &discretizableInTime();
+  
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
@@ -57,7 +62,7 @@ protected:
 
   std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
 
-  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+  //int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
   bool initialized_;     ///< if initialize() was already called
 

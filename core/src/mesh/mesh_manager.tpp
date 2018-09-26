@@ -4,6 +4,7 @@
 
 #include "easylogging++.h"
 #include "mesh/structured_regular_fixed.h"
+#include "control/performance_measurement.h"
 
 namespace Mesh
 {
@@ -42,13 +43,18 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
       }
 
       // create new mesh and initialize
-      std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, meshConfiguration);
-      functionSpace->setMeshName(meshName);
-      functionSpace->initialize();
-      
-      // store mesh under its name
-      functionSpaces_[meshName] = functionSpace;
-      LOG(DEBUG) << "Stored under key \"" << meshName << "\".";
+      std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
+
+      std::string logKey;
+      if (PythonUtility::hasKey(meshConfiguration, "logKey"))
+      {
+        logKey = PythonUtility::getOptionString(meshConfiguration, "logKey", "");
+      }
+
+      Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("nNodes") + logKey, functionSpace->nNodesGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("nElements") + logKey, functionSpace->nElementsGlobal());
+
       return functionSpace;
     }
     else
@@ -69,13 +75,17 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<anonymousName.str() << "\".";
   
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, settings);
-  functionSpace->setMeshName(anonymousName.str());
-  functionSpace->initialize();
+  std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
 
-  functionSpaces_[anonymousName.str()] = functionSpace;
+  std::string logKey;
+  if (PythonUtility::hasKey(settings, "logKey"))
+  {
+    logKey = PythonUtility::getOptionString(settings, "logKey", "");
+  }
 
-  VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts() << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << ")";
+  Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
+  Control::PerformanceMeasurement::setParameter(std::string("nNodes") + logKey, functionSpace->nNodesGlobal());
+  Control::PerformanceMeasurement::setParameter(std::string("nElements") + logKey, functionSpace->nElementsGlobal());
 
   return functionSpace;
 }
@@ -102,7 +112,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   functionSpaces_[name] = functionSpace;
 
   VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts()
-    << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << ")";
+    << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << "), stored under key \"" << name << "\"";
 
   return functionSpace;
 }

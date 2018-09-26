@@ -5,7 +5,6 @@
 #include "control/runnable.h"
 #include "data_management/multidomain.h"
 #include "control/dihu_context.h"
-#include "model_order_reduction/pod.h"
 
 namespace TimeSteppingScheme
 {

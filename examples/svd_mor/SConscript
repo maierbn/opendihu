@@ -11,11 +11,10 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # define the source files
-  src_files = [
-  "diffusion_1d",
-  "diffusion_1d_pod"
-  ]
+  src_files = Split(
+  """
+    svdexample.cpp
+  """)
 
   # create the main executable
-  for src_file in src_files:
-    env.Program(target = src_file, source = "{}.cpp".format(src_file))
+  env.Program(target = 'svdexample', source = src_files)

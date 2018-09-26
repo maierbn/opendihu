@@ -34,20 +34,25 @@ public:
   //! interval for output of time step number and time
   int timeStepOutputInterval();
 
-  //! reset state such that new initialization becomes necessary
+  ///! reset state such that new initialization becomes necessary
   virtual void reset();
 
   ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
   virtual bool knowsMeshType() = 0;
 
+  ///! start time of time interval to be simulated
   double startTime();
   
+  ///! end time of simulation
   double endTime();
   
+  ///! number of time steps in simulation time
   double numberTimeSteps();
   
+  ///! time step for simulation
   double timeStepWidth();
   
+  ///! python object containing the value of the python config dict with corresponding key
   PyObject *specificSettings();
 
   ///! destructor

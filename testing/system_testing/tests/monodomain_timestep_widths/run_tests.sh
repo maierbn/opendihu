@@ -2,6 +2,8 @@
 
 echo "running example $(pwd) with $1 processes"
 
+export PYTHONPATH=$PYTHONPATH:$(pwd)/../../../../scripts/
+
 workdir=$(pwd)
 variant="debug"
 variant="release"

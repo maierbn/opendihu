@@ -1,5 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
+
+import datetime
+now = datetime.datetime.now()
+print(" ======= csv2mesh.py =======") 
+print(now.strftime("%d/%m/%Y %H:%M:%S"))
 
 import sys
 import stl
@@ -12,16 +17,16 @@ if len(sys.argv) >= 2:
 if len(sys.argv) >= 3:
   out_filename = sys.argv[2]
   
-print "filename in: {}".format(in_filename)
-print "filename out: {}".format(out_filename)
+print("filename in: {}".format(in_filename))
+print("filename out: {}".format(out_filename))
 
 data = []
-with open(in_filename,"rb") as f:
+with open(in_filename,"r") as f:
   for line in f:
     dataset = line.split(";")
     if dataset[-1] == "\n":
       dataset = dataset[:-1]
-    dataset = map(float, dataset)
+    dataset = list(map(float, dataset))
     data.append(dataset)
 #data = np.genfromtxt("streamlines.csv",delimiter=";")
 
@@ -43,7 +48,7 @@ for dataset in data:
     
     
     if previous_point is not None:
-      #print "point ",[previous_point, point]
+      #print("point ",[previous_point, point])
       triangles.append([previous_point, point, 0.5*(previous_point+point)])
 
 # write debugging output stl meshes
@@ -61,7 +66,7 @@ def write_stl(triangles, outfile, description):
   out_mesh.update_normals()
 
   out_mesh.save(outfile)
-  print "saved {} triangles to \"{}\" ({})".format(n_triangles,outfile,description)
+  print("saved {} triangles to \"{}\" ({})".format(n_triangles,outfile,description))
 
 write_stl(triangles, out_filename, "streamlines")
 

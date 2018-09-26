@@ -10,7 +10,8 @@ for name in \
 "diffusion" \
 "monodomain" \
 "fibers" \
-"multiple_fibers"
+"multiple_fibers" \
+"monodomain_timestep_widths"
 do
 
 echo ""
@@ -37,7 +38,7 @@ echo ""
 # run tests
 START=$(date +%s.%N)
 
-. run_tests.sh 1
+. run_tests.sh 1   # the last argument is the number of cores to use
 
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")

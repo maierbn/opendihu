@@ -23,6 +23,14 @@ with open(mesh_file, "rb") as f:
 #  "n_linear_elements_per_coordinate_direction": n_linear_elements_per_coordinate_direction,
 #  "n_quadratic_elements_per_coordinate_direction": n_quadratic_elements_per_coordinate_direction,
 #
+
+
+# boundary conditions
+potential_flow_bc = {}
+for bottom_node_index in mesh_data["bottom_nodes"]:
+  potential_flow_bc[bottom_node_index] = 0.0
+for top_node_index in mesh_data["top_nodes"]:
+  potential_flow_bc[top_node_index] = 1.0
   
 config = {
   "Meshes": {
@@ -53,6 +61,7 @@ config = {
         "meshName": "mesh",
         "solverName": "potentialFlowSolver",
         "prefactor": 1.0,
+        "dirichletBoundaryConditions": potential_flow_bc,
       },
     },
     "Activation": {

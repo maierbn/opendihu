@@ -28,6 +28,9 @@ purge_dependencies:
 rebuild: purge_dependencies purge clean debug release
 
 # the following targets are just for convenience and could also be deleted
+release_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 

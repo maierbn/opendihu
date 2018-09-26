@@ -63,6 +63,9 @@ initialize()
   outputData1_ = PythonUtility::getOptionBool(specificSettings_, "outputData1", true);
   outputData2_ = PythonUtility::getOptionBool(specificSettings_, "outputData2", true);
   
+  // log endTime parameters
+  Control::PerformanceMeasurement::setParameter("endTime", endTime_);
+
   initialized_ = true;
 }
 
@@ -89,15 +92,8 @@ run()
   // initialize data structurures
   initialize();
 
-  // start time measurement
-  Control::PerformanceMeasurement::start("OperatorSplitting total");
-
   // run simulation
   advanceTimeSpan();
-
-  // stop time measurement and output log file
-  Control::PerformanceMeasurement::stop("OperatorSplitting total");
-  Control::PerformanceMeasurement::log("duration");
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

@@ -66,6 +66,7 @@ protected:
 
   bool isTimeStepWidthSignificant_;   ///< if time step width will be used to determine number of steps
   double timeStepWidth_;        ///< a timeStepWidth value that is used to compute the number of time steps
+  std::string durationLogKey_;   ///< the key under which the duration of the time stepping is saved in the log
 
   PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   bool initialized_;      ///< if initialize() was already called

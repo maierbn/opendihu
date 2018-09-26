@@ -4,6 +4,7 @@
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/paraview/paraview.h"
 #include "output_writer/exfile/exfile.h"
+#include "control/performance_measurement.h"
 
 namespace OutputWriter
 {
@@ -11,6 +12,9 @@ namespace OutputWriter
 template<typename DataType>
 void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime) const
 {
+  // start duration measurement
+  Control::PerformanceMeasurement::start("write output");
+
   for(auto &outputWriter : this->outputWriter_)
   {
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
@@ -34,6 +38,9 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
   }
+
+  // stop duration measurement
+  Control::PerformanceMeasurement::stop("write output");
 }
 
 };   // namespace

@@ -19,6 +19,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 {
   // write a RectilinearGrid
 
+  // get type of geometry field
+  typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
+
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
   ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
@@ -91,6 +94,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     file << ">" << std::endl;
 
     ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, true);
+    Paraview::writeParaviewPartitionFieldVariable<GeometryFieldType>(mesh->geometryField(), file, binaryOutput, fixedFormat, true);
 
     file << std::string(2, '\t') << "</PPointData>" << std::endl
       << std::string(2, '\t') << "<PCellData>" << std::endl
@@ -225,6 +229,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << ">" << std::endl;
     
   ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, false);
+  Paraview::writeParaviewPartitionFieldVariable<GeometryFieldType>(mesh->geometryField(), file, binaryOutput, fixedFormat, false);
   
   file << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl
@@ -288,6 +293,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
            int nFieldVariablesOfMesh, PyObject *specificSettings)
 {
   // write a StructuredGrid
+
+  // get type of geometry field
+  typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
+
   // collect field variable names that are defined on the current mesh
   std::vector<std::string> namesScalars, namesVectors;
   ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
@@ -360,6 +369,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     file << ">" << std::endl;
 
     ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, true);
+    Paraview::writeParaviewPartitionFieldVariable<GeometryFieldType>(mesh->geometryField(), file, binaryOutput, fixedFormat, true);
 
     file << std::string(2, '\t') << "</PPointData>" << std::endl
       << std::string(2, '\t') << "<PCellData>" << std::endl
@@ -430,9 +440,6 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     globalExtent[dimensionNo] = mesh->meshPartition()->nNodesGlobal(dimensionNo) - 1;
   }
 
-  // get type of geometry field
-  typedef FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>,3> GeometryFieldType;
-
   // avoid bug in paraview when reading binary encoded (base64) values for 1D meshes
   //if (D == 1 && extent[0] > 1 && binaryOutput)
   //   extent[0] -= 1;
@@ -465,7 +472,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << ">" << std::endl;
 
   ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, false);
-  
+  Paraview::writeParaviewPartitionFieldVariable<GeometryFieldType>(mesh->geometryField(), file, binaryOutput, fixedFormat, false);
+
   file << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl
     << std::string(3, '\t') << "</CellData>" << std::endl
@@ -536,7 +544,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   file << ">" << std::endl;
     
   ParaviewLoopOverTuple::loopOutputPointData(fieldVariables, meshName, file, binaryOutput, fixedFormat, false);
-  
+  Paraview::writeParaviewPartitionFieldVariable<GeometryFieldType>(mesh->geometryField(), file, binaryOutput, fixedFormat, false);
 
   file << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl

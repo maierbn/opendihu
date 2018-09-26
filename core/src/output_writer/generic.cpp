@@ -14,10 +14,18 @@ Generic::~Generic()
 {
 }
 
-std::ofstream Generic::openFile(std::string filename)
+std::ofstream Generic::openFile(std::string filename, bool append)
 {
   // open file
-  std::ofstream file(filename.c_str(), std::ios::out | std::ios::binary);
+  std::ofstream file;
+  if (append)
+  {
+    file.open(filename.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+  }
+  else
+  {
+    file.open(filename.c_str(), std::ios::out | std::ios::binary);
+  }
 
   if (!file.is_open())
   {

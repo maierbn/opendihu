@@ -23,6 +23,10 @@ template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,ty
 void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
 advanceTimeSpan()
 {
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
@@ -98,9 +102,21 @@ advanceTimeSpan()
     // get phi_e
     ierr = VecCopy(subvectorsRightHandSide[nCompartments_], dataMultidomain_.extraCellularPotential()->valuesGlobal()); CHKERRV(ierr);
 
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
     // write current output values
     this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
+
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>

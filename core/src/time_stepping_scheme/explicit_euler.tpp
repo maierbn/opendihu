@@ -19,6 +19,10 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
 template<typename DiscretizableInTime>
 void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 {
+  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationLogKey_);
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
@@ -63,11 +67,23 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
     // apply the prescribed boundary condition values
     this->applyBoundaryConditions();
 
+    // stop duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::stop(this->durationLogKey_);
+
     // write current output values
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+
+    // start duration measurement
+    if (this->durationLogKey_ != "")
+      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
   this->data_->solution()->restoreContiguousValuesGlobal();
+
+  // stop duration measurement
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
 template<typename DiscretizableInTime>

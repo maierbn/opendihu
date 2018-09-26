@@ -1,7 +1,7 @@
 # Electrophysiology debug
 #
 
-end_time = 1000.0
+end_time = 100.0
 
 import numpy as np
 import matplotlib 
@@ -24,23 +24,30 @@ cellml_file = "../input/hodgkin_huxley_1952.c"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-4                      # timestep width of diffusion
-dt_0D = 5e-5                      # timestep width of ODEs
-dt_3D = 1e-4                      # overall timestep width of splitting
-output_timestep = 1e-1            # timestep for output files
+dt_1D = 1e-3                      # timestep width of diffusion
+dt_0D = 3e-3                      # timestep width of ODEs
+dt_3D = 3e-3                      # overall timestep width of splitting
+output_timestep = 1e0             # timestep for output files
 
 # input files
 #fibre_file = "../input/laplace3d_structured_quadratic"
 fibre_file = "../input/laplace3d_structured_linear"
+#fibre_file = "../input1000/laplace3d_structured_quadratic"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../input/MU_firing_times_real.txt"
-#firing_times_file = "../input/MU_firing_times_immediately.txt"
+#firing_times_file = "../input/MU_firing_times_real.txt"
+firing_times_file = "../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
 
+# parse arguments
+n_processes_per_fiber = (int)(sys.argv[0])
+
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+
+if rank_no == 0:
+  print("n_processes_per_fiber: {}".format(n_processes_per_fiber))
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
@@ -107,60 +114,25 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     
   #wait = input("Press any key to continue...")
     
-fig = plt.figure(1)
-#plt.ion()
-
-def handleResult(n_nodes, time_step_no, current_time, states, intermediates):
-  #print "handleResult: time step {}, t={}, n_nodes: {}, n entries states: {}".format(time_step_no, current_time, n_nodes, len(states))
-  #print "states:", states[0:n_nodes]
-  
-  xdata = []
-  vm_data = []
-  gamma_data = []
-  for i in range(n_nodes):
-    xdata.append(i)
-    vm_data.append(states[i])
-    gamma_data.append(intermediates[i])
-  
-  # write out a png file
-  plt.figure(1)
-  plt.clf()
-  plt.xlabel('position $x$')
-  ax1 = plt.gca()
-  ax1.plot(xdata, vm_data, 'go-', label='$V_m$')
-  plt.ylim(-80, 80)
-  plt.xlabel('t')
-  plt.ylabel('$V_m$')
-  ax2 = ax1.twinx()
-  ax2.plot(xdata, gamma_data, 'ro-', label='$\gamma$')
-  plt.ylabel('$\gamma$')    
-  plt.ylim(0, 1)
-  
-  # ask matplotlib for the plotted objects and their labels
-  lines, labels = ax1.get_legend_handles_labels()
-  lines2, labels2 = ax2.get_legend_handles_labels()
-  ax2.legend(lines + lines2, labels + labels2, loc=0)
-  
-  filename = "out_{:06.1f}.png".format(currentTime)
-  plt.savefig(filename)
-  #print "   saved ""{}""".format(filename)
-  #plt.draw()
-    
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
   pass
     
 def get_instance_config(i):
-  
-  k = 1  # n ranks per fibre
+
+  # set ranks list containing the rank nos for fiber i  
   ranks = []
-  for j in range(k):
-    ranks.append(k*i + j)
+  for j in range(n_processes_per_fiber):
+    ranks.append(n_processes_per_fiber*i + j)
+
   bc = {0: -75, -1: -75}
   instance_config = {
     "ranks": ranks,
     "StrangSplitting": {
       #"numberTimeSteps": 1,
       "timeStepWidth": dt_3D,  # 1e-1
+      "logTimeStepWidthAsKey": "dt_3D",
+      "durationLogKey": "duration_total",
+      "timeStepOutputInterval" : 1000,
       "endTime": end_time,
       "outputData1": False,
       "outputData2": True,
@@ -168,6 +140,8 @@ def get_instance_config(i):
       "Term1": {      # CellML
         "Heun" : {
           "timeStepWidth": dt_0D,  # 5e-5
+          "logTimeStepWidthAsKey": "dt_0D",
+          "durationLogKey": "duration_0D",
           "initialValues": [],
           "timeStepOutputInterval": 1e4,
           "inputMeshIsGlobal": True,
@@ -197,6 +171,8 @@ def get_instance_config(i):
           "initialValues": [],
           #"numberTimeSteps": 1,
           "timeStepWidth": dt_1D,  # 1e-5
+          "logTimeStepWidthAsKey": "dt_1D",
+          "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,
           "dirichletBoundaryConditions": bc,
           "inputMeshIsGlobal": True,
@@ -207,13 +183,12 @@ def get_instance_config(i):
             "inputMeshIsGlobal": True,
             "meshName": "MeshFibre"+str(i),
             "prefactor": Conductivity/(Am*Cm),
-            "dirichletBoundaryConditions": bc,
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
           ]
         },
       },
@@ -229,7 +204,8 @@ with open(fibre_file, "rb") as f:
   streamlines = pickle.load(f)
     
 nInstances = len(streamlines)
-print("nInstances: {}".format(nInstances))
+if rank_no == 0:
+  print("nInstances: {}".format(nInstances))
 
 #nInstances = 1
     
@@ -265,6 +241,7 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
+  "scenarioName": "1e3_fibers_1e4_cores",
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

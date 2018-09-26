@@ -26,9 +26,16 @@ public:
   static void measureError(std::string name, T differenceVector);
 
   //! write collected information to a log file
-  static void log(std::string logFileName);
+  static void writeLogFile(std::string logFileName = "logs/log");
+
+  //! save a parameter that will be added in the log file
+  template<typename T>
+  static void setParameter(std::string key, T parameter);
 
 private:
+
+  //! parse some system information
+  static void parseStatusInformation();
 
   struct Measurement
   {
@@ -44,6 +51,8 @@ private:
   };
 
   static std::map<std::string, Measurement> measurements_;   ///< the currently stored measurements
+  static std::map<std::string,std::string> parameters_;   ///< arbitrary parameters that will be stored in the log
+
 
 };
 

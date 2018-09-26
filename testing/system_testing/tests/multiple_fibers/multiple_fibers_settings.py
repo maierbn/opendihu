@@ -1,7 +1,7 @@
 # Electrophysiology debug
 #
 
-end_time = 10.0
+end_time = 100.0
 
 import numpy as np
 import matplotlib 
@@ -31,8 +31,8 @@ output_timestep = 1e0             # timestep for output files
 
 # input files
 #fibre_file = "../input/laplace3d_structured_quadratic"
-fibre_file = "../input/laplace3d_structured_linear"
-#fibre_file = "../input1000/laplace3d_structured_quadratic"
+#fibre_file = "../input/laplace3d_structured_linear"
+fibre_file = "../input1000/laplace3d_structured_quadratic"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"

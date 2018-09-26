@@ -7,8 +7,8 @@ variant="debug"
 variant="release"
 
 # copy fibre results from fibers system test to this folder
-#cd input
-#. copy.sh
+cd input
+. copy.sh
 cd $workdir
 
 mkdir -p build_${variant}

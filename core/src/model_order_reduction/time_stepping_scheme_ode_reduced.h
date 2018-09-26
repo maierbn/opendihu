@@ -51,6 +51,9 @@ namespace ModelOrderReduction
     bool knowsMeshType();
     
   protected:
+    //! read initial values from settings and set field accordingly
+    void setInitialValues();
+    
     TimeSteppingType timestepping_;
     
   private:

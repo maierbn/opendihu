@@ -2,8 +2,10 @@
 
 #include <Python.h>
 #include "utility/python_utility.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "utility/petsc_utility.h"
+#include<petscmat.h>
 
+#include "time_stepping_scheme/time_stepping_scheme.h"
 
 namespace ModelOrderReduction
 {
@@ -35,6 +37,19 @@ SolutionVectorMapping &TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 solutionVectorMapping()
 {
   return solutionVectorMapping_;
+}
+
+template<typename TimeSteppingType>
+void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
+{
+  PetscErrorCode ierr;
+  
+  Vec &solution = this->timestepping_.data().solution()->getContiguousValuesGlobal();
+  Vec &redSolution=this->data_->redSolution()->getContiguousValuesGlobal();
+  Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
+  
+  // reduction step
+  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);   
 }
 
 template<typename TimeSteppingType>
@@ -71,6 +86,8 @@ initialize()
   this->data_->initialize();
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();
+  
+  setInitialValues();
     
   initialized_=true;
 }

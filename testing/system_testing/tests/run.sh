@@ -37,7 +37,7 @@ echo ""
 # run tests
 START=$(date +%s.%N)
 
-. run_tests.sh
+. run_tests.sh 1
 
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")

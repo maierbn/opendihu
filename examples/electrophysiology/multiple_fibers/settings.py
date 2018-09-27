@@ -22,7 +22,7 @@ firing_times_file = "../input/MU_firing_times_real.txt"
 print("prefactor: ",Conductivity/(Am*Cm))
 print("numpy path: ",np.__path__)
 
-def setParameters(n_nodes, time_step_no, current_time, parameters, fibre_no):
+def setParameters(n_nodes, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine motor unit
   mu_no = int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)

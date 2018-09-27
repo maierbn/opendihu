@@ -33,6 +33,13 @@ FiniteElementMethodTimeStepping(DihuContext context)
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
+{
+  BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Term>::setBoundaryConditionHandlingEnabled(boundaryConditionHandlingEnabled);
+}
+
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 initialize()
 {
   LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize";
@@ -85,7 +92,7 @@ reset()
 //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,1> &initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues)
 {
   // Do not set initial values from within the "FiniteElements" section of the config. (therefore return false)
   // The initial values are set by the time stepping scheme under its section.
@@ -139,10 +146,10 @@ knowsMeshType()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-std::shared_ptr<Mesh::Mesh> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-mesh()
+std::shared_ptr<FunctionSpaceType> FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+functionSpace()
 {
-  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::mesh();
+  return FiniteElementMethodBase<FunctionSpaceType, QuadratureType, Term>::functionSpace();
 }
 
 } // namespace SpatialDiscretization

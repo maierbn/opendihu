@@ -53,7 +53,7 @@ def fibre_gets_stimulated(current_time):
     return False
   
 # callback function that can set parameters, i.e. stimulation current
-def set_parameters(n_nodes, time_step_no, current_time, parameters, null):
+def set_parameters(n_nodes, time_step_no, current_time, parameters, dof_nos_global, null):
   
   # determine if fibre gets stimulated at the current time
   is_fibre_gets_stimulated = fibre_gets_stimulated(current_time)
@@ -149,7 +149,7 @@ config = {
       {"format": "ExFile", "filename": "out/fibre_splitting", "outputInterval": 1e5, "sphereSize": "2*2*2"},
     ],
     "Term1": {      # CellML
-      "ExplicitEuler" : {
+      "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
         "timeStepOutputInterval": 1e4,

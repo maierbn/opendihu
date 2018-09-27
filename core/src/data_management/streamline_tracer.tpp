@@ -51,11 +51,8 @@ createPetscObjects()
   LOG(DEBUG) << "StreamlineTracer<FunctionSpaceType,BaseDataType>::createPetscObjects()" << std::endl;
   assert(this->functionSpace_);
   
-  // create partitioning
-  Partition::MeshPartition<FunctionSpaceType> partition = this->context_.template createPartitioning<FunctionSpaceType>(this->rankSubset_, this->functionSpace_);
-  
   // create field variables on local partition
-  this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient", partition);
+  this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
@@ -74,8 +71,7 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
   std::array<element_no_t,1> nElementsPerCoordinateDirection{nElements}; 
   
   // create mesh by meshManager
-  meshPtr = std::static_pointer_cast<FunctionSpaceFibre>(
-     this->context_.meshManager()->template createMesh<FunctionSpaceFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection));
+  meshPtr = this->context_.meshManager()->template createFunctionSpace<FunctionSpaceFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection);
   
   // get geometry field 
   std::shared_ptr<FieldVariableFibreGeometry> geometryField = std::make_shared<FieldVariableFibreGeometry>(meshPtr->geometryField());
@@ -85,10 +81,10 @@ createFibreMesh(const std::vector<Vec3> &nodePositions)
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-FieldVariable::FieldVariable<FunctionSpaceType,3> &StreamlineTracer<FunctionSpaceType,BaseDataType>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> StreamlineTracer<FunctionSpaceType,BaseDataType>::
 gradient()
 {
-  return *this->gradient_;
+  return this->gradient_;
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>

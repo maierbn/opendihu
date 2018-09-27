@@ -12,5 +12,5 @@ plt.hist(data,bins=100)
 plt.xlabel("MU no")
 plt.ylabel("count")
 
-plt.savefig("histogram.pdf")
+plt.savefig("histogram_fibre_distribution.pdf")
 plt.show()

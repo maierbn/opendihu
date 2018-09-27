@@ -34,26 +34,26 @@ public:
   //! return reference to a stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> tangentStiffnessMatrix();
 
-  //! return reference to the residual field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the residual field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &residual();
 
-  //! return reference to the increment field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the increment field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &increment(){LOG(FATAL) << "this should not be in use";}
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &solution(){LOG(FATAL) << "this should not be in use";}
 
-  //! return reference to the actual geometry field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the actual geometry field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryActual();
 
-  //! return reference to the reference configuration geometry field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the reference configuration geometry field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryReference();
 
-  //! return reference to the displacements field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the displacements field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &displacements();
 
-  //! return reference to the wExt field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the wExt field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &externalVirtualWork();
 
-  //! return reference to the wInt field, the PETSc Vec can be obtained via fieldVariable.values()
+  //! return reference to the wInt field, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
   FieldVariable::FieldVariable<FunctionSpaceType,FunctionSpaceType::dim()> &internalVirtualWork();
 
   //! alias for externalVirtualWork, needed such that rhs setting functionality works

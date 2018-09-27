@@ -2,6 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping.h"
+#include "control/performance_measurement.h"
 
 namespace OperatorSplitting
 {
@@ -37,6 +38,8 @@ initialize()
 
   TimeSteppingScheme::initialize();
 
+  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
 
@@ -60,6 +63,9 @@ initialize()
   outputData1_ = PythonUtility::getOptionBool(specificSettings_, "outputData1", true);
   outputData2_ = PythonUtility::getOptionBool(specificSettings_, "outputData2", true);
   
+  // log endTime parameters
+  Control::PerformanceMeasurement::setParameter("endTime", endTime_);
+
   initialized_ = true;
 }
 
@@ -86,8 +92,14 @@ run()
   // initialize data structurures
   initialize();
 
+  // start time measurement
+  Control::PerformanceMeasurement::start("OperatorSplitting total");
+
   // run simulation
   advanceTimeSpan();
+
+  // stop time measurement and output log file
+  Control::PerformanceMeasurement::stop("OperatorSplitting total");
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

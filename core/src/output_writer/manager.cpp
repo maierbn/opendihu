@@ -16,7 +16,7 @@ void Manager::initialize(PyObject *settings)
 {
   outputWriter_.clear();
 
-  VLOG(1) << "initializeOutputWriter, settings=" << settings;
+  VLOG(3) << "initializeOutputWriter, settings=" << settings;
   //PythonUtility::printDict(settings);
 
   if (PythonUtility::hasKey(settings, "OutputWriter"))
@@ -35,7 +35,7 @@ void Manager::initialize(PyObject *settings)
   }
   else
   {
-    LOG(DEBUG) << "config does not contain \"OutputWriter\".";
+    LOG(DEBUG) << "Config does not contain \"OutputWriter\".";
   }
 }
 

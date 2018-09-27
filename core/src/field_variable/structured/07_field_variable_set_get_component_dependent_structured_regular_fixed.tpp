@@ -33,7 +33,7 @@ getValue(node_no_t dofLocalNo) const
   
   int nodeNoLocal = int(dofLocalNo / nDofsPerNode);
   int nodeLocalDofIndex = int(dofLocalNo % nDofsPerNode);
-  std::array<int,D> coordinates = this->functionSpace_->meshPartition()->getNodeNoGlobalCoordinates(nodeNoLocal);
+  std::array<global_no_t,D> coordinates = this->functionSpace_->meshPartition()->getCoordinatesGlobal(nodeNoLocal);
 
   std::array<double,nComponents> value;
   if (nodeLocalDofIndex > 0)   // if this is a derivative of Hermite, set to 0

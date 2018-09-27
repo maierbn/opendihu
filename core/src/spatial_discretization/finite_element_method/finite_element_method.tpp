@@ -24,11 +24,11 @@ setRightHandSide()
   LOG(DEBUG) << "FiniteElementMethod::setRightHandSide(): rightHandSide.zeroEntries()";
  
   // fill rhs vector with 0
-  FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> rightHandSide = this->data_.rightHandSide();
   
-  rightHandSide.zeroEntries();
+  rightHandSide->zeroEntries();
 
-  LOG(DEBUG) << rightHandSide;
+  LOG(DEBUG) << *rightHandSide;
 }
 
 };

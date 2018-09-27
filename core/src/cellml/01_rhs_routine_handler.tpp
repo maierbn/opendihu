@@ -15,12 +15,12 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates>
+template <int nStates,typename FunctionSpaceType>
 class CellmlAdapter;
 
 
-template<int nStates>
-void RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   /* we have the following:
@@ -29,9 +29,8 @@ initializeRhsRoutine()
    *   existing>new. 
    * this means: "Save time where possible!"
    */
-
   std::string libraryFilename;
-  forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);
+  forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);  // TODO: rename to useLibraryFile
 
   if(!forceRecompileRhs_)
   { //try open library file
@@ -41,13 +40,11 @@ initializeRhsRoutine()
       //default set in PythonUtility::getOptionString(...)
     }     
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
-    loadRhsLibrary(libraryFilename);
   }
   else // forceRecompileRhs_ is set true
   { // will compile lib new
     std::string gpuSourceFilename;
     std::string simdSourceFilename;
-    std::string compileCommandOptions;
     std::string SourceFilenameToUse;
     std::stringstream compileCommand;
 
@@ -63,9 +60,9 @@ initializeRhsRoutine()
       }
       SourceFilenameToUse = gpuSourceFilename;
 #ifdef NDEBUG
-      compileCommandOptions = "gcc -fPIC -fopenmp -O3 -shared -lm -x c -o ";
+      compileCommandOptions = "gcc -fPIC -fopenmp -O3 -shared -lm -x c ";
 #else
-      compileCommandOptions = "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c -o ";
+      compileCommandOptions = "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c ";
 #endif
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config. 
@@ -84,23 +81,27 @@ initializeRhsRoutine()
       }
       SourceFilenameToUse = simdSourceFilename;
 #ifdef NDEBUG
-      compileCommandOptions = "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c -o ";
+      // other possible options
+      // -fopt-info-vec-missed=vectorizer_missed.log 
+      // -fopt-info-vec-all=vectorizer_all.log 
+      compileCommandOptions = "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c ";
 #else
-      compileCommandOptions = "gcc -fPIC -O0 -ggdb -shared -lm -x c -o ";
+      compileCommandOptions = "gcc -fPIC -O0 -ggdb -shared -lm -x c ";
 #endif
     }
     // compile source file to a library
-    libraryFilename = "lib.so";
+    std::stringstream s;
+    s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
+    libraryFilename = s.str();
+    
     if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
     {
-      libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+      std::string unusedLibraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+      LOG(WARNING) << "You have specified a libraryFilename called \"" << unusedLibraryFilename << "\", but useLibraryFile is set to False. " 
+        << "If you want to use the provided library, set useLibraryFile to True in the config. The generated library file will be \"" << libraryFilename << "\".";
     }
-    else 
-    {
-      std::stringstream s;
-      s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
-      libraryFilename = s.str();
-    }
+    
+    // create path if it does not exist
     if (libraryFilename.find("/") != std::string::npos)
     {
       std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
@@ -111,24 +112,84 @@ initializeRhsRoutine()
         LOG(ERROR) << "Could not create path \"" << path << "\".";
       }
     }
-    compileCommand << compileCommandOptions << libraryFilename << " " << SourceFilenameToUse;
-    int ret = system(compileCommand.str().c_str());
-    if (ret != 0)
+    
+    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+
+    // gather what number of instances all ranks have
+    int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
+    int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
+    std::vector<int> nInstancesRanks(nRanksCommunicator);
+
+    LOG(DEBUG) << "Communicator has " << nRanksCommunicator << " ranks";
+
+    nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+    MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
+                                                1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");
+
+    // determine if this rank should do compilation, such that each nInstances is compiled only once, by the rank with lowest number
+    int i = 0;
+    int rankWhichCompilesLibrary = 0;
+    for (std::vector<int>::iterator iter = nInstancesRanks.begin(); iter != nInstancesRanks.end(); iter++, i++)
     {
-      LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
+      if (*iter == this->nInstances_)
+      {
+        rankWhichCompilesLibrary = i;
+        break;
+      }
+    }
+
+    LOG(DEBUG) << "library will be compiled on rank " << rankWhichCompilesLibrary;
+    
+    if (rankWhichCompilesLibrary == ownRankNoCommunicator)
+    {
+      LOG(DEBUG) << "compile on this rank";
+      
+      if (libraryFilename.find("/") != std::string::npos)
+      {
+        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+        int ret = system((std::string("mkdir -p ")+path).c_str());
+        
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Could not create path \"" << path << "\".";
+        }
+      }
+     
+      std::stringstream compileCommand;
+      
+      // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
+      compileCommand << compileCommandOptions
+        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << SourceFilenameToUse
+        << " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
+        << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
+
+      int ret = system(compileCommand.str().c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+        libraryFilename = "";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+      }
     }
     else
     {
-      LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+      LOG(DEBUG) << "we are the wrong rank, do not compile library " 
+        << "wait until library has been compiled";
     }
-    loadRhsLibrary(libraryFilename);
+    
+    // barrier to wait until the one rank that compiles the library has finished
+    MPIUtility::handleReturnValue(MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Barrier");
   }
+
+  loadRhsLibrary(libraryFilename);
 }
 
-
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
  
@@ -139,7 +200,13 @@ loadRhsLibrary(std::string libraryFilename)
   if (currentWorkingDirectory[currentWorkingDirectory.length()-1] != '/')
     currentWorkingDirectory += "/";
 
-  void* handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+  void* handle = NULL;
+  for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
+  {
+    handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
   if (handle)
   {
     // load rhs method
@@ -168,6 +235,7 @@ loadRhsLibrary(std::string libraryFilename)
     else if (rhsRoutineGPU_)
     {
       // if the gpu-processed rhs function (with openmp 4.5 pragmas) is present in the library, we can directly use it and we are done in this method.
+      rhsRoutine_ = rhsRoutineGPU_;
       return true;
     }
     else if (rhsRoutineOpenCMISS_)
@@ -177,7 +245,7 @@ loadRhsLibrary(std::string libraryFilename)
       {
         LOG(DEBUG) << "call opendihu rhsRoutine, by calling several opencmiss rhs";
 
-        CellmlAdapter<nStates> *cellmlAdapter = (CellmlAdapter<nStates> *)context;
+        CellmlAdapter<nStates,FunctionSpaceType> *cellmlAdapter = (CellmlAdapter<nStates,FunctionSpaceType> *)context;
         int nInstances, nIntermediates, nParameters;
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
@@ -238,8 +306,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createSimdSourceFile(std::string &simdSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR
@@ -544,12 +612,18 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // write out source file
     std::stringstream s;
-    s << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";
+    s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";  // standard file name for SIMD source is subfolder "src" and "_simd.c" suffix
     simdSourceFilename = s.str();
     if (PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
     {
       simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
     }
+
+    // add .rankNoWorldCommunicator to simd source filename
+    s.str("");
+    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+    s << simdSourceFilename << "." << rankNoWorldCommunicator;
+    simdSourceFilename = s.str();
 
     std::ofstream simdSourceFile(simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
@@ -593,7 +667,6 @@ createGPUSourceFile(std::string &gpuSourceFilename)
     std::stringstream source;
     source << sourceFile.rdbuf();
     sourceFile.close();
-
     bool discardOpenBrace = false;   // if the next line consisting of only "{" should be discarded
     std::stringstream gpuSource;
     
@@ -884,7 +957,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
 
     // write out source file
     std::stringstream s;
-    s << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";
+    s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_gpu.c";
     gpuSourceFilename = s.str();
     if (PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
     {
@@ -908,9 +981,8 @@ createGPUSourceFile(std::string &gpuSourceFilename)
   return true;
 }
 
-
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues)
 {
   LOG(TRACE) << "scanSourceFile";

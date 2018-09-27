@@ -96,6 +96,10 @@ const double PI = 3.14159265358979323846;
 //! check if vector b is a subsequence of a, i.e. is contained in a
 bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequenceAStartPos);
 
+//! rotate the matrix such that unit vector (1,0,0) now points to directionVector, directionVector does not need to be normalized
+template<int D>
+void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
+
 }  // namespace
 
 #include "utility/math_utility.tpp"

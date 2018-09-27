@@ -73,6 +73,10 @@ public:
   //! set values for the single component for given dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 
+  //! set values for the single component for given dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  template<int nValues>
+  void setValues(const std::array<dof_no_t,nValues> dofNosLocal, const std::array<double,nValues> values, InsertMode petscInsertMode=INSERT_VALUES);
+
   //! set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 

@@ -31,23 +31,23 @@ multiplyRightHandSideWithMassMatrix()
           > EvaluationsArrayType;    // evaluations[nGP^D][nDofs][nDofs]
 
   // initialize variables
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
 
   // merge local changes on the partitioned vector
-  rightHandSide.startGhostManipulation();
+  rightHandSide->startGhostManipulation();
   
   // get all entries
   std::vector<double> rhsValues;
-  rightHandSide.getValuesWithGhosts(rhsValues);
+  rightHandSide->getValuesWithGhosts(rhsValues);
   VLOG(1) << "extracted rhsValues (with ghosts): " << rhsValues;
 
   // initialize values to zero
-  rightHandSide.zeroEntries();
+  rightHandSide->zeroEntries();
 
   // also zero out the ghost buffer
-  rightHandSide.zeroGhostBuffer();
+  rightHandSide->zeroGhostBuffer();
 
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
@@ -97,13 +97,13 @@ multiplyRightHandSideWithMassMatrix()
         double value = integratedValue * rhsValues[dofNosLocal[j]];
         VLOG(2) << "  dof pair (" << i<< "," <<j<< "), integrated value: " <<integratedValue << ", rhsValue[" << dofNosLocal[j]<< "]: " << rhsValues[dofNosLocal[j]] << " = " << value;
 
-        rightHandSide.setValue(dofNosLocal[i], value, ADD_VALUES);
+        rightHandSide->setValue(dofNosLocal[i], value, ADD_VALUES);
       }  // j
     }  // i
   }  // elementNo
 
   // merge local changes on the vector, parallel assembly
-  rightHandSide.finishGhostManipulation();
+  rightHandSide->finishGhostManipulation();
  
 }
 

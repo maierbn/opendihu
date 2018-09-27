@@ -37,6 +37,9 @@ public:
   //! get the number of dofs
   dof_no_t nDofsLocalWithoutGhosts() const;
 
+  //! get the number of global dofs
+  dof_no_t nDofsGlobal() const;
+
   //! get the internal PETSc values vector
   virtual Vec &valuesLocal(int componentNo = 0) = 0;
 

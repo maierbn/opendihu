@@ -10,16 +10,24 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  OperatorSplitting::Godunov<
-    Control::MultipleInstances<
-      TimeSteppingScheme::ExplicitEuler<     // Hodgkin-Huxley
-        CellmlAdapter<4>
-      >,
-    >,
-    TimeSteppingScheme::MultidomainSolver<     // multidomain
-      Mesh::StructuredRegularFixedOfDimension<2>,
+  typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
+
+  TimeSteppingScheme::MultidomainSolver<              // multidomain
+    SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+      MeshType,
       BasisFunction::LagrangeOfOrder<1>,
-      Quadrature::Gauss<2>
+      Quadrature::Gauss<3>,
+      Equation::Static::Laplace
+    >,
+    CellmlAdapter<                // Hodgkin-Huxley
+      4,
+      FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>
+    >,
+    SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion
+      MeshType,
+      BasisFunction::LagrangeOfOrder<1>,
+      Quadrature::Gauss<3>,
+      Equation::Dynamic::DirectionalDiffusion
     >
   > problem(settings);
   

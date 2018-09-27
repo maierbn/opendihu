@@ -6,83 +6,46 @@
 #include <tuple>
 
 #include "data_management/data.h"
-#include "data_management/diffusion_tensor.h"
-#include "control/types.h"
-#include "mesh/mesh.h"
-#include "field_variable/field_variable.h"
-#include "function_space/mixed_function_space.h"
-#include "partition/partitioned_petsc_vec.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "data_management/finite_elements_base.h"
+#include "data_management/diffusion_tensor_field_variable.h"
+#include "data_management/diffusion_tensor_constant.h"
+#include "equation/diffusion.h"
 
 namespace Data
 {
 
 template<typename FunctionSpaceType,typename Term,typename = Term,typename = typename FunctionSpaceType::BasisFunction>
 class FiniteElements :
-  public Data<FunctionSpaceType>,
-  public DiffusionTensor<FunctionSpaceType::dim()>
+  public FiniteElementsBase<FunctionSpaceType>,
+  public DiffusionTensorConstant<FunctionSpaceType::dim()>
 {
 public:
+  //! constructor from base class
+  using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
 
-  //! constructor
-  FiniteElements(DihuContext context);
-
-  //! destructor
-  virtual ~FiniteElements();
-
-  //! initialize the object, create all stored data
-  virtual void initialize() override;
-
-  //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide();
-
-  //! return reference to solution of the system, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &solution();
-
-  //! print all stored data to stdout
-  void print();
-  
-  //! create PETSc matrix
-  void initializeMassMatrix();
-
-  //! create the inverse of the lumped mass matrix
-  void initializeInverseLumpedMassMatrix();
-
-  //! return reference to a stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix();
-
-  //! get the mass matrix
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix();
-
-  //! get the inversed lumped mass matrix
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
-  
-  //! field variables that will be output by outputWriters
-  typedef std::tuple<
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // solution
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>   // rhs
-  > OutputFieldVariables;
-
-  //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
-
-private:
-
-  //! initializes the vectors and stiffness matrix with size
-  void createPetscObjects();
-
-  //! get maximum number of expected non-zeros in stiffness matrix
-  void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
-
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix_;      ///< the standard stiffness matrix of the finite element formulation
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> massMatrix_;           ///< the standard mass matrix, which is a matrix that, applied to a rhs vector f, gives the rhs vector in weak formulation
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix_;         ///< the inverse lumped mass matrix that has only entries on the diagonal, they are the reciprocal of the row sums of the mass matrix
-
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rhs_;                 ///< the rhs vector in weak formulation
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution_;            ///< the vector of the quantity of interest, e.g. displacement
-
+  // !intialize base class and diffusion tensor
+  virtual void initialize();
 };
+
+/** for directional diffusion use the diffusion tensor that depends upon a direction field
+ */
+template<typename FunctionSpaceType>
+class FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion> :
+  public FiniteElementsBase<FunctionSpaceType>,
+  public DiffusionTensorFieldVariable<FunctionSpaceType>
+{
+public:
+  //! constructor from base class
+  using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
+
+  //! dummy method
+  virtual void initialize(){};
+
+  // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments=0);
+};
+
+
 
 /*
 #include "equation/type_traits.h"

@@ -1058,6 +1058,39 @@ the solution is
   \end{array}
 \end{equation*}
 
+%------------------------------------------------------------------------------------------------
+\section{Monodomain}
+Monodomain equation
+\begin{equation*}
+  \begin{array}{lll}
+  \dfrac{\partial}{\partial x} \Big(\sigma_\text{eff}\,\dfrac{\partial V_m}{\partial x}\Big) = A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big),\qquad
+  \text{with }\sigma_\text{eff}:= \sigma_i || \sigma_e
+  \end{array}
+\end{equation*}
+\subsection{Numerical treatment}
+Equation solved for $\dfrac{\partial V_m}{\partial t}$:
+\begin{equation*}
+  \begin{array}{lll}
+  \dfrac{\partial V_m}{\partial t} = -\dfrac{1}{C_m}I_\text{ion}(V_m) + \dfrac{1}{A_m\,C_m} \dfrac{\partial}{\partial x}\Big(\sigma_\text{eff}\,\dfrac{\partial}{\partial x}V_m\Big)
+  \end{array}
+\end{equation*}
+Employ finite differences in $t$ and Godunov operator splitting:
+\begin{equation*}
+  \begin{array}{lll}
+  \dfrac{V_m^\ast - V_m^{(k)}}{\Delta t} &= -\dfrac{1}{C_m}\,I_\text{ion}(V_m^{(k)}),\\[4mm]
+  \dfrac{V_m^{(k+1)} - V_m^{*}}{\Delta t} &= \dfrac{1}{A_m\,C_m}\dfrac{\partial}{\partial x}\Big(\sigma_\text{eff}\,\dfrac{\partial}{\partial x}V_m^{(k+1)}\Big),\\[4mm]
+  \end{array}
+\end{equation*}
+
+\begin{equation*}
+  \begin{array}{lll}
+  V_m^{(k+1)} = V_m^{*} + \Delta t \cdot \dfrac{1}{A_m\,C_m}\dfrac{\partial}{\partial x}\Big(\sigma_\text{eff}\,\dfrac{\partial}{\partial x}V_m^{(k+1)}\Big),
+  \end{array}
+\end{equation*}
+The CellML model gives the right hand side $f(V_m^{(k)}) = -\dfrac{1}{C_m}\,I_\text{ion}(V_m^{(k)})$. When solving the diffusion equation the value of $C_m$ should match.
+%------------------------------------------------------------------------------------------------
+
+    
 The bidomain equation can be used for computation of EMG ($\phi_e$), after the Heidlauf model, when only $V_m$ is known.
 \begin{equation*}
   \begin{array}{lll}

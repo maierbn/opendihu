@@ -18,7 +18,16 @@ Structured<D>::Structured(PyObject *specificSettings) :
   if (inputMeshIsGlobal)
   {
     // get settings values nElements_
-    this->nElementsPerCoordinateDirectionGlobal_ = PythonUtility::getOptionArray<global_no_t, D>(specificSettings, "nElements", 1, PythonUtility::Positive);
+    if (D == 1)
+    {
+      // for D=1 default value is 0, i.e. if nothing is given, create a 1-dof degenerate mesh
+      this->nElementsPerCoordinateDirectionGlobal_ = PythonUtility::getOptionArray<global_no_t, D>(specificSettings, "nElements", 0, PythonUtility::NonNegative);
+    }
+    else
+    {
+      // for D>1 default values is 1, i.e. one element layer in the degenerate dimensions that were not specified
+      this->nElementsPerCoordinateDirectionGlobal_ = PythonUtility::getOptionArray<global_no_t, D>(specificSettings, "nElements", 1, PythonUtility::NonNegative);
+    }
     LOG(DEBUG) << "set global number of elements from settings: " << this->nElementsPerCoordinateDirectionGlobal_;
   }
   else 

@@ -7,6 +7,7 @@
 #include <petscksp.h>
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
+#include "data_management/time_stepping_implicit.h"
 
 namespace TimeSteppingScheme
 {
@@ -15,16 +16,8 @@ template<typename DiscretizableInTimeType>
 TimeSteppingImplicit<DiscretizableInTimeType>::TimeSteppingImplicit(DihuContext context, std::string name) :
 TimeSteppingSchemeOde<DiscretizableInTimeType>(context, name)
 {
-  this->data_ = std::make_shared <Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
-  this->outputWriterManager_.initialize(this->specificSettings_);
-}
-
-template<typename DiscretizableInTimeType>
-void TimeSteppingImplicit<DiscretizableInTimeType>::run()
-{
-  TimeSteppingSchemeOde<DiscretizableInTimeType>::run();
+  this->data_ = std::make_shared<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(context); // create data object for implicit euler
+  this->dataImplicit_ = std::static_pointer_cast<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>>(this->data_);
 }
 
 template<typename DiscretizableInTimeType>
@@ -35,17 +28,22 @@ initialize()
     return;
   
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
-  
+  LOG(TRACE) << "TimeSteppingImplicit::initialize";
+
+  // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
-  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
-  
-  PetscErrorCode ierr;
-  
+
+  // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
+  this->dirichletBoundaryConditions_->applyInSystemMatrix(this->dataImplicit_->systemMatrix(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
+
+  // initialize the linear solver that is used for solving the implicit system
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
+  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   assert(this->ksp_);
-  ierr = KSPSetOperators (*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
+  PetscErrorCode ierr;
+  ierr = KSPSetOperators(*ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
   
   this->initialized_ = true;
 }
@@ -55,12 +53,12 @@ void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
-  Mat &systemMatrix = this->data_->systemMatrix()->valuesGlobal();
+  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
   
-  // solve the system
+  // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
   
   int numberOfIterations = 0;
@@ -72,7 +70,7 @@ solveLinearSystem(Vec &input, Vec &output)
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
   
   VLOG(1) << "Linear system of implicit time stepping solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-  << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 
 template<typename DiscretizableInTimeType>
@@ -81,9 +79,7 @@ initializeLinearSolver()
 { 
   if (linearSolver_ == nullptr)
   {
-    std::stringstream s;
-    s << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-    LOG(DEBUG) << s.str() << ": ImplicitEuler: initialize linearSolver";
+    LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";
     
     // retrieve linear solver
     linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
@@ -92,11 +88,10 @@ initializeLinearSolver()
   }
   else 
   {
-    std::stringstream s;
-    s << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-    VLOG(2) << s.str() << ": linearSolver_ already set";
-    
+    VLOG(2) << ": linearSolver_ already set";
   }
 }
+
+
 
 } // namespace TimeSteppingScheme

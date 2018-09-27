@@ -14,7 +14,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableLinear1D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -67,7 +67,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -111,8 +111,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -147,7 +147,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableQuadratic1D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -199,7 +199,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -243,8 +243,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -279,7 +279,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableHermite1D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -331,7 +331,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -375,8 +375,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -412,7 +412,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableLinear2D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -468,7 +468,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -514,8 +514,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -550,7 +550,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableQuadratic2D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -606,7 +606,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -652,8 +652,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -688,7 +688,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableHermite2D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -744,7 +744,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -804,7 +804,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableLinear3D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -861,7 +861,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -909,8 +909,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -945,7 +945,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableQuadratic3D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -1002,7 +1002,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -1050,8 +1050,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;
@@ -1086,7 +1086,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableHermite3D)
 {
   // methods that are tested in this test case:
   // global_no_t meshPartition->getElementNoGlobalNatural(element_no_t elementNoLocal)
-  // std::array<int,D> meshPartition_->getNodeNoGlobalCoordinates(node_no_t nodeNoLocal)
+  // std::array<int,D> meshPartition_->getCoordinatesGlobal(node_no_t nodeNoLocal)
   // global_no_t functionSpace->getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
@@ -1147,7 +1147,7 @@ config = {
 
       LOG(DEBUG) << "elementNoLocal = " << elementNoLocal << ", nodeIndex = " << nodeIndex << ", nodeNoLocal = " << nodeNoLocal;
 
-      std::array<int,D> coordinatesGlobal = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+      std::array<global_no_t,D> coordinatesGlobal = meshPartition->getCoordinatesGlobal(nodeNoLocal);
       std::array<int,D> coordinatesLocal;
       for (int i = 0; i < D; i++)
       {
@@ -1195,8 +1195,8 @@ config = {
       if (neighbourNodeNo != -1)
       {
         // compare difference between global coordinates of nodes
-        std::array<int,D> coordinatesGlobalNeighbour = meshPartition->getNodeNoGlobalCoordinates(neighbourNodeNo);
-        std::array<int,D> coordinatesGlobalOrigin = meshPartition->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,D> coordinatesGlobalNeighbour = meshPartition->getCoordinatesGlobal(neighbourNodeNo);
+        std::array<global_no_t,D> coordinatesGlobalOrigin = meshPartition->getCoordinatesGlobal(nodeNoLocal);
 
 
         std::array<int,D> realDifference;

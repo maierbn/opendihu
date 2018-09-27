@@ -65,9 +65,20 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   {
     stream << "l0=p" << localIndices[0];
   }
-  for (int i = 1; i < nLocalIndices; i++)
+
+  int indicesEnd = std::min(100, nLocalIndices);
+  if (VLOG_IS_ON(1))
+  {
+    indicesEnd = nLocalIndices;
+  }
+
+  for (int i = 1; i < indicesEnd; i++)
   {
     stream << ",l" << i << "=p" << localIndices[i];
+  }
+  if (indicesEnd < nLocalIndices)
+  {
+    stream << " ... (" << nLocalIndices << " local indices)";
   }
   stream << "]]";
   

@@ -55,6 +55,9 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
+  //! copy the values of a given component to a new single-component field variable
+  void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
 

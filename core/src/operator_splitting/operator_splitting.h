@@ -55,6 +55,8 @@ protected:
   bool outputData1_;               ///< if data output via writer is enabled for timeStepping1
   bool outputData2_;               ///< if data output via writer is enabled for timeStepping2
 
+  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
+
   bool initialized_;               ///< if initialize() was already called
 };
 

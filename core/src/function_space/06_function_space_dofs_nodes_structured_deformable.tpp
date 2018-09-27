@@ -27,7 +27,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyO
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
-  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(NULL)
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
  
@@ -68,7 +68,7 @@ initialize()
   
   // create empty field variable for geometry field
   std::vector<std::string> componentNames{"x", "y", "z"};
-  this->geometryField_ = std::make_unique<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
+  this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // assign values of geometry field
   this->setGeometryFieldValues();
@@ -147,7 +147,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
           for (; i < std::min(3,(int)PyList_Size(itemNodePositionPy)); i++)
           {
             PyObject *pointComponentPy = PyList_GetItem(itemNodePositionPy, (Py_ssize_t)i);
-            localNodePositions_[3*nodeNo + i] = PythonUtility::convertFromPython<double>(pointComponentPy, 0.0);
+            localNodePositions_[3*nodeNo + i] = PythonUtility::convertFromPython<double>::get(pointComponentPy, 0.0);
           }
 
           // set the rest of the values that were not specified to 0.0, e.g. z=0.0
@@ -161,7 +161,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
         else
         {
           // if the entry is not a list like [x,y,z] but a single value, assume it is the x value
-          double value = PythonUtility::convertFromPython<double>(itemNodePositionPy, 0.0);
+          double value = PythonUtility::convertFromPython<double>::get(itemNodePositionPy, 0.0);
           localNodePositions_[3*nodeNo + 0] = value;
           localNodePositions_[3*nodeNo + 1] = 0.0;
           localNodePositions_[3*nodeNo + 2] = 0.0;

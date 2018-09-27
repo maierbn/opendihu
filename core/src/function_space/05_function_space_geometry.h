@@ -28,7 +28,7 @@ public:
   std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
 
 protected:
-  std::unique_ptr<GeometryFieldType> geometryField_;     ///< the geometry field variable
+  std::shared_ptr<GeometryFieldType> geometryField_ = nullptr;     ///< the geometry field variable
   bool noGeometryField_ = false;                         ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 };
 

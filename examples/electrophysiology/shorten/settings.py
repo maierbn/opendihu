@@ -39,7 +39,7 @@ def fibre_gets_stimulated(current_time):
     return False
   
 # callback function that can set parameters, i.e. stimulation current
-def set_parameters(n_nodes, time_step_no, current_time, parameters, null):
+def set_parameters(n_nodes, time_step_no, current_time, parameters, dof_nos_global, null):
   
   # determine if fibre gets stimulated at the current time
   is_fibre_gets_stimulated = fibre_gets_stimulated(current_time)

@@ -46,10 +46,10 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType,int nComponents>
-FieldVariable::FieldVariable<FunctionSpaceType,nComponents> &TimeSteppingHeun<FunctionSpaceType,nComponents>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> TimeSteppingHeun<FunctionSpaceType,nComponents>::
 intermediateIncrement()
 {
-  return *this->intermediateIncrement_;
+  return this->intermediateIncrement_;
 }
 
 /*template<typename FunctionSpaceType,int nComponents>

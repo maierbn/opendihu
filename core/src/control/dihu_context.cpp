@@ -19,6 +19,7 @@
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "partition/partition_manager.h"
+#include "control/performance_measurement.h"
 
 #include "easylogging++.h"
 #include "control/use_numpy.h"
@@ -77,7 +78,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // check if the first command line argument is *.py, only then it is treated as config file
     bool explicitConfigFileGiven = false;
-    if (argc > 1)
+    if (argc > 1 && settingsFromFile)
     {
       std::string firstArgument = argv[1];
       if (firstArgument.rfind(".py") == firstArgument.size() - 3)
@@ -147,6 +148,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
     MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
 
+    Control::PerformanceMeasurement::setParameter("rankNo", rankNo);
+    Control::PerformanceMeasurement::setParameter("nRanks", nRanks);
+
     // convert to wchar_t
     std::stringstream rankNoStr, nRanksStr;
     rankNoStr << rankNo;
@@ -154,7 +158,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
     argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);
 
-    if (VLOG_IS_ON(1))
+    if (VLOG_IS_ON(1) && pythonConfig_)
     {
       PythonUtility::printDict(pythonConfig_);
     }
@@ -261,6 +265,13 @@ PyObject* DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
+int DihuContext::ownRankNo()
+{
+  int rankNo;
+  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  return rankNo;
+}
+
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager() const
 {
   return meshManager_;
@@ -310,7 +321,7 @@ DihuContext DihuContext::operator[](std::string keyString)
     // if config does not contain the requested child dict, create the needed context from the same level in config
     dihuContext.pythonConfig_ = pythonConfig_;
     Py_XINCREF(dihuContext.pythonConfig_);
-    LOG(WARNING) << "Dict does not contain key \"" <<keyString<< "\".";
+    LOG(FATAL) << "Dict does not contain key \"" <<keyString<< "\".";
   }
   LOG(TRACE) << "DihuContext::operator[](\"" <<keyString<< "\")";
 
@@ -409,8 +420,16 @@ void DihuContext::loadPythonScript(std::string text)
   // check if type is valid
   if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
   {
-    LOG(ERROR) << "Python config file does not contain a dict named \"config\".";
+    LOG(FATAL) << "Python config file does not contain a dict named \"config\".";
   }
+
+  // parse scenario name
+  std::string scenarioName = "";
+  if (PythonUtility::hasKey(pythonConfig_, "scenarioName"))
+  {
+    scenarioName = PythonUtility::getOptionString(pythonConfig_, "scenarioName", "");
+  }
+  Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
 }
 
 void DihuContext::initializeLogging(int argc, char *argv[])
@@ -520,8 +539,15 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            prefix+"ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);
 
   conf.set(el::Level::Fatal, el::ConfigurationType::Format,
-           std::string(ANSI_COLOR_MAGENTA)+prefix+"FATAL: %loc %func: \n"+separator
-           +"\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
+           "FATAL: %loc %func: \n"+std::string(ANSI_COLOR_MAGENTA)+prefix+separator
+           +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
+
+  // disable output for ranks != 0
+  if (rankNo > 0)
+  {
+    conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+    conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+  }
 
   //el::Loggers::addFlag(el::LoggingFlag::HierarchicalLogging);
 
@@ -542,6 +568,8 @@ DihuContext::~DihuContext()
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
   if (nObjects_ == 1)
   {
+    // write log file
+    Control::PerformanceMeasurement::writeLogFile();
 
     // After a call to MPI_Finalize we cannot call MPI_Initialize() anymore.
     // This is only a problem when the code is tested with the GoogleTest framework, because then we want to run multiple tests in one executable.
@@ -549,12 +577,12 @@ DihuContext::~DihuContext()
 
     if (doNotFinalizeMpi_)
     {
-      LOG(INFO) << "MPI_Barrier";
+      LOG(DEBUG) << "MPI_Barrier";
       MPI_Barrier(MPI_COMM_WORLD);
     }
     else
     {
-      LOG(INFO) << "MPI_Finalize";
+      LOG(DEBUG) << "MPI_Finalize";
       MPI_Finalize();
     }
   }

@@ -31,8 +31,8 @@ public:
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
-  //! get the stored mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  //! get the stored functionSpace
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! get the data object
   Data &data();
@@ -67,6 +67,35 @@ protected:
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
   bool initialized_;     ///< if initialize was already called on this object, then further calls to initialize() have no effect
 };
+
+/** class that provides extra initialize methods, depending on Term
+ */
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+class FiniteElementMethodInitializeData :
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::FiniteElementMethodBase;
+};
+
+/** special initialize for DiffusionTensorFieldVariable, for Term Equation::Dynamic::DirectionalDiffusion
+ */
+template<typename FunctionSpaceType,typename QuadratureType>
+class FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion> :
+  public FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>
+{
+public:
+  //! use constructor of base class
+  using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::FiniteElementMethodBase;
+
+  //! dummy initialize method
+  virtual void initialize(){};
+
+  //! initialize with direction field for DiffusionTensorFieldVariable, this replaces the initialize() method
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments = 0);
+};
+
 
 };  // namespace
 

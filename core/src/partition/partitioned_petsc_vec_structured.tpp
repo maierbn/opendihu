@@ -29,7 +29,6 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,Ba
     ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[i]); CHKERRV(ierr);
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);*/
   }
-
 }
   
 //! constructor, copy from existing vector
@@ -220,6 +219,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       str << y[i] << " ";
     }
+    str << "]";
     VLOG(3) << str.str();
   }
 }
@@ -272,17 +272,55 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       str << y[i] << " ";
     }
     str << (iora == INSERT_VALUES? "INSERT_VALUES" : (iora == ADD_VALUES? "ADD_VALUES" : "unknown"));
-    str << ")";
+    str << ") " << (valuesContiguousInUse_? " valuesContiguousInUse" : "");
     VLOG(3) << str.str();
   }
-  assert(!valuesContiguousInUse_);
 
-  // this wraps the standard PETSc VecSetValues on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
-  
-  // Note, there is also VecSetValuesLocal which acts on the global vector but the indices must be provided in the local ordering.
-  // For this to work one has to provide the mapping in advance (VecSetLocalToGlobalMapping)
+  // depending on which data representation is active, use vectorLocal or valuesContiguous
+  if (valuesContiguousInUse_)
+  {
+    if (componentNo > 0)
+    {
+      // shift indices
+      std::vector<PetscInt> indices(ni);
+      for (int i = 0; i < ni; i++)
+      {
+        indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
+      }
+
+      // this wraps the standard PETSc VecSetValues on the local vector
+      PetscErrorCode ierr;
+      ierr = VecSetValues(valuesContiguous_, ni, indices.data(), y, iora); CHKERRV(ierr);
+    }
+    else
+    {
+      // this wraps the standard PETSc VecSetValues on the local vector
+      PetscErrorCode ierr;
+      ierr = VecSetValues(valuesContiguous_, ni, ix, y, iora); CHKERRV(ierr);
+    }
+  }
+  else
+  {
+
+#ifndef NDEBUG
+
+    for (int i = 0; i < ni; i++)
+    {
+      if (ix[i] < 0 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
+      {
+        LOG(ERROR) << "\"" << this->name_ << "\" setValues ix[" << i << "]=" << ix[i] << ", nDofsLocalWithGhosts: " << this->meshPartition_->nDofsLocalWithGhosts();
+      }
+      assert(ix[i] >= 0 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
+    }
+#endif
+
+    // this wraps the standard PETSc VecSetValues on the local vector
+    PetscErrorCode ierr;
+    ierr = VecSetValues(vectorLocal_[componentNo], ni, ix, y, iora); CHKERRV(ierr);
+
+    // Note, there is also VecSetValuesLocal which acts on the global vector but the indices must be provided in the local ordering.
+    // For this to work one has to provide the mapping in advance (VecSetLocalToGlobalMapping)
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -393,6 +431,12 @@ getContiguousValuesGlobal()
     return vectorGlobal_[0];
   }
 
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    return valuesContiguous_;
+  }
+
   PetscErrorCode ierr;
 
   // create contiguos vector if it does not exist yet
@@ -462,7 +506,7 @@ restoreContiguousValuesGlobal()
     double *valuesDataComponent;
     ierr = VecGetArray(vectorLocal_[componentNo], &valuesDataComponent); CHKERRV(ierr);
 
-    VLOG(1) << "  component " << componentNo << ", copy " << this->meshPartition_->nDofsLocalWithoutGhosts() << " values, " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes from contiguous array";
+    VLOG(1) << "  \"" << this->name_ << "\", component " << componentNo << ", copy " << this->meshPartition_->nDofsLocalWithoutGhosts() << " values, " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes from contiguous array";
     memcpy(
       valuesDataComponent,
       valuesDataContiguous + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts(),
@@ -474,6 +518,48 @@ restoreContiguousValuesGlobal()
 
   ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
   valuesContiguousInUse_ = false;
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+{
+  PetscErrorCode ierr;
+
+  // prepare source vector
+  Vec vectorSource;
+  dof_no_t dofStart = 0;
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    vectorSource = valuesContiguous_;
+    dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
+  }
+  else
+  {
+    vectorSource = vectorLocal_[componentNo];
+  }
+
+  const double *valuesSource;
+  ierr = VecGetArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // prepare target vector
+  //assert(!extractedFieldVariable->valuesContiguousInUse());
+
+  double *valuesTarget;
+  ierr = VecGetArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes (\"" << this->name_ << "\" component " << componentNo
+    << ") to \"" << extractedFieldVariable->name() << "\"";
+  memcpy(
+    valuesTarget,
+    valuesSource + dofStart,
+    this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+  );
+
+  // restore memory
+  ierr = VecRestoreArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
@@ -492,8 +578,8 @@ output(std::ostream &stream)
 #ifndef NDEBUG  
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
-  MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo);
-  MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks);
+  MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
+  MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
   
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -511,23 +597,41 @@ output(std::ostream &stream)
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<PetscInt> indices(nDofsLocal);
-    for (int i = 0; i < nDofsLocal; i++)
+    if (valuesContiguous_)
     {
-      indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+      }
+    }
+    else
+    {
+      for (int i = 0; i < nDofsLocal; i++)
+      {
+        indices[i] = this->meshPartition_->dofNosLocal()[i];
+      }
     }
 
     std::vector<double> localValues(nDofsLocal);
-    VecGetValues(vector, nDofsLocal, indices.data(), localValues.data());
+    ierr = VecGetValues(vector, nDofsLocal, indices.data(), localValues.data()); CHKERRV(ierr);
     //VLOG(1) << "localValues: " << localValues;
     
     std::vector<int> localSizes(nRanks);
     localSizes[ownRankNo] = nDofsLocal;
     // MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
-    // Note that the recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
-    MPI_Gather(localSizes.data() + ownRankNo, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator());
+    // Note that th recvcount argument at the root indicates the number of items it receives from each process, not the total number of items it receives.
+
+    if (ownRankNo == 0)
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(MPI_IN_PLACE, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (5)");
+    }
+    else
+    {
+      MPIUtility::handleReturnValue(MPI_Gather(localSizes.data(), 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (5)");
+    }
     
     int maxLocalSize;
-    MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator());
+    MPIUtility::handleReturnValue(MPI_Allreduce(localSizes.data() + ownRankNo, &maxLocalSize, 1, MPI_INT, MPI_MAX, this->meshPartition_->mpiCommunicator()), "MPI_Allreduce");
     
     //VLOG(1) << "localSizes: " << localSizes << ", maxLocalSize: " << maxLocalSize << ", nRanks: " << nRanks;
 
@@ -537,13 +641,14 @@ output(std::ostream &stream)
     
     //VLOG(1) << " sendBuffer: " << sendBuffer;
 
-    MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator());
+    MPIUtility::handleReturnValue(MPI_Gather(sendBuffer.data(), maxLocalSize, MPI_DOUBLE, recvBuffer.data(), maxLocalSize, MPI_DOUBLE, 0, this->meshPartition_->mpiCommunicator()), "MPI_Gather (6)");
     
     if (ownRankNo == 0)
     {
       if (componentNo == 0)
       {
-        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component))" << std::endl;
+        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component)"
+          << (valuesContiguous_? ", valuesContiguous": "") << ")" << std::endl;
       }
 
       stream << "\"" << this->name_ << "\" component " << componentNo << ": local ordering: [";
@@ -563,7 +668,7 @@ output(std::ostream &stream)
     }
   }
 
-  if (nRanks > 0)
+  if (nRanks > 1)
   {
     // loop over components
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -582,7 +687,8 @@ output(std::ostream &stream)
         indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
       }
 
-      VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), localValuesWithGhosts.data());
+      PetscErrorCode ierr;
+      ierr = VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), localValuesWithGhosts.data()); CHKERRV(ierr);
       //VLOG(1) << "localValues: " << localValues;
 
       const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
@@ -594,7 +700,7 @@ output(std::ostream &stream)
         node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
         int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
 
-        std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
         global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
 
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
@@ -611,7 +717,7 @@ output(std::ostream &stream)
         node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
         int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
 
-        std::array<int,MeshType::dim()> globalCoordinates = this->meshPartition_->getNodeNoGlobalCoordinates(nodeNoLocal);
+        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
         global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
 
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;

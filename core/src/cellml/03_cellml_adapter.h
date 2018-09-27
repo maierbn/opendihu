@@ -21,11 +21,17 @@
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates>
+template <int nStates_, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
-  public CallbackHandler<nStates>
+  public CallbackHandler<nStates_,FunctionSpaceType>
 {
 public:
+
+  ///! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
+  typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
+
+  //! return nStates_
+  static constexpr int nStates();
 
   ///! constructor
   CellmlAdapter(DihuContext context);
@@ -49,18 +55,20 @@ public:
   bool knowsMeshType();
 
   //! return the mesh
-  std::shared_ptr<Mesh::Mesh> mesh();
+  std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  template<typename FunctionSpaceType>
-  bool setInitialValues(FieldVariable::FieldVariable<FunctionSpaceType,nStates> &initialValues);
+  template<typename FunctionSpaceType2>
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;
-  
+
+  //! if the class should handle Dirichlet boundary conditions, this does not apply here
+  void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
  };
 
 #include "cellml/03_cellml_adapter.tpp"

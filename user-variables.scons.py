@@ -15,27 +15,6 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-import lsb_release
-lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
-
-# MPI
-MPI_DIR="/usr/lib/openmpi"
-#MPI_DIR="/usr/lib64/mpich/"
-
-if lsb_info["RELEASE"] == "18.04":
-  MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
-
-# use value of environment variable 'MPI_HOME' if it is set
-import os
-if os.environ.get("MPI_HOME") is not None:
-  MPI_DIR = os.environ.get("MPI_HOME")
-  
-# for Travis CI build MPI ourselves
-if os.environ.get("TRAVIS") is not None:
-  print "Travis CI detected, del MPI_DIR"
-  del MPI_DIR
-  MPI_DOWNLOAD=True
-
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 
@@ -47,16 +26,18 @@ PETSC_DOWNLOAD=True
 PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
 PYTHON_REDOWNLOAD=False
 
-#Numpy
+# Numpy
 CYTHON_DOWNLOAD=True
 NUMPYC_DOWNLOAD=True
 
 # SciPy
 SCIPY_DOWNLOAD=True
 
-# Matplotlib
+# Matplotlib and other python dependencies
 BZIP2_DOWNLOAD=True
 MATPLOTLIB_DOWNLOAD=True
+NUMPYSTL_DOWNLOAD=True
+SVGPATH_DOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -72,6 +53,47 @@ SEMT_DOWNLOAD=True
 # EasyLoggingPP
 EASYLOGGINGPP_DOWNLOAD=True
 #EASYLOGGINGPP_REDOWNLOAD=True
+
+# MPI
+# MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
+MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
+#MPI_DIR="/usr/lib64/mpich/"
+
+# automatically set MPI_DIR for ubuntu 18.04
+try:
+  import lsb_release
+  lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
+  if "RELEASE" in lsb_info:
+    if lsb_info["RELEASE"] == "18.04":
+      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the path for ubuntu 18.04
+
+  # use value of environment variable 'MPI_HOME' if it is set
+  import os
+  if os.environ.get("MPI_HOME") is not None:
+    MPI_DIR = os.environ.get("MPI_HOME")
+    
+  # for Travis CI build MPI ourselves
+  if os.environ.get("TRAVIS") is not None:
+    print "Travis CI detected, del MPI_DIR"
+    del MPI_DIR
+    MPI_DOWNLOAD=True
+
+  # path on hazelhen
+  if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+    MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+except:
+  pass
+
+# other variables for hazelhen
+if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+  LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  PETSC_DIR = os.environ.get("PETSC_DIR")
+
+# module restore opendihu
+# or 
+#   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu
+#   module load cray-libsci
+#   module load cray-petsc-64
 
 
 

@@ -8,7 +8,7 @@ namespace TimeSteppingScheme
 TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
   context_(context), initialized_(false)
 {
-  specificSettings_ = NULL;   // needs to be set by deriving class
+  specificSettings_ = NULL;   // needs to be set by deriving class, in time_stepping_scheme_ode.tpp
   isTimeStepWidthSignificant_ = false;
 }
 
@@ -87,7 +87,19 @@ void TimeSteppingScheme::initialize()
 
   LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << timeStepWidth_;
-    
+
+  // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"
+  if (PythonUtility::hasKey(specificSettings_, "logTimeStepWidthAsKey"))
+  {
+    std::string timeStepWidthKey = PythonUtility::getOptionString(specificSettings_, "logTimeStepWidthAsKey", "timeStepWidth");
+    Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
+  }
+
+  if (PythonUtility::hasKey(specificSettings_, "logTimeStepWidthAsKey"))
+  {
+    this->durationLogKey_ = PythonUtility::getOptionString(specificSettings_, "durationLogKey", "");
+  }
+
   initialized_ = true;
 }
 

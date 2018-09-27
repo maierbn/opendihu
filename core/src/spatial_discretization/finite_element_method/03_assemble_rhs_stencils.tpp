@@ -35,10 +35,10 @@ multiplyRightHandSideWithMassMatrix()
 
   // multiply factor to rhs
   // rhs *= stencil * elementLength
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startGhostManipulation();
+  rightHandSide->startGhostManipulation();
   
   // stencil values
   // stencil in 1D: 1/6*[1 _4_ 1] (element contribution: 1/6*[_2_ 1])
@@ -48,9 +48,9 @@ multiplyRightHandSideWithMassMatrix()
 
   // get all entries
   std::vector<double> vectorValues;
-  rightHandSide.getValuesWithGhosts(vectorValues, false);
+  rightHandSide->getValuesWithGhosts(vectorValues, false);
 
-  rightHandSide.zeroEntries();
+  rightHandSide->zeroEntries();
   
   // loop over all dofs and set values with stencilCenter
   for (node_no_t dofNo = 1; dofNo < nNodes0-1; dofNo++)
@@ -60,7 +60,7 @@ multiplyRightHandSideWithMassMatrix()
       + stencilCenter[center]*vectorValues[dofNo]
       + stencilCenter[center+1]*vectorValues[dofNo+1]) * elementLength;
 
-    rightHandSide.setValue(dofNo, value, INSERT_VALUES);
+    rightHandSide->setValue(dofNo, value, INSERT_VALUES);
   }
   
   // set entries for boundary nodes on edges
@@ -74,7 +74,7 @@ multiplyRightHandSideWithMassMatrix()
     value += stencilSide[center+i]*vectorValues[x-i];
   }
   value *= elementLength;
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // right boundary (x=nNodes0-1)
   x = nNodes0-1;
@@ -85,7 +85,7 @@ multiplyRightHandSideWithMassMatrix()
     value += stencilSide[center+i]*vectorValues[x+i];
   }
   value *= elementLength;
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
   
   
   /*
@@ -94,16 +94,16 @@ multiplyRightHandSideWithMassMatrix()
   double value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo+1]) * elementLength;
-  rightHandSide.setValue(0, value, ADD_VALUES);
+  rightHandSide->setValue(0, value, ADD_VALUES);
 
   dofNo = nNodes0-1;
   value =
     (stencilSide[0]*vectorValues[dofNo]
     + stencilSide[1]*vectorValues[dofNo-1]) * elementLength;
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 */
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishGhostManipulation();
+  rightHandSide->finishGhostManipulation();
 }
 
 // 2D rhs
@@ -123,10 +123,10 @@ multiplyRightHandSideWithMassMatrix()
   double elementLength1 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1;
 
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startGhostManipulation();
+  rightHandSide->startGhostManipulation();
   
   // stencil values
 
@@ -155,9 +155,9 @@ multiplyRightHandSideWithMassMatrix()
 
   // get all values
   std::vector<double> vectorValues;
-  rightHandSide.getValuesWithGhosts(vectorValues);
+  rightHandSide->getValuesWithGhosts(vectorValues);
 
-  rightHandSide.zeroEntries();
+  rightHandSide->zeroEntries();
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int y=1; y<nNodes1-1; y++)
@@ -174,7 +174,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofIndex(x,y), value, INSERT_VALUES);
+      rightHandSide->setValue(dofIndex(x,y), value, INSERT_VALUES);
     }
   }
 
@@ -195,7 +195,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // right boundary (x=nNodes0-1)
@@ -214,7 +214,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // bottom boundary (y=0)
@@ -233,7 +233,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // top boundary (y=nNodes1-1)
@@ -252,7 +252,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // corner nodes
@@ -274,7 +274,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // bottom right (x=nNodes0-1, y=0)
   x = nNodes0-1;
@@ -291,7 +291,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top left (x=0, y=nNodes1-1)
   x = 0;
@@ -308,7 +308,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top right (x=nNodes0-1, y=nNodes1-1)
   x = nNodes0-1;
@@ -325,10 +325,10 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishGhostManipulation();
+  rightHandSide->finishGhostManipulation();
 }
 
 // 3D rhs
@@ -350,10 +350,10 @@ multiplyRightHandSideWithMassMatrix()
   double elementLength2 = functionSpace->meshWidth();
   double integralFactor = elementLength0*elementLength1*elementLength2;
 
-  FieldVariable::FieldVariable<FunctionSpaceType,1> &rightHandSide = this->data_.rightHandSide();
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
-  rightHandSide.startGhostManipulation();
+  rightHandSide->startGhostManipulation();
   
   // stencil values
 
@@ -415,9 +415,9 @@ multiplyRightHandSideWithMassMatrix()
 
   // get all values
   std::vector<double> vectorValues;
-  rightHandSide.getValuesWithGhosts(vectorValues);
+  rightHandSide->getValuesWithGhosts(vectorValues);
 
-  rightHandSide.zeroEntries();
+  rightHandSide->zeroEntries();
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
   for (int z=1; z<nNodes2-1; z++)
@@ -439,7 +439,7 @@ multiplyRightHandSideWithMassMatrix()
         }
         value *= integralFactor;
 
-        rightHandSide.setValue(dofIndex(x,y,z), value, INSERT_VALUES);
+        rightHandSide->setValue(dofIndex(x,y,z), value, INSERT_VALUES);
       }
     }
   }
@@ -466,7 +466,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -491,7 +491,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -516,7 +516,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -541,7 +541,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -566,7 +566,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -591,7 +591,7 @@ multiplyRightHandSideWithMassMatrix()
       }
       value *= integralFactor;
 
-      rightHandSide.setValue(dofNo, value, ADD_VALUES);
+      rightHandSide->setValue(dofNo, value, ADD_VALUES);
     }
   }
 
@@ -616,7 +616,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // bottom right (x=nNodes0-1,z=0)
@@ -639,7 +639,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // top left (x=0,z=nNodes2-1)
@@ -662,7 +662,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // top right (x=nNodes0-1,z=nNodes2-1)
@@ -685,7 +685,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // bottom front (y=0,z=0)
@@ -708,7 +708,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // bottom back (y=nNodes1-1,z=0)
@@ -731,7 +731,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // top front (y=0,z=nNodes2-1)
@@ -754,7 +754,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // top back (y=nNodes1-1,z=nNodes2-1)
@@ -777,7 +777,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // left front (x=0,y=0)
@@ -800,7 +800,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // left back (x=0,y=nNodes1-1)
@@ -823,7 +823,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // right front (x=nNodes0-1,y=0)
@@ -846,7 +846,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // right back (x=nNodes0-1,y=nNodes1-1)
@@ -869,7 +869,7 @@ multiplyRightHandSideWithMassMatrix()
     }
     value *= integralFactor;
 
-    rightHandSide.setValue(dofNo, value, ADD_VALUES);
+    rightHandSide->setValue(dofNo, value, ADD_VALUES);
   }
 
   // corner nodes
@@ -895,7 +895,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // bottom front right (x=nNodes0-1,y=0,z=0)
   x = nNodes0-1;
@@ -916,7 +916,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // bottom back left (x=0,y=nNodes1-1,z=0)
   x = 0;
@@ -937,7 +937,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // bottom back right (x=nNodes0-1,y=nNodes1-1,z=0)
   x = nNodes0-1;
@@ -958,7 +958,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top front left (x=0,y=0,z=nNodes2-1)
   x = 0;
@@ -979,7 +979,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top front right (x=nNodes0-1,y=0,z=nNodes2-1)
   x = nNodes0-1;
@@ -1000,7 +1000,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top back left (x=0,y=nNodes1-1,z=nNodes2-1)
   x = 0;
@@ -1021,7 +1021,7 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // top back right (x=nNodes0-1,y=nNodes1-1,z=nNodes2-1)
   x = nNodes0-1;
@@ -1042,10 +1042,10 @@ multiplyRightHandSideWithMassMatrix()
   }
   value *= integralFactor;
 
-  rightHandSide.setValue(dofNo, value, ADD_VALUES);
+  rightHandSide->setValue(dofNo, value, ADD_VALUES);
 
   // call VecAssemblyBegin, VecAssemblyEnd
-  rightHandSide.finishGhostManipulation();
+  rightHandSide->finishGhostManipulation();
 }
 
 };

@@ -148,7 +148,7 @@ def get_instance_config(i):
             "forceRecompileRhs": False,
             #"statesInitialValues": [],
             "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-            "setParametersCallInterval": 1./stimulation_frequency/dt_0D,     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             "setParametersFunctionAdditionalParameter": i,
             
             "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma

@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-  // 2D multidomain: implicit Euler, FEM
+  // 3D multidomain: implicit Euler, FEM
   
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);

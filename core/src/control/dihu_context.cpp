@@ -577,8 +577,8 @@ DihuContext::~DihuContext()
 
     if (doNotFinalizeMpi_)
     {
-      LOG(DEBUG) << "MPI_Barrier";
-      MPI_Barrier(MPI_COMM_WORLD);
+      //LOG(DEBUG) << "MPI_Barrier";
+      //MPI_Barrier(MPI_COMM_WORLD);
     }
     else
     {

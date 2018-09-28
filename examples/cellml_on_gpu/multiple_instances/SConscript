@@ -7,14 +7,10 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-# if the option no_tests was given, quit the script
-if not env['no_examples']:
-      
-  # define the source files
-  src_files = Split(
-  """
-    multidomain_2d.cpp
-  """)
+testcases = [
+  "cellml",
+]
+#testcases = ["diffusion_2d_structured_regular_fixed_linear",]
 
-  # create the main executable
-  env.Program(target = 'multidomain2d', source = src_files)
+for testcase in testcases:
+  env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

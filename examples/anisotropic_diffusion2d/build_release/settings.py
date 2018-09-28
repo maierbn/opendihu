@@ -17,7 +17,7 @@ config = {
     
     "FiniteElementMethod" : {
       "nElements": [n,n],
-      "physicalExtend": [4.0,4.0],
+      "physicalExtent": [4.0,4.0],
       "relativeTolerance": 1e-15,
       "prefactor": 0.1,
       "diffusionTensor": [1.0, 0.0,

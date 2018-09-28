@@ -29,4 +29,22 @@ void Manager::setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRa
   nextRankSubset_ = nextRankSubset;
 }
 
+//! store the ranks which should be used for collective MPI operations
+void Manager::setRankSubsetForCollectiveOperations(std::shared_ptr<RankSubset> rankSubset)
+{
+  rankSubsetForCollectiveOperations_ = rankSubset;
+}
+
+//! ranks which should be used for collective MPI operations
+std::shared_ptr<RankSubset> Manager::rankSubsetForCollectiveOperations()
+{
+  if (rankSubsetForCollectiveOperations_ == nullptr)
+  {
+    // if rank subset was not set, constructs a rank subset with all ranks (MPICommWorld)
+    rankSubsetForCollectiveOperations_ = std::make_shared<Partition::RankSubset>();
+  }
+
+  return rankSubsetForCollectiveOperations_;
+}
+
 };    // namespace

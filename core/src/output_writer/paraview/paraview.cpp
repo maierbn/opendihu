@@ -18,8 +18,30 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(PyObject *settings) : Generic(settings)
+Paraview::Paraview(DihuContext context, PyObject *settings) : Generic(context, settings)
 {
+  binaryOutput_ = PythonUtility::getOptionBool(specificSettings, "binary", true);
+  fixedFormat_ = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
+  combineFiles_ = PythonUtility::getOptionBool(settings, "combineFiles", false);
+  if (combineFile_)
+  {
+    LOG(DEBUG) << "combineFile is set";
+
+    // parse the list of list of strings
+
+    PyObject *currentItem = PythonUtility::getOptionListBegin<PyObject>(settings, "mergeMeshes");
+    for(; !PythonUtility::getOptionListEnd<PyObject>(settings, "mergeMeshes");
+       PythonUtility::getOptionListNext<PyObject>(settings, "mergeMeshes", currentItem))
+    {
+      mergeMeshes_.push_back(PythonUtility::convertFromPython<std::vector<std::string>>::get(currentItem));
+    }
+    VLOG(1) << "mergeMeshes: " << mergeMeshes_;
+  }
+}
+
+void Paraview::setRankSubset(Partition::RankSubset &rankSubset)
+{
+  rankSubset_ = rankSubset;
 }
 
 std::string Paraview::encodeBase64(const Vec &vector)

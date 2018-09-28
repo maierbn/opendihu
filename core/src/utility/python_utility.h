@@ -106,6 +106,9 @@ public:
   //! extract a vector with unknown number of nEntries, must be a list
   static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values);
 
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values);
+
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);
 

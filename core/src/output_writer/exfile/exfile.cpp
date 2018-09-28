@@ -22,10 +22,6 @@
 namespace OutputWriter
 {
 
-Exfile::Exfile(PyObject *settings) : Generic(settings)
-{
-}
-
 void Exfile::outputComFile()
 {
   std::stringstream s;

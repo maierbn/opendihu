@@ -927,14 +927,14 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // it is a list
         int listNEntries = PyList_Size(value);
-        
+
         // do nothing if it is an empty list
         if (listNEntries == 0)
           return;
 
         // get the first value from the list
         int value = PythonUtility::getOptionListBegin<int>(settings, keyString);
-        
+
         // loop over other values
         for (;
             !PythonUtility::getOptionListEnd(settings, keyString);
@@ -947,6 +947,55 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // not a list, but a different entry (only 1 entry)
         int value = PythonUtility::getOptionInt(settings, keyString, 0);
+        values.push_back(value);
+      }
+    }
+    else
+    {
+      // this is no warning
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+    }
+    Py_CLEAR(key);
+  }
+}
+
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values)
+{
+  if (settings)
+  {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+    if(PyDict_Contains((PyObject *)settings, key))
+    {
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+        int listNEntries = PyList_Size(value);
+
+        // do nothing if it is an empty list
+        if (listNEntries == 0)
+          return;
+
+        // get the first value from the list
+        int value = PythonUtility::getOptionListBegin<std::string>(settings, keyString);
+
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString);
+            PythonUtility::getOptionListNext<std::string>(settings, keyString, value))
+        {
+          values.push_back(value);
+        }
+      }
+      else
+      {
+        // not a list, but a different entry (only 1 entry)
+        std::string value = PythonUtility::getOptionString(settings, keyString, 0);
         values.push_back(value);
       }
     }

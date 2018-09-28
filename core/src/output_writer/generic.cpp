@@ -6,7 +6,8 @@
 namespace OutputWriter
 {
 
-Generic::Generic(PyObject *specificSettings) : specificSettings_(specificSettings)
+Generic::Generic(DihuContext context, PyObject *specificSettings) :
+  context_(context), specificSettings_(specificSettings)
 {
 }
 

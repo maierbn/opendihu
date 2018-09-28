@@ -14,7 +14,7 @@ class Generic
 {
 public:
   //! ctor
-  Generic(PyObject *specificSettings);
+  Generic(DihuContext context, PyObject *specificSettings);
 
   //! virtual destructor to allow dynamic_pointer_cast
   virtual ~Generic();
@@ -31,6 +31,8 @@ protected:
   template<typename DataType>
   bool prepareWrite(DataType &data, int timeStepNo = -1, double currentTime = 0.0);
 
+  DihuContext context_;         ///< the context object
+
   std::string filenameBase_;    ///< beginning of the file name for output file
   std::string filename_;        ///< file name with time step number
   int writeCallCount_ = 0;      ///< counter of calls to write
@@ -39,7 +41,7 @@ protected:
   int timeStepNo_;              ///< the current time step no.
   double currentTime_;          ///< the current simulation time
 
-  PyObject *specificSettings_;    ///< the python dict containing settings relevant to this objecto
+  PyObject *specificSettings_;    ///< the python dict containing settings relevant to this object
 };
 
 };  // namespace

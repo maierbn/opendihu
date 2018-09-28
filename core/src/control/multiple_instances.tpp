@@ -17,7 +17,7 @@ MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), data_(context_)
 {
   specificSettings_ = context_.getPythonConfig();
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
   
   //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
   
@@ -53,8 +53,8 @@ MultipleInstances(DihuContext context) :
   VLOG(1) << "MultipleInstances constructor, create Partitioning for " << nInstances_ << " instances";
   
   //MPIUtility::gdbParallelDebuggingBarrier();
-  
-  nInstancesComputedGlobally_ = 0;
+
+  std::set<int> ranksAllComputedInstances;
 
   // create all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
@@ -79,11 +79,12 @@ MultipleInstances(DihuContext context) :
       int thisRankNo = this->context_.partitionManager()->rankNoCommWorld();
       int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
       bool computeOnThisRank = false;
+
       for (int rank : ranks)
       {
         if (rank < nRanksCommWorld)
         {
-          nInstancesComputedGlobally_++;
+          ranksAllComputedInstances.insert(rank);
         }
         if (rank == thisRankNo)
         {
@@ -108,6 +109,13 @@ MultipleInstances(DihuContext context) :
     
     }
   }
+
+  nInstancesComputedGlobally_ = ranksAllComputedInstances.size();
+
+  // create the rank list with all computed instances
+  rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances);
+
+  this->context_.partitionManager()->setRankSubsetForCollectiveOperations(rankSubsetAllComputedInstances_);
 
   // log the number of instances that are computed by all ranks
   PerformanceMeasurement::setParameter("nInstancesComputedGlobally", nInstancesComputedGlobally_);

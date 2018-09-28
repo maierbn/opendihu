@@ -40,11 +40,17 @@ public:
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRankSubset);
   
+  //! store the ranks which should be used for collective MPI operations
+  void setRankSubsetForCollectiveOperations(std::shared_ptr<RankSubset> rankSubset);
+
   //! get the number of MPI ranks 
   int nRanksCommWorld();
   
   //! get the own MPI rank no
   int rankNoCommWorld();
+
+  //! ranks which should be used for collective MPI operations
+  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations();
   
 private:
  
@@ -53,7 +59,8 @@ private:
   int nRanksCommWorld_;  ///< number of MPI ranks, processes
   int rankNoCommWorld_;   ///< own process no.
   
-  std::shared_ptr<RankSubset> nextRankSubset_;
+  std::shared_ptr<RankSubset> nextRankSubset_;   ///< rank subset that will be used for the next partitioning that will be created
+  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    ///< the ranks which should be used for collective MPI operations
 };
 
 };    // namespace

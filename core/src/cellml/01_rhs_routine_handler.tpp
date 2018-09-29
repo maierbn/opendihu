@@ -32,6 +32,12 @@ initializeRhsRoutine()
   std::string libraryFilename;
   useGivenLibrary_ = PythonUtility::getOptionBool(this->specificSettings_, "useGivenLibrary", false);
 
+  // output warning if the old option forceRecompileRhs is still used
+  if (PythonUtility::hasKey(this->specificSettings_, "forceRecompileRhs"))
+  {
+    LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
+  }
+
   if(useGivenLibrary_)
   { //try open library file
     if (!PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
@@ -39,6 +45,7 @@ initializeRhsRoutine()
       LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file but \"useGivenLibrary\" is True.";
       //default set in PythonUtility::getOptionString(...)
     }
+
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
   }
   else // useGivenLibrary_ is set false

@@ -291,7 +291,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     {
       ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object, defaultValue[0]);
 
-      result.resize(1)
+      result.resize(1);
       result[0] = valueDouble;
 
       return result;
@@ -303,7 +303,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   static std::vector<ValueType> get(PyObject *object)
   {
     std::vector<ValueType> defaultValue(1);  // vector with 1 entry
-    return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
+    return convertFromPython<std::vector<ValueType>>::get(object, defaultValue);
   }
 };
 

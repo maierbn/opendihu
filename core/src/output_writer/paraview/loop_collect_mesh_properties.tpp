@@ -45,10 +45,13 @@ collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const Outpu
   std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
   */
   meshProperties[meshName].dimensionality = currentFieldVariable->functionSpace()->dim();
-  meshProperties[meshName].nPoints = currentFieldVariable->functionSpace()->nNodesGlobal();
-  meshProperties[meshName].nCells = currentFieldVariable->functionSpace()->nElementsGlobal();
+  meshProperties[meshName].nPoints = currentFieldVariable->functionSpace()->nNodesLocalWithGhosts();
+  meshProperties[meshName].nCells = currentFieldVariable->functionSpace()->nElementsLocal();
 
-  meshProperties[meshName].pointDataArrays.push_back(std::pair<std::string,int>(currentFieldVariable->name(),currentFieldVariable->nComponents()));
+  if (!currentFieldVariable->isGeometryField())
+  {
+    meshProperties[meshName].pointDataArrays.push_back(std::pair<std::string,int>(currentFieldVariable->name(),currentFieldVariable->nComponents()));
+  }
 
   return false;  // do not break iteration over field variables
 }

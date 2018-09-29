@@ -982,7 +982,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
           return;
 
         // get the first value from the list
-        int value = PythonUtility::getOptionListBegin<std::string>(settings, keyString);
+        std::string value = PythonUtility::getOptionListBegin<std::string>(settings, keyString);
 
         // loop over other values
         for (;

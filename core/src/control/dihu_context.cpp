@@ -10,6 +10,8 @@
 #include <memory>
 #include <list>
 #include <petscvec.h>
+#include <sys/types.h>  // getpid
+#include <unistd.h>     // getpid
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -49,6 +51,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 {
   nObjects_++;
   LOG(TRACE) << "DihuContext constructor";
+
+    int pid = getpid();
+  LOG(DEBUG) << "process " << pid;
 
   if (!initialized_)
   {

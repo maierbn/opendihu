@@ -4,6 +4,7 @@
 #include <array>
 #include <map>
 #include <set>
+#include <vector>
 #include <petscmat.h>
 
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.

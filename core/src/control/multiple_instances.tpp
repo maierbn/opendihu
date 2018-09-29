@@ -113,7 +113,7 @@ MultipleInstances(DihuContext context) :
   nInstancesComputedGlobally_ = ranksAllComputedInstances.size();
 
   // create the rank list with all computed instances
-  rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances);
+  rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances.begin(), ranksAllComputedInstances.end());
 
   this->context_.partitionManager()->setRankSubsetForCollectiveOperations(rankSubsetAllComputedInstances_);
 

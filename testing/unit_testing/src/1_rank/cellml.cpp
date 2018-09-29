@@ -34,7 +34,7 @@ config = {
     "CellML" : {
       "sourceFilename": "../input/hodgkin_huxley_1952.c",
       "setParametersCallInterval": 1e3,
-      "forceRecompileRhs": True,
+      "useGivenLibrary": False,
       #"statesInitialValues": [-75,  .05, 0.6, 0.325],
       "statesInitialValues": [-20, 0.05, 0.6, 0.325],
       "parametersInitialValues": [400.0],      # initial values for the parameters: I_Stim
@@ -83,7 +83,7 @@ config = {
     "CellML" : {
       "sourceFilename": "../input/shorten_opencmiss.cpp",
       "setParametersCallInterval": 1e3,
-      "forceRecompileRhs": True,
+      "useGivenLibrary": False,
       "parametersUsedAsIntermediate": [32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
       "parametersUsedAsConstant": [65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
       "parametersInitialValues": [1000.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
@@ -130,7 +130,7 @@ config = {
     "CellML" : {
       "sourceFilename": "../input/shorten_ocallaghan_davidson_soboleva_2007.c",
       "setParametersCallInterval": 1e3,
-      "forceRecompileRhs": True,
+      "useGivenLibrary": False,
       "parametersUsedAsIntermediate": [32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
       "parametersUsedAsConstant": [65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
       "parametersInitialValues": [1000.0, 1.0],      # initial values for the parameters: I_Stim, l_hs

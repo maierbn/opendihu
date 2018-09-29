@@ -46,7 +46,7 @@ protected:
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
   bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
 
-  bool forceRecompileRhs_;   ///< if the rhs code should be compiled even if the shared object library file exists already
+  bool useGivenLibrary_;   ///< if the given library at libraryFileName_ should be loaded instead of compiling on our own
 
   std::vector<std::string> constantAssignments_;   ///< source code lines where constant variables are assigned
 

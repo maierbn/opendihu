@@ -96,7 +96,7 @@ MultipleInstances(DihuContext context) :
       VLOG(1) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
 
       // create rank subset
-      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks);
+      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
       
       if (!computeOnThisRank)
         continue;

@@ -16,7 +16,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

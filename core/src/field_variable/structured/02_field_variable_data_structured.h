@@ -114,8 +114,6 @@ public:
   
 protected:
 
-  bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
-  
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 

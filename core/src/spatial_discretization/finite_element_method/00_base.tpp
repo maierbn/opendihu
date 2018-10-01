@@ -28,7 +28,7 @@ FiniteElementMethodBase(DihuContext context) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), initialized_(false)
 {
   specificSettings_ = context_.getPythonConfig();
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
   std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);

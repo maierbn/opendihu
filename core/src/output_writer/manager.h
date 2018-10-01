@@ -19,7 +19,7 @@ public:
   void writeOutput(DataType &problemData, int timeStepNo = -1, double currentTime = 0.0) const;
 
   //! parse settings and create output writers from specification in "OutputWriter" list
-  void initialize(PyObject *settings);
+  void initialize(DihuContext context, PyObject *settings);
 
   //! if this manager contains any output writers
   bool hasOutputWriters();
@@ -27,7 +27,7 @@ public:
 protected:
 
   //! helper function that creates an outputWriter
-  void createOutputWriterFromSettings(PyObject *settings);
+  void createOutputWriterFromSettings(DihuContext context, PyObject *settings);
 
   std::list<std::shared_ptr<Generic>> outputWriter_;    ///< list of active output writers
 };

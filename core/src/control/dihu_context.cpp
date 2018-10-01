@@ -10,6 +10,8 @@
 #include <memory>
 #include <list>
 #include <petscvec.h>
+#include <sys/types.h>  // getpid
+#include <unistd.h>     // getpid
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -48,7 +50,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
-  LOG(TRACE) << "DihuContext constructor";
 
   if (!initialized_)
   {
@@ -63,6 +64,10 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
+
+    // output process ID
+    int pid = getpid();
+    LOG(DEBUG) << "PID " << pid;
 
     // parallel debugging barrier
     bool enableDebuggingBarrier = false;

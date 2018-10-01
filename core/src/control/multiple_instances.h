@@ -51,6 +51,8 @@ protected:
   std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   
+  std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   ///< the rank nos of all computed instances of this MultipleInstances object
+
   Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> data_;  ///< the data object
 };
 

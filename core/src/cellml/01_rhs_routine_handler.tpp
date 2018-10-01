@@ -24,24 +24,31 @@ void RhsRoutineHandler<nStates,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   /* we have the following:
-   *   library>code (except if forceRecompileRHS_),
+   *   library>code,
    *   gpu>simd,
    *   existing>new.
    * this means: "Save time where possible!"
    */
   std::string libraryFilename;
-  forceRecompileRhs_ = PythonUtility::getOptionBool(this->specificSettings_, "forceRecompileRhs", true);  // TODO: rename to useLibraryFile
+  useGivenLibrary_ = PythonUtility::getOptionBool(this->specificSettings_, "useGivenLibrary", false);
 
-  if(!forceRecompileRhs_)
+  // output warning if the old option forceRecompileRhs is still used
+  if (PythonUtility::hasKey(this->specificSettings_, "forceRecompileRhs"))
+  {
+    LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
+  }
+
+  if(useGivenLibrary_)
   { //try open library file
     if (!PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
     {
-      LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file. Using default: libraryFilename=\"lib.so\".";
+      LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file but \"useGivenLibrary\" is True.";
       //default set in PythonUtility::getOptionString(...)
     }
+
     libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
   }
-  else // forceRecompileRhs_ is set true
+  else // useGivenLibrary_ is set false
   { // will compile lib new
     std::string gpuSourceFilename;
     std::string simdSourceFilename;

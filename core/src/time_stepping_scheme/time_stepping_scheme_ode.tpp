@@ -18,7 +18,7 @@ TimeSteppingSchemeOde(DihuContext context, std::string name) :
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
 
   // initialize output writers
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   // create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<

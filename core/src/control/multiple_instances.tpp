@@ -17,7 +17,7 @@ MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), data_(context_)
 {
   specificSettings_ = context_.getPythonConfig();
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
   
   //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
   
@@ -36,7 +36,7 @@ MultipleInstances(DihuContext context) :
       PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "instances", instanceConfig), i++)
   {
     instanceConfigs.push_back(instanceConfig);
-    VLOG(1) << "i = " << i << ", instanceConfig = " << instanceConfig;
+    VLOG(3) << "i = " << i << ", instanceConfig = " << instanceConfig;
   }
     
   if (i < nInstances_)
@@ -53,18 +53,24 @@ MultipleInstances(DihuContext context) :
   VLOG(1) << "MultipleInstances constructor, create Partitioning for " << nInstances_ << " instances";
   
   //MPIUtility::gdbParallelDebuggingBarrier();
-  
-  nInstancesComputedGlobally_ = 0;
 
-  // create all instances
+  // determine all ranks of all computed instances
+  std::set<int> ranksAllComputedInstances;
+  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PyObject *>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
+
+  // parse the rank lists for all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
     PyObject *instanceConfig = instanceConfigs[instanceConfigNo];
+    std::get<2>(rankSubsets[instanceConfigNo]) = instanceConfig;
    
     // extract ranks for this instance
     if (!PythonUtility::hasKey(instanceConfig, "ranks"))
     {
       LOG(ERROR) << "Instance " << instanceConfigs << " has no \"ranks\" settings.";
+
+      std::get<0>(rankSubsets[instanceConfigNo]) = nullptr;
+      std::get<1>(rankSubsets[instanceConfigNo]) = false;
       continue;
     }
     else 
@@ -76,42 +82,64 @@ MultipleInstances(DihuContext context) :
       VLOG(1) << "instance " << instanceConfigNo << " on ranks: " << ranks;
 
       // check if own rank is part of ranks list
-      int thisRankNo = this->context_.partitionManager()->rankNoCommWorld();
+      int ownRankNoWorldCommunicator = this->context_.partitionManager()->rankNoCommWorld();
       int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
       bool computeOnThisRank = false;
+
       for (int rank : ranks)
       {
         if (rank < nRanksCommWorld)
         {
-          nInstancesComputedGlobally_++;
+          ranksAllComputedInstances.insert(rank);
         }
-        if (rank == thisRankNo)
+        if (rank == ownRankNoWorldCommunicator)
         {
           computeOnThisRank = true;
           break;
         }
       }
-      
+
       VLOG(1) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
 
       // create rank subset
-      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks);
-      
-      if (!computeOnThisRank)
-        continue;
+      std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
 
-      // store the rank subset containing only the own rank for the mesh of the current instance
-      this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
-      
-      VLOG(1) << "create sub context";
-      instancesLocal_.emplace_back(context_.createSubContext(instanceConfig));
-    
+      std::get<0>(rankSubsets[instanceConfigNo]) = rankSubset;
+      std::get<1>(rankSubsets[instanceConfigNo]) = computeOnThisRank;
     }
   }
 
+  // store number of globally computed instances
+  nInstancesComputedGlobally_ = ranksAllComputedInstances.size();
+
+  // create the rank list with all computed instances
+  rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances.begin(), ranksAllComputedInstances.end());
+
+  // store the rank subset of all instances to partition manager, such that it can be retrived when the instances are generated
+  this->context_.partitionManager()->setRankSubsetForCollectiveOperations(rankSubsetAllComputedInstances_);
+
   // log the number of instances that are computed by all ranks
   PerformanceMeasurement::setParameter("nInstancesComputedGlobally", nInstancesComputedGlobally_);
-  
+
+  // create all instances that are computed on the own rank
+  for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
+  {
+    std::shared_ptr<Partition::RankSubset> rankSubset = std::get<0>(rankSubsets[instanceConfigNo]);
+    bool computeOnThisRank = std::get<1>(rankSubsets[instanceConfigNo]);
+    PyObject *instanceConfig = std::get<2>(rankSubsets[instanceConfigNo]);
+
+    if (!computeOnThisRank)
+    {
+      continue;
+    }
+
+    // store the rank subset containing only the own rank for the mesh of the current instance
+    this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
+
+    VLOG(1) << "create sub context for instance no " << instanceConfigNo << ", rankSubset: " << *rankSubset;
+    instancesLocal_.emplace_back(context_.createSubContext(instanceConfig));
+  }
+
   nInstancesLocal_ = instancesLocal_.size();
 }
 

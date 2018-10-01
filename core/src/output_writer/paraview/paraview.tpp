@@ -9,6 +9,9 @@
 #include "base64.h"
 
 #include "output_writer/paraview/loop_output.h"
+#include "output_writer/paraview/loop_collect_mesh_properties.h"
+#include "output_writer/paraview/poly_data_properties_for_mesh.h"
+
 namespace OutputWriter
 {
 
@@ -21,20 +24,34 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
+  std::set<std::string> combined1DMeshes;
+  if (combineFiles_)
+  {
+    // create a PolyData file that combines all 1D meshes into one file
+    writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
+  }
+
+  // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined
+
   // collect all available meshes
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
-  
+
+  // remove 1D meshes that were already output by writePolyDataFile
+  std::set<std::string> meshesToOutput;
+  std::set_difference(meshNames.begin(), meshNames.end(), combined1DMeshes.begin(), combined1DMeshes.end(),
+                      std::inserter(meshesToOutput, meshesToOutput.end()));
+
   // loop over meshes and create a paraview file for each
-  for (std::string meshName : meshNames)
+  for (std::string meshName : meshesToOutput)
   {
     // setup name of file
     std::stringstream filenameStart;
-    if (meshNames.size() == 1)
+    if (meshesToOutput.size() == 1)
       filenameStart << this->filename_;
     else
       filenameStart << this->filename_ << "_" << meshName;
-   
+
     // loop over all field variables and output those that are associated with the mesh given by meshName
     ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
   }
@@ -44,7 +61,6 @@ template<typename FieldVariableType>
 void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable, 
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
- 
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
   //typedef typename FieldVariableType::FunctionSpace FunctionSpace;
 
@@ -185,4 +201,4 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   }
 }
 
-};
+};  // namespace

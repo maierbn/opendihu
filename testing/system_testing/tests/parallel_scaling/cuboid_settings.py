@@ -41,6 +41,13 @@ scenario_name = sys.argv[3]
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
+# adjust n_processes_per_fiber if there are too many ranks
+surplus = n_processes_per_fiber*n_fibers - n_ranks
+while surplus > n_fibers:
+  n_processes_per_fiber += 1
+  surplus = n_processes_per_fiber*n_fibers - n_ranks
+
+
 if rank_no == 0:
   print("scenario_name: {}".format(scenario_name))
   print("n_processes_per_fiber: {}, n_fibers: {}, n_nodes_per_fiber: {}".format(n_processes_per_fiber, n_fibers, n_nodes_per_fiber))
@@ -113,8 +120,19 @@ def get_instance_config(i):
   # set ranks list containing the rank nos for fiber i 
   if n_processes_per_fiber > 0:
     ranks = []
-    for j in range(n_processes_per_fiber):
-      ranks.append(n_processes_per_fiber*i + j)
+    n_normal_fibers = n_fibers - surplus
+    if i < n_normal_fibers:
+      n_previous_ranks = n_processes_per_fiber*i
+    else:
+      n_previous_ranks = n_processes_per_fiber*n_normal_fibers + (n_processes_per_fiber+1)*(i-n_normal_fibers)
+
+    n_processes_on_this_fiber = n_processes_per_fiber
+    if i >= n_normal_fibers:
+      n_processes_on_this_fiber = n_processes_per_fiber+1
+
+    for j in range(n_processes_on_this_fiber):
+      rank_id = n_previous_ranks + j
+      ranks.append(rank_id)
   else:
     ranks = [int(i/-n_processes_per_fiber)]
 

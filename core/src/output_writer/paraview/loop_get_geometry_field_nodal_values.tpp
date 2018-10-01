@@ -1,7 +1,8 @@
 #include "output_writer/paraview/loop_collect_field_variables_names.h"
 
 #include "output_writer/paraview/paraview_writer.h"
-
+#include "easylogging++.h"
+#include "utility/vector_operators.h"
 #include <cstdlib>
 
 namespace OutputWriter
@@ -35,7 +36,8 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
                std::vector<double> &values)
 {
   // if mesh name is one of the specified meshNames and it is the geometry field
-  if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end() && currentFieldVariable->isGeometryField())
+  if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
+    && currentFieldVariable->isGeometryField())
   {
     const int nComponents = CurrentFieldVariableType::element_type::nComponents();
     std::array<std::vector<double>, nComponents> componentValues;
@@ -51,7 +53,7 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
                               retrievedLocalValues);
 
       const int nDofsPerNode = CurrentFieldVariableType::element_type::FunctionSpace::nDofsPerNode();
-      const node_no_t nNodesLocal = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithoutGhosts();
+      const node_no_t nNodesLocal = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
       // for Hermite only extract the non-derivative values
       componentValues[componentNo].resize(nNodesLocal);
@@ -73,7 +75,6 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
         values.push_back(componentValues[componentNo][i]);
       }
     }
-
   }
 
   return false;  // do not break iteration

@@ -35,7 +35,8 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
                std::vector<std::vector<double>> &values)
 {
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
-  if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end() && !currentFieldVariable->isGeometryField())
+  if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
+    && !currentFieldVariable->isGeometryField())
   {
     const int nComponents = CurrentFieldVariableType::element_type::nComponents();
     std::array<std::vector<double>, nComponents> componentValues;

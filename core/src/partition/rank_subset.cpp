@@ -26,6 +26,7 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   {
     rankNo_.insert(i);
   }
+  VLOG(1) << "initialized as COMM_WORLD: " << rankNo_;
 }
   
 RankSubset::RankSubset(int singleRank) : ownRankNo_(-1)

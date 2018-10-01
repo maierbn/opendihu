@@ -50,10 +50,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
-  LOG(TRACE) << "DihuContext constructor";
-
-    int pid = getpid();
-  LOG(DEBUG) << "process " << pid;
 
   if (!initialized_)
   {
@@ -68,6 +64,10 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
+
+    // output process ID
+    int pid = getpid();
+    LOG(DEBUG) << "PID " << pid;
 
     // parallel debugging barrier
     bool enableDebuggingBarrier = false;

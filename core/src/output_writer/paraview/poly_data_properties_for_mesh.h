@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "control/types.h"
-#include "output_writer/generic.h"
 
 namespace OutputWriter
 {
@@ -17,10 +16,15 @@ namespace OutputWriter
 struct PolyDataPropertiesForMesh
 {
   int dimensionality;    ///< D=1: object is a VTK "Line", D=2, D=3: object is a VTK "Poly"
-  global_no_t nPoints;   ///< the number of points needed for representing the mesh
-  global_no_t nCells;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements"
+  global_no_t nPointsLocal;   ///< the number of points needed for representing the mesh, local value of rank
+  global_no_t nCellsLocal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", local value of rank
+  global_no_t nPointsGlobal;   ///< the number of points needed for representing the mesh, global value of all rank
+  global_no_t nCellsGlobal;    ///< the number of VTK "cells", i.e. "Lines" or "Polys", which is the opendihu number of "elements", global value of all ranks
 
   std::vector<std::pair<std::string,int>> pointDataArrays;   ///< <name,nComponents> of PointData DataArray elements
 };
+
+// output operator
+std::ostream &operator<<(std::ostream &stream, PolyDataPropertiesForMesh rhs);
 
 };

@@ -21,9 +21,6 @@ public:
   template<typename DataType>
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
-  //! set the rank subset of all ranks that collectively call write afterwards. This is needed for the "combineFiles" option.
-  void setRankSubset(Partition::RankSubset &rankSubset);
-
   //! write the given field variable as VTK <DataArray> element to file, if onlyParallelDatasetElement write the <PDataArray> element
   template<typename FieldVariableType>
   static void writeParaviewFieldVariable(FieldVariableType &fieldVariable, std::ofstream &file,
@@ -67,9 +64,7 @@ protected:
 
   //! write the values vector combined to the file, correctly encoded
   template<typename T>
-  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, MPI_Comm mpiCommunicator, const std::vector<T> &values);
-
-  Partition::RankSubset rankSubset_; ///< the ranks that collectively call Paraview::write
+  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
   bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5

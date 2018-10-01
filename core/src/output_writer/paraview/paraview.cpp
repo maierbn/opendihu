@@ -18,16 +18,12 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(DihuContext context, PyObject *settings) : Generic(context, settings)
+Paraview::Paraview(DihuContext context, PyObject *settings) :
+  Generic(context, settings)
 {
   binaryOutput_ = PythonUtility::getOptionBool(settings, "binary", true);
   fixedFormat_ = PythonUtility::getOptionBool(settings, "fixedFormat", true);
   combineFiles_ = PythonUtility::getOptionBool(settings, "combineFiles", false);
-}
-
-void Paraview::setRankSubset(Partition::RankSubset &rankSubset)
-{
-  rankSubset_ = rankSubset;
 }
 
 std::string Paraview::encodeBase64(const Vec &vector, bool withEncodedSizePrefix)

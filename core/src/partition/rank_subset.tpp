@@ -15,16 +15,16 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd) : ownRankNo_(-1)
 {
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
 
-  // get the own current MPI rank
-  int currentRank;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &currentRank), "MPI_Comm_rank");
+  // get the own rank in the MPI_WORLD communcator
+  int ownRankWorldCommunicator;
+  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankWorldCommunicator), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
   
-  // if currentRank is contained in rank subset
-  if (std::find(ranksBegin,ranksEnd,currentRank) != ranksEnd)
+  // if ownRankWorldCommunicator is contained in rank subset
+  if (std::find(ranksBegin,ranksEnd,ownRankWorldCommunicator) != ranksEnd)
     color = 1;
   
-  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", currentRank=" << currentRank << ", color=" << color;
+  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankWorldCommunicator=" << ownRankWorldCommunicator << ", color=" << color;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
@@ -52,7 +52,7 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd) : ownRankNo_(-1)
     }
   }
 
-  VLOG(1) << "RankSubset constructor done";
+  VLOG(1) << "RankSubset constructor for ranks " << rankNo_ << " done";
 }
 
 };

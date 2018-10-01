@@ -9,6 +9,9 @@ namespace OutputWriter
 Generic::Generic(DihuContext context, PyObject *specificSettings) :
   context_(context), specificSettings_(specificSettings)
 {
+  // get the rank subset of all processes that collectively call the write methods
+  rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
+  VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
 }
 
 Generic::~Generic()

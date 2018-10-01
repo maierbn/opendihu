@@ -154,7 +154,7 @@ def get_instance_config(i):
             "useGivenLibrary": False,
             #"statesInitialValues": [],
             "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-            "setParametersCallInterval": 1./stimulation_frequency/dt_0D,     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
             "setParametersFunctionAdditionalParameter": i,
             
             "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
@@ -185,7 +185,7 @@ def get_instance_config(i):
             "prefactor": Conductivity/(Am*Cm),
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": False, "fixedFormat": False, "combineFiles": True},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
             #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
@@ -212,7 +212,7 @@ if rank_no == 0:
 for i,streamline in enumerate(streamlines):
   
   center_node = int(len(streamline)/2)
-  #streamline = streamline[center_node-5:center_node+5]
+  #streamline = streamline[center_node-2:center_node+2]
   
   # define mesh
   meshes["MeshFibre{}".format(i)] = {

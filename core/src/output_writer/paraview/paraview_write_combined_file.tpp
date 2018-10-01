@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <cstdio>  // remove
 
 #include "easylogging++.h"
 #include "base64.h"
@@ -18,7 +19,7 @@ namespace OutputWriter
 {
 
 template<typename T>
-void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, MPI_Comm mpiCommunicator, const std::vector<T> &values)
+void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values)
 {
   // fill the write buffer with the local values
   std::string writeBuffer;
@@ -28,7 +29,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, MPI
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
     std::vector<int> globalValuesSize(1);
     MPIUtility::handleReturnValue(MPI_Gather(&localValuesSize, 1, MPI_INT, globalValuesSize.data(), 1, MPI_INT, 0,
-                                              mpiCommunicator));
+                                              this->rankSubset_->mpiCommunicator()));
 
     // get the encoded data from the values vector
     std::string stringData = Paraview::encodeBase64(values, false);  //without leading dataset size
@@ -61,6 +62,10 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::map<std::string, PolyDataPropertiesForMesh> meshProperties;
   ParaviewLoopOverTuple::loopCollectMeshProperties<OutputFieldVariablesType>(fieldVariables, meshProperties);
 
+  VLOG(1) << "writePolyDataFile on rankSubset_: " << *this->rankSubset_;
+  assert(this->rankSubset_);
+  VLOG(1) << "meshProperties: " << meshProperties;
+
   /*
    PolyDataPropertiesForMesh:
   int dimensionality;    ///< D=1: object is a VTK "Line" and can be written to a combined vtp file
@@ -84,8 +89,10 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     //! constructor, initialize nPoints and nCells to 0
     VTKPiece()
     {
-      properties.nPoints = 0;
-      properties.nCells = 0;
+      properties.nPointsLocal = 0;
+      properties.nCellsLocal = 0;
+      properties.nPointsGlobal = 0;
+      properties.nCellsGlobal = 0;
     }
 
     //! assign the correct values to firstScalarName and firstVectorName, only if properties has been set
@@ -108,7 +115,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     std::string meshName = iter->first;
 
     // do not combine meshes other than 1D meshes
-    if (vtkPiece.properties.dimensionality != 1)
+    if (iter->second.dimensionality != 1)
       continue;
 
     // check if this mesh should be combined with other meshes
@@ -138,52 +145,87 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
       if (combineMesh)
       {
-        LOG(DEBUG) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes << ", add " << iter->second.nPoints << " points, " << iter->second.nCells << " elements to "
-          << vtkPiece.properties.nPoints << " points, " << vtkPiece.properties.nCells << " elements";
+        LOG(DEBUG) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes
+          << ", add " << iter->second.nPointsLocal << " points, " << iter->second.nCellsLocal << " elements to "
+          << vtkPiece.properties.nPointsLocal << " points, " << vtkPiece.properties.nCellsLocal << " elements";
 
-        vtkPiece.properties.nPoints += iter->second.nPoints;
-        vtkPiece.properties.nCells += iter->second.nCells;
+        vtkPiece.properties.nPointsLocal += iter->second.nPointsLocal;
+        vtkPiece.properties.nCellsLocal += iter->second.nCellsLocal;
+
+        vtkPiece.properties.nPointsGlobal += iter->second.nPointsGlobal;
+        vtkPiece.properties.nCellsGlobal += iter->second.nCellsGlobal;
         vtkPiece.setVTKValues();
       }
     }
     else
     {
+      VLOG(1) << "this is the first 1D mesh";
+
       // properties are not yet assigned
       vtkPiece.properties = iter->second; // store properties
       vtkPiece.setVTKValues();
     }
 
+    VLOG(1) << "combineMesh: " << combineMesh;
     if (combineMesh)
     {
       vtkPiece.meshNamesCombinedMeshes.insert(meshName);
     }
   }
 
+  VLOG(1) << "vtkPiece: meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes << ", properties: " << vtkPiece.properties
+    << ", firstScalarName: " << vtkPiece.firstScalarName << ", firstVectorName: " << vtkPiece.firstVectorName;
+
   combinedMeshesOut = vtkPiece.meshNamesCombinedMeshes;
+
+
+  // determine filename
+  std::stringstream filename;
+  filename << this->filenameBaseWithNo_ << ".vtp";
+  int filenameLength = filename.str().length();
+
+  // broadcast length of filename
+  MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()));
+
+  char receiveBuffer[filenameLength+1];
+  strcpy(receiveBuffer, filename.str().c_str());
+  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer, filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
+
+  std::string filenameStr = receiveBuffer;
+
+  // remove file if it exists, synchronization afterwards by MPI calls, that is why the remove call is already here
+  assert(this->rankSubset_);
+  int ownRankNo = this->rankSubset_->ownRankNo();
+  if (ownRankNo == 0)
+  {
+    std::remove(filenameStr.c_str());
+  }
 
   // exchange information about offset in terms of nCells and nPoints
   int nCellsPreviousRanks = 0;
   int nPointsPreviousRanks = 0;
+  int nPointsGlobal = 0;
+  int nLinesGlobal = 0;
 
-  std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
-
-  MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nCells, &nCellsPreviousRanks, 1, MPI_INT, MPI_SUM, rankSubsetAllComputedInstances->mpiCommunicator()));
-  MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nPoints, &nPointsPreviousRanks, 1, MPI_INT, MPI_SUM, rankSubsetAllComputedInstances->mpiCommunicator()));
+  MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nCellsLocal, &nCellsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+  MPIUtility::handleReturnValue(MPI_Exscan(&vtkPiece.properties.nPointsLocal, &nPointsPreviousRanks, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+  MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece.properties.nPointsLocal, &nPointsGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
+  MPIUtility::handleReturnValue(MPI_Reduce(&vtkPiece.properties.nCellsLocal, &nLinesGlobal, 1, MPI_INT, MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
 
   // get local data values
   // setup connectivity array
-  std::vector<int> connectivityValues(2*vtkPiece.properties.nCells);
-  for (int i = 0; i < vtkPiece.properties.nCells; i++)
+  std::vector<int> connectivityValues(2*vtkPiece.properties.nCellsLocal);
+  for (int i = 0; i < vtkPiece.properties.nCellsLocal; i++)
   {
     connectivityValues[2*i + 0] = nPointsPreviousRanks + i;
     connectivityValues[2*i + 1] = nPointsPreviousRanks + i+1;
   }
 
   // setup offset array
-  std::vector<int> offsetValues(vtkPiece.properties.nCells);
-  for (int i = 0; i < vtkPiece.properties.nCells; i++)
+  std::vector<int> offsetValues(vtkPiece.properties.nCellsLocal);
+  for (int i = 0; i < vtkPiece.properties.nCellsLocal; i++)
   {
-    offsetValues[i] = nCellsPreviousRanks + 2*i + 1;
+    offsetValues[i] = 2*nCellsPreviousRanks + 2*i + 1;
   }
 
   // collect all data for the field variables
@@ -202,20 +244,19 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     LOG(DEBUG) << "There are no 1D meshes that could be combined.";
   }
 
-  LOG(DEBUG) << "Combined mesh from " << vtkPiece.meshNamesCombinedMeshes << " is a vtk piece with " << vtkPiece.properties.nPoints << " points and " << vtkPiece.properties.nCells
-    << " cells";
+  LOG(DEBUG) << "Combined mesh from " << vtkPiece.meshNamesCombinedMeshes;
 
   int nOutputFileParts = 4 + vtkPiece.properties.pointDataArrays.size();
 
   // create the basic structure of the output file
-  std::stringstream outputFileParts[nOutputFileParts];
+  std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
   outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 
-  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << vtkPiece.properties.nPoints << "\" NumberOfVerts=\"0\" "
-    << "NumberOfLines=\"" << vtkPiece.properties.nCells << "\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
+  outputFileParts[outputFilePartNo] << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal << "\" NumberOfVerts=\"0\" "
+    << "NumberOfLines=\"" << nLinesGlobal << "\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
     << std::string(3, '\t') << "<PointData";
 
   if (vtkPiece.firstScalarName != "")
@@ -226,7 +267,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   {
     outputFileParts[outputFilePartNo] << " Vectors=\"" << vtkPiece.firstVectorName << "\"";
   }
-  outputFileParts[outputFilePartNo] << ">";
+  outputFileParts[outputFilePartNo] << ">" << std::endl;
 
   // loop over field variables (PointData)
   for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece.properties.pointDataArrays.begin(); pointDataArrayIter != vtkPiece.properties.pointDataArrays.end(); pointDataArrayIter++)
@@ -241,20 +282,20 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     // at this point the data of the field variable is missing
     outputFilePartNo++;
 
-    outputFileParts[outputFilePartNo] << std::endl << std::string(4, '\t') << "</DataArray>";
+    outputFileParts[outputFilePartNo] << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
 
   outputFileParts[outputFilePartNo] << std::string(3, '\t') << "</PointData>" << std::endl
     << std::string(3, '\t') << "<CellData>" << std::endl
     << std::string(3, '\t') << "</CellData>" << std::endl
     << std::string(3, '\t') << "<Points>" << std::endl
-    << std::string(4, '\t') << "<DataArray NumberOfComponents=\"3\" format=\"" << (binaryOutput_? "binary" : "ascii")
+    << std::string(4, '\t') << "<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"" << (binaryOutput_? "binary" : "ascii")
     << "\" >" << std::endl << std::string(5, '\t');
 
   // at this point the data of points (geometry field) is missing
   outputFilePartNo++;
 
-  outputFileParts[outputFilePartNo] << std::string(4, '\t') << "</DataArray>" << std::endl
+  outputFileParts[outputFilePartNo] << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
     << std::string(3, '\t') << "</Points>" << std::endl
     << std::string(3, '\t') << "<Verts></Verts>" << std::endl
     << std::string(3, '\t') << "<Lines>" << std::endl
@@ -273,9 +314,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   outputFilePartNo++;
 
   outputFileParts[outputFilePartNo]
-    << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl;
-
-  outputFileParts[outputFilePartNo] << "</Lines>" << std::endl
+    << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
+    << std::string(3, '\t') << "</Lines>" << std::endl
     << std::string(3, '\t') << "<Strips></Strips>" << std::endl
     << std::string(3, '\t') << "<Polys></Polys>" << std::endl
     << std::string(2, '\t') << "</Piece>" << std::endl
@@ -286,21 +326,28 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
   // loop over output file parts and collect the missing data for the own rank
 
-  // determine filename
-  std::stringstream filename;
-  filename << this->filename_ << ".vtp";
+  VLOG(1) << "outputFileParts:";
+
+  for (std::vector<std::stringstream>::iterator iter = outputFileParts.begin(); iter != outputFileParts.end(); iter++)
+  {
+    VLOG(1) << "  " << iter->str();
+  }
+  VLOG(1) << "open MPI file \"" << filenameStr << "\".";
 
   // open file
   MPI_File fileHandle;
-  MPIUtility::handleReturnValue(MPI_File_open(rankSubsetAllComputedInstances->mpiCommunicator(), filename.str().c_str(),
+  MPIUtility::handleReturnValue(MPI_File_open(this->rankSubset_->mpiCommunicator(), filenameStr.c_str(),
                                               MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN, MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
   // write beginning of file on rank 0
-  int ownRankNo = rankSubsetAllComputedInstances->ownRankNo();
   outputFilePartNo = 0;
+
+  VLOG(1) << "write first ascii";
 
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
+
+  VLOG(1) << "get current shared file position";
 
   // get current file position
   MPI_Offset currentFilePosition = 0;
@@ -314,7 +361,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
        pointDataArrayIter != vtkPiece.properties.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
   {
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, rankSubsetAllComputedInstances->mpiCommunicator(), fieldVariableValues[fieldVariableNo]);
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[fieldVariableNo]);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -322,21 +369,21 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   }
 
   // write geometry field data
-  writeCombinedValuesVector(fileHandle, ownRankNo, rankSubsetAllComputedInstances->mpiCommunicator(), geometryFieldValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write connectivity values
-  writeCombinedValuesVector(fileHandle, ownRankNo, rankSubsetAllComputedInstances->mpiCommunicator(), connectivityValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write offset values
-  writeCombinedValuesVector(fileHandle, ownRankNo, rankSubsetAllComputedInstances->mpiCommunicator(), offsetValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

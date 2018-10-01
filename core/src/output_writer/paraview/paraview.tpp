@@ -28,7 +28,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
   if (combineFiles_)
   {
     // create a PolyData file that combines all 1D meshes into one file
-    Paraview::writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
+    writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
   }
 
   // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined

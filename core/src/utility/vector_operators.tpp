@@ -1,5 +1,7 @@
 #include "utility/vector_operators.h"
 
+#include <sstream>
+
 #include "utility/petsc_utility.h"
 #include "easylogging++.h"
 
@@ -274,7 +276,13 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
   stream << "}";
   return stream;
 }
-
+/*
+std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream)
+{
+  stream << "\"" << stringstream.str() << "\"";
+  return stream;
+}
+*/
 /*
 std::ostream &operator<<(std::ostream &stream, const Mat &mat)
 {

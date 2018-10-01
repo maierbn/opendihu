@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "utility/mpi_utility.h"
+#include "partition/rank_subset.h"
 #include "easylogging++.h"
 
 namespace Partition
@@ -43,6 +44,8 @@ std::shared_ptr<RankSubset> Manager::rankSubsetForCollectiveOperations()
     // if rank subset was not set, constructs a rank subset with all ranks (MPICommWorld)
     rankSubsetForCollectiveOperations_ = std::make_shared<Partition::RankSubset>();
   }
+
+  VLOG(1) << "get rankSubsetForCollectiveOperations " << *rankSubsetForCollectiveOperations_;
 
   return rankSubsetForCollectiveOperations_;
 }

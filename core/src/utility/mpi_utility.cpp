@@ -11,14 +11,31 @@
 namespace MPIUtility
 {
   
-void handleReturnValue(int returnValue, std::string descriptor)
+void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *status)
 {
+  if (status != MPI_STATUS_IGNORE && status != nullptr)
+  {
+    /*
+     * typedef struct _MPI_Status {
+  int count;
+  int cancelled;
+  int MPI_SOURCE;
+  int MPI_TAG;
+  int MPI_ERROR;
+} MPI_Status, *PMPI_Status;
+*/
+
+    LOG(DEBUG) << "MPI status: count=" << status->_ucount << ", cancelled=" << status->_cancelled << ", MPI_SOURCE=" << status->MPI_SOURCE
+      << ", MPI_TAG=" << status->MPI_TAG << ", MPI_ERROR=" << status->MPI_ERROR;
+  }
+
   if (returnValue == MPI_SUCCESS)
     return;
   
-  char *errorString = nullptr;
-  int stringLength;
+  int stringLength = 200000;
+  char errorString[stringLength];
   MPI_Error_string(returnValue, errorString, &stringLength);
+  errorString[stringLength] = '\0';
   
   if (!descriptor.empty())
   {

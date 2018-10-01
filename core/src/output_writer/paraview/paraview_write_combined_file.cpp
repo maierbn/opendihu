@@ -20,11 +20,14 @@ void Paraview::writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::str
   // collective blocking write, only rank 0 writes, but afterwards all have the same shared file pointer position
   if (ownRankNo == 0)
   {
-    MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, writeBuffer.c_str(), writeBuffer.length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
+    MPI_Status status;
+    MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, writeBuffer.c_str(), writeBuffer.length(), MPI_BYTE, &status), "MPI_File_write_ordered", &status);
   }
   else
   {
-    MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, nullptr, 0, MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
+    char b[1] = {' '};
+    MPI_Status status;
+    MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 1, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
   }
 }
 

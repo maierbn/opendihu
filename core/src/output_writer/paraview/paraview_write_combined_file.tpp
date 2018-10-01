@@ -27,9 +27,12 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   {
     // gather data length of total vector to rank 0
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
-    std::vector<int> globalValuesSize(1);
-    MPIUtility::handleReturnValue(MPI_Gather(&localValuesSize, 1, MPI_INT, globalValuesSize.data(), 1, MPI_INT, 0,
+
+    int receiveBuffer[1];
+    MPIUtility::handleReturnValue(MPI_Gather(&localValuesSize, 1, MPI_INT, receiveBuffer, 1, MPI_INT, 0,
                                               this->rankSubset_->mpiCommunicator()));
+
+    std::vector<int> globalValuesSize({receiveBuffer[0]});
 
     // get the encoded data from the values vector
     std::string stringData = Paraview::encodeBase64(values, false);  //without leading dataset size
@@ -178,7 +181,6 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
   combinedMeshesOut = vtkPiece.meshNamesCombinedMeshes;
 
-
   // determine filename
   std::stringstream filename;
   filename << this->filenameBaseWithNo_ << ".vtp";
@@ -198,6 +200,11 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   int ownRankNo = this->rankSubset_->ownRankNo();
   if (ownRankNo == 0)
   {
+    // open file to ensure that directory exists and file is writable
+    std::ofstream file = Generic::openFile(filenameStr);
+
+    // close and delete file
+    file.close();
     std::remove(filenameStr.c_str());
   }
 
@@ -332,12 +339,16 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   {
     VLOG(1) << "  " << iter->str();
   }
-  VLOG(1) << "open MPI file \"" << filenameStr << "\".";
+  LOG(DEBUG) << "open MPI file \"" << filenameStr << "\".";
+
+
 
   // open file
   MPI_File fileHandle;
   MPIUtility::handleReturnValue(MPI_File_open(this->rankSubset_->mpiCommunicator(), filenameStr.c_str(),
-                                              MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN, MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+                                              //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
+                                              MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                              MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
   // write beginning of file on rank 0
   outputFilePartNo = 0;

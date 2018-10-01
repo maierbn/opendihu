@@ -56,6 +56,7 @@ MultipleInstances(DihuContext context) :
 
   // determine all ranks of all computed instances
   std::set<int> ranksAllComputedInstances;
+  nInstancesComputedGlobally_ = 0;
   std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PyObject *>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
   // parse the rank lists for all instances
@@ -86,17 +87,24 @@ MultipleInstances(DihuContext context) :
       int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
       bool computeOnThisRank = false;
 
+      bool computeSomewhere = false;
       for (int rank : ranks)
       {
         if (rank < nRanksCommWorld)
         {
           ranksAllComputedInstances.insert(rank);
+          computeSomewhere = true;
         }
         if (rank == ownRankNoWorldCommunicator)
         {
           computeOnThisRank = true;
           break;
         }
+      }
+
+      if (computeSomewhere)
+      {
+        nInstancesComputedGlobally_++;
       }
 
       VLOG(1) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
@@ -109,8 +117,6 @@ MultipleInstances(DihuContext context) :
     }
   }
 
-  // store number of globally computed instances
-  nInstancesComputedGlobally_ = ranksAllComputedInstances.size();
 
   // create the rank list with all computed instances
   rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances.begin(), ranksAllComputedInstances.end());

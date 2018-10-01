@@ -20,7 +20,7 @@ template<typename FunctionSpaceType,int nComponents>
 void TimeSteppingImplicit<FunctionSpaceType,nComponents>::
 createPetscObjects()
 {
-  LOG(DEBUG) << "TimeSteppingImplicit::createPetscObjects(" <<nComponents << ")" << std::endl;
+  LOG(DEBUG) << "TimeSteppingImplicit::createPetscObjects(" <<nComponents << ")";
   TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects();
 
   this->boundaryConditionsRightHandSideSummand_ = this->functionSpace_->template createFieldVariable<nComponents>("boundaryConditionsRightHandSideSummand");

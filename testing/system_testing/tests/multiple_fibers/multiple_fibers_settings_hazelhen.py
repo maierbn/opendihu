@@ -27,7 +27,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e0             # timestep for output files
+output_timestep = 4e-1             # timestep for output files
 
 # input files
 #fibre_file = "../input/laplace3d_structured_quadratic"
@@ -185,7 +185,7 @@ def get_instance_config(i):
             "prefactor": Conductivity/(Am*Cm),
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False},
+            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": True},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
             #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},

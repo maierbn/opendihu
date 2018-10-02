@@ -134,7 +134,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(values);
+      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else
@@ -188,7 +188,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(values);
+      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else
@@ -200,5 +200,115 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
 }
+
+template <typename Iter>
+std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+{
+  // encode as Paraview Float32
+  assert(sizeof(float) == 4);
+
+  int dataLength = std::distance(iterBegin, iterEnd)*sizeof(float);
+  int rawLength = dataLength;
+  int dataStartPos = 0;
+
+  if (withEncodedSizePrefix)
+  {
+    rawLength += 4;
+    dataStartPos = 4;
+  }
+
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  char raw[rawLength];
+  // loop over vector entries and add bytes to raw buffer
+  int i = 0;
+  for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
+  {
+    union {
+      float d;    // note, this is a float, not a double, to get 4 bytes
+      char c[4];
+    };
+    d = (float)(*iter);
+    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+  }
+
+  // prepend number of bytes as uint32
+  if (withEncodedSizePrefix)
+  {
+    union {
+      uint32_t i;
+      char c[4];
+    };
+    i = rawLength;
+
+    memcpy(raw, c, 4);
+  }
+
+  char encoded[encodedLength+1];
+
+  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  if (!success)
+    LOG(WARNING) << "Base64 encoding failed";
+
+  encoded[encodedLength] = '\0';
+
+  return std::string(encoded);
+}
+
+template <typename Iter>
+std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+{
+  // encode as Paraview Int32
+  assert(sizeof(int) == 4);
+
+  int dataLength = std::distance(iterBegin, iterEnd)*sizeof(int);
+  int rawLength = dataLength;
+  int dataStartPos = 0;
+
+  if (withEncodedSizePrefix)
+  {
+    rawLength += 4;
+    dataStartPos = 4;
+  }
+
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  char raw[rawLength];
+  // loop over vector entries and add bytes to raw buffer
+  int i = 0;
+  for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
+  {
+    union {
+      int integer;
+      char c[4];
+    };
+    integer = (int)(*iter);
+    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+  }
+
+  // prepend number of bytes as uint32
+  if (withEncodedSizePrefix)
+  {
+    union {
+      uint32_t i;
+      char c[4];
+    };
+    i = dataLength;
+
+    memcpy(raw, c, 4);
+  }
+
+  char encoded[encodedLength+1];
+
+  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  if (!success)
+    LOG(WARNING) << "Base64 encoding failed";
+
+
+  encoded[encodedLength] = '\0';
+
+  return std::string(encoded);
+}
+
 
 };  // namespace

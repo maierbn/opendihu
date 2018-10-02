@@ -40,13 +40,15 @@ public:
 
   //! encode a Petsc vector in Base64,
   //! @param withEncodedSizePrefix if the length of the vector should be added as encoded prefix
-  static std::string encodeBase64(const Vec &vector, bool withEncodedSizePrefix=true);
+  static std::string encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix=true);
 
-  //! encode a std::vector as base64
-  static std::string encodeBase64(const std::vector<double> &vector, bool withEncodedSizePrefix=true);
+  //! encode a std::vector<double> or std::list<double> as base64
+  template <typename Iter>
+  static std::string encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
 
-  //! encode a std::vector as base64
-  static std::string encodeBase64(const std::vector<element_no_t> &vector, bool withEncodedSizePrefix=true);
+  //! encode a std::vector<int> as base64
+  template <typename Iter>
+  static std::string encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
 
   //! convert to a string with space separated values
   static std::string convertToAscii(const Vec &vector, bool humanReadable);

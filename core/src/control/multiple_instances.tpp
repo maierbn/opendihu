@@ -59,6 +59,9 @@ MultipleInstances(DihuContext context) :
   nInstancesComputedGlobally_ = 0;
   std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PyObject *>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
+  int ownRankNoWorldCommunicator = this->context_.partitionManager()->rankNoCommWorld();
+  int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
+
   // parse the rank lists for all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
@@ -80,11 +83,9 @@ MultipleInstances(DihuContext context) :
       std::vector<int> ranks;
       PythonUtility::getOptionVector(instanceConfig, "ranks", ranks);
       
-      VLOG(1) << "instance " << instanceConfigNo << " on ranks: " << ranks;
+      VLOG(2) << "instance " << instanceConfigNo << " on ranks: " << ranks;
 
       // check if own rank is part of ranks list
-      int ownRankNoWorldCommunicator = this->context_.partitionManager()->rankNoCommWorld();
-      int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
       bool computeOnThisRank = false;
 
       bool computeSomewhere = false;
@@ -98,7 +99,6 @@ MultipleInstances(DihuContext context) :
         if (rank == ownRankNoWorldCommunicator)
         {
           computeOnThisRank = true;
-          break;
         }
       }
 
@@ -107,7 +107,7 @@ MultipleInstances(DihuContext context) :
         nInstancesComputedGlobally_++;
       }
 
-      VLOG(1) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
+      VLOG(2) << "compute on this rank: " << std::boolalpha << computeOnThisRank;
 
       // create rank subset
       std::shared_ptr<Partition::RankSubset> rankSubset = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
@@ -117,9 +117,10 @@ MultipleInstances(DihuContext context) :
     }
   }
 
-
   // create the rank list with all computed instances
   rankSubsetAllComputedInstances_ = std::make_shared<Partition::RankSubset>(ranksAllComputedInstances.begin(), ranksAllComputedInstances.end());
+
+  VLOG(1) << "rankSubsetAllComputedInstances: " << *rankSubsetAllComputedInstances_;
 
   // store the rank subset of all instances to partition manager, such that it can be retrived when the instances are generated
   this->context_.partitionManager()->setRankSubsetForCollectiveOperations(rankSubsetAllComputedInstances_);

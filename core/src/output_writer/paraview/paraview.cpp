@@ -26,7 +26,7 @@ Paraview::Paraview(DihuContext context, PyObject *settings) :
   combineFiles_ = PythonUtility::getOptionBool(settings, "combineFiles", false);
 }
 
-std::string Paraview::encodeBase64(const Vec &vector, bool withEncodedSizePrefix)
+std::string Paraview::encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix)
 {
   int vectorSize = 0;
   VecGetSize(vector, &vectorSize);
@@ -36,7 +36,7 @@ std::string Paraview::encodeBase64(const Vec &vector, bool withEncodedSizePrefix
   std::vector<double> values(vectorSize);
   VecGetValues(vector, vectorSize, indices.data(), values.data());
 
-  return encodeBase64(values, withEncodedSizePrefix);
+  return encodeBase64Float(values.begin(), values.end(), withEncodedSizePrefix);
 }
 
 std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
@@ -45,109 +45,6 @@ std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
   PetscUtility::getVectorEntries(vector, vectorValues);
 
   return convertToAscii(vectorValues, fixedFormat);
-}
-
-std::string Paraview::encodeBase64(const std::vector<double> &vector, bool withEncodedSizePrefix)
-{
-  // encode as Paraview Float32
-  assert(sizeof(float) == 4);
-
-  int rawLength = vector.size()*sizeof(float);
-  int dataStartPos = 0;
-
-  if (withEncodedSizePrefix)
-  {
-    rawLength += 4;
-    dataStartPos = 4;
-  }
-
-  int encodedLength = Base64::EncodedLength(rawLength);
-
-  char raw[rawLength];
-  // loop over vector entries and add bytes to raw buffer
-  for (unsigned int i = 0; i < vector.size(); i++)
-  {
-    union {
-      float d;    // note, this is a float, not a double, to get 4 bytes
-      char c[4];
-    };
-    d = vector[i];
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
-  }
-
-  // prepend number of bytes as uint32
-  if (withEncodedSizePrefix)
-  {
-    union {
-      uint32_t i;
-      char c[4];
-    };
-    i = rawLength;
-
-    memcpy(raw, c, 4);
-  }
-
-  char encoded[encodedLength+1];
-
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
-  if (!success)
-    LOG(WARNING) << "Base64 encoding failed";
-
-  encoded[encodedLength] = '\0';
-
-  return std::string(encoded);
-}
-
-std::string Paraview::encodeBase64(const std::vector<int> &vector, bool withEncodedSizePrefix)
-{
-  // encode as Paraview Int32
-  assert(sizeof(int) == 4);
-
-  int rawLength = vector.size()*sizeof(int);
-  int dataStartPos = 0;
-
-  if (withEncodedSizePrefix)
-  {
-    rawLength += 4;
-    dataStartPos = 4;
-  }
-
-  int encodedLength = Base64::EncodedLength(rawLength);
-
-  char raw[rawLength];
-  // loop over vector entries and add bytes to raw buffer
-  for (unsigned int i = 0; i < vector.size(); i++)
-  {
-    union {
-      int integer;
-      char c[4];
-    };
-    integer = vector[i];
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
-  }
-
-  // prepend number of bytes as uint32
-  if (withEncodedSizePrefix)
-  {
-    union {
-      uint32_t i;
-      char c[4];
-    };
-    i = rawLength;
-
-    memcpy(raw, c, 4);
-  }
-
-  char encoded[encodedLength+1];
-
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
-  if (!success)
-    LOG(WARNING) << "Base64 encoding failed";
-
-
-  encoded[encodedLength] = '\0';
-
-  return std::string(encoded);
 }
 
 std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fixedFormat)

@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/maierbn/opendihu.svg?branch=develop)](https://travis-ci.com/maierbn/opendihu)
-[![CodeFactor](https://www.codefactor.io/repository/github/maierbn/opendihu/badge/develop)](https://www.codefactor.io/repository/github/maierbn/opendihu/overview/develop)
+[![Build Status](https://travis-ci.com/maierbn/opendihu.svg?branch=stable)](https://travis-ci.com/maierbn/opendihu)
+[![CodeFactor](https://www.codefactor.io/repository/github/maierbn/opendihu/badge/stable)](https://www.codefactor.io/repository/github/maierbn/opendihu/overview/stable)
 
 # Overview
 The working title of this software framework is "opendihu", from the project name "Digital Human". 

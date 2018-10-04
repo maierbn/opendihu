@@ -30,7 +30,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": [n, m],
     "physicalExtent": [1.0, 1.0],
-    dirichletBoundaryConditions: bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "rightHandSide" : list(rhs),
     "OutputWriter" : [

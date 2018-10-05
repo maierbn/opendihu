@@ -25,9 +25,11 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator) :
   ksp_ = std::make_shared<KSP>();
   PetscErrorCode ierr = KSPCreate (mpiCommunicator, ksp_.get()); CHKERRV(ierr);
 
-  // set options from command line as specified by PETSc
-  KSPSetFromOptions(*ksp_);
+  // set solver type
+  ierr = KSPSetType(*ksp_, KSPGMRES); CHKERRV(ierr);
 
+  // set options from command line as specified by PETSc
+  ierr = KSPSetFromOptions(*ksp_); CHKERRV(ierr);
 
   // extract preconditioner context
   PC pc;
@@ -36,8 +38,8 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator) :
   // set preconditioner type
   ierr = PCSetType (pc, PCNONE); CHKERRV(ierr);
 
-  // set solver type
-  ierr = KSPSetType(*ksp_, KSPGMRES); CHKERRV(ierr);
+  // set options from command line as specified by PETSc
+  ierr = PCSetFromOptions(pc); CHKERRV(ierr);
 
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
   ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);

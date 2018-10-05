@@ -65,5 +65,5 @@ pod:
 	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 multidomain:
-	cd examples/multidomain2d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 

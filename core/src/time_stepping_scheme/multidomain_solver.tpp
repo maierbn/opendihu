@@ -12,9 +12,10 @@ namespace TimeSteppingScheme
 template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
 MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
 MultidomainSolver(DihuContext context) :
-  TimeSteppingImplicit<FiniteElementMethodDiffusion>(context, "MultidomainSolver"),
-  dataMultidomain_(context), finiteElementMethodPotentialFlow_(context["PotentialFlow"]),
-  finiteElementMethodDiffusion_(context["Activation"]), finiteElementMethodDiffusionTotal_(context["Activation"])
+  TimeSteppingScheme(context["MultidomainSolver"]),
+  dataMultidomain_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
+  finiteElementMethodDiffusion_(this->context_["Activation"]), finiteElementMethodDiffusionTotal_(this->context_["Activation"]),
+  rankSubset_(std::make_shared<Partition::RankSubset>())
 {
   // parse number of motor units
   nCompartments_ = PythonUtility::getOptionInt(this->specificSettings_, "nCompartments", 1, PythonUtility::NonNegative);
@@ -144,8 +145,7 @@ initialize()
   if (this->initialized_)
     return;
 
-  // TimeSteppingImplicit stores the potential flow data in data_, initialize potential flow and time stepping scheme
-  TimeSteppingSchemeOde<FiniteElementMethodDiffusion>::initialize();
+  TimeSteppingScheme::initialize();
 
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
 
@@ -178,13 +178,17 @@ initialize()
   setSystemMatrix(this->timeStepWidth_);
 
   // initialize linear solver
-  this->initializeLinearSolver();
+  if (linearSolver_ == nullptr)
+  {
+    // retrieve linear solver
+    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+      this->specificSettings_, this->rankSubset_->mpiCommunicator());
+  }
 
   // set matrix used for linear system and preconditioner to ksp context
-  Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
-  assert(this->ksp_);
+  assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->ksp_, systemMatrix, systemMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix_, systemMatrix_); CHKERRV(ierr);
 
   // initialize rhs vector
   ierr = VecCreate(MPI_COMM_WORLD, &rightHandSide_); CHKERRV(ierr);
@@ -269,18 +273,26 @@ solveLinearSystem()
   PetscErrorCode ierr;
 
   // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->ksp_, rightHandSide_, solution_); CHKERRV(ierr);
+  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide_, solution_); CHKERRV(ierr);
 
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*this->ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*this->ksp_, &residualNorm); CHKERRV(ierr);
+  ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
+  ierr = KSPGetResidualNorm(*this->linearSolver_->ksp(), &residualNorm); CHKERRV(ierr);
 
   KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*this->ksp_, &convergedReason); CHKERRV(ierr);
+  ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
 
   VLOG(1) << "Linear system of multidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+}
+
+//! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
+bool MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+knowsMeshType()
+{
+  return true;
 }
 
 } // namespace TimeSteppingScheme

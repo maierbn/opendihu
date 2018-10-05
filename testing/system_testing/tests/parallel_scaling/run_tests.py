@@ -60,16 +60,15 @@ for n_processes in np.logspace(2,0,4):   # 1e0 to 1e4, spaced evenly on a log sc
 # strong scaling on multiple nodes, in factors of 24, one fiber
 print("Strong scaling")
 
-n_nodes_per_fiber = 1000
+n_nodes_per_fiber = 10000*100
 n_fibers = 1
-n_nodes_per_process = 100
 
 # 1st case: multiple processes per fiber
 for n_nodes in np.logspace(0,3,n):   # 1e01 to 1e4, spaced evenly on a log scale.
   n_nodes = int(np.round(n_nodes))
   n_processes = n_nodes*24
   n_processes_per_fiber = int(n_processes / n_fibers)
-  n_nodes_per_fiber = int(n_nodes_per_process * n_processes / n_fibers)
+  #n_nodes_per_fiber = int(n_nodes_per_process * n_processes / n_fibers)
   
   run(n_processes, n_processes_per_fiber, n_fibers, n_nodes_per_fiber, "Strong_scaling")
         

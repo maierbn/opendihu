@@ -3,7 +3,6 @@
 
 import os, sys
 import subprocess
-import compute_error
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -39,7 +38,7 @@ n = 9
 for n_processes in np.logspace(4,2,n):   # 1e0 to 1e4, spaced evenly on a log scale.
   n_processes = int(np.round(n_processes))
   n_processes_per_fiber = n_processes/n_fibers
-  n_processes_per_fiber = int(np.round(n_processes_per_fiber))
+  n_processes_per_fiber = int(np.ceil(n_processes_per_fiber))
   
   run(n_processes, n_processes_per_fiber, n_fibers, n_nodes_per_fiber, "strong_scaling")
         
@@ -64,7 +63,7 @@ n_processes_per_fiber = 10
 
 n = 9
 for n_processes in np.logspace(0,4,n):   # 1e0 to 1e4, spaced evenly on a log scale.
-  n_processes = int(np.round(n_processes))
-  n_fibers = int(np.round(n_processes/n_processes_per_fiber))
+  n_processes = int(np.ceil(n_processes))
+  n_fibers = int(np.floor(n_processes/n_processes_per_fiber))
   run(n_processes, n_processes_per_fiber, n_fibers, n_nodes_per_fiber, "weak_scaling")
     

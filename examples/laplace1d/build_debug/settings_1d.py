@@ -15,7 +15,7 @@ config = {
   "FiniteElementMethod" : {
     "nElements": n,
     "physicalExtent": 4.0,
-    dirichletBoundaryConditions: bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},

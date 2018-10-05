@@ -12,7 +12,7 @@ mesh_file = "../input/mesh"
 
 # load mesh
 with open(mesh_file, "rb") as f:
-  mesh_data = pickle.load(f)
+  mesh_data = pickle.load(f, encoding='latin1')
 #
 #  "node_positions": node_positions, 
 #  "linear_elements": linear_elements, 
@@ -44,11 +44,11 @@ config = {
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance": 1e-15,
-    }
+    },
     "activationSolver": {
       "relativeTolerance": 1e-15,
     }
-  }
+  },
   "MultidomainSolver" : {
     "nCompartments": 1,
     "am": Am,

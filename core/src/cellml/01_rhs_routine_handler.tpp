@@ -169,7 +169,7 @@ initializeRhsRoutine()
       // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
       compileCommand << compileCommandOptions
         << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << SourceFilenameToUse
-        << " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
+        //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
         << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
 
       int ret = system(compileCommand.str().c_str());

@@ -46,17 +46,11 @@ protected:
   //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
   bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
 
-  
+  std::vector<std::string> constantAssignments_; // initial values from source file
+    
   bool forceRecompileRhs_;   ///< if the rhs code should be compiled even if the shared object library file exists already
   
   void (*rhsRoutine_)(void *context, double t, double *states, double *rates, double *algebraics, double *parameters);  ///< function pointer to the rhs routine that can compute several instances of the problem in parallel. Data is assumed to contain values for a state contiguously, e.g. (state[1], state[1], state[1], state[2], state[2], state[2], ...). The first parameter is a this pointer.
-  
-protected:
-
-  //! scan the given cellml source file for initial values that are given by dummy assignments (OpenCMISS) or directly (OpenCOR). This also sets nParameters_, nConstants_ and nIntermediates_
-  bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues);
-
-  std::vector<std::string> constantAssignments_;
   
   //! helper rhs routines     
   void (*rhsRoutineOpenCMISS_)(double VOI, double* OC_STATE, double* OC_RATE, double* OC_WANTED, double* OC_KNOWN);   ///< function pointer to a rhs function that is passed as dynamic library, computes rates and intermediate values from states. The parameters are: VOI, STATES, RATES, WANTED, KNOWN, (VOI: current simulation time, not used)  

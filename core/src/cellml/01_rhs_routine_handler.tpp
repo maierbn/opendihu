@@ -47,12 +47,10 @@ initializeRhsRoutine()
     std::string simdSourceFilename;
     std::string SourceFilenameToUse;
     std::stringstream compileCommand;
+    std::string compileCommandOptions;
 
     if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
     {
-      // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
-      //
-
       // file does not exist yet or is not a matching one. create one.
       if (!createGPUSourceFile(gpuSourceFilename))
       {
@@ -71,9 +69,6 @@ initializeRhsRoutine()
       {
         LOG(WARNING) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
-      // todo: would like to check whether source File "simdSourceFilename" already is a matching one.
-      //
-
       // file does not exist yet or is not a matching one. create one.
       if (!createSimdSourceFile(simdSourceFilename))
       {
@@ -644,8 +639,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
 
 // given a normal cellml source file for rhs routine, create a third file for gpu acceleration. @return: if successful
-template<int nStates>
-bool RhsRoutineHandler<nStates>::
+template<int nStates, typename FunctionSpaceType >
+bool RhsRoutineHandler<nStates,FunctionSpaceType>::
 createGPUSourceFile(std::string &gpuSourceFilename)
 {
   // This method can handle two different types of input c files: from OpenCMISS and from OpenCOR

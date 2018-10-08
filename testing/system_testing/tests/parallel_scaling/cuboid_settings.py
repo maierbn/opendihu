@@ -2,7 +2,7 @@
 #
 # arguments: <n_processes_per_fiber> <n_fibers> <n_nodes_per_fiber> <scenario_name>
 
-end_time = 10.0
+end_time = 100.0
 
 import numpy as np
 import pickle
@@ -37,6 +37,13 @@ n_processes_per_fiber = (int)(sys.argv[0])
 n_fibers = (int)(sys.argv[1])
 n_nodes_per_fiber = (int)(sys.argv[2])
 scenario_name = sys.argv[3]
+
+solver_type = "gmres"
+if scenario_name == "Strong_scaling":
+  end_time = 1.0
+elif scenario_name == "Strong_scalig_LU":
+  solver_type = "lu"
+  end_time = 0.1
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -144,7 +151,7 @@ def get_instance_config(i):
       "timeStepWidth": dt_3D,  # 1e-1
       "logTimeStepWidthAsKey": "dt_3D",
       "durationLogKey": "duration_total",
-      "timeStepOutputInterval" : 1000,
+      "timeStepOutputInterval" : 10,
       "endTime": end_time,
       "outputData1": False,
       "outputData2": True,
@@ -223,6 +230,7 @@ config = {
     "implicitSolver": {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
+      "type": solver_type,
     }
   },
   "MultipleInstances": {

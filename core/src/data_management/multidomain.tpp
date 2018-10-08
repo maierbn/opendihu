@@ -45,6 +45,8 @@ createPetscObjects()
   transmembraneIncrementNextTimeStep_.reserve(nCompartments_);
   ionicCurrentNextTimestep_.reserve(nCompartments_);
 
+  assert(this->functionSpace_);
+
   for (int i = 0; i < nCompartments_; i++)
   {
     std::stringstream transmembranePotentialName;

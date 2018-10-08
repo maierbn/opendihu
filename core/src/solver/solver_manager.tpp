@@ -40,7 +40,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings, MPI_Comm mpiComm
       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
         << "Type is " << typeid(SolverType).name() << ".";
 
-      std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_[solverName], mpiCommunicator);
+      std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_[solverName], mpiCommunicator, solverName);
 
       solvers_[mpiCommunicator][solverName] = solver;
 
@@ -79,7 +79,7 @@ std::shared_ptr<SolverType> Manager::solver(PyObject *settings, MPI_Comm mpiComm
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
   LOG(DEBUG) << "Create new solver with type " << typeid(SolverType).name() << " and name \"" <<anonymousName.str() << "\".";
-  std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator);
+  std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator, anonymousName.str());
 
   solvers_[mpiCommunicator][anonymousName.str()] = solver;
 

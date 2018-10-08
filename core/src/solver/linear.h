@@ -16,12 +16,15 @@ class Linear : public Solver
 {
 public:
   //! construct solver from python settings
-  Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator);
+  Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string name);
 
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();
 
 protected:
+
+  //! parse the solver and preconditioner type from settings
+  void parseSolverTypes(KSPType &kspType, PCType &pcType);
 
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;    ///< relative solver tolerance

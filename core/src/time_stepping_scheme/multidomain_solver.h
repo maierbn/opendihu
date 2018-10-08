@@ -34,6 +34,7 @@ public:
 
   //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
+
 protected:
 
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
@@ -41,6 +42,9 @@ protected:
 
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
   void solveLinearSystem();
+
+  //! initialize the cellMLAdapters_ vector
+  void initializeCellMLAdapters();
 
   Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace, CellMLAdapterType::nStates()> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 

@@ -659,9 +659,14 @@ output(std::ostream &stream)
           stream << ",";
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
+          if (dofNoLocal == 100)
+          {
+            stream << "... (" << localSizes[rankNo] << " entries, only showing the first 100)";
+            break;
+          }
+
           double value = recvBuffer[rankNo*maxLocalSize + dofNoLocal];
           stream << "  " << value;
-
         }
       }
       stream << "]," << std::endl;

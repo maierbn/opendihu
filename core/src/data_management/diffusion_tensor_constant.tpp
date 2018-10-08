@@ -9,7 +9,10 @@ void DiffusionTensorConstant<D>::
 initialize(PyObject *settings)
 {
   LOG(DEBUG) << "initialize Diffusion tensor";
-  PythonUtility::printDict(settings);
+  if (VLOG_IS_ON(1))
+  {
+    PythonUtility::printDict(settings);
+  }
   if (PythonUtility::hasKey(settings, "diffusionTensor"))
   {
     // create identity matrix as default values

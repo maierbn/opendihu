@@ -17,6 +17,9 @@ MultidomainSolver(DihuContext context) :
   finiteElementMethodDiffusion_(this->context_["Activation"]), finiteElementMethodDiffusionTotal_(this->context_["Activation"]),
   rankSubset_(std::make_shared<Partition::RankSubset>())
 {
+  // get python config
+  this->specificSettings_ = this->context_.getPythonConfig();
+
   // parse number of motor units
   nCompartments_ = PythonUtility::getOptionInt(this->specificSettings_, "nCompartments", 1, PythonUtility::NonNegative);
 }
@@ -128,8 +131,13 @@ run()
   // initialize everything
   initialize();
 
+  LOG(DEBUG) << "run potential flow simulation";
+
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
+
+
+  LOG(DEBUG) << "compute gradient field";
 
   // compute a gradient field from the solution of the potential flow
   dataMultidomain_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
@@ -148,25 +156,20 @@ initialize()
   TimeSteppingScheme::initialize();
 
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
+  assert(this->specificSettings_);
+
+  // initialize the potential flow finite element method, this also creates the function space
+  finiteElementMethodPotentialFlow_.initialize();
 
   // initialize the data object
+  dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
   dataMultidomain_.initialize(nCompartments_);
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   finiteElementMethodDiffusion_.initialize(dataMultidomain_.fibreDirection());
   finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fibreDirection(), nCompartments_);
-  finiteElementMethodPotentialFlow_.initialize();
 
-  // initialize cellml adapters
-  cellMLAdapters_ = std::vector<CellMLAdapterType>(nCompartments_, this->context_);
-
-  for (int k = 0; k < nCompartments_; k++)
-  {
-    cellMLAdapters_[k].initialize();
-
-    // initialize cellml states
-    cellMLAdapters_[k].setInitialValues(dataMultidomain_.transmembranePotential(k));
-  }
+  initializeCellMLAdapters();
 
   // parse parameters
   PythonUtility::getOptionVector(this->specificSettings_, "am", nCompartments_, am_);
@@ -198,6 +201,38 @@ initialize()
   ierr = VecDuplicate(rightHandSide_, &solution_); CHKERRV(ierr);
 
   this->initialized_ = true;
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+initializeCellMLAdapters()
+{
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "CellMLAdapters settings: ";
+    PythonUtility::printDict(this->specificSettings_);
+  }
+
+  std::vector<PyObject *> cellMLConfigs;
+  PythonUtility::getOptionVector(this->specificSettings_, "CellMLAdapters", cellMLConfigs);
+
+  // initialize cellml adapters
+  cellMLAdapters_.reserve(nCompartments_);
+  if (cellMLConfigs.size() < nCompartments_)
+  {
+    LOG(FATAL) << "Number of CellMLAdapters (" << cellMLConfigs.size() << ") is smaller than number of compartments (" << nCompartments_ << ")";
+  }
+
+  for (int k = 0; k < nCompartments_; k++)
+  {
+
+    cellMLAdapters_.emplace_back(this->context_.createSubContext(cellMLConfigs[k]));
+    cellMLAdapters_[k].initialize();
+
+    // initialize cellml states
+    cellMLAdapters_[k].setInitialValues(dataMultidomain_.transmembranePotential(k));
+  }
+
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>

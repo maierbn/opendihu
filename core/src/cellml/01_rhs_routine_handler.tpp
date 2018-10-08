@@ -77,7 +77,7 @@ initializeRhsRoutine()
     {
       if(!PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
       {
-        LOG(WARNING) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
+        LOG(DEBUG) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
       // todo: would like to check whether source File "simdSourceFilename" already is a matching one.
       //
@@ -633,7 +633,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     s << simdSourceFilename << "." << rankNoWorldCommunicator;
     simdSourceFilename = s.str();
 
-    std::ofstream simdSourceFile(simdSourceFilename.c_str());
+    std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());
     if (!simdSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << simdSourceFilename << "\".";
@@ -972,7 +972,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
     }
 
-    std::ofstream gpuSourceFile(gpuSourceFilename.c_str());
+    std::ofstream gpuSourceFile = OutputWriter::Generic::openFile(gpuSourceFilename.c_str());
     if (!gpuSourceFile.is_open())
     {
       LOG(ERROR) << "Could not write to file \"" << gpuSourceFilename << "\".";

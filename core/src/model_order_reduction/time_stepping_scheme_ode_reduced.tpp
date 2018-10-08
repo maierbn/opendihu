@@ -21,8 +21,11 @@ TimeSteppingSchemeOdeReduced(DihuContext context):
   // initialize output writers
   this->outputWriterManager_.initialize(timestepping_.specificSettings());
   
-  VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-  PythonUtility::printDict(this->specificSettings_);
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
+    PythonUtility::printDict(this->specificSettings_);
+  }
 }
 
 template<typename TimesteppingType>

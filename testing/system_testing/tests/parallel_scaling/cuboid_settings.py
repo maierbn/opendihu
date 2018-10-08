@@ -43,7 +43,7 @@ if scenario_name == "Strong_scaling":
   end_time = 1.0
 elif scenario_name == "Strong_scalig_LU":
   solver_type = "lu"
-  end_time = 0.1
+  end_time = 1.0
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -230,7 +230,8 @@ config = {
     "implicitSolver": {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
-      "type": solver_type,
+      "solverType": solver_type,
+      "preconditionerType": "none",
     }
   },
   "MultipleInstances": {

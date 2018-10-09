@@ -392,10 +392,11 @@ ax.set_yscale('log', basey=10)
 
 xticks = [24,48,144,312,768,1800,4272]
 xticks = map(int, xlist)
-xlabels = [str(xtick)+"\n("+str(xtick/24)+")" for xtick in xticks]
+xlabels = [str(xtick/24)+"\n"+str(xtick) for xtick in xticks]
+xlabels0 = [str(xtick/24) for xtick in xticks]
 
 ax.set_xticks(xticks)
-ax.set_xticklabels(xlabels)
+ax.set_xticklabels(xlabels0)
 
 plotkeys = []
 
@@ -429,7 +430,7 @@ for plotkey in plotkeys2:
   plt.errorbar(xlist, ylist, fmt=color, yerr=yerr, label=label)
   
 
-plt.xlabel('Number of processes (nodes)')
+plt.xlabel('Number of nodes\nNumber of processes')
 plt.ylabel('Parallel efficiency (-)')
 ax = plt.gca()
 ax.set_xticks(xticks)

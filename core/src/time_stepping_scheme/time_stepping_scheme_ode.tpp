@@ -139,8 +139,6 @@ initialize()
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
   this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
 
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
-
   // set initial values from settings
 
   // load initial values as specified in config under the "CellML" section

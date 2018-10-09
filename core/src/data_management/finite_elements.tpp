@@ -19,24 +19,42 @@
 namespace Data
 {
 
-template<typename FunctionSpaceType,typename Term,typename DummyForTraits,typename DummyForTraits2>
-void FiniteElements<FunctionSpaceType,Term,DummyForTraits,DummyForTraits2>::
+//! constructor
+template<typename FunctionSpaceType>
+FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion>::
+FiniteElements(DihuContext context) :
+  FiniteElementsBase<FunctionSpaceType>(context),
+  DiffusionTensorConstant<FunctionSpaceType>(context.getPythonConfig())
+{
+}
+
+//! constructor
+template<typename FunctionSpaceType>
+FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
+FiniteElements(DihuContext context) :
+  FiniteElementsBase<FunctionSpaceType>(context),
+  DiffusionTensorFieldVariable<FunctionSpaceType>(context.getPythonConfig())
+{
+}
+
+template<typename FunctionSpaceType>
+void FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion>::
 initialize()
 {
   FiniteElementsBase<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor if there is any
-  DiffusionTensorConstant<FunctionSpaceType::dim()>::initialize(this->context_.getPythonConfig());
+  DiffusionTensorConstant<FunctionSpaceType>::initialize();
 }
 
 template<typename FunctionSpaceType>
 void FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor)
 {
   FiniteElementsBase<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
-  DiffusionTensorFieldVariable<FunctionSpaceType>::initialize(direction, multidomainNCompartments);
+  DiffusionTensorFieldVariable<FunctionSpaceType>::initialize(direction, useAdditionalDiffusionTensor);
 }
 
 

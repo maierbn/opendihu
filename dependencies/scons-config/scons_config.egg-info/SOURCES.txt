@@ -44,10 +44,12 @@ sconsconfig/packages/SvgPath.py
 sconsconfig/packages/UTBot.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
+sconsconfig/packages/bison.py
 sconsconfig/packages/boost.py
 sconsconfig/packages/bzip2.py
 sconsconfig/packages/cfitsio.py
 sconsconfig/packages/clock.py
+sconsconfig/packages/flex.py
 sconsconfig/packages/glut.py
 sconsconfig/packages/googletest.py
 sconsconfig/packages/libcellml.py

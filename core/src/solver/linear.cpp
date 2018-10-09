@@ -44,6 +44,13 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string
   // set type of preconditioner
   ierr = PCSetType(pc, pcType); CHKERRV(ierr);
 
+  // for multigrid set number of levels to 5
+  if (pcType == PCGAMG)
+  {
+    int nLevels = 5;
+    ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
+  }
+
   // set options from command line, this overrides the python config
   ierr = PCSetFromOptions(pc); CHKERRV(ierr);
 
@@ -77,6 +84,10 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
   {
     pcType = PCILU;
   }
+  else if (preconditionerType == "gamg")
+  {
+    pcType = PCGAMG;
+  }
 
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
   kspType = KSPGMRES;
@@ -105,6 +116,11 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
   {
     kspType = KSPPREONLY;
     pcType = PCCHOLESKY;
+  }
+  else if (solverType == "gamg")
+  {
+    kspType = KSPPREONLY;
+    pcType = PCGAMG;
   }
 
   std::stringstream optionKey;

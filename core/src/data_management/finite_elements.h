@@ -14,14 +14,34 @@
 namespace Data
 {
 
+/*
+ * Data class for general finite elements method
+ */
 template<typename FunctionSpaceType,typename Term,typename = Term,typename = typename FunctionSpaceType::BasisFunction>
 class FiniteElements :
-  public FiniteElementsBase<FunctionSpaceType>,
-  public DiffusionTensorConstant<FunctionSpaceType::dim()>
+  public FiniteElementsBase<FunctionSpaceType>
 {
 public:
-  //! constructor from base class
+
+  //! constructor
   using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
+
+  // !intialize base class and diffusion tensor
+  using FiniteElementsBase<FunctionSpaceType>::initialize;
+};
+
+/*
+ * partial specialization for term with constant diffusion tensor
+ */
+template<typename FunctionSpaceType>
+class FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion> :
+  public FiniteElementsBase<FunctionSpaceType>,
+  public DiffusionTensorConstant<FunctionSpaceType>
+{
+public:
+
+  //! constructor
+  FiniteElements(DihuContext context);
 
   // !intialize base class and diffusion tensor
   virtual void initialize();
@@ -35,14 +55,14 @@ class FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion> 
   public DiffusionTensorFieldVariable<FunctionSpaceType>
 {
 public:
-  //! constructor from base class
-  using FiniteElementsBase<FunctionSpaceType>::FiniteElementsBase;
+  //! constructor
+  FiniteElements(DihuContext context);
 
   //! dummy method
   virtual void initialize(){};
 
   // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
-  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments=0);
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor = false);
 };
 
 

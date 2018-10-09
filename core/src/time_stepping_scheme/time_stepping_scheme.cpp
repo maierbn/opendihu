@@ -102,6 +102,8 @@ void TimeSteppingScheme::initialize()
     this->durationLogKey_ = PythonUtility::getOptionString(specificSettings_, "durationLogKey", "");
   }
 
+  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+
   initialized_ = true;
 }
 

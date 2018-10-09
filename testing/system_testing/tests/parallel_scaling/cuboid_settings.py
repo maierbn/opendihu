@@ -44,6 +44,9 @@ if scenario_name == "Strong_scaling":
 elif scenario_name == "Strong_scalig_LU":
   solver_type = "lu"
   end_time = 1.0
+elif scenario_name == "solver_scaling":
+  solver_type = sys.argv[4]
+  end_time = 1.0
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -58,6 +61,7 @@ while surplus > n_fibers:
 if rank_no == 0:
   print("scenario_name: {}".format(scenario_name))
   print("n_processes_per_fiber: {}, n_fibers: {}, n_nodes_per_fiber: {}".format(n_processes_per_fiber, n_fibers, n_nodes_per_fiber))
+  print("solver_type: {}".format(solver_type))
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
@@ -151,7 +155,7 @@ def get_instance_config(i):
       "timeStepWidth": dt_3D,  # 1e-1
       "logTimeStepWidthAsKey": "dt_3D",
       "durationLogKey": "duration_total",
-      "timeStepOutputInterval" : 10,
+      "timeStepOutputInterval" : 100,
       "endTime": end_time,
       "outputData1": False,
       "outputData2": True,
@@ -197,8 +201,7 @@ def get_instance_config(i):
           "inputMeshIsGlobal": True,
           "solverName": "implicitSolver",
           "FiniteElementMethod" : {
-            "maxIterations": 1e4,
-            "relativeTolerance": 1e-10,
+            "solverName": "implicitSolver",
             "inputMeshIsGlobal": True,
             "meshName": "MeshFiber",
             "prefactor": Conductivity/(Am*Cm),

@@ -3,7 +3,6 @@
 # arguments: <n_processes_per_fiber>
 
 end_time = 10.0
-solver_type = "cg"
 
 import numpy as np
 import matplotlib 
@@ -19,6 +18,7 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 1.  # cm
 innervation_zone_width = 0.  # cm
+solver_type = "gmres"
   
 cellml_file = "../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 cellml_file = "../input/shorten_opencmiss.cpp"

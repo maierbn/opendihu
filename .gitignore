@@ -25,4 +25,5 @@ out.py
 **/*[conflicted*
 **/results/*
 **/*.tgz
+**/out.txt
 config.py

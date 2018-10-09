@@ -571,7 +571,7 @@ DihuContext::~DihuContext()
   nObjects_--;
 
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
-  if (nObjects_ == 1)
+  if (nObjects_ == 0)
   {
     // write log file
     Control::PerformanceMeasurement::writeLogFile();

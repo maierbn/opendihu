@@ -19,7 +19,7 @@ TimeSteppingSchemeOdeReduced(DihuContext context):
   this->specificSettings_ = this->context_.getPythonConfig();
   
   // initialize output writers
-  this->outputWriterManager_.initialize(timestepping_.specificSettings());
+  this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
   
   if (VLOG_IS_ON(1))
   {

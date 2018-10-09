@@ -46,6 +46,9 @@ protected:
   //! initialize the cellMLAdapters_ vector
   void initializeCellMLAdapters();
 
+  //! initialize the relative factors fr_k
+  void initializeCompartmentRelativeFactors();
+
   Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace, CellMLAdapterType::nStates()> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fibre directions
@@ -60,6 +63,7 @@ protected:
   Mat systemMatrix_;    ///< for now, the system matrix which has more components than dofs, later this should be placed inside the data object
   Vec solution_;        ///< nested solution vector
   Vec rightHandSide_;             ///< distributed rhs
+  std::vector<Vec> subvectorsRightHandSide_; ///< the sub vectors that are used in the nested vector rightHandSide_
 
   std::vector<double> am_, cm_;  ///< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
 };

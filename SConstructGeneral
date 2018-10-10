@@ -36,7 +36,7 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 sconsconfig.select(
     packages.MPI(required=True),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
     packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
-    packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
+    #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),

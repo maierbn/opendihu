@@ -26,7 +26,7 @@ On a blank machine with ubuntu (tested on 16.04 and 18.04) you need to install t
 ```
   # Install prerequisites
   sudo apt-get update && \
-  sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev
+  sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 ```
 
 GCC version 5 or higher is required including the gfortran compiler. Ubuntu 16.04 has GCC 4 as standard compiler chain so you need to update to GCC 5 as follows:

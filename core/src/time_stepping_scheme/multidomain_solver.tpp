@@ -75,18 +75,11 @@ advanceTimeSpan()
       Vec subcellularIncrement = dataMultidomain_.subcellularIncrement(k)->getContiguousValuesGlobal();
       Vec transmembranePotential = dataMultidomain_.transmembranePotential(k)->valuesGlobal();
 
-      if (timeStepNo < 20)
-      {
-
-      // compute next delta_u = f(u)
+      // compute next delta_y = f(y)
       cellMLAdapters_[k].evaluateTimesteppingRightHandSideExplicit(subcellularStates, subcellularIncrement, timeStepNo, currentTime);
-
-      }
-
 
       VLOG(2) << "subcellularStates: " << *dataMultidomain_.subcellularStates(k);
       VLOG(2) << "subcellularIncrement: " << *dataMultidomain_.subcellularIncrement(k);
-
 
       // extract ionicCurrent (-1/Cm I_ion(Vm^(i+1))) from all rates (subcellularIncrement)
       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,1>> ionicCurrent  = dataMultidomain_.ionicCurrent(k);
@@ -97,26 +90,18 @@ advanceTimeSpan()
 
       // compute the right hand side entry as rhs[k] = Vm_k^{i} - dt/Cm_k*I_ion(Vm_k^{i})
 
-      if (timeStepNo < 20)
-      {
-
       ierr = VecCopy(ionicCurrent->valuesGlobal(), subvectorsRightHandSide_[k]); CHKERRV(ierr);   // rhs[k] = -1/Cm_k*I_ion(Vm_k^{i})
       ierr = VecScale(subvectorsRightHandSide_[k], this->timeStepWidth_); CHKERRV(ierr);          // rhs[k] *= dt
       ierr = VecAXPY(subvectorsRightHandSide_[k], 1.0, transmembranePotential); CHKERRV(ierr);    // rhs[k] += Vm_k^{i}
 
-      }
-      else
-      {
-
-      ierr = VecCopy(transmembranePotential, subvectorsRightHandSide_[k]); CHKERRV(ierr);   // rhs[k] = Vm_k^{i}
-
-      }
-
       VLOG(2) << "dt = " << this->timeStepWidth_;
       VLOG(2) << "k=" << k << ", rhs: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
 
-      // compute next subcellular states
+      // compute next subcellular states (y += dt*f(y) ) but not for y[0] = Vm
       ierr = VecAXPY(subcellularStates, this->timeStepWidth_, subcellularIncrement); CHKERRV(ierr);
+
+      // set Vm to the old values
+      dataMultidomain_.subcellularStates(k)->setValues(0, dataMultidomain_.transmembranePotential(k));
 
       VLOG(2) << "updated subcellularStates: " << *dataMultidomain_.subcellularStates(k);
     }
@@ -131,12 +116,12 @@ advanceTimeSpan()
     ierr = VecNestSetSubVecs(rightHandSide_, nCompartments_+1, indices.data(), subvectorsRightHandSide_.data()); CHKERRV(ierr);
 
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
-    this->solveLinearSystem();
+    //this->solveLinearSystem();
 
     // write the solution from the nested vector back to data
     int nSubVectors = 0;
     Vec *subVectors;
-    ierr = VecNestGetSubVecs(rightHandSide_, &nSubVectors, &subVectors); CHKERRV(ierr);
+    ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
     assert(nSubVectors == nCompartments_+1);
 
     for (int k = 0; k < nCompartments_; k++)
@@ -250,6 +235,24 @@ initialize()
 
   // initialize solution vector
   ierr = VecDuplicate(rightHandSide_, &solution_); CHKERRV(ierr);
+
+  // initialize solution vector
+  // get the subvectors of the nested vector
+  int nSubVectors = 0;
+  Vec *subVectors;
+  ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
+  assert(nSubVectors == nCompartments_+1);
+
+  // set all subvectors to the initialized Vm
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    ierr = VecCopy(dataMultidomain_.subcellularStates(k)->valuesGlobal(0), subVectors[k]); CHKERRV(ierr);
+  }
+
+  // set the subvectors back in the nested vector
+  std::vector<PetscInt> indices(nCompartments_+1);
+  std::iota(indices.begin(), indices.end(), 0);
+  ierr = VecNestSetSubVecs(solution_, nCompartments_+1, indices.data(), subVectors); CHKERRV(ierr);
 
   this->initialized_ = true;
 }
@@ -409,6 +412,9 @@ solveLinearSystem()
 
   VLOG(1) << "in solveLinearSystem";
   VLOG(1) << "rightHandSide: " << rightHandSide_;
+
+  // configure that the initial value for the iterative solver is the value in solution, not zero
+  ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
   // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide_, solution_); CHKERRV(ierr);

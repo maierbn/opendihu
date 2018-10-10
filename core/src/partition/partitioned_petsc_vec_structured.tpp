@@ -562,6 +562,49 @@ extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSp
   ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable)
+{
+  PetscErrorCode ierr;
+
+  // prepare source vector
+  //assert(!fieldVariable->valuesContiguousInUse());
+
+  const double *valuesSource;
+  ierr = VecGetArrayRead(fieldVariable->valuesLocal(0), &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  // prepare target vector
+  Vec vectorTarget;
+  dof_no_t dofStart = 0;
+  // if the contiguous representation is already being used, return contiguous vector
+  if (valuesContiguousInUse_)
+  {
+    vectorTarget = valuesContiguous_;
+    dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
+  }
+  else
+  {
+    vectorTarget = vectorLocal_[componentNo];
+  }
+
+  double *valuesTarget;
+  ierr = VecGetArray(vectorTarget, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+  VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to \"" << fieldVariable->name() << "\" "
+    << "(\"" << this->name_ << "\" component " << componentNo << ")";
+  memcpy(
+    valuesTarget + dofStart,
+    valuesSource,
+    this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+  );
+
+  // restore memory
+  ierr = VecRestoreArrayRead(fieldVariable->valuesLocal(0), &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArray(vectorTarget, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+}
+
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 std::vector<PetscInt> &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::

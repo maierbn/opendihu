@@ -102,7 +102,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     if z_index_center-1 <= k <= z_index_center+1:
       parameters[dof_no_local] = stimulation_current
   
-      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
+      print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
         #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), compartment_gets_stimulated))

@@ -129,6 +129,15 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
 
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable)
+{
+  std::vector<double> values;
+  fieldVariable->getValuesWithoutGhosts(0, values, false);
+  this->setValues(componentNo, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
 {
   std::vector<double> values;

@@ -2,32 +2,34 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/maierbn/opendihu/badge/develop)](https://www.codefactor.io/repository/github/maierbn/opendihu/overview/develop)
 
 # Overview
-The working title of this software framework is "opendihu" - from the project name "Digital Human". 
+The working title of this software framework is "opendihu", from the project name "Digital Human". 
 It serves as a code base to solve static and dynamic problems, where the Finite Element Method is used for spatial discretization. 
 Due to its modular nature it is supposed to be adaptible for future problems.
 
 # Installation
-There is a docker container that contains a full installation of opendihu. With it you can use the framework directly without having to build and install everything.
+## Using docker
+There is a docker container that contains a full installation of opendihu. Using the image you can use the framework directly without having to build and install dependencies.
 If you have docker installed, you can start a shell in the container with
 ```
 docker run -it maierbn/opendihu_system_testing:latest bash
 ```
-Then run `git pull` and `make` to get the latest code.
+Then run `git pull` and `make` to get and compile the latest code.
 
-For developing the code, it is necessary to clone this repo locally and build and install the framework.
+## Native installation
+In order to use the code for development it is necessary to clone this repo locally and build and install the framework with all dependencies.
 If you're impatient, type `make` in the top level directory and see what happens. If there are error messages, look into the log file `config.log`. 
 
-But please read the following instructions first.
+Please read the following instructions first.
 
 On a blank machine with ubuntu (tested on 16.04 and 18.04) you need to install the following packages.
 
 ```
-    # Install prerequisites
-    sudo apt-get update && \
-    sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev
+  # Install prerequisites
+  sudo apt-get update && \
+  sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 ```
 
-GCC version 5 or higher is required including the gfortran compiler. Ubuntu 16.04 has GCC 4 as standard compiler chain, so you need to update to GCC 5 as follows:
+GCC version 5 or higher is required including the gfortran compiler. Ubuntu 16.04 has GCC 4 as standard compiler chain so you need to update to GCC 5 as follows:
 
 ```
   # Install GCC5 toolchain
@@ -49,16 +51,18 @@ The scons build system needs python2.7. Make sure that the command `python2.7` s
   ln -s python2.7 /usr/bin/python
 ```
 
-All other needed dependencies are handled by the `scons` build system. For each dependency you can either specify the location of its installation or do nothing and let the build system download, build and install it for you.
-Note that python3 with numpy, scipy and matplotlib is such a dependency. It may download and install python3 on its own.
+All other needed dependencies are handled by the `scons` build system. For each dependency you can either specify the path of its installation or do nothing and let the build system download, build and install it for you.
+Note that python3 with numpy, scipy and matplotlib is such a dependency. Opendihu will download and install python3 on its own.
 
-It is recommended to not let the build system download and build `MPI`, instead specify the location of your local MPI installation.
-* Find out in which path on your system MPI is installed. We need the directory that contains a `lib` and an `include` subdirectory. 
-  It may be named like `/usr/lib/openmpi` or `/usr/lib/mpich` (e.g. on Ubuntu 16.04) or `/usr/lib/x86_64-linux-gnu/openmpi` (on Ubuntu 18.04).
-* Set this path in `user-variables.scons.py` at line ~20. You don't have to do anything for Ubuntu 16.04 or Ubuntu 18.04, because it should already be done.
+It is recommended to not let the build system download and build `MPI`, instead specify the location of your local MPI installation. 
+* On Ubuntu you don't have to do anything, the system MPI directory should be found automatically. Run `make` and see if MPI is being found.
+* If the MPI location is not detected automatically, you have to specifiy the path. Find out in which path on your system MPI is installed. We need the directory that contains a `lib` and an `include` subdirectory. 
+  It may be named like `/usr/lib/openmpi`, `/usr/lib/mpich` or `/usr/lib/x86_64-linux-gnu/openmpi` or similar.
+* Set this path in `user-variables.scons.py` as value of the variable `MPI_DIR`.
 * In this file you can also set paths for other packages, if they are already installed. This would reduce build time, it is, however, not required.
 * Type `make debug` or `make release` to build the debug or release target. If you run `make` without targets, it will build the debug target followed by the release target.
-  At first it will download and install several needed dependencies. It takes several hours. If some components fail to install you can inspect the log file `config.log`. If only an optional component failed, opendihu may still work.
+  At first it will download and install the needed dependencies. It takes several hours. If some components fail to install you can inspect the log file `config.log`. 
+  There are required and optional dependencies. If only optional component fail to install, installation of opendihu still works.
   The required dependencies are:
 ```
   MPI         (OpenMPI will be installed by default)
@@ -72,19 +76,34 @@ It is recommended to not let the build system download and build `MPI`, instead 
 ```
 There are optional dependencies that allow compilation of opendihu. But they may be needed for unit tests. The following are the optional dependencies:
 ```
-  bzip2
   Cython
   NumpyC
   Scipy
   Matplotlib
+  (+ various python packages)
 ```
 * To get started you find some examples in the `examples` directory. Also the system tests under `testing/system_testing/tests` might be useful.
+* To build an example, `ct` into an subdirectory under `examples`, e.g. `examples/laplace2d`. In this directory run `scons`. 
+  For this to work you either need to install `scons` on your system (e.g. `sudo apt install scons` on ubuntu). Or you use the given `scons` in the `dependencies` directory: 
+```
+  python2.7 ../../dependencies/scons/scons.py 
+```
+  You can set an alias in `.bashrc` like `alias scons="python2.7 <your path>/opendihu/dependencies/scons/scons.py"`.
+* To build release target, use `scons` or `scons BUILD_TYPE=release`, to build the debug target, use `scons BUILD_TYPE=debug`
+* There will be an executable created in the `build_debug` or `build_release` subdirectory. Change into that directory and run it with a settings file as only argument: `./laplace_regular ../settings_lagrange.py`.
+* Output files in this example will be created under the `out` subdirectory. If you look into `out` you'll find two files: `p.py` and `p.vtr`.
+ 
+  The `.vtr` file can be visualized using Paraview. The `*.py` files can be visualized using the plot script in `opendihu/scripts`. 
+  It is useful to add the `scripts` directory to the `PATH` environment variable, e.g. by adding the line `export PATH=$PATH:<your-path>/opendihu/scripts` to your `.bashrc` file.
+  Then you can run `plot.py <*.py-output files>` anywhere to visualize the output. Usually the shortcut `plot` instead of `plot.py` should also work. (Unless you have installed something different with the name `plot`).
+  An often used command is therefore `plot out/*`. If arguments are ommited, i.e. `plot`, this is the same as `plot *.py`.
+  In our example the command could be `plot.py out/p.py`.
 
 # Documentation
-The theory documentation can be found in the `doc/derivations/doc.pdf` document. Documentation concerning the code can be found in `doc/documentation.rst`.
-The best way to learn how the framework is used is by looking at the examples in the `example` directory and the system tests in the `testing/system_testing/tests` directory. 
-
+Some theory documentation can be found in the `doc/derivations/doc.pdf` document. Documentation concerning the code is not yet complete and can be found in `doc/documentation.rst`.
+The best way to learn how the framework is used is by asking someone who knows and studying the examples in the `example` directory and the system tests in the `testing/system_testing/tests` directory. 
 The following functionality is currently implemented:
+
 ## Equations
 Supported equation types are currently
 * Laplace and Poisson
@@ -113,6 +132,8 @@ Supported equation types are currently
 # Parallelism
 * Distributed memory parallelism using MPI is implemented for structured meshes (`StructuredRegularFixedOfDimension<D>` and `StructuredDeformableOfDimension<D>`). 
 * The python output files as well as VTK output files are parallel, the Exfiles output is only serial. The python plotting utility can handle the parallel output files.
+* MPI I/O is used to write combined VTK output files, i.e. a single file per time step. This is needed on supercomputers when running with a high number of cores.
+* The monodomain example has been successfully executed on 10.000 cores on Hazel Hen.
   
 # Tests
 * There are unit tests that run after each compile (you can abort the compilation process after the library was created to skip the unit tests). 

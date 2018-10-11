@@ -10,6 +10,9 @@
 #include <memory>
 #include <list>
 #include <petscvec.h>
+#include <sys/types.h>  // getpid
+#include <unistd.h>     // getpid
+#include <omp.h>
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -48,7 +51,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
-  LOG(TRACE) << "DihuContext constructor";
 
   if (!initialized_)
   {
@@ -63,6 +65,14 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
+
+    // set number of threads to use to 1
+    omp_set_num_threads(1);
+    LOG(DEBUG) << "set number of threads to 1";
+
+    // output process ID
+    int pid = getpid();
+    LOG(DEBUG) << "PID " << pid;
 
     // parallel debugging barrier
     bool enableDebuggingBarrier = false;
@@ -566,7 +576,7 @@ DihuContext::~DihuContext()
   nObjects_--;
 
   VLOG(1) << "~DihuContext, nObjects = " << nObjects_;
-  if (nObjects_ == 1)
+  if (nObjects_ == 0)
   {
     // write log file
     Control::PerformanceMeasurement::writeLogFile();
@@ -577,8 +587,8 @@ DihuContext::~DihuContext()
 
     if (doNotFinalizeMpi_)
     {
-      LOG(DEBUG) << "MPI_Barrier";
-      MPI_Barrier(MPI_COMM_WORLD);
+      //LOG(DEBUG) << "MPI_Barrier";
+      //MPI_Barrier(MPI_COMM_WORLD);
     }
     else
     {

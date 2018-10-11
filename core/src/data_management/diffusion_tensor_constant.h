@@ -2,27 +2,29 @@
 
 #include <Python.h>  // has to be the first included header
 
+#include "data_management/diffusion_tensor_base.h"
 #include "utility/math_utility.h"
 
 namespace Data
 {
 
-template <int D>
-class DiffusionTensorConstant
+template<typename FunctionSpaceType>
+class DiffusionTensorConstant :
+  public DiffusionTensorBase<FunctionSpaceType>
 {
 public:
 
-  //! dummy method that does nothing
-  void initialize(){};
+  //! constructor
+  DiffusionTensorConstant(PyObject *specificSettings);
 
   //! read values of diffusion tensor from config
-  void initialize(PyObject *settings);
+  void initialize();
 
   //! return diffusion tensor
-  const MathUtility::Matrix<D,D> &diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const;
+  const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> &diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const;
 
 private:
-  MathUtility::Matrix<D,D> diffusionTensor_;  ///< the diffusion/conductivity tensor A in an equation ∇•A∇ = f
+  MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> diffusionTensor_;  ///< the diffusion/conductivity tensor A in an equation ∇•A∇ = f
 };
 
 }  // namespace

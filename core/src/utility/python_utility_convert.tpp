@@ -265,6 +265,48 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   }
 };
 
+//partial specialization for std::vector
+template<typename ValueType>
+struct PythonUtility::convertFromPython<std::vector<ValueType>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::vector<ValueType> get(PyObject *object, std::vector<ValueType> defaultValue)
+  {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+
+    std::vector<ValueType> result;
+    if (PyList_Check(object))
+    {
+      int nEntries = (int)PyList_Size(object);
+      result.resize(nEntries);
+
+      for(int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+      return result;
+    }
+    else
+    {
+      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object, defaultValue[0]);
+
+      result.resize(1);
+      result[0] = valueDouble;
+
+      return result;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static std::vector<ValueType> get(PyObject *object)
+  {
+    std::vector<ValueType> defaultValue(1);  // vector with 1 entry
+    return convertFromPython<std::vector<ValueType>>::get(object, defaultValue);
+  }
+};
+
 //partial specialization for int
 template<>
 struct PythonUtility::convertFromPython<int>
@@ -513,7 +555,6 @@ struct PythonUtility::convertFromPython<PyObject *>
   }
 
 };
-
 
 //partial specialization for bool
 template<>

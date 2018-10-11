@@ -54,6 +54,9 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
     double duration = stopTime - measurement.start;
     measurement.totalDuration += duration;
     measurement.nTimeSpans += numberAccumulated;
+
+    VLOG(2) << "PerformanceMeasurement::stop(" << name << "), time span [" << measurement.start << "," << stopTime << "], duration=" << duration
+      << ", now total: " << measurement.totalDuration << ", nTimeSpans: " << measurement.nTimeSpans;
   }
 }
 
@@ -130,7 +133,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // write measurement values
   for (std::pair<std::string, Measurement> measurement : measurements_)
   {
-    file << measurement.second.totalDuration / measurement.second.nTimeSpans << ";"
+    file << measurement.second.totalDuration << ";"
      << measurement.second.nTimeSpans << ";";
   }
   file << std::endl;
@@ -218,7 +221,7 @@ void PerformanceMeasurement::parseStatusInformation()
      message << h << ":";
    if (min != 0)
    {
-     message << std::setw(2) << std::setfill('0') << min << ":" << s;
+     message << std::setw(2) << std::setfill('0') << min << ":" << std::setw(2) << std::setfill('0') << s << " min";
    }
    else
    {

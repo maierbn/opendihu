@@ -242,19 +242,19 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
         << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << Paraview::encodeBase64(coordinates[0]) << std::endl
+      << std::string(5, '\t') << Paraview::encodeBase64Float(coordinates[0].begin(), coordinates[0].end()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl
       << std::string(4, '\t') << "<DataArray "
         << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << Paraview::encodeBase64(coordinates[1]) << std::endl
+      << std::string(5, '\t') << Paraview::encodeBase64Float(coordinates[1].begin(), coordinates[1].end()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl
       << std::string(4, '\t') << "<DataArray "
         << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" "
         << "format=\"binary\" >" << std::endl
-      << std::string(5, '\t') << Paraview::encodeBase64(coordinates[2]) << std::endl
+      << std::string(5, '\t') << Paraview::encodeBase64Float(coordinates[2].begin(), coordinates[2].end()) << std::endl
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
   else
@@ -580,7 +580,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-       << Paraview::encodeBase64(values) << std::endl;
+       << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
   }
   else 
   {
@@ -602,7 +602,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-      << Paraview::encodeBase64(values) << std::endl;
+      << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
   }
   else
   {

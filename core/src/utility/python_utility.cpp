@@ -17,319 +17,7 @@ PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
 PyObject *PythonUtility::list = NULL;
 int PythonUtility::listIndex = 0;
-/*
-template<>
-int PythonUtility::convertFromPython<int>::
-get(PyObject *object)
-{
-  return convertFromPython<int>::get(object, 0);
-}
 
-template<>
-int PythonUtility::convertFromPython<int>::
-get(PyObject *object, int defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  if (PyLong_Check(object))
-  {
-    long valueLong = PyLong_AsLong(object);
-    return int(valueLong);
-  }
-  else if (PyFloat_Check(object))
-  {
-    double valueDouble = PyFloat_AsDouble(object);
-
-    if (double(int(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
-    {
-      LOG(WARNING) << "convertFromPython: object is no int: " << object;
-    }
-
-    return int(valueDouble);
-  }
-  else if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    return atoi(valueString.c_str());
-  }
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no int: " << object;
-  }
-  return defaultValue;
-}
-
-template<>
-global_no_t PythonUtility::convertFromPython<global_no_t>::
-get(PyObject *object)
-{
-  return convertFromPython<global_no_t>::get(object, 0);
-}
-
-template<>
-global_no_t PythonUtility::convertFromPython<global_no_t>::
-get(PyObject *object, global_no_t defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  if (PyLong_Check(object))
-  {
-    long valueLong = PyLong_AsLong(object);
-    return global_no_t(valueLong);
-  }
-  else if (PyFloat_Check(object))
-  {
-    double valueDouble = PyFloat_AsDouble(object);
-
-    if (double(global_no_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
-    {
-      LOG(WARNING) << "convertFromPython: object is no int: " << object;
-    }
-
-    return global_no_t(valueDouble);
-  }
-  else if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    return atoi(valueString.c_str());
-  }
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no long int: " << object;
-  }
-  return defaultValue;
-}
-
-template<>
-std::size_t PythonUtility::convertFromPython<std::size_t>::
-get(PyObject *object)
-{
-  return convertFromPython<std::size_t>::get(object, 0);
-}
-
-template<>
-std::size_t PythonUtility::convertFromPython<std::size_t>::
-get(PyObject *object, std::size_t defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  if (PyLong_Check(object))
-  {
-    long valueLong = PyLong_AsLong(object);
-    return std::size_t(valueLong);
-  }
-  else if (PyFloat_Check(object))
-  {
-    double valueDouble = PyFloat_AsDouble(object);
-
-    if (double(std::size_t(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
-    {
-      LOG(WARNING) << "convertFromPython: object is no std::size_t: " << object;
-    }
-
-    return std::size_t(valueDouble);
-  }
-  else if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    return atoi(valueString.c_str());
-  }
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no std::size_t: " << object;
-  }
-  return defaultValue;
-}
-
-template<>
-double PythonUtility::convertFromPython<double>::
-get(PyObject *object)
-{
-  return convertFromPython<double>::get(object, 0.0);
-}
-
-template<>
-double PythonUtility::convertFromPython<double>::
-get(PyObject *object, double defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  initNumpy();
-
-  if (PyFloat_Check(object))
-  {
-    double valueDouble = PyFloat_AsDouble(object);
-
-    return valueDouble;
-  }
-  else if (PyLong_Check(object))
-  {
-    long valueLong = PyLong_AsLong(object);
-    return double(valueLong);
-  }
-  else if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    return atof(valueString.c_str());
-  }
-
-//#ifdef HAVE_NUMPYC
-//  else if (PyArray_Check(object))
-//  {
-//    //if (object->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
-//
-//    LOG(WARNING) << "convertFromPython: object is a numpy array: " << object;
-//  }
-//#endif
-
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no double: " << object;
-  }
-  return defaultValue;
-}
-
-template<>
-std::string PythonUtility::convertFromPython<std::string>::
-get(PyObject *object)
-{
-  return convertFromPython<std::string>::get(object, "");
-}
-
-template<>
-std::string PythonUtility::convertFromPython<std::string>::
-get(PyObject *object, std::string defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    return valueString;
-  }
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no std::string: " << object;
-  }
-  return defaultValue;
-}
-
-template<>
-PyObject *PythonUtility::convertFromPython<PyObject *>::
-get(PyObject *object)
-{
-  return convertFromPython<PyObject *>::get(object, nullptr);
-}
-
-template<>
-PyObject *PythonUtility::convertFromPython<PyObject *>::
-get(PyObject *object, PyObject *defaultValue)
-{
-  return object;
-}
-
-template<>
-bool PythonUtility::convertFromPython<bool>::
-get(PyObject *object)
-{
-  return convertFromPython<bool>::get(object, false);
-}
-
-template<>
-bool PythonUtility::convertFromPython<bool>::
-get(PyObject *object, bool defaultValue)
-{
-  if(object == NULL)
-    return defaultValue;
-
-  // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
-  
-  if (PyBool_Check(object))
-  {
-    if (object == Py_True)
-    {
-      return true;
-    }
-    return false;
-  }
-  if (PyLong_Check(object))
-  {
-    long valueLong = PyLong_AsLong(object);
-    return bool(valueLong);
-  }
-  else if (PyUnicode_Check(object))
-  {
-    std::string valueString = pyUnicodeToString(object);
-    std::transform(valueString.begin(), valueString.end(), valueString.begin(), ::tolower);
-    if (valueString.find("true") != std::string::npos || valueString.find("1") != std::string::npos
-      || valueString.find("yes") != std::string::npos || valueString.find("on") != std::string::npos)
-    {
-      return true;
-    }
-    else if (valueString.find("false") != std::string::npos || valueString.find("0") != std::string::npos
-      || valueString.find("no") != std::string::npos || valueString.find("off") != std::string::npos)
-    {
-      return false;
-    }
-    else
-    {
-      LOG(WARNING) << "Could not infer bool value of \"" <<valueString<< "\".";
-      return defaultValue;
-    }
-  }
-  else
-  {
-    LOG(WARNING) << "convertFromPython: object is no bool: " << object;
-  }
-  return defaultValue;
-}*/
-
-/*
-template<>
-std::array<double,2> PythonUtility::get(PyObject *object, std::array<double,2> defaultValue)
-{
-  return PythonUtility::convertFromPython<double,2>(object, defaultValue);
-}
-
-template<>
-std::array<double,2> PythonUtility::get(PyObject *object)
-{
-  return convertFromPython<>::get double,2>(object);
-}
-
-template<>
-std::array<double,3> PythonUtility::get(PyObject *object, std::array<double,3> defaultValue)
-{
-  return PythonUtility::convertFromPython<double,3>(object, defaultValue);
-}
-
-template<>
-std::array<double,3> PythonUtility::get(PyObject *object)
-{
-  return convertFromPython<>::get double,3>(object);
-}
-*/
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
   if (settings)
@@ -804,7 +492,7 @@ void PythonUtility::printDict(PyObject *dict)
 {
   if (dict == NULL)
   {
-    VLOG(2) << "printDict: dict is NULL!";
+    LOG(DEBUG) << "printDict: dict is NULL!";
     return;
   }
 
@@ -813,11 +501,11 @@ void PythonUtility::printDict(PyObject *dict)
   
   if (!PyDict_Check(dict))
   {
-    VLOG(2) << "printDict: Object is not a dict!";
+    LOG(DEBUG) << "printDict: Object is not a dict!";
     return;
   }
 
-  VLOG(2) << getString(dict);
+  LOG(DEBUG) << getString(dict);
 }
 
 bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString)
@@ -927,14 +615,14 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // it is a list
         int listNEntries = PyList_Size(value);
-        
+
         // do nothing if it is an empty list
         if (listNEntries == 0)
           return;
 
         // get the first value from the list
         int value = PythonUtility::getOptionListBegin<int>(settings, keyString);
-        
+
         // loop over other values
         for (;
             !PythonUtility::getOptionListEnd(settings, keyString);
@@ -947,6 +635,55 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // not a list, but a different entry (only 1 entry)
         int value = PythonUtility::getOptionInt(settings, keyString, 0);
+        values.push_back(value);
+      }
+    }
+    else
+    {
+      // this is no warning
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+    }
+    Py_CLEAR(key);
+  }
+}
+
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values)
+{
+  if (settings)
+  {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+    if(PyDict_Contains((PyObject *)settings, key))
+    {
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+        int listNEntries = PyList_Size(value);
+
+        // do nothing if it is an empty list
+        if (listNEntries == 0)
+          return;
+
+        // get the first value from the list
+        std::string value = PythonUtility::getOptionListBegin<std::string>(settings, keyString);
+
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString);
+            PythonUtility::getOptionListNext<std::string>(settings, keyString, value))
+        {
+          values.push_back(value);
+        }
+      }
+      else
+      {
+        // not a list, but a different entry (only 1 entry)
+        std::string value = PythonUtility::getOptionString(settings, keyString, 0);
         values.push_back(value);
       }
     }
@@ -973,14 +710,14 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       {
         // it is a list
         int listNEntries = PyList_Size(value);
-        
+
         // do nothing if it is an empty list
         if (listNEntries == 0)
           return;
 
         // get the first value from the list
         double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
-        
+
         // loop over other values
         for (;
             !PythonUtility::getOptionListEnd(settings, keyString);
@@ -1000,6 +737,52 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     {
       // this is no warning
       LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+    }
+    Py_CLEAR(key);
+  }
+}
+
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<PyObject *> &values)
+{
+  if (settings)
+  {
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+    if(PyDict_Contains((PyObject *)settings, key))
+    {
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+        int listNEntries = PyList_Size(value);
+
+        // do nothing if it is an empty list
+        if (listNEntries == 0)
+          return;
+
+        // get the first value from the list
+        PyObject *item = PythonUtility::getOptionListBegin<PyObject *>(settings, keyString);
+
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString);
+            PythonUtility::getOptionListNext<PyObject *>(settings, keyString, item))
+        {
+          values.push_back(item);
+        }
+      }
+      else
+      {
+        // not a list, but a single entry (only 1 entry)
+        PyObject *item = (PyObject *)settings;
+        values.push_back(item);
+      }
+    }
+    else
+    {
+      // this is no warning
+      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming vector " << values;
     }
     Py_CLEAR(key);
   }

@@ -17,7 +17,7 @@ CellmlAdapterBase(DihuContext context) :
 {
   PyObject *topLevelSettings = this->context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, "CellML");
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
 }
 
@@ -79,7 +79,6 @@ initialize()
   parameters_.resize(nParameters_*nInstances_);
   LOG(DEBUG) << "parameters.size: " << parameters_.size() << ", intermediates.size: " << intermediates_.size();
 }
-
 
 template<int nStates, typename FunctionSpaceType>
 template<typename FunctionSpaceType2>

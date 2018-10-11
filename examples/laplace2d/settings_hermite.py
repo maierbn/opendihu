@@ -17,7 +17,7 @@ config = {
     "physicalExtent": [1.0, 1.0],
     "outputInterval": 1.0,
     "prefactor": 1,
-    dirichletBoundaryConditions: bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "maxIterations": 1e6,
     "OutputWriter" : [

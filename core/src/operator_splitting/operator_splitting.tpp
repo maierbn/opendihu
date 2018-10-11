@@ -16,7 +16,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -92,14 +92,8 @@ run()
   // initialize data structurures
   initialize();
 
-  // start time measurement
-  Control::PerformanceMeasurement::start("OperatorSplitting total");
-
   // run simulation
   advanceTimeSpan();
-
-  // stop time measurement and output log file
-  Control::PerformanceMeasurement::stop("OperatorSplitting total");
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

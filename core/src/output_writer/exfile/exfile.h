@@ -15,7 +15,7 @@ class Exfile : public Generic
 public:
 
   //! constructor
-  Exfile(PyObject *specificSettings);
+  using Generic::Generic;
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>

@@ -1059,12 +1059,207 @@ the solution is
 \end{equation*}
 
 %------------------------------------------------------------------------------------------------
-\section{Monodomain}
-Monodomain equation
+
+\section{Models of Electrophysiology}
+In the following the Bidomain and Monodomain models are derived.
+\subsection{The Bidomain Model}
+
+The Bidomain model considers two computational domains of intra-cellular and extra-cellular space. In a homogenised view it is assumed that these domains share space such that at each spatial point there coexist both domains at the same time. Both domains have their own conductivity tensors $\bfsigma_i, \bfsigma_e$ and electric potential $\phi_i, \phi_e$, as depicted in \cref{fig:bidomain}. An electric current $I_m$ between the computational domains is possible and has to pass the cell membrane. For specifying boundary conditions of the Bidomain equations, a third domain, the surrounding body, is assumed, that receives a current from the extracellular domain, but not from the intracellular space. For Monodomain equation this current is later set to 0.
+
+\bild{bidomain}{10cm}{Setting of the Bidomain model}
+
+Starting point of the derivation is a form of Ohm's Law by which the current density $J$ is a result of an electric field $E$ that exists in a medium with electric conductivity $\bfsigma$:
+\beq
+  \ba{ll}
+    J = \bfsigma\,E.
+  \ea
+\eeq
+Assuming quasi static conditions, the field strength $E$ is given by the negative gradient of a potential field:
+\beq
+  \ba{ll}
+    E = -∇\phi.
+  \ea
+\eeq
+For the current densities $J_i$ and $J_e$ in the two domains we then have:
+\beq
+  \ba{ll}
+    J_i = -\bfsigma_i\,∇\phi_i,\qquad J_e = -\bfsigma_e\,∇\phi_e.
+  \ea
+\eeq
+Because of the spatial coexistence of the two domains the divergence of the current density in one domain has to be the negative of the divergence at the same point in the other domain,
+\beqno\label{eq:pre2}
+  \ba{ll}
+    ∇\cdot J_i = -∇\cdot J_e \quad \Leftrightarrow \quad -∇\cdot(\bfsigma_i\,∇\phi_i) = ∇\cdot (\bfsigma_e\,∇\phi_e).
+  \ea
+\eeqno
+The current enabling this relationship is the membrane current $I_m$ such that:
+\beqno\label{eq:AmIm}
+  \ba{ll}
+    ∇\cdot(\bfsigma_i\,∇\phi_i) = A_m\,I_m.
+  \ea
+\eeqno
+The factor $A_m$ characterizes the membrane area to domain volume relationship of the cell membrane. Then $I_m$ is a quantity per area. It is the external current in the Hodgkin-Huxley model, \cref{eq:V_m}, such that \cref{eq:AmIm} becomes:
+\beq
+  \ba{ll}
+    ∇\cdot(\bfsigma_i\,∇\phi_i) = A_m\,\big(C_m\,\p{V_m}{t} + I_{ion}(V_m)\big).
+  \ea
+\eeq
+
+Using $V_m = \phi_i - \phi_e$, the intracellular potential $\phi_i$ can be eliminated yielding
+\beqno\label{eq:bidomain1}
+  \ba{ll}
+    ∇\cdot(\bfsigma_i\,∇V_m) + ∇\cdot (\bfsigma_i\,∇\phi_e) = A_m\,\big(C_m\p{V_m}{t} + I_{ion}(V_m)\big).
+  \ea
+\eeqno
+The second equation comes from \cref{eq:pre2} which is also formulated with $V_m$ instead of $\phi_i$:
+\beqno\label{eq:bidomain2}
+  \ba{ll}
+    &∇\cdot\big(\bfsigma_i\,∇(V_m + \phi_e)\big) = -∇\cdot(\bfsigma_e\,∇\phi_e)\\[4mm]
+    \Leftrightarrow \quad & ∇\cdot\big((\bfsigma_i + \bfsigma_e)\,∇\phi_e) + ∇\cdot (\bfsigma_i\,∇V_m) = 0,
+  \ea
+\eeqno
+\Cref{eq:bidomain1,eq:bidomain2} form the Bidomain Equations.
+
+\subsection{The Monodomain Model}
+
+Under assumption that the anisotropy of the tissue at a point inside and outside the muscle cell is equal, the two Bidomain Equations can be reduced to the single Monodomain Equation. The assumption can be expressed as
+\beq
+  \ba{ll}
+    \bfsigma_i = k\cdot \bfsigma_e
+  \ea
+\eeq
+for a real factor $k$. Plugging $\bfsigma_e = \bfsigma_i/k$ into the second Bidomain Eq. \eqref{eq:bidomain2} yields
+\beqno\label{eq:int1}
+  \ba{ll}
+    &∇\cdot\big((1+\dfrac{1}{k})\,\bfsigma_i\,∇\phi_e\big) + ∇\cdot (\bfsigma_i\,∇V_m) = 0\\[4mm]
+    \Leftrightarrow \quad & ∇\cdot(\bfsigma_i\,∇\phi_e) = -\dfrac{k}{k+1}\,∇\cdot(\bfsigma_i\,∇V_m).
+  \ea
+\eeqno
+Now \cref{eq:int1} can be combined with the first Bidomain Eq. \eqref{eq:bidomain1} to get:
+\beq
+  \ba{ll}
+    ∇\cdot(\bfsigma_i\,∇V_m) - \dfrac{k}{k+1}\,∇\cdot(\bfsigma_i\,∇V_m) = A_m\,\big(C_m\p{V_m}{t} + I_{ion}(V_m)\big)\\[4mm]
+    \dfrac{1}{k+1}\,∇\cdot(\bfsigma_i\,∇V_m) = A_m\,\big(C_m\p{V_m}{t} + I_{ion}(V_m)\big)
+  \ea
+\eeq
+For the 1D case where the muscle fibre is modeled as a single line this can be simplified to:
+\beq
+  \ba{ll}
+    ∇\cdot\Big(\ub{\dfrac{\bfsigma_i}{\bfsigma_i/\bfsigma_e+1}}{=\dfrac{\bfsigma_e\,\bfsigma_i}{\bfsigma_e+\bfsigma_i}}∇V_m\Big) = A_m\,\big(C_m\p{V_m}{t} + I_{ion}(V_m)\big)
+  \ea
+\eeq
+By defining the effective conductivity ${\bfsigma_{\text{eff}} := (\bfsigma_e\,\bfsigma_i)/(\bfsigma_e+\bfsigma_i)}$ the 1D Monodomain Equation can be written as:
+\beqno\label{eq:monodomain_1D}
+  \ba{ll}
+    ∇\cdot(\bfsigma_{\text{eff}}\,∇V_m) = A_m\,\big(C_m\p{V_m}{t} + I_{ion}(V_m)\big).
+  \ea
+\eeqno
+This is a 1D PDE in the variable $V_m$ and is usually solved with the boundary condition
+\beq
+  \ba{ll}
+    (\bfsigma_{\text{eff}}∇V_m)\cdot \bfn^M = 0 \quad \text{on }\Gamma^M.
+  \ea
+\eeq
+which inhibits current to the outer domain. $\bfn^M$ is the outward normal vector on the border $\Gamma^M$ of the muscle fibre surface.
+The spatial discretization of the diffusion term on the left-hand side of \cref{eq:monodomain_1D} can be achieved by using 1D finite elements.
+  
+%------------------------------------------------------------------------------------------------
+\subsection{The 1D Monodomain Equation}
+
+We consider 2 domains: intra- and extracellular space. The setting is homogenised such that the domains occupy the same space.
+The domains have electric potentials $\phi_i, \phi_e$ and conductivities $\sigma_i, \sigma_e$, the membrane voltage is defined as $V_m = \phi_i-\phi_e$.
+%  
+\begin{figure}
+  \def\svgwidth{6cm}
+  \input{images/bidomain_setting1.pdf_tex}\quad
+\end{figure}
+The current density can be described by a potential:
+% 
+\begin{equation*}
+\begin{array}{lll}
+j_e = -\sigma_e\,\dfrac{\partial\phi_e}{\partial x},\quad j_i = -\sigma_i\,\dfrac{\partial\phi_i}{\partial x}
+\end{array}
+\end{equation*}
+
+\begin{figure}
+  \def\svgwidth{6cm}
+  \input{images/bidomain_setting2.pdf_tex}\quad
+\end{figure}
+Conservation of charges holds, changes in current density affect the other domain.
+%
+\begin{equation}\label{eq:bidom1}
+  \begin{array}{lll}
+    &\dfrac{\partial}{\partial x} j_i = -\dfrac{\partial}{\partial x} j_e\\[4mm]
+    \quad\Leftrightarrow\quad & \dfrac{\partial}{\partial x} \Big(\sigma_i\,\dfrac{\partial\phi_i}{\partial x}\Big) 
+      = -\dfrac{\partial}{\partial x} \Big(\sigma_e\,\dfrac{\partial\phi_e}{\partial x}\Big)
+  \end{array}
+\end{equation}
+The current through the domain is given by
+\begin{equation}\label{eq:bidom2}
+  \begin{array}{lll}
+      \dfrac{\partial}{\partial x} \Big(\sigma_i\,\dfrac{\partial\phi_i}{\partial x}\Big)  &= I_m\\[4mm]
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)
+  \end{array}
+\end{equation}
+
+We assume $\sigma_i = k\cdot \sigma_e$ and substitute $V_m = \phi_i - \phi_e$ to eliminate $\phi_i$:
+\begin{equation}\label{eq:subsbidom}
+  \begin{array}{lll}
+    \dfrac{\partial}{\partial x} \Big(\sigma_i\,\dfrac{\partial\phi_i}{\partial x}\Big) = 
+    \dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial(V_m + \phi_e)}{\partial x}\Big)
+  \end{array}
+\end{equation}
+
+Plugging this into \eqref{eq:bidom1} yields
+\begin{equation}\label{eq:subs2bidom}
+  \begin{array}{lll}
+    &\dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial(V_m + \phi_e)}{\partial x}\Big)
+      = -\dfrac{\partial}{\partial x} \Big(\sigma_e\,\dfrac{\partial\phi_e}{\partial x}\Big)    \\[4mm]
+    \quad\Leftrightarrow\quad & 
+    \dfrac{\partial}{\partial x} \Big((k+1)\cdot \sigma_e\,\dfrac{\partial\phi_e}{\partial x}\Big) = -\dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial V_m}{\partial x}\Big) \\[4mm]
+    \quad\Leftrightarrow\quad & 
+    \dfrac{\partial}{\partial x} \Big(\sigma_e\,\dfrac{\partial\phi_e}{\partial x}\Big) = -\dfrac{\partial}{\partial x} \Big(\dfrac{k}{k+1}\cdot \sigma_e\,\dfrac{\partial V_m}{\partial x}\Big)\\[4mm]
+  \quad\Leftrightarrow\quad & 
+    \dfrac{\partial}{\partial x} \Big(k\,\sigma_e\,\dfrac{\partial\phi_e}{\partial x}\Big) = -\dfrac{\partial}{\partial x} \Big(\dfrac{k}{k+1}\cdot k\, \sigma_e\,\dfrac{\partial V_m}{\partial x}\Big)
+  \end{array}
+\end{equation}
+
+Using the substitution \eqref{eq:subsbidom} in \eqref{eq:bidom2} yields
+\begin{equation*}
+  \begin{array}{lll}
+      \dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial(V_m + \phi_e)}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)
+  \end{array}
+\end{equation*}
+Starting from \eqref{eq:bidom1} with \eqref{eq:subs2bidom} we get
+\begin{equation*}
+  \begin{array}{lll}
+      &\dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial(V_m + \phi_e)}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+      \quad\Leftrightarrow\quad &
+       \dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial V_m}{\partial x}\Big)
+      + \dfrac{\partial}{\partial x} \Big(k\cdot \sigma_e\,\dfrac{\partial \phi_e}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+      \quad\Leftrightarrow\quad &
+       \dfrac{\partial}{\partial x} \Big(\big(1 - \dfrac{k}{k+1}\big)\cdot k\, \sigma_e\,\dfrac{\partial V_m}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+      \quad\Leftrightarrow\quad &
+       \dfrac{\partial}{\partial x} \Big(\dfrac{1}{k+1}\cdot \sigma_i\,\dfrac{\partial V_m}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+    \quad\Leftrightarrow\quad &
+       \dfrac{\partial}{\partial x} \Big(\dfrac{1}{\sigma_i/\sigma_e+1}\cdot \sigma_i\,\dfrac{\partial V_m}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+    \quad\Leftrightarrow\quad &
+       \dfrac{\partial}{\partial x} \Big(\dfrac{\sigma_i\,\sigma_e}{\sigma_i+\sigma_e}\,\dfrac{\partial V_m}{\partial x}\Big)
+      &= A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big)\\[4mm]
+  \end{array}
+\end{equation*}
+
+This leads to the Monodomain equation:
 \begin{equation*}
   \begin{array}{lll}
   \dfrac{\partial}{\partial x} \Big(\sigma_\text{eff}\,\dfrac{\partial V_m}{\partial x}\Big) = A_m\Big(C_m \dfrac{\partial V_m}{\partial t} + I_\text{ion}(V_m)\Big),\qquad
-  \text{with }\sigma_\text{eff}:= \sigma_i || \sigma_e
+  \text{with }\sigma_\text{eff}:= \sigma_i || \sigma_e = \dfrac{\sigma_i\,\sigma_e}{\sigma_i+\sigma_e}
   \end{array}
 \end{equation*}
 \subsection{Numerical treatment}
@@ -1100,9 +1295,10 @@ The bidomain equation can be used for computation of EMG ($\phi_e$), after the H
 
 %------------------------------------------------------------------------------------------------
 \section{Structural mechanics}
-The order in this section may be a bit confusing or lacking transition texts. It should be seen more as a collection of the theory and formulas.
+%The order in this section may be a bit confusing or lacking transition texts. It should be seen more as a collection of the theory and formulas.
 
-In this section the Einstein sum convention is used.
+This section collects theory about structural mechanics formulations and algorithms.
+Throughout the text the Einstein sum convention is used.
 
 \subsection{Introduction of some quantities}
 No quantities that are completely defined in the actual configuration are considered. $\bfF$ maps between configurations, $\bfS, \bfC, \bfeps$ are completely in the reference configuration.
@@ -2961,14 +3157,13 @@ Considering the total reduction, we get the system to be solved for the fully re
   \begin{array}{l}
 	\tilde{\mathbf{z}}^{*} =
 	\tilde{\mathbf{z}}^{(t)}+
-	\mathbf{V}_k^{\text{T}} \textbf{FG}(\mathbf{v}_\mathrm{m}^{(t)}, \mathbf{y}^{(t)}) +
-	\mathbf{V}_k^{\text{T}} \textbf{I}_{\mathrm{enh}}^{(t)} 
+	\mathbf{V}_k^{\text{T}} \textbf{FG}(\mathbf{v}_\mathrm{m}^{(t)}, \mathbf{y}^{(t)})
 	\label{e:POD_full_a},\\[0.5em]
 	\tilde{\mathbf{z}}^{(t+1)} = \tilde{\mathbf{z}}^{*}+\mathbf{V}_k^{\text{T}}
 	\textbf{A}_\mathrm{enh} \mathbf{V}_k  \tilde{\mathbf{z}}^{(t+1)},
   \end{array}
 \end{equation*}
-where $\textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y})$, $\textbf{I}_{\mathrm{enh}}$, and $ \textbf{A}_\mathrm{enh}$
+where $\textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y})$ and $ \textbf{A}_\mathrm{enh}$
 as well as the full state recovery are defined by
 \begin{equation*}
   \textbf{FG}(\mathbf{v}_\mathrm{m}, \mathbf{y}) := \!  \,\left[\begin{array}{c}
@@ -2981,15 +3176,6 @@ as well as the full state recovery are defined by
   	\vdots \\  	
   	\textbf{G}_n(\mathbf{v}_\mathrm{m},\mathbf{y})
   \end{array}\right],\, 
-  \textbf{I}_{\mathrm{enh}} := \left[ \begin{array}{c}
-  	\textbf{I}_{\mathrm{stm},1} \vspace{6pt}\\  	
-  	\textbf{I}_{\mathrm{stm},2} \vspace{6pt}\\
-  	\vdots \\
-  	\textbf{I}_{\mathrm{stm},n} \vspace{6pt}\\
-  	0 \\
-  	\vdots \\  	
-  	0 
-  \end{array} \right], \,
   \textbf{A}_\mathrm{enh} := \left[ \begin{array}{c}
   	\textbf{A}_1\\
   	\textbf{A}_2\\

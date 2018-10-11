@@ -1,7 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
+
+import datetime
+now = datetime.datetime.now()
+print(" ======= remove_inside_triangles.py =======") 
+print(now.strftime("%d/%m/%Y %H:%M:%S"))
+
 import sys
 import numpy as np
+import matplotlib
+
+havedisplay = False
+if not havedisplay:
+  print("use Agg backend")
+  matplotlib.use('Agg')
+else:
+  print("use Tk backend")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import csv
@@ -96,14 +110,14 @@ direction1 = direction1/np.linalg.norm(direction1)
 direction2 = direction2/np.linalg.norm(direction2)
 
 if len(sys.argv) < 2:
-  print "usage: remove_inside_triangles <input file> [<output file>]"
+  print("usage: remove_inside_triangles <input file> [<output file>]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
   if os.path.isfile(sys.argv[1]):
     infile = sys.argv[1]
   else:
-    print "File \"{}\" does not exists".format(sys.argv[1])
+    print("File \"{}\" does not exists".format(sys.argv[1]))
     sys.exit(0)
   
 if len(sys.argv) >= 3:
@@ -111,8 +125,8 @@ if len(sys.argv) >= 3:
 else:
   outfile = os.path.splitext(infile)[0]+"_out.stl"
 
-print "Input file: \"{}\"".format(infile)
-print "Output file: \"{}\"".format(outfile)
+print("Input file: \"{}\"".format(infile))
+print("Output file: \"{}\"".format(outfile))
 
 stl_mesh = mesh.Mesh.from_file(infile)
 
@@ -162,7 +176,7 @@ for p in stl_mesh.points:
   n_intersections = get_n_intersections(center, -direction2, stl_mesh)
   is_inside_4 = (n_intersections > 0)
 
-  print "\b\b\b\b\b{:.2f}%".format(float(origin_index) / n_triangles * 100.0)
+  print("\b\b\b\b\b{:.2f}%".format(float(origin_index) / n_triangles * 100.0))
 
   if is_inside_1:
     n_is_inside_1 += 1
@@ -174,16 +188,16 @@ for p in stl_mesh.points:
   if not is_inside:
     out_triangles += [[p1, p2, p3]]
     
-print "n_is_inside_1:",n_is_inside_1
-print "n_is_inside_2:",n_is_inside_2
-print "ray directions: ", direction1, direction2
+print("n_is_inside_1:",n_is_inside_1)
+print("n_is_inside_2:",n_is_inside_2)
+print("ray directions: ", direction1, direction2)
 
-print "bounding box: x[",min[0],",",max[0],"], y[",min[1],",",max[1],"], z[",min[2],",",max[2],"], "
+print("bounding box: x[",min[0],",",max[0],"], y[",min[1],",",max[1],"], z[",min[2],",",max[2],"], ")
 
 # create output mesh
 triangles = out_triangles
 n_triangles = len(out_triangles)
-print "n_triangles: ",n_triangles
+print("n_triangles: ",n_triangles)
 
 # Create the mesh
 out_mesh = mesh.Mesh(np.zeros(n_triangles, dtype=mesh.Mesh.dtype))

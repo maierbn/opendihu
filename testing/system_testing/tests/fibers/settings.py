@@ -70,12 +70,12 @@ config = {
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-15,
-      "maxIterations": 100000,
+      "maxIterations": 500000,
     }
   },
   "StreamlineTracer" : {
     "seedPoints": seed_points,
-    "maxIterations": 100000,
+    "maxIterations": 500000,
     "useGradientField": use_gradient_field,
     "lineStepWidth": 1e-1,
     "targetElementLength": 1./100.,  # length per element, i.e. distance between nodes, length = 1/100 cm (100 per cm)

@@ -28,6 +28,9 @@ purge_dependencies:
 rebuild: purge_dependencies purge clean debug release
 
 # the following targets are just for convenience and could also be deleted
+release_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 
@@ -58,5 +61,9 @@ hodgkin_huxley:
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+pod:
+	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
 multidomain:
-	cd examples/multidomain2d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+

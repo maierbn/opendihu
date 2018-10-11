@@ -17,19 +17,27 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   // create copy MPI_COMM_WORLD
   MPIUtility::handleReturnValue(MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_), "MPI_Comm_dup");
  
+  if (mpiCommunicator_ == MPI_COMM_NULL)
+  {
+    LOG(FATAL) << "Failed to dup MPI_COMM_WORLD";
+  }
+
   // get number of ranks
   int nRanks;
   MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");
   
   // create list of all ranks
-  rankNo_.resize(nRanks);
-  std::iota(rankNo_.begin(), rankNo_.end(), 0);
+  for (int i = 0; i < nRanks; i++)
+  {
+    rankNo_.insert(i);
+  }
+  VLOG(1) << "initialized as COMM_WORLD: " << rankNo_;
 }
   
 RankSubset::RankSubset(int singleRank) : ownRankNo_(-1)
 {
   rankNo_.clear();
-  rankNo_.push_back(singleRank);
+  rankNo_.insert(singleRank);
   
   // get the own current MPI rank
   int currentRank;
@@ -44,44 +52,12 @@ RankSubset::RankSubset(int singleRank) : ownRankNo_(-1)
   MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 }
 
-RankSubset::RankSubset(std::vector<int> &ranks) : rankNo_(ranks), ownRankNo_(-1)
-{
-  // get the own current MPI rank
-  int currentRank;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &currentRank), "MPI_Comm_rank");
-  int color = MPI_UNDEFINED;
-  
-  // if currentRank is contained in rank subset
-  if (std::find(ranks.begin(),ranks.end(),currentRank) != ranks.end())
-    color = 1;
-  
-  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", currentRank=" << currentRank << ", color=" << color;
-
-  // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
-
-  // update rankNo_ vector
-  if (color == 1)
-  {
-    int nRanksInCommunicator;
-    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
-    if (nRanksInCommunicator != rankNo_.size())
-    {
-      LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
-        << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", because the program is only run with so many ranks.";
-      rankNo_.resize(nRanksInCommunicator);
-    }
-  }
-
-  VLOG(1) << "RankSubset constructor done";
-}
-
-std::vector<int>::const_iterator RankSubset::begin()
+std::set<int>::const_iterator RankSubset::begin()
 {
   return rankNo_.cbegin();
 }
 
-std::vector<int>::const_iterator RankSubset::end()
+std::set<int>::const_iterator RankSubset::end()
 {
   return rankNo_.cend();
 }
@@ -114,7 +90,7 @@ std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
   }
   else 
   {
-    std::vector<int>::const_iterator iterRank = rankSubset.begin();
+    std::set<int>::const_iterator iterRank = rankSubset.begin();
     stream << "(" << *iterRank;
     iterRank++;
     

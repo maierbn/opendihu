@@ -38,7 +38,7 @@ h = 4.0/(n_nodes)
 
 # move node positions
 for i in range(n_nodes):
-  node_positions[i] += h*np.sin(float(i)/n_nodes*4*np.pi)
+  node_positions[i] += 0.2*h*np.sin(float(i)/n_nodes*4*np.pi)
 
 # set elements for unstructured mesh
 elements = [[i, i+1] for i in range(n_nodes-1)]

@@ -40,30 +40,38 @@ createPetscObjects()
   LOG(DEBUG) << "Multidomain::createPetscObject for " << nCompartments_ << " compartments.";
 
   // create field variables that have one for every compartment
+  subcellularStates_.reserve(nCompartments_);
+  subcellularIncrement_.reserve(nCompartments_);
+  ionicCurrent_.reserve(nCompartments_);
   transmembranePotential_.reserve(nCompartments_);
-  transmembranePotentialNextTimeStep_.reserve(nCompartments_);
-  transmembraneIncrementNextTimeStep_.reserve(nCompartments_);
-  ionicCurrentNextTimestep_.reserve(nCompartments_);
+  compartmentRelativeFactor_.reserve(nCompartments_);
 
-  for (int i = 0; i < nCompartments_; i++)
+  assert(this->functionSpace_);
+
+  for (int k = 0; k < nCompartments_; k++)
   {
+    std::stringstream subcellularStatesName;
+    subcellularStatesName << "y_" << k;
+    this->subcellularStates_.push_back(this->functionSpace_->template createFieldVariable<nStatesCellML>(subcellularStatesName.str()));
+
+    std::stringstream subcellularIncrementName;
+    subcellularIncrementName << "Δy_" << k;
+    this->subcellularIncrement_.push_back(this->functionSpace_->template createFieldVariable<nStatesCellML>(subcellularIncrementName.str()));
+
+    std::stringstream ionicCurrentName;
+    ionicCurrentName << "I_" << k;
+    this->ionicCurrent_.push_back(this->functionSpace_->template createFieldVariable<1>(ionicCurrentName.str()));
+
     std::stringstream transmembranePotentialName;
-    transmembranePotentialName << "Vm_" << i;
-    this->transmembranePotential_.push_back(this->functionSpace_->template createFieldVariable<nStatesCellML>(transmembranePotentialName.str()));
+    transmembranePotentialName << "Vm_" << k;
+    this->transmembranePotential_.push_back(this->functionSpace_->template createFieldVariable<1>(transmembranePotentialName.str()));
 
-    std::stringstream transmembranePotentialNextTimeStepName;
-    transmembranePotentialNextTimeStepName << "Vm^{i+1}_" << i;
-    this->transmembranePotentialNextTimeStep_.push_back(this->functionSpace_->template createFieldVariable<nStatesCellML>(transmembranePotentialNextTimeStepName.str()));
-
-    std::stringstream transmembraneIncrementNextTimeStepName;
-    transmembraneIncrementNextTimeStepName << "ΔVm^{i+1}_" << i;
-    this->transmembraneIncrementNextTimeStep_.push_back(this->functionSpace_->template createFieldVariable<nStatesCellML>(transmembraneIncrementNextTimeStepName.str()));
-
-    std::stringstream ionicCurrentNextTimestepName;
-    ionicCurrentNextTimestepName << "I^{i+1}_" << i;
-    this->ionicCurrentNextTimestep_.push_back(this->functionSpace_->template createFieldVariable<1>(ionicCurrentNextTimestepName.str()));
+    std::stringstream compartmentRelativeFactorName;
+    compartmentRelativeFactorName << "fr_" << k;
+    this->compartmentRelativeFactor_.push_back(this->functionSpace_->template createFieldVariable<1>(compartmentRelativeFactorName.str()));
   }
 
+  this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
   this->fibreDirection_ = this->functionSpace_->template createFieldVariable<3>("fibreDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
 }
@@ -90,7 +98,7 @@ extraCellularPotential()
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStatesCellML>> Multidomain<FunctionSpaceType,nStatesCellML>::
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType,nStatesCellML>::
 transmembranePotential(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
@@ -98,27 +106,35 @@ transmembranePotential(int compartmentNo)
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStatesCellML>> Multidomain<FunctionSpaceType,nStatesCellML>::
-transmembranePotentialNextTimeStep(int compartmentNo)
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType,nStatesCellML>::
+compartmentRelativeFactor(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
-  return this->transmembranePotentialNextTimeStep_[compartmentNo];
+  return this->compartmentRelativeFactor_[compartmentNo];
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStatesCellML>> Multidomain<FunctionSpaceType,nStatesCellML>::
-transmembraneIncrementNextTimeStep(int compartmentNo)
+subcellularStates(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
-  return this->transmembraneIncrementNextTimeStep_[compartmentNo];
+  return this->subcellularStates_[compartmentNo];
+}
+
+template<typename FunctionSpaceType,int nStatesCellML>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStatesCellML>> Multidomain<FunctionSpaceType,nStatesCellML>::
+subcellularIncrement(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->subcellularIncrement_[compartmentNo];
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType,nStatesCellML>::
-ionicCurrentNextTimeStep(int compartmentNo)
+ionicCurrent(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
-  return this->ionicCurrentNextTimestep_[compartmentNo];
+  return this->ionicCurrent_[compartmentNo];
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
@@ -135,15 +151,28 @@ template<typename FunctionSpaceType,int nStatesCellML>
 typename Multidomain<FunctionSpaceType,nStatesCellML>::OutputFieldVariables Multidomain<FunctionSpaceType,nStatesCellML>::
 getOutputFieldVariables()
 {
-  std::vector<std::shared_ptr<CellMLFieldVariableType>> outputFieldVariables;
-  outputFieldVariables.reserve(nCompartments_);
-
+  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotentials;
+  transmembranePotentials.reserve(nCompartments_);
   for (int i = 0; i < nCompartments_; i++)
   {
-    outputFieldVariables.push_back(transmembranePotential_[i]);
+    transmembranePotentials.push_back(transmembranePotential_[i]);
   }
 
-  return std::make_tuple(this->fibreDirection_, extraCellularPotential_, outputFieldVariables);
+  std::vector<std::shared_ptr<CellMLFieldVariableType>> subcellularStates;
+  subcellularStates.reserve(nCompartments_);
+  for (int i = 0; i < nCompartments_; i++)
+  {
+    subcellularStates.push_back(subcellularStates_[i]);
+  }
+
+  std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactors;
+  compartmentRelativeFactors.reserve(nCompartments_);
+  for (int i = 0; i < nCompartments_; i++)
+  {
+    compartmentRelativeFactors.push_back(compartmentRelativeFactor_[i]);
+  }
+
+  return std::make_tuple(this->fibreDirection_, extraCellularPotential_, transmembranePotentials, subcellularStates, compartmentRelativeFactors);
 }
 
 } // namespace

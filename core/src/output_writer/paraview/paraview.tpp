@@ -9,6 +9,9 @@
 #include "base64.h"
 
 #include "output_writer/paraview/loop_output.h"
+#include "output_writer/paraview/loop_collect_mesh_properties.h"
+#include "output_writer/paraview/poly_data_properties_for_mesh.h"
+
 namespace OutputWriter
 {
 
@@ -21,20 +24,34 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
     return;
   }
 
+  std::set<std::string> combined1DMeshes;
+  if (combineFiles_)
+  {
+    // create a PolyData file that combines all 1D meshes into one file
+    writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
+  }
+
+  // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined
+
   // collect all available meshes
   std::set<std::string> meshNames;
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
-  
+
+  // remove 1D meshes that were already output by writePolyDataFile
+  std::set<std::string> meshesToOutput;
+  std::set_difference(meshNames.begin(), meshNames.end(), combined1DMeshes.begin(), combined1DMeshes.end(),
+                      std::inserter(meshesToOutput, meshesToOutput.end()));
+
   // loop over meshes and create a paraview file for each
-  for (std::string meshName : meshNames)
+  for (std::string meshName : meshesToOutput)
   {
     // setup name of file
     std::stringstream filenameStart;
-    if (meshNames.size() == 1)
+    if (meshesToOutput.size() == 1)
       filenameStart << this->filename_;
     else
       filenameStart << this->filename_ << "_" << meshName;
-   
+
     // loop over all field variables and output those that are associated with the mesh given by meshName
     ParaviewLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, filenameStart.str(), specificSettings_);
   }
@@ -44,7 +61,6 @@ template<typename FieldVariableType>
 void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable, 
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
- 
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
   //typedef typename FieldVariableType::FunctionSpace FunctionSpace;
 
@@ -118,7 +134,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(values);
+      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else
@@ -172,7 +188,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
 
     if (binaryOutput)
     {
-      stringData = Paraview::encodeBase64(values);
+      stringData = Paraview::encodeBase64Float(values.begin(), values.end());
       file << "format=\"binary\" >" << std::endl;
     }
     else
@@ -185,4 +201,114 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   }
 }
 
-};
+template <typename Iter>
+std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+{
+  // encode as Paraview Float32
+  assert(sizeof(float) == 4);
+
+  int dataLength = std::distance(iterBegin, iterEnd)*sizeof(float);
+  int rawLength = dataLength;
+  int dataStartPos = 0;
+
+  if (withEncodedSizePrefix)
+  {
+    rawLength += 4;
+    dataStartPos = 4;
+  }
+
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  char raw[rawLength];
+  // loop over vector entries and add bytes to raw buffer
+  int i = 0;
+  for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
+  {
+    union {
+      float d;    // note, this is a float, not a double, to get 4 bytes
+      char c[4];
+    };
+    d = (float)(*iter);
+    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+  }
+
+  // prepend number of bytes as uint32
+  if (withEncodedSizePrefix)
+  {
+    union {
+      uint32_t i;
+      char c[4];
+    };
+    i = rawLength;
+
+    memcpy(raw, c, 4);
+  }
+
+  char encoded[encodedLength+1];
+
+  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  if (!success)
+    LOG(WARNING) << "Base64 encoding failed";
+
+  encoded[encodedLength] = '\0';
+
+  return std::string(encoded);
+}
+
+template <typename Iter>
+std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+{
+  // encode as Paraview Int32
+  assert(sizeof(int) == 4);
+
+  int dataLength = std::distance(iterBegin, iterEnd)*sizeof(int);
+  int rawLength = dataLength;
+  int dataStartPos = 0;
+
+  if (withEncodedSizePrefix)
+  {
+    rawLength += 4;
+    dataStartPos = 4;
+  }
+
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  char raw[rawLength];
+  // loop over vector entries and add bytes to raw buffer
+  int i = 0;
+  for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
+  {
+    union {
+      int integer;
+      char c[4];
+    };
+    integer = (int)(*iter);
+    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+  }
+
+  // prepend number of bytes as uint32
+  if (withEncodedSizePrefix)
+  {
+    union {
+      uint32_t i;
+      char c[4];
+    };
+    i = dataLength;
+
+    memcpy(raw, c, 4);
+  }
+
+  char encoded[encodedLength+1];
+
+  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  if (!success)
+    LOG(WARNING) << "Base64 encoding failed";
+
+
+  encoded[encodedLength] = '\0';
+
+  return std::string(encoded);
+}
+
+
+};  // namespace

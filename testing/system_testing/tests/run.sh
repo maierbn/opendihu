@@ -10,7 +10,8 @@ for name in \
 "diffusion" \
 "monodomain" \
 "fibers" \
-"multiple_fibers"
+"multiple_fibers" \
+"monodomain_timestep_widths"
 do
 
 echo ""
@@ -37,7 +38,7 @@ echo ""
 # run tests
 START=$(date +%s.%N)
 
-. run_tests.sh
+. run_tests.sh 1   # the last argument is the number of cores to use
 
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
@@ -57,12 +58,11 @@ echo ""
 echo "postprocessing took $(date -u -d @$DIFF +%T)"
 echo ""
 
+done
 
 # recompile documents
 cd $basedir/../document
 make
-
-done
 
 # output total duration
 END_ALL=$(date +%s.%N)

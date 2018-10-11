@@ -18,7 +18,7 @@ TimeSteppingSchemeOde(DihuContext context, std::string name) :
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
 
   // initialize output writers
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   // create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
@@ -80,6 +80,13 @@ solution()
 }
 
 template<typename DiscretizableInTimeType>
+DiscretizableInTimeType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+discretizableInTime()
+{
+  return this->discretizableInTime_;
+}
+
+template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOde<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
@@ -132,8 +139,6 @@ initialize()
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
   this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
 
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
-
   // set initial values from settings
 
   // load initial values as specified in config under the "CellML" section
@@ -173,5 +178,11 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
+//template<typename DiscretizableInTimeType>
+//int TimeSteppingSchemeOde<DiscretizableInTimeType>::
+//timeStepOutputInterval()
+//{
+//  return this->timeStepOutputInterval_;
+//}
 
 } // namespace

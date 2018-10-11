@@ -58,6 +58,9 @@ public:
   //! copy the values of a given component to a new single-component field variable
   void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
+  //! set the values for the given component from the other field variable
+  void setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable);
+
   //! copy the values from another field variable of the same type
   void setValues(FieldVariable<FunctionSpaceType,nComponents> &rhs);
 

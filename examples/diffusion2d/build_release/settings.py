@@ -12,7 +12,7 @@ for y in range(int(0.2*n), int(0.3*n)):
 print("iv: ",iv)
 
 config = {
-  "ExplicitEuler" : {
+  "Heun" : {
     "initialValues": iv,
     "timeStepWidth": 1e-3,
     "endTime": 1.0,

@@ -12,6 +12,7 @@
 #include <petscvec.h>
 #include <sys/types.h>  // getpid
 #include <unistd.h>     // getpid
+#include <omp.h>
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -64,6 +65,10 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize PETSc
     PetscInitialize(&argc, &argv, NULL, "This is an opendihu application.");
+
+    // set number of threads to use to 1
+    omp_set_num_threads(1);
+    LOG(DEBUG) << "set number of threads to 1";
 
     // output process ID
     int pid = getpid();

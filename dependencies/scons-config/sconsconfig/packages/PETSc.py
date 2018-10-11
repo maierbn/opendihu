@@ -70,8 +70,8 @@ class PETSc(Package):
         
         # Setup the build handler. This needs bison installed.
         self.set_build_handler([
-            'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-            ./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+            #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
@@ -92,9 +92,6 @@ class PETSc(Package):
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-
-        self.check_required(res[0], ctx)
-        ctx.Result(res[0])
         
         # if installation of petsc fails, retry without mumps
         if not res[0]:

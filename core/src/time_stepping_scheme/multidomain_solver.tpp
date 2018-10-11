@@ -89,10 +89,12 @@ advanceTimeSpan()
       VLOG(2) << "ionicCurrent (should be first component of subcellularIncrement): " << *ionicCurrent;
 
       // compute the right hand side entry as rhs[k] = Vm_k^{i} - dt/Cm_k*I_ion(Vm_k^{i})
-
+#if 0
       ierr = VecCopy(ionicCurrent->valuesGlobal(), subvectorsRightHandSide_[k]); CHKERRV(ierr);   // rhs[k] = -1/Cm_k*I_ion(Vm_k^{i})
       ierr = VecScale(subvectorsRightHandSide_[k], this->timeStepWidth_); CHKERRV(ierr);          // rhs[k] *= dt
       ierr = VecAXPY(subvectorsRightHandSide_[k], 1.0, transmembranePotential); CHKERRV(ierr);    // rhs[k] += Vm_k^{i}
+#endif
+      ierr = VecCopy(transmembranePotential, subvectorsRightHandSide_[k]); CHKERRV(ierr);   /// rhs[k] = Vm_k^{i}
 
       VLOG(2) << "dt = " << this->timeStepWidth_;
       VLOG(2) << "k=" << k << ", rhs: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
@@ -101,7 +103,7 @@ advanceTimeSpan()
       ierr = VecAXPY(subcellularStates, this->timeStepWidth_, subcellularIncrement); CHKERRV(ierr);
 
       // set Vm to the old values
-      dataMultidomain_.subcellularStates(k)->setValues(0, dataMultidomain_.transmembranePotential(k));
+      //dataMultidomain_.subcellularStates(k)->setValues(0, dataMultidomain_.transmembranePotential(k));
 
       VLOG(2) << "updated subcellularStates: " << *dataMultidomain_.subcellularStates(k);
     }
@@ -117,6 +119,7 @@ advanceTimeSpan()
 
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     //this->solveLinearSystem();
+    ierr = VecCopy(rightHandSide_, solution_); CHKERRV(ierr);
 
     // write the solution from the nested vector back to data
     int nSubVectors = 0;
@@ -126,7 +129,7 @@ advanceTimeSpan()
 
     for (int k = 0; k < nCompartments_; k++)
     {
-      // copy the transmembrane potential from the subvector back to the subcellularStates vector
+      // copy the transmembrane potential from the subvector back to the subcellularStates vector, component 0 which is Vm
       Vec subcellularStates = dataMultidomain_.subcellularStates(k)->valuesGlobal(0);
       ierr = VecCopy(subVectors[k], subcellularStates); CHKERRV(ierr);
     }
@@ -209,6 +212,8 @@ initialize()
   // initialize system matrix
   setSystemMatrix(this->timeStepWidth_);
 
+  LOG(DEBUG) << "initialize linear solver";
+
   // initialize linear solver
   if (linearSolver_ == nullptr)
   {
@@ -217,43 +222,36 @@ initialize()
       this->specificSettings_, this->rankSubset_->mpiCommunicator());
   }
 
+  LOG(DEBUG) << "set system matrix to linear solver";
+
   // set matrix used for linear solver and preconditioner to ksp context
   assert(this->linearSolver_->ksp());
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix_, systemMatrix_); CHKERRV(ierr);
 
-  // initialize rhs vector
+  // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
+  subvectorsSolution_.resize(nCompartments_+1);
 
+  // set values for Vm in compartments
   for (int k = 0; k < nCompartments_; k++)
   {
     subvectorsRightHandSide_[k] = dataMultidomain_.ionicCurrent(k)->valuesGlobal();
+    subvectorsSolution_[k] = dataMultidomain_.subcellularStates(k)->valuesGlobal(0);
   }
+
+  // set values for phi_e
   subvectorsRightHandSide_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
 
+  subvectorsSolution_[nCompartments_] = dataMultidomain_.extraCellularPotential()->valuesGlobal();
+  ierr = VecZeroEntries(subvectorsSolution_[nCompartments_]); CHKERRV(ierr);
+
+  // create the nested vectors
+  LOG(DEBUG) << "create nested vector";
   ierr = VecCreateNest(MPI_COMM_WORLD, nCompartments_+1, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
+  ierr = VecCreateNest(MPI_COMM_WORLD, nCompartments_+1, NULL, subvectorsSolution_.data(), &solution_); CHKERRV(ierr);
 
-  // initialize solution vector
-  ierr = VecDuplicate(rightHandSide_, &solution_); CHKERRV(ierr);
-
-  // initialize solution vector
-  // get the subvectors of the nested vector
-  int nSubVectors = 0;
-  Vec *subVectors;
-  ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
-  assert(nSubVectors == nCompartments_+1);
-
-  // set all subvectors to the initialized Vm
-  for (int k = 0; k < nCompartments_; k++)
-  {
-    ierr = VecCopy(dataMultidomain_.subcellularStates(k)->valuesGlobal(0), subVectors[k]); CHKERRV(ierr);
-  }
-
-  // set the subvectors back in the nested vector
-  std::vector<PetscInt> indices(nCompartments_+1);
-  std::iota(indices.begin(), indices.end(), 0);
-  ierr = VecNestSetSubVecs(solution_, nCompartments_+1, indices.data(), subVectors); CHKERRV(ierr);
-
+  LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
 

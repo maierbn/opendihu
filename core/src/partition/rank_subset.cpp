@@ -17,6 +17,11 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   // create copy MPI_COMM_WORLD
   MPIUtility::handleReturnValue(MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_), "MPI_Comm_dup");
  
+  if (mpiCommunicator_ == MPI_COMM_NULL)
+  {
+    LOG(FATAL) << "Failed to dup MPI_COMM_WORLD";
+  }
+
   // get number of ranks
   int nRanks;
   MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");

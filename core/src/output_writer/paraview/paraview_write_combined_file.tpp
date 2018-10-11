@@ -223,7 +223,6 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
         writeBuffer += std::string("=");
       }
     }
-
   }
   else
   {

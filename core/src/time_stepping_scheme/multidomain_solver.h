@@ -64,6 +64,7 @@ protected:
   Vec solution_;        ///< nested solution vector
   Vec rightHandSide_;             ///< distributed rhs
   std::vector<Vec> subvectorsRightHandSide_; ///< the sub vectors that are used in the nested vector rightHandSide_
+  std::vector<Vec> subvectorsSolution_; ///< the sub vectors that are used for the solution nested vector
 
   std::vector<double> am_, cm_;  ///< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
 };

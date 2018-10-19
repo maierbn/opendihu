@@ -27,7 +27,7 @@ public:
   void run();
 
   //! function space to use, i.e. 3D structured deformable grid
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpace;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpaceType;
   typedef SpatialDiscretization::FiniteElementMethod<
     Mesh::StructuredDeformableOfDimension<3>,
     BasisFunctionType,
@@ -41,11 +41,11 @@ protected:
   void generateParallelMesh();
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  FiniteElementMethodType problem_;   ///< the DiscretizableInTime object that is managed by this class
+  std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 
-  Data::ParallelFiberEstimation<FunctionSpace> data_;    ///< the data object that holds the gradient field variable
+  Data::ParallelFiberEstimation<FunctionSpaceType> data_;    ///< the data object that holds the gradient field variable
 
-  std::shared_ptr<FunctionSpace> functionSpace_;   ///< current function space / mesh
+  std::shared_ptr<FunctionSpaceType> functionSpace_;   ///< current function space / mesh
 
   PyObject *specificSettings_;   ///< the specific python config for this module
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start

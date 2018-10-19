@@ -14,17 +14,6 @@ template<typename FunctionSpaceType, int nComponents>
 class DirichletBoundaryConditionsBase
 {
 public:
-  //! initialize data structures by parsing boundary conditions from python config, key "dirichletBoundaryConditions"
-  void initialize(PyObject *specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace);
-
-  //! set the boundary condition dofs to the values
-  void applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable);
-
-protected:
-
-  //! fill auxiliary ghost element data structures
-  virtual void initializeGhostElements(){};
-
   typedef std::array<double,nComponents> ValueType;   ///< the type of value of one dirichlet boundary condition
 
   struct ElementWithNodes
@@ -33,6 +22,22 @@ protected:
     std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
   };
 
+  //! initialize data structures by parsing boundary conditions from python config, key "dirichletBoundaryConditions"
+  void initialize(PyObject *specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace);
+
+  //! initialize directly from given vectors
+  void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<ElementWithNodes> &boundaryConditionElements_,
+                  std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos_, std::vector<ValueType> &boundaryConditionValues_);
+
+  //! set the boundary condition dofs to the values
+  void applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable);
+
+
+protected:
+
+  //! fill auxiliary ghost element data structures
+  virtual void initializeGhostElements(){};
+
   //! parse config and extract boundary conditions specified under key "dirichletBoundaryConditions", store in boundaryConditions
   void parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> functionSpace,
                                std::vector<std::pair<int,std::array<double,nComponents>>> &boundaryConditions);
@@ -40,12 +45,15 @@ protected:
   //! parse boundary conditions from config and store them in boundaryConditionElements_, boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   void parseBoundaryConditionsForElements();
 
+  //! print the data of Dirichlet Boundary Conditions to VLOG(1)
+  void printDebuggingInfo();
+
   PyObject *specificSettings_;            ///< the python config that contains the boundary conditions
   std::shared_ptr<FunctionSpaceType> functionSpace_;     ///< function space for which boundary conditions are specified
 
   std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        ///< vector of all local (non-ghost) boundary condition dofs
-  std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionDofLocalNos_
+  std::vector<ValueType> boundaryConditionValues_;               ///< vector of the local prescribed values, related to boundaryConditionNonGhostDofLocalNos_
 };
 
 template<typename FunctionSpaceType, int nComponents>

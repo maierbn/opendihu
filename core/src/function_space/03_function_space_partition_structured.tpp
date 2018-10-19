@@ -15,12 +15,15 @@ initialize()
 {
   // if meshPartition was already created earlier, do nothing
   if (this->meshPartition_) 
+  {
+    LOG(DEBUG) << "in FunctionSpacePartition<structured>: meshPartition already set";
     return;
+  }
   
   // Creation of the partitioning is only possible after the number of elements is known.
   // Because this may need file I/O (e.g. reading from exfiles)
  
-  VLOG(1) << "FunctionSpacePartition<Structured>::initialize()";
+  LOG(DEBUG) << "FunctionSpacePartition<Structured>::initialize(), create meshPartition";
   
   // create partitioning
   assert(this->partitionManager_ != nullptr);

@@ -5,14 +5,15 @@
 
 #include "utility/python_utility.h"
 #include "mesh/face_t.h"
+#include "partition/01_mesh_partition.h"
 
 namespace Postprocessing
 {
 
-template<typename DiscretizableInTimeType>
-ParallelFiberEstimation<DiscretizableInTimeType>::
+template<typename BasisFunctionType>
+ParallelFiberEstimation<BasisFunctionType>::
 ParallelFiberEstimation(DihuContext context) :
-  context_(context["ParallelFiberEstimation"]), problem_(context_), data_(context_)
+  context_(context["ParallelFiberEstimation"]), problem_(nullptr), data_(context_)
 {
   LOG(TRACE) << "ParallelFiberEstimation::ParallelFiberEstimation()";
 
@@ -25,35 +26,29 @@ ParallelFiberEstimation(DihuContext context) :
   nElementsZPerSubdomain_ = PythonUtility::getOptionInt(specificSettings_, "nElementsZPerSubdomain", 13);
 }
 
-template<typename DiscretizableInTimeType>
-void ParallelFiberEstimation<DiscretizableInTimeType>::
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
 initialize()
 {
   LOG(TRACE) << "ParallelFiberEstimation::initialize";
 
-  // initialize the problem
-  problem_.initialize();
-
   data_.initialize();
 }
 
-template<typename DiscretizableInTimeType>
-void ParallelFiberEstimation<DiscretizableInTimeType>::
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
 run()
 {
   initialize();
 
   generateParallelMesh();
 
-  // call the method of the underlying problem
-  problem_.run();
-
   // output
   outputWriterManager_.writeOutput(data_);
 }
 
-template<typename DiscretizableInTimeType>
-void ParallelFiberEstimation<DiscretizableInTimeType>::
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
 generateParallelMesh()
 {
   LOG(DEBUG) << "generateParallelMesh";
@@ -163,19 +158,139 @@ generateParallelMesh()
   std::vector<Vec3> nodePositions;
   PyObject *object = PythonUtility::getOptionPyObject(meshData, "node_positions");
   nodePositions = PythonUtility::convertFromPython<std::vector<Vec3>>::get(object);
-  std::array<int,3> nElements = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", std::array<int,3>({0,0,0}));
+  std::array<int,3> nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", std::array<int,3>({0,0,0}));
 
   LOG(DEBUG) << "nodePositions: " << nodePositions;
-  LOG(DEBUG) << "nElements: " << nElements;
+  LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
   std::stringstream meshName;
   meshName << "meshLevel" << level;
 
-  std::shared_ptr<Partition::RankSubset> currentRankSubset = std::make_shared<Partition::RankSubset>(0);
-  context_.partitionManager()->setRankSubsetForNextCreatedMesh(currentRankSubset);
-  functionSpace_ = context_.meshManager()->template createFunctionSpace<FunctionSpace>(meshName.str(), nodePositions, nElements);
 
+  std::shared_ptr<Partition::RankSubset> currentRankSubset = std::make_shared<Partition::RankSubset>(0);
+  std::array<int,3> nRanksPerCoordinateDirection({1,1,1});
+
+  std::array<global_no_t,3> nElementsPerCoordinateDirectionGlobal;
+
+  // create meshPartition for function space
+  std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>> meshPartition
+    = context_.partitionManager()->template createPartitioningStructuredLocal<FunctionSpaceType>(
+      nElementsPerCoordinateDirectionGlobal, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection);
+
+  LOG(DEBUG) << "nElementsPerCoordinateDirectionGlobal: " << nElementsPerCoordinateDirectionGlobal;
+
+  // create function space
+  context_.partitionManager()->setRankSubsetForNextCreatedMesh(currentRankSubset);
+  functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
+    meshName.str(), meshPartition, nodePositions, nElementsPerCoordinateDirectionLocal);
+  /*
+   std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
+    const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
+    const std::array<int,FunctionSpace::dim()> nRanks
+   * */
   // solve laplace problem globally
+  problem_ = std::make_shared<FiniteElementMethodType>(context_, functionSpace_);
+
+  std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions
+    = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>();
+
+  typedef typename SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>::ElementWithNodes ElementWithNodes;
+
+  std::vector<ElementWithNodes> boundaryConditionElements;
+  std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos;
+  std::vector<std::array<double,1>> boundaryConditionValues;
+
+  // set bottom nodes to 0
+  std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;
+  const int nDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();
+
+  // loop over bottom elements
+  for (element_no_t elementIndexX = 0; elementIndexX < nElementsPerCoordinateDirectionLocal[0]; elementIndexX++)
+  {
+    for (element_no_t elementIndexY = 0; elementIndexY < nElementsPerCoordinateDirectionLocal[1]; elementIndexY++)
+    {
+      element_no_t elementNoLocal = elementIndexY*nElementsPerCoordinateDirectionLocal[1] + elementIndexX;
+
+      ElementWithNodes elementWithNodes;
+      elementWithNodes.elementNoLocal = elementNoLocal;
+
+      // loop over dofs of element that are at bottom
+      for (dof_no_t elementalDofIndexX = 0; elementalDofIndexX < nDofsPerElement1D; elementalDofIndexX++)
+      {
+        for (dof_no_t elementalDofIndexY = 0; elementalDofIndexY < nDofsPerElement1D; elementalDofIndexY++)
+        {
+          dof_no_t elementalDofIndex = elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
+          elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({0.0})));
+
+          dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
+          boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+        }
+      }
+      boundaryConditionElements.push_back(elementWithNodes);
+    }
+  }
+
+  // create the vectors for dofs and values
+
+  // transfer the data in the set to the vector for the BC indices
+  boundaryConditionNonGhostDofLocalNos.resize(boundaryConditionNonGhostDofLocalNosSet.size());
+  std::copy(boundaryConditionNonGhostDofLocalNosSet.begin(), boundaryConditionNonGhostDofLocalNosSet.end(), boundaryConditionNonGhostDofLocalNos.begin());
+
+  // set the same amount of values 0.0 for the BC values
+  boundaryConditionValues.resize(boundaryConditionNonGhostDofLocalNosSet.size());
+  std::fill(boundaryConditionValues.begin(), boundaryConditionValues.end(),  std::array<double,1>({0.0}));
+  boundaryConditionNonGhostDofLocalNosSet.clear();
+
+  // set top nodes to 1
+  // loop over top elements
+  element_no_t elementIndexZ = nElementsPerCoordinateDirectionLocal[2]-1;
+  for (element_no_t elementIndexX = 0; elementIndexX < nElementsPerCoordinateDirectionLocal[0]; elementIndexX++)
+  {
+    for (element_no_t elementIndexY = 0; elementIndexY < nElementsPerCoordinateDirectionLocal[1]; elementIndexY++)
+    {
+      element_no_t elementNoLocal = elementIndexZ*nElementsPerCoordinateDirectionLocal[0]*nElementsPerCoordinateDirectionLocal[1]
+        + elementIndexY*nElementsPerCoordinateDirectionLocal[1] + elementIndexX;
+
+      ElementWithNodes elementWithNodes;
+      elementWithNodes.elementNoLocal = elementNoLocal;
+
+      // loop over dofs of element that are at top
+      dof_no_t elementalDofIndexZ = nDofsPerElement1D-1;
+      for (dof_no_t elementalDofIndexX = 0; elementalDofIndexX < nDofsPerElement1D; elementalDofIndexX++)
+      {
+        for (dof_no_t elementalDofIndexY = 0; elementalDofIndexY < nDofsPerElement1D; elementalDofIndexY++)
+        {
+          dof_no_t elementalDofIndex = elementalDofIndexZ*nDofsPerElement1D*nDofsPerElement1D
+            + elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
+          elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({1.0})));
+
+          dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
+          boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+        }
+      }
+      boundaryConditionElements.push_back(elementWithNodes);
+    }
+  }
+
+  // fill the vectors for dofs and values
+  // transfer the data in the set to the vector for the BC indices
+  int nBottomDofs = boundaryConditionNonGhostDofLocalNos.size();
+  boundaryConditionNonGhostDofLocalNos.resize(nBottomDofs + boundaryConditionNonGhostDofLocalNosSet.size());
+  std::copy(boundaryConditionNonGhostDofLocalNosSet.begin(), boundaryConditionNonGhostDofLocalNosSet.end(), boundaryConditionNonGhostDofLocalNos.begin()+nBottomDofs);
+
+  // add the same amount of 1.0 values for the BC values
+  boundaryConditionValues.resize(nBottomDofs + boundaryConditionNonGhostDofLocalNosSet.size());
+  std::fill(boundaryConditionValues.begin() + nBottomDofs, boundaryConditionValues.end(), std::array<double,1>({1.0}));
+
+  dirichletBoundaryConditions->initialize(functionSpace_, boundaryConditionElements, boundaryConditionNonGhostDofLocalNos, boundaryConditionValues);
+
+  // set boundary conditions to the problem
+  problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
+  problem_->initialize();
+
+  // solve the laplace problem, globally
+  problem_->run();
+
 
 
   // ----------------------------
@@ -195,7 +310,7 @@ generateParallelMesh()
 
   // call method recursively
 
-  LOG(FATAL) << "done";
+  LOG(FATAL) << "SUCCESS";
 /*
   std::vector<PyObject *> loopList = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(returnValue);
 

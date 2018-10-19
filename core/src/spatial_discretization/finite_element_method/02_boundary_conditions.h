@@ -24,6 +24,9 @@ public:
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
 
+  //! set the dirichlet boundary condition object, this can be done to set BC from within the C++ code, not from python config
+  void setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions);
+
 protected:
 
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm

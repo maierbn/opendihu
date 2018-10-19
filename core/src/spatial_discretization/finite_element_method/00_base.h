@@ -17,7 +17,9 @@ template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
 {
 public:
-  FiniteElementMethodBase(DihuContext context);
+  //! constructor, if function space is not given, create new one according to settings
+  //! if the function space is given as parameter, is has to be already initialize()d
+  FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
   typedef ::Data::FiniteElements<FunctionSpaceType,Term> Data;
   typedef FunctionSpaceType FunctionSpace;

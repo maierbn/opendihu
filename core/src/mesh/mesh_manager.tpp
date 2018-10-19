@@ -99,16 +99,43 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   {
     LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
- 
+
   // create new mesh
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
-  
+
   // create mesh and initialize
   std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
 
   functionSpace->setMeshName(name);
   functionSpace->initialize();
-  
+
+  functionSpaces_[name] = functionSpace;
+
+  VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts()
+    << ", with ghosts: " << functionSpace->nNodesLocalWithGhosts() << "), stored under key \"" << name << "\"";
+
+  return functionSpace;
+}
+
+template<typename FunctionSpaceType, typename ...Args>
+std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPartition(
+  std::string name, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, Args && ...args)
+{
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
+  {
+    LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
+  }
+
+  // create new mesh
+  LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
+
+  // create mesh and initialize
+  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+
+  functionSpace->setMeshName(name);
+  functionSpace->setMeshPartition(meshPartition);
+  functionSpace->initialize();
+
   functionSpaces_[name] = functionSpace;
 
   VLOG(1) << "mesh nNodes: (local without ghosts: " << functionSpace->nNodesLocalWithoutGhosts()

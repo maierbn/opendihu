@@ -16,7 +16,9 @@ class FiniteElementMethodTimeStepping :
   public DiscretizableInTime
 {
 public:
-  FiniteElementMethodTimeStepping(DihuContext context);
+  //! constructor, if function space is not given, create new one according to settings
+  //! if the function space is given as parameter, is has to be already initialize()d
+  FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
 
   using AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>::initialize;
 

@@ -22,8 +22,8 @@ namespace SpatialDiscretization
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(DihuContext context)
-  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context),
+FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
+  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context, functionSpace),
   DiscretizableInTime(SolutionVectorMapping()), linearSolver_(nullptr), ksp_(nullptr)
 {
   // The solutionVectorMapping_ object stores the information which component of the solution will be further used.

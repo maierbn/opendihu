@@ -14,9 +14,41 @@ initialize(PyObject *specificSettings, std::shared_ptr<FunctionSpaceType> functi
 {
   functionSpace_ = functionSpace;
   specificSettings_ = specificSettings;
+  printDebuggingInfo();
 
   parseBoundaryConditionsForElements();
   this->initializeGhostElements();
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes> &boundaryConditionElements,
+                std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos, std::vector<ValueType> &boundaryConditionValues)
+{
+  functionSpace_ = functionSpace;
+
+  boundaryConditionElements_ = boundaryConditionElements;
+  boundaryConditionNonGhostDofLocalNos_ = boundaryConditionNonGhostDofLocalNos;
+  boundaryConditionValues_ = boundaryConditionValues;
+  printDebuggingInfo();
+
+  this->initializeGhostElements();
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+printDebuggingInfo()
+{
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "parsed boundary conditions:";
+    VLOG(1) << "  dofsLocal of BC: " << boundaryConditionNonGhostDofLocalNos_ << " with prescribed values: " << boundaryConditionValues_;
+
+    for (auto boundaryConditionElement: boundaryConditionElements_)
+    {
+      VLOG(1) << "  elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
+    }
+  }
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -130,6 +162,7 @@ parseBoundaryConditionsForElements()
   // determine elements with nodes that have prescribed Dirichlet boundary conditions, store them in the vector boundaryConditionElements_,
   // which is organized by local elements
   element_no_t lastBoundaryConditionElement = -1;
+  std::set<dof_no_t> boundaryConditionNonGhostDofLocalNosSet;   ///< same data as in boundaryConditionNonGhostDofLocalNos_, but as set
 
   // loop over all local elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < functionSpace_->nElementsLocal(); elementNoLocal++)
@@ -209,34 +242,16 @@ parseBoundaryConditionsForElements()
 
           if (dofLocalNo < functionSpace_->nDofsLocalWithoutGhosts())
           {
-            // check if dofLocalNo is already contained in boundaryConditionNonGhostDofLocalNos_
-            bool dofLocalNoIsAlreadyContained = false;
-            for (auto dofNo : boundaryConditionNonGhostDofLocalNos_)
+            // if dofLocalNo is not already contained in boundaryConditionNonGhostDofLocalNos_
+            if (boundaryConditionNonGhostDofLocalNosSet.find(dofLocalNo) == boundaryConditionNonGhostDofLocalNosSet.end())
             {
-              if (dofNo == dofLocalNo)
-              {
-                dofLocalNoIsAlreadyContained = true;
-              }
-            }
-            if (!dofLocalNoIsAlreadyContained)
-            {
+              boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
               boundaryConditionNonGhostDofLocalNos_.push_back(dofLocalNo);
               boundaryConditionValues_.push_back(boundaryConditionValue);
             }
           }
         }
       }
-    }
-  }
-
-  if (VLOG_IS_ON(1))
-  {
-    VLOG(1) << "parsed boundary conditions:";
-    VLOG(1) << "  dofsLocal of BC: " << boundaryConditionNonGhostDofLocalNos_ << " with prescribed values: " << boundaryConditionValues_;
-
-    for (auto boundaryConditionElement: boundaryConditionElements_)
-    {
-      VLOG(1) << "  elementNo: " << boundaryConditionElement.elementNoLocal << " has (dof,value): " << boundaryConditionElement.elementalDofIndex;
     }
   }
 }
@@ -821,90 +836,5 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
 }
-
-
-/*
- *
- *
-  rightHandSide.startGhostManipulation();
-  rightHandSide.zeroGhostBuffer();
-
-  const int D = FunctionSpaceType::dim();
-  typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
-  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
-  typedef MathUtility::Matrix<nDofsPerElement,nDofsPerElement> EvaluationsType;
-  typedef std::array<
-            EvaluationsType,
-            QuadratureDD::numberEvaluations()
-          > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
-  // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
-  EvaluationsArrayType evaluationsArray{};
-
-  // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
-  for (typename std::vector<ElementWithNodes>::const_iterator iter = boundaryConditionElements_.cbegin(); iter != boundaryConditionElements_.cend(); iter++)
-  {
-    element_no_t elementNoLocal = iter->elementNoLocal;
-    std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
-
-    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-    std::array<Vec3,FunctionSpaceType::nDofsPerElement()> geometry;
-    functionSpace->getElementGeometry(elementNoLocal, geometry);
-
-    // compute integral numerically
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
-    {
-      // evaluate function to integrate at samplingPoint
-      std::array<double,D> xi = samplingPoints[samplingPointIndex];
-
-      // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
-
-      // get evaluations of integrand at xi for all (i,j)-dof pairs, integrand is defined in another class
-      evaluationsArray[samplingPointIndex]
-        = IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,Term>::evaluateIntegrand(this->data_, jacobian, xi);
-
-    }  // function evaluations
-
-    // integrate all values for the (i,j) dof pairs at once
-    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
-
-    // perform integration
-    for (std::vector<std::pair<int,double>>::const_iterator dofsIter1 = iter->elementalDofIndex.begin(); dofsIter1 != iter->elementalDofIndex.end(); dofsIter1++)
-    {
-      int elementalDofIndex1 = dofsIter1->first;
-      double boundaryConditionValue = dofsIter1->second;
-
-      for (int j = 0; j < nDofsPerElement; j++)
-      {
-        // integrate value and set entry in stiffness matrix
-        double integratedValue = integratedValues(elementalDofIndex1, j);
-        double value = boundaryConditionValue * integratedValue;
-
-        // the formula for boundary conditions is rhs = -sum_{over BC-dofs i} u_{0,i} * integral_Omega ∇phi_i • ∇phi_j dx  for equation j=1,...,N
-
-        VLOG(2) << "  dof pair (" << elementalDofIndex1 << "," << j << ") dofs (" << dofNosLocal[elementalDofIndex1] << "," << dofNosLocal[j]
-          << "), integrated value: " << integratedValue << ", boundaryConditionValue: " << boundaryConditionValue << ", value: " << value;
-
-        rightHandSide.setValue(dofNosLocal[j], value, ADD_VALUES);
-      }  // j
-    }
-  }
-
-  // Scatter the ghost values to their actual place, with ADD_VALUES,
-  // so the ghost value on one rank and the non-ghost value on the other rank are added.
-  rightHandSide.finishGhostManipulation();
-
-  // set boundary condition dofs to prescribed values, only non-ghost dofs
-  rightHandSide.setValues(boundaryConditionNonGhostDofLocalNos_,
-                          boundaryConditionValues_, INSERT_VALUES);
-
-  // zero entries in stiffness matrix that correspond to dirichlet dofs
-  // set values of row and column of the dofs to zero and diagonal entry to 1
-  stiffnessMatrix->zeroRowsColumns(boundaryConditionNonGhostDofLocalNos_.size(), boundaryConditionNonGhostDofLocalNos_.data(), 1.0);
-  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
-
-}*/
-
 
 }  // namespace

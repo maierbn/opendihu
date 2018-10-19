@@ -195,6 +195,8 @@ template<typename FunctionSpaceType,typename QuadratureType>
 void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
 {
+  LOG(DEBUG) << "FiniteElementMethodInitializeData::initialize";
+
   // initialize the DiffusionTensorFieldVariable object
   this->data_.initialize(direction, multidomainNCompartments);
 

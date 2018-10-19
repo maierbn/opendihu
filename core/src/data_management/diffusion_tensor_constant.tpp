@@ -21,6 +21,7 @@ template<typename FunctionSpaceType>
 void DiffusionTensorConstant<FunctionSpaceType>::
 initialize()
 {
+  LOG(DEBUG) << "DiffusionTensorConstant::initialize";
 }
 
 template<typename FunctionSpaceType>

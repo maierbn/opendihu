@@ -40,7 +40,7 @@ public:
   void initialize();
   
   //! initialize timestepping
-  void initialize(double timeStepWidth);
+  void initializeForImplicitTimeStepping();
   
   //! reset the object to uninitialized state
   void reset();

@@ -5,16 +5,17 @@
 
 int main(int argc, char *argv[])
 {
-  // 0D sub-cellular model
+  // 3D Laplace equation
   
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  TimeSteppingScheme::Heun<
-    CellmlAdapter<57>
-  > equationDiscretized(settings);
+  Postprocessing::ParallelFiberEstimation<
+    BasisFunction::LagrangeOfOrder<1>
+  >
+  problem(settings);
   
-  equationDiscretized.run();
+  problem.run();
   
   return EXIT_SUCCESS;
 }

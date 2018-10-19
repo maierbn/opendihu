@@ -117,10 +117,6 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     const wchar_t *pythonSearchPathWChar = Py_DecodeLocale(pythonSearchPath.c_str(), NULL);
     Py_SetPythonHome((wchar_t *)pythonSearchPathWChar);
 
-    //std::string pythonPath = ".:" PYTHON_HOME_DIRECTORY "/lib/python3.6:" PYTHON_HOME_DIRECTORY "/lib/python3.6/site-packages";
-    //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.c_str(), NULL);
-    //Py_SetPath((wchar_t *)pythonPathWChar);
-
     // initialize python
     Py_Initialize();
 
@@ -130,6 +126,21 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     //PyEval_ReleaseLock();
 
     Py_SetStandardStreamEncoding(NULL, NULL);
+
+    // get standard python path
+    wchar_t *standardPythonPathWChar = Py_GetPath();
+    std::wstring standardPythonPath(standardPythonPathWChar);
+
+    VLOG(1) << "standard python path: " << standardPythonPath;
+
+    // set python path
+    std::stringstream pythonPath;
+    //pythonPath << ".:" << PYTHON_HOME_DIRECTORY << "/lib/python3.6:" << PYTHON_HOME_DIRECTORY << "/lib/python3.6/site-packages:"
+    //pythonPath << OPENDIHU_HOME << "/scripts:" << OPENDIHU_HOME << "/scripts/geometry_manipulation";
+    //VLOG(1) << "python path: " << pythonPath.str();
+    //const wchar_t *pythonPathWChar = Py_DecodeLocale(pythonPath.str().c_str(), NULL);
+    //Py_SetPath((wchar_t *)pythonPathWChar);
+
 
     // pass on command line arguments to python config script
 
@@ -397,10 +408,7 @@ void DihuContext::loadPythonScript(std::string text)
     // execute config script
     ret = PyRun_SimpleString(text.c_str());
 
-    if (PyErr_Occurred())
-    {
-      PyErr_Print();
-    }
+    PythonUtility::checkForError();
   }
   catch(...)
   {
@@ -543,7 +551,8 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg");
   conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "" + prefix+"VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format,
-           prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
+  //         prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
+           prefix+ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
 
   conf.set(el::Level::Error, el::ConfigurationType::Format,
            prefix+"ERROR: %loc %func: \n" ANSI_COLOR_RED "Error: %msg" ANSI_COLOR_RESET);

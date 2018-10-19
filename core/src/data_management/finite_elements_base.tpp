@@ -36,7 +36,7 @@ template<typename FunctionSpaceType>
 void FiniteElementsBase<FunctionSpaceType>::
 initialize()
 {
-  LOG(DEBUG) << "FiniteElementsBase::initialize";
+  LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 }
 

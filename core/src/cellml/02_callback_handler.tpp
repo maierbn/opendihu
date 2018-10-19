@@ -10,7 +10,6 @@
 #include "utility/string_utility.h"
 #include "mesh/mesh_manager.h"
 
-
 template<int nStates, typename FunctionSpaceType>
 CallbackHandler<nStates,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :

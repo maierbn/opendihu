@@ -67,3 +67,5 @@ pod:
 multidomain:
 	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+parallel_fiber_estimation:
+	cd examples/parallel_fiber_estimation && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

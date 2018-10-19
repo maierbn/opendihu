@@ -74,6 +74,7 @@ createPetscObjects()
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
   this->fibreDirection_ = this->functionSpace_->template createFieldVariable<3>("fibreDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
+  this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
@@ -135,6 +136,13 @@ ionicCurrent(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
   return this->ionicCurrent_[compartmentNo];
+}
+
+template<typename FunctionSpaceType,int nStatesCellML>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType,nStatesCellML>::
+zero()
+{
+  return this->zero_;
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>

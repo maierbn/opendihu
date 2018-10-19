@@ -75,7 +75,7 @@ public:
 };
 
 /** common class for not specialized MeshType, BasisFunctionType, for time stepping
- * use inheritage hierarchy until file 06_timestepping.h
+ * use inheritage hierarchy until file 05_timestepping.h
  */
 template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename Term>
 class FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, Term, Equation::usesTimeStepping<Term>> :

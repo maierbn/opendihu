@@ -48,9 +48,6 @@ protected:
   
   //! setup mass matrix
   virtual void setMassMatrix() = 0;
-  
-  //! setup inverse of the lumped mass matrix
-  //virtual void setInverseLumpedMassMatrix()=0;
 
   //! solve finite element linear system
   virtual void solve();
@@ -90,7 +87,7 @@ public:
   using FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::FiniteElementMethodBase;
 
   //! dummy initialize method
-  virtual void initialize(){};
+  //virtual void initialize(){};
 
   //! initialize with direction field for DiffusionTensorFieldVariable, this replaces the initialize() method
   virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments = 0);

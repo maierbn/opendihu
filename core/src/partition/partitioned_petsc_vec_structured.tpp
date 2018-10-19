@@ -562,47 +562,52 @@ extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSp
   ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
+//! set the values for the given component from a petsc Vec
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setValues(int componentNo, Vec petscVector, std::string name)
+{
+  assert(componentNo >= 0);
+  assert(componentNo < vectorGlobal_.size());
+
+  PetscErrorCode ierr;
+
+  if (valuesContiguousInUse_)
+  {
+    // prepare source vector
+    const double *valuesSource;
+    ierr = VecGetArrayRead(petscVector, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    // prepare target vector
+    // if the contiguous representation is already being used, return contiguous vector
+    dof_no_t dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
+
+    double *valuesTarget;
+    ierr = VecGetArray(valuesContiguous_, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to "
+      << "(\"" << this->name_ << "\" component " << componentNo << ") from \"" << name << "\"";
+    memcpy(
+      valuesTarget + dofStart,
+      valuesSource,
+      this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
+    );
+
+    // restore memory
+    ierr = VecRestoreArrayRead(petscVector, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    ierr = VecRestoreArray(valuesContiguous_, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  }
+  else
+  {
+    ierr = VecCopy(petscVector, vectorLocal_[componentNo]); CHKERRV(ierr);
+  }
+}
+
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable)
 {
-  PetscErrorCode ierr;
-
-  // prepare source vector
-  //assert(!fieldVariable->valuesContiguousInUse());
-
-  const double *valuesSource;
-  ierr = VecGetArrayRead(fieldVariable->valuesLocal(0), &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-
-  // prepare target vector
-  Vec vectorTarget;
-  dof_no_t dofStart = 0;
-  // if the contiguous representation is already being used, return contiguous vector
-  if (valuesContiguousInUse_)
-  {
-    vectorTarget = valuesContiguous_;
-    dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
-  }
-  else
-  {
-    vectorTarget = vectorLocal_[componentNo];
-  }
-
-  double *valuesTarget;
-  ierr = VecGetArray(vectorTarget, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-
-  VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to \"" << fieldVariable->name() << "\" "
-    << "(\"" << this->name_ << "\" component " << componentNo << ")";
-  memcpy(
-    valuesTarget + dofStart,
-    valuesSource,
-    this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double)
-  );
-
-  // restore memory
-  ierr = VecRestoreArrayRead(fieldVariable->valuesLocal(0), &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-  ierr = VecRestoreArray(vectorTarget, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-
+  setValues(componentNo, fieldVariable->valuesLocal(0), fieldVariable->name());
 }
 
 //! get a vector of local dof nos (from meshPartition), without ghost dofs
@@ -702,9 +707,9 @@ output(std::ostream &stream)
           stream << ",";
         for (dof_no_t dofNoLocal = 0; dofNoLocal < localSizes[rankNo]; dofNoLocal++)
         {
-          if (dofNoLocal == 100)
+          if (dofNoLocal == 400)
           {
-            stream << "... (" << localSizes[rankNo] << " entries, only showing the first 100)";
+            stream << "... (" << localSizes[rankNo] << " entries, only showing the first 400)";
             break;
           }
 

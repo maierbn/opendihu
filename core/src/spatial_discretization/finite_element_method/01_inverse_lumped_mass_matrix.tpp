@@ -1,34 +1,18 @@
-#include "spatial_discretization/finite_element_method/05_time_stepping.h"
+#include "spatial_discretization/finite_element_method/01_matrix.h"
 
 #include <Python.h>
-#include <iostream>
-#include <petscmat.h>
+#include <memory>
 #include <petscksp.h>
-#include <vector>
-#include <numeric>
+#include <petscsys.h>
 
 #include "easylogging++.h"
-
-#include "control/types.h"
-#include "utility/python_utility.h"
-#include "utility/petsc_utility.h"
-#include "solver/solver_manager.h"
-#include "solver/linear.h"
-
 
 namespace SpatialDiscretization
 {
 
-/* 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
-{
-}
-*/
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
+void FiniteElementMethodMatrixInverseLumpedMass<FunctionSpaceType, QuadratureType, Term>::
 setInverseLumpedMassMatrix()
 {
   LOG(TRACE) << "setInverseLumpedMassMatrix";
@@ -37,13 +21,13 @@ setInverseLumpedMassMatrix()
   Mat &inverseLumpedMassMatrix = this->data_.inverseLumpedMassMatrix()->valuesGlobal();
   Mat &massMatrix = this->data_.massMatrix()->valuesGlobal();
   //this->data_.massMatrix()->assembly(MAT_FINAL_ASSEMBLY);
-  
+
   PetscErrorCode ierr;
-  
+
   PetscInt nRows, nColumns;
   ierr = MatGetSize(massMatrix,&nRows,&nColumns); CHKERRV(ierr);
   VLOG(1) << "massMatrix nRows " << nRows << " nColumns " << nColumns;
-     
+
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,1>> rowSum = std::make_shared<PartitionedPetscVec<FunctionSpaceType,1>>(functionSpace->meshPartition(), "rowSum");
 
   // In case of linear and bilinear basis functions
@@ -61,4 +45,4 @@ setInverseLumpedMassMatrix()
   VLOG(2) << *this->data_.inverseLumpedMassMatrix();
 }
 
-} // namespace SpatialDiscretization
+};    // namespace

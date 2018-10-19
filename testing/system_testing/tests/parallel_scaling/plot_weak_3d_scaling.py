@@ -29,9 +29,9 @@ outlier_top = 1
 outlier_bottom = 2
   
 # read csv file
-report_filename = "build_release/logs/log_solver_scaling4.csv"
+report_filename = "build_release/logs/weak_3d_scaling.csv"
 
-caption = u'Linear solver weak scaling, Hazel Hen'
+caption = u'Weak scaling, Hazel Hen'
 
 print("csv file: {}".format(report_filename))
 data = []
@@ -79,9 +79,7 @@ max_index = len(column_key_map)
 string_indices = [
   column_key_map["timestamp"],
   column_key_map["hostname"],
-  column_key_map["scenarioName"],
-  column_key_map["implicitSolver_preconditionerType"],
-  column_key_map["implicitSolver_solverType"],
+  column_key_map["scenarioName"]
 ]
 int_indices = [
   column_key_map["memoryData"],
@@ -128,12 +126,10 @@ def extract_data(data):
       
     # define sorting key, defines one unique data point (x-axis value without the y-axis value)
       
-    key_solver = column_key_map["implicitSolver_solverType"]
+    scenario_name = column_key_map["scenarioName"]
     nRanks = column_key_map["nRanks"]
     nElements = column_key_map["nElements1D"]
-    solver_type = new_data[key_solver]
-    
-    key = "{}{:05}".format(solver_type,new_data[nRanks])
+    key = "{:05}".format(new_data[nRanks])
       
     # store extracted values
     if key not in datasets:
@@ -157,11 +153,38 @@ def extract_data(data):
       value_list = []
       for j in range(len(datasets[key]['value'])):
         value = datasets[key]['value'][j][i]
-        value_list.append(value)
+        
+        if i == column_key_map["duration_total"] and "w" in key:
+          nF = datasets[key]['value'][j][column_key_map["nInstancesComputedGlobally"]]
+          nM = datasets[key]['value'][j][column_key_map["nElements1D"]] * nF
+          print "key: {} duration_total, hostname: {}, rank: {}, date: {}, #M: {}, #F: {}, value: {}".format(key, datasets[key]['value'][j][column_key_map["hostname"]], datasets[key]['value'][j][column_key_map["rankNo"]], datasets[key]['value'][j][column_key_map["timestamp"]], nM, nF, value)
+      
+        if i == column_key_map["duration_1D"] and "w" in key:
+          nF = datasets[key]['value'][j][column_key_map["nInstancesComputedGlobally"]]
+          nM = datasets[key]['value'][j][column_key_map["nElements1D"]] * nF
+          print "key: {} duration_1D,    hostname: {}, rank: {}, date: {}, #M: {}, #F: {}, value: {}".format(key, datasets[key]['value'][j][column_key_map["hostname"]], datasets[key]['value'][j][column_key_map["rankNo"]], datasets[key]['value'][j][column_key_map["timestamp"]], nM, nF, value)
+      
+        if value != 0:
+          value_list.append(value)
+          # if not ("w" in key and i == column_key_map["duration_1D"] and value > 30) \
+            # and not ("w" in key and i == column_key_map["duration_total"] and value > 50):
+            
+            # if "w" in key and (i == column_key_map["duration_1D"] or  i == column_key_map["duration_total"]):
+              # print ("ok")
+            # value_list.append(value)
+          # else:
+            # if "w" in key and (i == column_key_map["duration_1D"] or  i == column_key_map["duration_total"]):
+              # print ("not ok")
+          
+      # if i == column_key_map["duration_1D"] and key == "w00032":
+        # print "duration_1D for {}:".format(key)
+        # for value in value_list:
+          # print value
       
       # remove outlier
       value_list = sorted(value_list)
       n = len(value_list)
+      
       
       if n > outlier_bottom+outlier_top and remove_outlier:
         value_list = value_list[outlier_bottom:-outlier_top]
@@ -226,10 +249,7 @@ output_path = ""
 colors = {
   column_key_map["duration_total"]: "ko-",      # total
   column_key_map["duration_0D"]: "yd-",      # 0D
-  "cg_"+str(column_key_map["duration_1D"]): "rv--",      # 1D CG
-  "lu_"+str(column_key_map["duration_1D"]): "gd-.",      # 1D LU
-  "gmres_"+str(column_key_map["duration_1D"]): "bo:",      # 1D GMRES
-  "gamg_"+str(column_key_map["duration_1D"]): "cs--",      # 1D GAMG
+  column_key_map["duration_1D"]: "rv-",      # 1D
   "38o": "gs-",      # 3D
   "39o": "bp-",     # 1D->3D
   "40o": "c<-",      # 3D->1D
@@ -251,12 +271,9 @@ colors = {
 }
 
 labels = {
-  "cg_"+str(column_key_map["duration_total"]): "total (CG)",      # total
-  "cg_"+str(column_key_map["duration_0D"]): "solver 0D model (CG)",      # 0D
-  "cg_"+str(column_key_map["duration_1D"]): "solver 1D model (CG)",      # 1D
-  "lu_"+str(column_key_map["duration_1D"]): "solver 1D model (LU)",      # 1D
-  "gmres_"+str(column_key_map["duration_1D"]): "solver 1D model (GMRES)",      # 1D
-  "gamg_"+str(column_key_map["duration_1D"]): "solver 1D model (AMG)",      # 1D
+  column_key_map["duration_total"]: "total",      # total
+  column_key_map["duration_0D"]: "solver 0D model",      # 0D
+  column_key_map["duration_1D"]: "solver 1D model",      # 1D
   "38o": "solver 3D model",      # 3D
   "39o": u"homogenization, 1D to 3D",     # 1D->3D
   "40o": u"interpolation, 3D to 1D",      # 3D->1D
@@ -269,13 +286,10 @@ labels = {
 #plotkeys = [13, 17, 18, 19, 20]
 
 ######################
-# create plot solvers
-caption = "Multi-node weak scaling solvers, Hazel Hen,\n100 el./core"
-outfile = output_path+SCENARIO+'_solver_scaling.pdf'
-if paper_no_legend:
-  plt.figure("linear solvers weak scaling", figsize=(10,12))
-else:
-  plt.figure("linear solvers weak scaling", figsize=(14,8))
+# create plot multi node
+caption = "Multi-node weak scaling, Hazel Hen,\n100 el./core"
+outfile = output_path+'weak_3d_scaling.pdf'
+plt.figure("weak scaling", figsize=(8,8))
 
 output_path = ""
 plotdata = collections.OrderedDict()
@@ -294,9 +308,9 @@ for key in datasets:
   xtickslist.append((nM,nproc))
   
   # loop over different curves (e.g. different measurements)
-  for plotkey_number in [column_key_map["duration_1D"]]:
+  for plotkey_number in [column_key_map["duration_0D"],column_key_map["duration_1D"],column_key_map["duration_total"]]:
     
-    plotkey = dataset[column_key_map["implicitSolver_solverType"]]+"_"+str(plotkey_number)
+    plotkey = plotkey_number
     
     # define x value and y value
     xvalue = nM
@@ -334,7 +348,7 @@ for plotkey in plotkeys:
   
 ax = plt.gca()
 ax.set_xscale('log', basex=10) 
-ax.set_yscale('log', basey=10)
+#ax.set_yscale('log', basey=10) 
 #ax.set_xscale('log', basey=2) 
 #ticks = list(np.linspace(10**4, 10**5, 10)) + list(np.linspace(10**5, 10**6, 10))
 #ax.set_xticks(ticks)
@@ -349,11 +363,9 @@ plt.grid(which='major')
 
 if not paper_no_legend:
   print "legend"
-  if paper_version:
-    plt.subplots_adjust(right=0.58, top=0.84)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-  else:
-    plt.legend(loc='best')
+  #plt.subplots_adjust(right=0.58, top=0.84)
+  #plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+  plt.legend(loc='best')
 
 # twin axes for processes
 ax2 = ax.twiny()
@@ -392,8 +404,95 @@ if not paper_version:
   plt.title(caption, y=1.1)
   plt.tight_layout()
   
-print("write file '{}'".format(outfile))
+plt.tight_layout()
 plt.savefig(outfile)
+
+######################
+# create plot multi node, memory
+if True:
+  caption = "Weak scaling, memory consumption per core, Hazel Hen,\n 100 el./core "
+  outfile = 'weak_scaling_memory.pdf'
+  plt.figure("weak scaling memory consumption", figsize=(8,7))
+
+  output_path = ""
+  plotdata = collections.OrderedDict()
+  xdata = Set()
+  plotkeys = Set()
+
+  # key is the initially defined sorting key
+  for key in datasets:
+    
+    dataset = datasets[key]['value']
+    variances = datasets[key]['variance']
+    nproc = dataset[column_key_map["nRanks"]]
+    nM = dataset[column_key_map["nElements1D"]]*dataset[column_key_map["nInstancesComputedGlobally"]]
+
+    # loop over different curves (e.g. different measurements)
+    for plotkey_number in [column_key_map["memoryData"]]:
+      
+      plotkey = plotkey_number
+    
+      # define x value and y value
+      xvalue = nM
+      yvalue = dataset[plotkey_number]/(1024*1024.)
+      yvalue_variance = variances[plotkey_number]/(1024*1024.)**2
+
+      if plotkey not in plotdata:
+        plotdata[plotkey] = dict()
+        plotdata[plotkey]['value'] = collections.OrderedDict()
+        plotdata[plotkey]['variance'] = collections.OrderedDict()
+        
+      plotdata[plotkey]['value'][xvalue] = yvalue
+      plotdata[plotkey]['variance'][xvalue] = yvalue_variance
+      xdata.add(xvalue)
+      plotkeys.add(plotkey)
+
+
+  # loop over curves and plot data with given label and color
+  plotkeys = sorted(plotkeys)
+  for plotkey in plotkeys:
+      
+    xlist = sorted(plotdata[plotkey]["value"])
+    ylist = [item[1] for item in sorted(plotdata[plotkey]["value"].items())]
+    yerr = [item[1] for item in sorted(plotdata[plotkey]["variance"].items())]
+
+    label = None
+    if plotkey in labels:
+      label = labels[plotkey]
+    color = ""
+    if plotkey in colors:
+      color = colors[plotkey]
+    print "label:",label,", color:",color
+      
+    plt.errorbar(xlist, ylist, fmt=color, yerr=yerr, label=label)
+    
+  ax = plt.gca()
+  ax.set_xscale('log', basex=10) 
+  plt.grid(which="major")
+
+  #ax.set_xticks(np.linspace(20000,180000,5))
+  ax.set_ylim(0,ax.get_ylim()[1])
+  plt.xlabel('Number of 1D elements')
+  plt.ylabel('Memory consumption per process (MiB)')
+
+  plt.legend(loc='best')
+
+  # twin axes for processes
+  ax2 = ax.twiny()
+  ax2.set_xlim(ax.get_xlim())
+  ax2.set_xscale('log', basex=10)
+
+  ax2.set_xticks(xticks)
+  ax2.set_xticklabels(xlabels)
+  ax2.set_xlabel(r"Number of processes")
+  ax2.set_ylim(0,ax.get_ylim()[1])
+
+  plt.grid(which="major")
+  
+  if not paper_version:
+    plt.title(caption, y=1.1)
+    plt.tight_layout()
+  plt.savefig(outfile)
 
 if show_plots:
   plt.show()

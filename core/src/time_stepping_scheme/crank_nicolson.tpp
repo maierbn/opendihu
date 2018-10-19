@@ -100,9 +100,6 @@ setSystemMatrix(double timeStepWidth)
 {
   LOG(TRACE) << "setSystemMatrix(timeStepWidth=" << timeStepWidth << ")";
 
-  //if(!this->discretizableInTime_.invLumMassMatrixSet())
-    //this->discretizableInTime_.setInverseLumpedMassMatrix();
-  
   // compute the system matrix (I - dt*M^{-1}K) where M^{-1} is the lumped mass matrix
   
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();

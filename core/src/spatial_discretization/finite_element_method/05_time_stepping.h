@@ -26,14 +26,11 @@ public:
   //! proceed time stepping by computing output = stiffnessMatrix*input, output back in strong form
   void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
   
-  //! timestepping rhs of equation Au^(t+1)=Rhs^(t), used for the case (M/dt-K)u^(t+1)=M/dtu^(t)
-  //void evaluateTimesteppingRightHandSideImplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
-
   //! initialize for use with timestepping
   void initialize();
   
-  //! initialize for use with timestepping
-  void initialize(double timeStepWidth); 
+  //! initialize for use with timestepping, this sets mass matrix and inverse lumped mass matrix
+  void initializeForImplicitTimeStepping();
 
   //! reset the object to uninitialized state
   void reset();
@@ -64,15 +61,6 @@ protected:
   //! Compute from the rhs in weak formulation the rhs vector in strong formulation
   void computeInverseMassMatrixTimesRightHandSide(Vec &result);
 
-  //! compute the inverse of the lumped mass matrix
-  void setInverseLumpedMassMatrix();
-
-  //! compute the system matrix for implicit timestepping, A=I-dt*M^(-1)K from the inverse of the mass matrix M^(-1) and stiffness matrix K
-  //void setSystemMatrix(double timeStepWidth);
-/*
-  //! precomputes the system matrix A=M/dt-K for variant 1 of the implicit Euler
-  void precomputeSystemMatrix1();
-*/
   //! initialize the linear solve that is needed for the solution of the implicit timestepping system
   void initializeLinearSolver();
 
@@ -88,4 +76,3 @@ protected:
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
 #include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"
-#include "spatial_discretization/finite_element_method/05_time_stepping_implicit.tpp"

@@ -419,20 +419,55 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
     long objectLong = PyLong_AsLong(object);
     line << objectLong;
   }
-  else if (PyLong_CheckExact(object))
-  {
-    long objectLong = PyLong_AsLong(object);
-    line << objectLong;
-  }
   else if (PyFloat_CheckExact(object))
   {
     double objectDouble = PyFloat_AsDouble(object);
     line << objectDouble;
   }
+  else if (PyComplex_Check(object))
+  {
+    double realDouble = PyComplex_RealAsDouble(object);
+    double imagDouble = PyComplex_ImagAsDouble(object);
+    line << realDouble << " + " << imagDouble << "i";
+  }
+  else if (PyBytes_Check(object))
+  {
+    std::string str = PyBytes_AsString(object);
+    line << "\"" << str << "\"";
+  }
   else if (PyBool_Check(object))
   {
     bool objectBool = PyObject_IsTrue(object);
-    line << std::boolalpha<<objectBool;
+    line << std::boolalpha << objectBool;
+  }
+  else if (PyUnicode_Check(object))
+  {
+    std::string str = PyUnicode_AS_DATA(object);
+    line << "\"" << str << "\"";
+  }
+  else if (PyFunction_Check(object))
+  {
+    line << "<function object>";
+  }
+  else if (object == Py_True)
+  {
+    line << "True";
+  }
+  else if (object == Py_False)
+  {
+    line << "False";
+  }
+  else if (object == Py_None)
+  {
+    line << "None";
+  }
+  else if (PyCallIter_Check(object))
+  {
+    line << "<iterator object>";
+  }
+  else if (PyByteArray_Check(object))
+  {
+    line << "<byte array object>";
   }
   else if (PyList_Check(object))
   {
@@ -443,6 +478,17 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
       PyObject *item = PyList_GetItem(object, (Py_ssize_t)index);
 
       line << getString(item, indent+2, 0) << (index < size-1? ", " : "]");
+    }
+  }
+  else if (PyTuple_Check(object))
+  {
+    int size = (int)PyTuple_Size(object);
+    line << "(";
+    for (int index = 0; index < size; index++)
+    {
+      PyObject *item = PyTuple_GetItem(object, (Py_ssize_t)index);
+
+      line << getString(item, indent+2, 0) << (index < size-1? ", " : ")");
     }
   }
   else if(PyDict_CheckExact(object))
@@ -785,6 +831,15 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming vector " << values;
     }
     Py_CLEAR(key);
+  }
+}
+
+void PythonUtility::checkForError()
+{
+  if (PyErr_Occurred())
+  {
+    PyErr_Print();
+    PyErr_Clear();
   }
 }
 

@@ -34,6 +34,7 @@
 //#include "model_order_reduction/time_stepping_scheme_ode_reduced_implicit.h"
 
 #include "postprocessing/streamline_tracer.h"
+#include "postprocessing/parallel_fiber_estimation.h"
 
 #include "cellml/03_cellml_adapter.h"
 

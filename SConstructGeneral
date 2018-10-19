@@ -186,7 +186,10 @@ else:
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
-env.MergeFlags('-Wunused-variable')
+env.MergeFlags('-Wunused-variable')   # always warn about unused variables
+env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
+
+#print(env.Dump())
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])

@@ -60,9 +60,9 @@ initialize()
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-initialize(double timeStepWidth)
+initializeForImplicitTimeStepping()
 {
-  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize(timeStepWidth=" << timeStepWidth << ")";
+  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initializeForImplicitTimeStepping()";
 
   // initialize everything needed for implicit time stepping
   // currently this is executed regardless of explicit or implicit time stepping scheme
@@ -75,10 +75,7 @@ initialize(double timeStepWidth)
   this->setMassMatrix();
 
   // compute inverse lumped mass matrix
-  setInverseLumpedMassMatrix();
-
-  // initialize and compute the system matrix
-  //setSystemMatrix(timeStepWidth);
+  this->setInverseLumpedMassMatrix();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

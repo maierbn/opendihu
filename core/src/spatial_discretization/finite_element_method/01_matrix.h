@@ -129,6 +129,22 @@ protected:
 };*/
 
 
+/** compute inverse lumped mass matrix
+ */
+template<typename FunctionSpaceType, typename QuadratureType, typename Term>
+class FiniteElementMethodMatrixInverseLumpedMass :
+  public FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>
+{
+public:
+  // use constructor of base class
+  using FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodMatrix;
+
+  //! set entries in the inverse lumped mass matrix, compute from mass matrix
+  void setInverseLumpedMassMatrix();
+};
+
+
+
 
 };  // namespace
 
@@ -137,3 +153,4 @@ protected:
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible.h"
 #include "spatial_discretization/finite_element_method/01_stiffness_matrix_integrate.tpp"
 #include "spatial_discretization/finite_element_method/01_mass_matrix_integrate.tpp"
+#include "spatial_discretization/finite_element_method/01_inverse_lumped_mass_matrix.tpp"

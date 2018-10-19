@@ -14,6 +14,8 @@ if len(sys.argv) > 0:
     
     print("name: \"{}\"".format(name))
 
+with_aponeurosis = False
+
 # read in data
 with open('../mesh', 'rb') as f:
   data = pickle.load(f, encoding='latin1')
@@ -30,21 +32,7 @@ with open('../mesh', 'rb') as f:
 
   node_positions = data["node_positions"]
   seed_points = data["seed_points"]
-  
-# boundary conditions
-bc = {}
-if "hermite" in name:
-  for bottom_node_index in data["bottom_nodes"]:
-    bc[8*bottom_node_index] = 0.0
-  for top_node_index in data["top_nodes"]:
-    bc[8*top_node_index] = 1.0
-else:
-  for bottom_node_index in data["bottom_nodes"]:
-    bc[bottom_node_index] = 0.0
-  for top_node_index in data["top_nodes"]:
-    bc[top_node_index] = 1.0
-
-
+   
 # elements
 if "quadratic" in name:
   # quadratic elements
@@ -56,6 +44,36 @@ else:
   elements = data["linear_elements"]
   n_elements = data["n_linear_elements_per_coordinate_direction"]
 
+# boundary conditions
+bc = {}
+if "hermite" in name:
+  for bottom_node_index in data["bottom_nodes"]:
+    bc[8*bottom_node_index] = 0.0
+  for top_node_index in data["top_nodes"]:
+    bc[8*top_node_index] = 1.0
+else:
+  for bottom_node_index in data["bottom_nodes"]:
+    bc[bottom_node_index] = 0.0
+  
+  if with_aponeurosis:
+    if "quadratic" in name:
+      n_dofs = [(int)(2*n_elements[0]+1), (int)(2*n_elements[1]+1), (int)(2*n_elements[2]+1)]
+    else:
+      n_dofs = [n_elements[0]+1, n_elements[1]+1, n_elements[2]+1]
+    
+    # set top BC along aponeurosis
+    z_begin = (int)(0.5*n_dofs[2])
+    z_end = n_dofs[2]
+    for z in range(z_begin, z_end):
+      i = z*n_dofs[0]*n_dofs[1] + (int)(n_dofs[1]/2)*n_dofs[0] + (int)(n_dofs[0]/2)
+      
+      alpha = (z-z_begin) / (z_end-z_begin)
+      bc[i] = 1.0 + alpha*0.1 
+      
+  else:
+    for top_node_index in data["top_nodes"]:
+      bc[top_node_index] = 1.0
+  
 # use the gradient field for linear functions
 use_gradient_field = ("linear" in name)
 
@@ -90,7 +108,7 @@ config = {
       "prefactor": 1.0,
     },
     "OutputWriter" : [
-      #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+name, "binary": True, "fixedFormat": False},
       {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
     ]

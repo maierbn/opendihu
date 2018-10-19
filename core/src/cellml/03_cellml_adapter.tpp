@@ -60,7 +60,7 @@ initialize()
 
 template<int nStates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,FunctionSpaceType>::
-initialize(double timeStepWidth)
+initializeForImplicitTimeStepping()
 {
 }
 

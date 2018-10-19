@@ -14,7 +14,7 @@ plt.rcParams['lines.markersize'] = 8
 
 directory = "build_release"
 if len(sys.argv) > 1:
-  directory = sgs.argv[1]
+  directory = sys.argv[1]
 
 # plot dt_0D
 filename = os.path.join(directory, "dt_0D.csv")

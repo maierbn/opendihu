@@ -50,6 +50,9 @@ public:
   //! extract the specified component from the field variable and store it in the given field variable (which already has the data allocated)
   void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
+  //! set the values for the given component from a petsc Vec
+  void setValues(int componentNo, Vec petscVector);
+
   //! set the values for the given component from the other field variable
   void setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable);
 

@@ -948,7 +948,7 @@ The discretization remains the same and leads to an integral term of
 %
 \begin{equation*}
   \begin{array}{lll}
-    m_{ij} = -\ds\int_{Ω}A∇\phi_i\cdot ∇\phi_j\,\d\bfx.
+    m_{ji} = -\ds\int_{Ω}A∇\phi_i\cdot ∇\phi_j\,\d\bfx.
   \end{array}
 \end{equation*}
 for the stiffness matrix $M$. For these term the stencil notation cannot be applied in general. The stiffness matrix has to be computed using e.g. numerical quadrature.
@@ -1014,6 +1014,12 @@ For the Crank-Nicolson scheme $u^{(t+1)} = u^{(t)} + dt\,(f(t+1,u^{(t+1)})+f(t,u
 		(I - \dfrac{dt}{2}\,\bfM^{-1}\bfK)\,\bfu^{(t+1)}&= \,\bfu^{(t)}(I + \dfrac{dt}{2}\,\bfM^{-1}\bfK)
 	\end{array}
 \end{equation*} 
+or
+\begin{equation*}
+  \begin{array}{lll}
+    \big(\dfrac1{2}\bfK-\dfrac{1}{dt}\bfM\big) \bfu^{(t+1)} = \big(-\dfrac12{\bfK} - \dfrac{1}{dt}\bfM\big) \bfu^{(t)}
+  \end{array}
+\end{equation*}
 \subsection{Lumped Mass Matrix}
 For linear or bilinear basis functions
 \begin{equation*}
@@ -3286,7 +3292,7 @@ For $d=2$ one gets \emph{Stoke's theorem}.
 \subsubsection{Corollary}
 Replacing $\bfF$ of \eqref{eq:gauss} by ${f\,\bfF}$ yields the following proposition:
 
-For a differentable function $f: U \to \R$ and a vector field $\bfF: U \to \R^d$ it holds:
+For a differentable function $f: U \to \R$ and a vector field $\bfF: U \to \R^d$ the following holds:
 \begin{equation}\label{eq:gauss1}
   \begin{array}{ll}
      \ds\int_U f(∇\cdot\bfF) \,\d \bfx = \ds\int_{\p U} (f\,\bfF)\cdot\bfn\,\d \bfx -\ds\int_U \bfF \cdot ∇f \,\d \bfx
@@ -3294,7 +3300,7 @@ For a differentable function $f: U \to \R$ and a vector field $\bfF: U \to \R^d$
 \end{equation}
 Now set $\bfF\equiv (1,0,\dots), (0,1,\dots), \dots$ to get the following vector-valued identity:
 
-For a differentable function $f: U \to \R$ it holds:
+For a differentable function $f: U \to \R$ the following holds:
 \begin{equation}
   \begin{array}{ll}
     \ds\int_U ∇f(\bfx) \,\d \bfx = \ds\int_{\p U} f(\bfx)\,\bfn\,\d \bfx
@@ -3347,7 +3353,7 @@ Let $U \subset \R^2$ be an open set (parameter space), $\Phi:U \to \Phi(U)=:\Ome
 \emph{Integration by substitution}, \textit{German \say{Transformationssatz}}, also \emph{change of variables rule}.
 Let $U \subset \R^d$ be an open set, $\Phi:U \to \Phi(U) \subset\R^d$ a diffeomorphism ($\Phi$ bijective and continuously differentiable, inverse map $\Phi^{-1}$ also continuously differentiable).
 
-Then $g:\Phi(U) \to \R$ is integrable on $\Phi(U)$ if and only if the function $\bfxi \mapsto g(\Phi(\bfxi))\,|\det(J_{\Phi}(\bfxi))|$ is integrable on $U$. It holds:
+Then $g:\Phi(U) \to \R$ is integrable on $\Phi(U)$ if and only if the function $\bfxi \mapsto g(\Phi(\bfxi))\,|\det(J_{\Phi}(\bfxi))|$ is integrable on $U$. The following holds:
 \begin{equation}\label{eq:integration_transformation_3d}
   \begin{array}{ll}
     \ds\int_{\Phi(U)} g(\bfx)\,\d \bfx = \ds\int_U g(\Phi(\bfxi))\,|\det(J_{\Phi}(\bfxi))|\,\d \bfxi,

@@ -22,7 +22,7 @@ template<typename FunctionSpaceType>
 void DiffusionTensorFieldVariable<FunctionSpaceType>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor)
 {
-  LOG(DEBUG) << "initialize Diffusion tensor using field variable";
+  LOG(DEBUG) << "DiffusionTensorFieldVariable::initialize";
   useAdditionalDiffusionTensor_ = useAdditionalDiffusionTensor;
   direction_ = direction;
 
@@ -54,19 +54,19 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   // if the extracellular diffusion tensor should be added
   if (useAdditionalDiffusionTensor_)
   {
-    LOG(DEBUG) << " add extracellular diffusion tensor " << this->additionalDiffusionTensor_;
+    //LOG(DEBUG) << " add extracellular diffusion tensor " << this->additionalDiffusionTensor_;
 
     // add extracellular diffusion tensor
     diffusionTensor = diffusionTensor + this->additionalDiffusionTensor_;
   }
 
   VLOG(3) << "directionVector: " << directionVector;
-  LOG(DEBUG) << "diffusionTensor before rotation: " << diffusionTensor;
+  //LOG(DEBUG) << "diffusionTensor before rotation: " << diffusionTensor;
 
   // rotate diffusion tensor in fiber direction
   //MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
-  LOG(DEBUG) << "diffusionTensor after rotation: " << diffusionTensor;
+  //LOG(DEBUG) << "diffusionTensor after rotation: " << diffusionTensor;
 
   return diffusionTensor;
 }

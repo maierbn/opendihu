@@ -283,7 +283,16 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
 
       for(int i = 0; i < nEntries; i++)
       {
-        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+        ValueType defaultValueItem;
+        if (defaultValue.size() >= i)
+        {
+          defaultValueItem = defaultValue[i];
+        }
+        else if (defaultValue.size() >= 1)
+        {
+          defaultValueItem = defaultValue[0];
+        }
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValueItem);
       }
       return result;
     }
@@ -302,8 +311,31 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::vector<ValueType> get(PyObject *object)
   {
-    std::vector<ValueType> defaultValue(1);  // vector with 1 entry
-    return convertFromPython<std::vector<ValueType>>::get(object, defaultValue);
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+
+    std::vector<ValueType> result;
+    if (PyList_Check(object))
+    {
+      int nEntries = (int)PyList_Size(object);
+      result.resize(nEntries);
+
+      for(int i = 0; i < nEntries; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i));
+      }
+      return result;
+    }
+    else
+    {
+      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object);
+
+      result.resize(1);
+      result[0] = valueDouble;
+
+      return result;
+    }
+    return std::vector<ValueType>();
   }
 };
 
@@ -385,6 +417,10 @@ struct PythonUtility::convertFromPython<double>
     {
       std::string valueString = pyUnicodeToString(object);
       return atof(valueString.c_str());
+    }
+    else if (PyComplex_Check(object))
+    {
+      return PyComplex_RealAsDouble(object);
     }
     /*
   #ifdef HAVE_NUMPYC
@@ -613,5 +649,140 @@ struct PythonUtility::convertFromPython<bool>
   static bool get(PyObject *object)
   {
     return convertFromPython<bool>::get(object, false);
+  }
+};
+
+// ------------- convertToPython ----------------
+template<>
+struct PythonUtility::convertToPython<int>
+{
+  //! convert a type to a python object
+  static PyObject *get(int value)
+  {
+    return PyLong_FromLong(value);
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<double>
+{
+  //! convert a type to a python object
+  static PyObject *get(double value)
+  {
+    return PyFloat_FromDouble(value);
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<std::string>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::string value)
+  {
+    return PyUnicode_FromString(value.c_str());
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<global_no_t>
+{
+  //! convert a type to a python object
+  static PyObject *get(global_no_t value)
+  {
+    return PyLong_FromLongLong(value);
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<std::size_t>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::size_t value)
+  {
+    return PyLong_FromLongLong(value);
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<PyObject *>
+{
+  //! convert a type to a python object
+  static PyObject *get(PyObject * value)
+  {
+    return value;
+  }
+};
+
+template<>
+struct PythonUtility::convertToPython<bool>
+{
+  //! convert a type to a python object
+  static PyObject *get(bool value)
+  {
+    return PyBool_FromLong(value);
+  }
+};
+
+template<typename ValueType>
+struct PythonUtility::convertToPython<std::vector<ValueType>>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::vector<ValueType> &value)
+  {
+    PyObject *result = PyList_New(value.size());
+    for (int i = 0; i < value.size(); i++)
+    {
+      PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
+      PyList_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
+  }
+};
+
+template<typename ValueType, int nComponents>
+struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::array<ValueType,nComponents> &value)
+  {
+    PyObject *result = PyTuple_New(nComponents);
+    for (int i = 0; i < nComponents; i++)
+    {
+      PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
+      PyTuple_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
+  }
+};
+
+template<typename ValueType, global_no_t nComponents>
+struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::array<ValueType,nComponents> &value)
+  {
+    PyObject *result = PyTuple_New(nComponents);
+    for (int i = 0; i < nComponents; i++)
+    {
+      PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
+      PyTuple_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
+  }
+};
+
+template<typename ValueType, unsigned long nComponents>
+struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
+{
+  //! convert a type to a python object
+  static PyObject *get(std::array<ValueType,nComponents> &value)
+  {
+    PyObject *result = PyTuple_New(nComponents);
+    for (int i = 0; i < nComponents; i++)
+    {
+      PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
+      PyTuple_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
   }
 };

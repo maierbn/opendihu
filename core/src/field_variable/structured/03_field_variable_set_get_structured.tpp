@@ -198,6 +198,13 @@ extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceTyp
 
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, Vec petscVector)
+{
+  this->values_->setValues(componentNo, petscVector);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> fieldVariable)
 {
   assert(fieldVariable->partitionedPetscVec());

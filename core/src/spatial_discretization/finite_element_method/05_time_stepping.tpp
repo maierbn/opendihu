@@ -22,8 +22,8 @@ namespace SpatialDiscretization
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-FiniteElementMethodTimeStepping(DihuContext context)
-  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context),
+FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
+  : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context, functionSpace),
   DiscretizableInTime(SolutionVectorMapping()), linearSolver_(nullptr), ksp_(nullptr)
 {
   // The solutionVectorMapping_ object stores the information which component of the solution will be further used.
@@ -60,9 +60,9 @@ initialize()
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
-initialize(double timeStepWidth)
+initializeForImplicitTimeStepping()
 {
-  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initialize(timeStepWidth=" << timeStepWidth << ")";
+  LOG(DEBUG) << "FiniteElementMethodTimeStepping::initializeForImplicitTimeStepping()";
 
   // initialize everything needed for implicit time stepping
   // currently this is executed regardless of explicit or implicit time stepping scheme
@@ -75,10 +75,7 @@ initialize(double timeStepWidth)
   this->setMassMatrix();
 
   // compute inverse lumped mass matrix
-  setInverseLumpedMassMatrix();
-
-  // initialize and compute the system matrix
-  //setSystemMatrix(timeStepWidth);
+  this->setInverseLumpedMassMatrix();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

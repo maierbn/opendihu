@@ -15,19 +15,26 @@ innervation_zone_width = 0.  # cm
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_0D = 3e-3                      # timestep width of ODEs
-output_timestep = 1e0             # timestep for output files
-end_time = 1.0                   # end simulation time
+dt_0D = 1e-3                      # timestep width of ODEs
+dt_1D = dt_0D
+output_timestep = 1e-1             # timestep for output files
+end_time = 10.0                   # end simulation time
 #end_time = dt_0D
+
+Am = 0.1
 
 # input files
 #mesh_file = "../input/mesh_tiny"
 mesh_file = "../input/mesh_small"
 #mesh_file = "../input/mesh_normal"
+#mesh_file = "../input/mesh_big"
 cellml_file = "../input/hodgkin_huxley_1952.c"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"
+
+if "hodgkin" in cellml_file:
+  Cm = 1.0
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -102,7 +109,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     if z_index_center-1 <= k <= z_index_center+1:
       parameters[dof_no_local] = stimulation_current
   
-      print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
+      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
         #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), compartment_gets_stimulated))
@@ -147,7 +154,7 @@ config = {
     "cm": Cm,
     "timeStepWidth": dt_0D,
     "endTime": end_time,
-    "timeStepOutputInterval": 1,
+    "timeStepOutputInterval": 50,
     "solverName": "activationSolver",
 #    "compartmentRelativeFactors": [
 #      [...],
@@ -171,9 +178,9 @@ config = {
         "dirichletBoundaryConditions": {},
         "diffusionTensor": [                 # fiber direction is (1,0,0)
           1, 0, 0,
-          0, 1, 0,
-          0, 0, 1
-        ],
+          0, 0, 0,
+          0, 0, 0
+        ], 
         "extracellularDiffusionTensor": [
           2, 0, 0,
           0, 1, 0,
@@ -203,7 +210,7 @@ config = {
       } for compartment_no in range(nCompartments)
     ],
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": False},
       #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
       #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
     ]

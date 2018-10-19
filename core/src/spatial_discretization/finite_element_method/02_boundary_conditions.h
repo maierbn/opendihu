@@ -15,14 +15,17 @@ namespace SpatialDiscretization
  */
 template<typename FunctionSpaceType, typename QuadratureType, typename Term, typename Dummy= Term>
 class BoundaryConditions :
-  public FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>
+  public FiniteElementMethodMatrixInverseLumpedMass<FunctionSpaceType, QuadratureType, Term>
 {
 public:
   // use constructor of base class
-  using FiniteElementMethodMatrix<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodMatrix;
+  using FiniteElementMethodMatrixInverseLumpedMass<FunctionSpaceType, QuadratureType, Term>::FiniteElementMethodMatrixInverseLumpedMass;
 
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
+
+  //! set the dirichlet boundary condition object, this can be done to set BC from within the C++ code, not from python config
+  void setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions);
 
 protected:
 

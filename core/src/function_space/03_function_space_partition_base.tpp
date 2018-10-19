@@ -17,6 +17,14 @@ FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager,
 }
 
 template<typename MeshType,typename BasisFunctionType>
+void FunctionSpacePartitionBase<MeshType,BasisFunctionType>::
+setMeshPartition(std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition)
+{
+  this->meshPartition_ = meshPartition;
+  LOG(DEBUG) << "use given meshPartition";
+}
+
+template<typename MeshType,typename BasisFunctionType>
 std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> 
 FunctionSpacePartitionBase<MeshType,BasisFunctionType>::
 meshPartition() const

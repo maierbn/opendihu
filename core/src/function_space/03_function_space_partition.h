@@ -32,6 +32,9 @@ public:
   //! constructor
   FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
   
+  //! set the partition, call this prior to initialize to not initialize the partition from settings but use the given meshPartition
+  void setMeshPartition(std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition);
+
   //! get the partition
   std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition() const;
   

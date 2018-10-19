@@ -7,10 +7,11 @@
 
 Import('env')     # import Environment object from calling SConstruct
 
-testcases = [
-  "cellml",
-]
-#testcases = ["diffusion_2d_structured_regular_fixed_linear",]
+# if the option no_tests was given, quit the script
+if not env['no_examples']:
+      
+  # define the source files
+  src_files = ["src/laplace_structured_linear.cpp"]
 
-for testcase in testcases:
-  env.Program(target = testcase, source = "src/{}.cpp".format(testcase))
+  # create the main executable
+  env.Program(target = 'parallel_fiber_estimation', source = src_files)

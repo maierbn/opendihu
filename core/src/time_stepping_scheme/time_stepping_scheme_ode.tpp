@@ -119,7 +119,7 @@ initialize()
 
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
-  discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
+  discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
 
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
     = discretizableInTime_.functionSpace();

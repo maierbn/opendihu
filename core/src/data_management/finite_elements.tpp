@@ -41,6 +41,8 @@ template<typename FunctionSpaceType>
 void FiniteElements<FunctionSpaceType,Equation::Dynamic::AnisotropicDiffusion>::
 initialize()
 {
+  LOG(DEBUG) << "Data::FiniteElements::initialize";
+
   FiniteElementsBase<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor if there is any

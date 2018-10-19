@@ -29,7 +29,7 @@ outlier_top = 1
 outlier_bottom = 2
   
 # read csv file
-report_filename = "build_release/logs/log_solver_scaling_serial.csv"
+report_filename = "build_release/logs/log_solver_scaling_serial2.csv"
 
 caption = u'Linear solver serial scaling, Hazel Hen'
 
@@ -226,9 +226,10 @@ output_path = ""
 colors = {
   column_key_map["duration_total"]: "ko-",      # total
   column_key_map["duration_0D"]: "yd-",      # 0D
-  "cg_"+str(column_key_map["duration_1D"]): "rv-",      # 1D CG
-  "lu_"+str(column_key_map["duration_1D"]): "rd--",      # 1D LU
-  "gmres_"+str(column_key_map["duration_1D"]): "ro-.",      # 1D GMRES
+  "cg_"+str(column_key_map["duration_1D"]): "rv--",      # 1D CG
+  "lu_"+str(column_key_map["duration_1D"]): "gd-.",      # 1D LU
+  "gmres_"+str(column_key_map["duration_1D"]): "bo:",      # 1D GMRES
+  "gamg_"+str(column_key_map["duration_1D"]): "cs--",      # 1D GAMG
   "38o": "gs-",      # 3D
   "39o": "bp-",     # 1D->3D
   "40o": "c<-",      # 3D->1D
@@ -255,6 +256,7 @@ labels = {
   "cg_"+str(column_key_map["duration_1D"]): "solver 1D model (CG)",      # 1D
   "lu_"+str(column_key_map["duration_1D"]): "solver 1D model (LU)",      # 1D
   "gmres_"+str(column_key_map["duration_1D"]): "solver 1D model (GMRES)",      # 1D
+  "gamg_"+str(column_key_map["duration_1D"]): "solver 1D model (AMG)",      # 1D
   "38o": "solver 3D model",      # 3D
   "39o": u"homogenization, 1D to 3D",     # 1D->3D
   "40o": u"interpolation, 3D to 1D",      # 3D->1D

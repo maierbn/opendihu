@@ -21,7 +21,7 @@ public:
   virtual void initialize() = 0;
   
   //! initialize timestepping
-  virtual void initialize(double timeStepWidth) = 0;
+  virtual void initializeForImplicitTimeStepping() = 0;
 
   //! timestepping rhs function f of equation u_t = f(u,t), compute output = f(u,t) where u=input
   virtual void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime) = 0;

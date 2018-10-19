@@ -144,6 +144,9 @@ public:
   //! set values of a specific component from another vector, this is the opposite operation to extractComponent
   void setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable);
 
+  //! set the values for the given component from a petsc Vec, name is only for debugging output
+  void setValues(int componentNo, Vec petscVector, std::string name = "");
+
   //! extract a single component
   void extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
 

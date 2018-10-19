@@ -35,13 +35,6 @@ computeInverseMassMatrixTimesRightHandSide(Vec &result)
   // set matrix used for linear system and preconditioner to ksp context
   ierr = KSPSetOperators(*ksp_, massMatrix->valuesGlobal(), massMatrix->valuesGlobal()); CHKERRV(ierr);
 
-#if 0
-  // non zero initial values
-  PetscScalar scalar = .5;
-  ierr = VecSet(result, scalar); CHKERRV(ierr);
-  ierr = KSPSetInitialGuessNonzero(*ksp_, PETSC_TRUE); CHKERRV(ierr);
-#endif
-
   // solve the system, KSP assumes the initial guess is to be zero (and thus zeros it out before solving)
   ierr = KSPSolve(*ksp_, rightHandSide, result); CHKERRV(ierr);
 

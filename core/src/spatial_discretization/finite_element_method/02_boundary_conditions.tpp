@@ -20,6 +20,13 @@ setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled)
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
+setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions)
+{
+  this->dirichletBoundaryConditions_ = dirichletBoundaryConditions;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy>
+void BoundaryConditions<FunctionSpaceType,QuadratureType,Term,Dummy>::
 applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)

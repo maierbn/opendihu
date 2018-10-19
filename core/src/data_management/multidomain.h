@@ -51,6 +51,9 @@ public:
   //! return the relative factor f_r of the given compartment, at each point
   std::shared_ptr<FieldVariableType> compartmentRelativeFactor(int compartmentNo);
 
+  //! a field variable with constant value of zero, needed for the nested rhs vector
+  std::shared_ptr<FieldVariableType> zero();
+
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
 
@@ -83,6 +86,7 @@ private:
   std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;  ///< the Vm value (transmembrane potential)
   std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactor_;  ///< the relative factor f_r of the given compartment, at each point
   std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
+  std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
 };
 
 } // namespace Data

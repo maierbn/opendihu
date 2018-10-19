@@ -145,6 +145,9 @@ def extract_data(data):
     datasets[key]['value'].append(new_data)
     n += 1
     
+  ff = open("time_log.csv","w")
+  ff.write("timestamp,rankNo,nRanks,hostname,duration,ok?\n")
+    
   # compute mean value
   for key in datasets:
     
@@ -160,15 +163,18 @@ def extract_data(data):
       for j in range(len(datasets[key]['value'])):
         value = datasets[key]['value'][j][i]
         
+        written_to_ff = False
         if i == column_key_map["duration_total"] and "w" in key:
           nF = datasets[key]['value'][j][column_key_map["nInstancesComputedGlobally"]]
           nM = datasets[key]['value'][j][column_key_map["nElements1D"]] * nF
           print "key: {} duration_total, hostname: {}, rank: {}, date: {}, #M: {}, #F: {}, value: {}".format(key, datasets[key]['value'][j][column_key_map["hostname"]], datasets[key]['value'][j][column_key_map["rankNo"]], datasets[key]['value'][j][column_key_map["timestamp"]], nM, nF, value)
-      
+          
         if i == column_key_map["duration_1D"] and "w" in key:
           nF = datasets[key]['value'][j][column_key_map["nInstancesComputedGlobally"]]
           nM = datasets[key]['value'][j][column_key_map["nElements1D"]] * nF
           print "key: {} duration_1D,    hostname: {}, rank: {}, date: {}, #M: {}, #F: {}, value: {}".format(key, datasets[key]['value'][j][column_key_map["hostname"]], datasets[key]['value'][j][column_key_map["rankNo"]], datasets[key]['value'][j][column_key_map["timestamp"]], nM, nF, value)
+          ff.write("{},{},{},{},{},{},".format(datasets[key]['value'][j][column_key_map["timestamp"]], datasets[key]['value'][j][column_key_map["rankNo"]], datasets[key]['value'][j][column_key_map["nRanks"]], datasets[key]['value'][j][column_key_map["hostname"]], nM, value))
+          written_to_ff = True
       
         if value != 0:
           if not ("w" in key and i == column_key_map["duration_1D"] and value > 30) \
@@ -176,10 +182,14 @@ def extract_data(data):
             
             if "w" in key and (i == column_key_map["duration_1D"] or  i == column_key_map["duration_total"]):
               print ("ok")
+              if written_to_ff:
+                ff.write("1\n")
             value_list.append(value)
           else:
             if "w" in key and (i == column_key_map["duration_1D"] or  i == column_key_map["duration_total"]):
               print ("not ok")
+              if written_to_ff:
+                ff.write("0\n")
           
       if i == column_key_map["duration_1D"] and key == "w00032":
         print "duration_1D for {}:".format(key)
@@ -245,9 +255,9 @@ print ""
 # plot
 # x-axis: n processes
 # y-axis: total time
-plt.rcParams.update({'font.size': 16})
-plt.rcParams['lines.linewidth'] = 3
-plt.rcParams['lines.markersize'] = 8
+plt.rcParams.update({'font.size': 22})
+plt.rcParams['lines.linewidth'] = 5
+plt.rcParams['lines.markersize'] = 10
 
 output_path = ""
 
@@ -293,7 +303,7 @@ labels = {
 ######################
 # create plot multi node
 caption = "Multi-node weak scaling, Hazel Hen,\n100 el./core"
-outfile = output_path+'weak_scaling.pdf'
+outfile = output_path+'weak_scaling.png'
 plt.figure("weak scaling", figsize=(8,8))
 
 output_path = ""

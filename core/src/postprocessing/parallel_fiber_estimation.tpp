@@ -171,7 +171,8 @@ generateParallelMesh()
   std::stringstream meshName;
   meshName << "meshLevel" << level;
 
-  context_.partitionManager()->setRankSubsetForNextCreatedMesh(Partition::RankSubset(0));
+  std::shared_ptr<Partition::RankSubset> currentRankSubset = std::make_shared<Partition::RankSubset>(0);
+  context_.partitionManager()->setRankSubsetForNextCreatedMesh(currentRankSubset);
   functionSpace_ = context_.meshManager()->template createFunctionSpace<FunctionSpace>(meshName.str(), nodePositions, nElements);
 
   // solve laplace problem globally

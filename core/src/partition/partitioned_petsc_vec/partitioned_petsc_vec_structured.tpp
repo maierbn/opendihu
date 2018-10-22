@@ -233,7 +233,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
-    LOG(WARNING) << "getValues called in global vector representation, must be local, now set to local";
+    VLOG(1) << "getValues called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
   }
 
@@ -292,7 +292,7 @@ getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], 
 {
   if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
-    LOG(WARNING) << "getValuesGlobalPetscIndexing called in global vector representation, must be local, now set to local";
+    VLOG(1) << "getValuesGlobalPetscIndexing called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
   }
 
@@ -328,7 +328,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
 {
   if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
-    LOG(WARNING) << "setValues called in global vector representation, must be local, now set to local";
+    VLOG(1) << "setValues called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
   }
 
@@ -404,7 +404,7 @@ setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
   if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
-    LOG(DEBUG) << "setValue called in global vector representation, must be local, now set to local";
+    VLOG(1) << "setValue called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
   }
 
@@ -496,7 +496,7 @@ valuesLocal(int componentNo)
 
   if(this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
-    LOG(DEBUG) << "valuesLocal called in not local vector representation ("
+    VLOG(1) << "valuesLocal called in not local vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]
       <<"), now set to local (without considering ghost dofs, call startGhostManipulation if ghosts are needed!)";
     setRepresentationLocal();
@@ -515,7 +515,7 @@ valuesGlobal(int componentNo)
 
   if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
-    LOG(DEBUG) << "valuesGlobal called in not global vector representation ("
+    VLOG(1) << "valuesGlobal called in not global vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]
       <<"), now set to global (without considering ghost dofs, call finishGhostManipulation if ghosts are needed!)";
     setRepresentationGlobal();
@@ -646,7 +646,7 @@ extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSp
 {
   if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
-    LOG(DEBUG) << "Called extractComponents for global representation, representation needs to be local or contiguous, set to local";
+    VLOG(1) << "Called extractComponents for global representation, representation needs to be local or contiguous, set to local";
     setRepresentationLocal();
   }
 

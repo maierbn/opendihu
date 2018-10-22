@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 15.0
+end_time = 10.0
 
 import numpy as np
 import matplotlib 
@@ -34,7 +34,7 @@ fibre_file = "../input/laplace3d_structured_linear"
 #fibre_file = "../input1000/laplace3d_structured_quadratic"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
-firing_times_file = "../input/MU_firing_times_load_balancing.txt"
+firing_times_file = "../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
@@ -65,12 +65,12 @@ elif "hodgkin_huxley" in cellml_file:
   
 
 def getMotorUnitNo(fibre_no):
-  return (int)(0.8*int(fibre_distribution[fibre_no % len(fibre_distribution)]-1))
+  return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
 def fibreGetsStimulated(fibre_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = getMotorUnitNo(fibre_no)
+  mu_no = (int)(getMotorUnitNo(fibre_no)*0.8)
   
   # determine if fibre fires now
   index = int(current_time * frequency)
@@ -241,8 +241,7 @@ if rank_no == 0:
         first_stimulation = current_time
         break
   
-    mu_no = getMotorUnitNo(fibre_no_index)
-    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, mu_no, first_stimulation))
+    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
   "scenarioName": "1e3_fibers_1e4_cores",

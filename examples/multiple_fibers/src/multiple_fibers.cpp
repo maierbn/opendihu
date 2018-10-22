@@ -14,16 +14,21 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  LOG(DEBUG)<<std::string(80, '=');
-  
+  // define problem
   Control::MultipleInstances<
-    OperatorSplitting::Godunov<
-      TimeSteppingScheme::ExplicitEuler<
-        CellmlAdapter<57>
+    OperatorSplitting::Strang<
+      TimeSteppingScheme::Heun<
+        CellmlAdapter<
+          4,   // 57 for Hodgkin-Huxley
+          FunctionSpace::FunctionSpace<
+            Mesh::StructuredDeformableOfDimension<1>,
+            BasisFunction::LagrangeOfOrder<1>
+          >
+        >  
       >,
-      TimeSteppingScheme::ExplicitEuler<
+      TimeSteppingScheme::ImplicitEuler<
         SpatialDiscretization::FiniteElementMethod<
-          Mesh::StructuredRegularFixedOfDimension<1>,
+          Mesh::StructuredDeformableOfDimension<1>,
           BasisFunction::LagrangeOfOrder<1>,
           Quadrature::Gauss<2>,
           Equation::Dynamic::IsotropicDiffusion
@@ -32,6 +37,7 @@ int main(int argc, char *argv[])
     >
   > problem(settings);
   
+  // run problem
   problem.run();
   
   return EXIT_SUCCESS;

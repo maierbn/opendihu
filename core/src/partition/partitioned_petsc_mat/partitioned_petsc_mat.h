@@ -4,8 +4,8 @@
 
 #include "control/types.h"
 #include "partition/rank_subset.h"
-#include "partition/partitioned_petsc_mat_base.h"
-#include "partition/01_mesh_partition.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_base.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 /** Global numbering: such that each rank has its own contiguous subset of the total range.
  *  Local numbering: ghost elements
@@ -163,5 +163,5 @@ protected:
 template<typename FunctionSpaceType>
 std::ostream &operator<<(std::ostream &stream, const PartitionedPetscMat<FunctionSpaceType> &matrix);
 
-#include "partition/partitioned_petsc_mat_structured.tpp"
-#include "partition/partitioned_petsc_mat_unstructured.tpp"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_structured.tpp"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_unstructured.tpp"

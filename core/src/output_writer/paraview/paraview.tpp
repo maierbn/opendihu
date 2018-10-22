@@ -99,6 +99,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     fieldVariable.functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(fieldVariable.functionSpace());
 
     // ensure that ghost values are in place
+    fieldVariable.setRepresentationGlobal();
     fieldVariable.startGhostManipulation();
 
     // get all local values including ghosts for the components

@@ -18,7 +18,7 @@ namespace Data
 
 template<typename FunctionSpaceType,typename BaseDataType>
 StreamlineTracer<FunctionSpaceType,BaseDataType>::
-StreamlineTracer(DihuContext context) : Data<FunctionSpaceType>(context), fibreNo_(0)
+StreamlineTracer(DihuContext context) : Data<FunctionSpaceType>(context), fiberNo_(0)
 {
 }
 
@@ -57,27 +57,27 @@ createPetscObjects()
 
 template<typename FunctionSpaceType,typename BaseDataType>
 void StreamlineTracer<FunctionSpaceType,BaseDataType>::
-createFibreMesh(const std::vector<Vec3> &nodePositions)
+createfiberMesh(const std::vector<Vec3> &nodePositions)
 {
-  std::shared_ptr<FunctionSpaceFibre> meshPtr;
+  std::shared_ptr<FunctionSpacefiber> meshPtr;
  
-  // create name for fibre mesh 
+  // create name for fiber mesh 
   std::stringstream name;
-  name << "Fibre" << std::setw(5) << std::setfill('0') << fibreNo_;
-  fibreNo_++;
+  name << "fiber" << std::setw(5) << std::setfill('0') << fiberNo_;
+  fiberNo_++;
   
   // set number of elements. We have 1D linear Lagrange elements, i.e. 2 nodes per element
   const int nElements = nodePositions.size()-1;
   std::array<element_no_t,1> nElementsPerCoordinateDirection{nElements}; 
   
   // create mesh by meshManager
-  meshPtr = this->context_.meshManager()->template createFunctionSpace<FunctionSpaceFibre>(name.str(), nodePositions, nElementsPerCoordinateDirection);
+  meshPtr = this->context_.meshManager()->template createFunctionSpace<FunctionSpacefiber>(name.str(), nodePositions, nElementsPerCoordinateDirection);
   
   // get geometry field 
-  std::shared_ptr<FieldVariableFibreGeometry> geometryField = std::make_shared<FieldVariableFibreGeometry>(meshPtr->geometryField());
+  std::shared_ptr<FieldVariablefiberGeometry> geometryField = std::make_shared<FieldVariablefiberGeometry>(meshPtr->geometryField());
   
   // add geometry field
-  this->fibreGeometry_.push_back(geometryField);
+  this->fiberGeometry_.push_back(geometryField);
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
@@ -126,7 +126,7 @@ getOutputFieldVariables()
 {
   return std::tuple_cat(baseData_->getOutputFieldVariables(),
                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(gradient_),
-                        std::tuple<std::vector<std::shared_ptr<FieldVariableFibreGeometry>>>(fibreGeometry_)
+                        std::tuple<std::vector<std::shared_ptr<FieldVariablefiberGeometry>>>(fiberGeometry_)
                        );
 }
 

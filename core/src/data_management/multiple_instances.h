@@ -43,8 +43,8 @@ public:
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> MeshFibre;
-  typedef FieldVariable::FieldVariable<MeshFibre,3> FieldVariableFibreGeometry;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Meshfiber;
+  typedef FieldVariable::FieldVariable<Meshfiber,3> FieldVariablefiberGeometry;
   
   //! field variables that will be output by outputWriters
   typedef std::tuple<std::vector<typename BaseDataType::OutputFieldVariables>> OutputFieldVariables;

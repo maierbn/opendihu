@@ -9,7 +9,7 @@
 
 #include "field_variable/unstructured/element_to_dof_mapping.h"
 #include "field_variable/unstructured/exfile_representation.h"
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {

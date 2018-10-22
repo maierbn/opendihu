@@ -28,7 +28,7 @@ public:
   Multidomain(DihuContext context);
 
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
-  std::shared_ptr<GradientFieldVariableType> fibreDirection();
+  std::shared_ptr<GradientFieldVariableType> fiberDirection();
 
   //! return the field variable of the potential for the Laplace potential flow problem
   std::shared_ptr<FieldVariableType> flowPotential();
@@ -62,7 +62,8 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<GradientFieldVariableType>,     // fibreDirection
+    std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
+    std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
     std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
     std::vector<std::shared_ptr<CellMLFieldVariableType>>,        // subcellularStates
@@ -78,8 +79,8 @@ private:
   void createPetscObjects() override;
 
   int nCompartments_;     ///< number of compartments i.e. motor units
-  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibres
-  std::shared_ptr<GradientFieldVariableType> fibreDirection_; ///< the direction of fibres
+  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibers
+  std::shared_ptr<GradientFieldVariableType> fiberDirection_; ///< the direction of fibers
   std::vector<std::shared_ptr<CellMLFieldVariableType>> subcellularStates_;  ///< the Vm value for the compartments
   std::vector<std::shared_ptr<CellMLFieldVariableType>> subcellularIncrement_;              ///< increment helper variable
   std::vector<std::shared_ptr<FieldVariableType>> ionicCurrent_;  ///< -1/Cm I_ion(Vm) for the next time step

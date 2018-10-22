@@ -1,9 +1,9 @@
-#include "partition/partitioned_petsc_vec_base.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
 template<typename FunctionSpaceType>
 PartitionedPetscVecBase<FunctionSpaceType>::
 PartitionedPetscVecBase(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, std::string name) :
-  name_(name), meshPartition_(meshPartition)
+  name_(name), meshPartition_(meshPartition), currentRepresentation_(Partition::values_representation_t::representationGlobal)
 {
 }
 
@@ -29,3 +29,9 @@ name()
   return this->name_;
 }
 
+template<typename FunctionSpaceType>
+Partition::values_representation_t PartitionedPetscVecBase<FunctionSpaceType>::
+currentRepresentation()
+{
+  return currentRepresentation_;
+}

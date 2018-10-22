@@ -8,9 +8,13 @@ template<typename FunctionSpaceType>
 void FieldVariableVector<FunctionSpaceType,1>::
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField)
 {
+  this->values_->setRepresentationGlobal();
+  this->values_->startGhostManipulation();
+
   // initialize gradient field variable to 0
   gradientField->zeroEntries();
 
+  gradientField->setRepresentationGlobal();
   gradientField->startGhostManipulation();
   gradientField->zeroGhostBuffer();
 
@@ -19,8 +23,26 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   const int D = FunctionSpaceType::dim();
 
   const dof_no_t nDofsWithGhosts = this->functionSpace_->nDofsLocalWithGhosts();
-  std::vector<int> nSummands(nDofsWithGhosts,0.0);   ///< the number of elements that are adjacent to the node
+  std::vector<int> nSummands(nDofsWithGhosts, 0);   ///< the number of elements that are adjacent to the node
 
+  // count number evaluations for every dof
+  // loop over elements
+  for (element_no_t elementNo = 0; elementNo < this->functionSpace_->nElementsLocal(); elementNo++)
+  {
+    // get local dof nos of this element
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
+
+    // loop over dofs in element, where to compute the gradient
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      dof_no_t dofNo = elementDofs[dofIndex];
+
+      // increase counter of number of summands for that dof
+      nSummands[dofNo]++;
+    }
+  }
+
+  // compute gradient value divided by number of evaluations
   // loop over elements
   for (element_no_t elementNo = 0; elementNo < this->functionSpace_->nElementsLocal(); elementNo++)
   {
@@ -64,29 +86,34 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
       VLOG(2) << "   local dof " << dofNo << ", add value " << gradPhiWorldSpace;
 
-      // add value to gradient field variable
-      gradientField->setValue(dofNo, gradPhiWorldSpace, ADD_VALUES);
+      gradPhiWorldSpace /= nSummands[dofNo];
 
-      // increase counter of number of summands for that dof
-      nSummands[dofNo]++;
+      int rankNo;
+      MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+
+      // add value to gradient field variable
+      if (VLOG_IS_ON(2))
+      {
+        if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
+        {
+          LOG(DEBUG) << "dofNo " << dofNo << " gradPhiWorldSpace: " << gradPhiWorldSpace << ", nSummands[dofNo]: " << nSummands[dofNo]
+            << ",geometryValues: " << geometryValues << ", for this dof: " << geometryValues[dofIndex];
+          LOG(DEBUG) << "solutionValues: " << solutionValues[dofIndex] << ", all: " << solutionValues;
+        }
+      }
+
+      gradientField->setValue(dofNo, gradPhiWorldSpace, ADD_VALUES);
+      //VecD<D> test({1.0 + 0.1*(1+rankNo)});
+      //LOG(DEBUG) << "test: " << test;
+      //gradientField->setValue(dofNo, test, ADD_VALUES);
 
     }  // dofIndex
   }  // elementNo
 
   gradientField->finishGhostManipulation();
+  //gradientField->setRepresentationLocal();
 
-  // divide by number of summands
-  for (dof_no_t localDofNo = 0; localDofNo < this->functionSpace_->nDofsLocalWithoutGhosts(); localDofNo++)
-  {
-    VecD<D> value = gradientField->getValue(localDofNo);
-
-    VLOG(2) << "dof " << localDofNo << " value: " << value << ", nSummands: " << nSummands[localDofNo];
-
-
-    value /= nSummands[localDofNo];
-
-    gradientField->setValue(localDofNo, value, INSERT_VALUES);
-  }
+  //LOG(DEBUG) << "gradientField: " << *gradientField;
 }
 
 };  // namespace

@@ -802,16 +802,16 @@ valuesGlobal(int componentNo)
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-getContiguousValuesGlobal()
+getValuesContiguous()
 {
-  return this->values_->getContiguousValuesGlobal();
+  return this->values_->getValuesContiguous();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-restoreContiguousValuesGlobal()
+restoreValuesContiguous()
 {
-  this->values_->restoreContiguousValuesGlobal();
+  this->values_->restoreValuesContiguous();
 }
 
 template<int D, typename BasisFunctionType, int nComponents>

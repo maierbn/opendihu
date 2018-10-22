@@ -1,4 +1,4 @@
-#include "partition/partitioned_petsc_mat_base.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_base.h"
 
 
 template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>

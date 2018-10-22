@@ -51,7 +51,7 @@ protected:
 
   Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace, CellMLAdapterType::nStates()> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 
-  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fibre directions
+  FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
   FiniteElementMethodDiffusion finiteElementMethodDiffusion_;   ///< the finite element object that is used for the diffusion, only the stiffness matrix is computed by this object
   FiniteElementMethodDiffusion finiteElementMethodDiffusionTotal_;   ///< the finite element object that is used for the diffusion with diffusion tensor (sigma_i + sigma_e), bottom right block of system matrix
   std::vector<CellMLAdapterType> cellMLAdapters_;   ///< the cellml adapter objects that solves the cellml rhs, e.g. Hodgkin-Huxley model
@@ -67,6 +67,7 @@ protected:
   std::vector<Vec> subvectorsSolution_; ///< the sub vectors that are used for the solution nested vector
 
   std::vector<double> am_, cm_;  ///< the Am and Cm prefactors for the compartments, Am = surface-volume ratio, Cm = capacitance
+  int lastNumberOfIterations_;   ///< the number of iterations that were needed the last time to solve the linear system
 };
 
 }  // namespace

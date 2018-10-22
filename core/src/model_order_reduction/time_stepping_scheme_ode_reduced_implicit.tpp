@@ -38,8 +38,8 @@ advanceTimeSpan()
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
-  Vec &solution = this->timestepping_.data_->solution().getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution= this->solution().getContiguousValuesGlobal();
+  Vec &solution = this->timestepping_.data_->solution().getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &redSolution= this->solution().getValuesContiguous();
   
   // loop over time steps
   double currentTime = this->timestepping_.startTime_;
@@ -68,7 +68,7 @@ advanceTimeSpan()
     this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
   }
   
-  this->data_->solution().restoreContiguousValuesGlobal();
+  this->data_->solution().restoreValuesContiguous();
   
 }
 

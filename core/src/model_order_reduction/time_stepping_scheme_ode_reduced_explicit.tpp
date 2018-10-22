@@ -49,10 +49,10 @@ namespace ModelOrderReduction
     // debugging output of matrices
     //this->timestepping_.data().print();
     
-    Vec &solution = this->timestepping_.data().solution()->getContiguousValuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec &increment = this->timestepping_.data().increment()->getContiguousValuesGlobal();
-    Vec &redSolution= this->data_->redSolution()->getContiguousValuesGlobal();
-    Vec &redIncrement= this->data_->redIncrement()->getContiguousValuesGlobal();
+    Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
+    Vec &increment = this->timestepping_.data().increment()->getValuesContiguous();
+    Vec &redSolution= this->data_->redSolution()->getValuesContiguous();
+    Vec &redIncrement= this->data_->redIncrement()->getValuesContiguous();
     
     Mat &basis = this->data_->basis()->valuesGlobal();
     Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
@@ -97,7 +97,7 @@ namespace ModelOrderReduction
       this->outputWriterManager_.writeOutput(this->timestepping_.data(), timeStepNo, currentTime);
     }
     
-    this->timestepping_.data().solution()->restoreContiguousValuesGlobal();
+    this->timestepping_.data().solution()->restoreValuesContiguous();
     
   }
   

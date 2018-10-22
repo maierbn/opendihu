@@ -28,6 +28,15 @@ public:
   //! It sums up the values in the ghost buffer and the actual nodal value.
   void finishGhostManipulation();
 
+  //! set the internal representation to be global, i.e. using the global vectors, if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
+  void setRepresentationGlobal();
+
+  //! set the internal representation to be local, i.e. using the local vectors, ghost buffer is not filled (use startGhostManipulation to consider ghost dofs)
+  void setRepresentationLocal();
+
+  //! set the internal representation to be contiguous, i.e. using the contiguous vectors
+  void setRepresentationContiguous();
+
 };
 
 

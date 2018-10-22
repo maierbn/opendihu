@@ -3,9 +3,11 @@
 #include <numeric>
 #include <sstream>
 #include <iomanip>
+#include <mpi.h>
 
 #include "easylogging++.h"
 #include "petscksp.h"
+#include "utility/mpi_utility.h"
 
 // color codes: https://github.com/shiena/ansicolor/blob/master/README.md
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -126,6 +128,19 @@ std::string getStringMatrix(const Mat& matrix)
   MatGetLocalSize(matrix, &nRows, &nColumns);
   int nRowsGlobal, nColumnsGlobal;
   MatGetSize(matrix, &nRowsGlobal, &nColumnsGlobal);
+
+  PetscMPIInt nRanks;
+  MPIUtility::handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+
+  if (nRanks > 1)
+  {
+    std::stringstream s;
+    s << nRows << "x" << nColumns;
+    if (nRows != nRowsGlobal || nColumns != nColumnsGlobal)
+      s << " (global: " << nRowsGlobal << "x" << nColumnsGlobal << ")";
+    s << std::endl;
+    return s.str();
+  }
 
   std::vector<double> matrixValues;
   getMatrixEntries(matrix, matrixValues);

@@ -72,16 +72,16 @@ createPetscObjects()
   }
 
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
-  this->fibreDirection_ = this->functionSpace_->template createFieldVariable<3>("fibreDirection");
+  this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> Multidomain<FunctionSpaceType,nStatesCellML>::
-fibreDirection()
+fiberDirection()
 {
-  return this->fibreDirection_;
+  return this->fiberDirection_;
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
@@ -152,7 +152,7 @@ print() // use override in stead of extending the parents' print output.This way
   if (!VLOG_IS_ON(4))
     return;
 
-  VLOG(4) << *this->fibreDirection_;
+  VLOG(4) << *this->fiberDirection_;
 }
 
 template<typename FunctionSpaceType,int nStatesCellML>
@@ -180,7 +180,8 @@ getOutputFieldVariables()
     compartmentRelativeFactors.push_back(compartmentRelativeFactor_[i]);
   }
 
-  return std::make_tuple(this->fibreDirection_, extraCellularPotential_, transmembranePotentials, subcellularStates, compartmentRelativeFactors);
+  return std::make_tuple(this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
+                         transmembranePotentials, subcellularStates, compartmentRelativeFactors);
 }
 
 } // namespace

@@ -14,7 +14,7 @@
 #include "function_space/function_space.h"
 #include "mesh/unstructured_deformable.h"
 #include "basis_function/hermite.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Data
 {

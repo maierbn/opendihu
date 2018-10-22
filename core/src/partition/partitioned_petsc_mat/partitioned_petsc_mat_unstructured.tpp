@@ -1,4 +1,4 @@
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 //! constructor, create square sparse matrix
 template<int D, typename BasisFunctionType>

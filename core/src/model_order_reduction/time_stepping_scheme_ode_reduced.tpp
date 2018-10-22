@@ -47,8 +47,8 @@ void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
 {
   PetscErrorCode ierr;
   
-  Vec &solution = this->timestepping_.data().solution()->getContiguousValuesGlobal();
-  Vec &redSolution=this->data_->redSolution()->getContiguousValuesGlobal();
+  Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();
+  Vec &redSolution=this->data_->redSolution()->getValuesContiguous();
   Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
   
   // reduction step

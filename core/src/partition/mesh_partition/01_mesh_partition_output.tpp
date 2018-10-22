@@ -1,4 +1,4 @@
-#include "partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 #include <petscsys.h>
 

@@ -6,7 +6,7 @@
 #include "partition/rank_subset.h"
 #include "function_space/function_space.h"
 #include "mesh/type_traits.h"
-#include "partition/partitioned_petsc_vec_base.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
 
 // forward declaration
 namespace FunctionSpace
@@ -34,9 +34,6 @@ public:
   PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType,typename FunctionSpaceType::Mesh>> meshPartition, std::string name);
  
   //! constructor, copy from existing vector
-  PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs, std::string name);
-  
-  //! constructor, copy from existing vector
   template<int nComponents2>
   PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name);
   
@@ -55,8 +52,9 @@ public:
   //! wrapper to the PETSc VecSetValue, acting only on the local data
   void setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode);
   
-  //! set values from another vector
-  void setValues(PartitionedPetscVec<FunctionSpaceType,nComponents> &rhs);
+  //! set values from another vector, only the first components are copied, if nComponents != nComponents2
+  template<int nComponents2>
+  void setValues(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs);
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -74,12 +72,21 @@ public:
   Vec &valuesGlobal(int componentNo = 0);
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
-  Vec &getContiguousValuesGlobal();
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous();
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  void restoreContiguousValuesGlobal();
+  void restoreValuesContiguous();
+
+  //! set the internal representation to be global, for unstructured meshes this means "not contiguous", because there is no local or global vector
+  void setRepresentationGlobal();
+
+  //! set the internal representation to be local, for unstructured meshes this means "not contiguous", because there is no local or global vector
+  void setRepresentationLocal();
+
+  //! set the internal representation to be contiguous, i.e. using the contiguous vectors
+  void setRepresentationContiguous();
 
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
@@ -91,7 +98,6 @@ protected:
   
   std::array<Vec,nComponents> values_;  ///< the (serial) Petsc vectors that contains all the data, one for each component
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
-  bool valuesContiguousInUse_ = false;  ///< if the current representation of the vector is in valuesContiguous, not in the values vector
 };
 
 /** This is the partial specialization for structured meshes.
@@ -111,16 +117,15 @@ public:
   PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition, std::string name);
  
   //! constructor, copy from existing vector
-  PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name);
- 
-  //! constructor, copy from existing vector
   template<int nComponents2>
   PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name);
  
-  //! this has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
+  //! Communicates the ghost values from the global vectors to the local vector and sets the representation to local.
+  //! The representation has to be global, afterwards it is set to local.
   void startGhostManipulation();
   
-  //! this has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called)
+  //! Communicates the ghost values from the local vectors back to the global vector and sets the representation to global.
+  //! The representation has to be local, afterwards it is set to global.
   void finishGhostManipulation();
   
   //! zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the "old" ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.
@@ -138,8 +143,9 @@ public:
   //! for a single component vector set all values. values does not contain ghost dofs.
   void setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode);
 
-  //! set values from another vector
-  void setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs);
+  //! set values from another vector, only the first components are copied, if nComponents != nComponents2
+  template<int nComponents2>
+  void setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs);
 
   //! set values of a specific component from another vector, this is the opposite operation to extractComponent
   void setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable);
@@ -147,7 +153,8 @@ public:
   //! set the values for the given component from a petsc Vec, name is only for debugging output
   void setValues(int componentNo, Vec petscVector, std::string name = "");
 
-  //! extract a single component
+  //! extract a single component, this field variable can have any representation
+  //! It set the representation of extractedFieldVariable to local.
   void extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
@@ -169,12 +176,21 @@ public:
   Vec &valuesGlobal(int componentNo = 0);
   
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
-  Vec &getContiguousValuesGlobal();
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous();
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  void restoreContiguousValuesGlobal();
+  void restoreValuesContiguous();
+
+  //! set the internal representation to be global, i.e. using the global vectors, if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
+  void setRepresentationGlobal();
+
+  //! set the internal representation to be local, i.e. using the local vectors, ghost buffer is not filled (use startGhostManipulation to consider ghost dofs)
+  void setRepresentationLocal();
+
+  //! set the internal representation to be contiguous, i.e. using the contiguous vectors
+  void setRepresentationContiguous();
 
   //! get a vector of local dof nos (from meshPartition), without ghost dofs
   std::vector<PetscInt> &localDofNosWithoutGhosts();
@@ -193,12 +209,11 @@ protected:
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
-  bool valuesContiguousInUse_ = false;  ///< if the current representation of the vector is in valuesContiguous, not in the values vector
 };
 
 
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, PartitionedPetscVec<FunctionSpaceType,nComponents> &vector);
 
-#include "partition/partitioned_petsc_vec_default.tpp"
-#include "partition/partitioned_petsc_vec_structured.tpp"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_unstructured.tpp"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec_structured.tpp"

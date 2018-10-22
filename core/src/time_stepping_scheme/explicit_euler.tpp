@@ -33,8 +33,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
   //this->data_->print();
 
   // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
-  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
-  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
+  Vec &solution = this->data_->solution()->getValuesContiguous();
+  Vec &increment = this->data_->increment()->getValuesContiguous();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -79,7 +79,7 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
-  this->data_->solution()->restoreContiguousValuesGlobal();
+  this->data_->solution()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

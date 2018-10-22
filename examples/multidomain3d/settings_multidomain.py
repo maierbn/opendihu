@@ -18,10 +18,10 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_0D = 1e-3                      # timestep width of ODEs
 dt_1D = dt_0D
 output_timestep = 1e-1             # timestep for output files
-end_time = 10.0                   # end simulation time
+end_time = 500.0                   # end simulation time
 #end_time = dt_0D
 
-Am = 0.1
+Am = 0.001
 
 # input files
 #mesh_file = "../input/mesh_tiny"
@@ -71,19 +71,19 @@ elif "hodgkin_huxley" in cellml_file:
 def getMotorUnitNo(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
-def compartmentGetsStimulated(fibre_no, frequency, current_time):
+def compartmentGetsStimulated(compartment_no, current_time):
   # determine motor unit
-  mu_no = (int)(getMotorUnitNo(fibre_no)*0.8)
+  mu_no = (int)(getMotorUnitNo(compartment_no)*0.8)
   
-  # determine if fibre fires now
-  index = int(current_time * frequency)
+  # determine if MU fires now
+  index = int(current_time * stimulation_frequency)
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, compartment_no):
   
   # determine if fibre gets stimulated at the current time
-  compartment_gets_stimulated = compartmentGetsStimulated(compartment_no, stimulation_frequency, current_time)
+  compartment_gets_stimulated = compartmentGetsStimulated(compartment_no, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   
@@ -123,7 +123,7 @@ for bottom_node_index in mesh_data["bottom_nodes"]:
 for top_node_index in mesh_data["top_nodes"]:
   potential_flow_bc[top_node_index] = 1.0
   
-nCompartments = 1
+nCompartments = 5
   
 config = {
   "Meshes": {
@@ -136,13 +136,13 @@ config = {
   },
   "Solvers": {
     "potentialFlowSolver": {
-      "relativeTolerance": 1e-15,
+      "relativeTolerance": 1e-10,
       "maxIterations": 10000,
       "solverType": "gmres",
       "preconditionerType": "none"
     },
     "activationSolver": {
-      "relativeTolerance": 1e-15,
+      "relativeTolerance": 1e-5,
       "maxIterations": 10000,
       "solverType": "gmres",
       "preconditionerType": "none"
@@ -178,8 +178,8 @@ config = {
         "dirichletBoundaryConditions": {},
         "diffusionTensor": [                 # fiber direction is (1,0,0)
           1, 0, 0,
-          0, 0, 0,
-          0, 0, 0
+          0, 1, 0,
+          0, 0, 1
         ], 
         "extracellularDiffusionTensor": [
           2, 0, 0,

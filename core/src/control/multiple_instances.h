@@ -7,12 +7,12 @@
 #include "control/dihu_context.h"
 #include "data_management/multiple_instances.h"
 #include "output_writer/manager.h"
-#include "partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 namespace Control
 {
 
-/** This class holds multiple instances of the template type, e.g. for having multiple fibres, which are each as in example electrophysiology
+/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
   */
 template<class TimeSteppingScheme>
 class MultipleInstances: public Runnable

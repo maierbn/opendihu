@@ -271,7 +271,7 @@ traceStreamlines()
   for (int streamlineNo = 0; streamlineNo != streamlines.size(); streamlineNo++)
   {
     LOG(DEBUG) << "seed point " << streamlineNo << ", number node positions: " << streamlines[streamlineNo].size();
-    this->data_.createFibreMesh(streamlines[streamlineNo]);
+    this->data_.createfiberMesh(streamlines[streamlineNo]);
   }
 }
 

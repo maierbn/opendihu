@@ -45,6 +45,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
     currentFieldVariable->functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(currentFieldVariable->functionSpace());
 
     // ensure that ghost values are in place
+    currentFieldVariable->setRepresentationGlobal();
     currentFieldVariable->startGhostManipulation();
 
     // get all local values including ghosts for the components

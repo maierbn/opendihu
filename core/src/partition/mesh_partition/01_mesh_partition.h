@@ -3,7 +3,7 @@
 #include <memory>
 #include <petscdmda.h>
 
-#include "partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/00_mesh_partition_base.h"
 #include "control/types.h"
 #include "partition/rank_subset.h"
 #include "mesh/type_traits.h"
@@ -334,6 +334,6 @@ std::ostream &operator<<(std::ostream &stream, std::shared_ptr<Partition::MeshPa
 std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlobalMapping);
 std::ostream &operator<<(std::ostream &stream, std::shared_ptr<ISLocalToGlobalMapping> localToGlobalMapping);
 
-#include "partition/01_mesh_partition_output.tpp"
-#include "partition/01_mesh_partition_structured.tpp"
-#include "partition/01_mesh_partition_unstructured.tpp"
+#include "partition/mesh_partition/01_mesh_partition_output.tpp"
+#include "partition/mesh_partition/01_mesh_partition_structured.tpp"
+#include "partition/mesh_partition/01_mesh_partition_unstructured.tpp"

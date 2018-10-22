@@ -1,4 +1,4 @@
-#include "partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/00_mesh_partition_base.h"
 
 #include <numeric>
 

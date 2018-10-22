@@ -10,8 +10,8 @@
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
 #include "function_space/mixed_function_space.h"
-#include "partition/partitioned_petsc_vec.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Data
 {

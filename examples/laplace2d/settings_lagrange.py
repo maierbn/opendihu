@@ -3,7 +3,7 @@ import numpy as np
 n = 4.
 m = n
 
-# boundary conditions
+# boundary conditions (for quadratic elements)
 bc = {}
 for i in range(int(2*n+1)):
   x = i/(2*n+1.)

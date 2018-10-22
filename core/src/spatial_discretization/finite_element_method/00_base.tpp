@@ -16,8 +16,8 @@
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
-#include "partition/partitioned_petsc_vec.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
 {

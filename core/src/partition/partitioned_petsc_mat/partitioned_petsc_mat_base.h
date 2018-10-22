@@ -54,4 +54,4 @@ protected:
 };
 
 
-#include "partition/partitioned_petsc_mat_base.tpp"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat_base.tpp"

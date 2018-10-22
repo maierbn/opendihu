@@ -9,8 +9,8 @@
 #include "data_management/data.h"
 #include "data_management/time_stepping.h"
 #include "field_variable/field_variable.h"
-#include "partition/partitioned_petsc_vec.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Data
 {

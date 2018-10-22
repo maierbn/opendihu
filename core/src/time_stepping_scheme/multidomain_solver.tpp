@@ -6,7 +6,7 @@
 #include "utility/petsc_utility.h"
 #include "data_management/multidomain.h"
 
-#define MONODOMAIN
+//#define MONODOMAIN
 
 namespace TimeSteppingScheme
 {
@@ -53,7 +53,8 @@ advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Multidomain solver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Multidomain solver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
+        << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
     // advance simulation time
@@ -67,14 +68,11 @@ advanceTimeSpan()
     // advance cellml
     for (int k = 0; k < nCompartments_; k++)
     {
-      VLOG(1) << "k=" << k;
-
-      // extract transmembranePotential from subcellularStates (TODO: could this be done using globalValues(0)?)
-      dataMultidomain_.subcellularStates(k)->extractComponent(0, dataMultidomain_.transmembranePotential(k));
+      VLOG(2) << "k=" << k;
 
       // get subcellular variable vectors
-      Vec subcellularStates = dataMultidomain_.subcellularStates(k)->getContiguousValuesGlobal();
-      Vec subcellularIncrement = dataMultidomain_.subcellularIncrement(k)->getContiguousValuesGlobal();
+      Vec subcellularStates = dataMultidomain_.subcellularStates(k)->getValuesContiguous();
+      Vec subcellularIncrement = dataMultidomain_.subcellularIncrement(k)->getValuesContiguous();
 
       // compute next delta_y = f(y)
       cellMLAdapters_[k].evaluateTimesteppingRightHandSideExplicit(subcellularStates, subcellularIncrement, timeStepNo, currentTime);
@@ -89,32 +87,39 @@ advanceTimeSpan()
       //dataMultidomain_.subcellularIncrement(k)->extractComponent(0, dataMultidomain_.ionicCurrent(k));
       //VLOG(2) << "ionicCurrent (should be first component of subcellularIncrement): " << *ionicCurrent;
 
+      VLOG(2) << " rhs before: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
+
       // compute the right hand side entry as rhs[k] = Vm_k^{*} = Vm_k^{i} - dt/Cm_k*I_ion(Vm_k^{i})
       // extract the 0th component of the subcellular states which is Vm at the intermediate timestep
-      dataMultidomain_.subcellularStates(k)->extractComponent(0, dataMultidomain_.transmembranePotential(k));
-      ierr = VecCopy(dataMultidomain_.transmembranePotential(k)->valuesLocal(), subvectorsRightHandSide_[k]); CHKERRV(ierr);   /// rhs[k] = Vm_k^{*}
+      dataMultidomain_.subcellularStates(k)->extractComponent(0, dataMultidomain_.transmembranePotential(k));    // set representation of transmembranePotential to local
+      //dataMultidomain_.transmembranePotential(k)->setRepresentationGlobal();   // set representation to global because this vector is the subvectorRightHandSide, but it shares memory with the local vector therefore this is not needed
 
-      //VLOG(2) << "dt = " << this->timeStepWidth_;
-      //VLOG(2) << "k=" << k << ", rhs: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
+      // this is also not needed, because transmembranePotential(k) is already set as the right hand side subvector
+      //ierr = VecCopy(dataMultidomain_.transmembranePotential(k)->valuesGlobal(), subvectorsRightHandSide_[k]); CHKERRV(ierr);   /// rhs[k] = Vm_k^{*}
+
+      VLOG(2) << "dt = " << this->timeStepWidth_;
+      VLOG(2) << "k=" << k << ", rhs after: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
     }
 
     LOG(DEBUG) << " Vm: ";
-    dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
+    //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
     // fill nested right hand side vector with subvectors
-    std::vector<PetscInt> indices(nCompartments_+1);
+    /*std::vector<PetscInt> indices(nCompartments_+1);
     std::iota(indices.begin(), indices.end(), 0);
     ierr = VecNestSetSubVecs(rightHandSide_, nCompartments_+1, indices.data(), subvectorsRightHandSide_.data()); CHKERRV(ierr);
-
+*/
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
     //ierr = VecCopy(rightHandSide_, solution_); CHKERRV(ierr);  // for debugging just copy rhs (Vm_k^{*}) to solution (Vm_k^{i+1})
 
     // write the solution from the nested vector back to data
+    // Note, thte subvectors are actually the global vectors for component 0 of dataMultidomain_.subcellularStates(k).
+    // dataMultidomain_.subcellularStates(k) is currently stored in contiguous representation. The setValues(0, subVectors[k]) copies the data to the contiguous vector.
     int nSubVectors = 0;
     Vec *subVectors;
     ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
@@ -123,19 +128,20 @@ advanceTimeSpan()
     for (int k = 0; k < nCompartments_; k++)
     {
       // copy the transmembrane potential from the subvector back to the subcellularStates vector, component 0 which is Vm
-      dataMultidomain_.subcellularStates(k)->setValues(0, subVectors[k]);
+      dataMultidomain_.subcellularStates(k)->setValues(0, subVectors[k]);   // note, subcellularStates is in contiguous representation
+      VLOG(2) << *dataMultidomain_.subcellularStates(k);
     }
 
-    VLOG(1) << "copy phi_e";
+    VLOG(2) << "copy phi_e";
 
     // get phi_e
-    dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
+    //dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
 
     LOG(DEBUG) << " Vm: ";
     dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
-    LOG(DEBUG) << " extraCellularPotential: ";
+    LOG(DEBUG) << " extraCellularPotential: " << PetscUtility::getStringVector(subVectors[nCompartments_]);
     LOG(DEBUG) << *dataMultidomain_.extraCellularPotential();
 
     // stop duration measurement
@@ -193,15 +199,18 @@ initialize()
 
   // compute a gradient field from the solution of the potential flow
   dataMultidomain_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
-  dataMultidomain_.flowPotential()->computeGradientField(dataMultidomain_.fibreDirection());
+  dataMultidomain_.flowPotential()->computeGradientField(dataMultidomain_.fiberDirection());
 
   LOG(DEBUG) << "flow potential: " << *dataMultidomain_.flowPotential();
-  LOG(DEBUG) << "fiber direction: " << *dataMultidomain_.fibreDirection();
+  LOG(DEBUG) << "fiber direction: " << *dataMultidomain_.fiberDirection();
+
+  //MPI_Barrier(MPI_COMM_WORLD);
+  //LOG(FATAL) << "end";
 
   // initialize the finite element class, from which only the stiffness matrix is needed
-  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fibreDirection());
+  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection());
   finiteElementMethodDiffusion_.initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
-  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fibreDirection(), true);
+  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), true);
 
   initializeCellMLAdapters();
 
@@ -239,7 +248,7 @@ initialize()
   // set values for Vm in compartments
   for (int k = 0; k < nCompartments_; k++)
   {
-    subvectorsRightHandSide_[k] = dataMultidomain_.ionicCurrent(k)->valuesGlobal();
+    subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();
     subvectorsSolution_[k] = dataMultidomain_.subcellularStates(k)->valuesGlobal(0);
   }
 
@@ -281,9 +290,9 @@ template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,ty
 void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
 initializeCellMLAdapters()
 {
-  if (VLOG_IS_ON(1))
+  if (VLOG_IS_ON(2))
   {
-    VLOG(1) << "CellMLAdapters settings: ";
+    VLOG(2) << "CellMLAdapters settings: ";
     PythonUtility::printDict(this->specificSettings_);
   }
 
@@ -328,7 +337,7 @@ setSystemMatrix(double timeStepWidth)
     // right column matrix
     double prefactor = -this->timeStepWidth_ / (am_[k]*cm_[k]);
 
-    VLOG(1) << "k=" << k << ", am: " << am_[k] << ", cm: " << cm_[k] << ", prefactor: " << prefactor;
+    VLOG(2) << "k=" << k << ", am: " << am_[k] << ", cm: " << cm_[k] << ", prefactor: " << prefactor;
 
     // create matrix as M^{-1}*K
     Mat matrixOnRightColumn;
@@ -349,8 +358,11 @@ setSystemMatrix(double timeStepWidth)
     // set on right column of the system matrix
     submatrices[k*(nCompartments_+1) + (nCompartments_+1) - 1] = matrixOnRightColumn;
 
-    VLOG(1) << "matrixOnRightColumn: " << PetscUtility::getStringMatrix(matrixOnRightColumn);
-    VLOG(1) << "set at index " << k*(nCompartments_+1) + (nCompartments_+1) - 1;
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "matrixOnRightColumn: " << PetscUtility::getStringMatrix(matrixOnRightColumn);
+      VLOG(2) << "set at index " << k*(nCompartments_+1) + (nCompartments_+1) - 1;
+    }
 
     // ---
     // diagonal matrix
@@ -360,8 +372,11 @@ setSystemMatrix(double timeStepWidth)
     // set on diagonal
     submatrices[k*(nCompartments_+1) + k] = matrixOnDiagonalBlock;
 
-    VLOG(1) << "matrixOnDiagonalBlock:" << PetscUtility::getStringMatrix(matrixOnDiagonalBlock);
-    VLOG(1) << "set at index " << k*(nCompartments_+1) + k;
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "matrixOnDiagonalBlock:" << PetscUtility::getStringMatrix(matrixOnDiagonalBlock);
+      VLOG(2) << "set at index " << k*(nCompartments_+1) + k;
+    }
 
     // ---
     // bottom row matrices
@@ -375,7 +390,10 @@ setSystemMatrix(double timeStepWidth)
     // MatDiagonalScale(A,l,NULL) computes A = diag(l)*A, this scales the rows of A with the values in l (each row with one entry of l)
     ierr = MatDiagonalScale(matrixOnBottomRow, compartmentRelativeFactor, NULL); CHKERRV(ierr);
 
-    VLOG(1) << "matrixOnBottomRow: " << PetscUtility::getStringMatrix(matrixOnBottomRow);
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << "matrixOnBottomRow: " << PetscUtility::getStringMatrix(matrixOnBottomRow);
+    }
 
     // for debugging zero all entries
 #ifdef MONODOMAIN
@@ -385,13 +403,16 @@ setSystemMatrix(double timeStepWidth)
     // set on bottom row of the system matrix
     submatrices[((nCompartments_+1) - 1)*(nCompartments_+1) + k] = matrixOnBottomRow;
 
-    VLOG(1) << "set at index " << ((nCompartments_+1) - 1)*(nCompartments_+1) + k;
+    VLOG(2) << "set at index " << ((nCompartments_+1) - 1)*(nCompartments_+1) + k;
   }
 
   // set bottom right matrix
   Mat stiffnessMatrixBottomRight = finiteElementMethodDiffusionTotal_.data().stiffnessMatrix()->valuesGlobal();
 
-  VLOG(1) << "stiffnessMatrixBottomRight:" << PetscUtility::getStringMatrix(stiffnessMatrixBottomRight);
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << "stiffnessMatrixBottomRight:" << PetscUtility::getStringMatrix(stiffnessMatrixBottomRight);
+  }
 
   // for debugging set to identity
 #ifdef MONODOMAIN
@@ -401,7 +422,7 @@ setSystemMatrix(double timeStepWidth)
 
   // set on bottom right
   submatrices[(nCompartments_+1)*(nCompartments_+1)-1] = stiffnessMatrixBottomRight;
-  VLOG(1) << "set at index " << (nCompartments_+1)*(nCompartments_+1)-1;
+  VLOG(2) << "set at index " << (nCompartments_+1)*(nCompartments_+1)-1;
 
   // create nested matrix
   ierr = MatCreateNest(this->dataMultidomain_.functionSpace()->meshPartition()->mpiCommunicator(),
@@ -431,7 +452,9 @@ solveLinearSystem()
   KSPConvergedReason convergedReason;
   ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
 
-  VLOG(1) << "Linear system of multidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
+  lastNumberOfIterations_ = numberOfIterations;
+
+  LOG(DEBUG) << "Linear system of multidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
     << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 }
 

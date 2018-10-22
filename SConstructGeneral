@@ -155,6 +155,9 @@ except: pass
 # add progress display target
 Progress(progress_function, interval=env["node_count_interval"])
 
+notify = env.Command(target='notify-send', source = None, action = 'notify-send "compilation complete" || true')
+AlwaysBuild('notify-send')
+    
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
 # All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0. 

@@ -3,8 +3,8 @@
 #include <Python.h>  // has to be the first included header
 
 #include "function_space/02_function_space_jacobian.h"
-#include "partition/01_mesh_partition.h"
-#include "partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/00_mesh_partition_base.h"
 
 // forward declaration
 namespace Partition 

@@ -13,7 +13,7 @@
 #include "field_variable/unstructured/node_to_dof_mapping.h"
 #include "field_variable/field_variable_data.h"
 #include "field_variable/unstructured/component.h"
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
@@ -96,12 +96,12 @@ public:
   Vec &valuesGlobal(int componentNo = 0);
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
-  Vec &getContiguousValuesGlobal();
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous();
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  void restoreContiguousValuesGlobal();
+  void restoreValuesContiguous();
 
   //! get the number of scale factors
   int getNumberScaleFactors(element_no_t elementGlobalNo) const;

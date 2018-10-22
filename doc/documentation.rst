@@ -65,9 +65,9 @@ When working on unit tests, you can temporarily only enable the test you are wor
 # Howto debug:
 1.GDB
 define the following alias:
-  alias gdb='gdb -ex=run --args '
+  alias gdbrun='gdb -ex=run --args '
 then simply run with gdb:
-gdb ./executable ../settings.py <further-arguments>
+gdbrun ./executable ../settings.py <further-arguments>
 After the program crashes you can inspect the stacktrace with the command "bt" inside gdb.
 
 2.Debugging output
@@ -82,7 +82,7 @@ After the program crashes you can inspect the stacktrace with the command "bt" i
   Then it will stop with the following message:
 0/2 INFO : Rank 0, PID 16614 is waiting for gdbResume=0 to become 1 
 
-sudo gdb -p 16614
+gdb -p 16614
 
 select-frame 2
 set var gdbResume = 1

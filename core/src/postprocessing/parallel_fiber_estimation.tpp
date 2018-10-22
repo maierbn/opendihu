@@ -5,7 +5,7 @@
 
 #include "utility/python_utility.h"
 #include "mesh/face_t.h"
-#include "partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 namespace Postprocessing
 {

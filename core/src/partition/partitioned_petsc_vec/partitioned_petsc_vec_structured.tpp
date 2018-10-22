@@ -1,34 +1,15 @@
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 //! constructor
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition,
                     std::string name) :
-  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, name), ghostManipulationStarted_(false)
+  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, name)
 {
   //dm_ = meshPartition->dmElements();
   
   createVector();
-}
-
-//! constructor, copy from existing vector
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs, std::string name) :
-  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), ghostManipulationStarted_(false)
-{
-  createVector();
-
-  // copy existing values
-  PetscErrorCode ierr;
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
-  {
-    ierr = VecCopy(rhs.valuesLocal(componentNo), vectorLocal_[componentNo]); CHKERRV(ierr);
-    /*ierr = VecGhostRestoreLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[i]); CHKERRV(ierr);
-    ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);*/
-  }
 }
   
 //! constructor, copy from existing vector
@@ -36,21 +17,16 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
 PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs, std::string name) :
-  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name), ghostManipulationStarted_(false)
+  PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name)
 {
   //dm_ = rhs.dm_;
   
   createVector();
-  
-  // copy existing values
-  PetscErrorCode ierr;
-  for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
-  {
-    ierr = VecCopy(rhs.valuesLocal(componentNo), vectorLocal_[componentNo]); CHKERRV(ierr);
-    /*ierr = VecGhostRestoreLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[i]); CHKERRV(ierr);
-    ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);*/
-  }
+
+  VLOG(2) << "\"" << this->name_ << "\" contruct vector from rhs \"" << rhs.name() << "\", representation: "
+    << Partition::valuesRepresentationString[rhs.currentRepresentation()];
+
+  setValues(rhs);
 }
   
 //! create a distributed Petsc vector, according to partition
@@ -86,7 +62,83 @@ createVector()
   }
 
   // createVector acts like startGhostManipulation as it also gets the local vector (VecGhostGetLocalForm) to work on.
-  ghostManipulationStarted_ = true;
+  this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
+}
+
+// set the internal representation to be global, i.e. using the global vectors
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setRepresentationGlobal()
+{
+  VLOG(2) << "\"" << this->name_ << "\" setRepresentationGlobal, previous representation: "
+    << Partition::valuesRepresentationString[this->currentRepresentation_];
+  // set the internal representation to be global, i.e. using the global vectors
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  {
+    // restore local vector back into global vector, does not consider ghost dofs
+    // use finishGhostManipulation to handle ghost dofs, that requires communication
+
+    PetscErrorCode ierr;
+    // loop over the components of this field variable
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecGhostRestoreLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
+    }
+    this->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    // this sets the representation to local
+    restoreValuesContiguous();
+
+    setRepresentationGlobal();
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setRepresentationLocal()
+{
+  VLOG(2) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
+    << Partition::valuesRepresentationString[this->currentRepresentation_];
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    // retrieve the local vector from the global vector, does not consider ghost dofs
+    // use startGhostManipulation to also set the correct values for the ghost dofs, that requires communication
+
+    PetscErrorCode ierr;
+    // loop over the components of this field variable
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
+    }
+    this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    // this sets the representation to local
+    restoreValuesContiguous();
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setRepresentationContiguous()
+{
+  VLOG(2) << "\"" << this->name_ << "\" setRepresentationContiguous, previous representation: "
+    << Partition::valuesRepresentationString[this->currentRepresentation_];
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  {
+    getValuesContiguous();
+  }
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    setRepresentationLocal();
+    getValuesContiguous();
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -95,13 +147,17 @@ startGhostManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" startGhostManipulation";
   
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+  {
+    LOG(FATAL) << "\"" << this->name_ << "\", startGhostManipulation called when representation is not global (but "
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "), this overwrites the previous values and fetches the last from the global vectors!" << std::endl
+      << "Call setRepresentationGlobal() before startGhostManipulation() or check if startGhostManipulation() "
+      << "is even necessary (because the representation is already local).";
+  }
+
   // copy the global values into the local vectors, distributing ghost values
   PetscErrorCode ierr;
-  /*if (ghostManipulationStarted_)
-  {
-    LOG(DEBUG) << "\"" << this->name_ << "\", startGhostManipulation called multiple times without finishGhostManipulation in between. (Creation of the vector also calls startGhostManipulation). "
-      << "That means that locally stored ghost values got overwritten with the actual values from the foreign owner rank.";
-  }*/
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -118,7 +174,8 @@ startGhostManipulation()
     //ierr = DMGlobalToLocalEnd(*dm_, vectorGlobal_[componentNo], INSERT_VALUES, vectorLocal_[componentNo]); CHKERRV(ierr);
     ierr = VecGhostGetLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
   }
-  ghostManipulationStarted_ = true;
+
+  this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -127,9 +184,11 @@ finishGhostManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" finishGhostManipulation";
   
-  if (!ghostManipulationStarted_)
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
-    LOG(ERROR) << "\"" << this->name_ << "\", finishGhostManipulation called without previous startGhostManipulation";
+    LOG(ERROR) << "\"" << this->name_ << "\", finishGhostManipulation called when representation is not local (it is "
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << "), (probably no previous startGhostManipulation)";
   }
   
   // Copy the local values vectors into the global vector. ADD_VALUES means that ghost values are reduced (summed up)
@@ -140,17 +199,14 @@ finishGhostManipulation()
     ierr = VecGhostRestoreLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]); CHKERRV(ierr);
     
     ierr = VecGhostUpdateBegin(vectorGlobal_[componentNo], ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
-    //ierr = VecZeroEntries(vectorGlobal_[componentNo]); CHKERRV(ierr);
-    //ierr = DMLocalToGlobalBegin(*dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
   
   // loop over the components of this field variable
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
     ierr = VecGhostUpdateEnd(vectorGlobal_[componentNo], ADD_VALUES, SCATTER_REVERSE); CHKERRV(ierr);
-    //ierr = DMLocalToGlobalEnd(*dm_, vectorLocal_[componentNo], ADD_VALUES, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
-  ghostManipulationStarted_ = false;
+  this->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
@@ -175,8 +231,14 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    LOG(WARNING) << "getValues called in global vector representation, must be local, now set to local";
+    setRepresentationLocal();
+  }
+
   // depending on which data representation is active, use vectorLocal or valuesContiguous
-  if (valuesContiguousInUse_)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
     if (componentNo > 0)
     {
@@ -198,7 +260,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
       ierr = VecGetValues(valuesContiguous_, ni, ix, y); CHKERRV(ierr);
     }
   }
-  else
+  else if(this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
     // this wraps the standard PETSc VecGetValues on the local vector
     PetscErrorCode ierr;
@@ -214,7 +276,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       str << ix[i] << " ";
     }
-    str << ") [valuesContiguousInUse_=" << valuesContiguousInUse_ << "]: ";
+    str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
     for (int i = 0; i < ni; i++)
     {
       str << y[i] << " ";
@@ -228,7 +290,13 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
-  assert(!valuesContiguousInUse_);
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    LOG(WARNING) << "getValuesGlobalPetscIndexing called in global vector representation, must be local, now set to local";
+    setRepresentationLocal();
+  }
+
+  assert(this->currentRepresentation_ == Partition::values_representation_t::representationLocal);
 
   // this wraps the standard PETSc VecGetValues on the global vector
   PetscErrorCode ierr;
@@ -258,6 +326,13 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    LOG(WARNING) << "setValues called in global vector representation, must be local, now set to local";
+    setRepresentationLocal();
+  }
+
+  // debugging output
   if (VLOG_IS_ON(3))
   {
     std::stringstream str;
@@ -272,12 +347,12 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       str << y[i] << " ";
     }
     str << (iora == INSERT_VALUES? "INSERT_VALUES" : (iora == ADD_VALUES? "ADD_VALUES" : "unknown"));
-    str << ") " << (valuesContiguousInUse_? " valuesContiguousInUse" : "");
+    str << ") [representation=" << Partition::valuesRepresentationString[this->currentRepresentation_] << "]: ";
     VLOG(3) << str.str();
   }
 
   // depending on which data representation is active, use vectorLocal or valuesContiguous
-  if (valuesContiguousInUse_)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
     if (componentNo > 0)
     {
@@ -299,7 +374,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
       ierr = VecSetValues(valuesContiguous_, ni, ix, y, iora); CHKERRV(ierr);
     }
   }
-  else
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
 
 #ifndef NDEBUG
@@ -327,77 +402,89 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    LOG(DEBUG) << "setValue called in global vector representation, must be local, now set to local";
+    setRepresentationLocal();
+  }
+
   VLOG(3) << "\"" << this->name_ << "\" setValue(componentNo=" << componentNo << ", row=" << row << ", value=" << value
     << (mode == INSERT_VALUES? "INSERT_VALUES" : (mode == ADD_VALUES? "ADD_VALUES" : "unknown"));
-  assert(!valuesContiguousInUse_);
 
-  // this wraps the standard PETSc VecSetValue on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValue(vectorLocal_[componentNo], row, value, mode); CHKERRV(ierr);
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  {
+    PetscErrorCode ierr;
+    ierr = VecSetValue(vectorLocal_[componentNo], row, value, mode); CHKERRV(ierr);
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    PetscErrorCode ierr;
+    PetscInt index = row + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
+    ierr = VecSetValue(valuesContiguous_, index, value, mode); CHKERRV(ierr);
+  }
 }
 
 //! set values from another vector
 template<typename MeshType,typename BasisFunctionType,int nComponents>
+template<int nComponents2>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents> &rhs)
+setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs)
 {
-  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs \"" << rhs.name() << "\"), this calls startGhostManipulation()";
-  assert(!valuesContiguousInUse_);
+  VLOG(3) << "\"" << this->name_ << "\" setValues(rhs vector \"" << rhs.name() << "\"), rhs representation: "
+    << Partition::valuesRepresentationString[rhs.currentRepresentation()];
 
+  // copy existing values from rhs PartitionedPetscVec, depending on the rhs representation
   PetscErrorCode ierr;
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  if (rhs.currentRepresentation() == Partition::values_representation_t::representationGlobal)
   {
-    ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]); CHKERRV(ierr);
+    // copy from global vector
+    for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
+    {
+      ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]); CHKERRV(ierr);
+    }
+    this->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
   }
-  
-  startGhostManipulation();
-}
-
-/*
-//! for a single component vector set all values
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setValuesWithGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
-{
-  assert(values.size() == this->meshPartition_->nDofsLocalWithGhosts());
- 
-  // this wraps the standard PETSc VecSetValue on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], values.size(), this->meshPartition_->dofNosLocal().data(), values.data(), petscInsertMode); CHKERRV(ierr);
-}
-
-//! for a single component vector set all values, input does not contain values for ghosts
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setValuesWithoutGhosts(int componentNo, std::vector<double> &values, InsertMode petscInsertMode)
-{
-  assert(values.size() == this->meshPartition_->nDofsLocalWithoutGhosts());
- 
-  // copy all values to a bigger vector that is initialized with 0
-  std::vector<double> valuesWithGhosts(this->meshPartition_->nDofsLocalWithGhosts(), 0.0);
-  dof_no_t valueIndex = 0;
-  for (std::vector<dof_no_t>::const_iterator localDof = this->meshPartition_->nonGhostDofsBegin(); localDof != this->meshPartition_->nonGhostDofsEnd(); localDof++)
+  else if (rhs.currentRepresentation() == Partition::values_representation_t::representationLocal)
   {
-    valuesWithGhosts[*localDof] = values[valueIndex++];
+    // copy from local vector
+    for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
+    {
+      ierr = VecCopy(rhs.valuesLocal(componentNo), vectorLocal_[componentNo]); CHKERRV(ierr);
+    }
+    this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
   }
-  
-  // this wraps the standard PETSc VecSetValue on the local vector
-  PetscErrorCode ierr;
-  ierr = VecSetValues(vectorLocal_[componentNo], valuesWithGhosts.size(), this->meshPartition_->localDofNos().data(), valuesWithGhosts.data(), petscInsertMode); CHKERRV(ierr);
+  else if (rhs.currentRepresentation() == Partition::values_representation_t::representationContiguous)
+  {
+    // copy from contiguous vector
+    ierr = VecCopy(rhs.getValuesContiguous(), valuesContiguous_); CHKERRV(ierr);
+    this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
+  }
 }
-  */
+
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 zeroEntries()
 {
   VLOG(3) << "\"" << this->name_ << "\" zeroEntries";
-  
-  assert(!valuesContiguousInUse_);
 
   PetscErrorCode ierr;
-  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
-    ierr = VecZeroEntries(vectorLocal_[componentNo]); CHKERRV(ierr);
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecZeroEntries(vectorLocal_[componentNo]); CHKERRV(ierr);
+    }
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    for (int componentNo = 0; componentNo < nComponents; componentNo++)
+    {
+      ierr = VecZeroEntries(vectorGlobal_[componentNo]); CHKERRV(ierr);
+    }
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    ierr = VecZeroEntries(valuesContiguous_); CHKERRV(ierr);
   }
 }
 
@@ -406,6 +493,17 @@ Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType
 valuesLocal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+
+  if(this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
+  {
+    LOG(DEBUG) << "valuesLocal called in not local vector representation ("
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      <<"), now set to local (without considering ghost dofs, call startGhostManipulation if ghosts are needed!)";
+    setRepresentationLocal();
+  }
+
+  VLOG(2) << "\"" << this->name_ << "\" valuesLocal(component=" << componentNo << ")";
+
   return vectorLocal_[componentNo];
 }
 
@@ -415,27 +513,45 @@ valuesGlobal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
 
-  // We still may need to call VecGhostRestoreLocalForm(vectorGlobal_[componentNo], &vectorLocal_[componentNo]) here?
-  // Then after operation on the global vector is done, do we need to call VecGhostGetLocalForm again?
+  if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+  {
+    LOG(DEBUG) << "valuesGlobal called in not global vector representation ("
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      <<"), now set to global (without considering ghost dofs, call finishGhostManipulation if ghosts are needed!)";
+    setRepresentationGlobal();
+  }
+
+  VLOG(2) << "\"" << this->name_ << "\" valuesGlobal(component=" << componentNo << ")";
+
   return vectorGlobal_[componentNo];
 }
 
 //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-//! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
+//! after manipulation of the vector has finished one has to call restoreValuesContiguous
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-getContiguousValuesGlobal()
+getValuesContiguous()
 {
+  VLOG(2) << "\"" << this->name_ << "\" getValuesContiguous()";
+
   if (nComponents == 1)
   {
     return vectorGlobal_[0];
   }
 
   // if the contiguous representation is already being used, return contiguous vector
-  if (valuesContiguousInUse_)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
     return valuesContiguous_;
   }
+
+  // if the representation is global, set to local without considering ghosts, because in contiguous values we do not have ghosts
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    setRepresentationLocal();
+  }
+
+  // here the representation is local
 
   PetscErrorCode ierr;
 
@@ -477,7 +593,8 @@ getContiguousValuesGlobal()
   }
 
   ierr = VecRestoreArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
-  valuesContiguousInUse_ = true;
+  this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
+
   return valuesContiguous_;
 }
 
@@ -485,15 +602,18 @@ getContiguousValuesGlobal()
 //! this has to be called
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-restoreContiguousValuesGlobal()
+restoreValuesContiguous()
 {
+  VLOG(2) << "\"" << this->name_ << "\" restoreValuesContiguous()";
+
   if (nComponents == 1)
     return;
 
   assert(valuesContiguous_ != PETSC_NULL);
-  if (!valuesContiguousInUse_)
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
-    LOG(FATAL) << "Called restoreContiguousValuesGlobal() without previous getContiguousValuesGlobal()!";
+    LOG(FATAL) << "Called restoreValuesContiguous() in representation "
+      << Partition::valuesRepresentationString[this->currentRepresentation_] << ", probably without previous getValuesContiguous()";
   }
 
   PetscErrorCode ierr;
@@ -517,35 +637,41 @@ restoreContiguousValuesGlobal()
   }
 
   ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
-  valuesContiguousInUse_ = false;
+  this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
 {
-  PetscErrorCode ierr;
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    LOG(DEBUG) << "Called extractComponents for global representation, representation needs to be local or contiguous, set to local";
+    setRepresentationLocal();
+  }
+
+  VLOG(2) << "\"" << this->name_ << "\" extractComponent(componentNo=" << componentNo << ")";
 
   // prepare source vector
   Vec vectorSource;
   dof_no_t dofStart = 0;
   // if the contiguous representation is already being used, return contiguous vector
-  if (valuesContiguousInUse_)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
     vectorSource = valuesContiguous_;
     dofStart = componentNo * this->meshPartition_->nDofsLocalWithoutGhosts();
   }
-  else
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
     vectorSource = vectorLocal_[componentNo];
   }
+  else assert(false);
 
   const double *valuesSource;
+  PetscErrorCode ierr;
   ierr = VecGetArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
-  // prepare target vector
-  //assert(!extractedFieldVariable->valuesContiguousInUse());
-
+  extractedFieldVariable->setRepresentationLocal();
   double *valuesTarget;
   ierr = VecGetArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
@@ -567,12 +693,15 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, Vec petscVector, std::string name)
 {
+  VLOG(3) << "\"" << this->name_ << "\" setValues from petscVector, representation: "
+    << Partition::valuesRepresentationString[this->currentRepresentation_] << ".";
+
   assert(componentNo >= 0);
   assert(componentNo < vectorGlobal_.size());
 
   PetscErrorCode ierr;
 
-  if (valuesContiguousInUse_)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
     // prepare source vector
     const double *valuesSource;
@@ -597,9 +726,15 @@ setValues(int componentNo, Vec petscVector, std::string name)
     ierr = VecRestoreArrayRead(petscVector, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
     ierr = VecRestoreArray(valuesContiguous_, &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
   }
-  else
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
+    VLOG(1) << "input vector: " << PetscUtility::getStringVector(petscVector);
     ierr = VecCopy(petscVector, vectorLocal_[componentNo]); CHKERRV(ierr);
+    VLOG(1) << "now local vector is: " << PetscUtility::getStringVector(vectorLocal_[componentNo]);
+  }
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  {
+    ierr = VecCopy(petscVector, vectorGlobal_[componentNo]); CHKERRV(ierr);
   }
 }
 
@@ -632,8 +767,9 @@ output(std::ostream &stream)
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
+
     Vec vector = vectorLocal_[componentNo];
-    if (valuesContiguous_)
+    if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
       vector = valuesContiguous_;
 
     // get global size of vector
@@ -642,6 +778,13 @@ output(std::ostream &stream)
     ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
     ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
     
+    if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+    {
+      stream << "vector \"" << this->name_ << "\", (" << nEntries << " local entries (per component), representation global)";
+      if (nRanks > 1)
+        continue;
+    }
+
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<PetscInt> indices(nDofsLocal);
@@ -695,8 +838,8 @@ output(std::ostream &stream)
     {
       if (componentNo == 0)
       {
-        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component)"
-          << (valuesContiguous_? ", valuesContiguous": "") << ")" << std::endl;
+        stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component), "
+          << "representation: " << Partition::valuesRepresentationString[this->currentRepresentation_] << ")" << std::endl;
       }
 
       stream << "\"" << this->name_ << "\" component " << componentNo << ": local ordering: [";
@@ -727,10 +870,10 @@ output(std::ostream &stream)
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       Vec vector = vectorLocal_[componentNo];
-      if (valuesContiguous_)
+      if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
         vector = valuesContiguous_;
 
-      stream << "locally stored values: [";
+      stream << "component " << componentNo << " locally stored values: [";
       // retrieve local values
       int nDofsLocalWithGhosts = this->meshPartition_->nDofsLocalWithGhosts();
       std::vector<double> localValuesWithGhosts(nDofsLocalWithGhosts);

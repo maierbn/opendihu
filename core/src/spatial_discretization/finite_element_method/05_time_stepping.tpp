@@ -24,11 +24,11 @@ template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
   : AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>(context, functionSpace),
-  DiscretizableInTime(SolutionVectorMapping()), linearSolver_(nullptr), ksp_(nullptr)
+  DiscretizableInTime(), Splitable(), linearSolver_(nullptr), ksp_(nullptr)
 {
-  // The solutionVectorMapping_ object stores the information which component of the solution will be further used.
+  // The  object stores the information which component of the solution will be further used.
   // Because the FEM only has one solution component, set componentNo to 0.
-  solutionVectorMapping_.setOutputComponentNo(0);
+  this->solutionVectorMapping_->setOutputComponentNo(0);
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>

@@ -14,10 +14,10 @@ TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
   TimeSteppingScheme(context["ModelOrderReduction"]),
-  timestepping_(context["ModelOrderReduction"]), solutionVectorMapping_(SolutionVectorMapping()), initialized_(false)
+  timestepping_(context["ModelOrderReduction"]), initialized_(false)
 {  
   this->specificSettings_ = this->context_.getPythonConfig();
-  
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
   
@@ -33,13 +33,6 @@ std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeS
 solution()
 {  
   return this->data_->redSolution();
-}
-
-template<typename TimeSteppingType>
-SolutionVectorMapping &TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-solutionVectorMapping()
-{
-  return solutionVectorMapping_;
 }
 
 template<typename TimeSteppingType>

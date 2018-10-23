@@ -12,7 +12,7 @@
 #include <memory>
 
 #include "spatial_discretization/spatial_discretization.h"
-#include "control/runnable.h"
+#include "interfaces/runnable.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
 #include "data_management/finite_elements.h"

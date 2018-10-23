@@ -12,7 +12,7 @@ class DiscretizableInTime
 {
 public:
   //! constructor
-  DiscretizableInTime(SolutionVectorMapping solutionVectorMapping);
+  DiscretizableInTime();
 
   // Classes that derive from DiscretizableInTime must define a constexpr nComponents that specifies the number of components in the solution field variable
   //typedef .. nComponents;
@@ -43,9 +43,6 @@ public:
   //! set the subset of ranks that will compute the work
   virtual void setRankSubset(Partition::RankSubset rankSubset) = 0;
   
-  //! return the solution vector mapping object, that contains information on if there are more internal values stored in the data_ object than may be needed for further computationo
-  SolutionVectorMapping &solutionVectorMapping();
-
   //! set if the class should handle dirichlet boundary conditions. A time stepping scheme sets this to false, because for dynamic problems the time stepping scheme handles the boundary conditions, not e.g. the FiniteElementMethod.
   //! By default it is set to true, which is needed for static problems, like Laplace.
   virtual void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled) = 0;
@@ -58,5 +55,4 @@ public:
   //old: virtual std::shared_ptr<Mesh::Mesh> mesh() = 0;
 
 protected:
-  SolutionVectorMapping solutionVectorMapping_;   ///< the solution vector mapping object that contains information if for further computation only a subset of the stored entries in the data_.solution vector will be needed
 };

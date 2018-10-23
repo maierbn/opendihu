@@ -69,3 +69,6 @@ multidomain:
 
 parallel_fiber_estimation:
 	cd examples/parallel_fiber_estimation && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+load_balancing:
+	cd examples/load_balancing && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

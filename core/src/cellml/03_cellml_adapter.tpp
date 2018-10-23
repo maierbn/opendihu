@@ -17,7 +17,8 @@
 template<int nStates_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates_,FunctionSpaceType>(context)
+  CallbackHandler<nStates_,FunctionSpaceType>(context),
+  Splitable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
@@ -54,8 +55,8 @@ initialize()
   // The solutionVectorMapping_ object stores the information which component of the solution will be further used
   // in methods that use the result of this method, e.g. in operator splitting.
   // The solutionVectorMapping object also scales the solution after transfer.
-  this->solutionVectorMapping_.setOutputComponentNo(outputStateIndex);
-  this->solutionVectorMapping_.setScalingFactor(prefactor);
+  this->solutionVectorMapping_->setOutputComponentNo(outputStateIndex);
+  this->solutionVectorMapping_->setScalingFactor(prefactor);
 }
 
 template<int nStates_, typename FunctionSpaceType>

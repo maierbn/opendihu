@@ -3,7 +3,7 @@
 #include "spatial_discretization/finite_element_method/04_rhs.h"
 
 #include "mesh/mesh.h"
-#include "discretizable_in_time/discretizable_in_time.h"
+#include "interfaces/discretizable_in_time.h"
 
 namespace SpatialDiscretization
 {
@@ -13,7 +13,8 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class FiniteElementMethodTimeStepping :
   public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
-  public DiscretizableInTime
+  public DiscretizableInTime,
+  public Splitable
 {
 public:
   //! constructor, if function space is not given, create new one according to settings

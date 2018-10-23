@@ -3,8 +3,8 @@
 #include <Python.h>  // has to be the first included header
 #include <vector>
 
-#include "discretizable_in_time/discretizable_in_time.h"
-#include "control/runnable.h"
+#include "interfaces/discretizable_in_time.h"
+#include "interfaces/runnable.h"
 #include "data_management/streamline_tracer.h"
 
 namespace Postprocessing

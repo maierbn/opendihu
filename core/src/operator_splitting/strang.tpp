@@ -63,7 +63,7 @@ advanceTimeSpan()
 
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(*this->timeStepping1_.solution(),
+    this->timeStepping1_.solutionVectorMapping()->transfer(*this->timeStepping1_.solution(),
       this->timeStepping2_.solutionVectorMapping(), *this->timeStepping2_.solution());
 
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) advanceTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
@@ -75,7 +75,7 @@ advanceTimeSpan()
 
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping2_.solutionVectorMapping().transfer(*this->timeStepping2_.solution(),
+    this->timeStepping2_.solutionVectorMapping()->transfer(*this->timeStepping2_.solution(),
       this->timeStepping1_.solutionVectorMapping(), *this->timeStepping1_.solution());
 
     LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" << midTime << ", " << currentTime+this->timeStepWidth_<< "]";
@@ -95,7 +95,7 @@ advanceTimeSpan()
     // option 2. transfer data. (implemented)
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
     // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping().transfer(*this->timeStepping1_.solution(),
+    this->timeStepping1_.solutionVectorMapping()->transfer(*this->timeStepping1_.solution(),
       this->timeStepping2_.solutionVectorMapping(), *this->timeStepping2_.solution());
 
     // advance simulation time

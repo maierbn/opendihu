@@ -4,18 +4,21 @@
 #include "easylogging++.h"
 
 SolutionVectorMapping::SolutionVectorMapping() :
-  scalingFactor_(1.0)
+  scalingFactor_(1.0), outputComponentNo_(0)
 {
+  VLOG(1) << "initialize solution vector mapping";
 }
 
 void SolutionVectorMapping::setScalingFactor(double factor)
 {
+  VLOG(1) << "solution vector mapping, setScalingFactor " << factor;
   scalingFactor_ = factor;
 }
 
 //! set the component no
 void SolutionVectorMapping::setOutputComponentNo(int outputComponentNo)
 {
+  VLOG(1) << "solution vector mapping, setOutputComponentNo " << outputComponentNo;
   outputComponentNo_ = outputComponentNo;
 }
 

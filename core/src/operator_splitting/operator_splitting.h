@@ -2,7 +2,7 @@
 
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "output_writer/manager.h"
-#include "control/runnable.h"
+#include "interfaces/runnable.h"
 #include "data_management/time_stepping.h"
 #include "partition/rank_subset.h"
 

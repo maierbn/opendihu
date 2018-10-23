@@ -3,6 +3,7 @@
 
 #include "control/dihu_context.h"
 #include "control/multiple_instances.h"
+#include "control/load_balancing/load_balancing.h"
 
 #include "basis_function/lagrange.h"
 #include "basis_function/hermite.h"
@@ -19,7 +20,7 @@
 
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
 
-#include "discretizable_in_time/discretizable_in_time.h"
+#include "interfaces/discretizable_in_time.h"
 
 #include "time_stepping_scheme/crank_nicolson.h"
 #include "time_stepping_scheme/explicit_euler.h"

@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "discretizable_in_time/discretizable_in_time.h"
+#include "interfaces/splitable.h"
 #include "cellml/02_callback_handler.h"
 
 /** This is a class that contains cellml equations and can be used with a time stepping scheme.
@@ -23,7 +23,8 @@
  */
 template <int nStates_, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
-  public CallbackHandler<nStates_,FunctionSpaceType>
+  public CallbackHandler<nStates_,FunctionSpaceType>,
+  public Splitable
 {
 public:
 
@@ -69,6 +70,6 @@ public:
 
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
- };
+};
 
 #include "cellml/03_cellml_adapter.tpp"

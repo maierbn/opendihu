@@ -66,7 +66,7 @@ setInitialValues()
 }
 
 template<typename DiscretizableInTimeType>
-SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+std::shared_ptr<SolutionVectorMapping> TimeSteppingSchemeOde<DiscretizableInTimeType>::
 solutionVectorMapping()
 {
   return discretizableInTime_.solutionVectorMapping();

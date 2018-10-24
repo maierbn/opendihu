@@ -9,8 +9,8 @@ namespace TimeSteppingScheme
 {
 
 template<typename DiscretizableInTimeType>
-TimeSteppingSchemeOde<DiscretizableInTimeType>::
-TimeSteppingSchemeOde(DihuContext context, std::string name) :
+TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
   TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
   // get python config
@@ -27,14 +27,14 @@ TimeSteppingSchemeOde(DihuContext context, std::string name) :
 }
 
 template<typename DiscretizableInTimeType>
-Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 data()
 {
   return *data_;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -64,30 +64,30 @@ setInitialValues()
 
   VLOG(1) << data_->solution();
 }
-
+/*
 template<typename DiscretizableInTimeType>
-std::shared_ptr<SolutionVectorMapping> TimeSteppingSchemeOde<DiscretizableInTimeType>::
-solutionVectorMapping()
-{
-  return discretizableInTime_.solutionVectorMapping();
-}
-
-template<typename DiscretizableInTimeType>
-std::shared_ptr<typename TimeSteppingSchemeOde<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOde<DiscretizableInTimeType>::
+std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 solution()
 {
   return data_->solution();
+}*/
+
+template<typename DiscretizableInTimeType>
+typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+getSolutionForTransferInOperatorSplitting()
+{
+  return data_->getSolutionForTransferInOperatorSplitting();
 }
 
 template<typename DiscretizableInTimeType>
-DiscretizableInTimeType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+DiscretizableInTimeType &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 discretizableInTime()
 {
   return this->discretizableInTime_;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
   data_->setRankSubset(rankSubset);
@@ -95,7 +95,7 @@ setRankSubset(Partition::RankSubset rankSubset)
 } 
  
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 reset()
 {
   TimeSteppingScheme::reset();
@@ -105,14 +105,14 @@ reset()
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 initialize()
 {
   if (initialized_)
     return;
  
   TimeSteppingScheme::initialize();
-  LOG(TRACE) << "TimeSteppingSchemeOde::initialize";
+  LOG(TRACE) << "TimeSteppingSchemeOdeBase::initialize";
 
   // disable boundary condition handling in finite element method, because Dirichlet BC have to be handled in the system matrix here
   discretizableInTime_.setBoundaryConditionHandlingEnabled(false);
@@ -160,8 +160,22 @@ initialize()
   initialized_ = true;
 }
 
+template<int nStates, typename FunctionSpaceType>
+void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
+initialize()
+{
+  TimeSteppingSchemeOdeBase<CellmlAdapter<nStates, FunctionSpaceType>>::initialize();
+  double prefactor = this->discretizableInTime_.prefactor();
+  int outputComponentNo = this->discretizableInTime_.outputStateIndex();
+
+  LOG(DEBUG) << "set CellML prefactor=" << prefactor << ", outputComponentNo=" << outputComponentNo;
+
+  this->data_->setPrefactor(prefactor);
+  this->data_->setOutputComponentNo(outputComponentNo);
+}
+
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 run()
 {
   // initialize
@@ -172,17 +186,11 @@ run()
 }
 
 template<typename DiscretizableInTimeType>
-bool TimeSteppingSchemeOde<DiscretizableInTimeType>::
+bool TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
 knowsMeshType()
 {
   return this->discretizableInTime_.knowsMeshType();
 }
 
-//template<typename DiscretizableInTimeType>
-//int TimeSteppingSchemeOde<DiscretizableInTimeType>::
-//timeStepOutputInterval()
-//{
-//  return this->timeStepOutputInterval_;
-//}
 
 } // namespace

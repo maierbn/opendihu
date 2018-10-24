@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
-#include "interfaces/splitable.h"
+#include "interfaces/splittable.h"
 
 #include "easylogging++.h"
 
@@ -11,7 +11,7 @@ namespace TimeSteppingScheme
 {
 
 class TimeSteppingScheme :
-  public Splitable
+  public Splittable
 {
 public:
 

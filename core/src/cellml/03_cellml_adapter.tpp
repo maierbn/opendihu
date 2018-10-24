@@ -18,7 +18,7 @@ template<int nStates_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
   CallbackHandler<nStates_,FunctionSpaceType>(context),
-  Splitable()
+  Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
@@ -49,14 +49,8 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  int outputStateIndex = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
-
-  // The solutionVectorMapping_ object stores the information which component of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splitting.
-  // The solutionVectorMapping object also scales the solution after transfer.
-  this->solutionVectorMapping_->setOutputComponentNo(outputStateIndex);
-  this->solutionVectorMapping_->setScalingFactor(prefactor);
+  this->outputStateIndex_ = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
+  this->prefactor_ = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
 }
 
 template<int nStates_, typename FunctionSpaceType>

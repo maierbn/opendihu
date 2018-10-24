@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "easylogging++.h"
-
+/*
 SolutionVectorMapping::SolutionVectorMapping() :
   scalingFactor_(1.0), outputComponentNo_(0)
 {
@@ -20,7 +20,7 @@ void SolutionVectorMapping::setOutputComponentNo(int outputComponentNo)
 {
   VLOG(1) << "solution vector mapping, setOutputComponentNo " << outputComponentNo;
   outputComponentNo_ = outputComponentNo;
-}
+}*/
 
 /*
 void SolutionVectorMapping::setOutputRange(int outputIndexBegin, int outputIndexEnd)

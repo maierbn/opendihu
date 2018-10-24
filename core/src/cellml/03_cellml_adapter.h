@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "interfaces/splitable.h"
+#include "interfaces/splittable.h"
 #include "cellml/02_callback_handler.h"
 
 /** This is a class that contains cellml equations and can be used with a time stepping scheme.
@@ -24,7 +24,7 @@
 template <int nStates_, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
   public CallbackHandler<nStates_,FunctionSpaceType>,
-  public Splitable
+  public Splittable
 {
 public:
 
@@ -70,6 +70,7 @@ public:
 
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
+
 };
 
 #include "cellml/03_cellml_adapter.tpp"

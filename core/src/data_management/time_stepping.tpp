@@ -20,7 +20,7 @@ namespace Data
 
 template<typename FunctionSpaceType,int nComponents>
 TimeStepping<FunctionSpaceType,nComponents>::
-TimeStepping(DihuContext context) : Data<FunctionSpaceType>(context)
+TimeStepping(DihuContext context) : Data<FunctionSpaceType>(context), outputComponentNo_(0), prefactor_(1.0)
 {
 }
 
@@ -111,7 +111,28 @@ setComponentNames(std::vector<std::string> componentNames)
 {
   componentNames_ = componentNames;
 }
-  
+
+template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+setOutputComponentNo(int outputComponentNo)
+{
+  outputComponentNo_ = outputComponentNo;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void TimeStepping<FunctionSpaceType,nComponents>::
+setPrefactor(double prefactor)
+{
+  prefactor_ = prefactor;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
+getSolutionForTransferInOperatorSplitting()
+{
+  return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
+}
+
 template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::OutputFieldVariables TimeStepping<FunctionSpaceType,nComponents>::
 getOutputFieldVariables()

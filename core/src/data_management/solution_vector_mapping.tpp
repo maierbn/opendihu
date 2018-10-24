@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "easylogging++.h"
-
+/*
 template<typename FieldVariable1, typename FieldVariable2>
 void SolutionVectorMapping::
 transfer(FieldVariable1 &solution1, std::shared_ptr<SolutionVectorMapping> solutionVectorMapping2, FieldVariable2 &solution2)
@@ -25,3 +25,4 @@ transfer(FieldVariable1 &solution1, std::shared_ptr<SolutionVectorMapping> solut
 
   solution2.checkNansInfs();
 }
+*/

@@ -2,6 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping.h"
+#include "operator_splitting/solution_vector_mapping.h"
 
 namespace OperatorSplitting
 {
@@ -62,9 +63,9 @@ advanceTimeSpan()
     this->timeStepping1_.advanceTimeSpan();
 
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
-    // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping()->transfer(*this->timeStepping1_.solution(),
-      this->timeStepping2_.solutionVectorMapping(), *this->timeStepping2_.solution());
+    // scale solution in timeStepping1 and transfer to timestepping2_
+    SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
+      transfer(this->timeStepping1_.getSolutionForTransferInOperatorSplitting(), this->timeStepping2_.getSolutionForTransferInOperatorSplitting());
 
     LOG(DEBUG) << "  Strang: timeStepping2 (complete) advanceTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping2
@@ -74,9 +75,9 @@ advanceTimeSpan()
     this->timeStepping2_.advanceTimeSpan();
 
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
-    // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping2_.solutionVectorMapping()->transfer(*this->timeStepping2_.solution(),
-      this->timeStepping1_.solutionVectorMapping(), *this->timeStepping1_.solution());
+    // scale solution in timeStepping2 and transfer to timestepping1_
+    SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
+      transfer(this->timeStepping2_.getSolutionForTransferInOperatorSplitting(), this->timeStepping1_.getSolutionForTransferInOperatorSplitting());
 
     LOG(DEBUG) << "  Strang: timeStepping1 (second half) advanceTimeSpan [" << midTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping1
@@ -94,9 +95,9 @@ advanceTimeSpan()
 
     // option 2. transfer data. (implemented)
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
-    // transfer data from timestepping1_.data_.solution_ to timestepping2_.data_.solution_
-    this->timeStepping1_.solutionVectorMapping()->transfer(*this->timeStepping1_.solution(),
-      this->timeStepping2_.solutionVectorMapping(), *this->timeStepping2_.solution());
+    // scale solution in timeStepping1 and transfer to timestepping2_
+    SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
+      transfer(this->timeStepping1_.getSolutionForTransferInOperatorSplitting(), this->timeStepping2_.getSolutionForTransferInOperatorSplitting());
 
     // advance simulation time
     timeStepNo++;

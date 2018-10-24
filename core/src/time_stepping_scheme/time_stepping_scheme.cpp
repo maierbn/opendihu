@@ -6,10 +6,9 @@ namespace TimeSteppingScheme
 {
 
 TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
-  Splitable(), context_(context), initialized_(false)
+  Splittable(), context_(context), initialized_(false)
 {
   specificSettings_ = NULL;   // needs to be set by deriving class, in time_stepping_scheme_ode.tpp
-  this->solutionVectorMapping_->setOutputComponentNo(0);
   isTimeStepWidthSignificant_ = false;
 }
 

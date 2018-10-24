@@ -15,6 +15,7 @@
  * contains lots of internal states and only a single state variable is needed in the diffusion equation.
  * This class stores information for a single solution vector/equation object on how the needed values can be extracted.
  */
+/*
 class SolutionVectorMapping
 {
 public:
@@ -47,5 +48,5 @@ private:
 
  //bool canProvideInternalContiguousSolutionPointer_;
 };
-
+*/
 #include "solution_vector_mapping.tpp"

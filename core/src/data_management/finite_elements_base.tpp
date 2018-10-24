@@ -133,6 +133,13 @@ solution()
 }
 
 template<typename FunctionSpaceType>
+typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
+getSolutionForTransferInOperatorSplitting()
+{
+  return this->solution_;
+}
+
+template<typename FunctionSpaceType>
 void FiniteElementsBase<FunctionSpaceType>::
 print()
 {

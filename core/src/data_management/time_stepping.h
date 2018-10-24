@@ -26,11 +26,12 @@ class TimeStepping : public Data<FunctionSpaceType>
 public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
+  typedef std::tuple<std::shared_ptr<FieldVariableType>,int,double> TransferableSolutionDataType;  // <field variable, output component no., prefactor>
 
   //! constructor
   TimeStepping(DihuContext context);
 
-  //! destructur
+  //! destructor
   ~TimeStepping();
 
   //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
@@ -42,6 +43,12 @@ public:
   //! set the names of the components for the solution field variable
   void setComponentNames(std::vector<std::string> componentNames); 
   
+  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
+  void setOutputComponentNo(int outputComponentNo);
+
+  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
+  void setPrefactor(double prefactor);
+
   //! print all stored data to stdout
   virtual void print();
 
@@ -53,6 +60,10 @@ public:
   
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -70,10 +81,11 @@ protected:
 
   std::shared_ptr<FieldVariableType> solution_;            ///< the vector of the variable of interest
   std::shared_ptr<FieldVariableType> increment_;        ///< the vector for delta u, (note, this might be reduced in future to only a sub-part of the whole data vector if memory consumption is a problem)
-  //std::shared_ptr<FieldVariableType> rhs_;     ///for the variant 1 of the implicit Euler scheme
-  // std::shared_ptr<FieldVariableType> intermediateIncrement_;
   std::vector<std::string> componentNames_;      ///< names of the components of the solution and increment variables
   
+  int outputComponentNo_;   ///< the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
+  double prefactor_;        ///< a factor with which the solution will be scaled when transferred in an operator splitting
+
 private:
   //! get maximum number of expected non-zeros in the system matrix
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);

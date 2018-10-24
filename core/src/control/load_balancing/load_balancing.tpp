@@ -10,7 +10,7 @@ namespace Control
 template<class TimeSteppingScheme>
 LoadBalancing<TimeSteppingScheme>::
 LoadBalancing(DihuContext context) :
-  Runnable(), Splitable(), context_(context["LoadBalancing"]), timeSteppingScheme_(context_)
+  Runnable(), Splittable(), context_(context["LoadBalancing"]), timeSteppingScheme_(context_)
 {
   // initialize the python object "specificSettings" which holds the python dict under "LoadBalancing"
   specificSettings_ = context_.getPythonConfig();
@@ -75,11 +75,22 @@ solutionVectorMapping()
   return timeSteppingScheme_.solutionVectorMapping();
 }*/
 
+/*
 template<class TimeSteppingScheme>
 std::shared_ptr<typename LoadBalancing<TimeSteppingScheme>::Data::FieldVariableType> LoadBalancing<TimeSteppingScheme>::
 solution()
 {
   return timeSteppingScheme_.solution();
+}
+*/
+
+//! get the data that will be transferred in the operator splitting to the other term of the splitting
+//! the transfer is done by the solution_vector_mapping class
+template<class TimeSteppingScheme>
+typename LoadBalancing<TimeSteppingScheme>::TransferableSolutionDataType LoadBalancing<TimeSteppingScheme>::
+getSolutionForTransferInOperatorSplitting()
+{
+  return timeSteppingScheme_.getSolutionForTransferInOperatorSplitting();
 }
 
 };  // namespace

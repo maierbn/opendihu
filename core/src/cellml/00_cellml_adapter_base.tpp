@@ -34,8 +34,6 @@ nComponents()
   return nStates;
 }
 
-
-
 template<int nStates, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates,FunctionSpaceType>::
 initialize()
@@ -183,3 +181,16 @@ knowsMeshType()
   return false;
 }
 
+template<int nStates, typename FunctionSpaceType>
+int CellmlAdapterBase<nStates,FunctionSpaceType>::
+outputStateIndex()
+{
+  return outputStateIndex_;
+}
+
+template<int nStates, typename FunctionSpaceType>
+double CellmlAdapterBase<nStates,FunctionSpaceType>::
+prefactor()
+{
+  return prefactor_;
+}

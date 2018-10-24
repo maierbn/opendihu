@@ -22,6 +22,8 @@ class FiniteElementsBase :
 {
 public:
 
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;
+
   //! constructor
   FiniteElementsBase(DihuContext context);
 
@@ -55,6 +57,10 @@ public:
   //! get the inversed lumped mass matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> inverseLumpedMassMatrix();
   
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry

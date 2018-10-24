@@ -4,7 +4,7 @@
 #include <petscvec.h>
 
 #include "interfaces/runnable.h"
-#include "interfaces/splitable.h"
+#include "interfaces/splittable.h"
 #include "interfaces/discretizable_in_time.h"
 #include "control/dihu_context.h"
 #include "data_management/solution_vector_mapping.h"
@@ -17,12 +17,13 @@ namespace Control
 template<class TimeSteppingScheme>
 class LoadBalancing:
   public Runnable,
-  public Splitable
+  public Splittable
 {
 public:
 
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename TimeSteppingScheme::Data Data;
+  typedef typename TimeSteppingScheme::TransferableSolutionDataType TransferableSolutionDataType;
 
   //! constructor
   LoadBalancing(DihuContext context);
@@ -42,14 +43,20 @@ public:
   //! run solution process
   void run();
 
-  //! run solution process
+  //! reset state
   void reset();
 
   //! return the data object of the timestepping scheme
   Data &data();
 
+  /*
   //! returns the Petsc solution vector
   std::shared_ptr<typename Data::FieldVariableType> solution();
+  */
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
 
 protected:
 

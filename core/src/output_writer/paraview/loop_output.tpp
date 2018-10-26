@@ -14,7 +14,7 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables,
            std::string meshName, std::string filename, PyObject *specificSettings

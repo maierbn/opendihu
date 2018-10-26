@@ -11,7 +11,7 @@ namespace ExfileLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCheckIfNewExnodeHeaderNecessary(const OutputFieldVariablesType &fieldVariables, std::string meshName,
                                     element_no_t currentNodeGlobalNo, bool &newHeaderNecessary)

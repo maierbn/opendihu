@@ -18,9 +18,9 @@ cellml_file = "../input/shorten.cpp"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-6                      # timestep width of diffusion
-dt_0D = 3e-6                      # timestep width of ODEs
-dt_3D = 3e-6                      # overall timestep width of splitting
+dt_1D = 1e-3                      # timestep width of diffusion
+dt_0D = 3e-3                      # timestep width of ODEs
+dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
 # import needed packages
@@ -33,7 +33,7 @@ print("prefactor: ",Conductivity/(Am*Cm))
 
 # determine if fibre gets stimulation at given time
 def fibre_gets_stimulated(current_time):
-  a = current_time * stimulation_frequency
+  a = current_time
   
   if a - int(a) < 0.1 and a < 5:
     return True
@@ -49,14 +49,16 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
   innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
   nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
+  
+  for k in range(10):
+    if innervation_node_global-k >= 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-k)
+    if innervation_node_global+k <= n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+k)
   
   # stimulation value
   if fibre_gets_stimulated:
-    stimulation_current = 1200.
+    stimulation_current = 40.
   else:
     stimulation_current = 0.
   
@@ -143,7 +145,7 @@ config = {
     "endTime": end_time,
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval" : 1000,
+    "timeStepOutputInterval" : 200,
     
     "Term1": {      # CellML
       "Heun" : {
@@ -160,7 +162,7 @@ config = {
           "useGivenLibrary": False,
           #"statesInitialValues": [],
           "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-          "setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
           #"handleResultFunction": handleResult,
           #"handleResultCallInterval": 2e3,
           
@@ -173,7 +175,7 @@ config = {
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True, "onlyNodalValues":True},
+          #{"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": True, "onlyNodalValues":True},
         ],
       },
     },

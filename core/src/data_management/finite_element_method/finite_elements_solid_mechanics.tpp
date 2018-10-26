@@ -83,7 +83,7 @@ nUnknownsLocalWithGhosts()
 }
 
 template<typename FunctionSpaceType,typename Term>
-const dof_no_t FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
+dof_no_t FiniteElementsSolidMechanics<FunctionSpaceType,Term>::
 getTangentStiffnessMatrixNRows()
 {
   const int D = FunctionSpaceType::dim();

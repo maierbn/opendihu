@@ -59,7 +59,7 @@ protected:
   void initializeFieldVariables();
 
   //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
-  const dof_no_t getTangentStiffnessMatrixNRows() override;
+  dof_no_t getTangentStiffnessMatrixNRows() override;
 
   std::shared_ptr<FieldVariable::FieldVariable<LowOrderFunctionSpaceType,1>> pressure_;   //< the pressure field of the mixed formulation
 

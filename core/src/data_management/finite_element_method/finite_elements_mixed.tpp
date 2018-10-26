@@ -80,7 +80,7 @@ initializeFieldVariables()
 }
 
 template<typename LowOrderFunctionSpaceType,typename HighOrderFunctionSpaceType,typename Term>
-const dof_no_t FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
+dof_no_t FiniteElements<FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,Term>::
 getTangentStiffnessMatrixNRows()
 {
   const int D = HighOrderFunctionSpaceType::dim();

@@ -128,7 +128,7 @@ protected:
   void getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros);
 
   //! get the number of rows and columns to be used for setup of tangent stiffness matrix. This is different for mixed formulation.
-  virtual const dof_no_t getTangentStiffnessMatrixNRows();
+  virtual dof_no_t getTangentStiffnessMatrixNRows();
 
   PartitionedPetscMat<FunctionSpaceType> tangentStiffnessMatrix_;     ///< the tangent stiffness matrix which is the jacobian for the nonlinear problem. This is the non-reduced matrix that also contains entries for Dirichlet BC values. If computeWithReducedVectors_ is has to be reduced before computation.
   PartitionedPetscMat<FunctionSpaceType> solverMatrixTangentStiffnessFiniteDifferences_;    ///< this tangent stiffness matrix is used for the finite difference jacobian when an analytic jacobian gets computed in tangentStiffnessMatrix_

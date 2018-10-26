@@ -54,20 +54,21 @@ class PETSc(Package):
         self.sub_dirs = [('include','lib')]
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
 
+        self.check_text = petsc_text
+        self.static = False
+        
         if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-          if os.environ.get("PE_ENV") == "GNU":
-            self.libs = ["craypetsc_gnu_real"]
-            self.extra_libs = ["sci_gnu_71_mpi_mp"]
-            print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
-          else:
-            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+          #if os.environ.get("PE_ENV") == "GNU":
+          #  self.libs = ["craypetsc_gnu_real"]
+          #  self.extra_libs = ["sci_gnu_71_mpi_mp"]
+          #  print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
+          #else:
+          #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+          print("Hazelhen detected, PrgEnv {}, do not do anything for Petsc, because it is assumed that all flags are set correctly by the compiler wrapper CC.".format(os.environ.get("PE_ENV")))
         
           # on hazel hen login node do not run MPI test program because this is not possible (only compile)
           self.run = False
           
-        self.check_text = petsc_text
-        self.static = False
-        
         # Setup the build handler. This needs bison installed.
         self.set_build_handler([
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
@@ -87,6 +88,9 @@ class PETSc(Package):
         self.number_output_lines = 4121
         
     def check(self, ctx):
+        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          return True
+      
         env = ctx.env
         ctx.Message('Checking for PETSc ... ')
         self.check_options(env)

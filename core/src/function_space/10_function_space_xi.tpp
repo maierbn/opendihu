@@ -140,7 +140,8 @@ template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<1,MeshType>>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
 {
-  const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=2
+  //const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=2
+  const int nDofsPerElement = 2;
   std::array<Vec3, nDofsPerElement> geometryValues;
   
   // get needed variables
@@ -163,7 +164,8 @@ template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
 pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
 {
-  const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
+  //const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
+  const int nDofsPerElement = 4;
   std::array<Vec3, nDofsPerElement> geometryValues;
   
   // get needed variables

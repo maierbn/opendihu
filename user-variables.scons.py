@@ -88,8 +88,9 @@ except:
 # other variables for hazelhen
 import os
 if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-  cc="cc"   # c compiler
-  CC="CC"   # c++ compiler
+  cc="cc"   # C compiler
+  CC="CC"   # C++ compiler
+  mpiCC="CC"  # mpi C++ compiler
 
   MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   LAPACK_DOWNLOAD = False

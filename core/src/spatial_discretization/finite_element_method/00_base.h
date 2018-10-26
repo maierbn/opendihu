@@ -23,6 +23,7 @@ public:
 
   typedef ::Data::FiniteElements<FunctionSpaceType,Term> Data;
   typedef FunctionSpaceType FunctionSpace;
+  typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
 
   // perform computation
   void run();

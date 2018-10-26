@@ -47,6 +47,7 @@ class Package(object):
   ## Default include/library sub-directories to search.
   DEFAULT_SUB_DIRS = [('include', 'lib'), ('include', 'lib64')]
   one_shot_options = []  # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
+  compilers_checked = False  # if the C and CXX compilers have been checked
 
   ##
   # @param[in] required Boolean indicating whether the configuration should fail if this package
@@ -78,8 +79,42 @@ class Package(object):
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
-    
 
+
+  def check_compilers(self, ctx):
+    
+    if Package.compilers_checked:
+      return True
+    
+    ctx.Log("CC: {}, CXX: {}\n".format(ctx.env["CC"], ctx.env["CXX"]))
+    for compiler in [ctx.env["CC"], ctx.env["CXX"]]:
+      cmd = "{} --version".format(compiler)
+      
+      ctx.Log("Checking compiler {}\n".format(compiler))
+
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      try:
+        subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+        
+        # get output
+        with file('stdout.log') as f:
+          output = f.read()
+        ctx.Log("$"+cmd+"\n")
+        ctx.Log(output+"\n")
+      except:
+        self.command_running = False
+        stdout_log.close()
+        with file('stdout.log') as f:
+         output = f.read()
+        ctx.Log("Command failed: \n"+output)
+        sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
+        ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
+        return False
+
+    Package.compilers_checked = True
+    return True
+    
   ##
   # TODO: Make more general
   def include_directories(self):
@@ -105,6 +140,10 @@ class Package(object):
     sub_dirs = self.sub_dirs
 
     upp = name.upper()
+
+    # check if compiler works
+    if not self.check_compilers(ctx):
+      return (False, 0)
     
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
@@ -646,9 +685,9 @@ class Package(object):
           self.command_running = False
           if not allow_errors:
             stdout_log.close()
+            sys.stdout.write('failed.\n')
             with file('stdout.log') as f:
              output = f.read()
-            sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
             return False
 
@@ -713,9 +752,11 @@ class Package(object):
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
     ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
     ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
+    ctx.Log("  CC:       "+str(ctx.env["CC"])+"\n")
+    ctx.Log("  CXX:      "+str(ctx.env["CXX"])+"\n")
     ccflags = ctx.env["CCFLAGS"]
     for i in ccflags:
-      ctx.Log("  CCFLAGS "+str(i)+"\n")
+      ctx.Log("  CCFLAGS: "+str(i)+"\n")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
     
     # compile / run test program

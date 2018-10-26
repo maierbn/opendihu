@@ -15,6 +15,10 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
+# set compiler
+cc="gcc"   # c compiler
+CC="g++"   # c++ compiler
+
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 
@@ -84,11 +88,15 @@ except:
 # other variables for hazelhen
 import os
 if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+  cc="cc"   # c compiler
+  CC="CC"   # c++ compiler
+
   MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   LAPACK_DOWNLOAD = False
   LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
   PETSC_DOWNLOAD = False
   PETSC_DIR = os.environ.get("PETSC_DIR")
+
 
 # module restore opendihu
 # or 

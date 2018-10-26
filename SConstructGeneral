@@ -18,6 +18,7 @@
 #
 import os
 import sys
+import random
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
@@ -69,13 +70,17 @@ variables = ARGUMENTS.copy()        # command line arguments are in the global A
 vars = Variables(['user-variables.scons.py','../user-variables.scons.py'], variables)
 
 # specify type and default value for recognized variables
-#vars.Add(BoolVariable('DUMMY', 'This is left in the code to see how bools work', 0))
 vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different compiler options will be set. '\
                       '(Shortcuts: ''d'',''r'',''rd''=''dr'', ''p'')', 'release', 
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add('cc', help='The c compiler', default='gcc')
+vars.Add('CC', help='The c++ compiler', default='g++')
+vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
+vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -124,6 +129,12 @@ sconf.Finish()
 if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   env['no_tests'] = True
 
+# set compiler, "CC" is C++, "cc" is C
+env['CXX'] = env['CC']
+env['CC'] = env['cc']
+print env.Dump()
+
+
 # -----------------------------------------------
 # progress display e.g. [ 50%]
 
@@ -155,7 +166,8 @@ except: pass
 # add progress display target
 Progress(progress_function, interval=env["node_count_interval"])
 
-notify = env.Command(target='notify-send', source = None, action = 'notify-send "compilation complete" || true')
+# add notification when compilation is complete
+notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
 AlwaysBuild('notify-send')
     
 # -----------------------------------------------

@@ -66,33 +66,34 @@ int main(int argc, char* argv[])
         env.MergeFlags(ldflags)
         
         res = self.try_link(ctx)
+        use_mpi_dir = False
         
       except Exception as e: 
         ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
         use_mpi_dir = True
-      
-      if use_mpi_dir:
-        # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
-        self.headers = ['mpi.h']
-        self.libs=[
-          [],                          # nothing
-          ['mpich'],                   # mpich/mpich2
-          ['pmpich', 'mpich'],         # mpich2
-          ['mpich', 'mpl'],            # mpich2
-          ['pmpich', 'mpich', 'mpl'],  # mpich2
-          ['mpi', 'mpi_cxx'],          # openmpi
-          ['mpi'],                     # openmpi
-        ]
-        self.extra_libs=[
-          [],
-          ['rt'],
-          ['pthread', 'rt'],
-          ['dl'],
-          ['dl', 'rt'],
-          ['dl', 'pthread'],
-          ['dl', 'pthread', 'rt']
-        ]
-        res = super(MPI, self).check(ctx)
+    
+    if use_mpi_dir:
+      # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
+      self.headers = ['mpi.h']
+      self.libs=[
+        [],                          # nothing
+        ['mpich'],                   # mpich/mpich2
+        ['pmpich', 'mpich'],         # mpich2
+        ['mpich', 'mpl'],            # mpich2
+        ['pmpich', 'mpich', 'mpl'],  # mpich2
+        ['mpi', 'mpi_cxx'],          # openmpi
+        ['mpi'],                     # openmpi
+      ]
+      self.extra_libs=[
+        [],
+        ['rt'],
+        ['pthread', 'rt'],
+        ['dl'],
+        ['dl', 'rt'],
+        ['dl', 'pthread'],
+        ['dl', 'pthread', 'rt']
+      ]
+      res = super(MPI, self).check(ctx)
     
     self.check_required(res[0], ctx)
     ctx.Result(res[0])

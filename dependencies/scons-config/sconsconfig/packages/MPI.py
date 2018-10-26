@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
     try:
       # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
       
-      cflags = subprocess.check_output("mpic++ --showme:compile", shell=True)
-      ldflags = subprocess.check_output("mpic++ --showme:link", shell=True)
+      cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
+      ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
 
       # remove trailing newline
       if cflags[-1] == '\n':
@@ -53,8 +53,8 @@ int main(int argc, char* argv[])
       if ldflags[-1] == '\n':
         ldflags = ldflags[:-1]
 
-      ctx.Log("extracted cflags from mpic++: \n{}\n\n".format(cflags))
-      ctx.Log("extracted ldflags from mpic++: \n{}\n\n".format(ldflags))
+      ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
+      ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))
 
       env.MergeFlags(cflags)
       env.MergeFlags(ldflags)
@@ -62,11 +62,12 @@ int main(int argc, char* argv[])
       res = self.try_link(ctx)
       
     except Exception as e: 
-      ctx.Message("MPI mpic++ --showme failed: \n"+str(e)+"\nNow using MPI_DIR\n")
+      ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
       
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
       self.headers = ['mpi.h']
       self.libs=[
+        [],                          # nothing
         ['mpich'],                   # mpich/mpich2
         ['pmpich', 'mpich'],         # mpich2
         ['mpich', 'mpl'],            # mpich2

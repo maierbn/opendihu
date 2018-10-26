@@ -1,3 +1,6 @@
+#include "quadrature/tensor_product.h"
+
+#include "utility/math_utility.h"
 
 namespace Quadrature
 {
@@ -6,7 +9,7 @@ template<unsigned int D, typename Quadrature>
 constexpr int TensorProductBase<D,Quadrature>::
 numberEvaluations()
 {
-  return pow(Quadrature::numberEvaluations(),D);
+  return MathUtility::pow(Quadrature::numberEvaluations(),D);
 }
 
 // 1D sampling points

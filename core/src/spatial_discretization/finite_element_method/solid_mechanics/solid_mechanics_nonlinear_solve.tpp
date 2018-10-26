@@ -7,7 +7,7 @@
 
 #include "easylogging++.h"
 #include "solver/nonlinear.h"
-#include "data_management/finite_elements_solid_mechanics.h"
+#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"
 #include "control/performance_measurement.h"
 
 namespace SpatialDiscretization

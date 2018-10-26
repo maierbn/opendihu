@@ -5,12 +5,12 @@
 #include <memory>
 
 #include "data_management/data.h"
-#include "data_management/finite_elements_mixed.h"
+#include "data_management/finite_element_method/finite_elements_mixed.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "field_variable/field_variable.h"
 #include "function_space/mixed_function_space.h"
-#include "data_management/finite_elements_solid_mechanics.h"
+#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"
 
 namespace Data
 {
@@ -68,4 +68,4 @@ protected:
 };
 }  // namespace
 
-#include "data_management/finite_elements_mixed.tpp"
+#include "data_management/finite_element_method/finite_elements_mixed.tpp"

@@ -4,7 +4,7 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
-#include "data_management/multidomain.h"
+#include "data_management/time_stepping/multidomain.h"
 
 //#define MONODOMAIN
 

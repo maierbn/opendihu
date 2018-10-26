@@ -1,7 +1,7 @@
 #include "operator_splitting/operator_splitting.h"
 
 #include "utility/python_utility.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
 
 namespace OperatorSplitting

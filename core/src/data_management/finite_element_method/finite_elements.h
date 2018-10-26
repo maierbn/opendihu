@@ -6,9 +6,9 @@
 #include <tuple>
 
 #include "data_management/data.h"
-#include "data_management/finite_elements_base.h"
-#include "data_management/diffusion_tensor_field_variable.h"
-#include "data_management/diffusion_tensor_constant.h"
+#include "data_management/finite_element_method/finite_elements_base.h"
+#include "data_management/finite_element_method/diffusion_tensor_field_variable.h"
+#include "data_management/finite_element_method/diffusion_tensor_constant.h"
 #include "equation/diffusion.h"
 
 namespace Data
@@ -85,6 +85,6 @@ public:
 */
 }  // namespace
 
-#include "data_management/finite_elements.tpp"
-#include "data_management/finite_elements_mixed.h"
-#include "data_management/finite_elements_solid_mechanics.h"
+#include "data_management/finite_element_method/finite_elements.tpp"
+#include "data_management/finite_element_method/finite_elements_mixed.h"
+#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"

@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "interfaces/runnable.h"
-#include "data_management/multidomain.h"
+#include "data_management/time_stepping/multidomain.h"
 #include "control/dihu_context.h"
 #include "partition/rank_subset.h"
 

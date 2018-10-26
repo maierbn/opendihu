@@ -1,7 +1,7 @@
 #include "operator_splitting/godunov.h"
 
 #include "utility/python_utility.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping/time_stepping.h"
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
 
 namespace OperatorSplitting

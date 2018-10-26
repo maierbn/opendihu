@@ -7,7 +7,7 @@
 #include "control/types.h"
 #include "mesh/mesh.h"
 #include "data_management/data.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping/time_stepping.h"
 #include "field_variable/field_variable.h"
 
 namespace Data
@@ -85,4 +85,4 @@ private:
 
 } // namespace Data
 
-#include "data_management/multidomain.tpp"
+#include "data_management/time_stepping/multidomain.tpp"

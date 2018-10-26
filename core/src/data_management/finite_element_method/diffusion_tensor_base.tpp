@@ -1,4 +1,4 @@
-#include "data_management/diffusion_tensor_base.h"
+#include "data_management/finite_element_method/diffusion_tensor_base.h"
 
 namespace Data
 {

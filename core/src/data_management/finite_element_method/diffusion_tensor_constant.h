@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "data_management/diffusion_tensor_base.h"
+#include "data_management/finite_element_method/diffusion_tensor_base.h"
 #include "utility/math_utility.h"
 
 namespace Data
@@ -29,4 +29,4 @@ private:
 
 }  // namespace
 
-#include "data_management/diffusion_tensor_constant.tpp"
+#include "data_management/finite_element_method/diffusion_tensor_constant.tpp"

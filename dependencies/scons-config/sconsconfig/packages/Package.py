@@ -756,20 +756,16 @@ class Package(object):
     ccflags = ctx.env["CCFLAGS"]
     for i in ccflags:
       ctx.Log("  CCFLAGS: "+str(i)+"\n")
+    ctx.Log("=============")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
         
     # compile / run test program
     if self.run:
-      ctx.Log("start finished.\n");
       res = ctx.TryRun(text, self.ext)
-      ctx.Log("TryRun finished.\n");
-      ctx.Log(res[0])
       
       if not res[0] and os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
         ctx.Log("Run failed on hazelhen, try again, this time only link")
         res = (ctx.TryLink(text, self.ext), '')
-      else:
-        ctx.Log("Run failed, not on hazelhen")
     else:
       res = (ctx.TryLink(text, self.ext), '')
         

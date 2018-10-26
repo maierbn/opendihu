@@ -760,7 +760,10 @@ class Package(object):
         
     # compile / run test program
     if self.run:
+      ctx.Log("start finished.\n");
       res = ctx.TryRun(text, self.ext)
+      ctx.Log("TryRun finished.\n");
+      ctx.Log(res[0])
       
       if not res[0] and os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
         ctx.Log("Run failed on hazelhen, try again, this time only link")

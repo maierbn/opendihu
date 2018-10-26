@@ -756,6 +756,7 @@ class Package(object):
     ccflags = ctx.env["CCFLAGS"]
     for i in ccflags:
       ctx.Log("  CCFLAGS: "+str(i)+"\n")
+    ctx.Log("=============")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
         
     # compile / run test program

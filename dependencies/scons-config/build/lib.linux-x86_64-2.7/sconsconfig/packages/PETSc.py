@@ -89,6 +89,7 @@ class PETSc(Package):
         
     def check(self, ctx):
         if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          ctx.Result(True)
           return True
       
         env = ctx.env

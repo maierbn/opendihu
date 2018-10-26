@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
     Control::MultipleInstances<
       TimeSteppingScheme::Heun<
         CellmlAdapter<
-          4   // 57 for Hodgkin-Huxley
+          4,   // 57 for Hodgkin-Huxley
+          FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>  // same function space as for anisotropic diffusion
         >  
       >
     >,

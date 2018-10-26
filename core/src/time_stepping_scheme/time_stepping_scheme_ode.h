@@ -82,6 +82,7 @@ class TimeSteppingSchemeOde :
 public:
   //! use constructor of parent class
   using TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TimeSteppingSchemeOdeBase;
+
 };
 
 /**

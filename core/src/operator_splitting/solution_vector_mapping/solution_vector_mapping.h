@@ -34,28 +34,12 @@ class SolutionVectorMapping<
 {
 public:
   ///! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
-  static void transfer(std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> transferableSolutionData1,
-                       std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> transferableSolutionData2);
+  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>,int,double> &transferableSolutionData1,
+                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2);
 };
 
-/** Transfer between one scalar field variable (e.g. from finite element method) and one field variables with given component number and prefactor (e.g. from cellml)
- */
-template<typename FunctionSpaceType1, typename FunctionSpaceType2, int nComponents2>
-class SolutionVectorMapping<
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,   // <fieldVariableType,componentNo>
-  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double>
-> :
-  public SolutionVectorMapping<
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,int,double>,
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double>
-  >
-{
-public:
-  ///! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
-  static void transfer(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> transferableSolutionData1,
-                       std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> transferableSolutionData2);
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping.tpp"
 
-};
-
-
-#include "operator_splitting/solution_vector_mapping.tpp"
+// include all other solution_vector_mapping partial specializations
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_finite_element_method_cellml.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_multidomain.h"

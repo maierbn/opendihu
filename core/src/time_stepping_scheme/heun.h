@@ -13,13 +13,13 @@ namespace TimeSteppingScheme
  *  However, we compute it in the way: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))
  *  (more round off this way, but less storage required)
  *
- * Blödsinn: f_t - f* ist gar nicht möglich ohne zusätzlichen vektor!
-  */
+ */
 template<typename DiscretizableInTime>
 class Heun :
   public TimeSteppingExplicit<DiscretizableInTime>, public Runnable
 {
 public:
+
 
   //! constructor
   Heun(DihuContext context);

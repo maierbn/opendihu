@@ -16,7 +16,6 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 {
   PyObject *topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
-  outputWriterManager_.initialize(context_, specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -60,9 +59,6 @@ initialize()
     timeStepping2_.initialize();
   }
 
-  outputData1_ = PythonUtility::getOptionBool(specificSettings_, "outputData1", true);
-  outputData2_ = PythonUtility::getOptionBool(specificSettings_, "outputData2", true);
-  
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 

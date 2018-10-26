@@ -2,7 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping.h"
-#include "operator_splitting/solution_vector_mapping.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
 
 namespace OperatorSplitting
 {
@@ -68,27 +68,6 @@ advanceTimeSpan()
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
-    // stop duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-    LOG(DEBUG) << "  Godunov: write output";
-    // write current output values
-    if(this->outputData1_)
-    {
-      LOG(DEBUG) << "write output 1";
-      this->outputWriterManager_.writeOutput(this->timeStepping1_.data(), timeStepNo, currentTime);
-    }
-    if(this->outputData2_)
-    {
-      LOG(DEBUG) << "write output 2";
-      this->outputWriterManager_.writeOutput(this->timeStepping2_.data(), timeStepNo, currentTime);
-    }
-
-    // start duration measurement
-    if (this->durationLogKey_ != "")
-      Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
 
   // stop duration measurement

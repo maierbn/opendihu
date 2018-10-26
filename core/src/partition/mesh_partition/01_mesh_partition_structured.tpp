@@ -923,6 +923,7 @@ nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionI
   {
     assert(false);
   }
+  return 0;  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 //! fill the dofLocalNo vectors
@@ -1091,6 +1092,7 @@ getNodeNoGlobalPetsc(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) 
   {
     assert(false);
   }
+  return 0;  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 //! get the node no in global petsc ordering from a local node no
@@ -1146,6 +1148,7 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
   {
     assert(false);
   }
+  return 0;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1373,6 +1376,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
   {
     assert(false);
   }
+  return std::array<global_no_t,MeshType::dim()>({0});  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 

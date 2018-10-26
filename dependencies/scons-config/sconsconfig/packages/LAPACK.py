@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
           #  print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
           #else:
           #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
-          print("Same for LAPACK.")
+          print("Hazelhen detected, PrgEnv {}, do not do anything for LAPACK, because it is assumed that all flags are set correctly by the compiler wrapper CC.".format(os.environ.get("PE_ENV")))
 
         elif False:
           # reference blas, make based, only static libraries

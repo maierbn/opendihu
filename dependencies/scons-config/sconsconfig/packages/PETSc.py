@@ -64,7 +64,7 @@ class PETSc(Package):
           #  print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
           #else:
           #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
-          print("Hazelhen detected, PrgEnv {}, do not do anything for Petsc, because it is assumed that all flags are set correctly by the compiler wrapper CC.".format(os.environ.get("PE_ENV")))
+          print("Same for Petsc.")
         
           # on hazel hen login node do not run MPI test program because this is not possible (only compile)
           self.run = False

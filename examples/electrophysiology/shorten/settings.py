@@ -1,7 +1,7 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
-end_time = 1000.0   # [ms] end time of simulation
+end_time = 100.0   # [ms] end time of simulation
 n_elements = 500
 
 # global parameters
@@ -58,14 +58,15 @@ def set_parameters(n_nodes, time_step_no, current_time, parameters, dof_nos_glob
     stimulation_current = 400.
   else:
     stimulation_current = 0.
-  
-  for node_no in nodes_to_stimulate:
-    parameters[node_no] = stimulation_current
-
-  print("       set_parameters at timestep {}, t={}, n_nodes={}, stimulated: {}".\
-    format(time_step_no, current_time, n_nodes, is_fibre_gets_stimulated))
  
-  print("       set stimulation for nodes {}".format(nodes_to_stimulate))
+  first_dof_global = dof_nos_global[0]
+  last_dof_global = dof_nos_global[-1]
+    
+  for node_no_global in nodes_to_stimulate_global:
+    if first_dof_global <= node_no_global <= last_dof_global:
+      # get local no for global no (1D)
+      dof_no_local = node_no_global - first_dof_global
+      parameters[dof_no_local] = stimulation_current
   
   #wait = input("Press any key to continue...")
     
@@ -123,7 +124,7 @@ config = {
       "physicalExtent": n_elements/10.,
     },
   },
-  "GodunovSplitting": {
+  "StrangSplitting": {
     #"numberTimeSteps": 1,
     "timeStepWidth": dt_3D,  # 1e-1
     "endTime": end_time,
@@ -135,7 +136,7 @@ config = {
       {"format": "ExFile", "filename": "out/fibre_splitting", "outputInterval": 1e5, "sphereSize": "2*2*2"},
     ],
     "Term1": {      # CellML
-      "ExplicitEuler" : {
+      "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
         "timeStepOutputInterval": 1e4,

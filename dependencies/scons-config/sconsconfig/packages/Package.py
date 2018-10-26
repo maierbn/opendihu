@@ -730,7 +730,6 @@ class Package(object):
   def try_link(self, ctx, **kwargs):
     text = self.check_text
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program
@@ -765,7 +764,7 @@ class Package(object):
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
-    # remove C++11 and C++14 flags
+    # remove C++11 and C++14 flags, only for the test program
     if 'cpp' in self.ext:
       ccflags = ctx.env["CCFLAGS"]
       ccflags_new = []

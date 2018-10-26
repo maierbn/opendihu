@@ -79,7 +79,6 @@ vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
-vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
     
 # Add options from any packages we want to use.
@@ -172,7 +171,9 @@ AlwaysBuild('notify-send')
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg -fopenmp -std=c++14 -Werror -Wall -Wno-sign-compare -Wno-error=sign-compare -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-fopenmp -std=c++14 -ftemplate-backtrace-limit=0 -fstack-check')
+  env.MergeFlags('-Werror -Wall -Wno-sign-compare -Wno-error=sign-compare -Wunused-variable')
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
@@ -191,7 +192,8 @@ elif env["BUILD_TYPE"] == "preprocess":
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
-  env.MergeFlags('-O2 -march=native -std=c++14 -Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-O2 -march=native -std=c++14 -fopenmp')
+  env.MergeFlags('-Wunused-variable -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
@@ -207,7 +209,7 @@ env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 ldflags = "-lpthread -ldl -lutil -lm"
 env.MergeFlags(ldflags)
 
-print("compilers CXX={}, CC={}".format(env['CXX'],env['CC']))
+print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,

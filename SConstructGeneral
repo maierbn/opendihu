@@ -111,11 +111,11 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['LINKCOMSTR'] = "\x1b[32mLinking   $TARGET\x1b[0m"
   env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
   env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
-
-# add basic linker flags for linux
-ldflags = "-lpthread -ldl -lutil -lm"
-env.MergeFlags(ldflags)
            
+# set compiler, "CC" is C++, "cc" is C
+env['CXX'] = env['CC']
+env['CC'] = env['cc']
+
 # Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
@@ -128,12 +128,6 @@ sconf.Finish()
 # disable unit tests on hazel hen
 if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   env['no_tests'] = True
-
-# set compiler, "CC" is C++, "cc" is C
-env['CXX'] = env['CC']
-env['CC'] = env['cc']
-print env.Dump()
-
 
 # -----------------------------------------------
 # progress display e.g. [ 50%]
@@ -209,6 +203,11 @@ env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   #
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
+# add basic linker flags for linux
+ldflags = "-lpthread -ldl -lutil -lm"
+env.MergeFlags(ldflags)
+
+print("compilers CXX={}, CC={}".format(env['CXX'],env['CC']))
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,

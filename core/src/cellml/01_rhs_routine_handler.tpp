@@ -68,9 +68,9 @@ initializeRhsRoutine()
       }
       SourceFilenameToUse = gpuSourceFilename;
 #ifdef NDEBUG
-      compileCommandOptions = "gcc -fPIC -fopenmp -O3 -shared -lm -x c ";
+      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -fopenmp -O3 -shared -lm -x c ";
 #else
-      compileCommandOptions = "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c ";
+      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -fopenmp -O0 -ggdb -shared -lm -x c ";
 #endif
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
@@ -92,9 +92,9 @@ initializeRhsRoutine()
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      compileCommandOptions = "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c ";
+      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c ";
 #else
-      compileCommandOptions = "gcc -fPIC -O0 -ggdb -shared -lm -x c ";
+      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -O0 -ggdb -shared -lm -x c ";
 #endif
     }
     // compile source file to a library

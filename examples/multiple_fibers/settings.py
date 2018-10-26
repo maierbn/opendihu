@@ -136,8 +136,6 @@ def get_instance_config(i):
       "durationLogKey": "duration_total",
       "timeStepOutputInterval" : 1000,
       "endTime": end_time,
-      "outputData1": False,
-      "outputData2": True,
 
       "Term1": {      # CellML
         "Heun" : {

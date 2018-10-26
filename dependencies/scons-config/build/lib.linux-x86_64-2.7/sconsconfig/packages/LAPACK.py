@@ -124,6 +124,7 @@ int main(int argc, char* argv[]) {
 
     def check(self, ctx):
         if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          ctx.Message('Not checking for LAPACK ... ')
           ctx.Result(True)
           return True
           

@@ -89,6 +89,7 @@ class PETSc(Package):
         
     def check(self, ctx):
         if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+          ctx.Message('Not checking for PETSc ... ')
           ctx.Result(True)
           return True
       

@@ -13,7 +13,6 @@ import collections
 import copy
 import os
 import time
-import py_reader
 import json
 
 files = ""

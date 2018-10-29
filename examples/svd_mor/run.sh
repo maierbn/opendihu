@@ -3,7 +3,7 @@
 echo "running example $(pwd)"
 
 workdir=$(pwd)
-variant="debug"
+#variant="debug"
 variant="release"
 
 mkdir -p build_${variant}
@@ -13,10 +13,7 @@ cd build_${variant}
 rm -rf out
 
 ./shorten_implicit ../settings.py
-python ../write_csv.py
-./shorten_pod ../settings_pod.py
-
-  
+python ../check_results.py  
 
 cd $workdir
 

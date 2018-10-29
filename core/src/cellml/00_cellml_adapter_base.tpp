@@ -87,7 +87,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     LOG(DEBUG) << "set initial values from config";
 
     // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-    statesInitialValues_ = this->specificSettings_.getOptionArray<double,nStates>("statesInitialValues", 0);
+    statesInitialValues_ = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
   }
   else if(this->sourceFilename_ != "")
   {

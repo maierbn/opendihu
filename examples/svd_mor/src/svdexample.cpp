@@ -28,6 +28,6 @@ int main(int argc, char *argv[])
   std::cout << "/n" << std::endl;
   
   std::cout << "size Vt: " << result.size() << std::endl;
-  SvdUtility::writeCSV("./out/SVDresult.csv", result, 51, 51);
+  SvdUtility::writeCSV("./out/SVDresult.csv", result, columnCount, columnCount);
   return EXIT_SUCCESS;
 }

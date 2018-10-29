@@ -1,8 +1,8 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
-end_time = 50.0   # [ms] end time of simulation
-n_elements = 20
+end_time = 20.0   # [ms] end time of simulation
+n_elements = 10
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -179,8 +179,8 @@ config = {
         },
         "OutputWriter" : [
           {"format": "PythonFile", "outputInterval": 1e5, "filename": "out/fibre", "binary": False},
-          {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre", "binaryOutput": True, "fixedFormat": False},
-          {"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
+         # {"format": "Paraview", "outputInterval": 1e5, "filename": "out/fibre", "binaryOutput": True, "fixedFormat": False},
+         # {"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },
     },

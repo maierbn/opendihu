@@ -13,10 +13,12 @@ import collections
 import copy
 import os
 import time
+#sys.path.append('../../scripts/')
+import py_reader
 import json
 
 files = ""
-path = "./build_release/out/"
+path = "./out/"
 # get all input data in current directory
 ls = os.listdir(path)
 

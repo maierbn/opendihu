@@ -5,7 +5,8 @@
 namespace Solver
 {
 
-Solver::Solver(PyObject *specificSettings) : specificSettings_(specificSettings)
+Solver::Solver(PyObject *specificSettings, std::string name) :
+  specificSettings_(specificSettings), name_(name)
 {
 
 }

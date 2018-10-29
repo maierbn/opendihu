@@ -3,8 +3,8 @@
 #include <Python.h>  // has to be the first included header
 #include <vector>
 
-#include "discretizable_in_time/discretizable_in_time.h"
-#include "control/runnable.h"
+#include "interfaces/discretizable_in_time.h"
+#include "interfaces/runnable.h"
 #include "data_management/streamline_tracer.h"
 
 namespace Postprocessing
@@ -52,7 +52,7 @@ protected:
 
   double targetElementLength_;   ///< the final length of each element of the traced streamlines. After the streamlines were traced using the fine lineStepWidth_, it gets resampled with this width.
   double targetLength_;           ///< the final length of the longest streamline, 0 means disabled
-  double discardRelativeLength_;   ///< a relative length (in [0,1]), at the end streamlines are dropped that are smaller than this relative length times the median fibre length
+  double discardRelativeLength_;   ///< a relative length (in [0,1]), at the end streamlines are dropped that are smaller than this relative length times the median fiber length
   std::string csvFilename_;      ///< a csv output filename to write the node positions of the streamlines to (after postprocessing)
   std::string csvFilenameBeforePostprocessing_;      ///< a csv output filename to write the node positions of the streamlines to (before postprocessing)
 };

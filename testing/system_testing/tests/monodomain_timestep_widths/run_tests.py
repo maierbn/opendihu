@@ -15,7 +15,7 @@ plt.rcParams['lines.linewidth'] = 3
 plt.rcParams['lines.markersize'] = 8
 
 def run(dt_0D, dt_1D, dt_3D, output_name):   
-  command = "rm -f out/{output_name}* && mpirun -n 2 ./multiple_fibers ../multiple_fibers_settings.py {dt_0D} {dt_1D} {dt_3D} {output_name}"\
+  command = "rm -f out/{output_name}* && mpirun -n 2 --allow-run-as-root ./multiple_fibers ../multiple_fibers_settings.py {dt_0D} {dt_1D} {dt_3D} {output_name}"\
    .format(dt_0D=dt_0D, dt_1D=dt_1D, dt_3D=dt_3D, output_name=output_name)
 
   try:

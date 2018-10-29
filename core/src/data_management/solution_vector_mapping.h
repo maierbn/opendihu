@@ -32,7 +32,7 @@ public:
 
   //! transfer data from solution1 to solution2, where solution1 corresponds to "this" object, solution2 corresponds to solutionVectorMapping2
   template<typename FieldVariable1, typename FieldVariable2>
-  void transfer(FieldVariable1 &solution1, SolutionVectorMapping &solutionVectorMapping2, FieldVariable2 &solution2);
+  void transfer(FieldVariable1 &solution1, std::shared_ptr<SolutionVectorMapping> solutionVectorMapping2, FieldVariable2 &solution2);
 
   //void copyFromSolutionToDataPointer(Vec &solution, double *data);
   //void copyFromDataPointerToSolution(const double *data, Vec &solution);

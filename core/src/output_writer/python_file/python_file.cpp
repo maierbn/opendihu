@@ -9,7 +9,7 @@
 namespace OutputWriter
 {
 
-PythonFile::PythonFile(PyObject *settings) : Generic(settings)
+PythonFile::PythonFile(DihuContext context, PyObject *settings) : Generic(context, settings)
 {
   onlyNodalValues_ = PythonUtility::getOptionBool(settings, "onlyNodalValues", true);
 }

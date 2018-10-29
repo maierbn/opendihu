@@ -612,6 +612,10 @@ class Package(object):
         cmd = cmd.replace('${PREFIX}', install_dir)
         cmd = cmd.replace('${SOURCE_DIR}', source_dir)
         cmd = cmd.replace('${DEPENDENCIES_DIR}', dependencies_dir)
+        path_environment_variable = ""
+        if os.environ.get("PATH") is not None:
+          path_environment_variable = os.environ.get("PATH")
+        cmd = cmd.replace('${PATH}', path_environment_variable)
         
         if substitute_environment_variables:
           cmd = ctx.env.subst(cmd)

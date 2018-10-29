@@ -28,7 +28,7 @@ public:
   Multidomain(DihuContext context);
 
   //! return a reference to the rhs summand vector which is needed to apply the boundary conditions, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
-  std::shared_ptr<GradientFieldVariableType> fibreDirection();
+  std::shared_ptr<GradientFieldVariableType> fiberDirection();
 
   //! return the field variable of the potential for the Laplace potential flow problem
   std::shared_ptr<FieldVariableType> flowPotential();
@@ -37,19 +37,22 @@ public:
   std::shared_ptr<FieldVariableType> extraCellularPotential();
 
   //! return the trans-membrane potential field variable (all states) for MU compartmentNo
-  std::shared_ptr<CellMLFieldVariableType> transmembranePotential(int compartmentNo);
-
-  //! return the trans-membrane potential field variable (all states) for MU compartmentNo
-  std::shared_ptr<CellMLFieldVariableType> transmembranePotentialNextTimeStep(int compartmentNo);
+  std::shared_ptr<CellMLFieldVariableType> subcellularStates(int compartmentNo);
 
   //! return the increment of the trans-membrane potential field variable (all states) for MU compartmentNo
-  std::shared_ptr<CellMLFieldVariableType> transmembraneIncrementNextTimeStep(int compartmentNo);
+  std::shared_ptr<CellMLFieldVariableType> subcellularIncrement(int compartmentNo);
 
-  //! return field variable for -1/Cm I_ion(Vm) for the next time step, this is a single component extracted from transmembranePotentialNextTimeStep
-  std::shared_ptr<FieldVariableType> ionicCurrentNextTimeStep(int compartmentNo);
+  //! return field variable for -1/Cm I_ion(Vm) for the next time step, this is a single component extracted from subcellularStatesNextTimeStep
+  std::shared_ptr<FieldVariableType> ionicCurrent(int compartmentNo);
 
-  //! return the transmembrane (Vm) increment field variable used for time stepping
-  std::shared_ptr<FieldVariableType> transmembraneIncrement();
+  //! return the transmembrane potential (Vm) field variable
+  std::shared_ptr<FieldVariableType> transmembranePotential(int compartmentNo);
+
+  //! return the relative factor f_r of the given compartment, at each point
+  std::shared_ptr<FieldVariableType> compartmentRelativeFactor(int compartmentNo);
+
+  //! a field variable with constant value of zero, needed for the nested rhs vector
+  std::shared_ptr<FieldVariableType> zero();
 
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
@@ -59,9 +62,12 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
-    std::shared_ptr<GradientFieldVariableType>,     // fibreDirection
+    std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
+    std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential
-    std::vector<std::shared_ptr<CellMLFieldVariableType>>    // transmembrane potentials
+    std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
+    std::vector<std::shared_ptr<CellMLFieldVariableType>>,        // subcellularStates
+    std::vector<std::shared_ptr<FieldVariableType>>              // compartmentRelativeFactors
   > OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers
@@ -73,13 +79,15 @@ private:
   void createPetscObjects() override;
 
   int nCompartments_;     ///< number of compartments i.e. motor units
-  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibres
-  std::shared_ptr<GradientFieldVariableType> fibreDirection_; ///< the direction of fibres
-  std::vector<std::shared_ptr<CellMLFieldVariableType>> transmembranePotential_;  ///< the Vm value for the compartments
-  std::vector<std::shared_ptr<CellMLFieldVariableType>> transmembranePotentialNextTimeStep_;  ///< the Vm value for the compartments
-  std::vector<std::shared_ptr<CellMLFieldVariableType>> transmembraneIncrementNextTimeStep_;              ///< increment helper variable
-  std::vector<std::shared_ptr<FieldVariableType>> ionicCurrentNextTimestep_;  ///< -1/Cm I_ion(Vm) for the next time step
+  std::shared_ptr<FieldVariableType> flowPotential_; ///< the direction of fibers
+  std::shared_ptr<GradientFieldVariableType> fiberDirection_; ///< the direction of fibers
+  std::vector<std::shared_ptr<CellMLFieldVariableType>> subcellularStates_;  ///< the Vm value for the compartments
+  std::vector<std::shared_ptr<CellMLFieldVariableType>> subcellularIncrement_;              ///< increment helper variable
+  std::vector<std::shared_ptr<FieldVariableType>> ionicCurrent_;  ///< -1/Cm I_ion(Vm) for the next time step
+  std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;  ///< the Vm value (transmembrane potential)
+  std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactor_;  ///< the relative factor f_r of the given compartment, at each point
   std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
+  std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
 };
 
 } // namespace Data

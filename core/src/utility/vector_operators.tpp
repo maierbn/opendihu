@@ -1,5 +1,7 @@
 #include "utility/vector_operators.h"
 
+#include <sstream>
+
 #include "utility/petsc_utility.h"
 #include "easylogging++.h"
 
@@ -197,11 +199,11 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
 {
   if (values.empty())
   {
-    stream << "()";
+    stream << "[]";
     return stream;
   }
 
-  stream << "(" << values[0];
+  stream << "[" << values[0];
 
   if (VLOG_IS_ON(1))
   {
@@ -219,7 +221,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
       stream << "... " << values.size() << " entries total, only showing the first 100";
   }
 
-  stream << ")";
+  stream << "]";
   return stream;
 }
 
@@ -274,7 +276,13 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
   stream << "}";
   return stream;
 }
-
+/*
+std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream)
+{
+  stream << "\"" << stringstream.str() << "\"";
+  return stream;
+}
+*/
 /*
 std::ostream &operator<<(std::ostream &stream, const Mat &mat)
 {

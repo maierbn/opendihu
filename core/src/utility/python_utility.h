@@ -106,6 +106,12 @@ public:
   //! extract a vector with unknown number of nEntries, must be a list
   static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values);
 
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values);
+
+  //! extract a vector with unknown number of nEntries, must be a list
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<PyObject *> &values);
+
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);
 
@@ -122,15 +128,13 @@ public:
     static T get(PyObject *object);
   };
 
-  /*
-  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   template<typename T>
-  static T convertFromPython(PyObject *object, T defaultValue);
+  struct convertToPython
+  {
+    //! convert a type to a python object
+    static PyObject *get(T value);
+  };
 
-  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
-  template<typename T>
-  static T convertFromPython(PyObject *object);
-*/
   //! create a python list out of the double vector
   static PyObject *convertToPythonList(std::vector<double> &data);
 
@@ -156,21 +160,12 @@ public:
 
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
-/*
-  //! convert a python list to a std::array, use default value when python list is shorter than the resulting array
-  template<class ValueType, int D>
-  static std::array<ValueType, D> convertFromPython(PyObject *object, ValueType defaultValue);
 
-  //! convert a python list to a std::array with specified default values if the python list is shorter than the array
-  template<class ValueType, int D>
-  static std::array<ValueType, D> convertFromPython(PyObject *object, std::array<ValueType, D> defaultValue);
-
-  //! convert a python list to a std::array
-  template<class ValueType, int D>
-  static std::array<ValueType, D> convertFromPython(PyObject *object);
-*/
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
+
+  //! print a error message to stderr if there was a python error
+  static void checkForError();
 
   /** Helper class that acquires the global interpreter lock of the python interpreter. This is needed for every call to the python api when running multi-threaded (openmp) programs.
    * A critical section for python API code starts when an object of this class is instantiated and ends, when the object gets destructed.

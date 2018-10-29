@@ -40,11 +40,19 @@ public:
   //! check if a function space with the specified name is stored, the type is not checked
   bool hasFunctionSpace(std::string meshName);
 
-  //! create a mesh not from python config but directly by calling an appropriate construtor. 
+  //! create a mesh not from python config but directly by calling an appropriate construtor.
   //! With this e.g. meshes from node positions can be created.
+  //! Initialize the functionSpace from settings.
   template<typename FunctionSpaceType, typename ...Args>
   std::shared_ptr<FunctionSpaceType> createFunctionSpace(std::string name, Args && ...args);
-  
+
+  //! create a mesh not from python config but directly by calling an appropriate construtor.
+  //! With this e.g. meshes from node positions can be created.
+  //! Use the given meshPartition, i.e. not the number of elements from settings.
+  template<typename FunctionSpaceType, typename ...Args>
+  std::shared_ptr<FunctionSpaceType> createFunctionSpaceWithGivenMeshPartition(
+    std::string name, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, Args && ...args);
+
   //! Create a field variable without logical mesh representation, e.g. for MOR reduced vectors.
   //! The vector contains nEntries entries, the partitioning is done by the partition manager.
   //! \param name is the name of the Petsc Vec, used for debugging output.

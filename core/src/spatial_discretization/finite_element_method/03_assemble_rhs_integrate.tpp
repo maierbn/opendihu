@@ -36,6 +36,7 @@ multiplyRightHandSideWithMassMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
 
   // merge local changes on the partitioned vector
+  rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
   
   // get all entries

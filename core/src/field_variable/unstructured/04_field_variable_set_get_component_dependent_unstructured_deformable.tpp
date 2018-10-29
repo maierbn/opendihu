@@ -83,6 +83,14 @@ setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode)
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+//! set the values from a petsc Vec
+template<int D, typename BasisFunctionType>
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+setValues(Vec petscVector)
+{
+  this->setValues(0, petscVector);
+}
+
 //! set values for one components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::

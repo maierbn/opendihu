@@ -38,6 +38,7 @@ multiplyRightHandSideWithMassMatrix()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
+  rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
   
   // stencil values
@@ -126,6 +127,7 @@ multiplyRightHandSideWithMassMatrix()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
+  rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
   
   // stencil values
@@ -353,6 +355,7 @@ multiplyRightHandSideWithMassMatrix()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide = this->data_.rightHandSide();
 
   // merge local changes on the vector
+  rightHandSide->setRepresentationGlobal();
   rightHandSide->startGhostManipulation();
   
   // stencil values

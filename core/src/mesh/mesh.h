@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <control/types.h>
 #include <memory>
-#include "partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/00_mesh_partition_base.h"
 
 namespace Mesh
 {

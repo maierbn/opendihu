@@ -36,7 +36,9 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 sconsconfig.select(
     packages.MPI(required=True),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
     packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
-    packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS
+    #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
+    #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
+    packages.PETSc(required=True),   # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
     packages.Python(required=True),  # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
     packages.Cython(required=False), # Cython is a dependency for the numpy C API
@@ -118,6 +120,10 @@ sconsconfig.check(sconf)
 # Finish the configuration and save it to file.
 sconf.Finish()
 
+# disable unit tests on hazel hen
+if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+  env['no_tests'] = True
+
 # -----------------------------------------------
 # progress display e.g. [ 50%]
 
@@ -149,6 +155,9 @@ except: pass
 # add progress display target
 Progress(progress_function, interval=env["node_count_interval"])
 
+notify = env.Command(target='notify-send', source = None, action = 'notify-send "compilation complete" || true')
+AlwaysBuild('notify-send')
+    
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
 # All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0. 
@@ -157,14 +166,14 @@ Progress(progress_function, interval=env["node_count_interval"])
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -fopenmp -std=c++14 -Werror -Wall -Wno-sign-compare -Wno-error=sign-compare -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg -fopenmp -std=c++14 -Werror -Wall -Wno-sign-compare -Wno-error=sign-compare -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
   
 elif env["BUILD_TYPE"] == "releasewithdebuginfo":
   # release with debug info build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release_with_debug_info')         # folder of build
-  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -march=native -std=c++14 -Wunused-variable -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -pg -march=native -std=c++14 -Wunused-variable -fopenmp')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release_with_debug_info')])   # add release with debug info version of opendihu library
   env.Prepend(LIBS = ['opendihurd'])
 
@@ -180,7 +189,10 @@ else:
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
-env.MergeFlags('-Wunused-variable')
+env.MergeFlags('-Wunused-variable')   # always warn about unused variables
+env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
+
+#print(env.Dump())
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])

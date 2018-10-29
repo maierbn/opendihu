@@ -221,7 +221,7 @@ void PerformanceMeasurement::parseStatusInformation()
      message << h << ":";
    if (min != 0)
    {
-     message << std::setw(2) << std::setfill('0') << min << ":" << s;
+     message << std::setw(2) << std::setfill('0') << min << ":" << std::setw(2) << std::setfill('0') << s << " min";
    }
    else
    {

@@ -3,16 +3,16 @@
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
 
-#include "control/runnable.h"
+#include "interfaces/runnable.h"
 #include "control/dihu_context.h"
 #include "data_management/multiple_instances.h"
 #include "output_writer/manager.h"
-#include "partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
 
 namespace Control
 {
 
-/** This class holds multiple instances of the template type, e.g. for having multiple fibres, which are each as in example electrophysiology
+/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
   */
 template<class TimeSteppingScheme>
 class MultipleInstances: public Runnable
@@ -51,6 +51,8 @@ protected:
   std::vector<TimeSteppingScheme> instancesLocal_;   ///< the instances of the problem that are computed on the local rank
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   
+  std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   ///< the rank nos of all computed instances of this MultipleInstances object
+
   Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> data_;  ///< the data object
 };
 

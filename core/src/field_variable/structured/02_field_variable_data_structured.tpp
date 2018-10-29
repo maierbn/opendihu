@@ -97,7 +97,7 @@ FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, st
   std::copy(componentNames.begin(), componentNames.end(), this->componentNames_.begin());
 
   LOG(DEBUG) << "FieldVariableDataStructured constructor, name=" << this->name_
-   << ", components: " << nComponents;
+   << ", components: " << nComponents << ", isGeometryField: " << this->isGeometryField_;
 
   bool isStructuredRegularFixed = std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<1>>::value
     || std::is_same<typename FunctionSpaceType::Mesh, Mesh::StructuredRegularFixedOfDimension<2>>::value
@@ -154,18 +154,18 @@ valuesGlobal(int componentNo)
 
 template<typename FunctionSpaceType, int nComponents>
 Vec &FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-getContiguousValuesGlobal()
+getValuesContiguous()
 {
   assert(this->values_);
-  return this->values_->getContiguousValuesGlobal();
+  return this->values_->getValuesContiguous();
 }
 
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-restoreContiguousValuesGlobal()
+restoreValuesContiguous()
 {
   assert(this->values_);
-  this->values_->restoreContiguousValuesGlobal();
+  this->values_->restoreValuesContiguous();
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -204,7 +204,7 @@ void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 outputHeaderExelem(std::ostream &stream, element_no_t currentElementGlobalNo, int fieldVariableNo)
 {
   // output first line of header
-  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
+  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (this->isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
 
   // output headers of components
@@ -274,7 +274,7 @@ outputHeaderExnode(std::ostream &stream, node_no_t currentNodeGlobalNo, int &val
    1.  Value index= 3, #Derivatives= 0
 */
   // output first line of header
-  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (isGeometryField_? "coordinate" : "field")
+  stream << " " << (fieldVariableNo+1) << ") " << this->name_ << ", " << (this->isGeometryField_? "coordinate" : "field")
     << ", rectangular cartesian, #Components=" << nComponents << std::endl;
 
   // output headers of components
@@ -303,7 +303,7 @@ output(std::ostream &stream) const
   if (this->functionSpace_->meshPartition()->ownRankNo() == 0)
   {
     stream << "\"" << this->name_ << "\""
-      << ", isGeometryField: " << std::boolalpha << isGeometryField_
+      << ", isGeometryField: " << std::boolalpha << this->isGeometryField_
       << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
     for (auto &componentName : this->componentNames_)
     {

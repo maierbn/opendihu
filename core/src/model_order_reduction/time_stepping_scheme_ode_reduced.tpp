@@ -14,15 +14,18 @@ TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
   TimeSteppingScheme(context["ModelOrderReduction"]),
-  timestepping_(context["ModelOrderReduction"]), solutionVectorMapping_(SolutionVectorMapping()), initialized_(false)
+  timestepping_(context["ModelOrderReduction"]), initialized_(false)
 {  
   this->specificSettings_ = this->context_.getPythonConfig();
-  
+
   // initialize output writers
-  this->outputWriterManager_.initialize(timestepping_.specificSettings());
+  this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
   
-  VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-  PythonUtility::printDict(this->specificSettings_);
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
+    PythonUtility::printDict(this->specificSettings_);
+  }
 }
 
 template<typename TimesteppingType>
@@ -33,19 +36,12 @@ solution()
 }
 
 template<typename TimeSteppingType>
-SolutionVectorMapping &TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-solutionVectorMapping()
-{
-  return solutionVectorMapping_;
-}
-
-template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
 {
   PetscErrorCode ierr;
   
-  Vec &solution = this->timestepping_.data().solution()->getContiguousValuesGlobal();
-  Vec &redSolution=this->data_->redSolution()->getContiguousValuesGlobal();
+  Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();
+  Vec &redSolution=this->data_->redSolution()->getValuesContiguous();
   Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
   
   // reduction step

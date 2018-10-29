@@ -28,9 +28,9 @@ public:
   virtual ~Data();
 
   //! initialize the mesh with e.g. number of dimensions
-  virtual void setFunctionSpace(std::shared_ptr<FunctionSpaceType> mesh);
+  virtual void setFunctionSpace(std::shared_ptr<FunctionSpaceType> fuctionSpace);
 
-  //! initialize, generate petsc objects, this has to be called after setMesh
+  //! initialize, generate petsc objects, this has to be called after setFunctionSpace
   virtual void initialize();
 
   //! set the subset of ranks that will compute the work

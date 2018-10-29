@@ -3,7 +3,7 @@
 #include "control/dihu_context.h"
 #include "data_management/solution_vector_mapping.h"
 #include "data_management/time_stepping.h"
-#include "discretizable_in_time/discretizable_in_time.h"
+#include "interfaces/discretizable_in_time.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "data_management/data.h"
 
@@ -29,7 +29,7 @@ public:
   virtual void run();
 
   //! get the solutionVectorMapping object that stores information about which values of the solution should be used for further computation and how they can be retrieved
-  SolutionVectorMapping &solutionVectorMapping();
+  std::shared_ptr<SolutionVectorMapping> solutionVectorMapping();
 
   //! return the Petsc solution vector
   std::shared_ptr<typename Data::FieldVariableType> solution();

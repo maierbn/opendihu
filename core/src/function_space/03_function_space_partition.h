@@ -3,8 +3,8 @@
 #include <Python.h>  // has to be the first included header
 
 #include "function_space/02_function_space_jacobian.h"
-#include "partition/01_mesh_partition.h"
-#include "partition/00_mesh_partition_base.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/00_mesh_partition_base.h"
 
 // forward declaration
 namespace Partition 
@@ -32,6 +32,9 @@ public:
   //! constructor
   FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
   
+  //! set the partition, call this prior to initialize to not initialize the partition from settings but use the given meshPartition
+  void setMeshPartition(std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition);
+
   //! get the partition
   std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition() const;
   

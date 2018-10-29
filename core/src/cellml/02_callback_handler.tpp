@@ -10,12 +10,11 @@
 #include "utility/string_utility.h"
 #include "mesh/mesh_manager.h"
 
-
 template<int nStates, typename FunctionSpaceType>
 CallbackHandler<nStates,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates,FunctionSpaceType>(context),
-  DiscretizableInTime(SolutionVectorMapping()),
+  DiscretizableInTime(),
   setParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)

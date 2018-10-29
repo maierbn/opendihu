@@ -5,7 +5,8 @@
 namespace Solver
 {
 
-Nonlinear::Nonlinear(PyObject *specificSettings, MPI_Comm mpiCommunicator) : Solver(specificSettings)
+Nonlinear::Nonlinear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string name) :
+  Solver(specificSettings, name)
 {
   // parse options
   relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);

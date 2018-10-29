@@ -8,7 +8,7 @@
 #include "easylogging++.h"
 
 #include "field_variable/01_field_variable_components.h"
-#include "partition/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
@@ -59,20 +59,15 @@ public:
   Vec &valuesGlobal(int componentNo = 0);
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
-  Vec &getContiguousValuesGlobal();
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  Vec &getValuesContiguous();
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  void restoreContiguousValuesGlobal();
+  void restoreValuesContiguous();
 
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
-
-  /*
-  //! get the number of dofs, i.e. the number of entries per component
-  dof_no_t nDofsLocal() const;
-  */
 
   //! not implemented interface methods
 
@@ -114,8 +109,6 @@ public:
   
 protected:
 
-  bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
-  
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 

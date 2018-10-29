@@ -28,6 +28,9 @@ purge_dependencies:
 rebuild: purge_dependencies purge clean debug release
 
 # the following targets are just for convenience and could also be deleted
+release_without_tests:
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
+
 system_testing:
 	cd testing/system_testing && ./run.sh
 
@@ -62,5 +65,10 @@ pod:
 	cd examples/diffusion1d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 multidomain:
-	cd examples/multidomain2d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/multidomain3d && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+parallel_fiber_estimation:
+	cd examples/parallel_fiber_estimation && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+load_balancing:
+	cd examples/load_balancing && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

@@ -16,25 +16,28 @@
 #include "mesh/mesh_manager.h"
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
-#include "partition/partitioned_petsc_vec.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace SpatialDiscretization
 {
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
-FiniteElementMethodBase(DihuContext context) :
+FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
   context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), initialized_(false)
 {
   specificSettings_ = context_.getPythonConfig();
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
-  std::shared_ptr<Mesh::Mesh> mesh = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
-  
+  if (!functionSpace)
+  {
+    functionSpace = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
+  }
+
   // store mesh in data
-  data_.setFunctionSpace(std::static_pointer_cast<FunctionSpaceType>(mesh));
+  data_.setFunctionSpace(functionSpace);
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
@@ -195,6 +198,8 @@ template<typename FunctionSpaceType,typename QuadratureType>
 void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
 initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
 {
+  LOG(DEBUG) << "FiniteElementMethodInitializeData::initialize";
+
   // initialize the DiffusionTensorFieldVariable object
   this->data_.initialize(direction, multidomainNCompartments);
 

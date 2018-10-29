@@ -33,9 +33,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     = std::static_pointer_cast<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->data_);
 
   // get vectors of all components in struct-of-array order, as needed by CellML (i.e. one long vector with [state0 state0 state0 ... state1 state1...]
-  Vec &solution = this->data_->solution()->getContiguousValuesGlobal();
-  Vec &increment = this->data_->increment()->getContiguousValuesGlobal();
-  Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getContiguousValuesGlobal();
+  Vec &solution = this->data_->solution()->getValuesContiguous();
+  Vec &increment = this->data_->increment()->getValuesContiguous();
+  Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getValuesContiguous();
 
   // loop over time steps
   double currentTime = this->startTime_;
@@ -96,9 +96,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
     //this->data_->print();
   }
 
-  this->data_->solution()->restoreContiguousValuesGlobal();
-  this->data_->increment()->restoreContiguousValuesGlobal();
-  dataHeun->intermediateIncrement()->restoreContiguousValuesGlobal();
+  this->data_->solution()->restoreValuesContiguous();
+  this->data_->increment()->restoreValuesContiguous();
+  dataHeun->intermediateIncrement()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

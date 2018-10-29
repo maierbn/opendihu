@@ -12,7 +12,7 @@ namespace OutputWriter
 {
 
 
-void Manager::initialize(PyObject *settings)
+void Manager::initialize(DihuContext context, PyObject *settings)
 {
   outputWriter_.clear();
 
@@ -30,7 +30,7 @@ void Manager::initialize(PyObject *settings)
         PythonUtility::getOptionListNext<PyObject *>(settings, "OutputWriter", writerSettings))
     {
       LOG(DEBUG) << "parse outputWriter";
-      createOutputWriterFromSettings(writerSettings);
+      createOutputWriterFromSettings(context, writerSettings);
     }
   }
   else
@@ -39,7 +39,7 @@ void Manager::initialize(PyObject *settings)
   }
 }
 
-void Manager::createOutputWriterFromSettings(PyObject *settings)
+void Manager::createOutputWriterFromSettings(DihuContext context, PyObject *settings)
 {
 
   if (PythonUtility::hasKey(settings, "format"))
@@ -48,19 +48,19 @@ void Manager::createOutputWriterFromSettings(PyObject *settings)
     std::string typeString = PythonUtility::getOptionString(settings, "format", "none");
     if (typeString == "Paraview")
     {
-      outputWriter_.push_back(std::make_shared<Paraview>(settings));
+      outputWriter_.push_back(std::make_shared<Paraview>(context, settings));
     }
     else if(typeString == "PythonCallback")
     {
-      outputWriter_.push_back(std::make_shared<PythonCallback>(settings));
+      outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings));
     }
     else if(typeString == "PythonFile")
     {
-      outputWriter_.push_back(std::make_shared<PythonFile>(settings));
+      outputWriter_.push_back(std::make_shared<PythonFile>(context, settings));
     }
     else if(typeString == "Exfile" || typeString == "ExFile")
     {
-      outputWriter_.push_back(std::make_shared<Exfile>(settings));
+      outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
     }
     else
     {

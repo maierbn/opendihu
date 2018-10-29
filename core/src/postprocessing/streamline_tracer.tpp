@@ -17,7 +17,7 @@ StreamlineTracer(DihuContext context) :
 
   specificSettings_ = context_.getPythonConfig();
   VLOG(2) << "in StreamlineTracer(), specificSettings_: " << specificSettings_;
-  outputWriterManager_.initialize(specificSettings_);
+  outputWriterManager_.initialize(context_, specificSettings_);
 
   lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2, PythonUtility::Positive);
   targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 0.0, PythonUtility::Positive);
@@ -271,7 +271,7 @@ traceStreamlines()
   for (int streamlineNo = 0; streamlineNo != streamlines.size(); streamlineNo++)
   {
     LOG(DEBUG) << "seed point " << streamlineNo << ", number node positions: " << streamlines[streamlineNo].size();
-    this->data_.createFibreMesh(streamlines[streamlineNo]);
+    this->data_.createfiberMesh(streamlines[streamlineNo]);
   }
 }
 

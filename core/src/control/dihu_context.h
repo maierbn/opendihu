@@ -49,7 +49,7 @@ public:
   static int ownRankNo();
 
   ///! destructor
-  ~DihuContext();
+  virtual ~DihuContext();
 
 private:
   ///! read in file and execute python script and store global variables

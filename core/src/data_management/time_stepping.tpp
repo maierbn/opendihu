@@ -12,8 +12,8 @@
 #include "utility/python_utility.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "partition/01_mesh_partition.h"
-#include "partition/partitioned_petsc_mat.h"
+#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 namespace Data
 {

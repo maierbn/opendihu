@@ -3,7 +3,7 @@ import numpy as np
 n = 4.
 m = n
 
-# boundary conditions
+# boundary conditions (for quadratic elements)
 bc = {}
 for i in range(int(2*n+1)):
   x = i/(2*n+1.)
@@ -19,7 +19,7 @@ config = {
     "physicalExtent": [1.0, 1.0],
     "outputInterval": 1.0,
     "prefactor": 1,
-    dirichletBoundaryConditions: bc,
+    "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
     "maxIterations": 10000,
     "OutputWriter" : [

@@ -3,40 +3,30 @@
 namespace Data
 {
 
-
-template <int D>
-void DiffusionTensorConstant<D>::
-initialize(PyObject *settings)
+template<typename FunctionSpaceType>
+DiffusionTensorConstant<FunctionSpaceType>::
+DiffusionTensorConstant(PyObject *settings) :
+  DiffusionTensorBase<FunctionSpaceType>::DiffusionTensorBase(settings)
 {
-  LOG(DEBUG) << "initialize Diffusion tensor";
-  PythonUtility::printDict(settings);
-  if (PythonUtility::hasKey(settings, "diffusionTensor"))
+  LOG(DEBUG) << "construct Diffusion tensor";
+  if (VLOG_IS_ON(1))
   {
-    // create identity matrix as default values
-    std::array<double, D*D> defaultValue({0});
-    for (int i=0; i<D; i++)
-      defaultValue[i*D] = 1.0;
-
-    // get diffusion tensor from config as array with D*D entries
-    this->diffusionTensor_ = PythonUtility::template getOptionArray<double, D*D>(settings, "diffusionTensor", defaultValue);
-
-    LOG(DEBUG) << "diffusionTensor found: " << this->diffusionTensor_;
+    PythonUtility::printDict(settings);
   }
-  else
-  {
-    LOG(DEBUG) << "diffusionTensor not found";
-    /*
-    // create identity matrix as default values
-    this->diffusionTensor_ = std::array<double, D*D>({0});
-    for (int i=0; i<D; i++)
-      this->diffusionTensor_[i*D] = 1.0;
-    */
-  }
+
+  this->diffusionTensor_ = this->parseDiffusionTensor("diffusionTensor");
 }
 
-template <int D>
-const MathUtility::Matrix<D,D> &DiffusionTensorConstant<D>::
-diffusionTensor(element_no_t elementNoLocal, const std::array<double,D> xi) const
+template<typename FunctionSpaceType>
+void DiffusionTensorConstant<FunctionSpaceType>::
+initialize()
+{
+  LOG(DEBUG) << "DiffusionTensorConstant::initialize";
+}
+
+template<typename FunctionSpaceType>
+const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> &DiffusionTensorConstant<FunctionSpaceType>::
+diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const
 {
   return this->diffusionTensor_;
 }

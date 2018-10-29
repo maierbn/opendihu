@@ -28,7 +28,7 @@ int main(int argc_, char **argv_) {
     outfile.close();
   }
 
-  ierr = MPI_Barrier(MPI_COMM_WORLD); CHKERRQ(ierr);
+  ierr = MPI_Finalize(); CHKERRQ(ierr);
 
   return nFails;
 }

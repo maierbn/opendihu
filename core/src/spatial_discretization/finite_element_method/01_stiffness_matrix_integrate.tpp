@@ -37,6 +37,7 @@ setStiffnessMatrix()
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
 
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
+  functionSpace->geometryField().setRepresentationGlobal();
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
 
   // initialize values to zero

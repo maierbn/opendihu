@@ -18,7 +18,7 @@ TimeSteppingSchemeOde(DihuContext context, std::string name) :
   this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
 
   // initialize output writers
-  this->outputWriterManager_.initialize(this->specificSettings_);
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   // create dirichlet Boundary conditions object
   this->dirichletBoundaryConditions_ = std::make_shared<
@@ -66,7 +66,7 @@ setInitialValues()
 }
 
 template<typename DiscretizableInTimeType>
-SolutionVectorMapping &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+std::shared_ptr<SolutionVectorMapping> TimeSteppingSchemeOde<DiscretizableInTimeType>::
 solutionVectorMapping()
 {
   return discretizableInTime_.solutionVectorMapping();
@@ -119,7 +119,7 @@ initialize()
 
   // initialize underlying DiscretizableInTime object, also with time step width
   discretizableInTime_.initialize();
-  discretizableInTime_.initialize(this->timeStepWidth_);   // this performs extra initialization for implicit timestepping methods that need the time step width
+  discretizableInTime_.initializeForImplicitTimeStepping();   // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
 
   std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
     = discretizableInTime_.functionSpace();
@@ -138,8 +138,6 @@ initialize()
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
   this->dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_->functionSpace());
-
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
 
   // set initial values from settings
 

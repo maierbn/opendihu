@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <set>
 
 #include "control/types.h"
 
@@ -16,8 +16,9 @@ public:
   //! constructor that constructs a rank subset with a single rank
   RankSubset(int singleRank);
   
-  //! constructor that constructs a whole vector of ranks
-  RankSubset(std::vector<int> &ranks);
+  //! constructor that constructs a whole set of ranks
+  template<typename Iter>
+  RankSubset(Iter ranksBegin, Iter ranksEnd);
  
   //! constructor that constructs a rank subset with all ranks (MPICommWorld)
   RankSubset();
@@ -29,17 +30,17 @@ public:
   element_no_t ownRankNo();
 
   //! first entry of the rank list
-  std::vector<int>::const_iterator begin();
+  std::set<int>::const_iterator begin();
   
   //! one after last  entry of the rank list
-  std::vector<int>::const_iterator end();
+  std::set<int>::const_iterator end();
   
   //! get the MPI communicator that contains all ranks of this subset
   MPI_Comm mpiCommunicator() const;
   
 protected:
  
-  std::vector<int> rankNo_;  ///< the list of ranks
+  std::set<int> rankNo_;  ///< the list of ranks
   int ownRankNo_;             ///< own rank id of this rankSubset
   MPI_Comm mpiCommunicator_;    ///< the MPI communicator that contains only the ranks of this rank subset
   
@@ -49,3 +50,5 @@ protected:
 std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset);
 
 }  // namespace
+
+#include "partition/rank_subset.tpp"

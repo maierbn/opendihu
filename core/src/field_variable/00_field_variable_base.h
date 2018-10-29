@@ -47,12 +47,12 @@ public:
   virtual Vec &valuesGlobal(int componentNo = 0) = 0;
 
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
-  //! after manipulation of the vector has finished one has to call restoreContiguousValuesGlobal
-  virtual Vec &getContiguousValuesGlobal() = 0;
+  //! after manipulation of the vector has finished one has to call restoreValuesContiguous
+  virtual Vec &getValuesContiguous() = 0;
 
   //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
   //! this has to be called
-  virtual void restoreContiguousValuesGlobal() = 0;
+  virtual void restoreValuesContiguous() = 0;
 
   //! set the functionSpace
   virtual void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace) {LOG(FATAL) << "this is unused";}
@@ -118,7 +118,7 @@ public:
 protected:
  
   bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
- 
+
   std::shared_ptr<FunctionSpaceType> functionSpace_;  ///< the mesh/function_space for which the field variable is defined
   std::string name_;     ///< name of the field variable
 };

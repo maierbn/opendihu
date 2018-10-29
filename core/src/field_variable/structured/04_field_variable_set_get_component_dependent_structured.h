@@ -67,6 +67,9 @@ public:
   //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
 
+  //! set the values from a petsc Vec
+  void setValues(Vec petscVector);
+
   //! set values for the single component for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValues(const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES);
 

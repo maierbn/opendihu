@@ -5,20 +5,20 @@
 namespace Solver
 {
 
-Solver::Solver(PyObject *specificSettings, std::string name) :
+Solver::Solver(PythonConfig specificSettings, std::string name) :
   specificSettings_(specificSettings), name_(name)
 {
 
 }
 
-bool Solver::configEquals(PyObject* config)
+bool Solver::configEquals(PythonConfig config)
 {
-  if (config && specificSettings_)
+  if (config.pyObject() != nullptr && specificSettings_.pyObject() != nullptr)
   {
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
   
-    return PyObject_RichCompareBool(specificSettings_, config, Py_EQ);
+    return PyObject_RichCompareBool(specificSettings_.pyObject(), config.pyObject(), Py_EQ);
   }
   return false;
 }

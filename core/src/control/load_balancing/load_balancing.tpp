@@ -2,7 +2,6 @@
 
 #include <omp.h>
 #include <sstream>
-#include "data_management/solution_vector_mapping.h"
 
 namespace Control
 {
@@ -10,10 +9,8 @@ namespace Control
 template<class TimeSteppingScheme>
 LoadBalancing<TimeSteppingScheme>::
 LoadBalancing(DihuContext context) :
-  Runnable(), Splittable(), context_(context["LoadBalancing"]), timeSteppingScheme_(context_)
+  Runnable(), Splittable(), context_(context["LoadBalancing"]), specificSettings_(context_.getPythonConfig()), timeSteppingScheme_(context_)
 {
-  // initialize the python object "specificSettings" which holds the python dict under "LoadBalancing"
-  specificSettings_ = context_.getPythonConfig();
 }
 
 template<class TimeSteppingScheme>

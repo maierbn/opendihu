@@ -42,7 +42,7 @@ protected:
 
   Data::StreamlineTracer<typename DiscretizableInTimeType::FunctionSpace, typename DiscretizableInTimeType::Data> data_;    ///< the data object that holds the gradient field variable
 
-  PyObject *specificSettings_;   ///< the specific python config for this module
+  PythonConfig specificSettings_;   ///< the specific python config for this module
   double lineStepWidth_;     ///< the line step width used for integrating the streamlines
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 

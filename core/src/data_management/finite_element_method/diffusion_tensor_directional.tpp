@@ -1,30 +1,33 @@
-#include "data_management/finite_element_method/diffusion_tensor_field_variable.h"
+#include "data_management/finite_element_method/diffusion_tensor_directional.h"
 
 namespace Data
 {
 
 
 template<typename FunctionSpaceType>
-DiffusionTensorFieldVariable<FunctionSpaceType>::
-DiffusionTensorFieldVariable(PyObject *specificSettings) :
+DiffusionTensorDirectional<FunctionSpaceType>::
+DiffusionTensorDirectional(PythonConfig specificSettings) :
   DiffusionTensorBase<FunctionSpaceType>::DiffusionTensorBase(specificSettings)
 {
   LOG(DEBUG) << "construct directional diffusion tensor";
   if (VLOG_IS_ON(1))
   {
-    PythonUtility::printDict(this->specificSettings_);
+    PythonUtility::printDict(this->specificSettings_.pyObject());
   }
 
   this->diffusionTensor_ = this->parseDiffusionTensor("diffusionTensor");
 }
 
 template<typename FunctionSpaceType>
-void DiffusionTensorFieldVariable<FunctionSpaceType>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor)
+void DiffusionTensorDirectional<FunctionSpaceType>::
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
+           bool useAdditionalDiffusionTensor)
 {
-  LOG(DEBUG) << "DiffusionTensorFieldVariable::initialize";
+  LOG(DEBUG) << "DiffusionTensorDirectional::initialize";
   useAdditionalDiffusionTensor_ = useAdditionalDiffusionTensor;
   direction_ = direction;
+  spatiallyVaryingPrefactor_ = spatiallyVaryingPrefactor;
 
   if (useAdditionalDiffusionTensor_)
   {
@@ -33,7 +36,7 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
 }
 
 template<typename FunctionSpaceType>
-MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> DiffusionTensorFieldVariable<FunctionSpaceType>::
+MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> DiffusionTensorDirectional<FunctionSpaceType>::
 diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const
 {
   const int D = FunctionSpaceType::dim();
@@ -64,9 +67,20 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   //LOG(DEBUG) << "diffusionTensor before rotation: " << diffusionTensor;
 
   // rotate diffusion tensor in fiber direction
-  //MathUtility::rotateMatrix(diffusionTensor, directionVector);
+  MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
   //LOG(DEBUG) << "diffusionTensor after rotation: " << diffusionTensor;
+
+  // if there is a relative factor
+  if (spatiallyVaryingPrefactor_)
+  {
+    std::array<double,FunctionSpaceType::nDofsPerElement()> spatiallyVaryingPrefactorElementalValues;
+    spatiallyVaryingPrefactor_->getElementValues(elementNoLocal, spatiallyVaryingPrefactorElementalValues);
+    double spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi);
+
+    diffusionTensor *= spatiallyVaryingPrefactor;
+    LOG(DEBUG) << "elementNoLocal " << elementNoLocal << ", factor: " << spatiallyVaryingPrefactor << ", scaled diffusionTensor: " << diffusionTensor;
+  }
 
   return diffusionTensor;
 }

@@ -29,7 +29,7 @@ initialize()
   assert(this->partitionManager_ != nullptr);
   
   // get whether the mesh information in config specifies local or global domain
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredGlobal<FunctionSpace<MeshType,BasisFunctionType>>(

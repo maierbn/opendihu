@@ -24,7 +24,6 @@ FiniteElementsSolidMechanics(DihuContext context) :
   Data<FunctionSpaceType>(context), computeWithReducedVectors_(true)  // true: works for analytic and numeric Jacobian in nonlinear solver, false: works only for analyitc Jacobian
 {
   LOG(TRACE) << "Data::FiniteElements constructor";
-  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename FunctionSpaceType,typename Term>

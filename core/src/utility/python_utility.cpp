@@ -12,6 +12,7 @@
 
 #include "control/use_numpy.h"
 #include "control/types.h"
+#include "control/settings_file_name.h"
 
 PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
@@ -53,7 +54,7 @@ bool PythonUtility::isTypeList(const PyObject *object)
   return false;
 }
 
-PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString)
+PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString, std::string pathString)
 {
   if (settings)
   {
@@ -70,7 +71,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
     }
     else
     {
-      LOG(WARNING) << "Dict does not contain Key \"" <<keyString<< "\"!" << std::endl;
+      LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
       Py_CLEAR(key);
       return NULL;
     }
@@ -78,7 +79,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
   return NULL;
 }
 
-double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, double defaultValue, ValidityCriterion validityCriterion)
+double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, std::string pathString, double defaultValue, ValidityCriterion validityCriterion)
 {
   double result = defaultValue;
 
@@ -116,25 +117,23 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
         if (listNEntries > 1)
         {
           LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
-                        << " at Key \"" <<keyString<< "\"." << std::endl;
+                        << " at " << pathString << "[\"" << keyString << "\"]." << std::endl;
         }
       }
       else
       {
-        LOG(WARNING) << "Empty list for Key \"" <<keyString<< "\"." << std::endl;
+        LOG(WARNING) << "Empty list for " << pathString << "[\"" << keyString << "\"]." << std::endl;
       }
     }
     else
     {
       // convert to double or take default value
       result = convertFromPython<double>::get(value, defaultValue);
-
-      //LOG(DEBUG) << "PythonUtility::getOptionDouble: Value for key \"" <<keyString<< "\" found: " <<result<< ".";
     }
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << defaultValue << ".";
   }
 
   switch(validityCriterion)
@@ -142,7 +141,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   case Positive:
     if (result <= 0.0)
     {
-      LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
+      LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not positive). Using default value "
         << defaultValue << ".";
       result = defaultValue;
     }
@@ -150,7 +149,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   case NonNegative:
     if (result < 0.0)
     {
-      LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
+      LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not non-negative). Using default value "
         << defaultValue << ".";
       result = defaultValue;
     }
@@ -158,13 +157,13 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   case Between1And3:
     if (result < 1.0)
     {
-      LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
+      LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (<1). Using default value "
         << defaultValue << ".";
       result = defaultValue;
     }
     else if (result > 3.0)
     {
-      LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
+      LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (>3). Using default value "
         << defaultValue << ".";
       result = defaultValue;
     }
@@ -177,7 +176,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   return result;
 }
 
-int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString, int defaultValue, ValidityCriterion validityCriterion)
+int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString, std::string pathString, int defaultValue, ValidityCriterion validityCriterion)
 {
   int result = defaultValue;
 
@@ -212,12 +211,12 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
         if (listNEntries > 1)
         {
           LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
-            << " at Key \"" <<keyString<< "\"." << std::endl;
+            << " at " << pathString << "[\"" << keyString << "\"]." << std::endl;
         }
       }
       else
       {
-        LOG(WARNING) << "Empty list for Key \"" <<keyString<< "\"." << std::endl;
+        LOG(WARNING) << "Empty list in " << pathString << "[\"" << keyString << "\"]." << std::endl;
       }
     }
     else
@@ -228,7 +227,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << defaultValue << ".";
   }
 
   switch(validityCriterion)
@@ -236,7 +235,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     case Positive:
       if (result <= 0)
       {
-        LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not positive). Using default value "
+        LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not positive). Using default value "
           << defaultValue << ".";
         result = defaultValue;
       }
@@ -244,7 +243,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     case NonNegative:
       if (result < 0)
       {
-        LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (not non-negative). Using default value "
+        LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (not non-negative). Using default value "
           << defaultValue << ".";
         result = defaultValue;
       }
@@ -252,13 +251,13 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     case Between1And3:
       if (result < 1)
       {
-        LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (<1). Using default value "
+        LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (<1). Using default value "
           << defaultValue << ".";
         result = defaultValue;
       }
       else if (result > 3)
       {
-        LOG(WARNING) << "value " <<result<< " of Key \"" <<keyString<< "\" is invalid (>3). Using default value "
+        LOG(WARNING) << "Value " <<result<< " of " << pathString << "[\"" << keyString << "\"] is invalid (>3). Using default value "
           << defaultValue << ".";
         result = defaultValue;
       }
@@ -271,7 +270,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   return result;
 }
 
-bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyString, bool defaultValue)
+bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyString, std::string pathString, bool defaultValue)
 {
   int result = defaultValue;
 
@@ -306,12 +305,12 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
         if (listNEntries > 1)
         {
           LOG(WARNING) << "Only using first value " <<result<< " of list of length " << listNEntries
-            << " at Key \"" <<keyString<< "\"." << std::endl;
+            << " at " << pathString << "[\"" << keyString << "\"]." << std::endl;
         }
       }
       else
       {
-        LOG(WARNING) << "Empty list for Key \"" <<keyString<< "\"." << std::endl;
+        LOG(WARNING) << "Empty list for " << pathString << "[\"" << keyString << "\"]." << std::endl;
       }
     }
     else
@@ -322,13 +321,13 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value " << std::boolalpha << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << std::boolalpha << defaultValue << ".";
   }
   Py_CLEAR(key);
   return result;
 }
 
-std::string PythonUtility::getOptionString(const PyObject *settings, std::string keyString, std::string defaultValue)
+std::string PythonUtility::getOptionString(const PyObject *settings, std::string keyString, std::string pathString, std::string defaultValue)
 {
   std::string result = defaultValue;
 
@@ -350,14 +349,14 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming default value \"" << defaultValue << "\".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value \"" << defaultValue << "\".";
   }
 
   Py_CLEAR(key);
   return result;
 }
 
-PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string keyString)
+PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string keyString, std::string pathString)
 {
   PyObject *result = NULL;
 
@@ -382,17 +381,17 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
       }
       else
       {
-        LOG(WARNING) << "Value for key \"" <<keyString<< "\" is not a callable object.";
+        LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a callable object.";
       }
     }
     else
     {
-      LOG(WARNING) << "Value for key \"" <<keyString<< "\" is not a function.";
+      LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a function.";
     }
   }
   else
   {
-    LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file.";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\".";
   }
   Py_CLEAR(key);
   return result;
@@ -554,7 +553,7 @@ void PythonUtility::printDict(PyObject *dict)
   LOG(DEBUG) << getString(dict);
 }
 
-bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString)
+bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keyString, std::string pathString)
 {
   if (!itemList)
     return true;
@@ -565,7 +564,7 @@ bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keySt
   return itemListIndex >= PyList_Size(itemList);
 }
 
-bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keyString)
+bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keyString, std::string pathString)
 {
   if (!list)
     return true;
@@ -576,7 +575,7 @@ bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keySt
   return listIndex >= PyList_Size(list);
 }
 
-void PythonUtility::getOptionVector(const PyObject* settings, std::string keyString, int nEntries, std::vector<double> &values)
+void PythonUtility::getOptionVector(const PyObject* settings, std::string keyString, std::string pathString, int nEntries, std::vector<double> &values)
 {
   values.resize(nEntries, 0.0);
 
@@ -596,14 +595,14 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
         // it is a list
 
         // get the first value from the list
-        double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
+        double value = PythonUtility::getOptionListBegin<double>(settings, keyString, pathString);
         int i = 0;
 
         // loop over other values
         for (;
-            !PythonUtility::getOptionListEnd(settings, keyString)
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString)
             && i < nEntries;
-            PythonUtility::getOptionListNext<double>(settings, keyString, value), i++)
+            PythonUtility::getOptionListNext<double>(settings, keyString, pathString, value), i++)
         {
           values[i] = value;
         }
@@ -611,11 +610,11 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
       else if (PyDict_Check(value))
       {
         std::pair<int, double> dictItem
-          = PythonUtility::getOptionDictBegin<int, double>(settings, keyString);
+          = PythonUtility::getOptionDictBegin<int, double>(settings, keyString, pathString);
 
         // loop over Dirichlet boundary conditions
-        for (; !PythonUtility::getOptionDictEnd(settings, keyString);
-            PythonUtility::getOptionDictNext<int, double>(settings, keyString, dictItem))
+        for (; !PythonUtility::getOptionDictEnd(settings, keyString, pathString);
+            PythonUtility::getOptionDictNext<int, double>(settings, keyString, pathString, dictItem))
         {
           int index = dictItem.first;
           double value = dictItem.second;
@@ -626,25 +625,25 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
           }
           else
           {
-            LOG(WARNING) << "In config dict, ignoring key " <<index<< ", maximum key is " <<nEntries-1;
+            LOG(WARNING) << "In " << pathString << "[\"" << keyString << "\"], ignoring key " <<index<< ", maximum key is " <<nEntries-1;
           }
         }
       }
       else
       {
-        double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
+        double value = PythonUtility::getOptionDouble(settings, keyString, pathString, 0.0);
         std::fill(values.begin(), values.end(), value);
       }
     }
     else
     {
-      LOG(WARNING) << "Key \"" <<keyString<< "\" not found in dict in config file, assuming list with " << nEntries << " zeros";
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\", assuming list with " << nEntries << " zeros";
     }
     Py_CLEAR(key);
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values)
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<int> &values)
 {
   if (settings)
   {
@@ -667,12 +666,12 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
           return;
 
         // get the first value from the list
-        int value = PythonUtility::getOptionListBegin<int>(settings, keyString);
+        int value = PythonUtility::getOptionListBegin<int>(settings, keyString, pathString);
 
         // loop over other values
         for (;
-            !PythonUtility::getOptionListEnd(settings, keyString);
-            PythonUtility::getOptionListNext<int>(settings, keyString, value))
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
+            PythonUtility::getOptionListNext<int>(settings, keyString, pathString, value))
         {
           values.push_back(value);
         }
@@ -680,20 +679,20 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       else
       {
         // not a list, but a different entry (only 1 entry)
-        int value = PythonUtility::getOptionInt(settings, keyString, 0);
+        int value = PythonUtility::getOptionInt(settings, keyString, pathString, 0);
         values.push_back(value);
       }
     }
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values)
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<std::string> &values)
 {
   if (settings)
   {
@@ -716,12 +715,12 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
           return;
 
         // get the first value from the list
-        std::string value = PythonUtility::getOptionListBegin<std::string>(settings, keyString);
+        std::string value = PythonUtility::getOptionListBegin<std::string>(settings, keyString, pathString);
 
         // loop over other values
         for (;
-            !PythonUtility::getOptionListEnd(settings, keyString);
-            PythonUtility::getOptionListNext<std::string>(settings, keyString, value))
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
+            PythonUtility::getOptionListNext<std::string>(settings, keyString, pathString, value))
         {
           values.push_back(value);
         }
@@ -729,20 +728,20 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       else
       {
         // not a list, but a different entry (only 1 entry)
-        std::string value = PythonUtility::getOptionString(settings, keyString, 0);
+        std::string value = PythonUtility::getOptionString(settings, keyString, pathString, 0);
         values.push_back(value);
       }
     }
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values)
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<double> &values)
 {
   if (settings)
   {
@@ -762,12 +761,12 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
           return;
 
         // get the first value from the list
-        double value = PythonUtility::getOptionListBegin<double>(settings, keyString);
+        double value = PythonUtility::getOptionListBegin<double>(settings, keyString, pathString);
 
         // loop over other values
         for (;
-            !PythonUtility::getOptionListEnd(settings, keyString);
-            PythonUtility::getOptionListNext<double>(settings, keyString, value))
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
+            PythonUtility::getOptionListNext<double>(settings, keyString, pathString, value))
         {
           values.push_back(value);
         }
@@ -775,20 +774,20 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       else
       {
         // not a list, but a different entry (only 1 entry)
-        double value = PythonUtility::getOptionDouble(settings, keyString, 0.0);
+        double value = PythonUtility::getOptionDouble(settings, keyString, pathString, 0.0);
         values.push_back(value);
       }
     }
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming " << values;
+      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
     }
     Py_CLEAR(key);
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::vector<PyObject *> &values)
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<PyObject *> &values)
 {
   if (settings)
   {
@@ -808,12 +807,12 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
           return;
 
         // get the first value from the list
-        PyObject *item = PythonUtility::getOptionListBegin<PyObject *>(settings, keyString);
+        PyObject *item = PythonUtility::getOptionListBegin<PyObject *>(settings, keyString, pathString);
 
         // loop over other values
         for (;
-            !PythonUtility::getOptionListEnd(settings, keyString);
-            PythonUtility::getOptionListNext<PyObject *>(settings, keyString, item))
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
+            PythonUtility::getOptionListNext<PyObject *>(settings, keyString, pathString, item))
         {
           values.push_back(item);
         }
@@ -828,7 +827,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     else
     {
       // this is no warning
-      LOG(DEBUG) << "Key \"" <<keyString<< "\" not found in dict in config file. Assuming vector " << values;
+      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming vector " << values;
     }
     Py_CLEAR(key);
   }
@@ -932,13 +931,9 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
   // start critical section for python API calls
   PythonUtility::GlobalInterpreterLock lock;
   
-#if PY_MAJOR_VERSION >= 3
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
   std::string result = PyBytes_AsString(asciiString);
   Py_DECREF(asciiString);
-#else
-  std::string result = pyUnicodeToString(object);
-#endif
 
   return result;
 }

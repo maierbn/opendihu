@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
       SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion
         MeshType,
         BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<3>,
+        Quadrature::Gauss<5>,
         Equation::Dynamic::DirectionalDiffusion
       >
     >

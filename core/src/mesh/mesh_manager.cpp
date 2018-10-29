@@ -7,7 +7,7 @@
 namespace Mesh
 {
 
-Manager::Manager(PyObject *specificSettings) :
+Manager::Manager(PythonConfig specificSettings) :
   partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
@@ -22,33 +22,40 @@ void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionM
 void Manager::storePreconfiguredMeshes()
 {
   LOG(TRACE) << "MeshManager::storePreconfiguredMeshes";
-  if (specificSettings_)
+  if (specificSettings_.pyObject())
   {
     std::string keyString("Meshes");
-    if (PythonUtility::hasKey(specificSettings_, "Meshes"))
+    if (specificSettings_.hasKey("Meshes"))
     {
 
       std::pair<std::string, PyObject *> dictItem
-        = PythonUtility::getOptionDictBegin<std::string, PyObject *>(specificSettings_, keyString);
+        = specificSettings_.getOptionDictBegin<std::string, PyObject *>(keyString);
 
-      for (; !PythonUtility::getOptionDictEnd(specificSettings_, keyString);
-          PythonUtility::getOptionDictNext<std::string, PyObject *>(specificSettings_, keyString, dictItem))
+      for (; !specificSettings_.getOptionDictEnd(keyString);
+          specificSettings_.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
       {
         std::string key = dictItem.first;
         PyObject *value = dictItem.second;
 
         if (value == NULL)
         {
-          LOG(WARNING) << "Could not extract dict for Mesh \"" <<key<< "\".";
+          LOG(WARNING) << "Could not extract dict for Mesh \"" << key << "\".";
         }
         else if(!PyDict_Check(value))
         {
-          LOG(WARNING) << "Value for mesh with name \"" <<key<< "\" should be a dict.";
+          LOG(WARNING) << "Value for mesh with name \"" << key << "\" should be a dict.";
         }
         else
         {
-          LOG(DEBUG) << "store mesh configuration with key \"" <<key<< "\".";
-          meshConfiguration_[key] = value;
+          LOG(DEBUG) << "Store mesh configuration with key \"" << key << "\".";
+          if (meshConfiguration_.find(key) != meshConfiguration_.end())
+          {
+            meshConfiguration_.at(key).setPyObject(value);
+          }
+          else
+          {
+            meshConfiguration_.insert(std::pair<std::string,PythonConfig>(key, PythonConfig(specificSettings_, "Meshes", key, value)));
+          }
         }
       }
     }

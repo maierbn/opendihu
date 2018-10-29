@@ -14,7 +14,7 @@ class Generic
 {
 public:
   //! ctor
-  Generic(DihuContext context, PyObject *specificSettings);
+  Generic(DihuContext context, PythonConfig specificSettings);
 
   //! virtual destructor to allow dynamic_pointer_cast
   virtual ~Generic();
@@ -44,7 +44,7 @@ protected:
   int timeStepNo_;              ///< the current time step no.
   double currentTime_;          ///< the current simulation time
 
-  PyObject *specificSettings_;    ///< the python dict containing settings relevant to this object
+  PythonConfig specificSettings_;    ///< the python dict containing settings relevant to this object
 };
 
 };  // namespace

@@ -54,7 +54,8 @@ protected:
   Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
-  FiniteElementMethodDiffusion finiteElementMethodDiffusion_;   ///< the finite element object that is used for the diffusion, only the stiffness matrix is computed by this object
+  std::vector<FiniteElementMethodDiffusion> finiteElementMethodDiffusionCompartment_;   ///< the finite element object that is used for the diffusion of the compartments, with prefactor f_r
+  FiniteElementMethodDiffusion finiteElementMethodDiffusion_;   ///< the finite element object that is used for the diffusion with diffusion tensor sigma_i, without prefactor
   FiniteElementMethodDiffusion finiteElementMethodDiffusionTotal_;   ///< the finite element object that is used for the diffusion with diffusion tensor (sigma_i + sigma_e), bottom right block of system matrix
 
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system

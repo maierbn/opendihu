@@ -14,8 +14,8 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"]), initialized_(false)
 {
-  PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
+  PythonConfig topLevelSettings = context_.getPythonConfig();
+  specificSettings_ = PythonConfig(topLevelSettings, schemeName);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -37,7 +37,7 @@ initialize()
 
   TimeSteppingScheme::initialize();
 
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+  timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;

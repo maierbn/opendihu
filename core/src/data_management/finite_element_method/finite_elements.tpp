@@ -33,7 +33,7 @@ template<typename FunctionSpaceType>
 FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
 FiniteElements(DihuContext context) :
   FiniteElementsBase<FunctionSpaceType>(context),
-  DiffusionTensorFieldVariable<FunctionSpaceType>(context.getPythonConfig())
+  DiffusionTensorDirectional<FunctionSpaceType>(context.getPythonConfig())
 {
 }
 
@@ -51,12 +51,14 @@ initialize()
 
 template<typename FunctionSpaceType>
 void FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor)
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
+           bool useAdditionalDiffusionTensor)
 {
   FiniteElementsBase<FunctionSpaceType>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
-  DiffusionTensorFieldVariable<FunctionSpaceType>::initialize(direction, useAdditionalDiffusionTensor);
+  DiffusionTensorDirectional<FunctionSpaceType>::initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 }
 
 

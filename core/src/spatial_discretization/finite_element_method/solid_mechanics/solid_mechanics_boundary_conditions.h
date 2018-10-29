@@ -37,7 +37,7 @@ protected:
   void reduceMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> input, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> output, const int nLocalUnknowns);
 
   //! initialize Dirichlet boundary conditions
-  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data);
+  void initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PythonConfig specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data);
 
   //! print boundary conditions
   void printBoundaryConditions();
@@ -54,7 +54,7 @@ protected:
     std::vector<std::pair<dof_no_t, VecD<FunctionSpaceType::dim()>>> dofVectors;  //<element-local dof no, value>
 
     // parse values from python config, e.g. {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
-    TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh);
+    TractionBoundaryCondition(PythonConfig specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh);
   };
 
   std::vector<TractionBoundaryCondition> tractionReferenceConfiguration_;   //< tractions for elements

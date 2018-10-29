@@ -9,9 +9,9 @@
 namespace OutputWriter
 {
 
-PythonFile::PythonFile(DihuContext context, PyObject *settings) : Generic(context, settings)
+PythonFile::PythonFile(DihuContext context, PythonConfig settings) : Generic(context, settings)
 {
-  onlyNodalValues_ = PythonUtility::getOptionBool(settings, "onlyNodalValues", true);
+  onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);
 }
 
 PyObject *PythonFile::openPythonFileStream(std::string filename, std::string writeFlag)

@@ -23,19 +23,19 @@ class CellmlAdapterBase
 {
 public:
 
-  ///! constructor
+  //! constructor
   CellmlAdapterBase(DihuContext context);
 
-  ///! destructor
+  //! destructor
   ~CellmlAdapterBase();
 
-  ///! return the compile-time constant number of state variables of one instance that will be integrated
+  //! return the compile-time constant number of state variables of one instance that will be integrated
   static constexpr int nComponents();
 
-  ///! load model
+  //! load model
   void initialize();
   
-  ///! set initial values as given in python config
+  //! set initial values as given in python config
   template<typename FunctionSpaceType2>
   bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues);
 
@@ -63,7 +63,7 @@ protected:
   virtual bool scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesInitialValues) = 0;
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
   std::shared_ptr<FunctionSpaceType> functionSpace_;    ///< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh

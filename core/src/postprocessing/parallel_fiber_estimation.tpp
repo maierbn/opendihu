@@ -13,17 +13,16 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 ParallelFiberEstimation<BasisFunctionType>::
 ParallelFiberEstimation(DihuContext context) :
-  context_(context["ParallelFiberEstimation"]), problem_(nullptr), data_(context_)
+  context_(context["ParallelFiberEstimation"]), specificSettings_(context_.getPythonConfig()), problem_(nullptr), data_(context_)
 {
   LOG(TRACE) << "ParallelFiberEstimation::ParallelFiberEstimation()";
 
-  specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
 
-  stlFilename_ = PythonUtility::getOptionString(specificSettings_, "stlFilename", "");
-  bottomZClip_ = PythonUtility::getOptionInt(specificSettings_, "bottomZClip", 0);
-  topZClip_ = PythonUtility::getOptionInt(specificSettings_, "topZClip", 100);
-  nElementsZPerSubdomain_ = PythonUtility::getOptionInt(specificSettings_, "nElementsZPerSubdomain", 13);
+  stlFilename_ = specificSettings_.getOptionString("stlFilename", "");
+  bottomZClip_ = specificSettings_.getOptionInt("bottomZClip", 0);
+  topZClip_ = specificSettings_.getOptionInt("topZClip", 100);
+  nElementsZPerSubdomain_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13);
 }
 
 template<typename BasisFunctionType>
@@ -156,9 +155,9 @@ generateParallelMesh()
   LOG(DEBUG) << PythonUtility::getString(meshData);
 
   std::vector<Vec3> nodePositions;
-  PyObject *object = PythonUtility::getOptionPyObject(meshData, "node_positions");
+  PyObject *object = PythonUtility::getOptionPyObject(meshData, "node_positions", "");
   nodePositions = PythonUtility::convertFromPython<std::vector<Vec3>>::get(object);
-  std::array<int,3> nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", std::array<int,3>({0,0,0}));
+  std::array<int,3> nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", "", std::array<int,3>({0,0,0}));
 
   LOG(DEBUG) << "nodePositions: " << nodePositions;
   LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;

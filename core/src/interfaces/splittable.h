@@ -3,8 +3,6 @@
 #include <Python.h>  // has to be the first included header
 #include <iostream>
 
-#include "data_management/solution_vector_mapping.h"
-
 /**
  *  Class that can be part of a splitting scheme
  */

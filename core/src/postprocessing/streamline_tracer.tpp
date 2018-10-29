@@ -11,30 +11,29 @@ namespace Postprocessing
 template<typename DiscretizableInTimeType>
 StreamlineTracer<DiscretizableInTimeType>::
 StreamlineTracer(DihuContext context) :
-  context_(context["StreamlineTracer"]), problem_(context_), data_(context_)
+  context_(context["StreamlineTracer"]), problem_(context_), data_(context_), specificSettings_(context_.getPythonConfig())
 {
   LOG(TRACE) << "StreamlineTracer::StreamlineTracer()";
 
-  specificSettings_ = context_.getPythonConfig();
   VLOG(2) << "in StreamlineTracer(), specificSettings_: " << specificSettings_;
   outputWriterManager_.initialize(context_, specificSettings_);
 
-  lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2, PythonUtility::Positive);
-  targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 0.0, PythonUtility::Positive);
-  targetLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetLength", 0.0, PythonUtility::Positive);
-  discardRelativeLength_ = PythonUtility::getOptionDouble(specificSettings_, "discardRelativeLength", 0.0, PythonUtility::Positive);
-  maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
-  useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField", false);
-  csvFilename_ = PythonUtility::getOptionString(specificSettings_, "csvFilename", "");
-  csvFilenameBeforePostprocessing_ = PythonUtility::getOptionString(specificSettings_, "csvFilenameBeforePostprocessing", "");
+  lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
+  targetElementLength_ = specificSettings_.getOptionDouble("targetElementLength", 0.0, PythonUtility::Positive);
+  targetLength_ = specificSettings_.getOptionDouble("targetLength", 0.0, PythonUtility::Positive);
+  discardRelativeLength_ = specificSettings_.getOptionDouble("discardRelativeLength", 0.0, PythonUtility::Positive);
+  maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
+  useGradientField_ = specificSettings_.getOptionBool("useGradientField", false);
+  csvFilename_ = specificSettings_.getOptionString("csvFilename", "");
+  csvFilenameBeforePostprocessing_ = specificSettings_.getOptionString("csvFilenameBeforePostprocessing", "");
   
   // get the first seed position from the list
-  PyObject *pySeedPositions = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "seedPoints");
+  PyObject *pySeedPositions = specificSettings_.getOptionListBegin<PyObject *>("seedPoints");
 
   // loop over other entries of list
   for (;
-      !PythonUtility::getOptionListEnd(specificSettings_, "seedPoints");
-      PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "seedPoints", pySeedPositions))
+      !specificSettings_.getOptionListEnd("seedPoints");
+      specificSettings_.getOptionListNext<PyObject *>("seedPoints", pySeedPositions))
   {
     Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>::get(pySeedPositions);
     seedPositions_.push_back(seedPosition);
@@ -346,6 +345,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
   if (targetLength_ != 0)
   {
     scalingFactor = targetLength_/maximumLength;
+    LOG(INFO) << "Scaling factor for streamlines: " << scalingFactor;
   }
   
   // resample streamlines

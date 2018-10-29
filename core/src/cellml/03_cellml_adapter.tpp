@@ -9,7 +9,6 @@
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
-#include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"
 
 //#include <libcellml>    // libcellml not used here
@@ -49,8 +48,8 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  this->outputStateIndex_ = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
-  this->prefactor_ = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
+  this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 }
 
 template<int nStates_, typename FunctionSpaceType>

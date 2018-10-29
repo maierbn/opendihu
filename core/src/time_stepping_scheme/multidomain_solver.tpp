@@ -26,7 +26,14 @@ MultidomainSolver(DihuContext context) :
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   // parse number of motor units
-  nCompartments_ = PythonUtility::getOptionInt(this->specificSettings_, "nCompartments", 1, PythonUtility::NonNegative);
+  nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
+
+  // create finiteElement objects for diffusion in compartments
+  finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    finiteElementMethodDiffusionCompartment_.emplace_back(this->context_["Activation"]);
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -129,7 +136,7 @@ initialize()
   TimeSteppingScheme::initialize();
 
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
-  assert(this->specificSettings_);
+  assert(this->specificSettings_.pyObject());
 
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
@@ -152,20 +159,26 @@ initialize()
   LOG(DEBUG) << "flow potential: " << *dataMultidomain_.flowPotential();
   LOG(DEBUG) << "fiber direction: " << *dataMultidomain_.fiberDirection();
 
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //LOG(FATAL) << "end";
+  initializeCompartmentRelativeFactors();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
-  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection());
+  // diffusion object without prefactor, for normal diffusion (2nd multidomain eq.)
+  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection(), nullptr);
   finiteElementMethodDiffusion_.initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
-  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), true);
+
+  // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    finiteElementMethodDiffusionCompartment_[k].initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.compartmentRelativeFactor(k));
+    finiteElementMethodDiffusionCompartment_[k].initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
+  }
+
+  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.relativeFactorTotal(), true);
 
   // parse parameters
-  PythonUtility::getOptionVector(this->specificSettings_, "am", nCompartments_, am_);
-  PythonUtility::getOptionVector(this->specificSettings_, "cm", nCompartments_, cm_);
+  this->specificSettings_.getOptionVector("am", nCompartments_, am_);
+  this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
-
-  initializeCompartmentRelativeFactors();
 
   // initialize system matrix
   setSystemMatrix(this->timeStepWidth_);
@@ -216,20 +229,50 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initializeCompartmentRelativeFactors()
 {
-  if (PythonUtility::hasKey(this->specificSettings_, "compartmentRelativeFactors"))
-  {
-    LOG(FATAL) << "compartmentRelativeFactors not yet implemented";
-  }
-  else
-  {
-    double fr = 1./nCompartments_;
+  // parse relative factors f_r for compartments
+  bool inputIsGlobal = this->specificSettings_.getOptionBool("inputIsGlobal", true);
 
-    //initialize vectors with default values
-    for (int k = 0; k < nCompartments_; k++)
-    {
-      dataMultidomain_.compartmentRelativeFactor(k)->setValues(fr);
-    }
+  std::vector<PythonConfig> compartmentFields;
+  this->specificSettings_.getOptionVector("compartmentRelativeFactors", compartmentFields);
+  if (compartmentFields.size() < nCompartments_)
+  {
+    LOG(FATAL) << "Only " << compartmentFields.size() << " relative factors specified under \"compartmentRelativeFactors\". "
+      << "Number of compartments is " << nCompartments_ << ".";
   }
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    std::vector<double> values = PythonUtility::convertFromPython<std::vector<double>>::get(compartmentFields[k].pyObject());
+
+    // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
+    if (inputIsGlobal)
+    {
+      dataMultidomain_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(values);
+    }
+
+    if (values.size() < dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts())
+    {
+      LOG(FATAL) << "\"compartmentRelativeFactors\" for compartment " << k << " contains only " << values.size() << " entries, "
+        << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " are needed.";
+    }
+
+    dataMultidomain_.compartmentRelativeFactor(k)->setValuesWithoutGhosts(values);
+  }
+
+  // compute relative Factor total as sum f_r
+  dataMultidomain_.relativeFactorTotal()->zeroEntries();
+  PetscErrorCode ierr;
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    ierr = VecAXPY(dataMultidomain_.relativeFactorTotal()->valuesGlobal(), 1.0, dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal()); CHKERRV(ierr);
+  }
+
+
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    LOG(DEBUG) << "compartmentRelativeFactor(k=" << k << "): " << *dataMultidomain_.compartmentRelativeFactor(k);
+  }
+  LOG(DEBUG) << "relativeFactorTotal: " << *dataMultidomain_.relativeFactorTotal();
+
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -241,14 +284,15 @@ setSystemMatrix(double timeStepWidth)
   LOG(TRACE) << "setSystemMatrix";
 
   // fill submatrices, empty submatrices may be NULL
-
-  PetscErrorCode ierr;
+  // stiffnessMatrix and inverse lumped mass matrix without prefactor
   Mat stiffnessMatrix = finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal();
   Mat inverseLumpedMassMatrix = finiteElementMethodDiffusion_.data().inverseLumpedMassMatrix()->valuesGlobal();
 
+  PetscErrorCode ierr;
   // set all submatrices
   for (int k = 0; k < nCompartments_; k++)
   {
+
     // right column matrix
     double prefactor = -this->timeStepWidth_ / (am_[k]*cm_[k]);
 
@@ -296,15 +340,53 @@ setSystemMatrix(double timeStepWidth)
     // ---
     // bottom row matrices
     // create matrix as copy of stiffnessMatrix
+    Mat stiffnessMatrixWithPrefactor = finiteElementMethodDiffusionCompartment_[k].data().stiffnessMatrix()->valuesGlobal();
+
     Mat matrixOnBottomRow;
-    ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
+    ierr = MatConvert(stiffnessMatrixWithPrefactor, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
+
+#if 0
+    // debugging test, gives slightly different results due to approximation of test
+    Mat test;
+    ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &test); CHKERRV(ierr);
 
     // get the relative factor of the compartment
     Vec compartmentRelativeFactor = dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal();
 
-    // MatDiagonalScale(A,l,NULL) computes A = diag(l)*A, this scales the rows of A with the values in l (each row with one entry of l)
-    ierr = MatDiagonalScale(matrixOnBottomRow, compartmentRelativeFactor, NULL); CHKERRV(ierr);
+    int i = 0;double v = 0;
+    MatGetValues(test,1,&i,1,&i,&v);
+    LOG(DEBUG) << "compartmentRelativeFactor: " << PetscUtility::getStringVector(compartmentRelativeFactor);
+    LOG(DEBUG) << "test[0][0] = " << v;
 
+    // MatDiagonalScale(A,l,NULL) computes A = diag(l)*A, this scales the rows of A with the values in l (each row with one entry of l)
+    ierr = MatDiagonalScale(test, compartmentRelativeFactor, NULL); CHKERRV(ierr);
+
+    MatGetValues(test,1,&i,1,&i,&v);
+    LOG(DEBUG) << "MatdiagonalScale";
+    LOG(DEBUG) << "test[0][0] = " << v;
+
+    // test if "test" and matrixOnBottomRow yield the same matrices
+    PetscInt nRows, nColumns;
+    ierr = MatGetSize(matrixOnBottomRow,&nRows,&nColumns); CHKERRV(ierr);
+    double max_diff = 0;
+    for (int column = 0; column < nColumns; column++)
+    {
+      for (int row = 0; row < nRows; row++)
+      {
+        double value1, value2;
+        ierr = MatGetValues(matrixOnBottomRow,1,&row,1,&column,&value1); CHKERRV(ierr);
+        ierr = MatGetValues(test,1,&row,1,&column,&value2); CHKERRV(ierr);
+        double difference = fabs(value1-value2);
+        max_diff = std::max(max_diff, difference);
+        if (difference > 1e-5)
+        {
+          LOG(DEBUG) << "bottom matrix entry row=" << row << ", column=" << column << " is different: " << value1 << "," << value2 << ", diff: " << difference;
+
+        }
+      }
+    }
+    LOG(FATAL) << "max_diff:" << max_diff;
+#endif
     if (VLOG_IS_ON(2))
     {
       VLOG(2) << "matrixOnBottomRow: " << PetscUtility::getStringMatrix(matrixOnBottomRow);

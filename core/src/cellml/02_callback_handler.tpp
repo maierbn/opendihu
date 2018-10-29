@@ -33,10 +33,10 @@ template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
 initializeCallbackFunctions()
 {
-  if (PythonUtility::hasKey(this->specificSettings_, "setParametersFunction"))
+  if (this->specificSettings_.hasKey("setParametersFunction"))
   {
-    pythonSetParametersFunction_ = PythonUtility::getOptionFunction(this->specificSettings_, "setParametersFunction");
-    setParametersCallInterval_ = PythonUtility::getOptionInt(this->specificSettings_, "setParametersCallInterval", 1, PythonUtility::Positive);
+    pythonSetParametersFunction_ = this->specificSettings_.getOptionFunction("setParametersFunction");
+    setParametersCallInterval_ = this->specificSettings_.getOptionInt("setParametersCallInterval", 1, PythonUtility::Positive);
     setParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
@@ -45,10 +45,10 @@ initializeCallbackFunctions()
     LOG(DEBUG) << "registered setParameters function";
   }
 
-  if (PythonUtility::hasKey(this->specificSettings_, "handleResultFunction"))
+  if (this->specificSettings_.hasKey("handleResultFunction"))
   {
-    pythonHandleResultFunction_ = PythonUtility::getOptionFunction(this->specificSettings_, "handleResultFunction");
-    handleResultCallInterval_ = PythonUtility::getOptionInt(this->specificSettings_, "handleResultCallInterval", 1, PythonUtility::Positive);
+    pythonHandleResultFunction_ = this->specificSettings_.getOptionFunction("handleResultFunction");
+    handleResultCallInterval_ = this->specificSettings_.getOptionInt("handleResultCallInterval", 1, PythonUtility::Positive);
     handleResult_ = [](void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
@@ -57,18 +57,18 @@ initializeCallbackFunctions()
     LOG(DEBUG) << "registered handleResult function";
   }
   
-  if (PythonUtility::hasKey(this->specificSettings_, "setParametersFunctionAdditionalParameter"))
+  if (this->specificSettings_.hasKey("setParametersFunctionAdditionalParameter"))
   {
-    pySetParametersFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(this->specificSettings_, "setParametersFunctionAdditionalParameter");
+    pySetParametersFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("setParametersFunctionAdditionalParameter");
   }
   else 
   {
     pySetParametersFunctionAdditionalParameter_ = Py_None;
   }
   
-  if (PythonUtility::hasKey(this->specificSettings_, "handleResultFunctionAdditionalParameter"))
+  if (this->specificSettings_.hasKey("handleResultFunctionAdditionalParameter"))
   {
-    pyHandleResultFunctionAdditionalParameter_ = PythonUtility::getOptionPyObject(this->specificSettings_, "handleResultFunctionAdditionalParameter");
+    pyHandleResultFunctionAdditionalParameter_ = this->specificSettings_.getOptionPyObject("handleResultFunctionAdditionalParameter");
   }
   else 
   {

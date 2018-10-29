@@ -28,13 +28,13 @@ class CellmlAdapter :
 {
 public:
 
-  ///! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
+  //! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
   typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
 
   //! return nStates_
   static constexpr int nStates();
 
-  ///! constructor
+  //! constructor
   CellmlAdapter(DihuContext context);
   
   //! initialize callback functions and rhs

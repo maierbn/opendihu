@@ -7,7 +7,7 @@
 #include "interfaces/splittable.h"
 #include "interfaces/discretizable_in_time.h"
 #include "control/dihu_context.h"
-#include "data_management/solution_vector_mapping.h"
+#include "control/python_config.h"
 
 namespace Control
 {
@@ -61,7 +61,7 @@ public:
 protected:
 
   DihuContext context_;           ///< the context object that holds the config for this class
-  PyObject *specificSettings_;    ///< the python dictionary under "LoadBalancing"
+  PythonConfig specificSettings_;    ///< the python dictionary under "LoadBalancing"
 
   TimeSteppingScheme timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
 };

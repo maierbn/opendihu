@@ -16,7 +16,7 @@ namespace FunctionSpace
 // constructor
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField) :
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, noGeometryField_=" << this->noGeometryField_;
@@ -77,7 +77,7 @@ initialize()
 // read in config nodes
 template<int D,typename BasisFunctionType>
 void FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-parseNodePositionsFromSettings(PyObject *specificSettings)
+parseNodePositionsFromSettings(PythonConfig specificSettings)
 {
   LOG(TRACE) << "FunctionSpaceDofsNodes<structuredDeformable> parseNodePositionsFromSettings";
   
@@ -87,7 +87,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
   global_no_t nNodes;
 
   // if the given information about the mesh in config is for the global mesh
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(specificSettings, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = specificSettings.getOptionBool("inputMeshIsGlobal", true);
   LOG(DEBUG) << "inputMeshIsGlobal: " << std::boolalpha << inputMeshIsGlobal;
   
   global_no_t vectorSize;
@@ -111,13 +111,13 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
 
   
   // fill initial position from settings
-  if (PythonUtility::hasKey(specificSettings, "nodePositions"))
+  if (specificSettings.hasKey("nodePositions"))
   {
     bool nodesStoredAsLists = false;
     VLOG(1) << "specificSettings has \"nodePositions\"";
 
     // check if the node positions are stored as list, e.g. [[x,y,z], [x,y,z],...]
-    PyObject *nodePositionsListPy = PythonUtility::getOptionPyObject(specificSettings, "nodePositions");
+    PyObject *nodePositionsListPy = specificSettings.getOptionPyObject("nodePositions");
     if (PyList_Check(nodePositionsListPy))
     {
       if (PyList_Size(nodePositionsListPy) > 0)
@@ -189,10 +189,10 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
     {
       // nodes are stored as contiguous array, e.g. [x,y,z,x,y,z] or [x,y,x,y,x,y,...]
 
-      int nodeDimension = PythonUtility::getOptionInt(specificSettings, "nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
+      int nodeDimension = specificSettings.getOptionInt("nodeDimension", 3, PythonUtility::ValidityCriterion::Between1And3);
 
       int inputVectorSize = nNodesLocal * nodeDimension;
-      PythonUtility::getOptionVector(specificSettings, "nodePositions", inputVectorSize, localNodePositions_);
+      specificSettings.getOptionVector("nodePositions", inputVectorSize, localNodePositions_);
 
       LOG(DEBUG) << "nodeDimension: " << nodeDimension << ", expect input vector to have " << nNodesLocal << "*" << nodeDimension << "=" << inputVectorSize << " entries.";
 
@@ -221,7 +221,7 @@ parseNodePositionsFromSettings(PyObject *specificSettings)
   {    
     // if node positions are not given in settings but physicalExtent, fill from that
     std::array<double, D> physicalExtent, meshWidth;
-    physicalExtent = PythonUtility::getOptionArray<double, D>(specificSettings, "physicalExtent", 1.0, PythonUtility::Positive);
+    physicalExtent = specificSettings.getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
 
     for (unsigned int dimNo = 0; dimNo < D; dimNo++)
     {
@@ -352,7 +352,7 @@ setGeometryFieldValues()
   this->geometryField_->finishGhostManipulation();
 
   // initialize Hermite derivative dofs such that geometry fields becomes "even"
-  bool setHermiteDerivatives = PythonUtility::getOptionBool(this->specificSettings_, "setHermiteDerivatives", false);
+  bool setHermiteDerivatives = this->specificSettings_.getOptionBool("setHermiteDerivatives", false);
   if (setHermiteDerivatives)
   {
     this->setHermiteDerivatives();

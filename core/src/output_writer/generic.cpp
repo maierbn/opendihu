@@ -6,7 +6,7 @@
 namespace OutputWriter
 {
 
-Generic::Generic(DihuContext context, PyObject *specificSettings) :
+Generic::Generic(DihuContext context, PythonConfig specificSettings) :
   context_(context), specificSettings_(specificSettings)
 {
   // get the rank subset of all processes that collectively call the write methods

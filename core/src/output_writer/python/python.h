@@ -12,25 +12,6 @@
 namespace OutputWriter
 {
 
- /*
-class Python : public Generic
-{
-public:
-
-  //! constructor
-  Python(PyObject *specificSettings);
-
-  //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
-  template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
-
-private:
-
-  std::string filenameBase_;
-};
-*/
-
-
 /** Helper class that creates a python object out of a tuple of field variables.
  *  OutputFieldVariablesType is a std::tuple<std::shared_ptr<>, std::shared_ptr<>, ...> of field variables that will be output.
   */

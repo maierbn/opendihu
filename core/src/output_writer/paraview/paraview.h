@@ -15,7 +15,7 @@ class Paraview : public Generic
 public:
 
   //! constructor
-  Paraview(DihuContext context, PyObject *specificSettings);
+  Paraview(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>

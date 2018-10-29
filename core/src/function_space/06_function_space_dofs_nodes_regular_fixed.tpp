@@ -15,7 +15,7 @@ namespace FunctionSpace
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) :
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodesStructured(partitionManager, specificSettings), physicalExtent_({0.0})
 {
   this->meshWidth_ = 0;
@@ -45,12 +45,12 @@ computeMeshWidth()
     // only get physicalExtent if it is not a 1-node mesh with 0 elements
     if (D > 1 || this->nElementsPerCoordinateDirectionLocal_[0] != 0 || this->nElementsPerCoordinateDirectionGlobal_[0] != 0)
     {
-      if (PythonUtility::hasKey(this->specificSettings_, "physicalExtend"))
+      if (this->specificSettings_.hasKey("physicalExtend"))
       {
         LOG(ERROR) << "You misspelled \"physicalExtent\" as \"physicalExtend\"!";
       }
       
-      physicalExtent_ = PythonUtility::getOptionArray<double, D>(this->specificSettings_, "physicalExtent", 1.0, PythonUtility::Positive);
+      physicalExtent_ = this->specificSettings_.template getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
     }
     else
     {
@@ -61,7 +61,7 @@ computeMeshWidth()
 
   
   std::array<element_no_t, D> nElements;
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     for (int coordinateIndex = 0; coordinateIndex < D; coordinateIndex++)

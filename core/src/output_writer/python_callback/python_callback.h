@@ -16,7 +16,7 @@ class PythonCallback : public Generic
 public:
 
   //! constructor
-  PythonCallback(DihuContext context, PyObject *specificSettings);
+  PythonCallback(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution i.e. call the callback function in this case
   template<typename DataType>

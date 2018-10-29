@@ -32,7 +32,7 @@ class FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFun
 public:
 
   //! constructor from python settings
-  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings);
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings);
 
   //! construct from element numbers and physical extent
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
@@ -63,7 +63,7 @@ class FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunct
 {
 public:
   //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
-  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings, bool noGeometryField=false);
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField=false);
 
   //! constructor from node positions
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection);
@@ -76,7 +76,7 @@ public:
 protected:
 
   //! parse the node from python config into a vector
-  void parseNodePositionsFromSettings(PyObject *specificSettings);
+  void parseNodePositionsFromSettings(PythonConfig specificSettings);
 
   //! set the values of the geometry field
   void setGeometryFieldValues();

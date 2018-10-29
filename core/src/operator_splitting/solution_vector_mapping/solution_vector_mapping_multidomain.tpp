@@ -69,6 +69,7 @@ void SolutionVectorMapping<
     std::shared_ptr<FieldVariableType2> subcellularStatesFieldVariable = std::get<0>(subcellularStates[k]);
     int outputStateIndex = std::get<1>(subcellularStates[k]);  // is 0
 
+    subcellularStatesFieldVariable->setRepresentationGlobal();
     subcellularStatesFieldVariable->setValues(outputStateIndex, subVectors[k]);
   }
 }

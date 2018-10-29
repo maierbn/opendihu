@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Python.h>  // has to be the first included header
-
 #include <iostream>
+
+#include "control/python_config.h"
 
 namespace Solver
 {
@@ -14,14 +15,14 @@ class Solver
 {
 public:
   //! construct solver from python settings
-  Solver(PyObject *specificSettings, std::string name);
+  Solver(PythonConfig specificSettings, std::string name);
   virtual ~Solver() {}
 
   //! determine if the own python config object is the same as config
-  bool configEquals(PyObject *config);
+  bool configEquals(PythonConfig config);
 protected:
 
-  PyObject *specificSettings_;   ///< the python config dict
+  PythonConfig specificSettings_;   ///< the python config dict
   std::string name_;           ///< the name of the solver
 };
 

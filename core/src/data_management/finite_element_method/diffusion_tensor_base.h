@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "utility/math_utility.h"
+#include "control/python_config.h"
 
 namespace Data
 {
@@ -13,14 +14,14 @@ class DiffusionTensorBase
 public:
 
   //! constructor
-  DiffusionTensorBase(PyObject *specificSettings);
+  DiffusionTensorBase(PythonConfig specificSettings);
 
 protected:
 
   // parse a diffusion tensor from python config, at the given config
   MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> parseDiffusionTensor(std::string settingsKey);
 
-  PyObject *specificSettings_;    ///< the python settings from which the diffusion tensors are parsed
+  PythonConfig specificSettings_;    ///< the python settings from which the diffusion tensors are parsed
 };
 
 }  // namespace

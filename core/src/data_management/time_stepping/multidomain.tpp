@@ -65,6 +65,7 @@ createPetscObjects()
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
+  this->relativeFactorTotal_ = this->functionSpace_->template createFieldVariable<1>("relativeFactorTotal");
 }
 
 template<typename FunctionSpaceType>
@@ -117,6 +118,13 @@ compartmentRelativeFactor(int compartmentNo)
 {
   assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
   return this->compartmentRelativeFactor_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+relativeFactorTotal()
+{
+  return this->relativeFactorTotal_;
 }
 
 template<typename FunctionSpaceType>

@@ -6,7 +6,7 @@ namespace Data
 
 template<typename FunctionSpaceType>
 DiffusionTensorBase<FunctionSpaceType>::
-DiffusionTensorBase(PyObject *specificSettings) :
+DiffusionTensorBase(PythonConfig specificSettings) :
   specificSettings_(specificSettings)
 {
   LOG(DEBUG) << "initialize diffusion tensor";
@@ -19,7 +19,7 @@ parseDiffusionTensor(std::string settingsKey)
   const int D = FunctionSpaceType::dim();
 
   MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> result;
-  if (PythonUtility::hasKey(this->specificSettings_, settingsKey))
+  if (this->specificSettings_.hasKey(settingsKey))
   {
     // create identity matrix as default values
     std::array<double, D*D> defaultValue({0});
@@ -29,7 +29,7 @@ parseDiffusionTensor(std::string settingsKey)
     }
 
     // get diffusion tensor from config as array with D*D entries
-    result = PythonUtility::template getOptionArray<double, D*D>(this->specificSettings_, settingsKey, defaultValue);
+    result = this->specificSettings_.template getOptionArray<double, D*D>(settingsKey, defaultValue);
 
     LOG(DEBUG) << "parsed diffusionTensor \"" << settingsKey << "\": " << result;
   }

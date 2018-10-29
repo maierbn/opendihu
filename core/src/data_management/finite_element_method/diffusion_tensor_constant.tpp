@@ -5,13 +5,13 @@ namespace Data
 
 template<typename FunctionSpaceType>
 DiffusionTensorConstant<FunctionSpaceType>::
-DiffusionTensorConstant(PyObject *settings) :
+DiffusionTensorConstant(PythonConfig settings) :
   DiffusionTensorBase<FunctionSpaceType>::DiffusionTensorBase(settings)
 {
   LOG(DEBUG) << "construct Diffusion tensor";
   if (VLOG_IS_ON(1))
   {
-    PythonUtility::printDict(settings);
+    PythonUtility::printDict(settings.pyObject());
   }
 
   this->diffusionTensor_ = this->parseDiffusionTensor("diffusionTensor");

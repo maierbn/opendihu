@@ -14,8 +14,8 @@ TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
   TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
 {
   // get python config
-  PyObject *topLevelSettings = this->context_.getPythonConfig();
-  this->specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, name);
+  PythonConfig topLevelSettings = this->context_.getPythonConfig();
+  this->specificSettings_ = PythonConfig(topLevelSettings, name);
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -40,7 +40,7 @@ setInitialValues()
   // set initial values as given in settings, or set to zero if not given
   std::vector<double> localValues;
   
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     assert(this->data_);
@@ -48,14 +48,14 @@ setInitialValues()
     const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
     LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
 
-    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsGlobal, localValues);
+    this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
 
     this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {
     const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
-    PythonUtility::getOptionVector(this->specificSettings_, "initialValues", nDofsLocal, localValues);
+    this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
   }
   VLOG(1) << "set initial values to " << localValues;
 

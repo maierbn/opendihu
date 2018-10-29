@@ -47,7 +47,7 @@ protected:
 
   std::shared_ptr<FunctionSpaceType> functionSpace_;   ///< current function space / mesh
 
-  PyObject *specificSettings_;   ///< the specific python config for this module
+  PythonConfig specificSettings_;   ///< the specific python config for this module
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
   std::string stlFilename_;   ///< the filename of the STL file

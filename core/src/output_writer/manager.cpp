@@ -12,25 +12,29 @@ namespace OutputWriter
 {
 
 
-void Manager::initialize(DihuContext context, PyObject *settings)
+void Manager::initialize(DihuContext context, PythonConfig settings)
 {
   outputWriter_.clear();
 
-  VLOG(3) << "initializeOutputWriter, settings=" << settings;
-  //PythonUtility::printDict(settings);
+  //VLOG(3) << "initializeOutputWriter, settings=" << settings;
+  //PythonUtility::printDict(settings.pyObject());
 
-  if (PythonUtility::hasKey(settings, "OutputWriter"))
+  if (settings.hasKey("OutputWriter"))
   {
     // get the first value from the list
-    PyObject *writerSettings = PythonUtility::getOptionListBegin<PyObject *>(settings, "OutputWriter");
+    PyObject *writerSettings = settings.getOptionListBegin<PyObject *>("OutputWriter");
 
     // loop over other values
     for (;
-        !PythonUtility::getOptionListEnd(settings, "OutputWriter");
-        PythonUtility::getOptionListNext<PyObject *>(settings, "OutputWriter", writerSettings))
+        !settings.getOptionListEnd("OutputWriter");
+        settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings))
     {
-      LOG(DEBUG) << "parse outputWriter";
-      createOutputWriterFromSettings(context, writerSettings);
+      if (VLOG_IS_ON(1))
+      {
+        VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
+      }
+      PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
+      createOutputWriterFromSettings(context, writerConfig);
     }
   }
   else
@@ -39,13 +43,12 @@ void Manager::initialize(DihuContext context, PyObject *settings)
   }
 }
 
-void Manager::createOutputWriterFromSettings(DihuContext context, PyObject *settings)
+void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig settings)
 {
-
-  if (PythonUtility::hasKey(settings, "format"))
+  if (settings.hasKey("format"))
   {
     // depending on type string create different OutputWriter object
-    std::string typeString = PythonUtility::getOptionString(settings, "format", "none");
+    std::string typeString = settings.getOptionString("format", "none");
     if (typeString == "Paraview")
     {
       outputWriter_.push_back(std::make_shared<Paraview>(context, settings));

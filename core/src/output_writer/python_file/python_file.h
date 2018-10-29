@@ -15,7 +15,7 @@ class PythonFile : public Generic
 {
 public:
   //! constructor
-  PythonFile(DihuContext context, PyObject *specificSettings);
+  PythonFile(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution to file, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>

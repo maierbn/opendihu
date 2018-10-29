@@ -55,7 +55,7 @@ public:
 protected:
 
   DihuContext context_; ///< the context object that holds the config for this class
-  PyObject *specificSettings_;    ///< config for this object
+  PythonConfig specificSettings_;    ///< config for this object
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 
   int nInstances_; ///< number of instances that are given by config

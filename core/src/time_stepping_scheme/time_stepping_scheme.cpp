@@ -6,9 +6,9 @@ namespace TimeSteppingScheme
 {
 
 TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
-  Splittable(), context_(context), initialized_(false)
+  Splittable(), context_(context), specificSettings_(NULL), initialized_(false)
 {
-  specificSettings_ = NULL;   // needs to be set by deriving class, in time_stepping_scheme_ode.tpp
+  // specificSettings_ needs to be set by deriving class, in time_stepping_scheme_ode.tpp
   isTimeStepWidthSignificant_ = false;
 }
 
@@ -53,23 +53,23 @@ void TimeSteppingScheme::initialize()
   // initialize time stepping values
   startTime_ = 0.0;
   endTime_ = 1.0;
-  if (PythonUtility::hasKey(specificSettings_, "endTime"))
-    endTime_ = PythonUtility::getOptionDouble(specificSettings_, "endTime", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("endTime"))
+    endTime_ = specificSettings_.getOptionDouble("endTime", 1.0, PythonUtility::Positive);
 
   LOG(DEBUG) << "  TimeSteppingScheme::initialize read endTime=" << endTime_;
 
-  if (PythonUtility::hasKey(specificSettings_, "timeStepWidth"))
+  if (specificSettings_.hasKey("timeStepWidth"))
   {
-    timeStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive);
+    timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive);
     setTimeStepWidth(timeStepWidth_);
 
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth="
-      <<PythonUtility::getOptionDouble(specificSettings_, "timeStepWidth", 0.001, PythonUtility::Positive)
+      << specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive)
       << ", compute numberTimeSteps=" <<numberTimeSteps_;
 
-    if (PythonUtility::hasKey(specificSettings_, "numberTimeSteps"))
+    if (specificSettings_.hasKey("numberTimeSteps"))
     {
-      numberTimeSteps_ = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);      
+      numberTimeSteps_ = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::Positive);
       isTimeStepWidthSignificant_ = false;
       LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
 
@@ -82,7 +82,7 @@ void TimeSteppingScheme::initialize()
   }
   else
   {
-    int numberTimeSteps = PythonUtility::getOptionInt(specificSettings_, "numberTimeSteps", 10, PythonUtility::Positive);
+    int numberTimeSteps = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::Positive);
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps: " << numberTimeSteps;
     setNumberTimeSteps(numberTimeSteps);
   }
@@ -91,18 +91,18 @@ void TimeSteppingScheme::initialize()
     << ", time step width: " << timeStepWidth_;
 
   // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"
-  if (PythonUtility::hasKey(specificSettings_, "logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
   {
-    std::string timeStepWidthKey = PythonUtility::getOptionString(specificSettings_, "logTimeStepWidthAsKey", "timeStepWidth");
+    std::string timeStepWidthKey = specificSettings_.getOptionString("logTimeStepWidthAsKey", "timeStepWidth");
     Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
   }
 
-  if (PythonUtility::hasKey(specificSettings_, "logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
   {
-    this->durationLogKey_ = PythonUtility::getOptionString(specificSettings_, "durationLogKey", "");
+    this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
 
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+  timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
   initialized_ = true;
 }
@@ -132,7 +132,7 @@ double TimeSteppingScheme::timeStepWidth()
   return timeStepWidth_;
 }
 
-PyObject *TimeSteppingScheme::specificSettings()
+PythonConfig TimeSteppingScheme::specificSettings()
 {
   return specificSettings_;
 }

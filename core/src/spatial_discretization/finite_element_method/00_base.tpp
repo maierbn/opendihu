@@ -25,9 +25,8 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
-  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), initialized_(false)
+  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
-  specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
@@ -196,12 +195,14 @@ solve()
 
 template<typename FunctionSpaceType,typename QuadratureType>
 void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
+           bool useAdditionalDiffusionTensor)
 {
   LOG(DEBUG) << "FiniteElementMethodInitializeData::initialize";
 
-  // initialize the DiffusionTensorFieldVariable object
-  this->data_.initialize(direction, multidomainNCompartments);
+  // initialize the DiffusionTensorDirectional object
+  this->data_.initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 
   // call normal initialize, this does not initialize the data object again
   FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();

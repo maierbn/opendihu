@@ -20,7 +20,7 @@ using namespace StringUtility;
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDataUnstructured<D,BasisFunctionType>::
-FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PyObject *settings, bool noGeometryField) :
+FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig settings, bool noGeometryField) :
   FunctionSpacePartition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FunctionSpacePartition(partitionManager, settings),
   noGeometryField_(noGeometryField)
 {
@@ -32,10 +32,10 @@ template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
 initialize()
 { 
-  if (PythonUtility::hasKey(this->specificSettings_, "exelem"))
+  if (this->specificSettings_.hasKey("exelem"))
   {
-    std::string filenameExelem = PythonUtility::getOptionString(this->specificSettings_, "exelem", "input.exelem");
-    std::string filenameExnode = PythonUtility::getOptionString(this->specificSettings_, "exnode", "input.exnode");
+    std::string filenameExelem = this->specificSettings_.getOptionString("exelem", "input.exelem");
+    std::string filenameExnode = this->specificSettings_.getOptionString("exnode", "input.exnode");
 
     // read in exelem file
     this->parseExelemFile(filenameExelem);
@@ -53,7 +53,7 @@ initialize()
     // eliminate scale factors (not yet tested)
     //this->eliminateScaleFactors();
   }
-  else if (PythonUtility::hasKey(this->specificSettings_, "nodePositions"))
+  else if (this->specificSettings_.hasKey("nodePositions"))
   {
     // this creates the geometryField and sets the mesh, also creates the meshPartition by calling FunctionSpacePartition::initialize();
     this->parseFromSettings(this->specificSettings_);

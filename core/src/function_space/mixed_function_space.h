@@ -25,7 +25,7 @@ public:
   static constexpr int dim();
 
   //! contructor
-  Mixed(PyObject *specificSettings);
+  Mixed(PythonConfig specificSettings);
 
   //! this assigns the geometry_ field variable's mesh pointer to this object, it is not possible from the constructor, therefore this extra method
   void initialize();

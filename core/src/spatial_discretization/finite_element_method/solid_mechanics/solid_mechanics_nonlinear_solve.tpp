@@ -161,7 +161,7 @@ debug()
 {
   LOG(DEBUG) << "------- debug method ------";
 
-  //bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
+  //bool useAnalyticJacobian = this->specificSettings_.getOptionBool("analyticJacobian", true);
   PetscErrorCode ierr;
 
   //Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
@@ -415,8 +415,8 @@ solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
 
-  bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
-  bool useNumericJacobian = PythonUtility::getOptionBool(this->specificSettings_, "numericJacobian", true);
+  bool useAnalyticJacobian = this->specificSettings_.getOptionBool("analyticJacobian", true);
+  bool useNumericJacobian = this->specificSettings_.getOptionBool("numericJacobian", true);
 
   if (!useAnalyticJacobian && !useNumericJacobian)
   {
@@ -510,9 +510,9 @@ solve()
 
   // prepare log file
   std::shared_ptr<std::ofstream> logFile = nullptr;
-  if (PythonUtility::hasKey(this->specificSettings_, "logfile"))
+  if (this->specificSettings_.hasKey("logfile"))
   {
-    std::string logFileName = PythonUtility::getOptionString(this->specificSettings_, "logfile", "residual_norm.txt");
+    std::string logFileName = this->specificSettings_.getOptionString("logfile", "residual_norm.txt");
 
     logFile = std::make_shared<std::ofstream>(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
 

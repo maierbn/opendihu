@@ -23,7 +23,6 @@ template<typename FunctionSpaceType>
 FiniteElementsBase<FunctionSpaceType>::
 FiniteElementsBase(DihuContext context) : Data<FunctionSpaceType>(context)
 {
-  //PythonUtility::printDict(this->context_.getPythonConfig());
 }
 
 template<typename FunctionSpaceType>

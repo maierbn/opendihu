@@ -28,24 +28,24 @@ class CallbackHandler :
 {
 public:
 
-  ///! constructor
+  //! constructor
   CallbackHandler(DihuContext context);
 
-  ///! destructor
+  //! destructor
   virtual ~CallbackHandler();
   
-  ///! register a callback function setParameters that can set parameter values before each computation
+  //! register a callback function setParameters that can set parameter values before each computation
   void registerSetParameters(void (*setParameters) (void *context, int nInstances, int timeStepNo, double currentTime,
                                                     std::vector<double> &parameters));
 
-  ///! register a callbackfunction handleResult that gets called after each new values are available
+  //! register a callbackfunction handleResult that gets called after each new values are available
   void registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime,
                                                   double *states, double intermediates[]));
   
-  ///! directly call the python callback if it exists
+  //! directly call the python callback if it exists
   void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);
 
-  ///! directly call the python callback if it exists
+  //! directly call the python callback if it exists
   void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
 
 protected:

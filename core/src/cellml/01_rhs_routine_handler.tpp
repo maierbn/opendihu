@@ -30,23 +30,22 @@ initializeRhsRoutine()
    * this means: "Save time where possible!"
    */
   std::string libraryFilename;
-  useGivenLibrary_ = PythonUtility::getOptionBool(this->specificSettings_, "useGivenLibrary", false);
+  useGivenLibrary_ = this->specificSettings_.getOptionBool("useGivenLibrary", false);
 
   // output warning if the old option forceRecompileRhs is still used
-  if (PythonUtility::hasKey(this->specificSettings_, "forceRecompileRhs"))
+  if (this->specificSettings_.hasKey("forceRecompileRhs"))
   {
     LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
   }
 
   if(useGivenLibrary_)
   { //try open library file
-    if (!PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    if (!this->specificSettings_.hasKey("libraryFilename"))
     {
       LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file but \"useGivenLibrary\" is True.";
-      //default set in PythonUtility::getOptionString(...)
     }
 
-    libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+    libraryFilename = this->specificSettings_.getOptionString("libraryFilename", "lib.so");
   }
   else // useGivenLibrary_ is set false
   { // will compile lib new
@@ -56,7 +55,7 @@ initializeRhsRoutine()
     std::stringstream compileCommand;
     std::string compileCommandOptions;
 
-    if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    if(this->specificSettings_.hasKey("gpuSourceFilename"))
     {
       // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
       //
@@ -75,7 +74,7 @@ initializeRhsRoutine()
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
     {
-      if(!PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
+      if(!this->specificSettings_.hasKey("simdSourceFilename"))
       {
         LOG(DEBUG) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
@@ -102,9 +101,9 @@ initializeRhsRoutine()
     s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
     libraryFilename = s.str();
 
-    if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    if (this->specificSettings_.hasKey("libraryFilename"))
     {
-      std::string unusedLibraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+      std::string unusedLibraryFilename = this->specificSettings_.getOptionString("libraryFilename", "lib.so");
       LOG(WARNING) << "You have specified a libraryFilename called \"" << unusedLibraryFilename << "\", but useLibraryFile is set to False. "
         << "If you want to use the provided library, set useLibraryFile to True in the config. The generated library file will be \"" << libraryFilename << "\".";
     }
@@ -622,9 +621,9 @@ createSimdSourceFile(std::string &simdSourceFilename)
     std::stringstream s;
     s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";  // standard file name for SIMD source is subfolder "src" and "_simd.c" suffix
     simdSourceFilename = s.str();
-    if (PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
+    if (this->specificSettings_.hasKey("simdSourceFilename"))
     {
-      simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
+      simdSourceFilename = this->specificSettings_.getOptionString("simdSourceFilename", "");
     }
 
     // add .rankNoWorldCommunicator to simd source filename
@@ -967,9 +966,9 @@ createGPUSourceFile(std::string &gpuSourceFilename)
     std::stringstream s;
     s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_gpu.c";
     gpuSourceFilename = s.str();
-    if (PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    if (this->specificSettings_.hasKey("gpuSourceFilename"))
     {
-      gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
+      gpuSourceFilename = this->specificSettings_.getOptionString("gpuSourceFilename", "");
     }
 
     std::ofstream gpuSourceFile = OutputWriter::Generic::openFile(gpuSourceFilename.c_str());

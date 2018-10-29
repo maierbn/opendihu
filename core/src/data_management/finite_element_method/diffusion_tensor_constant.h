@@ -15,7 +15,7 @@ class DiffusionTensorConstant :
 public:
 
   //! constructor
-  DiffusionTensorConstant(PyObject *specificSettings);
+  DiffusionTensorConstant(PythonConfig specificSettings);
 
   //! read values of diffusion tensor from config
   void initialize();

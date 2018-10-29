@@ -8,9 +8,16 @@
 namespace SpatialDiscretization
 {
 
+
+template<typename FunctionSpaceType,int nComponents>
+DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+DirichletBoundaryConditionsBase() : specificSettings_(NULL)
+{
+}
+
 template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
-initialize(PyObject *specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace)
+initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace)
 {
   functionSpace_ = functionSpace;
   specificSettings_ = specificSettings;
@@ -53,7 +60,7 @@ printDebuggingInfo()
 
 template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
-parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> functionSpace,
+parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType> functionSpace,
                         std::vector<std::pair<int,std::array<double,nComponents>>> &boundaryConditions)
 {
   LOG(TRACE) << "parseBoundaryConditions";
@@ -61,14 +68,14 @@ parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> f
 
   if (VLOG_IS_ON(1))
   {
-    PythonUtility::printDict(settings);
+    PythonUtility::printDict(settings.pyObject());
   }
 
   // add weak form of Dirichlet BC to rhs
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(settings, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = settings.getOptionBool("inputMeshIsGlobal", true);
 
   int nDofs = 0;
   if (inputMeshIsGlobal)
@@ -80,7 +87,7 @@ parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> f
     nDofs = functionSpace->nDofsLocalWithoutGhosts();
   }
 
-  if (PythonUtility::hasKey(settings, "DirichletBoundaryCondition"))
+  if (settings.hasKey("DirichletBoundaryCondition"))
   {
     LOG(ERROR) << "Option \"DirichletBoundaryCondition\" was renamed to \"dirichletBoundaryConditions\".";
   }
@@ -88,9 +95,9 @@ parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> f
   VLOG(1) << "inputMeshIsGlobal: " << inputMeshIsGlobal << ", nDofs: " << nDofs;
 
   // parse all boundary conditions that are given in config
-  std::pair<int,std::array<double,nComponents>> boundaryCondition = PythonUtility::getOptionDictBegin<int,std::array<double,nComponents>>(settings, "dirichletBoundaryConditions");
-  for (; !PythonUtility::getOptionDictEnd(settings, "dirichletBoundaryConditions");
-          PythonUtility::getOptionDictNext<int,std::array<double,nComponents>>(settings, "dirichletBoundaryConditions", boundaryCondition))
+  std::pair<int,std::array<double,nComponents>> boundaryCondition = settings.getOptionDictBegin<int,std::array<double,nComponents>>("dirichletBoundaryConditions");
+  for (; !settings.getOptionDictEnd("dirichletBoundaryConditions");
+          settings.getOptionDictNext<int,std::array<double,nComponents>>("dirichletBoundaryConditions", boundaryCondition))
   {
     // for negative indices add number of dofs such that -1 is the last dof, -2 is the econd-last etc.
     if (boundaryCondition.first < 0)
@@ -123,7 +130,7 @@ parseBoundaryConditionsForElements()
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
   // determine if the BC indices in the config are given for global or local dof nos
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
 
   // Boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives.
   // However the ordering of the dofs is not known in the config for unstructured meshes. Therefore the ordering is special.

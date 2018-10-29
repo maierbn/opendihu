@@ -2,6 +2,7 @@
 #
 
 import numpy as np
+import scipy.stats
 import pickle
 import sys
 
@@ -22,17 +23,26 @@ output_timestep = 1e-1             # timestep for output files
 end_time = 500.0                   # end simulation time
 #end_time = dt_0D
 
-Am = 0.001
+Am = 0.2
 
 # input files
-#mesh_file = "../input/mesh_tiny"
-mesh_file = "../input/mesh_small"
-#mesh_file = "../input/mesh_normal"
-#mesh_file = "../input/mesh_big"
+#mesh_file = "../input/scaled_mesh_tiny"
+#mesh_file = "../input/scaled_mesh_small"
+mesh_file = "../input/scaled_mesh_normal"
+#mesh_file = "../input/scaled_mesh_big"
+fiber_file = "../input/laplace3d_structured_linear"
 cellml_file = "../input/hodgkin_huxley_1952.c"
 fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"
+
+# motor unit parameters
+motor_units = [
+  {"fiber_no": 10, "standard_deviation": 2.0, "maximum": 0.5},
+  {"fiber_no": 30, "standard_deviation": 2.0, "maximum": 0.4},
+  {"fiber_no": 50, "standard_deviation": 3.0, "maximum": 0.6},
+]
+
 
 if "hodgkin" in cellml_file:
   Cm = 1.0
@@ -53,6 +63,70 @@ with open(mesh_file, "rb") as f:
 #  "n_linear_elements_per_coordinate_direction": n_linear_elements_per_coordinate_direction,
 #  "n_quadratic_elements_per_coordinate_direction": n_quadratic_elements_per_coordinate_direction,
 #
+
+# load fibers
+with open(fiber_file, "rb") as f:
+  fiber_data = pickle.load(f, encoding='latin1')
+# list of fibers, fiber = list of points, point = list with 3 coordinate entries
+
+min_x = min([x for [x,y,z] in mesh_data["node_positions"]])
+max_x = max([x for [x,y,z] in mesh_data["node_positions"]])
+min_y = min([y for [x,y,z] in mesh_data["node_positions"]])
+max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
+min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
+max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
+
+print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
+
+for fiber_no in [10, 30, 50]:
+  data = fiber_data[fiber_no]
+  min_x = min([x for [x,y,z] in data])
+  max_x = max([x for [x,y,z] in data])
+  min_y = min([y for [x,y,z] in data])
+  max_y = max([y for [x,y,z] in data])
+  min_z = min([z for [x,y,z] in data])
+  max_z = max([z for [x,y,z] in data])
+
+  print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
+
+n_compartments = len(motor_units)
+
+# create relative factors for compartments
+print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
+
+# create data structure with 0
+relative_factors = np.zeros((n_compartments, len(mesh_data["node_positions"])))   # each row is one compartment
+
+# loop over nodes of mesh
+for node_no,node_position in enumerate(mesh_data["node_positions"]):
+  node_position = np.array(node_position)
+  
+  # loop over motor units
+  for motor_unit_no,motor_unit in enumerate(motor_units):
+    
+    # find point on fiber that is closest to current node
+    fiber_no = motor_unit["fiber_no"]
+    if fiber_no >= len(fiber_data):
+      print("Error with motor unit {}, only {} fibers available".format(motor_unit, len(fiber_datar)))
+    else:
+      max_distance = None
+      for fiber_point in fiber_data[fiber_no]:
+        d = np.array(fiber_point) - node_position
+        distance = np.inner(d,d)
+        if max_distance is None or distance < max_distance:
+          max_distance = distance
+          #print("node_position {}, fiber_point {}, d={}, |d|={}".format(node_position, fiber_point, d, np.sqrt(distance)))
+      
+      distance = np.sqrt(max_distance)
+      
+      
+      gaussian = scipy.stats.norm(loc = 0., scale = motor_unit["standard_deviation"])
+      value = gaussian.pdf(distance)*motor_unit["maximum"]
+      relative_factors[motor_unit_no][node_no] += value
+      #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
+
+for i,factors_list in enumerate(relative_factors.tolist()):
+  print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
 # load MU distribution and firing times
 fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
@@ -93,6 +167,8 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
   n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
   n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
   z_index_center = (int)(n_nodes_z/2)
+  y_index_center = (int)(n_nodes_y/2)
+  x_index_center = (int)(n_nodes_x/2)
   
   #nodes_to_stimulate_global = [k*n_nodes_y*n_nodes_x + j*n_nodes_y + i for i in range(n_nodes_x) for j in range(n_nodes_y) for k in [z_index_center-1, z_index_center, z_index_center+1]]
 
@@ -108,7 +184,10 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     i = (int)(dof_no_global % n_nodes_x)
   
     if z_index_center-1 <= k <= z_index_center+1:
-      parameters[dof_no_local] = stimulation_current
+      if y_index_center-1 <= j <= y_index_center+1:
+        if x_index_center-1 <= i <= x_index_center+1:
+      
+          parameters[dof_no_local] = stimulation_current
   
       #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
@@ -123,8 +202,6 @@ for bottom_node_index in mesh_data["bottom_nodes"]:
   potential_flow_bc[bottom_node_index] = 0.0
 for top_node_index in mesh_data["top_nodes"]:
   potential_flow_bc[top_node_index] = 1.0
-  
-n_compartments = 5
   
 config = {
   "Meshes": {
@@ -153,7 +230,7 @@ config = {
     "timeStepWidth": dt_3D,  # 1e-1
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval" : 1000,
+    "timeStepOutputInterval" : 100,
     "endTime": end_time,
     "Term1": {      # CellML
       "MultipleInstances": {
@@ -200,10 +277,8 @@ config = {
         "endTime": end_time,
         "timeStepOutputInterval": 50,
         "solverName": "activationSolver",
-    #    "compartmentRelativeFactors": [
-    #      [...],
-    #      [...],
-    #    ],
+        "inputIsGlobal": True,
+        "compartmentRelativeFactors": relative_factors.tolist(),
         "PotentialFlow": {
           "FiniteElementMethod" : {  
             "meshName": "mesh",

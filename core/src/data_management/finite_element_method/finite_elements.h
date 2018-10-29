@@ -7,7 +7,7 @@
 
 #include "data_management/data.h"
 #include "data_management/finite_element_method/finite_elements_base.h"
-#include "data_management/finite_element_method/diffusion_tensor_field_variable.h"
+#include "data_management/finite_element_method/diffusion_tensor_directional.h"
 #include "data_management/finite_element_method/diffusion_tensor_constant.h"
 #include "equation/diffusion.h"
 
@@ -52,7 +52,7 @@ public:
 template<typename FunctionSpaceType>
 class FiniteElements<FunctionSpaceType,Equation::Dynamic::DirectionalDiffusion> :
   public FiniteElementsBase<FunctionSpaceType>,
-  public DiffusionTensorFieldVariable<FunctionSpaceType>
+  public DiffusionTensorDirectional<FunctionSpaceType>
 {
 public:
   //! constructor
@@ -62,7 +62,9 @@ public:
   virtual void initialize(){};
 
   // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
-  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, bool useAdditionalDiffusionTensor = false);
+  virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+                          std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
+                          bool useAdditionalDiffusionTensor = false);
 };
 
 

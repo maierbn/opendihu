@@ -8,31 +8,31 @@ namespace SpatialDiscretization
 
 template<typename FunctionSpaceType,typename Term>
 SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::TractionBoundaryCondition::
-TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh)
+TractionBoundaryCondition(PythonConfig specificSettings, std::shared_ptr<typename FunctionSpaceType::HighOrderFunctionSpace> mesh)
 {
   typedef typename FunctionSpaceType::HighOrderFunctionSpace FunctionSpace;  // the high order FunctionSpace for mixed formulation or the FunctionSpace itself for non-mixed formulation
   const int D = FunctionSpace::dim();
 
   // store global element no
-  elementGlobalNo = PythonUtility::getOptionInt(specificSettings, "element", 0, PythonUtility::NonNegative);
+  elementGlobalNo = specificSettings.getOptionInt("element", 0, PythonUtility::NonNegative);
 
   // store face
-  std::string faceStr = PythonUtility::getOptionString(specificSettings, "face", "0+");
+  std::string faceStr = specificSettings.getOptionString("face", "0+");
   face = Mesh::parseFace(faceStr);
 
-  if (PythonUtility::hasKey(specificSettings, "constantValue") && PythonUtility::hasKey(specificSettings, "constantVector"))
+  if (specificSettings.hasKey("constantValue") && specificSettings.hasKey("constantVector"))
   {
     LOG(ERROR) << "Specified both \"constantValue\" and \"constantVector\".";
   }
 
   // parse dof vectors
-  if (PythonUtility::hasKey(specificSettings, "constantValue") || PythonUtility::hasKey(specificSettings, "constantVector"))
+  if (specificSettings.hasKey("constantValue") || specificSettings.hasKey("constantVector"))
   {
     VecD<D> constantVector;
 
-    if (PythonUtility::hasKey(specificSettings, "constantValue"))
+    if (specificSettings.hasKey("constantValue"))
     {
-      double constantValue = PythonUtility::getOptionDouble(specificSettings, "constantValue", 0.0);
+      double constantValue = specificSettings.getOptionDouble("constantValue", 0.0);
 
       VecD<D-1> xiSurface;
       for (int i = 0; i < D-1; i++)
@@ -41,9 +41,9 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename F
       VecD<D> xi = Mesh::getXiOnFace(face, xiSurface);
       constantVector = MathUtility::transformToD<D,3>(mesh->getNormal(face, elementGlobalNo, xi) * constantValue);
     }
-    else if (PythonUtility::hasKey(specificSettings, "constantVector"))
+    else if (specificSettings.hasKey("constantVector"))
     {
-      constantVector = PythonUtility::getOptionArray<double,D>(specificSettings, "constantVector", 0.0);
+      constantVector = specificSettings.getOptionArray<double,D>("constantVector", 0.0);
     }
 
     // get dofs indices within element that correspond to the selected face
@@ -57,14 +57,14 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename F
       dofVectors.push_back(std::pair<dof_no_t, VecD<D>>(dofIndices[i], constantVector));
     }
   }
-  else if (PythonUtility::hasKey(specificSettings, "dofVectors"))
+  else if (specificSettings.hasKey("dofVectors"))
   {
     std::pair<dof_no_t, PyObject *> dofVectorItem;
 
     // loop over dofVectors
-    for (dofVectorItem = PythonUtility::getOptionDictBegin<dof_no_t, PyObject *>(specificSettings, "dofVectors");
-      !PythonUtility::getOptionDictEnd(specificSettings, "dofVectors");
-      PythonUtility::getOptionDictNext<dof_no_t, PyObject *>(specificSettings, "dofVectors", dofVectorItem))
+    for (dofVectorItem = specificSettings.getOptionDictBegin<dof_no_t, PyObject *>("dofVectors");
+      !specificSettings.getOptionDictEnd("dofVectors");
+      specificSettings.getOptionDictNext<dof_no_t, PyObject *>("dofVectors", dofVectorItem))
     {
       dof_no_t dofIndex = dofVectorItem.first;
       VecD<D> dofVector = PythonUtility::convertFromPython<std::array<double,D>>::get(dofVectorItem.second);
@@ -80,7 +80,7 @@ TractionBoundaryCondition(PyObject *specificSettings, std::shared_ptr<typename F
 
 template<typename FunctionSpaceType,typename Term>
 void SolidMechanicsBoundaryConditions<FunctionSpaceType,Term>::
-initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PyObject *specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data)
+initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLocalUnknowns, PythonConfig specificSettings, Data::FiniteElements<FunctionSpaceType,Term> &data)
 {
   LOG(TRACE) << "initializeBoundaryConditions";
 
@@ -90,42 +90,42 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
   // ----- Neumann BC ----------
   // parse values for traction and body force
   externalVirtualWorkIsConstant = true;
-  if (PythonUtility::hasKey(specificSettings, "tractionReferenceConfiguration"))
+  if (specificSettings.hasKey("tractionReferenceConfiguration"))
   {
-    PyObject *listItem = PythonUtility::getOptionListBegin<PyObject*>(specificSettings, "tractionReferenceConfiguration");
+    PyObject *listItem = specificSettings.getOptionListBegin<PyObject*>("tractionReferenceConfiguration");
 
     // loop over items in tractionReferenceConfiguration list
     for (;
-         !PythonUtility::getOptionListEnd(specificSettings, "tractionReferenceConfiguration");
-         PythonUtility::getOptionListNext<PyObject*>(specificSettings, "tractionReferenceConfiguration", listItem))
+         !specificSettings.getOptionListEnd("tractionReferenceConfiguration");
+         specificSettings.getOptionListNext<PyObject*>("tractionReferenceConfiguration", listItem))
     {
       tractionReferenceConfiguration_.emplace_back(listItem, functionSpace);
     }
   }
 
-  if (PythonUtility::hasKey(specificSettings, "tractionCurrentConfiguration"))
+  if (specificSettings.hasKey("tractionCurrentConfiguration"))
   {
     externalVirtualWorkIsConstant = false;
 
-    PyObject *listItem = PythonUtility::getOptionListBegin<PyObject*>(specificSettings, "tractionReferenceConfiguration");
+    PyObject *listItem = specificSettings.getOptionListBegin<PyObject*>("tractionReferenceConfiguration");
 
     // loop over items in tractionCurrentConfiguration list
     for (;
-         !PythonUtility::getOptionListEnd(specificSettings, "tractionCurrentConfiguration");
-         PythonUtility::getOptionListNext<PyObject*>(specificSettings, "tractionCurrentConfiguration", listItem))
+         !specificSettings.getOptionListEnd("tractionCurrentConfiguration");
+         specificSettings.getOptionListNext<PyObject*>("tractionCurrentConfiguration", listItem))
     {
       tractionCurrentConfiguration_.emplace_back(listItem, functionSpace);
     }
   }
 
-  if (PythonUtility::hasKey(specificSettings, "bodyForceReferenceConfiguration"))
+  if (specificSettings.hasKey("bodyForceReferenceConfiguration"))
   {
    // example entry: {0: [tmax,0,0], 5: [tmax,tmax,tmax]},   # {<element global no.>: <vector>, ...}
    // loop over dict items
    std::pair<element_no_t, PyObject *> dofVectorItem;
-   for (dofVectorItem = PythonUtility::getOptionDictBegin<element_no_t, PyObject *>(specificSettings, "bodyForceReferenceConfiguration");
-      !PythonUtility::getOptionDictEnd(specificSettings, "bodyForceReferenceConfiguration");
-      PythonUtility::getOptionDictNext<element_no_t, PyObject *>(specificSettings, "bodyForceReferenceConfiguration", dofVectorItem))
+   for (dofVectorItem = specificSettings.getOptionDictBegin<element_no_t, PyObject *>("bodyForceReferenceConfiguration");
+      !specificSettings.getOptionDictEnd("bodyForceReferenceConfiguration");
+      specificSettings.getOptionDictNext<element_no_t, PyObject *>("bodyForceReferenceConfiguration", dofVectorItem))
     {
       element_no_t elementGlobalNo = dofVectorItem.first;
       VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>::get(dofVectorItem.second);
@@ -134,16 +134,16 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
     }
   }
 
-  if (PythonUtility::hasKey(specificSettings, "bodyForceCurrentConfiguration"))
+  if (specificSettings.hasKey("bodyForceCurrentConfiguration"))
   {
     externalVirtualWorkIsConstant = false;
 
     // example entry: {0: [tmax,0,0], 5: [tmax,tmax,tmax]},   # {<global dof no.>: <vector>, ...}
     // loop over dict items
     std::pair<element_no_t, PyObject *> dofVectorItem;
-    for (dofVectorItem = PythonUtility::getOptionDictBegin<element_no_t, PyObject *>(specificSettings, "bodyForceCurrentConfiguration");
-       !PythonUtility::getOptionDictEnd(specificSettings, "bodyForceCurrentConfiguration");
-       PythonUtility::getOptionDictNext<element_no_t, PyObject *>(specificSettings, "bodyForceCurrentConfiguration", dofVectorItem))
+    for (dofVectorItem = specificSettings.getOptionDictBegin<element_no_t, PyObject *>("bodyForceCurrentConfiguration");
+       !specificSettings.getOptionDictEnd("bodyForceCurrentConfiguration");
+       specificSettings.getOptionDictNext<element_no_t, PyObject *>("bodyForceCurrentConfiguration", dofVectorItem))
     {
       element_no_t elementGlobalNo = dofVectorItem.first;
       VecD<D> vector = PythonUtility::convertFromPython<VecD<D>>::get(dofVectorItem.second);
@@ -157,11 +157,11 @@ initializeBoundaryConditions(bool &externalVirtualWorkIsConstant, const int nLoc
 
   // get the first dirichlet boundary condition from the list
   std::pair<node_no_t, double> boundaryCondition
-    = PythonUtility::getOptionDictBegin<dof_no_t, double>(specificSettings, "dirichletBoundaryCondition");
+    = specificSettings.getOptionDictBegin<dof_no_t, double>("dirichletBoundaryCondition");
 
   // loop over Dirichlet boundary conditions
-  for (; !PythonUtility::getOptionDictEnd(specificSettings, "dirichletBoundaryCondition");
-       PythonUtility::getOptionDictNext<dof_no_t, double>(specificSettings, "dirichletBoundaryCondition", boundaryCondition))
+  for (; !specificSettings.getOptionDictEnd("dirichletBoundaryCondition");
+       specificSettings.getOptionDictNext<dof_no_t, double>("dirichletBoundaryCondition", boundaryCondition))
   {
     dof_no_t boundaryConditionLocalUnknownsIndex = boundaryCondition.first;
     double boundaryConditionValue = boundaryCondition.second;

@@ -22,7 +22,7 @@ class SolutionVectorMapping<
   >
 {
 public:
-  ///! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
   static void transfer(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1,
                        const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2);
 
@@ -42,7 +42,7 @@ class SolutionVectorMapping<
   >
 {
 public:
-  ///! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
+  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
   static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2,
                        const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1);
 

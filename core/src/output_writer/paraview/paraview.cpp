@@ -18,12 +18,12 @@
 namespace OutputWriter
 {
 
-Paraview::Paraview(DihuContext context, PyObject *settings) :
+Paraview::Paraview(DihuContext context, PythonConfig settings) :
   Generic(context, settings)
 {
-  binaryOutput_ = PythonUtility::getOptionBool(settings, "binary", true);
-  fixedFormat_ = PythonUtility::getOptionBool(settings, "fixedFormat", true);
-  combineFiles_ = PythonUtility::getOptionBool(settings, "combineFiles", false);
+  binaryOutput_ = settings.getOptionBool("binary", true);
+  fixedFormat_ = settings.getOptionBool("fixedFormat", true);
+  combineFiles_ = settings.getOptionBool("combineFiles", false);
 }
 
 std::string Paraview::encodeBase64Vec(const Vec &vector, bool withEncodedSizePrefix)

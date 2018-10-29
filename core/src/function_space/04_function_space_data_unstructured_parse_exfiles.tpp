@@ -318,17 +318,17 @@ parseExnodeFile(std::string exnodeFilename)
 
 template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
-remapFieldVariables(PyObject *settings)
+remapFieldVariables(PythonConfig settings)
 {
   // remap name of field variables to different names if specified
-  if (PythonUtility::hasKey(settings, "remap"))
+  if (settings.hasKey("remap"))
   {
     std::string keyString = "remap";
     std::pair<std::string, std::string> dictItem
-      = PythonUtility::getOptionDictBegin<std::string, std::string>(settings, keyString);
+      = settings.getOptionDictBegin<std::string, std::string>(keyString);
 
-    for (; !PythonUtility::getOptionDictEnd(settings, keyString);
-        PythonUtility::getOptionDictNext<std::string, std::string>(settings, keyString, dictItem))
+    for (; !settings.getOptionDictEnd(keyString);
+        settings.getOptionDictNext<std::string, std::string>(keyString, dictItem))
     {
       // remap request field variable from key to value
       std::string key = dictItem.first;

@@ -68,7 +68,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
       ofile.close();
 
     // pickle is the python library to serialize objects
-    bool usePickle = PythonUtility::getOptionBool(specificSettings_, "binary", false);
+    bool usePickle = specificSettings_.getOptionBool("binary", false);
 
     std::string writeFlag = (usePickle? "wb" : "w");
 

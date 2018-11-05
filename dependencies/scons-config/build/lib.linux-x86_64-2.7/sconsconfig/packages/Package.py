@@ -766,7 +766,8 @@ class Package(object):
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
+      if os.environ.get("PE_ENV") != "CRAY":
+        ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")

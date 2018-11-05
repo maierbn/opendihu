@@ -197,8 +197,9 @@ else:
   env.Prepend(LIBS = ['opendihu'])
 
 # flags to always include
-env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-env.MergeFlags('-std=c++14 -fopenmp -march=native')
+if os.environ.get("PE_ENV") != "CRAY":
+  env.MergeFlags('-Wunused-variable')   # always warn about unused variables
+  env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")

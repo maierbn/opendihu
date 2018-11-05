@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N multiple_fibers
+#PBS -q R_opti16
+#PBS -l nodes=1:ppn=24
+#PBS -l walltime=00:03:00
+
+# load modules  
+. ~/load_modules.sh
+module load perftools-lite
+
+# General setup information :
+export MPICH_VERSION_DISPLAY=1
+export MPICH_ENV_DISPLAY=1
+export MPICH_CPUMASK_DISPLAY=1 # uncomment if output to large.
+export MPICH_RANK_REORDER_DISPLAY=1 # 
+
+# If using MPI-IO (parallel NetCDF or parallel HDF5) :
+export MPICH_MPIIO_AGGREGATOR_PLACEMENT_DISPLAY=1
+export MPICH_MPIIO_HINTS_DISPLAY=1
+export MPICH_MPIIO_TIMERS=1 
+export MPICH_MPIIO_STATS=1 # or 2
+
+
+# Change to the directory that the job was submitted from
+cd $PBS_O_WORKDIR
+cd build_release
+
+# arguments to aprun
+#    n pes  
+#    N pes_per_node
+
+aprun -n 24 -N 24 ./multiple_fibers ../settings.py > out.txt 2>&1

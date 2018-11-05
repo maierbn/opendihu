@@ -106,11 +106,32 @@ class Package(object):
         self.command_running = False
         stdout_log.close()
         with file('stdout.log') as f:
-         output = f.read()
+          output = f.read()
         ctx.Log("Command failed: \n"+output)
-        sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
-        ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
-        return False
+        
+        # try again with "-version" instead of "--version" (for cray compiler)
+        cmd = "{} -version".format(compiler)
+        
+        # Make a file to log stdout from the commands.
+        stdout_log = open('stdout.log', 'w')
+        try:
+          subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+          
+          # get output
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("$"+cmd+"\n")
+          ctx.Log(output+"\n")
+        except:
+          self.command_running = False
+          stdout_log.close()
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("Command failed: \n"+output)
+          
+          sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
+          ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
+          return False
 
     Package.compilers_checked = True
     return True

@@ -45,7 +45,7 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   ierr = PCSetType(pc, pcType); CHKERRV(ierr);
 
   // for multigrid set number of levels to 5
-  if (pcType == std::string(CGAMG))
+  if (pcType == std::string(PCGAMG))
   {
     int nLevels = 5;
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);

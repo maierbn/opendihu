@@ -242,7 +242,7 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
-  "scenarioName": "1e3_fibers_1e4_cores",
+  "scenarioName": "iobuf",
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

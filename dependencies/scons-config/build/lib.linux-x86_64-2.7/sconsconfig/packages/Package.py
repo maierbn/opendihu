@@ -109,8 +109,8 @@ class Package(object):
           output = f.read()
         ctx.Log("Command failed: \n"+output)
         
-        # try again with "-version" instead of "--version" (for cray compiler)
-        cmd = "{} -version".format(compiler)
+        # try again with "-V" instead of "--version" (for cray compiler)
+        cmd = "{} -V".format(compiler)
         
         # Make a file to log stdout from the commands.
         stdout_log = open('stdout.log', 'w')

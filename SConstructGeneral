@@ -160,7 +160,7 @@ except: pass
 Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
-if os.environ.get("PE_ENV") != None:
+if os.environ.get("PE_ENV") == None:
   notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
   AlwaysBuild('notify-send')
     

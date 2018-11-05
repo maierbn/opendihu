@@ -829,7 +829,10 @@ class Package(object):
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
+        linkflags = None
+        if 'LINKFLAGS' in ctx.env:
+          linkflags = ctx.env['LINKFLAGS']
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=linkflags)
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)

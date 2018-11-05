@@ -1034,7 +1034,7 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         pos = line.find("= ");
         double value = atof(line.substr(pos+2).c_str());
 
-        if (variableName == "OC_STATE" && index >= 0 && index < (unsigned int)nStates)
+        if (variableName == "OC_STATE" && index < (unsigned int)nStates)
         {
           // store initial value for state
           statesInitialValues[index] = value;
@@ -1042,7 +1042,7 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
           // store name of the state that was parsed from the comment in the previous line
           this->stateNames_[index] = name;
         }
-        else if (variableName == "OC_KNOWN" && index >= 0)
+        else if (variableName == "OC_KNOWN")
         {
           // store initial value for parameter
           if (this->parameters_.size() < index+1)

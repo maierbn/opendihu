@@ -160,8 +160,9 @@ except: pass
 Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
-notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
-AlwaysBuild('notify-send')
+if os.environ.get("PE_ENV") != None:
+  notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
+  AlwaysBuild('notify-send')
     
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
@@ -196,7 +197,7 @@ else:
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
-# flags to always include
+# flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
@@ -207,13 +208,15 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
+env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
 #print(env.Dump())
-
+# output compilers
 print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,

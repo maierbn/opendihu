@@ -98,6 +98,10 @@ if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   PETSC_DOWNLOAD = False
   PETSC_DIR = os.environ.get("PETSC_DIR")
 
+  PYTHON_DOWNLOAD = False
+  PYTHON_REDOWNLOAD = False
+  PYTHON_DIR = "/opt/python/3.6.5.1"
+
 
 # module restore opendihu
 # or 

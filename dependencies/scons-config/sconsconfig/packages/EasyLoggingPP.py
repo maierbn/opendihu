@@ -51,7 +51,7 @@ class EasyLoggingPP(Package):
             'sed -i \'1907i      addSuffix(ss, ".tpp", ".hh");\' ${PREFIX}/src/easylogging++.cc',
             'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -o ${PREFIX}/src/easylogging++.o',
         ])
-        self.build_flags = '-std=c++14'
+        #self.build_flags = '-std=c++14'
         
     def check(self, ctx):
         env = ctx.env

@@ -26,11 +26,24 @@ public:
   //! run tracing of stream lines
   void run();
 
-protected:
+
+  struct TraceStreamlineResources
+  {
+    element_no_t initialElementNo;   ///< element to start with
+    std::array<double,(unsigned long int)3> xi;  ///< xi value of element to start with
+    Vec3 startingPoint;    ///< starting point of the streamline
+    double direction;     ///< either 1. or -1. depending on the direction to trace (with or against the gradient direction)
+    std::vector<Vec3> &points;   ///< the collected points of the streamline
+    bool useGradientField;    ///< if the gradient field should be used for streamline tracing
+
+    TraceStreamlineResources(std::vector<Vec3> &pointsParameter) : points(pointsParameter){};
+  };
 
   //! trace the streamline starting from startingPoint in the element initialElementNo, direction is either 1. or -1. depending on the direction
-  void traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points);
-  
+  static void traceStreamline(TraceStreamlineResources &traceStreamlineResources);
+
+protected:
+
   //! trace the streamlines starting from seed points
   void traceStreamlines();
   

@@ -72,8 +72,19 @@ run()
 
 template<typename DiscretizableInTimeType>
 void StreamlineTracer<DiscretizableInTimeType>::
-traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points)
+traceStreamline(TraceStreamlineResources &traceStreamlineResources)
 {
+  // rename arguments
+  element_no_t initialElementNo = traceStreamlineResources.initialElementNo;
+  std::array<double,(unsigned long int)3> &xi = traceStreamlineResources.xi;
+  Vec3 &startingPoint = traceStreamlineResources.startingPoint;
+  double direction = traceStreamlineResources.direction;
+  std::vector<Vec3> &points = traceStreamlineResources.points;
+  bool useGradientField = traceStreamlineResources.useGradientField;
+  std::shared_ptr<DiscretizableInTimeType::FunctionSpace> functionSpace = traceStreamlineResources.functionSpace;
+  std::shared_ptr<FieldVariable::FieldVariable<DiscretizableInTimeType::FunctionSpace,1>> solution = traceStreamlineResources.solution;
+  std::shared_ptr<FieldVariable::FieldVariable<DiscretizableInTimeType::FunctionSpace,3>> gradient = traceStreamlineResources.gradient;
+
   const int D = DiscretizableInTimeType::FunctionSpace::dim();
   
   const int nDofsPerElement = DiscretizableInTimeType::FunctionSpace::nDofsPerElement();
@@ -81,95 +92,94 @@ traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long 
   Vec3 currentPoint = startingPoint;
   element_no_t elementNo = initialElementNo;
   
-    std::array<Vec3,nDofsPerElement> elementalGradientValues;
-    std::array<double,nDofsPerElement> elementalSolutionValues;
-    std::array<Vec3,nDofsPerElement> geometryValues;
+  std::array<Vec3,nDofsPerElement> elementalGradientValues;
+  std::array<double,nDofsPerElement> elementalSolutionValues;
+  std::array<Vec3,nDofsPerElement> geometryValues;
 
-   // get gradient values for element
-   // There are 2 implementations of streamline tracing. 
-   // The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. 
-   // The first one seems more stable, because the gradient is zero and the position of the boundary conditions and should be used with a linear discretization of the potential field. 
-   // The second one is more accurate.
-   if (useGradientField_)
-   {
-     // use the precomputed gradient field
-     data_.gradient()->getElementValues(elementNo, elementalGradientValues);
-   }
-   else 
-   {
-     // get the local gradient value at the current position
-     problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
+  // get gradient values for element
+  // There are 2 implementations of streamline tracing.
+  // The first one (useGradientField) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field.
+  // The first one seems more stable, because the gradient is zero and the position of the boundary conditions and should be used with a linear discretization of the potential field.
+  // The second one is more accurate.
+  if (useGradientField)
+  {
+    // use the precomputed gradient field
+    gradient->getElementValues(elementNo, elementalGradientValues);
+  }
+  else
+  {
+    // get the local gradient value at the current position
+    solution->getElementValues(elementNo, elementalSolutionValues);
 
-     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-     problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
-   }
-   
-   VLOG(2) << "streamline starts in element " << elementNo;
-   
-   // loop over length of streamline, avoid loops by limiting the number of iterations
-   for(int iterationNo = 0; iterationNo <= maxNIterations_; iterationNo++)
-   {
-     if (iterationNo == maxNIterations_)
-     {
-       LOG(WARNING) << "streamline reached maximum number of iterations (" << maxNIterations_ << ")";
-       points.clear();
-       break;
-     }
-    
-     // check if element_no is still valid
-     if (!problem_.data().functionSpace()->pointIsInElement(currentPoint, elementNo, xi))
-     {
-       bool positionFound = problem_.data().functionSpace()->findPosition(currentPoint, elementNo, xi);
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    functionSpace->getElementGeometry(elementNo, geometryValues);
+  }
 
-       // if no position was found, the streamline exits the domain
-       if (!positionFound)
-       {
-         VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
-         break;
-       }
-           
-       // get values for element that are later needed to compute the gradient
-       if (useGradientField_)      
-       {
-         data_.gradient()->getElementValues(elementNo, elementalGradientValues);
-       }
-       else 
-       {
-         problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
-           
-         // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-         problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
-       }
-       
-       VLOG(2) << "streamline enters element " << elementNo;
-     }
+  VLOG(2) << "streamline starts in element " << elementNo;
 
-     // get value of gradient
-     Vec3 gradient;
-     if (useGradientField_)
-     {       
-       gradient = problem_.data().functionSpace()->template interpolateValueInElement<3>(elementalGradientValues, xi);
-       VLOG(2) << "use gradient field";
-     }
-     else 
-     {
-       // compute the gradient value in the current value
-       Tensor2<D> inverseJacobian = problem_.data().functionSpace()->getInverseJacobian(geometryValues, elementNo, xi);
-       gradient = problem_.data().functionSpace()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
-       
-       VLOG(2) << "use direct gradient";
-     }
-     
-     // integrate streamline
-     VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient) << ", lineStepWidth: " << lineStepWidth_;
-     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
-     
-     VLOG(2) << "              to " << currentPoint;
-     
-     points.push_back(currentPoint);
-   }
+  // loop over length of streamline, avoid loops by limiting the number of iterations
+  for(int iterationNo = 0; iterationNo <= maxNIterations_; iterationNo++)
+  {
+    if (iterationNo == maxNIterations_)
+    {
+      LOG(WARNING) << "streamline reached maximum number of iterations (" << maxNIterations_ << ")";
+      points.clear();
+      break;
+    }
+
+    // check if element_no is still valid
+    if (!functionSpace->pointIsInElement(currentPoint, elementNo, xi))
+    {
+      bool positionFound = functionSpace->findPosition(currentPoint, elementNo, xi);
+
+      // if no position was found, the streamline exits the domain
+      if (!positionFound)
+      {
+        VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
+        break;
+      }
+
+      // get values for element that are later needed to compute the gradient
+      if (useGradientField)
+      {
+        gradient->getElementValues(elementNo, elementalGradientValues);
+      }
+      else
+      {
+        solution->getElementValues(elementNo, elementalSolutionValues);
+
+        // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+        functionSpace->getElementGeometry(elementNo, geometryValues);
+      }
+
+      VLOG(2) << "streamline enters element " << elementNo;
+    }
+
+    // get value of gradient
+    Vec3 gradient;
+    if (useGradientField)
+    {
+      gradient = functionSpace->template interpolateValueInElement<3>(elementalGradientValues, xi);
+      VLOG(2) << "use gradient field";
+    }
+    else
+    {
+      // compute the gradient value in the current value
+      Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNo, xi);
+      gradient = functionSpace->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+
+      VLOG(2) << "use direct gradient";
+    }
+
+    // integrate streamline
+    VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient) << ", lineStepWidth: " << lineStepWidth_;
+    currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
+
+    VLOG(2) << "              to " << currentPoint;
+
+    points.push_back(currentPoint);
+  }
 }
-
 
 template<typename DiscretizableInTimeType>
 void StreamlineTracer<DiscretizableInTimeType>::
@@ -207,11 +217,33 @@ traceStreamlines()
     
     // trace streamline forwards
     std::vector<Vec3> forwardPoints;
-    traceStreamline(initialElementNo, xi, startingPoint, 1.0, forwardPoints);
+    TraceStreamlineResources traceStreamlineResourcesForward(forwardPoints);
+    traceStreamlineResourcesForward.initialElementNo = initialElementNo;
+    traceStreamlineResourcesForward.xi = xi;
+    traceStreamlineResourcesForward.startingPoint = startingPoint;
+    traceStreamlineResourcesForward.direction = 1.0;
+    traceStreamlineResourcesForward.useGradientField = useGradientField_;
+    traceStreamlineResourcesForward.functionSpace = problem_.data().functionSpace();
+    traceStreamlineResourcesForward.solution = problem_.data().solution();
+    traceStreamlineResourcesForward.gradient = data_.gradient();
+
+  std::shared_ptr<FieldVariable::FieldVariable<DiscretizableInTimeType::FunctionSpace,3>> gradient = traceStreamlineResources.gradient;
+
+    traceStreamline(traceStreamlineResourcesForward);
     
     // trace streamline backwards
     std::vector<Vec3> backwardPoints;
-    traceStreamline(initialElementNo, xi, startingPoint, -1.0, backwardPoints);
+    TraceStreamlineResources traceStreamlineResourcesBackward(backwardPoints);
+    traceStreamlineResourcesBackward.initialElementNo = initialElementNo;
+    traceStreamlineResourcesBackward.xi = xi;
+    traceStreamlineResourcesBackward.startingPoint = startingPoint;
+    traceStreamlineResourcesBackward.direction = -1.0;
+    traceStreamlineResourcesBackward.useGradientField = useGradientField_;
+    traceStreamlineResourcesBackward.functionSpace = problem_.data().functionSpace();
+    traceStreamlineResourcesBackward.solution = problem_.data().solution();
+    traceStreamlineResourcesBackward.gradient = data_.gradient();
+
+    traceStreamline(traceStreamlineResourcesBackward);
   
     // copy collected points to result vector 
     streamlines[seedPointNo].insert(streamlines[seedPointNo].begin(), backwardPoints.rbegin(), backwardPoints.rend());

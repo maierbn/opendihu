@@ -32,7 +32,16 @@ FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
   if (!functionSpace)
   {
+    LOG(DEBUG) << "FiniteElementMethodBase constructor, create new function space from settings";
     functionSpace = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
+  }
+  else
+  {
+    LOG(DEBUG) << "FiniteElementMethodBase constructor, use given functionSpace \"" << functionSpace->meshName() << "\"";
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "geometry field: " << functionSpace->geometryField();
+    }
   }
 
   // store mesh in data

@@ -60,7 +60,7 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const
+getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
   
@@ -107,6 +107,20 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
     {
       values[dofIndex][componentIndex] = result[componentIndex*N + dofIndex];
     }
+  }
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
+{
+  int nValues = dofLocalNo.size();
+  values.resize(nValues*nComponents);
+
+  // get values into values vector
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    this->values_->getValues(componentIndex, nValues, dofLocalNo.data(), values.data() + componentIndex*nValues);
   }
 }
 

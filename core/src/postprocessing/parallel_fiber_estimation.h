@@ -40,6 +40,9 @@ protected:
   //! perform the algorithm to recursively, collectively refine the mesh and trace fibers for the boundaries of the subdomains
   void generateParallelMesh();
 
+  //! recursive part of the algorithm
+  void generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, int level, std::array<bool,4> subdomainIsAtBorder);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 
@@ -54,6 +57,9 @@ protected:
   int bottomZClip_;   ///< bottom z-value of the volume to consider
   int topZClip_;   ///< top z-value of the volume to consider
   int nElementsZPerSubdomain_;   ///< number of elements per subdomain in z direction
+
+  PyObject* moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
+  std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 };

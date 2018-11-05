@@ -57,6 +57,14 @@ getValue(node_no_t dofLocalNo) const
   return result;
 }
 
+//! get a single value from local dof no. for the single component
+template<int D, typename BasisFunctionType>
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
+{
+  this->getValues(0, dofLocalNo, values);
+}
+
 //! get all stored local values
 template<int D, typename BasisFunctionType>
 void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::

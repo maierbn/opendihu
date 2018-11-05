@@ -1595,6 +1595,264 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 }
 
 template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+neighbourRank(Mesh::face_t face)
+{
+  /*
+  face0Minus = 0, face0Plus,
+  face1Minus, face1Plus,
+  face2Minus, face2Plus
+   * */
+  if (face == Mesh::face_t::face0Minus)
+  {
+    // if this subdomain is at the left end of the global domain
+    if (ownRankPartitioningIndex_[0] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      return this->ownRankNo()-1;
+    }
+  }
+  else if (face == Mesh::face_t::face0Plus)
+  {
+    // if this subdomain is at the right end of the global domain
+    if (ownRankPartitioningIndex_[0] == nRanks_[0]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      return this->ownRankNo()+1;
+    }
+  }
+  else if (face == Mesh::face_t::face1Minus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the front end of the global domain
+    if (ownRankPartitioningIndex_[1] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]-1)*nRanks_[0] + ownRankPartitioningIndex_[0];  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_t::face1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the back end of the global domain
+    if (ownRankPartitioningIndex_[1] == nRanks_[1]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]+1)*nRanks_[0] + ownRankPartitioningIndex_[0];  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus)
+  {
+    assert(MeshType::dim() == 3);
+
+    // if this subdomain is at the bottom end of the global domain
+    if (ownRankPartitioningIndex_[2] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      return (ownRankPartitioningIndex_[2]-1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus)
+  {
+    assert(MeshType::dim() == 3);
+
+    // if this subdomain is at the top end of the global domain
+    if (ownRankPartitioningIndex_[2] == nRanks_[2]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      return (ownRankPartitioningIndex_[2]+1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+    }
+  }
+  return -1;  // does not happen (but intel compiler does not recognize it)
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos)
+{
+  neighbourRankNo = neighbourRank(face);
+
+  // if there is no neighbouring rank, do not fill data structures
+  if (neighbourRankNo == -1)
+  {
+    return;
+  }
+
+  /*
+  face0Minus = 0, face0Plus,
+  face1Minus, face1Plus,
+  face2Minus, face2Plus
+   */
+
+  std::array<element_no_t,MeshType::dim()> boundaryElementIndexStart;
+
+  if (face == Mesh::face_t::face0Minus || face == Mesh::face_t::face0Plus)
+  {
+    if (face == Mesh::face_t::face0Minus)
+    {
+      boundaryElementIndexStart[0] = 0;
+      nBoundaryElements[0] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[0] = nElementsLocal_[0]-1;
+      nBoundaryElements[0] = 1;
+    }
+
+    if (MeshType::dim() >= 2)
+    {
+      boundaryElementIndexStart[1] = 0;
+      nBoundaryElements[1] = nElementsLocal_[1];
+    }
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_t::face1Minus || face == Mesh::face_t::face1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    if (face == Mesh::face_t::face1Minus)
+    {
+      boundaryElementIndexStart[1] = 0;
+      nBoundaryElements[1] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[1] = nElementsLocal_[1]-1;
+      nBoundaryElements[1] = 1;
+    }
+
+    boundaryElementIndexStart[0] = 0;
+    nBoundaryElements[0] = nElementsLocal_[0];
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus || face == Mesh::face_t::face2Plus)
+  {
+    assert(MeshType::dim() == 3);
+
+    if (face == Mesh::face_t::face2Minus)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[2] = nElementsLocal_[2]-1;
+      nBoundaryElements[2] = 1;
+    }
+
+    boundaryElementIndexStart[0] = 0;
+    nBoundaryElements[0] = nElementsLocal_[0];
+
+    boundaryElementIndexStart[1] = 0;
+    nBoundaryElements[1] = nElementsLocal_[1];
+  }
+
+  int nBoundaryElementsTotal = 1;
+  switch (MeshType::dim())
+  {
+  case 1:
+    nBoundaryElementsTotal = nBoundaryElements[0];
+    break;
+  case 2:
+    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1];
+    break;
+  case 3:
+    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1]*nBoundaryElements[2];
+    break;
+  }
+
+  // determine dofs of all nodes adjacent to the boundary elements
+  dofNos.resize(nBoundaryElementsTotal);
+
+  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+
+  std::array<dof_no_t,MeshType::dim()> nDofs;
+  std::array<dof_no_t,MeshType::dim()> boundaryDofIndexStart;
+  for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
+  {
+    nDofs[dimensionIndex] = nBoundaryElements[dimensionIndex]*averageNDofsPerElement1D + nDofsPerNode;
+    boundaryDofIndexStart[dimensionIndex] = boundaryElementIndexStart[dimensionIndex]*averageNDofsPerElement1D;
+  }
+
+  if (MeshType::dim() == 1)
+  {
+    int dofIndex = 0;
+    for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+    {
+      dofNos[dofIndex] = dofNosLocalNaturalOrdering_[i];
+    }
+  }
+  else if (MeshType::dim() == 2)
+  {
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
+    int dofIndex = 0;
+    for (int j = boundaryDofIndexStart[1]; j < boundaryDofIndexStart[1]+nDofs[1]; j++)
+    {
+      for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+      {
+        dofNos[dofIndex] = dofNosLocalNaturalOrdering_[j*nDofsRow + i];
+      }
+    }
+  }
+  else if (MeshType::dim() == 3)
+  {
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
+    int nDofsPlane = (nElementsLocal_[1]*averageNDofsPerElement1D + averageNDofsPerElement1D) * nDofsRow;
+    int dofIndex = 0;
+    for (int k = boundaryDofIndexStart[2]; k < boundaryDofIndexStart[2]+nDofs[2]; k++)
+    {
+      for (int j = boundaryDofIndexStart[1]; j < boundaryDofIndexStart[1]+nDofs[1]; j++)
+      {
+        for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+        {
+          dofNos[dofIndex] = dofNosLocalNaturalOrdering_[k*nDofsPlane + j*nDofsRow + i];
+        }
+      }
+    }
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)
 {

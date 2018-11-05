@@ -52,6 +52,8 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd) : ownRankNo_(-1)
     }
   }
 
+  // all ranks that are not part of the communcator will store "MPI_COMM_NULL" as mpiCommunicator_
+
   VLOG(1) << "RankSubset constructor for ranks " << rankNo_ << " done";
 }
 

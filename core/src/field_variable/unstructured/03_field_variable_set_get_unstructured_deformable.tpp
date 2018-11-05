@@ -70,11 +70,28 @@ getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,
 //! for a specific component, get values from their local dof no.s
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const
+getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
-  
+
   this->component_[componentNo].getValues(dofLocalNo, values);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
+{
+
+  int nValues = dofLocalNo.size();
+  values.resize(nValues*nComponents);
+
+  // get values into values vector
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    std::vector<double> componentValues;
+    this->component_[componentIndex].getValues(dofLocalNo, componentValues);
+    std::copy(componentValues.begin(), componentValues.end(), values.begin()+componentIndex*nValues);
+  }
 }
 
 //! for a specific component, get a single value from local dof no.

@@ -40,7 +40,10 @@ public:
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
 
   //! for a specific component, get values from their local dof no.s, as vector
-  void getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const;
+  void getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
+
+  //! get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, ..., comp1, comp1, ...]
+  void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
   template<int N>

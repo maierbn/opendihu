@@ -56,8 +56,12 @@ initialize()
     return;
 
   // setup geometry field
-  // parse node positions from python config
-  this->parseNodePositionsFromSettings(this->specificSettings_);
+  // if no node positions were given, e.g. by the constructor that takes node positions
+  if (localNodePositions_.empty())
+  {
+    // parse node positions from python config
+    this->parseNodePositionsFromSettings(this->specificSettings_);
+  }
  
   // pass a shared "this" pointer to the geometryField 
   // retrieve "this" pointer and convert to downwards pointer of most derived class "FunctionSpace"

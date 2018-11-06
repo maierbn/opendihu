@@ -25,7 +25,12 @@ done
 
 # hyperthreads
 for i in `seq 1 5`; do
-  aprun -n 48 -N 48 -S 24 -j 2 --p-state 1250000 ./multiple_fibers_intel ../settings.py 4 intel_hyperthreads       # 4 = 4 processes per fiber
+  aprun -n 48 -N 48 -S 24 -j 2 --p-state 2500000 ./multiple_fibers_intel ../setting.py 4 intel_hyperthreads_turbo_off       # 4 = 4 processes per fiber
+done
+
+# hyperthreads
+for i in `seq 1 5`; do
+  aprun -n 48 -N 48 -S 24 -j 2 --p-state 1250000 ./multiple_fibers_intel ../setting.py 4 intel_hyperthreads_slow      # 4 = 4 processes per fiber
 done
 
 # hugepages

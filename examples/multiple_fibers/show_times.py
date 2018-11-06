@@ -185,7 +185,7 @@ datasets = extract_data(data)
 # output to console
 print("")
 print("------------- duration -------------------------------------------")
-print("{:10}, {:7},  {:10}, {:10}, {:10}, {:3}, {:10}".\
+print("{:30}, {:7},  {:10}, {:10}, {:10}, {:3}, {:10}".\
 format("key", "nproc", "solve: 0D", "1D", "total", "n", "memData"))
 for key in datasets:
   
@@ -193,7 +193,7 @@ for key in datasets:
   nproc = int(datasets[key]["value"][column_key_map["nRanks"]])
   number = datasets[key]["number"]
   
-  print("{:10}, {:7}, {:10}, {:10}, {:10}, {:3}, {:10}".\
+  print("{:30}, {:7}, {:10}, {:10}, {:10}, {:3}, {:10}".\
   format(key, 
   nproc,
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_0D"]]),

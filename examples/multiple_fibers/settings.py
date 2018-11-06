@@ -45,11 +45,17 @@ if len(sys.argv) == 2:
 else:
   n_processes_per_fiber = (int)(sys.argv[0])
 
+if len(sys.argv) <= 3:
+  scenario_name = ""
+else:
+  scenario_name == sys.argv[1]
+
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
 if rank_no == 0:
   print("n_processes_per_fiber: {}".format(n_processes_per_fiber))
+  print("scenario_name: {}".format(scenario_name))
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
@@ -220,7 +226,8 @@ for i,streamline in enumerate(streamlines):
     "nElements": len(streamline)-1,
     "nodePositions": streamline,
     "inputMeshIsGlobal": True,
-    "setHermiteDerivatives": False
+    "setHermiteDerivatives": False,
+    "logKey": "Fiber{}".format(i)
   }
     
 # load MU distribution and firing times
@@ -242,7 +249,7 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
-  "scenarioName": "iobuf",
+  "scenarioName": scenario_name,
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

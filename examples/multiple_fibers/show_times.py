@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import csv
 import random
 import collections
 import copy
 #from sets import Set
-import matplotlib.style
-import matplotlib as mpl
-mpl.style.use('classic')
+#import matplotlib.style
+#import matplotlib as mpl
+#mpl.style.use('classic')
 
 SCENARIO='cuboid'
 
@@ -130,7 +130,7 @@ def extract_data(data):
     scenario_name = column_key_map["scenarioName"]
     solver_type = new_data[key_solver]
     
-    key = "{:50}".format(new_data[scenario_name])
+    key = "{:30}".format(new_data[scenario_name])
       
     # store extracted values
     if key not in datasets:
@@ -185,20 +185,17 @@ datasets = extract_data(data)
 # output to console
 print("")
 print("------------- duration -------------------------------------------")
-print("{:10}, {:7}, {:13}, {:9}, {:4}, {:10}, {:10}, {:10}, {:3}, {:10}".\
-format("key", "nproc", "#M", "#M/proc", "#F", "solve: 0D", "1D", "total", "n", "memData"))
+print("{:10}, {:7},  {:10}, {:10}, {:10}, {:3}, {:10}".\
+format("key", "nproc", "solve: 0D", "1D", "total", "n", "memData"))
 for key in datasets:
   
   nF = int(datasets[key]["value"][column_key_map["nInstancesComputedGlobally"]])
   nproc = int(datasets[key]["value"][column_key_map["nRanks"]])
   number = datasets[key]["number"]
   
-  print("{:10}, {:7}, {:13}, {:9}, {:4}, {:10}, {:10}, {:10}, {:3}, {:10}".\
+  print("{:10}, {:7}, {:10}, {:10}, {:10}, {:3}, {:10}".\
   format(key, 
   nproc,
-  0,
-  0,
-  nF,
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_0D"]]),
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_1D"]]),
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_total"]]),
@@ -207,7 +204,7 @@ for key in datasets:
   ))
 print("")
 print("")
-  
+sys.exit(0)  
 ###############################################################
 #######################################################
 # plot

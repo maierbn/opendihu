@@ -43,6 +43,8 @@ int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the 
 DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
+
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
 
@@ -50,12 +52,15 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig) :
   pythonConfig_(pythonConfig), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
+  nObjects_++;
+  VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
 }
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(c), nObjects = " << nObjects_;
 
   if (!initialized_)
   {
@@ -261,6 +266,7 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(d), nObjects = " << nObjects_;
   // This constructor is called when creating the context object from unit tests.
 
   // load python config script as given by parameter

@@ -23,7 +23,7 @@ MultipleInstances(DihuContext context) :
 #ifdef HAVE_PAT
   PAT_record(PAT_STATE_ON);
   std::string label = "initialization";
-  PAT_region_begin(0, label.c_str());
+  PAT_region_begin(1, label.c_str());
   LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
 
@@ -195,7 +195,7 @@ initialize()
   data_.setInstancesData(instancesLocal_);
 
 #ifdef HAVE_PAT
-  PAT_region_end(0);    // end region "initialization", id 0
+  PAT_region_end(1);    // end region "initialization", id 1
 #endif
 }
 
@@ -210,7 +210,7 @@ run()
 
 #ifdef HAVE_PAT
   std::string label = "computation";
-  PAT_region_begin(1, label.c_str());
+  PAT_region_begin(2, label.c_str());
   LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
 
@@ -229,7 +229,7 @@ run()
   }
   
 #ifdef HAVE_PAT
-  PAT_region_end(1);    // end region "computation", id 1
+  PAT_region_end(2);    // end region "computation", id 
 #endif
 
   this->outputWriterManager_.writeOutput(this->data_);

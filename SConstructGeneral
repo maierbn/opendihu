@@ -76,7 +76,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
-vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
@@ -209,6 +209,10 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
+
+if env["USE_CRAY_PAT"]:
+  print("Compile with HAVE_PAT\n")
+  env.Append(CPPDEFINES = "-DHAVE_PAT")
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])

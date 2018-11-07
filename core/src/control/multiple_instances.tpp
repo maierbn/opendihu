@@ -22,7 +22,7 @@ MultipleInstances(DihuContext context) :
 {
 #ifdef HAVE_PAT
   PAT_record(PAT_STATE_ON);
-  std::string label = "initialization"
+  std::string label = "initialization";
   PAT_region_begin(0, label.c_str());
   LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
@@ -209,7 +209,7 @@ run()
     << " to be computed in total.";
 
 #ifdef HAVE_PAT
-  std::string label = "computation"
+  std::string label = "computation";
   PAT_region_begin(1, label.c_str());
   LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif

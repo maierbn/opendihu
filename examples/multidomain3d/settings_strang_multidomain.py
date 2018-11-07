@@ -76,7 +76,8 @@ max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
 min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
 max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
 
-print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
+if rank_no == 0:
+  print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
 
 for fiber_no in [10, 30, 50]:
   data = fiber_data[fiber_no]
@@ -87,12 +88,15 @@ for fiber_no in [10, 30, 50]:
   min_z = min([z for [x,y,z] in data])
   max_z = max([z for [x,y,z] in data])
 
-  print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
+  if rank_no == 0:
+    print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
 
 n_compartments = len(motor_units)
 
 # create relative factors for compartments
-print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
+
+if rank_no == 0:
+  print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
 
 # create data structure with 0
 relative_factors = np.zeros((n_compartments, len(mesh_data["node_positions"])))   # each row is one compartment
@@ -125,8 +129,9 @@ for node_no,node_position in enumerate(mesh_data["node_positions"]):
       relative_factors[motor_unit_no][node_no] += value
       #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
 
-for i,factors_list in enumerate(relative_factors.tolist()):
-  print("MU {}, maximum fr: {}".format(i,max(factors_list)))
+if rank_no == 0:
+  for i,factors_list in enumerate(relative_factors.tolist()):
+    print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
 # load MU distribution and firing times
 fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")

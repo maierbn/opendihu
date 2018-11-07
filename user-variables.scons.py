@@ -98,7 +98,6 @@ if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   #PETSC_DOWNLOAD = False
   #PETSC_DIR = os.environ.get("PETSC_DIR")
 
-
 # module restore opendihu
 # or 
 #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu

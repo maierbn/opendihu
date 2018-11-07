@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     TimeSteppingScheme::Heun<
       CellmlAdapter<57>
     >,
-    TimeSteppingScheme::ImplicitEuler<
+    TimeSteppingScheme::CrankNicolson<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::StructuredRegularFixedOfDimension<1>,
         BasisFunction::LagrangeOfOrder<1>,

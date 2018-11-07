@@ -2,7 +2,7 @@
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
 end_time = 30.0   # [ms] end time of simulation
-n_elements = 500
+n_elements = 1000
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -18,9 +18,9 @@ cellml_file = "../input/shorten.cpp"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
+dt_1D = 5e-5                      # timestep width of diffusion
+dt_0D = 5e-5                      # timestep width of ODEs
+dt_3D = 5e-5                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
 # import needed packages
@@ -30,6 +30,19 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 print("prefactor: ",Conductivity/(Am*Cm))
+
+scenario_name = ""
+if len(sys.argv) <= 2:
+  scenario_name = ""
+else:
+  scenario_name = sys.argv[0]
+
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
+
+if rank_no == 0:
+  print("scenario_name: {}".format(scenario_name))
+
 
 # determine if fibre gets stimulation at given time
 def fibre_gets_stimulated(current_time):
@@ -74,61 +87,20 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
   
   #wait = input("Press any key to continue...")
     
-fig = plt.figure(1)
-#plt.ion()
-
-# callback function that is called after integration of rhs, generates plots
-def handleResult(n_instances, time_step_no, current_time, states, intermediates, null):
-  
-  # collect data for every instance
-  xdata = []
-  vm_data = []
-  gamma_data = []
-  for i in range(nInstances):
-    xdata.append(i)
-    vm_data.append(states[i])
-    gamma_data.append(intermediates[i])
-  
-  # generate plot of Vm and gamma
-  # prepare figure
-  plt.figure(1)
-  plt.clf()
-  plt.xlabel('position $x$')
-  ax1 = plt.gca()
-  ax1.plot(xdata, vm_data, 'go-', label='$V_m$')
-  plt.ylim(-80, 80)
-  plt.xlabel('t')
-  plt.ylabel('$V_m$')
-  ax2 = ax1.twinx()
-  
-  # plot data
-  ax2.plot(xdata, gamma_data, 'ro-', label='$\gamma$')
-  plt.ylabel('$\gamma$')    
-  plt.ylim(0, 1)
-  
-  # ask matplotlib for the plotted objects and their labels
-  lines, labels = ax1.get_legend_handles_labels()
-  lines2, labels2 = ax2.get_legend_handles_labels()
-  ax2.legend(lines + lines2, labels + labels2, loc=0)
-  
-  # save to png file
-  filename = "out_{:06.1f}.png".format(currentTime)
-  plt.savefig(filename)
-  #print "   saved ""{}""".format(filename)
-  #plt.draw()
-    
 # callback function from output writer
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
     
 bc = {0: -75, -1: -75}
 config = {
+  "scenarioName": scenario_name,
   "Meshes": {
     "MeshFibre": {
       "nElements": n_elements,
       "physicalExtent": n_elements/100.,
       "inputMeshIsGlobal": True,
-      "setHermiteDerivatives": False
+      "setHermiteDerivatives": False,
+      "logKey": "Fiber"
     },
   },
   "Solvers": {
@@ -150,6 +122,7 @@ config = {
     "Term1": {      # CellML
       "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
+        "durationLogKey": "duration_0D",
         "initialValues": [],
         "timeStepOutputInterval": 1e4,
         "inputMeshIsGlobal": True,
@@ -180,7 +153,7 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ImplicitEuler" : {
+      "CrankNicolson" : {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,
@@ -199,10 +172,10 @@ config = {
           "inputMeshIsGlobal": True,
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": False, "onlyNodalValues":True},
+          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues":True},
           #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
           #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-          {"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+          #{"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
         ]
       },
     },

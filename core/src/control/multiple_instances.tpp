@@ -21,8 +21,10 @@ MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
 {
 #ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
   std::string label = "initialization"
   PAT_region_begin(0, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
 
   outputWriterManager_.initialize(context_, specificSettings_);
@@ -209,6 +211,7 @@ run()
 #ifdef HAVE_PAT
   std::string label = "computation"
   PAT_region_begin(1, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
 
   //#pragma omp parallel for // does not work with the python interpreter

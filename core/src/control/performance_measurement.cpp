@@ -62,9 +62,13 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
 
 void PerformanceMeasurement::writeLogFile(std::string logFileName)
 {
+  //LOG(DEBUG) << "PerformanceMeasurement::writeLogFile \"" << logFileName;
+
   parseStatusInformation();
 
   const bool combined = true;   /// if the output is using MPI Output
+
+  int ownRankNo = DihuContext::ownRankNo();
 
   // determine file name
   std::stringstream filename;
@@ -73,9 +77,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     filename << "." << std::setw(7) << std::setfill('0') << DihuContext::ownRankNo();
   filename << ".csv";
   logFileName = filename.str();
-
-  // open log file
-  std::ofstream file = OutputWriter::Generic::openFile(filename.str(), true);
 
   // compose header
   std::stringstream header;
@@ -123,7 +124,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   // check if header has to be added to file
   bool outputHeader = true;
-  if (DihuContext::ownRankNo() == 0 || !combined)
+  if (!combined || ownRankNo == 0)
   {
     // parse header and check if it would be the same header as own
     std::ifstream inputFile(filename.str());
@@ -148,11 +149,16 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // write header and data to file
   if (combined)   // MPI output
   {
-    file.close();
+    // open log file to create directory
+    std::ofstream file;
+    if (ownRankNo == 0)
+    {
+      file = OutputWriter::Generic::openFile(filename.str(), true);
+      file.close();
+    }
 
     LOG(DEBUG) << "open MPI file \"" << logFileName << "\".";
 
-    int ownRankNo = DihuContext::ownRankNo();
 
     // open file
     MPI_File fileHandle;
@@ -169,8 +175,9 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     }
     else
     {
+      char b[0];
       MPI_Status status;
-      MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, nullptr, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
+      MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
     }
 
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, data.str().c_str(), data.str().length(), MPI_BYTE, MPI_STATUS_IGNORE), "MPI_File_write_ordered");
@@ -179,6 +186,9 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   }
   else  // standard POSIX output
   {
+    // open log file
+    std::ofstream file = OutputWriter::Generic::openFile(filename.str(), true);
+
     if (outputHeader)
     {
       file << header.str();

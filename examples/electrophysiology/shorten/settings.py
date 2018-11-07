@@ -1,8 +1,8 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
-end_time = 30.0   # [ms] end time of simulation
-n_elements = 500
+end_time = 5.0   # [ms] end time of simulation
+n_elements = 4799
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]

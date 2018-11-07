@@ -7,6 +7,9 @@
 #include "interfaces/splittable.h"
 #include "cellml/02_callback_handler.h"
 
+void computeCellMLRightHandSide(void *context, double t, double *states, double *rates, double *algebraics, double *parameters);
+
+
 /** This is a class that contains cellml equations and can be used with a time stepping scheme.
  *  The nStates template parameter specifies the number of state variables that should be used with the integrator.
  *  It is necessary that this value is fixed at compile time because the timestepping scheme needs to know which field variable types it has to construct.

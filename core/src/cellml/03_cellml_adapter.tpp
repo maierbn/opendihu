@@ -98,6 +98,8 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     this->setParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
   }
 
+  computeCellMLRightHandSide((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
+#if 0
   //              this          STATES, RATES, WANTED,                KNOWN
   if(this->rhsRoutine_)
   {
@@ -107,6 +109,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
   }
+#endif
 
   // handle intermediates, call callback function of python config
   if (this->handleResult_ && timeStepNo % this->handleResultCallInterval_ == 0)

@@ -173,7 +173,7 @@ if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-  env.MergeFlags('-Werror -Wall -Wno-sign-compare -Wno-error=sign-compare')
+  env.MergeFlags('-Wall -Wno-sign-compare -Wno-error=sign-compare')
   env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
@@ -199,7 +199,7 @@ else:
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY":
-  env.MergeFlags('-Wunused-variable')   # always warn about unused variables
+  env.MergeFlags('-Wno-unused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
 if os.environ.get("PE_ENV") == "CRAY":

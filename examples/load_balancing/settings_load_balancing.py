@@ -4,9 +4,6 @@
 end_time = 15.0     # end time for the simulation
 
 import numpy as np
-import matplotlib 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import pickle
 import sys
 
@@ -32,6 +29,7 @@ fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_load_balancing.txt"
 cellml_file = "../input/hodgkin_huxley_1952.c"
 
+# get own rank no and number of ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 

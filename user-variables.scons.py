@@ -92,16 +92,11 @@ if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   CC="CC"   # C++ compiler
   mpiCC="CC"  # mpi C++ compiler
 
-  MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
-  LAPACK_DOWNLOAD = False
-  LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
-  PETSC_DOWNLOAD = False
-  PETSC_DIR = os.environ.get("PETSC_DIR")
-
-  PYTHON_DOWNLOAD = False
-  PYTHON_REDOWNLOAD = False
-  PYTHON_DIR = "/opt/python/3.6.5.1"
-
+  #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+  #LAPACK_DOWNLOAD = False
+  #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  #PETSC_DOWNLOAD = False
+  #PETSC_DIR = os.environ.get("PETSC_DIR")
 
 # module restore opendihu
 # or 

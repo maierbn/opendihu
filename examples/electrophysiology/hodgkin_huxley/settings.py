@@ -3,7 +3,9 @@
 #
 # parameters: [<n_elements> [<end_time>]]
 
-end_time = 10.0   # [ms] end time of simulation
+import sys
+
+end_time = 20.0   # [ms] end time of simulation
 n_elements = 1000
 
 # global parameters
@@ -54,33 +56,37 @@ def fibre_gets_stimulated(current_time):
     return False
   
 # callback function that can set parameters, i.e. stimulation current
-def set_parameters(n_nodes, time_step_no, current_time, parameters, dof_nos_global, null):
+def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
   
   # determine if fibre gets stimulated at the current time
   is_fibre_gets_stimulated = fibre_gets_stimulated(current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node = int(n_nodes / 2) + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate = [innervation_node]
-  if innervation_node > 0:
-    nodes_to_stimulate.insert(0, innervation_node-1)
-  if innervation_node < n_nodes-1:
-    nodes_to_stimulate.append(innervation_node+1)
+  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+  nodes_to_stimulate_global = [innervation_node_global]
+  
+  for k in range(10):
+    if innervation_node_global-k >= 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-k)
+    if innervation_node_global+k <= n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+k)
   
   # stimulation value
-  if is_fibre_gets_stimulated:
-    stimulation_current = 400.
+  if fibre_gets_stimulated:
+    stimulation_current = 40.
   else:
     stimulation_current = 0.
   
-  for node_no in nodes_to_stimulate:
-    parameters[node_no] = stimulation_current
+  first_dof_global = dof_nos_global[0]
+  last_dof_global = dof_nos_global[-1]
+    
+  for node_no_global in nodes_to_stimulate_global:
+    if first_dof_global <= node_no_global <= last_dof_global:
+      # get local no for global no (1D)
+      dof_no_local = node_no_global - first_dof_global
+      parameters[dof_no_local] = stimulation_current
 
-  #print("       set_parameters at timestep {}, t={}, n_nodes={}, stimulated: {}".\
-   # format(time_step_no, current_time, n_nodes, is_fibre_gets_stimulated))
- 
-  #print("       set stimulation for nodes {}".format(nodes_to_stimulate))
   
   #wait = input("Press any key to continue...")
     

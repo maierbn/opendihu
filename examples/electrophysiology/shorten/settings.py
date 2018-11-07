@@ -1,6 +1,9 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
+import sys
+
+
 end_time = 30.0   # [ms] end time of simulation
 n_elements = 1000
 

@@ -2,7 +2,7 @@
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
 end_time = 30.0   # [ms] end time of simulation
-n_elements = 500
+n_elements = 50
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -72,7 +72,32 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       parameters[dof_no_local] = stimulation_current
  
   
-  #wait = input("Press any key to continue...")
+def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fibre_no):
+  
+  # determine if fibre gets stimulated at the current time
+  is_fibre_gets_stimulated = fibre_gets_stimulated(current_time)
+  
+  # determine nodes to stimulate (center node, left and right neighbour)
+  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+  nodes_to_stimulate_global = [innervation_node_global]
+  
+  for k in range(10):
+    if innervation_node_global-k >= 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-k)
+    if innervation_node_global+k <= n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+k)
+ 
+  nodes_to_stimulate_global += [2,5,10]
+
+  # stimulation value
+  if fibre_gets_stimulated:
+    stimulation_current = 40.
+  else:
+    stimulation_current = 0.
+  
+  for node_no_global in nodes_to_stimulate_global:
+    parameters[(node_no_global,0)] = stimulation_current
     
 fig = plt.figure(1)
 #plt.ion()
@@ -161,8 +186,11 @@ config = {
           #"libraryFilename": "cellml_simd_lib.so",   # compiled library
           "useGivenLibrary": False,
           #"statesInitialValues": [],
-          "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-          "setParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+#          "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
+#          "setParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
+          "setSpecificParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+           
           #"handleResultFunction": handleResult,
           #"handleResultCallInterval": 2e3,
           

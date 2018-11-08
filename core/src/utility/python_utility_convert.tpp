@@ -332,6 +332,46 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   }
 };
 
+//partial specialization for std::pair
+template<typename ValueType1,typename ValueType2>
+struct PythonUtility::convertFromPython<std::pair<ValueType1,ValueType2>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::pair<ValueType1,ValueType2> get(PyObject *object, std::pair<ValueType1,ValueType2> defaultValue)
+  {
+    // start critical section for python API calls
+    PythonUtility::GlobalInterpreterLock lock;
+
+    std::pair<ValueType1,ValueType2> result;
+    if (PyTuple_Check(object))
+    {
+      int nEntries = (int)PyTuple_Size(object);
+      if (nEntries != 2)
+      {
+        LOG(WARNING) << "Converting python tuple to pair, but the tuple has " << nEntries << " != 2 entries.";
+      }
+
+      result.first = PythonUtility::convertFromPython<ValueType1>::get(PyTuple_GetItem(object, (Py_ssize_t)0), defaultValue.first);
+      result.second = PythonUtility::convertFromPython<ValueType2>::get(PyTuple_GetItem(object, (Py_ssize_t)1), defaultValue.second);
+
+      return result;
+    }
+    else 
+    {
+      LOG(ERROR) << "Could not convert python tuple to pair.";
+    }
+
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static std::pair<ValueType1,ValueType2> get(PyObject *object)
+  {
+    std::pair<ValueType1,ValueType2> defaultValue;
+    return PythonUtility::convertFromPython<std::pair<ValueType1,ValueType2>>::get(object, defaultValue);
+  }
+};
+
 //partial specialization for int
 template<>
 struct PythonUtility::convertFromPython<int>

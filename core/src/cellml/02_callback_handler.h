@@ -41,7 +41,7 @@ public:
 
   //! register a callback function setParameters that can set parameter values before each computation
   void registerSetSpecificParameters(void (*setParameters) (void *context, int nInstances, int timeStepNo, double currentTime,
-                                                            std::map<global_no_t,double> &globalParameters));
+                                                            std::vector<double> &localParameters));
 
   //! register a callbackfunction handleResult that gets called after each new values are available
   void registerHandleResult(void (*handleResult) (void *context, int nInstances, int timeStepNo, double currentTime,
@@ -51,7 +51,7 @@ public:
   void callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);
 
   //! directly call the python callback if it exists
-  void callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters);
+  void callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);
 
   //! directly call the python callback if it exists
   void callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);
@@ -62,7 +62,7 @@ protected:
   virtual void initializeCallbackFunctions();
 
   void (*setParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters);  ///< callback function that will be called before new states are computed. It can set new parameters ("known" variables) for the computation.
-  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters);  ///< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
+  void (*setSpecificParameters_) (void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters);  ///< callback function that will be called before new states are computed. It can set values for global parameters ("known" variables) for the computation.
   void (*handleResult_) (void *context, int nInstances, int timeStepNo, double currentTime, double *states, double *intermediates);   ///< callback function that will be called after new states and intermediates were computed
 
   int setParametersCallInterval_;      ///< setParameters_ will be called every callInterval_ time steps

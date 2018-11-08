@@ -50,10 +50,10 @@ initializeCallbackFunctions()
   {
     pythonSetSpecificParametersFunction_ = this->specificSettings_.getOptionFunction("setSpecificParametersFunction");
     setSpecificParametersCallInterval_ = this->specificSettings_.getOptionInt("setSpecificParametersCallInterval", 1, PythonUtility::Positive);
-    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters)
+    setSpecificParameters_ = [](void *context, int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
     {
       CallbackHandler *cellmlAdapter = (CallbackHandler *)context;
-      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, globalParameters);
+      cellmlAdapter->callPythonSetSpecificParametersFunction(nInstances, timeStepNo, currentTime, localParameters);
     };
     LOG(DEBUG) << "registered setSpecificParameters function";
   }
@@ -91,14 +91,16 @@ initializeCallbackFunctions()
 
 template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
-callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &localParameters)
 {
   if (pythonSetSpecificParametersFunction_ == NULL)
     return;
 
+  VLOG(1) << "callPythonSetSpecificParametersFunction timeStepNo=" << timeStepNo;
+
   // compose callback function
   PyObject *globalParametersDict = PyDict_New();
-  PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
+  PyObject *arglist = Py_BuildValue("(i,i,d,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalParametersDict, pySetParametersFunctionAdditionalParameter_);
   PyObject *returnValue = PyObject_CallObject(pythonSetSpecificParametersFunction_, arglist);
 
@@ -108,45 +110,35 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
 
   // copy new values in parametersList to parameters_ vector
   // loop over dict entries
-/*
-    bool first = true;
-    while (PyDict_Next(object, &pos, &key, &value))
+
+  // iterate over top level key-value pairs
+  PyObject *key, *valuePy;
+  Py_ssize_t pos = 0;
+
+  const int D = FunctionSpaceType::dim();
+
+  while (PyDict_Next(globalParametersDict, &pos, &key, &valuePy))
+  {
+    std::pair<std::array<global_no_t,D>,int> globalCoordinateAndIndex = PythonUtility::convertFromPython<std::pair<std::array<global_no_t,D>,int>>::get(key);   // tuple( [x,y,z], value )
+    std::array<global_no_t,D> coordinatesGlobal = globalCoordinateAndIndex.first;
+    int nodalDofIndex = globalCoordinateAndIndex.second;
+
+    double value = PythonUtility::convertFromPython<double>::get(valuePy);
+
+    VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal << ", nodalDofIndex: " << nodalDofIndex << ", value: " << value;
+
+    // tranform global coordinates to local dof no, this can be outside of the local domain
+    bool isOnLocalDomain;
+    dof_no_t dofNoLocal = this->functionSpace_->getDofNoLocal(coordinatesGlobal, nodalDofIndex, isOnLocalDomain);
+
+    VLOG(1) << "dofNoLocal: " << dofNoLocal << " is OnLocalDomain: " << isOnLocalDomain;
+ 
+    if (isOnLocalDomain)   // if the given parameter values is for a dof inside the current domain
     {
-      if (!first)
-        line << ",";
-      first = false;
-
-      line << std::endl << std::string(indent+2, ' ');
-
-      if (PyUnicode_Check(key))
-      {
-        std::string keyString = pyUnicodeToString(key);
-        line << keyString<< ": ";
-      }
-      else if (PyLong_Check(key))
-      {
-        std::string keyString = std::to_string(PyLong_AsLong(key));
-        line << keyString<< ": ";
-      }
-      else
-      {
-        line << "(key is of unknown type): ";
-      }
-
-      line << getString(value, indent+2, 0);
+      // set first parameter value to given value
+      localParameters[dofNoLocal] = value;
     }
-    line << std::endl << std::string(indent, ' ') << "}";
-  }
-  else
-  {
-    line << "<unknown type>";
-  }
-*/
-
-  for (unsigned int i=0; i<parameters.size(); i++)
-  {
-    PyObject *item = PyList_GetItem(parametersList, (Py_ssize_t)i);
-    parameters[i] = PythonUtility::convertFromPython<double>::get(item);
+    VLOG(1) << "localParameters: " << localParameters;
   }
 
   // decrement reference counters for python objects
@@ -157,7 +149,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
 
 template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
-callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters)
+callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
 {
   if (pythonSetParametersFunction_ == NULL)
     return;

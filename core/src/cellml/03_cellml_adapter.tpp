@@ -92,10 +92,19 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    //PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
     this->setParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
+  }
+  // get new values for parameters, call callback function of python config
+  if (this->setSpecificParameters_ && timeStepNo % this->setSpecificParametersCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    //PythonUtility::GlobalInterpreterLock lock;
+    
+    VLOG(1) << "call setParameters";
+    this->setSpecificParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN

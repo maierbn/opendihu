@@ -1453,6 +1453,29 @@ getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
 }
 
 template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  const int D = MeshType::dim();
+  std::array<int,D> coordinatesLocal;
+  isOnLocalDomain = true;
+  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
+  {
+    coordinatesLocal[coordinateDirection] = coordinatesGlobal[coordinateDirection] - this->beginNodeGlobalNatural(coordinateDirection);
+
+    // check if the computed local coordinate is in the local range of nodes
+    if (coordinatesLocal[coordinateDirection] < 0 || coordinatesLocal[coordinateDirection] >= nNodesLocalWithoutGhosts(coordinateDirection))
+    {
+      isOnLocalDomain = false;
+    }
+  }
+
+  return coordinatesLocal;
+
+  //node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+}
+
+template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getDofNoLocal(global_no_t dofNoGlobalPetsc) const
 {

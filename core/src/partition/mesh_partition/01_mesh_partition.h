@@ -171,6 +171,9 @@ public:
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
 
+  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  std::array<int,MeshType::dim()> getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
+
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
@@ -297,6 +300,9 @@ public:
 
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
+  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  std::array<int,D> getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
   node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;

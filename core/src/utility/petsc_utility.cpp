@@ -84,6 +84,9 @@ void createVector(Vec& vector, int nEntries, std::string name)
 
 std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   std::string name;
   char *cName;
   PetscObjectGetName((PetscObject)vector, (const char **)&cName);
@@ -120,10 +123,14 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
   s << std::endl;
 
   return s.str();
+#endif
 }
 
 std::string getStringMatrix(const Mat& matrix)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
   int nRowsGlobal, nColumnsGlobal;
@@ -146,10 +153,14 @@ std::string getStringMatrix(const Mat& matrix)
   getMatrixEntries(matrix, matrixValues);
 
   return getStringMatrix(matrixValues, nRows, nColumns, nRowsGlobal, nColumnsGlobal);
+#endif
 }
 
 std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nColumns, int nRowsGlobal, int nColumnsGlobal)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   const double zeroTolerance = 1e-15;
 
   std::stringstream s;
@@ -180,10 +191,14 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
   s << std::endl;
 
   return s.str();
+#endif
 }
 
 std::string getStringVector(const Vec& vector)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   std::vector<double> vectorValues;
   getVectorEntries(vector, vectorValues);
 
@@ -201,10 +216,14 @@ std::string getStringVector(const Vec& vector)
   }
 
   return s.str();
+#endif
 }
 
 std::string getStringSparsityPattern(const Mat& matrix)
 {
+#ifdef NDEBUG
+  return std::string("");
+#else
   int nRows, nColumns;
   MatGetLocalSize(matrix, &nRows, &nColumns);
 
@@ -237,6 +256,7 @@ std::string getStringSparsityPattern(const Mat& matrix)
   }
   s << std::endl;
   return s.str();
+#endif
 }
 
 void checkDimensionsMatrixVector(Mat &matrix, Vec &input)

@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <array>
 
-#include "control/use_numpy.h"
 #include "utility/vector_operators.h"
 #include "control/types.h"
 

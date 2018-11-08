@@ -25,7 +25,6 @@
 #include "control/performance_measurement.h"
 
 #include "easylogging++.h"
-#include "control/use_numpy.h"
 #include "control/settings_file_name.h"
 #include "utility/mpi_utility.h"
 

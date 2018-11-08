@@ -10,7 +10,6 @@
 #include <Python.h>
 #include "easylogging++.h"
 
-#include "control/use_numpy.h"
 #include "control/types.h"
 #include "control/settings_file_name.h"
 

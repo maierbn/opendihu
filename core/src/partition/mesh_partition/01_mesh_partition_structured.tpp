@@ -273,6 +273,12 @@ createDmElements()
     ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
+
+    std::array<int,2> meshIsPeriodicInDimension({false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   else if (MeshType::dim() == 3)
   {
@@ -303,6 +309,13 @@ createDmElements()
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
     localSizesOnRanks_[2].assign(lzData, lzData + nRanks_[2]);
+
+    // create cartesian communciator using MPI_Cart_Create
+    std::array<int,3> meshIsPeriodicInDimension({false,false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   
   initializeHasFullNumberOfNodes();

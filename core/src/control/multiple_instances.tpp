@@ -20,12 +20,12 @@ MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
 {
-#ifdef HAVE_PAT
-  PAT_record(PAT_STATE_ON);
-  std::string label = "initialization";
-  PAT_region_begin(1, label.c_str());
-  LOG(INFO) << "PAT_region_begin(" << label << ")";
-#endif
+// #ifdef HAVE_PAT
+  // PAT_record(PAT_STATE_OFF);
+  // std::string label = "initialization";
+  // PAT_region_begin(1, label.c_str());
+  // LOG(INFO) << "PAT_region_begin(" << label << ")";
+// #endif
 
   outputWriterManager_.initialize(context_, specificSettings_);
   
@@ -194,9 +194,9 @@ initialize()
   
   data_.setInstancesData(instancesLocal_);
 
-#ifdef HAVE_PAT
-  PAT_region_end(1);    // end region "initialization", id 1
-#endif
+// #ifdef HAVE_PAT
+  // PAT_region_end(1);    // end region "initialization", id 1
+// #endif
 }
 
 template<class TimeSteppingScheme>
@@ -209,6 +209,7 @@ run()
     << " to be computed in total.";
 
 #ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
   std::string label = "computation";
   PAT_region_begin(2, label.c_str());
   LOG(INFO) << "PAT_region_begin(" << label << ")";
@@ -230,6 +231,7 @@ run()
   
 #ifdef HAVE_PAT
   PAT_region_end(2);    // end region "computation", id 
+  PAT_record(PAT_STATE_OFF);
 #endif
 
   this->outputWriterManager_.writeOutput(this->data_);

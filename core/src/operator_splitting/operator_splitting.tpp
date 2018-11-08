@@ -1,5 +1,9 @@
 #include "operator_splitting/operator_splitting.h"
 
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
+
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
@@ -14,6 +18,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"]), initialized_(false)
 {
+
   PythonConfig topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
 }
@@ -88,8 +93,21 @@ run()
   // initialize data structurures
   initialize();
 
+#ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
+  std::string label = "computation";
+  PAT_region_begin(2, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
+#endif
+
   // run simulation
   advanceTimeSpan();
+
+#ifdef HAVE_PAT
+  PAT_region_end(2);    // end region "computation", id 
+  PAT_record(PAT_STATE_OFF);
+#endif
+
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

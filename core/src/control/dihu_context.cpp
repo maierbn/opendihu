@@ -27,6 +27,9 @@
 #include "easylogging++.h"
 #include "control/settings_file_name.h"
 #include "utility/mpi_utility.h"
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
 
 //INITIALIZE_EASYLOGGINGPP
 
@@ -63,6 +66,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
   if (!initialized_)
   {
+
+#ifdef HAVE_PAT
+    PAT_record(PAT_STATE_OFF);
+#endif
+
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 

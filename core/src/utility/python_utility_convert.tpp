@@ -23,8 +23,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
 
-    initNumpy();
-
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
     {
@@ -107,8 +105,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
 
-    initNumpy();
-
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
     {
@@ -190,8 +186,6 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   {
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
 
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
@@ -399,8 +393,6 @@ struct PythonUtility::convertFromPython<double>
 
     // start critical section for python API calls
     PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
 
     if (PyFloat_Check(object))
     {

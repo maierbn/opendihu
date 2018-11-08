@@ -17,7 +17,8 @@ void SolutionVectorMapping<
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>> fieldVariable1 = std::get<0>(transferableSolutionData1);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2 = std::get<0>(transferableSolutionData2);
 
-  fieldVariable1->checkNansInfs();
+  // disable checking for nans and infs because it take a lot of time
+  //fieldVariable1->checkNansInfs();
 
   int componentNo1 = std::get<1>(transferableSolutionData1);
   int componentNo2 = std::get<1>(transferableSolutionData2);

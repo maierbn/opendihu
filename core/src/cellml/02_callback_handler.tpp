@@ -91,16 +91,16 @@ initializeCallbackFunctions()
 
 template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
-callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
+callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::vector<double> &parameters)
 {
-  if (pythonSetParametersFunction_ == NULL)
+  if (pythonSetSpecificParametersFunction_ == NULL)
     return;
 
   // compose callback function
   PyObject *globalParametersDict = PyDict_New();
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(),
                                     timeStepNo, currentTime, globalParametersDict, pySetParametersFunctionAdditionalParameter_);
-  PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
+  PyObject *returnValue = PyObject_CallObject(pythonSetSpecificParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message
   if (returnValue == NULL)
@@ -157,9 +157,9 @@ callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTi
 
 template<int nStates, typename FunctionSpaceType>
 void CallbackHandler<nStates,FunctionSpaceType>::
-callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters)
+callPythonSetParametersFunction(int nInstances, int timeStepNo, double currentTime, std::map<global_no_t,double> &globalParameters)
 {
-  if (pythonSetSpecificParametersFunction_ == NULL)
+  if (pythonSetParametersFunction_ == NULL)
     return;
 
   // create list of global dof nos if it does not already exist
@@ -173,7 +173,7 @@ callPythonSetSpecificParametersFunction(int nInstances, int timeStepNo, double c
   // compose callback function
   PyObject *parametersList = PythonUtility::convertToPythonList(parameters);
   PyObject *arglist = Py_BuildValue("(i,i,d,O,O,O)", this->functionSpace_->meshPartitionBase()->nDofsGlobal(), timeStepNo, currentTime, parametersList, pyGlobalNaturalDofsList_, pySetParametersFunctionAdditionalParameter_);
-  PyObject *returnValue = PyObject_CallObject(pythonSetSpecificParametersFunction_, arglist);
+  PyObject *returnValue = PyObject_CallObject(pythonSetParametersFunction_, arglist);
 
   // if there was an error while executing the function, print the error message
   if (returnValue == NULL)

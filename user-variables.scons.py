@@ -19,6 +19,9 @@
 cc="gcc"   # c compiler
 CC="g++"   # c++ compiler
 
+# use cray-pat for profiling
+USE_CRAY_PAT=True
+
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 

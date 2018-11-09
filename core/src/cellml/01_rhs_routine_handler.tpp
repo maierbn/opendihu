@@ -95,10 +95,12 @@ initializeRhsRoutine()
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      std::stringstream s << C_COMPILER_COMMAND << " -fPIC -O3 " << compilerFlags << " ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -fPIC -O3 " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #else
-      std::stringstream s << C_COMPILER_COMMAND << " -fPIC -O0 -ggdb " << compilerFlags << " ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -fPIC -O0 -ggdb " << compilerFlags << " ";
       compileCommandOptions = s.str();
 #endif
     }

@@ -7,7 +7,8 @@ const char *valuesRepresentationString[16] =
 {
   "local",
   "global",
-  "contiguous"
+  "contiguous",
+  "globalSub"
 };
 
 };  // namespace

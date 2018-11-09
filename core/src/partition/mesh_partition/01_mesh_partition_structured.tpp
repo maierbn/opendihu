@@ -10,7 +10,7 @@ namespace Partition
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false})
+  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
@@ -18,11 +18,19 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
+
+    // compute nDofsLocalWithoutGhosts
+    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+    this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
   }
   else
   {
     // determine partitioning of elements
     this->createDmElements();
+
+    // compute nDofsLocalWithoutGhosts
+    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+    this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
 
     // initialize dof vectors
     this->createLocalDofOrderings();
@@ -41,7 +49,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
               std::array<int,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
-  nRanks_(nRanks), hasFullNumberOfNodes_({false})
+  nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   // partitioning is already prescribed as every rank knows its own local size
  
@@ -49,6 +57,10 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     << "nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal 
     << ", beginElementGlobal: " << beginElementGlobal << ", nRanks: " << nRanks << ", rankSubset: " << *rankSubset;
     
+  // compute nDofsLocalWithoutGhosts
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+  this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
+
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
@@ -386,9 +398,7 @@ template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nDofsLocalWithoutGhosts() const
 {
-  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-
-  return nNodesLocalWithoutGhosts() * nDofsPerNode;
+  return this->nDofsLocalWithoutGhosts_;
 }
 
 template<typename MeshType,typename BasisFunctionType>

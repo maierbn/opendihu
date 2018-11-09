@@ -186,10 +186,10 @@ config = {
           #"libraryFilename": "cellml_simd_lib.so",   # compiled library
           "useGivenLibrary": False,
           #"statesInitialValues": [],
-#          "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-#          "setParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-          "setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
-          "setSpecificParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
+          "setParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+#          "setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
+#          "setSpecificParametersCallInterval": int(3./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
            
           #"handleResultFunction": handleResult,
           #"handleResultCallInterval": 2e3,
@@ -230,7 +230,7 @@ config = {
           {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues":True},
           #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
           #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-          #{"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+          {"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
         ]
       },
     },

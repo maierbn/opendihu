@@ -343,6 +343,10 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithoutGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (values.size() != this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts())
+  {
+    LOG(FATAL) << "setValuesWithoutGhosts: values.size: " << values.size() << " != " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  }
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
   
   // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched

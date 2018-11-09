@@ -183,6 +183,9 @@ public:
   //! this has to be called
   void restoreValuesContiguous();
 
+  //! restore contigous values to mode GlobalSub
+  void restoreValuesContiguousToGlobalSub();
+
   //! set the internal representation to be global, i.e. using the global vectors, if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs)
   void setRepresentationGlobal();
 

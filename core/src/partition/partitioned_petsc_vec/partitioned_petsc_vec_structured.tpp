@@ -494,7 +494,11 @@ valuesLocal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
 
-  if(this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobalSub)
+  {
+    LOG(FATAL) << "Representation is globalSub, can not transform to local";
+  }
+  else if(this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
     VLOG(1) << "valuesLocal called in not local vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]
@@ -513,7 +517,18 @@ valuesGlobal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
 
-  if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobalSub)
+  {
+    VLOG(1) << "Using globalSub representation when global is requested.";
+    if (componentNo != 0)
+    {
+      LOG(WARNING) << "valuesGlobal called in not global vector representation ("
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      <<"), now set to global)";
+      LOG(FATAL) << "valuesGlobal() Representation is globalSub, but requested component is " << componentNo << " != 0";
+    }
+  }
+  else if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "valuesGlobal called in not global vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]
@@ -541,6 +556,11 @@ getValuesContiguous()
 
   // if the contiguous representation is already being used, return contiguous vector
   if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    return valuesContiguous_;
+  }
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobalSub)
   {
     return valuesContiguous_;
   }
@@ -638,6 +658,35 @@ restoreValuesContiguous()
 
   ierr = VecRestoreArrayRead(valuesContiguous_, &valuesDataContiguous); CHKERRV(ierr);
   this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+restoreValuesContiguousToGlobalSub()
+{
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+  {
+    PetscErrorCode ierr;
+    const IS &indexSet = this->meshPartition_->dofNosLocalNonGhostIS();
+
+    const PetscInt *ptr;
+    ierr = ISGetIndices(indexSet, &ptr); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    LOG(DEBUG) << "VecGetSubVector \"" << this->name_ << "\", index set: " << ptr[0] << "," << ptr[1];
+
+    if (valuesContiguous_ == PETSC_NULL)
+    {
+      LOG(DEBUG) << "valuesContiguous_ is NULL";
+    }
+
+    ierr = VecGetSubVector(this->valuesContiguous_, indexSet, &this->vectorGlobal_[0]); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    this->currentRepresentation_ = Partition::values_representation_t::representationGlobalSub;
+  }
+  else if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobalSub)
+  {
+    LOG(FATAL) << "Can not transform value representation from " <<
+      Partition::valuesRepresentationString[this->currentRepresentation_] << " to GlobalSub, must be Contiguous.";
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>

@@ -44,6 +44,9 @@ public:
   //! get a vector of local dof nos, range [0,nDofsLocalWithoutGhosts] are the dofs without ghost dofs, the whole vector are the dofs with ghost dofs (only for structured mesh)e
   const std::vector<PetscInt> &dofNosLocal() const;
   
+  //! get the number of local dofs, without ghosts
+  virtual dof_no_t nDofsLocalWithoutGhosts() const = 0;
+
   //! number of dofs in total
   virtual global_no_t nDofsGlobal() const = 0;
 
@@ -58,13 +61,18 @@ public:
 
   //! get a PETSc IS (index set) with the same information as dofNosLocal_
   const IS &dofNosLocalIS() const;
-  
+
+  //! get a PETSc IS (index set) with the same information as dofNosLocal_, but without ghost dofs
+  const IS &dofNosLocalNonGhostIS() const;
+
 protected:
    
   std::shared_ptr<RankSubset> rankSubset_;  ///< the set of ranks that compute something where this partition is a part of, also holds the MPI communciator
   
   std::vector<dof_no_t> dofNosLocal_;   ///< vector of all local nos of non-ghost dofs followed by the ghost dofs
   IS dofNosLocalIS_;   ///< index set (IS) with the indices of the local dof nos (including ghosts)
+  IS dofNosLocalNonGhostIS_;   ///< index set (IS) with the indices of the local dof nos (without ghosts)
+
 };
 
 }  // namespace

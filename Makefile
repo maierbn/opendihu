@@ -58,6 +58,9 @@ fibers:
 hodgkin_huxley:
 	cd examples/electrophysiology/hodgkin_huxley && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
+shorten:
+	cd examples/electrophysiology/shorten && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 

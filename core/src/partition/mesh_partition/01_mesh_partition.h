@@ -236,6 +236,7 @@ protected:
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;   ///< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition
   
   std::vector<dof_no_t> dofNosLocalNaturalOrdering_;  ///< for every local natural number, i.e. local numbering according to coordinates, the local dof no
+  dof_no_t nDofsLocalWithoutGhosts_;                       ///< number of local dofs without ghosts, cached value, the actual value is derived from nElementslocal_ and mesh type
 
   ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   ///< local to global mapping for dofs
 };

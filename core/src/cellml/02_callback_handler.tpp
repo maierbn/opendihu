@@ -15,7 +15,7 @@ CallbackHandler<nStates,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates,FunctionSpaceType>(context),
   DiscretizableInTime(),
-  setParameters_(NULL), handleResult_(NULL),
+  setParameters_(NULL), setSpecificParameters_(NULL), handleResult_(NULL),
   pythonSetParametersFunction_(NULL), pythonSetSpecificParametersFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetParametersFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
 {

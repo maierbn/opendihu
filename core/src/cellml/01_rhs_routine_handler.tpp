@@ -87,13 +87,19 @@ initializeRhsRoutine()
          LOG(ERROR) << "Could not create a simd version for CellML RHS.";
       }
       SourceFilenameToUse = simdSourceFilename;
+
+      // load compiler flags     
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -x c");
+
 #ifdef NDEBUG
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -x c ";
+      std::stringstream s << C_COMPILER_COMMAND << " -fPIC -O3 " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #else
-      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -O0 -ggdb -shared -x c ";
+      std::stringstream s << C_COMPILER_COMMAND << " -fPIC -O0 -ggdb " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #endif
     }
     // compile source file to a library

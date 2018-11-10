@@ -100,9 +100,9 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   //this->data_->increment()->restoreValuesContiguousToGlobalSub();
   //dataHeun->intermediateIncrement()->restoreValuesContiguousToGlobalSub();
 
-  this->data_->solution()->restoreValuesContiguous();
-  this->data_->increment()->restoreValuesContiguous();
-  dataHeun->intermediateIncrement()->restoreValuesContiguous();
+  //this->data_->solution()->restoreValuesContiguous();
+  //this->data_->increment()->restoreValuesContiguous();
+  //dataHeun->intermediateIncrement()->restoreValuesContiguous();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

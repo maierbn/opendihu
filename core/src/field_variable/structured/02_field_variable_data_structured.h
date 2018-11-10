@@ -66,10 +66,6 @@ public:
   //! this has to be called
   void restoreValuesContiguous();
 
-  //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
-  //! this has to be called
-  void restoreValuesContiguousToGlobalSub();
-
   //! output string representation to stream for debugging
   void output(std::ostream &stream) const;
 

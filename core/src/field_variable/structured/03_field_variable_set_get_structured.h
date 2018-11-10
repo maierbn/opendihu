@@ -50,8 +50,14 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
-  //! extract the specified component from the field variable and store it in the given field variable (which already has the data allocated)
-  void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+  //! extract the specified component from the field variable (by copying it) and store it in the given field variable (which already has the data allocated)
+  void extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
+  //! extract the specified component from the field variable by using the raw data array in the given field variable. Afterwards this field variable is invalid and can only be used again after restoreExtractedComponent has been called
+  void extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
+  //! restore the extracted raw array to petsc and make the field variable usable again
+  void restoreExtractedComponent();
 
   //! set the values for the given component from a petsc Vec
   void setValues(int componentNo, Vec petscVector);

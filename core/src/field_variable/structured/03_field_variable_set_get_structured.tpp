@@ -201,13 +201,28 @@ getValue(int componentNo, node_no_t dofLocalNo) const
   this->values_->getValues(componentNo, 1, &index, &result);
   return result;
 }
-  
+
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
-extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
+extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
 {
   assert(extractedFieldVariable->partitionedPetscVec());
-  this->values_->extractComponent(componentNo, extractedFieldVariable->partitionedPetscVec());
+  this->values_->extractComponentCopy(componentNo, extractedFieldVariable->partitionedPetscVec());
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
+{
+  assert(extractedFieldVariable->partitionedPetscVec());
+  this->values_->extractComponentShared(componentNo, extractedFieldVariable->partitionedPetscVec());
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+restoreExtractedComponent()
+{
+  this->values_->restoreExtractedComponent();
 }
 
 template<typename FunctionSpaceType, int nComponents>

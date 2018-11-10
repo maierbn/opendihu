@@ -169,14 +169,6 @@ restoreValuesContiguous()
 }
 
 template<typename FunctionSpaceType, int nComponents>
-void FieldVariableDataStructured<FunctionSpaceType,nComponents>::
-restoreValuesContiguousToGlobalSub()
-{
-  assert(this->values_);
-  this->values_->restoreValuesContiguousToGlobalSub();
-}
-
-template<typename FunctionSpaceType, int nComponents>
 std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> FieldVariableDataStructured<FunctionSpaceType,nComponents>::
 partitionedPetscVec()
 {

@@ -9,11 +9,5 @@ Import('env')     # import Environment object from calling SConstruct
 
 # if the option no_tests was given, quit the script
 if not env['no_examples']:
-        
-  examples = [
-    "hodgkin_huxley_godunov",
-    "hodgkin_huxley_strang"
-  ]
-
-  for example in examples:
-    env.Program(target = example, source = "src/{}.cpp".format(example))
+  # create the main executable
+  env.Program(target = 'diffusion', source = "src/diffusion.cpp")

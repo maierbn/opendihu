@@ -272,7 +272,9 @@ void PerformanceMeasurement::parseStatusInformation()
    int d = int(totalUsertime/(3600*24));
    int h = hTotal - d*24;
    int min = minTotal - h*60 - d*24*60;
-   double s = totalUsertime - minTotal*60;
+   double sDouble = totalUsertime - minTotal*60;
+   int s = int(sDouble);
+   sDouble -= s;
 
    std::stringstream message;
    if (d != 0)
@@ -281,7 +283,14 @@ void PerformanceMeasurement::parseStatusInformation()
      message << h << ":";
    if (min != 0)
    {
-     message << std::setw(2) << std::setfill('0') << min << ":" << std::setw(2) << std::setfill('0') << s;
+     std::stringstream secondsFraction;
+     secondsFraction << std::setprecision(4) << sDouble;
+     if (h == 0)
+       message << min;
+     else
+       message << std::setw(2) << std::setfill('0') << min;
+
+     message << ":" << std::setw(2) << std::setfill('0') << s << secondsFraction.str().substr(1);
      if (h == 0)
        message << " min";
    }

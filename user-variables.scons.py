@@ -19,9 +19,6 @@
 cc="gcc"   # c compiler
 CC="g++"   # c++ compiler
 
-# use cray-pat for profiling
-USE_CRAY_PAT=True
-
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 
@@ -42,9 +39,9 @@ SCIPY_DOWNLOAD=True
 
 # Matplotlib and other python dependencies
 BZIP2_DOWNLOAD=True
-MATPLOTLIB_DOWNLOAD=True
-NUMPYSTL_DOWNLOAD=True
-SVGPATH_DOWNLOAD=True
+MATPLOTLIB_DOWNLOAD=False
+NUMPYSTL_DOWNLOAD=False
+SVGPATH_DOWNLOAD=False
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -94,6 +91,9 @@ if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   cc="cc"   # C compiler
   CC="CC"   # C++ compiler
   mpiCC="CC"  # mpi C++ compiler
+
+  # use cray-pat for profiling
+  USE_CRAY_PAT=True
 
   #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   #LAPACK_DOWNLOAD = False

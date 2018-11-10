@@ -13,7 +13,7 @@ void SolutionVectorMapping<
 {
   // transfer from cellml to multidomain
   // this is analogous to the following code line in the old code:
-  // dataMultidomain_.subcellularStates(k)->extractComponent(0, dataMultidomain_.transmembranePotential(k));
+  // dataMultidomain_.subcellularStates(k)->extractComponentCopy(0, dataMultidomain_.transmembranePotential(k));
 
   // rename input variables
   const std::vector<std::tuple<std::shared_ptr<FieldVariableType1>, int, double>> &subcellularStates = transferableSolutionData1;
@@ -31,7 +31,7 @@ void SolutionVectorMapping<
     int outputStateIndex = std::get<1>(subcellularStates[k]);  // is 0
     double prefactor = std::get<2>(subcellularStates[k]);  // is 1
     std::shared_ptr<FieldVariableType2> transmembranePotentialCompartment = transmembranePotential[k];
-    subcellularStatesFieldVariable->extractComponent(outputStateIndex, transmembranePotentialCompartment);
+    subcellularStatesFieldVariable->extractComponentShared(outputStateIndex, transmembranePotentialCompartment);
 
     if (prefactor != 1.0)
     {

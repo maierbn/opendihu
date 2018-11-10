@@ -4,7 +4,7 @@
 import sys
 
 
-end_time = 30.0   # [ms] end time of simulation
+end_time = 10.0   # [ms] end time of simulation
 n_elements = 1000
 
 # global parameters
@@ -114,7 +114,7 @@ config = {
       "preconditionerType": "none",
     }
   },
-  "GodunovSplitting": {
+  "StrangSplitting": {
     #"numberTimeSteps": 1,
     "timeStepWidth": dt_3D,  # 1e-1
     "endTime": end_time,
@@ -123,7 +123,7 @@ config = {
     "timeStepOutputInterval" : 200,
     
     "Term1": {      # CellML
-      "ExplicitEuler" : {
+      "Heun" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "logTimeStepWidthAsKey": "dt_0D",
         "durationLogKey": "duration_0D",
@@ -157,7 +157,7 @@ config = {
       },
     },
     "Term2": {     # Diffusion
-      "ImplicitEuler" : {
+      "CrankNicolson" : {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,

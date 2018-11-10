@@ -51,7 +51,7 @@ initializeRhsRoutine()
   { // will compile lib new
     std::string gpuSourceFilename;
     std::string simdSourceFilename;
-    std::string SourceFilenameToUse;
+    std::string sourceFilenameToUse;
     std::stringstream compileCommand;
     std::string compileCommandOptions;
 
@@ -65,11 +65,18 @@ initializeRhsRoutine()
       {
          LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
       }
-      SourceFilenameToUse = gpuSourceFilename;
+      sourceFilenameToUse = gpuSourceFilename;
+
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
 #ifdef NDEBUG
-      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -fopenmp -O3 -shared -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #else
-      compileCommandOptions = C_COMPILER_COMMAND " -fPIC -fopenmp -O0 -ggdb -shared -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #endif
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
@@ -86,14 +93,22 @@ initializeRhsRoutine()
       {
          LOG(ERROR) << "Could not create a simd version for CellML RHS.";
       }
-      SourceFilenameToUse = simdSourceFilename;
+      sourceFilenameToUse = simdSourceFilename;
+
+      // load compiler flags     
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
 #ifdef NDEBUG
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      compileCommandOptions = C_COMPILER_COMMAND " -finstrument-functions -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #else
-      compileCommandOptions = C_COMPILER_COMMAND " -finstrument-functions -fPIC -O0 -ggdb -shared -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #endif
     }
     // compile source file to a library
@@ -167,7 +182,7 @@ initializeRhsRoutine()
 
       // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
       compileCommand << compileCommandOptions
-        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << SourceFilenameToUse
+        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
         //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
         << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
 
@@ -629,7 +644,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
     int rankNoWorldCommunicator = DihuContext::ownRankNo();
-    s << simdSourceFilename << "." << rankNoWorldCommunicator;
+    s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 
     std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());

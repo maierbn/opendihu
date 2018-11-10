@@ -39,9 +39,9 @@ SCIPY_DOWNLOAD=True
 
 # Matplotlib and other python dependencies
 BZIP2_DOWNLOAD=True
-MATPLOTLIB_DOWNLOAD=True
-NUMPYSTL_DOWNLOAD=True
-SVGPATH_DOWNLOAD=True
+MATPLOTLIB_DOWNLOAD=False
+NUMPYSTL_DOWNLOAD=False
+SVGPATH_DOWNLOAD=False
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -92,12 +92,14 @@ if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   CC="CC"   # C++ compiler
   mpiCC="CC"  # mpi C++ compiler
 
-  MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
-  LAPACK_DOWNLOAD = False
-  LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
-  PETSC_DOWNLOAD = False
-  PETSC_DIR = os.environ.get("PETSC_DIR")
+  # use cray-pat for profiling
+  USE_CRAY_PAT=True
 
+  #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+  #LAPACK_DOWNLOAD = False
+  #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  #PETSC_DOWNLOAD = False
+  #PETSC_DIR = os.environ.get("PETSC_DIR")
 
 # module restore opendihu
 # or 

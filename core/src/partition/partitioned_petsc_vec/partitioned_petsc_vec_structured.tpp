@@ -127,7 +127,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setRepresentationContiguous()
 {
-  VLOG(2) << "\"" << this->name_ << "\" setRepresentationContiguous, previous representation: "
+  VLOG(2) << "\"" << this->name_ << "\" setrepresentationContiguous, previous representation: "
     << Partition::valuesRepresentationString[this->currentRepresentation_];
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
@@ -494,7 +494,14 @@ valuesLocal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
 
-  if(this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
+  {
+    LOG(FATAL) << "Cannot use field variable with representation set to invalid. This happens because extractComponentShared was "
+      << "called and the field variable was used afterwards. You can only access the field variable again after "
+      << "restoreExtractedComponent has been called.";
+  }
+
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationLocal)
   {
     VLOG(1) << "valuesLocal called in not local vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]
@@ -512,6 +519,13 @@ Vec &PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType
 valuesGlobal(int componentNo)
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
+  {
+    LOG(FATAL) << "Cannot use field variable with representation set to invalid. This happens because extractComponentShared was "
+      << "called and the field variable was used afterwards. You can only access the field variable again after "
+      << "restoreExtractedComponent has been called.";
+  }
 
   if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
@@ -642,7 +656,54 @@ restoreValuesContiguous()
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+{
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
+  {
+    VLOG(1) << "Called extractComponentShared with "
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << " representation, representation needs to be contiguous, set to contiguous";
+    setRepresentationContiguous();
+  }
+
+  VLOG(2) << "\"" << this->name_ << "\" extractComponentShared(componentNo=" << componentNo << ")";
+
+  // get data array from valuesContiguous;
+  PetscErrorCode ierr;
+  ierr = VecGetArrayRead(this->valuesContiguous_, &extractedData_);
+
+  // set array in field variable
+  extractedFieldVariable->setRepresentationGlobal();
+  ierr = VecPlaceArray(extractedFieldVariable->valuesGlobal(0), &extractedData_ + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts()); CHKERRV(ierr);
+
+  this->currentRepresentation_ = Partition::values_representation_t::representationInvalid;
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+restoreExtractedComponent()
+{
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationInvalid)
+  {
+    LOG(ERROR) << "restoreExtractedComponent was called on a vector with representation "
+      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << ", should be representationInvalid. Check that extractComponentShared was called previously.";
+    return;
+  }
+
+  // assert that the extracted data array is set
+  assert(extractedData_);
+
+  // restore the data array to the valuesContiguous Vec
+  PetscErrorCode ierr;
+  ierr = VecRestoreArrayRead(this->valuesContiguous_, &extractedData_); CHKERRV(ierr);
+
+  this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
+}
+
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
 {
   if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
@@ -650,7 +711,7 @@ extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSp
     setRepresentationLocal();
   }
 
-  VLOG(2) << "\"" << this->name_ << "\" extractComponent(componentNo=" << componentNo << ")";
+  VLOG(2) << "\"" << this->name_ << "\" extractComponentCopy(componentNo=" << componentNo << ")";
 
   // prepare source vector
   Vec vectorSource;

@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <array>
 
-#include "control/use_numpy.h"
 #include "utility/vector_operators.h"
 #include "control/types.h"
 
@@ -21,9 +20,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
+    // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
@@ -105,9 +102,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
+    // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
@@ -189,9 +184,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
+    // PythonUtility::GlobalInterpreterLock lock;
 
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
@@ -273,7 +266,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   static std::vector<ValueType> get(PyObject *object, std::vector<ValueType> defaultValue)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     std::vector<ValueType> result;
     if (PyList_Check(object))
@@ -312,7 +305,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   static std::vector<ValueType> get(PyObject *object)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     std::vector<ValueType> result;
     if (PyList_Check(object))
@@ -339,6 +332,107 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
   }
 };
 
+//partial specialization for std::pair
+template<typename ValueType1,typename ValueType2>
+struct PythonUtility::convertFromPython<std::pair<ValueType1,ValueType2>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::pair<ValueType1,ValueType2> get(PyObject *object, std::pair<ValueType1,ValueType2> defaultValue)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::pair<ValueType1,ValueType2> result;
+    if (PyTuple_Check(object))
+    {
+      int nEntries = (int)PyTuple_Size(object);
+      if (nEntries != 2)
+      {
+        LOG(WARNING) << "Converting python tuple to pair, but the tuple has " << nEntries << " != 2 entries.";
+      }
+
+      result.first = PythonUtility::convertFromPython<ValueType1>::get(PyTuple_GetItem(object, (Py_ssize_t)0), defaultValue.first);
+      result.second = PythonUtility::convertFromPython<ValueType2>::get(PyTuple_GetItem(object, (Py_ssize_t)1), defaultValue.second);
+
+      return result;
+    }
+    else
+    {
+      LOG(ERROR) << "Could not convert python tuple to pair.";
+    }
+
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static std::pair<ValueType1,ValueType2> get(PyObject *object)
+  {
+    std::pair<ValueType1,ValueType2> defaultValue;
+    return PythonUtility::convertFromPython<std::pair<ValueType1,ValueType2>>::get(object, defaultValue);
+  }
+};
+
+//partial specialization for std::tuple
+template <size_t index, typename... ValueTypes>
+typename std::enable_if<index == sizeof...(ValueTypes)>::type
+ExtractTuple(PyObject *object, int nEntries, std::tuple<ValueTypes...> &result)
+{}
+
+template <size_t index, typename... ValueTypes>
+typename std::enable_if<(index < sizeof...(ValueTypes))>::type
+ExtractTuple(PyObject *object, int nEntries, std::tuple<ValueTypes...> &result)
+{
+  typedef typename std::tuple_element<index,std::tuple<ValueTypes...>>::type Type;
+  if (index < nEntries)
+  {
+    // extract value from python config
+    std::get<index>(result) = PythonUtility::convertFromPython<Type>::get(
+      PyTuple_GetItem(object, (Py_ssize_t)index));
+  }
+  else
+  {
+    // if the current index is higher than the number of entries in the python config, default values are used
+    std::get<index>(result) = Type();
+  }
+
+  ExtractTuple<index+1,ValueTypes...>(object, nEntries, result);
+}
+
+template<typename... ValueTypes>
+struct PythonUtility::convertFromPython<std::tuple<ValueTypes...>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::tuple<ValueTypes...> get(PyObject *object)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::tuple<ValueTypes...> result;
+    if (PyTuple_Check(object))
+    {
+      int nEntries = (int)PyTuple_Size(object);
+
+      int nEntriesTuple = std::tuple_size<std::tuple<ValueTypes...>>::value;
+      if (nEntriesTuple < nEntries)
+      {
+        LOG(WARNING) << "Python tuple has " << nEntries << " entries, expected are only " << nEntriesTuple << ".";
+      }
+      else if (nEntriesTuple > nEntries)
+      {
+        LOG(WARNING) << "Python tuple has only " << nEntries << " entries, but " << nEntriesTuple << " are required, using 0 for the other values.";
+      }
+
+      ExtractTuple<0, ValueTypes...>(object, nEntries, result);
+    }
+    else
+    {
+      LOG(ERROR) << "Could not convert python tuple to pair.";
+    }
+
+    return result;
+  }
+};
+
 //partial specialization for int
 template<>
 struct PythonUtility::convertFromPython<int>
@@ -350,7 +444,7 @@ struct PythonUtility::convertFromPython<int>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyLong_Check(object))
     {
@@ -398,9 +492,7 @@ struct PythonUtility::convertFromPython<double>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
-
-    initNumpy();
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyFloat_Check(object))
     {
@@ -457,7 +549,7 @@ struct PythonUtility::convertFromPython<std::string>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyUnicode_Check(object))
     {
@@ -489,7 +581,7 @@ struct PythonUtility::convertFromPython<global_no_t>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyLong_Check(object))
     {
@@ -537,7 +629,7 @@ struct PythonUtility::convertFromPython<std::size_t>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyLong_Check(object))
     {
@@ -603,7 +695,7 @@ struct PythonUtility::convertFromPython<bool>
       return defaultValue;
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     if (PyBool_Check(object))
     {

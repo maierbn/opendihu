@@ -106,11 +106,32 @@ class Package(object):
         self.command_running = False
         stdout_log.close()
         with file('stdout.log') as f:
-         output = f.read()
+          output = f.read()
         ctx.Log("Command failed: \n"+output)
-        sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
-        ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
-        return False
+        
+        # try again with "-V" instead of "--version" (for cray compiler)
+        cmd = "{} -V".format(compiler)
+        
+        # Make a file to log stdout from the commands.
+        stdout_log = open('stdout.log', 'w')
+        try:
+          subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+          
+          # get output
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("$"+cmd+"\n")
+          ctx.Log(output+"\n")
+        except:
+          self.command_running = False
+          stdout_log.close()
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("Command failed: \n"+output)
+          
+          sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
+          ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
+          return False
 
     Package.compilers_checked = True
     return True
@@ -745,7 +766,8 @@ class Package(object):
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
+      if os.environ.get("PE_ENV") != "CRAY":
+        ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
     ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
@@ -808,7 +830,10 @@ class Package(object):
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
+        linkflags = None
+        if 'LINKFLAGS' in ctx.env:
+          linkflags = ctx.env['LINKFLAGS']
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=linkflags)
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)

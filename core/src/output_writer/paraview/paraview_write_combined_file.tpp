@@ -27,6 +27,8 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
 
   if (binaryOutput_)
   {
+    VLOG(1) << "Paraview::writeCombinedValuesVector, values: " << values;
+
     // gather data length of total vector to rank 0
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
 
@@ -436,7 +438,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   // only continue if there is data to reduce
   if (vtkPiece.meshNamesCombinedMeshes.empty())
   {
-    LOG(DEBUG) << "There are no 1D meshes that could be combined.";
+    LOG(ERROR) << "There are no 1D meshes that could be combined, but Paraview output with combineFiles=True was specified. \n(This only works for 1D meshes.)";
   }
 
   LOG(DEBUG) << "Combined mesh from " << vtkPiece.meshNamesCombinedMeshes;

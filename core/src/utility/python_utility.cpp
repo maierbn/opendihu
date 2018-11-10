@@ -10,7 +10,6 @@
 #include <Python.h>
 #include "easylogging++.h"
 
-#include "control/use_numpy.h"
 #include "control/types.h"
 #include "control/settings_file_name.h"
 
@@ -24,7 +23,7 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -44,7 +43,7 @@ bool PythonUtility::isTypeList(const PyObject *object)
   if (object)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     if (PyList_Check(object))
     {
@@ -54,12 +53,12 @@ bool PythonUtility::isTypeList(const PyObject *object)
   return false;
 }
 
-PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString, std::string pathString)
+PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString, std::string pathString, PyObject *defaultValue)
 {
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
     
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -73,10 +72,10 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
     {
       LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
       Py_CLEAR(key);
-      return NULL;
+      return defaultValue;
     }
   }
-  return NULL;
+  return defaultValue;
 }
 
 double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyString, std::string pathString, double defaultValue, ValidityCriterion validityCriterion)
@@ -90,7 +89,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   }
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -184,7 +183,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
     return result;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -278,7 +277,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
     return result;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -335,7 +334,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
     return result;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -364,7 +363,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
     return result;
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -406,7 +405,7 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
   line << std::string(first_indent, ' ');
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   if (PyUnicode_CheckExact(object))
   {
@@ -542,7 +541,7 @@ void PythonUtility::printDict(PyObject *dict)
   }
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   if (!PyDict_Check(dict))
   {
@@ -559,7 +558,7 @@ bool PythonUtility::getOptionDictEnd(const PyObject *settings, std::string keySt
     return true;
   
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   return itemListIndex >= PyList_Size(itemList);
 }
@@ -570,7 +569,7 @@ bool PythonUtility::getOptionListEnd(const PyObject *settings, std::string keySt
     return true;
   
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   return listIndex >= PyList_Size(list);
 }
@@ -582,7 +581,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -648,7 +647,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -697,7 +696,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
   if (settings)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
 
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
@@ -845,7 +844,7 @@ void PythonUtility::checkForError()
 PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
@@ -859,7 +858,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
@@ -873,7 +872,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<long> &data)
 PyObject *PythonUtility::convertToPythonList(std::vector<global_no_t> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
@@ -887,7 +886,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<global_no_t> &data)
 PyObject *PythonUtility::convertToPythonList(std::vector<int> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
@@ -901,7 +900,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<int> &data)
 PyObject *PythonUtility::convertToPythonList(std::vector<bool> &data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
 
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
@@ -915,7 +914,7 @@ PyObject *PythonUtility::convertToPythonList(std::vector<bool> &data)
 PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *result = PyList_New((Py_ssize_t)nEntries);
   for (unsigned int i=0; i<nEntries; i++)
@@ -929,7 +928,7 @@ PyObject *PythonUtility::convertToPythonList(unsigned int nEntries, double* data
 std::string PythonUtility::pyUnicodeToString(PyObject* object)
 {
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
   std::string result = PyBytes_AsString(asciiString);

@@ -1,5 +1,9 @@
 #include "control/multiple_instances.h"
 
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
+
 #include <omp.h>
 #include <sstream>
 
@@ -16,6 +20,13 @@ MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
 {
+// #ifdef HAVE_PAT
+  // PAT_record(PAT_STATE_OFF);
+  // std::string label = "initialization";
+  // PAT_region_begin(1, label.c_str());
+  // LOG(INFO) << "PAT_region_begin(" << label << ")";
+// #endif
+
   outputWriterManager_.initialize(context_, specificSettings_);
   
   //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
@@ -182,6 +193,10 @@ initialize()
   }
   
   data_.setInstancesData(instancesLocal_);
+
+// #ifdef HAVE_PAT
+  // PAT_region_end(1);    // end region "initialization", id 1
+// #endif
 }
 
 template<class TimeSteppingScheme>
@@ -192,6 +207,13 @@ run()
  
   LOG(INFO) << "MultipleInstances: " << nInstancesComputedGlobally_ << " instance" << (nInstancesComputedGlobally_ != 1? "s" : "")
     << " to be computed in total.";
+
+#ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
+  std::string label = "computation";
+  PAT_region_begin(2, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
+#endif
 
   //#pragma omp parallel for // does not work with the python interpreter
   for (int i = 0; i < nInstancesLocal_; i++)
@@ -207,6 +229,11 @@ run()
     instancesLocal_[i].run();
   }
   
+#ifdef HAVE_PAT
+  PAT_region_end(2);    // end region "computation", id 
+  PAT_record(PAT_STATE_OFF);
+#endif
+
   this->outputWriterManager_.writeOutput(this->data_);
 }
 

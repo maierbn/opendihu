@@ -76,7 +76,8 @@ max_y = max([y for [x,y,z] in mesh_data["node_positions"]])
 min_z = min([z for [x,y,z] in mesh_data["node_positions"]])
 max_z = max([z for [x,y,z] in mesh_data["node_positions"]])
 
-print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
+if rank_no == 0:
+  print("mesh bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(min_x, max_x, min_y, max_y, min_z, max_z))
 
 for fiber_no in [10, 30, 50]:
   data = fiber_data[fiber_no]
@@ -87,12 +88,15 @@ for fiber_no in [10, 30, 50]:
   min_z = min([z for [x,y,z] in data])
   max_z = max([z for [x,y,z] in data])
 
-  print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
+  if rank_no == 0:
+    print("fiber {} bounding box x: [{},{}], y: [{},{}], z:[{},{}]".format(fiber_no, min_x, max_x, min_y, max_y, min_z, max_z))
 
 n_compartments = len(motor_units)
 
 # create relative factors for compartments
-print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
+
+if rank_no == 0:
+  print("determine relative factors for {} motor units:\n{}".format(n_compartments, motor_units))
 
 # create data structure with 0
 relative_factors = np.zeros((n_compartments, len(mesh_data["node_positions"])))   # each row is one compartment
@@ -125,8 +129,9 @@ for node_no,node_position in enumerate(mesh_data["node_positions"]):
       relative_factors[motor_unit_no][node_no] += value
       #print("motor unit {}, fiber {}, distance {}, value {}".format(motor_unit_no, fiber_no, distance, value))
 
-for i,factors_list in enumerate(relative_factors.tolist()):
-  print("MU {}, maximum fr: {}".format(i,max(factors_list)))
+if rank_no == 0:
+  for i,factors_list in enumerate(relative_factors.tolist()):
+    print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
 # load MU distribution and firing times
 fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
@@ -134,21 +139,21 @@ firing_times = np.genfromtxt(firing_times_file)
 
 # cellml settings
 if "shorten" in cellml_file:
-  parametersUsedAsIntermediate = [32]
-  parametersUsedAsConstant = [65]
-  parametersInitialValues = [0.0, 1.0]
+  parameters_used_as_intermediate = [32]
+  parameters_used_as_constant = [65]
+  parameters_initial_values = [0.0, 1.0]
   
 elif "hodgkin_huxley" in cellml_file:
-  parametersUsedAsIntermediate = []
-  parametersUsedAsConstant = [2]
-  parametersInitialValues = [0.0]
+  parameters_used_as_intermediate = []
+  parameters_used_as_constant = [2]
+  parameters_initial_values = [0.0]
   
-def getMotorUnitNo(fibre_no):
+def get_motor_unit_no(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
 def compartmentGetsStimulated(compartment_no, current_time):
   # determine motor unit
-  mu_no = (int)(getMotorUnitNo(compartment_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(compartment_no)*0.8)
   
   # determine if MU fires now
   index = int(current_time * stimulation_frequency)
@@ -192,7 +197,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), compartment_gets_stimulated))
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), compartment_gets_stimulated))
     
   #wait = input("Press any key to continue...")
 
@@ -258,9 +263,9 @@ config = {
               "setParametersFunctionAdditionalParameter": compartment_no,
               
               "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
-              "parametersUsedAsIntermediate": parametersUsedAsIntermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-              "parametersUsedAsConstant": parametersUsedAsConstant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-              "parametersInitialValues": parametersInitialValues,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+              "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+              "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+              "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
               "meshName": "mesh",
               "prefactor": 1.0,
             }

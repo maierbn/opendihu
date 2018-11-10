@@ -75,6 +75,7 @@ protected:
    
   int outputStateIndex_ = 0;   ///< the index of the state that should be used further in an operator splitting scheme, for electrophysiology application this is the states of Vm
   double prefactor_ = 0;       ///< the factor with which the solution will be scaled before the transfer in an operator splitting scheme
+  int internalTimeStepNo_ = 0; ///< the counter how often the right hand side was called
 
   //std::vector<double> states_;    ///< vector of states, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme
   //std::vector<double> rates_;     ///< vector of rates, that are computed by rhsRoutine, this is not needed as member variable, because the states are directly stored in the Petsc Vecs of the solving time stepping scheme

@@ -10,7 +10,7 @@ namespace Partition
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false})
+  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
@@ -23,6 +23,9 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   {
     // determine partitioning of elements
     this->createDmElements();
+
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
 
     // initialize dof vectors
     this->createLocalDofOrderings();
@@ -41,7 +44,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
               std::array<int,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
-  nRanks_(nRanks), hasFullNumberOfNodes_({false})
+  nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   // partitioning is already prescribed as every rank knows its own local size
  
@@ -71,6 +74,10 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
 
     setOwnRankPartitioningIndex();
+
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
+
     this->createLocalDofOrderings();
   }
 
@@ -200,6 +207,7 @@ initialize1NodeMesh()
   dofNosLocalNaturalOrdering_.resize(1);
   dofNosLocalNaturalOrdering_[0] = 0;
   localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
 
   this->dofNosLocal_.resize(1);
   this->dofNosLocal_[0] = 0;
@@ -273,6 +281,12 @@ createDmElements()
     ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
+
+    std::array<int,2> meshIsPeriodicInDimension({false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   else if (MeshType::dim() == 3)
   {
@@ -303,6 +317,13 @@ createDmElements()
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
     localSizesOnRanks_[2].assign(lzData, lzData + nRanks_[2]);
+
+    // create cartesian communciator using MPI_Cart_Create
+    std::array<int,3> meshIsPeriodicInDimension({false,false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   
   initializeHasFullNumberOfNodes();
@@ -315,7 +336,16 @@ createDmElements()
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_
     << ", ownRankPartitioningIndex/nRanks: " << ownRankPartitioningIndex_ << " / " << nRanks_;
 }
-  
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+setNDofsLocalWithoutGhosts()
+{
+  // compute nDofsLocalWithoutGhosts
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+  this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
+}
+
 //! get the local to global mapping for the current partition
 template<typename MeshType,typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -373,9 +403,7 @@ template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nDofsLocalWithoutGhosts() const
 {
-  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-
-  return nNodesLocalWithoutGhosts() * nDofsPerNode;
+  return this->nDofsLocalWithoutGhosts_;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1034,7 +1062,10 @@ createLocalDofOrderings()
       }
     }
   }
-  
+
+  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal()
+    << ", nGhostDofs: " << nGhostDofs << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
+
   // create localToGlobalPetscMappingDofs_
   PetscErrorCode ierr;
   Vec temporaryVector;
@@ -1045,7 +1076,6 @@ createLocalDofOrderings()
   ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
 
-  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal() << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
   // VecCreateGhost(MPI_Comm comm,PetscInt n,PetscInt N,PetscInt nghost,const PetscInt ghosts[],Vec *vv)
 
   VLOG(1) << "n=" << nDofsLocalWithoutGhosts() << ", N=" << nDofsGlobal() << ", nghost=" << nGhostDofs << " ghosts:" << ghostDofNosGlobalPetsc_;
@@ -1437,6 +1467,29 @@ node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>
 getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
 {
   return (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+}
+
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  const int D = MeshType::dim();
+  std::array<int,D> coordinatesLocal;
+  isOnLocalDomain = true;
+  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
+  {
+    coordinatesLocal[coordinateDirection] = coordinatesGlobal[coordinateDirection] - this->beginNodeGlobalNatural(coordinateDirection);
+
+    // check if the computed local coordinate is in the local range of nodes
+    if (coordinatesLocal[coordinateDirection] < 0 || coordinatesLocal[coordinateDirection] >= nNodesLocalWithoutGhosts(coordinateDirection))
+    {
+      isOnLocalDomain = false;
+    }
+  }
+
+  return coordinatesLocal;
+
+  //node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 }
 
 template<typename MeshType,typename BasisFunctionType>

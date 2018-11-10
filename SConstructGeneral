@@ -49,7 +49,7 @@ sconsconfig.select(
     packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
     packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
     packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
-    packages.googletest(required=True),   # This is the testing framework.
+    packages.googletest(required=False),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
@@ -76,7 +76,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
-vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
+vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
@@ -160,8 +160,9 @@ except: pass
 Progress(progress_function, interval=env["node_count_interval"])
 
 # add notification when compilation is complete
-notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
-AlwaysBuild('notify-send')
+if os.environ.get("PE_ENV") == None:
+  notify = env.Command(target='notify-send'+str(random.random()), source = None, action = 'notify-send "compilation complete" || true')
+  AlwaysBuild('notify-send')
     
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
@@ -192,13 +193,18 @@ elif env["BUILD_TYPE"] == "preprocess":
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
-  env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+  env.MergeFlags('-O2 -finstrument-functions -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
-# flags to always include
-env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-env.MergeFlags('-std=c++14 -fopenmp -march=native')
+# flags to always include, except with cray compiler
+if os.environ.get("PE_ENV") != "CRAY":
+  env.MergeFlags('-Wunused-variable')   # always warn about unused variables
+  env.MergeFlags('-std=c++14 -fopenmp -march=native')
+
+if os.environ.get("PE_ENV") == "CRAY":
+  print("compile for reveal\n")
+  env.MergeFlags('-hpl=my_program.pl')
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")
@@ -206,13 +212,19 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
+env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
+
+if env["USE_CRAY_PAT"]:
+  print("Compile with HAVE_PAT\n")
+  env.Append(CPPDEFINES = "-DHAVE_PAT")
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
 #print(env.Dump())
-
+# output compilers
 print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,

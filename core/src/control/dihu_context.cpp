@@ -25,9 +25,11 @@
 #include "control/performance_measurement.h"
 
 #include "easylogging++.h"
-#include "control/use_numpy.h"
 #include "control/settings_file_name.h"
 #include "utility/mpi_utility.h"
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
 
 //INITIALIZE_EASYLOGGINGPP
 
@@ -43,6 +45,8 @@ int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the 
 DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
+
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
 }
 
@@ -50,15 +54,23 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig) :
   pythonConfig_(pythonConfig), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
+  nObjects_++;
+  VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
 }
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(c), nObjects = " << nObjects_;
 
   if (!initialized_)
   {
+
+#ifdef HAVE_PAT
+    PAT_record(PAT_STATE_OFF);
+#endif
+
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
@@ -261,6 +273,7 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(d), nObjects = " << nObjects_;
   // This constructor is called when creating the context object from unit tests.
 
   // load python config script as given by parameter

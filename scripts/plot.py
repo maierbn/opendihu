@@ -384,7 +384,7 @@ if dimension == 1:
     i = len(data)-1
     if 'currentTime' in data[i]:
       current_time = data[i]['currentTime']
-    line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label="t={}".format(current_time))
+    line_2D, = ax1.plot([], [], '+-', color=(1.0,0.9,0.8), lw=2, label="t={}".format(current_time))
     
     animate(i)
     

@@ -147,7 +147,7 @@ public:
   template<int nComponents2>
   void setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs);
 
-  //! set values of a specific component from another vector, this is the opposite operation to extractComponent
+  //! set values of a specific component from another vector, this is the opposite operation to extractComponentCopy
   void setValues(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> fieldVariable);
 
   //! set the values for the given component from a petsc Vec, name is only for debugging output
@@ -155,7 +155,13 @@ public:
 
   //! extract a single component, this field variable can have any representation
   //! It set the representation of extractedFieldVariable to local.
-  void extractComponent(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
+  void extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
+
+  //! extract a component from the shared vector (no copy), this field variable cannot be used any longer and is set to invalid, until restoreExtractedComponent is called.
+  void extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable);
+
+  //! restore the extracted raw array to petsc and make the field variable usable again
+  void restoreExtractedComponent();
 
   //! wrapper to the PETSc VecGetValues, acting only on the local data, the indices ix are the local dof nos
   void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]);
@@ -209,6 +215,7 @@ protected:
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
   Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  const double *extractedData_ = nullptr;   ///< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
 };
 
 

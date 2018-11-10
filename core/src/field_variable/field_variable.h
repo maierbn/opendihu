@@ -36,7 +36,6 @@ public:
 
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
-
 };
 
 

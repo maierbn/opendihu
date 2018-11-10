@@ -171,6 +171,9 @@ public:
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
 
+  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  std::array<int,MeshType::dim()> getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
+
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
@@ -198,6 +201,9 @@ protected:
   
   //! initialize mesh partition for a mesh with only 0 elements, 1 node and 1 dof
   void initialize1NodeMesh();
+
+  //! initialize the value of nDofsLocalWithoutGhosts
+  void setNDofsLocalWithoutGhosts();
 
   //! create the DM object for the node partitioning, such that is follows the element partitioning
   void createDmElements();
@@ -233,6 +239,7 @@ protected:
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;   ///< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition
   
   std::vector<dof_no_t> dofNosLocalNaturalOrdering_;  ///< for every local natural number, i.e. local numbering according to coordinates, the local dof no
+  dof_no_t nDofsLocalWithoutGhosts_;                       ///< number of local dofs without ghosts, cached value, the actual value is derived from nElementslocal_ and mesh type
 
   ISLocalToGlobalMapping localToGlobalPetscMappingDofs_;   ///< local to global mapping for dofs
 };
@@ -297,6 +304,9 @@ public:
 
   //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
   void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
+  //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
+  std::array<int,D> getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
 
   //! get the local node no for a global petsc node no, does not work for ghost nodes
   node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const;

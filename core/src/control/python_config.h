@@ -46,7 +46,7 @@ public:
   bool hasKey(std::string key) const;
 
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
-  PyObject *getOptionPyObject(std::string key) const;
+  PyObject *getOptionPyObject(std::string key, PyObject *defaultValue = Py_None) const;
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
   double getOptionDouble(std::string key, double defaultValue, PythonUtility::ValidityCriterion validityCriterion = PythonUtility::ValidityCriterion::None) const;

@@ -33,6 +33,11 @@ int main(int argc, char* argv[])
 
 
   def check(self, ctx):
+    if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+      ctx.Message('Not checking for MPI ... ')
+      ctx.Result(True)
+      return True
+        
     env = ctx.env
     ctx.Message('Checking for MPI ... ')
     self.check_options(env)

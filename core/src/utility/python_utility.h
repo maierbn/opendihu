@@ -34,7 +34,7 @@ public:
   static bool isTypeList(const PyObject *object);
 
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
-  static PyObject *getOptionPyObject(const PyObject *settings, std::string key, std::string pathString);
+  static PyObject *getOptionPyObject(const PyObject *settings, std::string key, std::string pathString, PyObject *defaultValue = Py_None);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
   static double getOptionDouble(const PyObject *settings, std::string key, std::string pathString, double defaultValue, ValidityCriterion validityCriterion = None);
@@ -43,7 +43,7 @@ public:
   static int getOptionInt(const PyObject *settings, std::string key, std::string pathString, int defaultValue, ValidityCriterion validityCriterion = None);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
-  static bool getOptionBool(const PyObject *settings, std::string key, std::string pathString, bool defaultValue=true);
+  static bool getOptionBool(const PyObject *settings, std::string key, std::string pathString, bool defaultValue = true);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
   static std::string getOptionString(const PyObject *settings, std::string key, std::string pathString, std::string defaultValue);

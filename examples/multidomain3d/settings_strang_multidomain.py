@@ -139,21 +139,21 @@ firing_times = np.genfromtxt(firing_times_file)
 
 # cellml settings
 if "shorten" in cellml_file:
-  parametersUsedAsIntermediate = [32]
-  parametersUsedAsConstant = [65]
-  parametersInitialValues = [0.0, 1.0]
+  parameters_used_as_intermediate = [32]
+  parameters_used_as_constant = [65]
+  parameters_initial_values = [0.0, 1.0]
   
 elif "hodgkin_huxley" in cellml_file:
-  parametersUsedAsIntermediate = []
-  parametersUsedAsConstant = [2]
-  parametersInitialValues = [0.0]
+  parameters_used_as_intermediate = []
+  parameters_used_as_constant = [2]
+  parameters_initial_values = [0.0]
   
-def getMotorUnitNo(fibre_no):
+def get_motor_unit_no(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
 def compartmentGetsStimulated(compartment_no, current_time):
   # determine motor unit
-  mu_no = (int)(getMotorUnitNo(compartment_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(compartment_no)*0.8)
   
   # determine if MU fires now
   index = int(current_time * stimulation_frequency)
@@ -197,7 +197,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
       #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), compartment_gets_stimulated))
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), compartment_gets_stimulated))
     
   #wait = input("Press any key to continue...")
 
@@ -263,9 +263,9 @@ config = {
               "setParametersFunctionAdditionalParameter": compartment_no,
               
               "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
-              "parametersUsedAsIntermediate": parametersUsedAsIntermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-              "parametersUsedAsConstant": parametersUsedAsConstant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-              "parametersInitialValues": parametersInitialValues,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+              "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+              "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+              "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
               "meshName": "mesh",
               "prefactor": 1.0,
             }

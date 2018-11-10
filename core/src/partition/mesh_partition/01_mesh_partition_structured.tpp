@@ -18,19 +18,14 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
-
-    // compute nDofsLocalWithoutGhosts
-    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-    this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
   }
   else
   {
     // determine partitioning of elements
     this->createDmElements();
 
-    // compute nDofsLocalWithoutGhosts
-    const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-    this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
 
     // initialize dof vectors
     this->createLocalDofOrderings();
@@ -57,10 +52,6 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     << "nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal 
     << ", beginElementGlobal: " << beginElementGlobal << ", nRanks: " << nRanks << ", rankSubset: " << *rankSubset;
     
-  // compute nDofsLocalWithoutGhosts
-  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-  this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
-
   if (MeshType::dim() == 1 && nElementsGlobal_[0] == 0)
   {
     initialize1NodeMesh();
@@ -83,6 +74,10 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
 
     setOwnRankPartitioningIndex();
+
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
+
     this->createLocalDofOrderings();
   }
 
@@ -212,6 +207,7 @@ initialize1NodeMesh()
   dofNosLocalNaturalOrdering_.resize(1);
   dofNosLocalNaturalOrdering_[0] = 0;
   localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
 
   this->dofNosLocal_.resize(1);
   this->dofNosLocal_[0] = 0;
@@ -340,7 +336,16 @@ createDmElements()
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_
     << ", ownRankPartitioningIndex/nRanks: " << ownRankPartitioningIndex_ << " / " << nRanks_;
 }
-  
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+setNDofsLocalWithoutGhosts()
+{
+  // compute nDofsLocalWithoutGhosts
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+  this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
+}
+
 //! get the local to global mapping for the current partition
 template<typename MeshType,typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -1057,7 +1062,10 @@ createLocalDofOrderings()
       }
     }
   }
-  
+
+  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal()
+    << ", nGhostDofs: " << nGhostDofs << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
+
   // create localToGlobalPetscMappingDofs_
   PetscErrorCode ierr;
   Vec temporaryVector;
@@ -1068,7 +1076,6 @@ createLocalDofOrderings()
   ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
 
-  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal() << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
   // VecCreateGhost(MPI_Comm comm,PetscInt n,PetscInt N,PetscInt nghost,const PetscInt ghosts[],Vec *vv)
 
   VLOG(1) << "n=" << nDofsLocalWithoutGhosts() << ", N=" << nDofsGlobal() << ", nghost=" << nGhostDofs << " ghosts:" << ghostDofNosGlobalPetsc_;

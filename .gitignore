@@ -29,3 +29,4 @@ out.py
 config.py
 **/*.csv
 **/input/*
+**/scaled_mesh*

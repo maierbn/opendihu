@@ -10,7 +10,8 @@ n_elements = 100
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
-Conductivity = 3.828    # sigma, conductivity [mS/cm]
+Conductivity = 3.828    # sigma, conductivity [mS/cm
+Conductivity *= 10
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 0.  # cm
@@ -59,28 +60,28 @@ if rank_no == 0:
 
 # set values for cellml model
 if "shorten" in cellml_file:
-  parametersUsedAsIntermediate = [32]
-  parametersUsedAsConstant = [65]
-  parametersInitialValues = [0.0, 1.0]
+  parameters_used_as_intermediate = [32]
+  parameters_used_as_constant = [65]
+  parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 1200.
   
 elif "hodgkin_huxley" in cellml_file:
-  parametersUsedAsIntermediate = []
-  parametersUsedAsConstant = [2]
-  parametersInitialValues = [0.0]
+  parameters_used_as_intermediate = []
+  parameters_used_as_constant = [2]
+  parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
 
 # load MU distribution and firing times
 fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
-def getMotorUnitNo(fibre_no):
+def get_motor_unit_no(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
 def fibre_gets_stimulated(fibre_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = (int)(getMotorUnitNo(fibre_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(fibre_no)*0.8)
   
   # determine if fibre fires now
   index = int(current_time * frequency)
@@ -154,6 +155,21 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
   for node_no_global in nodes_to_stimulate_global:
     parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
 
+# callback function that can set states, i.e. prescribed values for stimulation
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
+  
+  # determine if fibre gets stimulated at the current time
+  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+
+  if is_fibre_gets_stimulated:  
+    # determine nodes to stimulate (center node, left and right neighbour)
+    innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+    innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+    nodes_to_stimulate_global = [innervation_node_global]
+
+    for node_no_global in nodes_to_stimulate_global:
+      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+
 # callback function from output writer
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
@@ -200,16 +216,18 @@ config = {
           #"statesInitialValues": [],
           #"setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
           #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-          "setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
-          "setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-          "setParametersFunctionAdditionalParameter": 0,   # use fiber 0
+          #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
+          #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+          "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "additionalArgument": 0,   # use fiber 0
           #"handleResultFunction": handleResult,
           #"handleResultCallInterval": 2e3,
           
           "outputStateIndex": 0,     # state 0 = Vm
-          "parametersUsedAsIntermediate": parametersUsedAsIntermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-          "parametersUsedAsConstant": parametersUsedAsConstant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-          "parametersInitialValues": parametersInitialValues,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+          "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+          "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+          "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
           "meshName": "MeshFibre",
           "prefactor": 1.0,
         },
@@ -267,16 +285,18 @@ config = {
           #"statesInitialValues": [],
           #"setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
           #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-          "setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
-          "setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-          "setParametersFunctionAdditionalParameter": 0,
+          #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
+          #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+          "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+          "additionalArgument": 0,
            #"handleResultFunction": handleResult,
            #"handleResultCallInterval": 2e3,
           
           "outputStateIndex": 0,     # state 0 = Vm
-          "parametersUsedAsIntermediate": parametersUsedAsIntermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-          "parametersUsedAsConstant": parametersUsedAsConstant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-          "parametersInitialValues": parametersInitialValues,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+          "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+          "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+          "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
           "meshName": "MeshFibre",
           "prefactor": 1.0,
         },

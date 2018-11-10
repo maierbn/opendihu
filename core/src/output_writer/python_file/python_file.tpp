@@ -47,7 +47,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     LOG(DEBUG) << "filename is [" << filename << "]";
     
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
    
     // build python object for data
     PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::OutputFieldVariables>::

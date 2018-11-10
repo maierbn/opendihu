@@ -202,6 +202,9 @@ protected:
   //! initialize mesh partition for a mesh with only 0 elements, 1 node and 1 dof
   void initialize1NodeMesh();
 
+  //! initialize the value of nDofsLocalWithoutGhosts
+  void setNDofsLocalWithoutGhosts();
+
   //! create the DM object for the node partitioning, such that is follows the element partitioning
   void createDmElements();
   

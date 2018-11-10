@@ -118,10 +118,10 @@ bool PythonConfig::hasKey(std::string key) const
 }
 
 //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
-PyObject *PythonConfig::getOptionPyObject(std::string key) const
+PyObject *PythonConfig::getOptionPyObject(std::string key, PyObject *defaultValue) const
 {
   std::string pathString = getStringPath();
-  return PythonUtility::getOptionPyObject(this->pythonConfig_, key, pathString);
+  return PythonUtility::getOptionPyObject(this->pythonConfig_, key, pathString, defaultValue);
 }
 
 //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue

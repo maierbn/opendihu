@@ -193,7 +193,7 @@ elif env["BUILD_TYPE"] == "preprocess":
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
-  env.MergeFlags('-O2 -finstrument-functions -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
+  env.MergeFlags('-O2 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
@@ -201,6 +201,7 @@ else:
 if os.environ.get("PE_ENV") != "CRAY":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp')
+  env.MergeFlags('-finstrument-functions')
 
 if os.environ.get("PE_ENV") == "CRAY":
   print("compile for reveal\n")

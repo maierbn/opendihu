@@ -197,14 +197,14 @@ else:
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
 
-# flags to always include, except with cray compiler
+# flags to always include, except with cray compiler, which does not recognize them
 if os.environ.get("PE_ENV") != "CRAY":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp -march=native')
+  env.MergeFlags('-std=c++14 -fopenmp')
 
 if os.environ.get("PE_ENV") == "CRAY":
   print("compile for reveal\n")
-  env.MergeFlags('-hpl=my_program.pl')
+  env.MergeFlags('-hpl=my_program.pl')  # insert absolute path here
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")

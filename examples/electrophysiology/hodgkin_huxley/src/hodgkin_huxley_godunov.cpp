@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     TimeSteppingScheme::ExplicitEuler<
       CellmlAdapter<4>
     >,
-    TimeSteppingScheme::ImplicitEuler<
+    TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::StructuredRegularFixedOfDimension<1>,
         BasisFunction::LagrangeOfOrder<1>,

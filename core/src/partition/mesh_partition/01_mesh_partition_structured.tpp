@@ -623,6 +623,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   {
     assert(false);
   }
+  return 0;
 }
   
 template<typename MeshType,typename BasisFunctionType>
@@ -1645,6 +1646,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   {
     assert(false);
   }
+  return false;
 }
 
 template<typename MeshType,typename BasisFunctionType>

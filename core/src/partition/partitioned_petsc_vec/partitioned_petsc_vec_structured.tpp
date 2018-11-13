@@ -668,20 +668,26 @@ extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<Func
 
   VLOG(2) << "\"" << this->name_ << "\" extractComponentShared(componentNo=" << componentNo << ")";
 
+  LOG(DEBUG) << "\"" << this->name() << "\": get array read";
+
   // get data array from valuesContiguous;
   PetscErrorCode ierr;
   ierr = VecGetArrayRead(this->valuesContiguous_, &extractedData_);
 
   // set array in field variable
   extractedFieldVariable->setRepresentationGlobal();
-  ierr = VecPlaceArray(extractedFieldVariable->valuesGlobal(0), &extractedData_ + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts()); CHKERRV(ierr);
+
+  LOG(DEBUG) << "\"" << extractedFieldVariable->name() << "\": place array";
+  //extractedFieldVariable->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
+  ierr = VecPlaceArray(extractedFieldVariable->valuesGlobal(0), extractedData_ + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts()); CHKERRV(ierr);
 
   this->currentRepresentation_ = Partition::values_representation_t::representationInvalid;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
+template<int nComponents2>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-restoreExtractedComponent()
+restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2>> extractedVec)
 {
   if (this->currentRepresentation_ != Partition::values_representation_t::representationInvalid)
   {
@@ -694,9 +700,16 @@ restoreExtractedComponent()
   // assert that the extracted data array is set
   assert(extractedData_);
 
+
+  LOG(DEBUG) << "\"" << this->name() << "\": restore array read";
+
   // restore the data array to the valuesContiguous Vec
   PetscErrorCode ierr;
   ierr = VecRestoreArrayRead(this->valuesContiguous_, &extractedData_); CHKERRV(ierr);
+
+  LOG(DEBUG) << "\"" << extractedVec->name() << "\": reset array";
+  // restore the data array in the extracted vector
+  ierr = VecResetArray(extractedVec->getValuesContiguous()); CHKERRV(ierr);
 
   this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
 }

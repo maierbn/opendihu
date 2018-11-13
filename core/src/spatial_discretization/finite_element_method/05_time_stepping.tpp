@@ -145,7 +145,7 @@ FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, Term>::
 getSolutionForTransferInOperatorSplitting()
 {
   // check for nans or infs
-  this->data_->solution()->checkNanInf();
+  //this->data_->solution()->checkNanInf();
   return this->data_->getSolutionForTransferInOperatorSplitting();
 }
 

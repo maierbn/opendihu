@@ -4,6 +4,7 @@
 #include <petscvec.h>
 
 #include "field_variable/structured/02_field_variable_data_structured.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
@@ -57,7 +58,8 @@ public:
   void extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
 
   //! restore the extracted raw array to petsc and make the field variable usable again
-  void restoreExtractedComponent();
+  template<int nComponents2>
+  void restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec);
 
   //! set the values for the given component from a petsc Vec
   void setValues(int componentNo, Vec petscVector);

@@ -63,6 +63,7 @@ advanceTimeSpan()
     this->timeStepping1_.advanceTimeSpan();
 
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
+
     // scale solution in timeStepping1 and transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
       transfer(this->timeStepping1_.getSolutionForTransferInOperatorSplitting(), this->timeStepping2_.getSolutionForTransferInOperatorSplitting());
@@ -86,18 +87,24 @@ advanceTimeSpan()
     // advance simulation by time span
     this->timeStepping1_.advanceTimeSpan();
 
-    /* option 1. (not implemented)
+    /* option 1. (implemented)
      * no need to transfer data again, since next operator splitting step will start with timeStepping1 (which has the actual data).
      *
      * Then we could skip output of this->timeStepping2_.data(). However, if they are needed in between two operator splitting steps (for example in the 3-scale muscle model)
      * then this->timeStepping2_.data() should have the actualized data.
      */
 
-    // option 2. transfer data. (implemented)
+    /* option 2. transfer data. (not implemented)
+     * the second option to not transfer the data again is needed, because two subsequent transfers in the same direction yield an error with shared field variables.
+     * When this will be needed in the future, there have to be actually two transfers timeStepping1->timeStepping2 and timeStepping->timeStepping1 again,
+     * to have a matching VecResetArray to the previous VecPlaceArray.
+     */
+#if 0
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
     // scale solution in timeStepping1 and transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
       transfer(this->timeStepping1_.getSolutionForTransferInOperatorSplitting(), this->timeStepping2_.getSolutionForTransferInOperatorSplitting());
+#endif
 
     // advance simulation time
     timeStepNo++;

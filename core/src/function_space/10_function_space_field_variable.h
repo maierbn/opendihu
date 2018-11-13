@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "function_space/08_function_space_nodes.h"
+#include "function_space/09_function_space_find_position.h"
 
 namespace FunctionSpace
 {
@@ -15,12 +15,12 @@ class FunctionSpace;
  */
 template<typename MeshType,typename BasisFunctionType>
 class FunctionSpaceFieldVariable :
-  public FunctionSpaceNodes<MeshType,BasisFunctionType>
+  public FunctionSpaceFindPosition<MeshType,BasisFunctionType>
 {
 public:
 
   //! inherit constructor
-  using FunctionSpaceNodes<MeshType,BasisFunctionType>::FunctionSpaceNodes;
+  using FunctionSpaceFindPosition<MeshType,BasisFunctionType>::FunctionSpaceFindPosition;
 
   //! create a non-geometry field field variable with no values being set, with given component names
   std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
@@ -63,12 +63,9 @@ public:
   //! compute the normal in world space, normal to face at xi
   Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
 
-  //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 10_function_space_xi.h
-  virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi) = 0;
+  //! store a ghost mesh which is a neighouring mesh with only one layer of elements, this will be used by pointIsInElement and findPosition
+  void setGhostMesh(Mesh::face_t face, std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
 
-  //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
-  bool findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi);
-  
   //! Compute the inverseJacobian that is needed to transform a gradient vector from parameter space to world space, for an element at a xi position.
   //! This version of the method needs the values of the geometry field, if the jacobian is needed at multiple positions in the same element, these values can be retrieved once and used for all computations of the jacobians.
   //! There is also the convienience method which does not need the geometryValues but gets them itself.
@@ -82,9 +79,8 @@ public:
   //! jacobianParameterSpace[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
   //! inverseJacobianParameterSpace[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
   Tensor2<MeshType::dim()> getInverseJacobian(element_no_t elementNo, std::array<double,MeshType::dim()> xi);
-
 };
 
 }  // namespace
 
-#include "function_space/09_function_space_field_variable.tpp"
+#include "function_space/10_function_space_field_variable.tpp"

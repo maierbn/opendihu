@@ -11,14 +11,15 @@ void SolutionVectorMapping<
 >::transfer(const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> &transferableSolutionData1,
             const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double> &transferableSolutionData2)
 {
-  /*
+
   // call the transfer function of the parent class
   SolutionVectorMapping<
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>, int, double>,
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
   >::transfer(std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>, int, double>(transferableSolutionData1, 0, 1.0),
               transferableSolutionData2);
-*/
+  return;   // need to use the first implementation
+
   // rename input data
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>> fieldVariable1 = &transferableSolutionData1;
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>> fieldVariable2 = std::get<0>(transferableSolutionData2);
@@ -27,7 +28,7 @@ void SolutionVectorMapping<
   //fieldVariable1->checkNansInfs();
 
   // tranfer from finite elements back to cellml
-  fieldVariable1->restoreExtractedComponent();
+  fieldVariable1->restoreExtractedComponent(fieldVariable2->partitionedPetscVec());
 }
 
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
@@ -38,12 +39,13 @@ void SolutionVectorMapping<
             const std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>> &transferableSolutionData2)
 {
   // call the transfer function of the parent class
-  /*SolutionVectorMapping<
+  SolutionVectorMapping<
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1>>, int, double>,
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>
   >::transfer(transferableSolutionData1,
               std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>, int, double>(transferableSolutionData2, 0, 1.0));
-*/
+  return;
+
   // transfer from cellml to finite elements
 
   // rename input data

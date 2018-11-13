@@ -473,7 +473,7 @@ nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
-node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsLocal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
@@ -484,7 +484,7 @@ nElementsLocal(int coordinateDirection) const
 
 //! number of nodes in total
 template<typename MeshType,typename BasisFunctionType>
-node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsGlobal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
@@ -1437,6 +1437,59 @@ getCoordinatesLocal(node_no_t nodeNoLocal) const
     assert(false);
   }
   return coordinatesLocal;
+}
+
+
+  //! get the local coordinates for a local element no
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementCoordinatesLocal(element_no_t elementNoLocal) const
+{
+  std::array<int,MeshType::dim()> result;
+  if (MeshType::dim() == 1)
+  {
+    result[0] = elementNoLocal;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    result[1] = int(elementNoLocal / nElementsLocal_[0]);
+    result[0] = elementNoLocal % nElementsLocal_[0];
+  }
+  else if (MeshType::dim() == 3)
+  {
+    result[2] = int(elementNoLocal / (nElementsLocal_[0] * nElementsLocal_[1]));
+    result[1] = int((elementNoLocal % (nElementsLocal_[0] * nElementsLocal_[1])) / nElementsLocal_[0]);
+    result[0] = elementNoLocal % nElementsLocal_[0];
+  }
+  else
+  {
+    assert(false);
+  }
+  return result;
+}
+
+  //! get the local element no. from coordinates
+template<typename MeshType,typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return elementCoordinates[0];
+  }
+  else if (MeshType::dim() == 2)
+  {
+    return elementCoordinates[1]*nElementsLocal_[0] + elementCoordinates[0];
+  }
+  else if (MeshType::dim() == 3)
+  {
+    return elementCoordinates[2]*nElementsLocal_[0]*nElementsLocal_[1] + elementCoordinates[1]*nElementsLocal_[0] + elementCoordinates[0];
+  }
+  else
+  {
+    assert(false);
+  }
+  return 0;
 }
 
 

@@ -1,4 +1,4 @@
-#include "function_space/09_function_space_field_variable.h"
+#include "function_space/10_function_space_field_variable.h"
 
 #include <cmath>
 #include <array>
@@ -217,7 +217,7 @@ template<typename MeshType, typename BasisFunctionType>
 Vec3 FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi)
 {
-  // compute normal analog to nansons formula
+  // compute normal analoguous to nansons formula
   // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
 
   // get geometry field values of element
@@ -225,41 +225,6 @@ getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType:
   this->getElementGeometry(elementNo, geometryValues);
 
   return getNormal(face, geometryValues, xi);
-}
-
-template<typename MeshType, typename BasisFunctionType>
-bool FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNo, std::array<double,MeshType::dim()> &xi)
-{
-  const element_no_t nElements = this->nElementsLocal();
- 
-  // set starting no to 0 if it was not given and is thus arbitrarily initialized
-  if (elementNo < 0 || elementNo >= nElements)
-    elementNo = 0;
-  
-  // look in every element, starting at elementNo-2
-  element_no_t elementNoStart = (elementNo - 2 + nElements) % nElements;
-  element_no_t elementNoEnd = (elementNo - 3 + nElements) % nElements;
-  
-  VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements;
-  
-  for (element_no_t currentElementNo = elementNoStart; currentElementNo != elementNoEnd; currentElementNo++)
-  {
-    if (currentElementNo == nElements)
-    {
-      currentElementNo = 0;
-      if (elementNoEnd == currentElementNo)
-        break;
-    }
-   
-    
-    if (this->pointIsInElement(point, currentElementNo, xi))
-    {
-      elementNo = currentElementNo;
-      return true;
-    }
-  }
-  return false;
 }
 
 template<typename MeshType, typename BasisFunctionType>

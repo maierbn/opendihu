@@ -34,10 +34,10 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1)
 }
 
 //! vector addition
-template<std::size_t nComponents>
-std::array<double,nComponents> operator+(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator+(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
-  std::array<double,nComponents> result;
+  std::array<T,nComponents> result;
 
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)
@@ -48,8 +48,8 @@ std::array<double,nComponents> operator+(const std::array<double,nComponents> ve
 }
 
 //! vector increment operation
-template<std::size_t nComponents>
-std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> &operator+=(std::array<T,nComponents> &vector1, const std::array<T,nComponents> vector2)
 {
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)

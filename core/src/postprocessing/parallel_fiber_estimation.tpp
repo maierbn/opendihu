@@ -52,8 +52,8 @@ generateParallelMesh()
 {
   LOG(DEBUG) << "generateParallelMesh";
 
-  int nBorderPointsX = 4;
-  int nBorderPoints = 4*nBorderPointsX;
+  nBorderPointsX_ = 4;
+  int nBorderPoints = 4*nBorderPointsX_;
 
   // get loops of whole domain
 
@@ -122,23 +122,23 @@ generateParallelMesh()
     borderPoints[face].resize(nElementsZPerSubdomain_+1);
     for (int zIndex = 0; zIndex < nElementsZPerSubdomain_+1; zIndex++)
     {
-      borderPoints[face][zIndex].resize(nBorderPointsX);
+      borderPoints[face][zIndex].resize(nBorderPointsX_);
 
       if (face == Mesh::face_t::face1Minus)
       {
-        std::copy(loops[zIndex].begin(), loops[zIndex].begin() + nBorderPointsX, borderPoints[face][zIndex].begin());
+        std::copy(loops[zIndex].begin(), loops[zIndex].begin() + nBorderPointsX_, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face0Plus)
       {
-        std::copy(loops[zIndex].begin() + nBorderPointsX, loops[zIndex].begin() + 2*nBorderPointsX, borderPoints[face][zIndex].begin());
+        std::copy(loops[zIndex].begin() + nBorderPointsX_, loops[zIndex].begin() + 2*nBorderPointsX_, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face1Plus)
       {
-        std::reverse_copy(loops[zIndex].begin() + 2*nBorderPointsX, loops[zIndex].begin() + 3*nBorderPointsX, borderPoints[face][zIndex].begin());
+        std::reverse_copy(loops[zIndex].begin() + 2*nBorderPointsX_, loops[zIndex].begin() + 3*nBorderPointsX_, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face0Minus)
       {
-        std::reverse_copy(loops[zIndex].begin() + 3*nBorderPointsX, loops[zIndex].end(), borderPoints[face][zIndex].begin());
+        std::reverse_copy(loops[zIndex].begin() + 3*nBorderPointsX_, loops[zIndex].end(), borderPoints[face][zIndex].begin());
       }
     }
   }
@@ -219,7 +219,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     meshName << "meshLevel" << level;
 
     context_.partitionManager()->setRankSubsetForNextCreatedMesh(currentRankSubset_);
-    functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
+    this->functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
       meshName.str(), meshPartition, nodePositions, nElementsPerCoordinateDirectionLocal);
 
     /*
@@ -229,7 +229,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     * */
     // solve laplace problem globally
     // create problem
-    problem_ = std::make_shared<FiniteElementMethodType>(context_, functionSpace_);
+    problem_ = std::make_shared<FiniteElementMethodType>(context_, this->functionSpace_);
 
     // create dirichlet boundary condition object
     std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions
@@ -264,7 +264,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
             dof_no_t elementalDofIndex = elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
             elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({0.0})));
 
-            dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
+            dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
             boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
           }
         }
@@ -306,7 +306,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
               + elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
             elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({1.0})));
 
-            dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
+            dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
             boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
           }
         }
@@ -324,7 +324,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     boundaryConditionValues.resize(nBottomDofs + boundaryConditionNonGhostDofLocalNosSet.size());
     std::fill(boundaryConditionValues.begin() + nBottomDofs, boundaryConditionValues.end(), std::array<double,1>({1.0}));
 
-    dirichletBoundaryConditions->initialize(functionSpace_, boundaryConditionElements, boundaryConditionNonGhostDofLocalNos, boundaryConditionValues);
+    dirichletBoundaryConditions->initialize(this->functionSpace_, boundaryConditionElements, boundaryConditionNonGhostDofLocalNos, boundaryConditionValues);
 
     // set boundary conditions to the problem
     problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
@@ -417,13 +417,16 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
     // create ghost element meshes
-    std::array<std::shared_ptr<FunctionSpaceType>,4> mesh;
+    std::array<std::shared_ptr<FunctionSpaceType>,4> ghostMesh;
+    std::array<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,4> ghostSolution;
+    std::array<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,4> ghostGradient;
+
     for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
     {
       if (!ghostValuesBuffer[face].nodePositionValues.empty())
       {
         std::stringstream meshName;
-        meshName << functionSpace_->meshName() << "_ghost_" << Mesh::getString((Mesh::face_t)face);
+        meshName << this->functionSpace_->meshName() << "_ghost_" << Mesh::getString((Mesh::face_t)face);
 
         // transform the node Position data from vector of double to vector of Vec3
         int nNodes = ghostValuesBuffer[face].nodePositionValues.size() / 3;
@@ -436,8 +439,80 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
           nodePositions[nodeIndex][2] = ghostValuesBuffer[face].nodePositionValues[nodeIndex*3 + 2];
         }
 
-        mesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection);
+        ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection);
+        ghostSolution[face] = ghostMesh[face]->createFieldVariable("solution", 1);
+        ghostSolution[face]->setValues(ghostValuesBuffer[face].solutionValues);
+        ghostGradient[face] = ghostMesh[face]->createFieldVariable("gradient", 3);
+        ghostGradient[face]->setValue(ghostValuesBuffer[face].gradientValues);
       }
+    }
+
+    // determine seed points
+    // nodePositions contains all node positions in the current 3D mesh
+    //  _______
+    // |   |   |
+    // |___|___|
+    // |   |   |
+    // |___|___|
+    std::vector<Vec3> seedPoints;
+    // seedPoints contains in this order:
+    // face0Minus, face0Plus, face1Minus (without corner points), face1Plus (without corner points),
+    // horizontal center line (without corner points), vertical center line (without corner points, without center point)
+
+    int nNodesX = nElementsPerCoordinateDirectionLocal[0];
+    int nNodesY = nElementsPerCoordinateDirectionLocal[1];
+    int nNodesZ = nElementsPerCoordinateDirectionLocal[2];
+
+    // face0Minus
+    for (int i = 0; i < nBorderPointsX_; i++)
+    {
+      seedPoints.push_back(nodePositions[i*nNodesX + 0]);
+    }
+
+    // face0Plus
+    for (int i = 0; i < nBorderPointsX_; i++)
+    {
+      seedPoints.push_back(nodePositions[i*nNodesX + (nNodesX-1)]);
+    }
+
+    // face1Minus (without corner points)
+    for (int i = 1; i < nBorderPointsX_-1; i++)
+    {
+      seedPoints.push_back(nodePositions[i]);
+    }
+
+    // face1Plus (without corner points)
+    for (int i = 1; i < nBorderPointsX_-1; i++)
+    {
+      seedPoints.push_back(nodePositions[(nNodesY-1)*nNodesX + i]);
+    }
+
+    // horizontal center line (without corner points)
+    for (int i = 1; i < nBorderPointsX_-1; i++)
+    {
+      seedPoints.push_back(nodePositions[int(nNodesY/2)*nNodesX + i]);
+    }
+
+    // vertical center line (without corner points)
+    for (int i = 1; i < nBorderPointsX_-1; i++)
+    {
+      seedPoints.push_back(nodePositions[i*nNodesX + int(nNodesX/2)]);
+    }
+
+    // trace streamlines
+    int nStreamlines = seedPoints.size();
+    std::vector<std::vector<Vec3>> streamlinePoints(nStreamlines);
+    for (int i = 0; i < nStreamlines; i++)
+    {
+      Vec3 &startingPoint = seedPoints[i];
+      streamlinePoints[i].push_back(startingPoint);
+
+      for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
+      {
+        this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
+      }
+
+      this->traceStreamline(startingPoint, 1.0, streamlinePoints[i]);
     }
 
 

@@ -28,8 +28,8 @@ def str_format_memory(value):
   else:
     result += "{} B".format(int(value))
 
-  if value >= 1024:
-    result += " ("+str_format_number(int(value))+" Bytes)";
+  #if value >= 1024:
+  #  result += " ("+str_format_number(int(value))+" Bytes)";
   
   return result
     

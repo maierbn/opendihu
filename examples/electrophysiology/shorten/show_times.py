@@ -185,20 +185,23 @@ datasets = extract_data(data)
 # output to console
 print("")
 print("------------- duration -------------------------------------------")
-print("{:30}, {:7}, {:10}, {:10}, {:10}, {:3}, {:10}".\
-format("key", "nproc", "solve 0D", "solve 1D", "total", "n", "memRSS"))
+print("{:30}, {:7}, {:10}, {:10}, {:10}, {:10}, {:10}, {:10}, {:3}, {:10}".\
+format("key", "nproc", "solve 0D", "solve 1D", "write", "comp.", "usertime", "overhead", "n", "memRSS"))
 for key in datasets:
   
   #nF = int(datasets[key]["value"][column_key_map["nInstancesComputedGlobally"]])
   nproc = int(datasets[key]["value"][column_key_map["nRanks"]])
   number = datasets[key]["number"]
   
-  print("{:30}, {:7}, {:10}, {:10}, {:10}, {:3}, {:10}".\
+  print("{:30}, {:7}, {:10}, {:10}, {:10}, {:10}, {:10}, {:10}, {:3}, {:10}".\
   format(key, 
   nproc,
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_0D"]]),
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_1D"]]),
+  fo.str_format_seconds(datasets[key]["value"][column_key_map["write output"]]),
   fo.str_format_seconds(datasets[key]["value"][column_key_map["duration_total"]]),
+  fo.str_format_seconds(datasets[key]["value"][column_key_map["totalUsertime"]]),
+  fo.str_format_seconds((float)(datasets[key]["value"][column_key_map["duration_total"]])-(float)(datasets[key]["value"][column_key_map["write output"]])-(float)(datasets[key]["value"][column_key_map["duration_1D"]])-(float)(datasets[key]["value"][column_key_map["duration_0D"]])),
   number,
   fo.str_format_memory(datasets[key]["value"][column_key_map["memoryResidentSet"]])
   ))

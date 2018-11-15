@@ -42,7 +42,7 @@ void Manager::storePreconfiguredSolvers()
         {
           LOG(WARNING) << "Could not extract dict for solver \"" << key << "\".";
         }
-        else if(!PyDict_Check(value))
+        else if (!PyDict_Check(value))
         {
           LOG(WARNING) << "Value for solver with name \"" << key << "\" should be a dict.";
         }

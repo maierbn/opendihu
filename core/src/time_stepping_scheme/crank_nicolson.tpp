@@ -36,7 +36,7 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   // loop over time steps
   double currentTime = this->startTime_;
   
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {

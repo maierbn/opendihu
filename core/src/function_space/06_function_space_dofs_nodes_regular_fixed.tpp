@@ -89,7 +89,7 @@ computeMeshWidth()
       {
         this->meshWidth_ = meshWidthCurrentDirection;
       }
-      else if(fabs(this->meshWidth_ - meshWidthCurrentDirection) > 1e-14)
+      else if (fabs(this->meshWidth_ - meshWidthCurrentDirection) > 1e-14)
       {
         LOG(ERROR) << "Mesh has no uniform mesh width, use a StructuredDeformableOfDimension<" << D << "> mesh instead.";
         LOG(ERROR) << "mesh width: " << this->meshWidth_ << ", other: " << physicalExtent_[coordinateIndex] << "/" << double(nElements[coordinateIndex] * FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement())

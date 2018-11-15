@@ -15,7 +15,7 @@ void ExfileRepresentation::parseHeaderFromExelemFile(std::string content)
   VLOG(1) << "ExfileRepresentation::parseHeaderFromExelemFile";
 
   std::stringstream str;
-  for(unsigned int i=0; i<representation_.size(); i++)
+  for (unsigned int i=0; i<representation_.size(); i++)
   {
     str << representation_[i];
   }
@@ -46,7 +46,7 @@ void ExfileRepresentation::parseElementFromExelemFile(std::string content)
 {
   VLOG(1) << "ExfileRepresentation::parseElementFromExelemFile ";
   std::stringstream str;
-  for(unsigned int i=0; i<representation_.size(); i++)
+  for (unsigned int i=0; i<representation_.size(); i++)
   {
     str << representation_[i];
   }
@@ -103,9 +103,9 @@ void ExfileRepresentation::unifyExfileElementRepresentations()
   if (representation_.size() < 2)
     return;
 
-  for(element_no_t elementGlobalNo1 = 0; elementGlobalNo1 < representation_.size()-1; elementGlobalNo1++)
+  for (element_no_t elementGlobalNo1 = 0; elementGlobalNo1 < representation_.size()-1; elementGlobalNo1++)
   {
-    for(element_no_t elementGlobalNo2 = elementGlobalNo1+1; elementGlobalNo2 < representation_.size(); elementGlobalNo2++)
+    for (element_no_t elementGlobalNo2 = elementGlobalNo1+1; elementGlobalNo2 < representation_.size(); elementGlobalNo2++)
     {
       if (*representation_[elementGlobalNo1] == *representation_[elementGlobalNo2])
       {
@@ -127,13 +127,13 @@ bool ExfileRepresentation::haveSameExfileRepresentation(element_no_t element1, e
 void ExfileRepresentation::output(std::ostream &stream) const
 {
   stream << "ExfileRepresentation: size: " << representation_.size() << ": ";
-  for(auto &representation : representation_)
+  for (auto &representation : representation_)
   {
     stream << representation << "-";
   }
   stream << std::endl;
   int i=0;
-  for(auto &representation : representation_)
+  for (auto &representation : representation_)
   {
     if (representation == nullptr)
       stream << "el " <<i << "  null" << std::endl;

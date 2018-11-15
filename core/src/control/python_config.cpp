@@ -188,7 +188,7 @@ getOptionVector(std::string keyString, std::vector<PythonConfig> &values) const
   {
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);

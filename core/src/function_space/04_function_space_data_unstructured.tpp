@@ -101,7 +101,7 @@ getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const
 
   dofGlobalNos.reserve(dofGlobalNos.size() + nodeDofs.size());
 
-  for(dof_no_t dof : nodeDofs)
+  for (dof_no_t dof : nodeDofs)
   {
     dofGlobalNos.push_back(dof);
   }

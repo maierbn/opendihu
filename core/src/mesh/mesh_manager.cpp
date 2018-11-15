@@ -41,7 +41,7 @@ void Manager::storePreconfiguredMeshes()
         {
           LOG(WARNING) << "Could not extract dict for Mesh \"" << key << "\".";
         }
-        else if(!PyDict_Check(value))
+        else if (!PyDict_Check(value))
         {
           LOG(WARNING) << "Value for mesh with name \"" << key << "\" should be a dict.";
         }

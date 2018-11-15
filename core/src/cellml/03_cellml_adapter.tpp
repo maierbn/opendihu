@@ -123,7 +123,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
-  if(this->rhsRoutine_)
+  if (this->rhsRoutine_)
   {
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;

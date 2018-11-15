@@ -63,9 +63,6 @@ public:
   //! compute the normal in world space, normal to face at xi
   Vec3 getNormal(Mesh::face_t face, element_no_t elementNo, std::array<double,MeshType::dim()> xi);
 
-  //! store a ghost mesh which is a neighouring mesh with only one layer of elements, this will be used by pointIsInElement and findPosition
-  void setGhostMesh(Mesh::face_t face, std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
-
   //! Compute the inverseJacobian that is needed to transform a gradient vector from parameter space to world space, for an element at a xi position.
   //! This version of the method needs the values of the geometry field, if the jacobian is needed at multiple positions in the same element, these values can be retrieved once and used for all computations of the jacobians.
   //! There is also the convienience method which does not need the geometryValues but gets them itself.

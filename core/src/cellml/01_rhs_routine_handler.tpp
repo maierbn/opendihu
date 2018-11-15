@@ -38,7 +38,7 @@ initializeRhsRoutine()
     LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
   }
 
-  if(useGivenLibrary_)
+  if (useGivenLibrary_)
   { //try open library file
     if (!this->specificSettings_.hasKey("libraryFilename"))
     {
@@ -55,7 +55,7 @@ initializeRhsRoutine()
     std::stringstream compileCommand;
     std::string compileCommandOptions;
 
-    if(this->specificSettings_.hasKey("gpuSourceFilename"))
+    if (this->specificSettings_.hasKey("gpuSourceFilename"))
     {
       // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
       //
@@ -81,7 +81,7 @@ initializeRhsRoutine()
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
     {
-      if(!this->specificSettings_.hasKey("simdSourceFilename"))
+      if (!this->specificSettings_.hasKey("simdSourceFilename"))
       {
         LOG(DEBUG) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
@@ -226,7 +226,7 @@ loadRhsLibrary(std::string libraryFilename)
   for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
   {
     handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }
 
   if (handle)
@@ -272,7 +272,7 @@ loadRhsLibrary(std::string libraryFilename)
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
         // call the standard rhs routine for every instance of the CellML problem
-        for(int instanceNo = 0; instanceNo < nInstances; instanceNo++)
+        for (int instanceNo = 0; instanceNo < nInstances; instanceNo++)
         {
           // create vectors that contain the values for a single instance
           std::vector<double> states(nStates);
@@ -418,7 +418,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
 	{
 	  LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
 	    << "Use the option \"gpuSourceFilename\" instead.";
@@ -448,7 +448,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -464,7 +464,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -594,7 +594,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         else
         {
           // add pragma omp here
-          simdSource << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -757,7 +757,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
           gpuSourceFilename="";
           return false;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
         {
           LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" contains already a GPU version of the rhs routine."
             << "Use the option \"gpuSourceFilename\" instead of \"sourceFilename\" or \"simdSourceFilename\".";
@@ -787,7 +787,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -803,7 +803,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -932,7 +932,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         }
         else
         {
-          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -966,7 +966,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       // every other line
       else
       {
-        if(line.find("}")!= 0)
+        if (line.find("}")!= 0)
         {
           gpuSource << line << std::endl;
         }

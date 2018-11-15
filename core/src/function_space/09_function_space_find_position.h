@@ -35,15 +35,20 @@ public:
 
   //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
   //! ghostMeshNo: -1 means main mesh, 0-5 means ghost Mesh with respecitve Mesh::face_t
-  bool findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
+  bool findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement);
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 11_function_space_xi.h
   virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi) = 0;
 
 protected:
 
-  //! fill a vector of information about neighbouring elements (elementNo, face), neighbours to elmentNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.)
-  void getNeighbouringElements(element_no_t elementNo, int ghostMeshNo, std::vector<std::pair<element_no_t,int>> &neighbouringElements);
+  //! check if the point is in a neighoubring element to elmentNo on ghostMeshNo (-1=main m0esh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
+  //! set elementNo, ghostMeshNo and xi appropriately
+  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
+
+  int targetX_ = 0;   //! the x index of the neighbour (-1,0, or 1) where the last neighbouring element was found
+  int targetY_ = 0;   //! the y index of the neighbour (-1,0, or 1) where the last neighbouring element was found
+  int targetZ_ = 0;   //! the z index of the neighbour (-1,0, or 1) where the last neighbouring element was found
 
   std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_ = {nullptr};   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
 };
@@ -61,7 +66,7 @@ public:
 
   //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
   //! ghostMeshNo: -1 means main mesh, 0-5 means ghost Mesh with respecitve Mesh::face_t
-  bool findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi);
+  bool findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement);
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 11_function_space_xi.h
   virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,D> &xi) = 0;

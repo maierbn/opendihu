@@ -43,7 +43,7 @@ std::ofstream Generic::openFile(std::string filename, bool append)
       int ret = system((std::string("mkdir -p ")+path).c_str());
       if (ret != 0)
         LOG(WARNING) << "Creation of directory \"" <<path<< "\" failed.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      std::this_thread::sleep_for (std::chrono::milliseconds(500));
 
       file.clear();
       file.open(filename.c_str(), std::ios::out | std::ios::binary);

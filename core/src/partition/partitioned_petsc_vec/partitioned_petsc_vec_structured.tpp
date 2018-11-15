@@ -231,7 +231,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
-  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "getValues called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
@@ -260,7 +260,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
       ierr = VecGetValues(valuesContiguous_, ni, ix, y); CHKERRV(ierr);
     }
   }
-  else if(this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
     // this wraps the standard PETSc VecGetValues on the local vector
     PetscErrorCode ierr;
@@ -290,7 +290,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 getValuesGlobalPetscIndexing(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
-  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "getValuesGlobalPetscIndexing called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
@@ -326,7 +326,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode iora)
 {
-  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "setValues called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
@@ -402,7 +402,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 setValue(int componentNo, PetscInt row, PetscScalar value, InsertMode mode)
 {
-  if(this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "setValue called in global vector representation, must be local, now set to local";
     setRepresentationLocal();
@@ -527,7 +527,7 @@ valuesGlobal(int componentNo)
       << "restoreExtractedComponent has been called.";
   }
 
-  if(this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationGlobal)
   {
     VLOG(1) << "valuesGlobal called in not global vector representation ("
       << Partition::valuesRepresentationString[this->currentRepresentation_]

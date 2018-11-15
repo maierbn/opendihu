@@ -180,10 +180,10 @@ solve()
 
     // compute f = matrix * solution
 
-    for(int i=0; i<vectorSize; i++)
+    for (int i=0; i<vectorSize; i++)
     {
       f[i] = 0.0;
-      for(int j=0; j<vectorSize; j++)
+      for (int j=0; j<vectorSize; j++)
       {
         f[i] += matrixValues[i*nColumns + j] * solution[j];
       }
@@ -191,7 +191,7 @@ solve()
 
     // compute residual norm
     double res = 0.0;
-    for(int i=0; i<vectorSize; i++)
+    for (int i=0; i<vectorSize; i++)
     {
       res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
       LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);

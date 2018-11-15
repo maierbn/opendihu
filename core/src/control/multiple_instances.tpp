@@ -41,7 +41,7 @@ MultipleInstances(DihuContext context) :
   PyObject *instanceConfig = specificSettings_.getOptionListBegin<PyObject *>("instances");
 
   int i = 0;
-  for(;
+  for (;
       !specificSettings_.getOptionListEnd("instances") && i < nInstances_;
       specificSettings_.template getOptionListNext<PyObject *>("instances", instanceConfig), i++)
   {

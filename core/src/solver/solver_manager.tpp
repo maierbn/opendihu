@@ -34,7 +34,7 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
 
       return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
     }
-    else if(solverConfiguration_.find(solverName) != solverConfiguration_.end())
+    else if (solverConfiguration_.find(solverName) != solverConfiguration_.end())
     {
       // solver was preconfigured, do nothing specific here, created standard solver
       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
@@ -59,7 +59,7 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
 
   // check if there is a matching solver already stored
   // loop over all stored solvers
-  for(auto &solver: solvers_[mpiCommunicator])
+  for (auto &solver: solvers_[mpiCommunicator])
   {
     // check if type matches
     if (std::dynamic_pointer_cast<SolverType>(solver.second))

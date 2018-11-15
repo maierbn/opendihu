@@ -54,7 +54,7 @@ advanceTimeSpan()
   double currentTime = this->startTime_;
 
   // loop over time steps
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {

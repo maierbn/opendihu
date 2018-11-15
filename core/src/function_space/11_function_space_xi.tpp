@@ -8,6 +8,9 @@
 
 namespace FunctionSpace
 {
+
+const int N_NEWTON_ITERATIONS = 4;    // (5) number of newton iterations to find out if a point is inside an element
+const double POINT_IN_ELEMENT_EPSILON = 1e-5;    // (1e-12)
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
@@ -48,7 +51,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
   VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
   
-  for (int iterationNo = 0; iterationNo < 5 && residuumNormSquared > 1e-10; iterationNo++)
+  for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > 1e-10; iterationNo++)
   {
     Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
     xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
@@ -61,7 +64,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   
   // Phi(xi) = point
   // Phi(xi) = Phi(xi0) + J*(xi-xi0)  => xi = xi0 + Jinv*(point - Phi(xi0))
-  double epsilon = 1e-12;
+  double epsilon = POINT_IN_ELEMENT_EPSILON;
   
   // check if point is inside the element by looking at the value of xi
   bool pointIsInElement = true;

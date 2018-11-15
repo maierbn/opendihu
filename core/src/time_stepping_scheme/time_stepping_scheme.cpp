@@ -31,7 +31,7 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
   startTime_ = startTime;
   endTime_ = endTime;
 
-  if(isTimeStepWidthSignificant_)
+  if (isTimeStepWidthSignificant_)
   {
     setTimeStepWidth(timeStepWidth_);
     LOG(DEBUG) << "set number of time steps to " <<numberTimeSteps_<< " from timeStepWidth " << timeStepWidth_;

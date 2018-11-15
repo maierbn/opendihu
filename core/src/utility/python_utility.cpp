@@ -28,7 +28,7 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
 
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       Py_CLEAR(key);
       return true;
@@ -62,7 +62,7 @@ PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string
     
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
       Py_CLEAR(key);
@@ -93,7 +93,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
-  if(PyDict_Contains((PyObject *)settings, key))
+  if (PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -187,7 +187,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
-  if(PyDict_Contains((PyObject *)settings, key))
+  if (PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -281,7 +281,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
-  if(PyDict_Contains((PyObject *)settings, key))
+  if (PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -338,7 +338,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
-  if(PyDict_Contains((PyObject *)settings, key))
+  if (PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
     PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -367,7 +367,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
   
   // check if input dictionary contains the key
   PyObject *key = PyUnicode_FromString(keyString.c_str());
-  if(PyDict_Contains((PyObject *)settings, key))
+  if (PyDict_Contains((PyObject *)settings, key))
   {
     // extract the value of the key and check its type
     PyObject *function = PyDict_GetItem((PyObject *)settings, key);
@@ -489,7 +489,7 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
       line << getString(item, indent+2, 0) << (index < size-1? ", " : ")");
     }
   }
-  else if(PyDict_CheckExact(object))
+  else if (PyDict_CheckExact(object))
   {
     // iterate over top level key-value pairs
     PyObject *key, *value;
@@ -585,7 +585,7 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -651,7 +651,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
 
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -700,7 +700,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
 
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -746,7 +746,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
   {
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);
@@ -792,7 +792,7 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
   {
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);

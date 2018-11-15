@@ -64,7 +64,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
     // open file, to see if directory needs to be created
     std::ofstream ofile = openFile(filename);
-    if(ofile.is_open())
+    if (ofile.is_open())
       ofile.close();
 
     // pickle is the python library to serialize objects

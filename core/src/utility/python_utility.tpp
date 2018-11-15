@@ -24,7 +24,7 @@ std::pair<Key, Value> PythonUtility::getOptionDictBegin(const PyObject *settings
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       //PythonUtility::printDict((PyObject *)settings);
 
@@ -97,7 +97,7 @@ Value PythonUtility::getOptionListBegin(const PyObject *settings, std::string ke
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // check if it is a list
       list = PyDict_GetItem((PyObject *)settings, key);
@@ -169,7 +169,7 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if(PyDict_Contains((PyObject *)settings, key))
+    if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
       PyObject *value = PyDict_GetItem((PyObject *)settings, key);

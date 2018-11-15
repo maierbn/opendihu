@@ -25,7 +25,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
         << ", cast to " << typeid(FunctionSpaceType).name();
       return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
     }
-    else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
+    else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
       LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "

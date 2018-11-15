@@ -112,7 +112,7 @@ std::string getStringMatrixVector(const Mat& matrix, const Vec& vector)
     s << std::setw(3) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
-      if(matrixValues[i*nRows + j] == 0.0)
+      if (matrixValues[i*nRows + j] == 0.0)
         s << std::string(5, ' ');
       else
         s << std::setw(4) << std::setfill(' ') << matrixValues[i*nRows + j]<< " ";
@@ -180,7 +180,7 @@ std::string getStringMatrix(std::vector<double> &matrixValues, int nRows, int nC
     s << std::setw(4) << std::setfill(' ') <<i<< "| ";
     for (int j=0; j<nColumns; j++)
     {
-      if(fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
+      if (fabs(matrixValues[i*nRows + j]) <= zeroTolerance)
         s << std::string(6, ' ');
       else
         s << std::showpos << std::setw(5) << std::setfill(' ') << std::setprecision(3) << matrixValues[i*nRows + j]<< " ";
@@ -247,7 +247,7 @@ std::string getStringSparsityPattern(const Mat& matrix)
     s << " ";
     for (int j=0; j<nColumns; j++)
     {
-      if(matrixValues[i*nRows + j] == 0.0)
+      if (matrixValues[i*nRows + j] == 0.0)
         s << " ";
       else
         s << "*";

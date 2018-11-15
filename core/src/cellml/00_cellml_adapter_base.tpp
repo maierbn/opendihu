@@ -82,14 +82,14 @@ bool CellmlAdapterBase<nStates,FunctionSpaceType>::
 setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates>> initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates,FunctionSpaceType>::setInitialValues, sourceFilename_=" << this->sourceFilename_;
-  if(this->specificSettings_.hasKey("statesInitialValues"))
+  if (this->specificSettings_.hasKey("statesInitialValues"))
   {
     LOG(DEBUG) << "set initial values from config";
 
     // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
     statesInitialValues_ = this->specificSettings_.template getOptionArray<double,nStates>("statesInitialValues", 0);
   }
-  else if(this->sourceFilename_ != "")
+  else if (this->sourceFilename_ != "")
   {
     LOG(DEBUG) << "set initial values from source file";
     // parsing the source file was already done, the initial values are stored in the statesInitialValues_ vector
@@ -100,7 +100,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     statesInitialValues_.fill(0.0);
   }
 
-  if(this->specificSettings_.hasKey("parametersInitialValues"))
+  if (this->specificSettings_.hasKey("parametersInitialValues"))
   {
     LOG(DEBUG) << "load parametersInitialValues from config";
 
@@ -117,9 +117,9 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     else
     {
       LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
-      for(int instanceNo=0; instanceNo<nInstances_; instanceNo++)
+      for (int instanceNo=0; instanceNo<nInstances_; instanceNo++)
       {
-        for(int j=0; j<nParameters_; j++)
+        for (int j=0; j<nParameters_; j++)
         {
           parameters_[j*nInstances_ + instanceNo] = parametersInitial[j];
         }

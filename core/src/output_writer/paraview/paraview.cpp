@@ -50,9 +50,9 @@ std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
 std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fixedFormat)
 {
   std::stringstream result;
-  for(auto value : vector)
+  for (auto value : vector)
   {
-    if(fixedFormat)
+    if (fixedFormat)
     {
       result << std::setw(16) << std::scientific << value << " ";
     }
@@ -67,9 +67,9 @@ std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fix
 std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedFormat)
 {
   std::stringstream result;
-  for(auto value : vector)
+  for (auto value : vector)
   {
-    if(fixedFormat)
+    if (fixedFormat)
     {
       result << std::setw(16) << std::scientific << (float)(value) << " ";
     }

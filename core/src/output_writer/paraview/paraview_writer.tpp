@@ -188,7 +188,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     coordinates[dimensionNo].resize(nNodes);
 
-    for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
+    for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       double coordinate = (mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo) + nodeNo) * meshWidth;
       VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" << nodeNo;
@@ -197,7 +197,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // set other coordinates to 0
-  for(; dimensionNo < 3; dimensionNo++)
+  for (; dimensionNo < 3; dimensionNo++)
   {
     coordinates[dimensionNo].resize(1);
     coordinates[dimensionNo][0] = 0.0;

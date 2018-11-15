@@ -12,6 +12,8 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   const int D = FunctionSpace::dim();
   const int nDofsPerElement = FunctionSpace::nDofsPerElement();
   
+  LOG(DEBUG) << "traceStreamline(startingPoint " << startingPoint << ", direction " << direction << ")";
+
   Vec3 currentPoint = startingPoint;
   element_no_t elementNo;
   int ghostMeshNo = -1;
@@ -26,8 +28,10 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   std::array<double,nDofsPerElement> elementalSolutionValues;
   std::array<Vec3,nDofsPerElement> geometryValues;
 
+  bool startSearchInCurrentElement = false;
+
   // loop over length of streamline, avoid loops by limiting the number of iterations
-  for(int iterationNo = 0; iterationNo <= maxNIterations_; iterationNo++)
+  for (int iterationNo = 0; iterationNo <= maxNIterations_; iterationNo++)
   {
     if (iterationNo == maxNIterations_)
     {
@@ -36,7 +40,14 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       break;
     }
 
-    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi);
+    if (iterationNo == 0)
+    {
+      startSearchInCurrentElement = false;
+    }
+    else
+      startSearchInCurrentElement = true;
+
+    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement);
 
     // if no position was found, the streamline exits the domain
     if (!positionFound)
@@ -75,7 +86,8 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
 
     // integrate streamline
-    VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient) << ", lineStepWidth: " << lineStepWidth_;
+    VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
+      << ", lineStepWidth: " << lineStepWidth_;
     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
 
     VLOG(2) << "              to " << currentPoint;

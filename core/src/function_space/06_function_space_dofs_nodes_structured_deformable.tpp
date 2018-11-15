@@ -204,7 +204,7 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
       if (nodeDimension < 3)
       {
         localNodePositions_.resize(vectorSize);   // resize vector and value-initialize to 0
-        for(int i = nNodesLocal-1; i >= 0; i--)
+        for (int i = nNodesLocal-1; i >= 0; i--)
         {
 
           if (nodeDimension == 2)

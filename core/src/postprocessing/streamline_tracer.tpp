@@ -229,7 +229,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
       }
     }
     
-    auto lastValidStreamline = std::remove_if(streamlines.begin(), streamlines.end(), 
+    auto lastValidStreamline = std::remove_if (streamlines.begin(), streamlines.end(), 
                                               [](const std::vector<Vec3> &a)-> bool{return a.empty();});
     
     // remove previously cleared streamlines

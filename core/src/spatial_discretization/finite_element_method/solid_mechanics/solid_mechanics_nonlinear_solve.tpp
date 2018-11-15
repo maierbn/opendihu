@@ -250,7 +250,7 @@ debug()
     }
 
   }
-  else if(FunctionSpaceType::dim() == 2)
+  else if (FunctionSpaceType::dim() == 2)
   {
 
 #if 0   // 1 element
@@ -488,7 +488,7 @@ solve()
   // set jacobian
   if (useAnalyticJacobian)
   {
-    if(useNumericJacobian)   // use combination of analytic jacobian also with finite differences
+    if (useNumericJacobian)   // use combination of analytic jacobian also with finite differences
     {
       Mat &solverMatrixTangentStiffnessFiniteDifferences = this->data_.solverMatrixTangentStiffnessFiniteDifferences();
       ierr = MatDuplicate(solverMatrixTangentStiffness, MAT_DO_NOT_COPY_VALUES, &solverMatrixTangentStiffnessFiniteDifferences); CHKERRV(ierr);

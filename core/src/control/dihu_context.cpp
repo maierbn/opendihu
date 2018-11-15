@@ -238,7 +238,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     VLOG(2) << "python buildInfo: " << buildInfo;
 
     // load python script
-    if(settingsFromFile)
+    if (settingsFromFile)
     {
       loadPythonScriptFromFile(Control::settingsFileName);
     }

@@ -250,7 +250,7 @@ template<typename T1, typename T2>
 std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map)
 {
   bool first = true;
-  for(typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
+  for (typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
   {
     if (!first)
       stream << ", ";
@@ -266,7 +266,7 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
 {
   stream << "{";
   bool first = true;
-  for(typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
+  for (typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
   {
     if (!first)
       stream << ", ";

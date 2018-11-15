@@ -44,7 +44,7 @@ void PerformanceMeasurement::stop(std::string name, int numberAccumulated)
 {
   double stopTime = MPI_Wtime();
 
-  if(measurements_.find(name) == measurements_.end())
+  if (measurements_.find(name) == measurements_.end())
   {
     LOG(ERROR) << "PerformanceMeasurement stop with name \"" << name << "\", a corresponding start is not present.";
   }

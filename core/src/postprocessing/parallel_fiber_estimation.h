@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <vector>
 
+#include "function_space/function_space.h"
 #include "postprocessing/streamline_tracer_base.h"
 #include "interfaces/discretizable_in_time.h"
 #include "interfaces/runnable.h"

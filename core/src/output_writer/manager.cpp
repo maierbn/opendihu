@@ -53,15 +53,15 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     {
       outputWriter_.push_back(std::make_shared<Paraview>(context, settings));
     }
-    else if(typeString == "PythonCallback")
+    else if (typeString == "PythonCallback")
     {
       outputWriter_.push_back(std::make_shared<PythonCallback>(context, settings));
     }
-    else if(typeString == "PythonFile")
+    else if (typeString == "PythonFile")
     {
       outputWriter_.push_back(std::make_shared<PythonFile>(context, settings));
     }
-    else if(typeString == "Exfile" || typeString == "ExFile")
+    else if (typeString == "Exfile" || typeString == "ExFile")
     {
       outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
     }

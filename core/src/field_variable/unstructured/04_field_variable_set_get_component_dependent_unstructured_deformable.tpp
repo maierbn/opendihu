@@ -21,7 +21,7 @@ getValue(node_no_t dofLocalNo) const
   std::array<double,nComponents> resultVector;
   assert(this->values_);
 
-  for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     // get values and assign them to result values vector
     this->values_->getValues(componentIndex, 1, &dofLocalNo, resultVector.data() + componentIndex);

@@ -67,7 +67,7 @@ void gdbParallelDebuggingBarrier()
       << "continue";
     while (gdbResume == 0)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::this_thread::sleep_for (std::chrono::milliseconds(5));
     }
     LOG(INFO) << "Rank " << rankNo << ", PID " << pid << " resumes because gdbResume=" << gdbResume;
   }

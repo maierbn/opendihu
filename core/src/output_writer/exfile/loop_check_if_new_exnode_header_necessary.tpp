@@ -41,7 +41,7 @@ checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, s
   int previousNumberVersions = currentFieldVariable->nodeToDofMapping()->nVersions(currentNodeGlobalNo-1);
   int currentNumberVersions = currentFieldVariable->nodeToDofMapping()->nVersions(currentNodeGlobalNo);
 
-  if(previousNumberVersions != currentNumberVersions)
+  if (previousNumberVersions != currentNumberVersions)
   {
     newHeaderNecessary = true;
   

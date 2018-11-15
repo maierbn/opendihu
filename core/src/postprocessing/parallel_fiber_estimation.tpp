@@ -440,10 +440,18 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         }
 
         ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection);
-        ghostSolution[face] = ghostMesh[face]->createFieldVariable("solution", 1);
-        ghostSolution[face]->setValues(ghostValuesBuffer[face].solutionValues);
-        ghostGradient[face] = ghostMesh[face]->createFieldVariable("gradient", 3);
-        ghostGradient[face]->setValue(ghostValuesBuffer[face].gradientValues);
+        ghostSolution[face] = ghostMesh[face]->template createFieldVariable<1>("solution");
+        ghostSolution[face]->setValuesWithGhosts(ghostValuesBuffer[face].solutionValues);
+        ghostGradient[face] = ghostMesh[face]->template createFieldVariable<3>("gradient");
+        int nGradientValues = ghostValuesBuffer[face].gradientValues.size()/3;
+        std::vector<Vec3> gradientValues(nGradientValues);
+        for (int i = 0; i < nGradientValues; i++)
+        {
+          gradientValues[i][0] = ghostValuesBuffer[face].gradientValues[3*i + 0];
+          gradientValues[i][1] = ghostValuesBuffer[face].gradientValues[3*i + 1];
+          gradientValues[i][2] = ghostValuesBuffer[face].gradientValues[3*i + 2];
+        }
+        ghostGradient[face]->setValuesWithGhosts(gradientValues);
       }
     }
 
@@ -459,9 +467,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face0Minus, face0Plus, face1Minus (without corner points), face1Plus (without corner points),
     // horizontal center line (without corner points), vertical center line (without corner points, without center point)
 
-    int nNodesX = nElementsPerCoordinateDirectionLocal[0];
-    int nNodesY = nElementsPerCoordinateDirectionLocal[1];
-    int nNodesZ = nElementsPerCoordinateDirectionLocal[2];
+    int nNodesX = nElementsPerCoordinateDirectionLocal[0]+1;
+    int nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
+    //int nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
     // face0Minus
     for (int i = 0; i < nBorderPointsX_; i++)
@@ -514,8 +522,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
       this->traceStreamline(startingPoint, 1.0, streamlinePoints[i]);
     }
-
-
 
     // ----------------------------
     // algorithm:

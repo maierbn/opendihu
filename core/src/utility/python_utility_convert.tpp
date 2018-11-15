@@ -28,13 +28,13 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       int i = 0;
       int iEnd = std::min((int)PyList_Size(object), nComponents);
 
-      for(;i < iEnd; i++)
+      for (;i < iEnd; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
       }
 
       // fill rest of values with default values
-      for(;i < nComponents; i++)
+      for (;i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -65,7 +65,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
 
       // fill rest of values with default values
-      for(int i = nElementsToCopy; i < nComponents; i++)
+      for (int i = nElementsToCopy; i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -110,13 +110,13 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       global_no_t i = 0;
       global_no_t iEnd = std::min((global_no_t)PyList_Size(object), nComponents);
 
-      for(;i < iEnd; i++)
+      for (;i < iEnd; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
       }
 
       // fill rest of values with default values
-      for(;i < nComponents; i++)
+      for (;i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -147,7 +147,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
 
       // fill rest of values with default values
-      for(int i = nElementsToCopy; i < nComponents; i++)
+      for (int i = nElementsToCopy; i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -192,13 +192,13 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       unsigned long i = 0;
       unsigned long iEnd = std::min((unsigned long)PyList_Size(object), nComponents);
 
-      for(;i < iEnd; i++)
+      for (;i < iEnd; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), (ValueType)defaultValue[i]);
       }
 
       // fill rest of values with default values
-      for(;i < nComponents; i++)
+      for (;i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -229,7 +229,7 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
 
       // fill rest of values with default values
-      for(int i = nElementsToCopy; i < nComponents; i++)
+      for (int i = nElementsToCopy; i < nComponents; i++)
       {
         result[i] = defaultValue[i];
       }
@@ -274,7 +274,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
       int nEntries = (int)PyList_Size(object);
       result.resize(nEntries);
 
-      for(int i = 0; i < nEntries; i++)
+      for (int i = 0; i < nEntries; i++)
       {
         ValueType defaultValueItem;
         if (defaultValue.size() >= i)
@@ -313,7 +313,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
       int nEntries = (int)PyList_Size(object);
       result.resize(nEntries);
 
-      for(int i = 0; i < nEntries; i++)
+      for (int i = 0; i < nEntries; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i));
       }
@@ -440,7 +440,7 @@ struct PythonUtility::convertFromPython<int>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static int get(PyObject *object, int defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls
@@ -488,7 +488,7 @@ struct PythonUtility::convertFromPython<double>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static double get(PyObject *object, double defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls
@@ -545,7 +545,7 @@ struct PythonUtility::convertFromPython<std::string>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static std::string get(PyObject *object, std::string defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls
@@ -577,7 +577,7 @@ struct PythonUtility::convertFromPython<global_no_t>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static global_no_t get(PyObject *object, global_no_t defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls
@@ -625,7 +625,7 @@ struct PythonUtility::convertFromPython<std::size_t>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static std::size_t get(PyObject *object, std::size_t defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls
@@ -691,7 +691,7 @@ struct PythonUtility::convertFromPython<bool>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static bool get(PyObject *object, bool defaultValue)
   {
-    if(object == NULL)
+    if (object == NULL)
       return defaultValue;
 
     // start critical section for python API calls

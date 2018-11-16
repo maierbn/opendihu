@@ -63,6 +63,16 @@ void MORBase<FullFunctionSpaceType>::
 setRedSysMatrix(Mat &A, Mat &A_R)
 {
   //to be implemented
+  
+  //MatGetRow  //(1) to get each row of the V_k^T or V_k.
+  //VecGetValues //(2-1-a) To extract only the required part of vector. Output is probably an array not petsc vector. Indirect indexing is considered. It is local.
+  //VecCreatMPIWithArray  //(2-2-a)creating petsc vec from array
+  //VecMdot //(3) Vector dot products  cor computing V_k^T A. We do not need to stor the required parts of V_k and V_k^T as new matrices.
+  
+  //instead of (2-a) one can use the following:
+  //ISCreatGeneral //(2-1-b)creat the index set for the indices that we require.
+  //VecGetSubVector //(2-2-b) uses the above index set
+  
 }
 
 } //namespace

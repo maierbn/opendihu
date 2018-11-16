@@ -622,6 +622,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   else
   {
     assert(false);
+    return -1;
   }
 }
   
@@ -1645,6 +1646,9 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   {
     assert(false);
   }
+  // return a non-meaning value to prevent CCE from Warning `A "return" statement is missing from the end of a non-void function`.
+  LOG(INFO) << "WARNING: in function isNonGhost() in file 01_mesh_partition_structured.tpp: returning non-meaning `false` after assertion.";
+  return false;  
 }
 
 template<typename MeshType,typename BasisFunctionType>

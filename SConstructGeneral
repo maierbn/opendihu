@@ -215,7 +215,8 @@ env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   #
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
-if env["USE_CRAY_PAT"]:
+#if env["USE_CRAY_PAT"]: USE_CRAY_PAT is defined earlier, and set true if we have PrgEnv-Cray. Is False otherwise, but exists anyway.
+if os.environ.get("USE_CRAY_PAT") == "True":
   print("Compile with HAVE_PAT\n")
   env.Append(CPPDEFINES = "-DHAVE_PAT")
 

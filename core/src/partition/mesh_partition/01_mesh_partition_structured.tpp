@@ -624,6 +624,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
     assert(false);
     return -1;
   }
+  return 0;
 }
   
 template<typename MeshType,typename BasisFunctionType>

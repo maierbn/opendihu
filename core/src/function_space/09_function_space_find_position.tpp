@@ -327,7 +327,6 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               return true;
             }
           }
-
         }  // z
       }  // y
     }   // x

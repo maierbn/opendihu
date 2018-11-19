@@ -243,7 +243,8 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     if (componentNo > 0)
     {
       // shift indices
-      std::vector<PetscInt> indices(ni);
+      std::vector<PetscInt> &indices = temporaryIndicesVector_;
+      indices.resize(ni);
       for (int i = 0; i < ni; i++)
       {
         indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
@@ -357,7 +358,8 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
     if (componentNo > 0)
     {
       // shift indices
-      std::vector<PetscInt> indices(ni);
+      std::vector<PetscInt> &indices = temporaryIndicesVector_;
+      indices.resize(ni);
       for (int i = 0; i < ni; i++)
       {
         indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
@@ -861,7 +863,8 @@ output(std::ostream &stream)
 
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
-    std::vector<PetscInt> indices(nDofsLocal);
+    std::vector<PetscInt> &indices = temporaryIndicesVector_;
+    indices.resize(nDofsLocal);
     if (valuesContiguous_)
     {
       for (int i = 0; i < nDofsLocal; i++)
@@ -951,7 +954,9 @@ output(std::ostream &stream)
       // retrieve local values
       int nDofsLocalWithGhosts = this->meshPartition_->nDofsLocalWithGhosts();
       std::vector<double> localValuesWithGhosts(nDofsLocalWithGhosts);
-      std::vector<PetscInt> indices(nDofsLocalWithGhosts);
+
+      std::vector<PetscInt> &indices = temporaryIndicesVector_;
+      indices.resize(nDofsLocalWithGhosts);
       for (int i = 0; i < nDofsLocalWithGhosts; i++)
       {
         indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();

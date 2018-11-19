@@ -319,7 +319,7 @@ setValues(double value)
   const dof_no_t nDofs = this->functionSpace_->nDofsLocalWithGhosts();
 
   static std::vector<double> valueBuffer;
-  valueBuffer.resize(nDofs,value);
+  valueBuffer.assign(nDofs,value);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {

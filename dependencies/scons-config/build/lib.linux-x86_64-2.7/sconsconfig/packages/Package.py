@@ -749,7 +749,7 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text
+    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
     bkp = env_setup(ctx.env, **kwargs)
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     

@@ -623,6 +623,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   {
     assert(false);
   }
+  return 0;   // will not be reached
 }
   
 template<typename MeshType,typename BasisFunctionType>
@@ -1698,6 +1699,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   {
     assert(false);
   }
+  return false;  // this is only needed for cray compiler, it will not be reached
 }
 
 template<typename MeshType,typename BasisFunctionType>

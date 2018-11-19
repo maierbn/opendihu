@@ -125,7 +125,7 @@ sconsconfig.check(sconf)
 sconf.Finish()
 
 # disable unit tests on hazel hen
-if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
   env['no_tests'] = True
 
 # -----------------------------------------------
@@ -193,28 +193,19 @@ elif env["BUILD_TYPE"] == "preprocess":
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
+  env.MergeFlags('-Ofast -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_release')])   # add release version of opendihu library
   env.Prepend(LIBS = ['opendihu'])
-  env.MergeFlags('-DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -DNDEBUG')
-  
-  if os.environ.get("PE_ENV") == "CRAY":
-    env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
-  else:
-    env.MergeFlags('-Ofast')   # fastest with GNU and Intel
-  
-  if env["USE_CRAY_PAT"]:
-    print("Compile with HAVE_PAT\n")
-    env.Append(CPPDEFINES = "-DHAVE_PAT")
-    env.MergeFlags('-finstrument-functions')
 
-# flags to always include, except with cray compiler
+# flags to always include, except with cray compiler, which does not recognize them
 if os.environ.get("PE_ENV") != "CRAY":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp -march=native')
+  env.MergeFlags('-std=c++14 -fopenmp')
+  env.MergeFlags('-finstrument-functions')
 
 if os.environ.get("PE_ENV") == "CRAY":
   print("compile for reveal\n")
-  env.MergeFlags('-hpl=~/my_program.pl')
+  env.MergeFlags('-hpl=my_program.pl')  # insert absolute path here
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")
@@ -223,6 +214,11 @@ env.MergeFlags("-lpthread -ldl -lutil -lm")
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
+
+#if env["USE_CRAY_PAT"]: USE_CRAY_PAT is defined earlier, and set true if we have PrgEnv-Cray. Is False otherwise, but exists anyway.
+if os.environ.get("USE_CRAY_PAT") == "True":
+  print("Compile with HAVE_PAT\n")
+  env.Append(CPPDEFINES = "-DHAVE_PAT")
 
 # Set the include path for header files
 env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])

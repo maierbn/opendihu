@@ -622,6 +622,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   else
   {
     assert(false);
+    return -1;
   }
   return 0;   // will not be reached
 }

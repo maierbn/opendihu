@@ -46,6 +46,10 @@ class EasyLoggingPP(Package):
         env = ctx.env
         ctx.Message('Checking for EasyLoggingPP ... ')
         
+        flag = ""
+        if env["CXX"] == "g++":
+          flag = " -std=c++11"
+        
         # Setup the build handler.
         self.set_build_handler([
             'rm -f README.txt',
@@ -55,7 +59,7 @@ class EasyLoggingPP(Package):
             'cp ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src/easylogging++.cpp',
             'sed -i \'1906i      m_modules.insert(std::make_pair(ss.str(), level));\' ${PREFIX}/src/easylogging++.cpp',
             'sed -i \'1907i      addSuffix(ss, ".tpp", ".hh");\' ${PREFIX}/src/easylogging++.cpp',
-            env["CXX"]+' -c ${PREFIX}/src/easylogging++.cpp -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -DELPP_NO_DEFAULT_LOG_FILE -o ${PREFIX}/src/easylogging++.o',
+            env["CXX"]+flag+' -c ${PREFIX}/src/easylogging++.cpp -I${PREFIX}/include -DELPP_FEATURE_CRASH_LOG -DELPP_NO_DEFAULT_LOG_FILE -o ${PREFIX}/src/easylogging++.o',
         ])
         
         self.check_options(env)

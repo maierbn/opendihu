@@ -93,7 +93,10 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   mpiCC="CC"  # mpi C++ compiler
 
   # use cray-pat for profiling
-  USE_CRAY_PAT=True
+  USE_CRAY_PAT=False
+
+  # use -hpl option with cray compiler to create an optimization program library
+  USE_HPL=False
 
   #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   #LAPACK_DOWNLOAD = False

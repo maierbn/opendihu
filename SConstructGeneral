@@ -77,6 +77,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
+vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
@@ -203,18 +204,19 @@ else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
   
   if env["USE_CRAY_PAT"]:
-    print("Compile with HAVE_PAT\n")
+    print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
     env.Append(CPPDEFINES = "-DHAVE_PAT")
-    env.MergeFlags('-finstrument-functions')
+    if os.environ.get("PE_ENV") != "CRAY":
+      env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
-if os.environ.get("PE_ENV") == "CRAY":
-  print("compile for reveal\n")
-  env.MergeFlags('-hpl=~/my_program.pl')
+if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
+  print("USE_HPL=True: Compiling with -hpl option\n")
+  env.MergeFlags('-hpl={}/opendihu.pl'.format(opendihu_home))
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")

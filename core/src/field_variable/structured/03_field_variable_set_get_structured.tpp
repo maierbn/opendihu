@@ -246,12 +246,14 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+#ifndef NDEBUG
   if (dofNosLocal.size() != values.size())
   {
     LOG(DEBUG) << "dofNosLocal.size(): " << dofNosLocal.size() << ", values.size(): " << values.size();
     LOG(DEBUG) << "dofNosLocal: " << dofNosLocal << ", values: " << values;
   }
   assert(dofNosLocal.size() == values.size());
+#endif
 
   setValues(values.size(), dofNosLocal, values, petscInsertMode);
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
@@ -262,6 +264,9 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (nValues == 0)
+    return;
+
   if (dofNosLocal.size() < nValues)
   {
     LOG(ERROR) << "dofNosLocal.size()=" << dofNosLocal.size() << ", nValues=" << nValues;
@@ -270,7 +275,8 @@ setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vect
   assert(values.size() == nValues);
   assert(this->values_);
 
-  std::vector<double> valuesBuffer(nValues);
+  static std::vector<double> valuesBuffer;
+  valuesBuffer.resize(nValues);
 
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
@@ -312,7 +318,8 @@ setValues(double value)
   assert(this->functionSpace_);
   const dof_no_t nDofs = this->functionSpace_->nDofsLocalWithGhosts();
 
-  std::vector<double> valueBuffer(nDofs,value);
+  static std::vector<double> valueBuffer;
+  valueBuffer.resize(nDofs,value);
   
   for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {

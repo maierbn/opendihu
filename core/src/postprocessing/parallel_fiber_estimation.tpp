@@ -22,7 +22,10 @@ ParallelFiberEstimation(DihuContext context) :
   stlFilename_ = specificSettings_.getOptionString("stlFilename", "");
   bottomZClip_ = specificSettings_.getOptionInt("bottomZClip", 0);
   topZClip_ = specificSettings_.getOptionInt("topZClip", 100);
-  nElementsZPerSubdomain_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13);
+  nBorderPointsX_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13)+1;
+
+  // ensure nBorderPointsX is odd
+  nBorderPointsX_ = 2*int(nBorderPointsX_/2)+1;
 }
 
 template<typename BasisFunctionType>
@@ -52,7 +55,7 @@ generateParallelMesh()
 {
   LOG(DEBUG) << "generateParallelMesh";
 
-  nBorderPointsX_ = 4;
+  nBorderPointsX_ = 5;
   int nBorderPoints = 4*nBorderPointsX_;
 
   // get loops of whole domain
@@ -71,7 +74,7 @@ generateParallelMesh()
   PyObject* functionCreateRings = PyObject_GetAttrString(moduleStlCreateRings, "create_rings");
   assert(functionCreateRings);
 
-  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s i i i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nElementsZPerSubdomain_+1, Py_False);
+  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s i i i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsX_-1, Py_False);
   assert(loopsPy);
 
   // run stl_create_mesh.rings_to_border_points
@@ -114,31 +117,38 @@ generateParallelMesh()
   //LOG(DEBUG) << "loops: " << loops << ", lengths: " << lengths;
 
   // rearrange the border points from the loops to the portions of the faces
-  std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][x]
+  std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
 
   // loop over faces: face0Minus = 0, face0Plus, face1Minus, face1Plus
+
+  //   ^ --(1+)-> ^
+  // ^ 0-         0+
+  // | | --(1-)-> |
+  // +-->
+
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    borderPoints[face].resize(nElementsZPerSubdomain_+1);
-    for (int zIndex = 0; zIndex < nElementsZPerSubdomain_+1; zIndex++)
+    borderPoints[face].resize(nBorderPointsX_);
+    for (int zIndex = 0; zIndex < nBorderPointsX_; zIndex++)
     {
       borderPoints[face][zIndex].resize(nBorderPointsX_);
 
       if (face == Mesh::face_t::face1Minus)
       {
-        std::copy(loops[zIndex].begin(), loops[zIndex].begin() + nBorderPointsX_, borderPoints[face][zIndex].begin());
+        std::copy(loops[zIndex].begin(), loops[zIndex].begin() + (nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face0Plus)
       {
-        std::copy(loops[zIndex].begin() + nBorderPointsX_, loops[zIndex].begin() + 2*nBorderPointsX_, borderPoints[face][zIndex].begin());
+        std::copy(loops[zIndex].begin() + (nBorderPointsX_-1), loops[zIndex].begin() + 2*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face1Plus)
       {
-        std::reverse_copy(loops[zIndex].begin() + 2*nBorderPointsX_, loops[zIndex].begin() + 3*nBorderPointsX_, borderPoints[face][zIndex].begin());
+        std::reverse_copy(loops[zIndex].begin() + 2*(nBorderPointsX_-1), loops[zIndex].begin() + 3*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
       }
       else if (face == Mesh::face_t::face0Minus)
       {
-        std::reverse_copy(loops[zIndex].begin() + 3*nBorderPointsX_, loops[zIndex].end(), borderPoints[face][zIndex].begin());
+        std::reverse_copy(loops[zIndex].begin() + 3*(nBorderPointsX_-1), loops[zIndex].begin() + 4*(nBorderPointsX_-1), borderPoints[face][zIndex].begin());
+        borderPoints[face][zIndex][nBorderPointsX_-1] = loops[zIndex].front();
       }
     }
   }
@@ -154,9 +164,39 @@ generateParallelMesh()
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, int level, std::array<bool,4> subdomainIsAtBorder)
+generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, int level, std::array<bool,4> subdomainIsAtBorder)
 {
   LOG(DEBUG) << "generateParallelMeshRecursion";
+
+  int nBorderPointsNew = nBorderPointsX_*2-1;
+
+  // refine borderPoints to twice the precision, only in x and y direction, stays the same in z direction
+  // then we have nBorderPointsNew points per x,y-direction and nBorderPointsX_ in z direction, each time also including first and list border point
+  // borderPoints[face_t][z-level][pointIndex]
+  std::array<std::vector<std::vector<Vec3>>,4> borderPoints;
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+
+    borderPoints[face].resize(nBorderPointsX_);
+    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
+    {
+      Vec3 previousPoint = borderPointsOld[face][zLevelIndex][0];
+
+      for (int pointIndex = 0; pointIndex < nBorderPointsX_-1; pointIndex++)
+      {
+        const Vec3 &currentPoint = borderPointsOld[face][zLevelIndex][pointIndex];
+        borderPoints[face][zLevelIndex][2*pointIndex+0] = currentPoint;
+
+        // interpolate point in between
+        borderPoints[face][zLevelIndex][2*pointIndex+1] = 0.5*(currentPoint + previousPoint);
+
+        previousPoint = currentPoint;
+      }
+
+      // copy the last point
+      borderPoints[face][zLevelIndex][nBorderPointsNew-1] = borderPointsOld[face][zLevelIndex][nBorderPointsX_-1];
+    }
+  }
 
   // create mesh in own domain, using python, harmonic maps
 
@@ -472,8 +512,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     int nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
     //int nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
-    int nBorderPointsNew = nBorderPointsX_*2-1;
-
     // face0Minus
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
     {
@@ -576,6 +614,27 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     reorganizeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, subdomainIsAtBorder);
+
+    // output points for debugging
+#ifndef NDEBUG
+    std::ofstream file("points.csv", std::ios::out | std::ios::trunc);
+    assert (file.is_open());
+    for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
+    {
+      for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
+      {
+        for (int zLevelIndex = 0; zLevelIndex < borderPointsSubdomain[subdomainIndex][faceNo].size(); zLevelIndex++)
+        {
+          for (int pointIndex = 0; pointIndex < borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].size(); pointIndex++)
+          {
+            file << borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][0] << ";" << borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][1] << ";" << borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][2] << ";";
+          }
+          file << std::endl;
+        }
+      }
+    }
+    file.close();
+#endif
 
     // ----------------------------
     // algorithm:

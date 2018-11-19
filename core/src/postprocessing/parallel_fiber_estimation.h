@@ -63,7 +63,6 @@ protected:
   std::string stlFilename_;   ///< the filename of the STL file
   int bottomZClip_;   ///< bottom z-value of the volume to consider
   int topZClip_;   ///< top z-value of the volume to consider
-  int nElementsZPerSubdomain_;   ///< number of elements per subdomain in z direction
   int nBorderPointsX_;    ///< number of subdivisions of the line
 
   PyObject* moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"

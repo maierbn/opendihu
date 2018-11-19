@@ -22,26 +22,35 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
-  int outputInterval = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
+
+  if (outputInterval_ == 0)
+  {
+    outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
+  }
+
+  if (formatString_.empty())
+  {
+    formatString_ = specificSettings_.getOptionString("format", "Callback");
+  }
+
+  // determine filename base
+  if (filenameBase_.empty() && formatString_ != "Callback")
+  {
+    filenameBase_ = specificSettings_.getOptionString("filename", "out");
+  }
 
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
 
-  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
+  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
   
   // if no output should be written, because of interval, return false
-  if (oldWriteCallCount % outputInterval != 0)
+  if (oldWriteCallCount % outputInterval_ != 0)
   {
     VLOG(2) << " do not write";
     return false;
   }
 
-  // determine filename base
-  if (filenameBase_.empty()
-    && specificSettings_.getOptionString("format", "Callback") != "Callback")
-  {
-    filenameBase_ = specificSettings_.getOptionString("filename", "out");
-  }
 
   // add time step number to file name base
   std::stringstream s;

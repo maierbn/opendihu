@@ -36,9 +36,12 @@ protected:
   std::string filenameBaseWithNo_;   ///< beginning of the file with "_<fileNo>" appended
   std::string filenameBase_;    ///< beginning of the file name for output file
   std::string filename_;        ///< file name with time step number
+  std::string formatString_;    ///< the format option, the string as given in config, e.g. "Paraview"
   int writeCallCount_ = 0;      ///< counter of calls to write
   int outputFileNo_ = 0;        ///< counter of calls to write when actually a file was written
-  
+  int outputInterval_ = 0;      ///< the interval in which calls to write actually write data
+
+
   std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively call Paraview::write
 
   int timeStepNo_;              ///< the current time step no.

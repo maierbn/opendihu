@@ -180,6 +180,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     borderPoints[face].resize(nBorderPointsX_);
     for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
     {
+      borderPoints[face][zLevelIndex].resize(nBorderPointsNew);
       Vec3 previousPoint = borderPointsOld[face][zLevelIndex][0];
 
       for (int pointIndex = 0; pointIndex < nBorderPointsX_-1; pointIndex++)
@@ -197,6 +198,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       borderPoints[face][zLevelIndex][nBorderPointsNew-1] = borderPointsOld[face][zLevelIndex][nBorderPointsX_-1];
     }
   }
+
+  // dimensions of borderPoints[face_t][z-level][pointIndex]: borderPoints[4][nBorderPointsX_][nBorderPointsNew]
 
   // create mesh in own domain, using python, harmonic maps
 
@@ -497,12 +500,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // determine seed points
     // nodePositions contains all node positions in the current 3D mesh
-    //    _______
-    //   |   |   |
-    //   |___|___|
-    // ^ |   |   |
-    // | |___|___|
-    // +-->
+    //     ___1+__
+    //    |   |   |
+    // 0- |___|___| 0+
+    // ^  |   |   |
+    // |  |___|___|
+    // +-->   1-
     std::vector<Vec3> seedPoints;
     // seedPoints contains in this order:
     // face0Minus, face0Plus, face1Minus (with corner points), face1Plus (with corner points),
@@ -512,10 +515,30 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     int nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
     //int nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
+    // boundary indices for face0Minus and face0Plus
+    int i0Begin = 0;
+    int i0End = nBorderPointsNew;
+
+    if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
+      i0Begin += 1;
+
+    if (subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
+      i0End -= 1;
+
+    // boundary indices for face1Minus and face1Plus
+    int i1Begin = 0;
+    int i1End = nBorderPointsNew;
+
+    if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
+      i1Begin += 1;
+
+    if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
+      i1End -= 1;
+
     // face0Minus
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
     {
-      for (int i = 0; i < nBorderPointsNew; i++)
+      for (int i = i0Begin; i < i0End; i++)
       {
         seedPoints.push_back(nodePositions[i*nNodesX + 0]);
       }
@@ -524,7 +547,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face0Plus
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
     {
-      for (int i = 0; i < nBorderPointsNew; i++)
+      for (int i = i0Begin; i < i0End; i++)
       {
         seedPoints.push_back(nodePositions[i*nNodesX + (nNodesX-1)]);
       }
@@ -533,7 +556,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face1Minus (with corner points)
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
     {
-      for (int i = 0; i < nBorderPointsNew; i++)
+      for (int i = i1Begin; i < i1End; i++)
       {
         seedPoints.push_back(nodePositions[i]);
       }
@@ -542,20 +565,20 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face1Plus (with corner points)
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
     {
-      for (int i = 0; i < nBorderPointsNew; i++)
+      for (int i = i1Begin; i < i1End; i++)
       {
         seedPoints.push_back(nodePositions[(nNodesY-1)*nNodesX + i]);
       }
     }
 
     // horizontal center line (with corner points)
-    for (int i = 0; i < nBorderPointsNew; i++)
+    for (int i = i1Begin; i < i1End; i++)
     {
       seedPoints.push_back(nodePositions[int(nNodesY/2)*nNodesX + i]);
     }
 
     // vertical center line (with corner points and center point)
-    for (int i = 0; i < nBorderPointsNew; i++)
+    for (int i = i0Begin; i < i0End; i++)
     {
       seedPoints.push_back(nodePositions[i*nNodesX + int(nNodesX/2)]);
     }
@@ -694,11 +717,32 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   int nBorderPointsNew = nBorderPointsX_*2-1;
   int currentStreamlineIndex = 0;
 
+  // boundary indices for face0Minus and face0Plus
+  int i0Begin = 0;
+  int i0End = nBorderPointsNew;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
+    i0Begin += 1;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
+    i0End -= 1;
+
+  // boundary indices for face1Minus and face1Plus
+  int i1Begin = 0;
+  int i1End = nBorderPointsNew;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
+    i1Begin += 1;
+
+  if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
+    i1End -= 1;
+
   // face0Minus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
   {
     // subdomains 0,4
-    for (int streamlineIndex = 0; streamlineIndex <= nBorderPointsX_; streamlineIndex++)
+    int pointIndex = 0;
+    for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -718,7 +762,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     }
 
     // subdomains 2,6
-    for (int streamlineIndex = nBorderPointsX_; streamlineIndex < nBorderPointsNew; streamlineIndex++)
+    for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex < currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)

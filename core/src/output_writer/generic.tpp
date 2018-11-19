@@ -23,22 +23,6 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
 
-  if (outputInterval_ == 0)
-  {
-    outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
-  }
-
-  if (formatString_.empty())
-  {
-    formatString_ = specificSettings_.getOptionString("format", "Callback");
-  }
-
-  // determine filename base
-  if (filenameBase_.empty() && formatString_ != "Callback")
-  {
-    filenameBase_ = specificSettings_.getOptionString("filename", "out");
-  }
-
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
 

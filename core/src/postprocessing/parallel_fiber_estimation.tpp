@@ -715,7 +715,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
 
   int nBorderPointsNew = nBorderPointsX_*2-1;
-  int currentStreamlineIndex = 0;
+  int streamlineIndex = 0;
 
   // boundary indices for face0Minus and face0Plus
   int i0Begin = 0;
@@ -742,13 +742,12 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   {
     // subdomains 0,4
     int pointIndex = 0;
-    for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++, pointIndex++)
+    for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 0;
-        const int pointIndex = streamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -756,19 +755,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 4;
-        const int pointIndex = streamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
 
     // subdomains 2,6
-    for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex < currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+    pointIndex = 0;
+    streamlineIndex--;  // consider center point twice
+    for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 2;
-        const int pointIndex = streamlineIndex-nBorderPointsX_;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -776,26 +775,22 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 6;
-        const int pointIndex = streamlineIndex-nBorderPointsX_;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
-
-    // set index to beginning of next face
-    currentStreamlineIndex = nBorderPointsNew;
   }
 
   // face0Plus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
   {
     // subdomains 1,5
-    for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+    int pointIndex = 0;
+    for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 1;
-        const int pointIndex = streamlineIndex-currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -803,19 +798,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 5;
-        const int pointIndex = streamlineIndex-currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
 
     // subdomains 3,7
-    for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex < currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+    pointIndex = 0;
+    streamlineIndex--;  // consider center point twice
+    for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 3;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -823,26 +818,22 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 7;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
-
-    // set index to beginning of next face
-    currentStreamlineIndex += nBorderPointsNew;
   }
 
   // face1Minus (without corner points)
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
   {
     // subdomains 0,4
-    for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+    int pointIndex = 0;
+    for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 0;
-        const int pointIndex = streamlineIndex - currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -850,19 +841,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 4;
-        const int pointIndex = streamlineIndex - currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
 
     // subdomains 1,5
-    for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+    pointIndex = 0;
+    streamlineIndex--;  // consider center point twice
+    for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 1;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -870,26 +861,22 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 5;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
-
-    // set index to beginning of next face
-    currentStreamlineIndex += nBorderPointsNew;
   }
 
   // face1Plus (with corner points)
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
   {
     // subdomains 2,6
-    for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+    int pointIndex = 0;
+    for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 2;
-        const int pointIndex = streamlineIndex - currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -897,19 +884,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 6;
-        const int pointIndex = streamlineIndex - currentStreamlineIndex;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
 
     // subdomains 3,7
-    for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+    pointIndex = 0;
+    streamlineIndex--;  // consider center point twice
+    for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
       {
         const int subdomainIndex = 3;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
@@ -917,24 +904,20 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
       for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
       {
         const int subdomainIndex = 7;
-        const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
     }
-
-    // set index to beginning of next face
-    currentStreamlineIndex += nBorderPointsNew;
   }
 
   // horizontal center line (with corner points)
   // subdomains 0,4
-  for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+  int pointIndex = 0;
+  for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 0;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -942,19 +925,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 4;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 1,5
-  for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+  pointIndex = 0;
+  streamlineIndex--;  // consider center point twice
+  for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 1;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -962,19 +945,18 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 5;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 2,6
-  for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+  pointIndex = 0;
+  for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 2;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -982,19 +964,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 6;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 3,7
-  for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+  pointIndex = 0;
+  streamlineIndex--;  // consider center point twice
+  for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 3;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -1002,23 +984,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 7;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
-
-  // set index to beginning of next face
-  currentStreamlineIndex += nBorderPointsNew;
 
   // vertical center line (with corner points and center point)
   // subdomains 0,4
-  for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+  pointIndex = 0;
+  for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 0;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -1026,19 +1004,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 4;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 1,5
-  for (int streamlineIndex = currentStreamlineIndex; streamlineIndex <= currentStreamlineIndex + nBorderPointsX_; streamlineIndex++)
+  pointIndex = 0;
+  streamlineIndex--;  // consider center point twice
+  for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 1;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -1046,19 +1024,18 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 5;
-      const int pointIndex = streamlineIndex - currentStreamlineIndex;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 2,6
-  for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+  pointIndex = 0;
+  for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 2;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -1066,19 +1043,19 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 6;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // subdomains 3,7
-  for (int streamlineIndex = currentStreamlineIndex + nBorderPointsX_; streamlineIndex <= currentStreamlineIndex + nBorderPointsNew; streamlineIndex++)
+  pointIndex = 0;
+  streamlineIndex--;  // consider center point twice
+  for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
     {
       const int subdomainIndex = 3;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
@@ -1086,14 +1063,12 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
     {
       const int subdomainIndex = 7;
-      const int pointIndex = streamlineIndex - (currentStreamlineIndex + nBorderPointsX_);
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
   }
 
   // set index to beginning of next face
-  currentStreamlineIndex += nBorderPointsNew;
-  assert(currentStreamlineIndex == streamlineZPoints.size());
+  assert(streamlineIndex == streamlineZPoints.size());
 
 }
 

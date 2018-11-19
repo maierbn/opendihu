@@ -12,6 +12,15 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings) :
   // get the rank subset of all processes that collectively call the write methods
   rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
+
+  outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
+  formatString_ = specificSettings_.getOptionString("format", "Callback");
+
+  // determine filename base
+  if (formatString_ != "Callback")
+  {
+    filenameBase_ = specificSettings_.getOptionString("filename", "out");
+  }
 }
 
 Generic::~Generic()

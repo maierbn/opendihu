@@ -201,8 +201,8 @@ else:
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
-
-	if env["USE_CRAY_PAT"]:
+  
+  if env["USE_CRAY_PAT"]:
     print("Compile with HAVE_PAT\n")
     env.Append(CPPDEFINES = "-DHAVE_PAT")
     env.MergeFlags('-finstrument-functions')

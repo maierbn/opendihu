@@ -40,22 +40,24 @@ class EasyLoggingPP(Package):
         self.check_text = check_text
         self.static = False
         
+        #self.build_flags = '-std=c++14'
+        
+    def check(self, ctx):
+        env = ctx.env
+        ctx.Message('Checking for EasyLoggingPP ... ')
+        
         # Setup the build handler.
         self.set_build_handler([
             'rm -f README.txt',
             'mkdir -p  ${PREFIX}/include',
             'mkdir -p  ${PREFIX}/src',
             'cp ${SOURCE_DIR}/easylogging++.h ${PREFIX}/include',
-            'cp ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src',
-            'sed -i \'1906i      m_modules.insert(std::make_pair(ss.str(), level));\' ${PREFIX}/src/easylogging++.cc',
-            'sed -i \'1907i      addSuffix(ss, ".tpp", ".hh");\' ${PREFIX}/src/easylogging++.cc',
-            'g++ -c ${PREFIX}/src/easylogging++.cc -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -o ${PREFIX}/src/easylogging++.o',
+            'cp ${SOURCE_DIR}/easylogging++.cc ${PREFIX}/src/easylogging++.cpp',
+            'sed -i \'1906i      m_modules.insert(std::make_pair(ss.str(), level));\' ${PREFIX}/src/easylogging++.cpp',
+            'sed -i \'1907i      addSuffix(ss, ".tpp", ".hh");\' ${PREFIX}/src/easylogging++.cpp',
+            env["CXX"]+' -c ${PREFIX}/src/easylogging++.cpp -I${PREFIX}/include -std=c++11 -DELPP_FEATURE_CRASH_LOG -DELPP_NO_DEFAULT_LOG_FILE -o ${PREFIX}/src/easylogging++.o',
         ])
-        #self.build_flags = '-std=c++14'
         
-    def check(self, ctx):
-        env = ctx.env
-        ctx.Message('Checking for EasyLoggingPP ... ')
         self.check_options(env)
 
         res = super(EasyLoggingPP, self).check(ctx)

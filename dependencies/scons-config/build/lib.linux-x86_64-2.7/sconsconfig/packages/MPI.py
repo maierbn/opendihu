@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
 
   def check(self, ctx):
-    if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+    if os.environ.get("PE_ENV") is not None:
       ctx.Message('Not checking for MPI ... ')
       ctx.Result(True)
       return True
@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     use_mpi_dir = False
     
     # on hazel hen login node do not run MPI test program because this is not possible (only compile)
-    if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+    if os.environ.get("PE_ENV") is not None:
       self.run = False
       use_showme = False
       use_mpi_dir = True

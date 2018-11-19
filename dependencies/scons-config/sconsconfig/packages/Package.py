@@ -785,7 +785,7 @@ class Package(object):
     if self.run:
       res = ctx.TryRun(text, self.ext)
       
-      if not res[0] and os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+      if not res[0] and os.environ.get("PE_ENV") is not None:
         ctx.Log("Run failed on hazelhen, try again, this time only link")
         res = (ctx.TryLink(text, self.ext), '')
     else:

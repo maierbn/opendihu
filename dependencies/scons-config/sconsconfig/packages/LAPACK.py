@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
           run_in_docker = True
         
         # Setup the build handler.
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:
         #if os.environ.get("LIBSCI_BASE_DIR") is not None:
         #  self.libs = ["sci_cray_mpi_mp"]
           #if os.environ.get("PE_ENV") == "GNU":
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
           self.headers = ["lapacke.h"]
 
     def check(self, ctx):
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:
           ctx.Message('Not checking for LAPACK ... ')
           ctx.Result(True)
           return True

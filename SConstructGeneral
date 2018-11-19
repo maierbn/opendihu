@@ -125,7 +125,7 @@ sconsconfig.check(sconf)
 sconf.Finish()
 
 # disable unit tests on hazel hen
-if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   env['no_tests'] = True
 
 # -----------------------------------------------

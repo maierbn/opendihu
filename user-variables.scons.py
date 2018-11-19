@@ -87,7 +87,7 @@ except:
 
 # other variables for hazelhen
 import os
-if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc="cc"   # C compiler
   CC="CC"   # C++ compiler
   mpiCC="CC"  # mpi C++ compiler

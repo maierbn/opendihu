@@ -49,7 +49,7 @@ sconsconfig.select(
     packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
     packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
     packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
-    packages.googletest(required=True),   # This is the testing framework.
+    #packages.googletest(required=True),   # This is the testing framework.
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG

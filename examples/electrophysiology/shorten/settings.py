@@ -1,8 +1,8 @@
 # Electrophysiology
 # Monodomain with either Shorten or Hodgkin-Huxley model as rhs
 
-end_time = 30.0   # [ms] end time of simulation
-n_elements = 500
+end_time = 20.0   # [ms] end time of simulation
+n_elements = 2400
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -18,9 +18,9 @@ cellml_file = "../input/shorten.cpp"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
+dt_1D = 1e-4                      # timestep width of diffusion
+dt_0D = 3e-4                      # timestep width of ODEs
+dt_3D = 3e-4                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
 # import needed packages
@@ -152,6 +152,8 @@ config = {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
         "timeStepOutputInterval": 1e4,
+        "durationLogKey": "duration_0D",
+        "logTimeStepWidthAsKey": "dt_0D",
         "inputMeshIsGlobal": True,
         "dirichletBoundaryConditions": {},
   
@@ -199,10 +201,10 @@ config = {
           "inputMeshIsGlobal": True,
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": False, "onlyNodalValues":True},
+          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues":True},
           #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
           #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-          {"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+          #{"format": "PythonFile", "filename": "out/fibre", "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
         ]
       },
     },

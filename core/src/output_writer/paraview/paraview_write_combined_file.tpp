@@ -19,7 +19,7 @@ namespace OutputWriter
 {
 
 template<typename T>
-void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values)
+void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier)
 {
   // fill the write buffer with the local values
   std::string writeBuffer;
@@ -29,29 +29,29 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   {
     VLOG(1) << "Paraview::writeCombinedValuesVector, values: " << values;
 
-    // gather data length of total vector to rank 0
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
-
-    static int globalValuesSize = 0;
-
-    if (globalValuesSize == 0)
-    {
-      MPIUtility::handleReturnValue(MPI_Reduce(&localValuesSize, &globalValuesSize, 1, MPI_INT,
-                                               MPI_SUM, 0, this->rankSubset_->mpiCommunicator()));
-    }
-
-    VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize;
-
-    // determine number of previous values
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
-    static int nPreviousValues = 0;
-    static bool nPreviousValuesInitialized = false;
 
-    if (!nPreviousValuesInitialized)
+    // initialize cached values
+    if (globalValuesSize_.size() < identifier+1)
     {
+      globalValuesSize_.resize(identifier+1);
+
+      // gather data length of total vector to rank 0
+      int globalValuesSize = 0;
+      MPIUtility::handleReturnValue(MPI_Reduce(&localValuesSize, &globalValuesSize, 1, MPI_INT,
+                                                MPI_SUM, 0, this->rankSubset_->mpiCommunicator()));
+
+      globalValuesSize_[identifier] = globalValuesSize;  // value only set on rank 0, all other ranks have value 0
+
+      // determine number of previous values
+      nPreviousValues_.resize(identifier+1);
+      int nPreviousValues = 0;
       MPIUtility::handleReturnValue(MPI_Exscan(&nLocalValues, &nPreviousValues, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+      nPreviousValues_[identifier] = nPreviousValues;
+
+      VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize;
     }
-    nPreviousValuesInitialized = true;
 
     std::list<int32_t> valuesVector;
 
@@ -78,7 +78,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     // on rank 0 prepend the encoded total length of the data vector in bytes
     if (ownRankNo == 0)
     {
-      valuesVector.push_front(globalValuesSize);
+      valuesVector.push_front(globalValuesSize_[identifier]);
     }
 
     // send first value to previous rank
@@ -109,7 +109,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     }
 
     // the end of the own values are contained in the own written data plus some part of the first value of the next rank
-    if (nPreviousValues % 3 == 0)
+    if (nPreviousValues_[identifier] % 3 == 0)
     {
       valuesVector.push_back(firstValueNextRank);
       writeBuffer = Paraview::encodeBase64Int(valuesVector.begin(), valuesVector.end(), false);  //without leading dataset size
@@ -128,7 +128,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       //info << "offset = 0 bits";
 
     }
-    else if (nPreviousValues % 3 == 1)
+    else if (nPreviousValues_[identifier] % 3 == 1)
     {
       // offset = 4 bits (4 bits were written by the previous rank)
       // add dummy value (4 bytes)
@@ -160,7 +160,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
 
       writeBuffer = stringData;
     }
-    else if (nPreviousValues % 3 == 2)
+    else if (nPreviousValues_[identifier] % 3 == 2)
     {
       // offset = 2 bits (2 bits were written by the previous rank)
       // add two dummy values (8 bytes)
@@ -569,7 +569,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
        pointDataArrayIter != vtkPiece.properties.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
   {
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[fieldVariableNo]);
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[fieldVariableNo], fieldVariableNo);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
@@ -577,21 +577,21 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   }
 
   // write geometry field data
-  writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, geometryFieldValues, fieldVariableNo++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write connectivity values
-  writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, connectivityValues, fieldVariableNo++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());
   outputFilePartNo++;
 
   // write offset values
-  writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues);
+  writeCombinedValuesVector(fileHandle, ownRankNo, offsetValues, fieldVariableNo++);
 
   // write next xml constructs
   writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

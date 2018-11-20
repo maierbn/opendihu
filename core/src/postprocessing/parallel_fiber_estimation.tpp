@@ -515,30 +515,30 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     int nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
     //int nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
-    // boundary indices for face0Minus and face0Plus
-    int i0Begin = 0;
-    int i0End = nBorderPointsNew;
+    // boundary indices for face0Minus and face0Plus (vertical direction)
+    int iBeginVertical = 0;
+    int iEndVertical = nBorderPointsNew;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
-      i0Begin += 1;
+      iBeginVertical += 1;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
-      i0End -= 1;
+      iEndVertical -= 1;
 
-    // boundary indices for face1Minus and face1Plus
-    int i1Begin = 0;
-    int i1End = nBorderPointsNew;
+    // boundary indices for face1Minus and face1Plus (horizontal direction)
+    int iBeginHorizontal = 0;
+    int iEndHorizontal = nBorderPointsNew;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
-      i1Begin += 1;
+      iBeginHorizontal += 1;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
-      i1End -= 1;
+      iEndHorizontal -= 1;
 
     // face0Minus
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
     {
-      for (int i = i0Begin; i < i0End; i++)
+      for (int i = iBeginVertical; i < iEndVertical; i++)
       {
         seedPoints.push_back(nodePositions[i*nNodesX + 0]);
       }
@@ -547,7 +547,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face0Plus
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
     {
-      for (int i = i0Begin; i < i0End; i++)
+      for (int i = iBeginVertical; i < iEndVertical; i++)
       {
         seedPoints.push_back(nodePositions[i*nNodesX + (nNodesX-1)]);
       }
@@ -556,7 +556,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face1Minus (with corner points)
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
     {
-      for (int i = i1Begin; i < i1End; i++)
+      for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
       {
         seedPoints.push_back(nodePositions[i]);
       }
@@ -565,20 +565,20 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // face1Plus (with corner points)
     if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
     {
-      for (int i = i1Begin; i < i1End; i++)
+      for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
       {
         seedPoints.push_back(nodePositions[(nNodesY-1)*nNodesX + i]);
       }
     }
 
     // horizontal center line (with corner points)
-    for (int i = i1Begin; i < i1End; i++)
+    for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
       seedPoints.push_back(nodePositions[int(nNodesY/2)*nNodesX + i]);
     }
 
     // vertical center line (with corner points and center point)
-    for (int i = i0Begin; i < i0End; i++)
+    for (int i = iBeginVertical; i < iEndVertical; i++)
     {
       seedPoints.push_back(nodePositions[i*nNodesX + int(nNodesX/2)]);
     }
@@ -637,6 +637,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     reorganizeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, subdomainIsAtBorder);
+
+    // fill points that are on the border of the domain
 
     // output points for debugging
 #ifndef NDEBUG
@@ -717,32 +719,32 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   int nBorderPointsNew = nBorderPointsX_*2-1;
   int streamlineIndex = 0;
 
-  // boundary indices for face0Minus and face0Plus
-  int i0Begin = 0;
-  int i0End = nBorderPointsNew;
+  // boundary indices for face0Minus and face0Plus (vertical)
+  int iBeginVertical = 0;
+  int iEndVertical = nBorderPointsNew;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
-    i0Begin += 1;
+    iBeginVertical += 1;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
-    i0End -= 1;
+    iEndVertical -= 1;
 
-  // boundary indices for face1Minus and face1Plus
-  int i1Begin = 0;
-  int i1End = nBorderPointsNew;
+  // boundary indices for face1Minus and face1Plus (horizontal)
+  int iBeginHorizontal = 0;
+  int iEndHorizontal = nBorderPointsNew;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
-    i1Begin += 1;
+    iBeginHorizontal += 1;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
-    i1End -= 1;
+    iEndHorizontal -= 1;
 
   // face0Minus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
   {
     // subdomains 0,4
-    int pointIndex = 0;
-    for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
+    int pointIndex = iBeginVertical;
+    for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -762,7 +764,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     // subdomains 2,6
     pointIndex = 0;
     streamlineIndex--;  // consider center point twice
-    for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
+    for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
@@ -784,8 +786,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
   {
     // subdomains 1,5
-    int pointIndex = 0;
-    for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
+    int pointIndex = iBeginVertical;
+    for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -805,7 +807,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     // subdomains 3,7
     pointIndex = 0;
     streamlineIndex--;  // consider center point twice
-    for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
+    for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -827,8 +829,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
   {
     // subdomains 0,4
-    int pointIndex = 0;
-    for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
+    int pointIndex = iBeginHorizontal;
+    for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -848,7 +850,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     // subdomains 1,5
     pointIndex = 0;
     streamlineIndex--;  // consider center point twice
-    for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
+    for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -870,8 +872,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
   {
     // subdomains 2,6
-    int pointIndex = 0;
-    for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
+    int pointIndex = iBeginHorizontal;
+    for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -891,7 +893,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     // subdomains 3,7
     pointIndex = 0;
     streamlineIndex--;  // consider center point twice
-    for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
+    for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
       for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -911,8 +913,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
 
   // horizontal center line (with corner points)
   // subdomains 0,4
-  int pointIndex = 0;
-  for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
+  int pointIndex = iBeginHorizontal;
+  for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -932,7 +934,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   // subdomains 1,5
   pointIndex = 0;
   streamlineIndex--;  // consider center point twice
-  for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
+  for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -950,8 +952,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   }
 
   // subdomains 2,6
-  pointIndex = 0;
-  for (int i = i1Begin; i < i1End; i++, streamlineIndex++, pointIndex++)
+  pointIndex = iBeginHorizontal;
+  for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -971,7 +973,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   // subdomains 3,7
   pointIndex = 0;
   streamlineIndex--;  // consider center point twice
-  for (int i = i1Begin-1; i < i1End; i++, streamlineIndex++, pointIndex++)
+  for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -990,8 +992,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
 
   // vertical center line (with corner points and center point)
   // subdomains 0,4
-  pointIndex = 0;
-  for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
+  pointIndex = iBeginVertical;
+  for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -1011,7 +1013,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   // subdomains 1,5
   pointIndex = 0;
   streamlineIndex--;  // consider center point twice
-  for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
+  for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -1029,8 +1031,8 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   }
 
   // subdomains 2,6
-  pointIndex = 0;
-  for (int i = i0Begin; i < i0End; i++, streamlineIndex++, pointIndex++)
+  pointIndex = iBeginVertical;
+  for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
@@ -1050,7 +1052,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   // subdomains 3,7
   pointIndex = 0;
   streamlineIndex--;  // consider center point twice
-  for (int i = i0Begin-1; i < i0End; i++, streamlineIndex++, pointIndex++)
+  for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
     for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)

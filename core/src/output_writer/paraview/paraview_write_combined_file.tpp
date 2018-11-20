@@ -32,16 +32,26 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     // gather data length of total vector to rank 0
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
 
-    int globalValuesSize = 0;
-    MPIUtility::handleReturnValue(MPI_Reduce(&localValuesSize, &globalValuesSize, 1, MPI_INT,
-                                             MPI_SUM, 0, this->rankSubset_->mpiCommunicator()));
+    static int globalValuesSize = 0;
+
+    if (globalValuesSize == 0)
+    {
+      MPIUtility::handleReturnValue(MPI_Reduce(&localValuesSize, &globalValuesSize, 1, MPI_INT,
+                                               MPI_SUM, 0, this->rankSubset_->mpiCommunicator()));
+    }
 
     VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize;
 
     // determine number of previous values
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
-    int nPreviousValues = 0;
-    MPIUtility::handleReturnValue(MPI_Exscan(&nLocalValues, &nPreviousValues, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+    static int nPreviousValues = 0;
+    static bool nPreviousValuesInitialized = false;
+
+    if (!nPreviousValuesInitialized)
+    {
+      MPIUtility::handleReturnValue(MPI_Exscan(&nLocalValues, &nPreviousValues, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
+    }
+    nPreviousValuesInitialized = true;
 
     std::list<int32_t> valuesVector;
 

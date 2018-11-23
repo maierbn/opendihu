@@ -1962,6 +1962,13 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
 }
 
 template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+ownRankPartitioningIndex(int coordinateDirection)
+{
+  return ownRankPartitioningIndex_[coordinateDirection];
+}
+
+template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)
 {

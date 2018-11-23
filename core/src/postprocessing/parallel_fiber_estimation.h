@@ -45,7 +45,7 @@ protected:
   void generateParallelMesh();
 
   //! recursive part of the algorithm
-  void generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, int level, std::array<bool,4> subdomainIsAtBorder);
+  void generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<bool,4> subdomainIsAtBorder);
 
   //! take the streamlines at equidistant z points in streamlineZPoints and copy them to the array borderPointsSubdomain
   void reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<bool,4> &subdomainIsAtBorder);
@@ -64,9 +64,12 @@ protected:
   int bottomZClip_;   ///< bottom z-value of the volume to consider
   int topZClip_;   ///< top z-value of the volume to consider
   int nBorderPointsX_;    ///< number of subdivisions of the line
+  int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
 
   PyObject* moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
+  PyObject* moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
   std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
+  std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 };

@@ -121,6 +121,115 @@ def get_intersecting_line_segment(triangle, z_value):
   
   return edge
 
+def create_loop(z_value, stl_mesh, loop):
+  """
+  Sample the mesh at a given z level, result is a loop, the edges are in no particular order.
+  The output loop is a list of edges.
+  :param z_value: z level of all extracted points
+  :param stl_mesh: the mesh as stl.mesh object
+  :param loop: this is the output, this list will contain edges [p0,1]
+  """
+  debug = False
+
+  # loop over all triangles in mesh
+  for (no,p) in enumerate(stl_mesh.points):
+    # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
+
+    triangle = p
+
+    p1 = np.array(triangle[0:3])
+    p2 = np.array(triangle[3:6])
+    p3 = np.array(triangle[6:9])
+    
+    # get intersection of current triangle with z plane
+    edge = get_intersecting_line_segment([p1, p2, p3], z_value)
+    
+    # if there is an intersection
+    if edge is not None:
+    
+      if debug:
+        print("triangle ",p1,p2,p3,", found intersection edge: ", edge)
+      
+      # check if edge is already contained in loop
+      edge_is_already_in_loop = False
+      
+      # for all points in the current loop
+      for [p1, p2] in loop:
+        if (np.allclose(p1, edge[0]) and np.allclose(p2, edge[1])) \
+          or (np.allclose(p2, edge[0]) and np.allclose(p1, edge[1])):
+          edge_is_already_in_loop = True
+          break
+      
+      
+      # append edge to loop
+      if not edge_is_already_in_loop:
+        if debug:
+          print(" add edge ",edge," to loop no ", loop_no)
+        #print(", prev: ", loop, "->", 
+        loop.append(edge)
+        #print(loop
+      else:
+        if debug:
+          print("edge_is_already_in_loop")
+      
+def order_loop(loop, first_point):
+  """
+  Create a new loop with consecutive edges, starting from first_point, which has to be a point contained in the loop
+  :param loop: list of edges in no particular order
+  :param first_point: the point which will be the first point of the resulting loop, must be a point of the input loop
+  :return: a list of points
+  """
+  
+  debug = False
+  
+  # fill new loop starting with first_point, ordered by consecutive edges
+  new_loop = [first_point]
+  
+  if debug:
+    print("")
+    print("order_loop(loop={},first_point={})".format(loop,first_point))
+    print("first point: ", first_point)
+  
+  previous_end_point = first_point
+  current_end_point = first_point
+  
+  while len(new_loop) < len(loop)+1:
+      
+    next_point_found = False
+      
+    # iterate over points in current loop
+    for edge in loop:
+      if np.allclose(current_end_point, edge[0]) and not np.allclose(previous_end_point, edge[1]):
+        new_loop.append(edge[1])
+        previous_end_point = current_end_point
+        current_end_point = edge[1]
+        next_point_found = True
+        
+        if debug:
+          print("add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
+          
+      elif np.allclose(current_end_point, edge[1]) and not np.allclose(previous_end_point, edge[0]):
+        new_loop.append(edge[0])
+        previous_end_point = current_end_point
+        current_end_point = edge[0]
+        next_point_found = True
+        
+        if debug:
+          print("add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
+        
+    # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
+    if np.allclose(current_end_point, first_point):
+      if debug:
+        print("start point reached")
+      break
+      
+    if not next_point_found:
+      if debug: 
+        print("no point found that continues loop")
+      print("Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no]))
+      break
+  return new_loop
+      
 def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh):
   """
   Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip
@@ -154,47 +263,8 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
       
     print("loop no {}/{}".format(loop_no,len(z_samples)))
 
-    # loop over all triangles in mesh
-    for (no,p) in enumerate(stl_mesh.points):
-      # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
-
-      triangle = p
-
-      p1 = np.array(triangle[0:3])
-      p2 = np.array(triangle[3:6])
-      p3 = np.array(triangle[6:9])
-      
-      # get intersection of current triangle with z plane
-      edge = get_intersecting_line_segment([p1, p2, p3], z_value)
-      
-      # if there is an intersection
-      if edge is not None:
-      
-        if debug:
-          print("triangle ",p1,p2,p3,", found intersection edge: ", edge)
-        
-        # check if edge is already contained in loop
-        edge_is_already_in_loop = False
-        
-        # for all points in the current loop
-        for [p1, p2] in loops[loop_no]:
-          if (np.allclose(p1, edge[0]) and np.allclose(p2, edge[1])) \
-            or (np.allclose(p2, edge[0]) and np.allclose(p1, edge[1])):
-            edge_is_already_in_loop = True
-            break
-        
-        
-        # append edge to loop
-        if not edge_is_already_in_loop:
-          if debug:
-            print(" add edge ",edge," to loop no ", loop_no)
-          #print(", prev: ", loops[loop_no], "->", 
-          loops[loop_no].append(edge)
-          #print(loops[loop_no]
-        else:
-          if debug:
-            print("edge_is_already_in_loop")
-        
+    create_loop(z_value, stl_mesh, loops[loop_no])
+    
   if debug:      
     print("-----------------")
     print("")
@@ -234,58 +304,7 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
           min_x = loop_point[0]
           first_point = loop_point
       
-    
-    # fill new loop starting with first_point, ordered by consecutive edges
-    new_loop = [first_point]
-    
-    if debug:
-      print("first point: ", first_point)
-    
-    previous_end_point = first_point
-    current_end_point = first_point
-    
-    #
-    #new_loop = []
-    #for edge in loop:
-    #  for p in edge:
-    #    new_loop.append(p)
-    
-    if True:
-      while len(new_loop) < len(loop)+1:
-          
-        next_point_found = False
-          
-        # iterate over points in current loop
-        for edge in loop:
-          if np.allclose(current_end_point, edge[0]) and not np.allclose(previous_end_point, edge[1]):
-            new_loop.append(edge[1])
-            previous_end_point = current_end_point
-            current_end_point = edge[1]
-            next_point_found = True
-            
-            if debug:
-              print("add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
-              
-          elif np.allclose(current_end_point, edge[1]) and not np.allclose(previous_end_point, edge[0]):
-            new_loop.append(edge[0])
-            previous_end_point = current_end_point
-            current_end_point = edge[0]
-            next_point_found = True
-            
-            if debug:
-              print("add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
-            
-        # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
-        if np.allclose(current_end_point, first_point):
-          if debug:
-            print("start point reached")
-          break
-          
-        if not next_point_found:
-          if debug: 
-            print("no point found that continues loop")
-          print("Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no]))
-          break
+    new_loop = order_loop(loop, first_point)
             
     # store new loop 
     loops[loop_no] = list(new_loop)
@@ -345,3 +364,428 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
       list_loops.append(list_loop)
   
   return loops
+
+
+def create_point_marker(point, markers, size=None):
+  if size is None:
+    size = 0.02
+  diag0 = np.array([-size,-size,-size])
+  diag1 = np.array([size,-size,-size])
+  diag2 = np.array([-size,size,-size])
+  diag3 = np.array([size,size,-size])
+  diag4 = np.array([-size,-size,size])
+  diag5 = np.array([size,-size,size])
+  diag6 = np.array([-size,size,size])
+  diag7 = np.array([size,size,size])
+  markers += [
+    [point+diag0,point+diag3,point+diag1],[point+diag0,point+diag2,point+diag3],  # bottom
+    [point+diag4,point+diag5,point+diag7],[point+diag4,point+diag7,point+diag6],  # top
+    [point+diag0,point+diag1,point+diag5],[point+diag0,point+diag5,point+diag4],  # front
+    [point+diag2,point+diag7,point+diag3],[point+diag2,point+diag6,point+diag7],  # back
+    [point+diag2,point+diag0,point+diag4],[point+diag2,point+diag4,point+diag6],  # left
+    [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
+  ]
+
+def create_ring_section(input_filename, start_point, end_point, z_value, n_points):
+  """
+  Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
+  From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
+  The direction is such that the distance of the curve
+  :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
+  :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
+  :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
+  :param z_value: the z level of the line on the surface
+  :param n_points: number of points on the border
+  """
+  
+  debug = False
+  write_output_mesh = False
+  
+  stl_mesh = mesh.Mesh.from_file(input_filename)
+  
+  # create a full loop at the given z_value
+  loop = []
+  create_loop(z_value, stl_mesh, loop)
+  
+  new_loop = order_loop(loop, loop[0][0])
+  
+  if debug:
+    print("new_loop: {}".format(new_loop))
+  
+  # determine edge which is closest to start_point
+  min_distance_start_point = None
+  min_distance_end_point = None
+  
+  near_start_point = np.array(start_point)
+  near_end_point = np.array(end_point)
+  loop_start_point = None
+  loop_end_point = None
+  edge_index_end = 0
+  edge_index_start = 0
+  
+  # loop over edges
+  for i,edge in enumerate([[new_loop[i], new_loop[(i+1)%len(new_loop)]] for i in range(len(new_loop))]):
+    p0 = np.array(edge[0])
+    p1 = np.array(edge[1])
+    u = -p0 + p1
+    
+    if debug:
+      print("edge {}, u: {}".format(edge, u))
+    
+    # determine loop_start_point as the point in the loop that is closest to the given near_start_point
+    if u.dot(u) < 1e-10:
+      t_start = -1
+    else:
+      t_start = (near_start_point - p0).dot(u) / u.dot(u)
+
+    if debug:
+      print("t_start: {}".format(t_start))
+      
+    if t_start >= 0 and t_start <= 1:
+      plumb_foot_point_start = p0 + t_start * u
+      
+      if debug:
+        print("")
+        print("start point found, plumb_foot_point_start: ",plumb_foot_point_start)
+        print("")
+      
+      distance_start_point = np.linalg.norm(near_start_point - plumb_foot_point_start)
+      if distance_start_point < min_distance_start_point or min_distance_start_point is None:
+        min_distance_start_point = distance_start_point
+        loop_start_point = plumb_foot_point_start
+        edge_index_start = (i+1)%len(new_loop)
+        
+    if np.linalg.norm(near_start_point - p0) < min_distance_start_point or min_distance_start_point is None:
+      min_distance_start_point = np.linalg.norm(near_start_point - p0)
+      loop_start_point = p0
+      edge_index_start = i
+      
+      if debug:
+        print("take p0 ({}), new min_distance_start_point: {}".format(p0,min_distance_start_point))
+      
+    if np.linalg.norm(near_start_point - p1) < min_distance_start_point or min_distance_start_point is None:
+      min_distance_start_point = np.linalg.norm(near_start_point - p1)
+      loop_start_point = p1
+      edge_index_start = (i+1)%len(new_loop)
+
+      if debug:
+        print("take p1 ({}), new min_distance_start_point: {}".format(p1,min_distance_start_point))
+        
+    # determine loop_end_point as the point in the loop that is closest to the given near_end_point
+    if u.dot(u) < 1e-10:
+      t_end = -1
+    else:
+      t_end = (near_end_point - p0).dot(u) / u.dot(u)
+    
+    if debug:
+      print("t_end: {}".format(t_end))
+    
+    if t_end >= 0 and t_end <= 1:
+      plumb_foot_point_end = p0 + t_end * u
+      
+    if debug:
+      print("")
+      print("end point found, plumb_foot_point_end: ",plumb_foot_point_end)
+      print("")
+      
+      distance_end_point = np.linalg.norm(near_end_point - plumb_foot_point_end)
+      if distance_end_point < min_distance_end_point or distance_end_point is None:
+        min_distance_end_point = distance_end_point
+        loop_end_point = plumb_foot_point_end
+        edge_index_end = (i+1)%len(new_loop)
+      
+    if np.linalg.norm(near_end_point - p0) < min_distance_end_point or min_distance_end_point is None:
+      min_distance_end_point = np.linalg.norm(near_end_point - p0)
+      loop_end_point = p0
+      edge_index_end = i
+      
+      if debug:
+        print("take p0 ({}), new min_distance_end_point: {}".format(p0,min_distance_end_point))
+      
+    if np.linalg.norm(near_end_point - p1) < min_distance_end_point or min_distance_end_point is None:
+      min_distance_end_point = np.linalg.norm(near_end_point - p1)
+      loop_end_point = p1
+      edge_index_end = (i+1)%len(new_loop)
+      
+      if debug:
+        print("take p0 ({}), new min_distance_end_point: {}".format(p0,min_distance_end_point))
+  
+  
+  if debug:
+    print("start_point: {}".format(start_point))
+    print("end_point: {}".format(end_point))
+    print("min_distance_start_point: {}".format(min_distance_start_point))
+    print("min_distance_end_point: {}".format(min_distance_end_point))
+    print("loop_start_point: {}".format(loop_start_point))
+    print("loop_end_point: {}".format(loop_end_point))
+  
+  # determine length of loop between loop_start_point and loop_end_point, in forward direction (distance0) and reverse direction (distance1)
+  # iterate over points of loop
+  previous_point = np.array(new_loop[0])
+  point_index = 1
+  first_section = 0   # 0 = not yet started, 1 = currently running, 2 = finished
+  second_section = 0   # 0 = not yet started, 1 = currently running, 2 = finished
+  distance0 = 0
+  distance1 = 0
+  start_point_index = 0
+  end_point_index = 0
+  
+  while True:
+    current_point = np.array(new_loop[point_index])
+    
+    if debug:
+      print("previous_point: {}, current_point: {}, first: {}, second: {}, d: {},{}".format(previous_point, current_point, first_section, second_section, distance0, distance1))
+    
+    if second_section == 1:
+      distance1 += np.linalg.norm(current_point - previous_point)
+      
+      if debug:
+        print("  add to distance1 {}, new: {}".format(np.linalg.norm(current_point - previous_point), distance1))
+      
+    # if loop_end_point lies on the line between previous_point and end_point
+    if point_index == edge_index_end:
+      
+      if debug:
+        print("line with loop_end_point found at point_index {}".format(point_index))
+      
+      end_point_index = point_index
+      if first_section == 1:
+        distance0 += np.linalg.norm(loop_end_point - previous_point)
+        
+        if debug:
+          print("add to distance0 {}, new: {}".format(np.linalg.norm(loop_end_point - previous_point), distance0))
+        first_section = 2
+      
+      if second_section == 0:
+        second_section = 1
+        distance1 = np.linalg.norm(loop_end_point - previous_point)
+              
+        if debug:
+          print("set distance1: {}".format(distance1))
+    
+    if first_section == 1:
+      distance0 += np.linalg.norm(current_point - previous_point)
+      
+      if debug:
+        print("  add to distance0 {}, new: {}".format(np.linalg.norm(current_point - previous_point), distance0))
+      
+    # if loop_start_point lies on the line between previous_point and end_point
+    if point_index == edge_index_start:
+      
+      if debug:
+        print("line with loop_start_point found at point_index {}".format(point_index))
+      
+      start_point_index = point_index   
+      if first_section == 0:
+        first_section = 1
+        distance0 = np.linalg.norm(current_point - loop_start_point)
+        
+        if debug:
+          print("set distance0: {}".format(distance0))
+        
+      if second_section == 1:
+        distance1 -= np.linalg.norm(current_point - previous_point)
+        distance1 += np.linalg.norm(loop_start_point - previous_point)
+        
+        if debug:
+          print("add to distance1: {}, new: {}".format(np.linalg.norm(loop_start_point - previous_point)-np.linalg.norm(current_point - previous_point), distance1))
+        
+        second_section = 2
+      
+    if first_section == 2 and second_section == 2:
+      break
+      
+    # go to next point
+    point_index = (point_index+1) % len(new_loop)
+    previous_point = current_point
+  
+    if debug:
+      print("distance0: {}, distance1: {}".format(distance0, distance1))
+            
+  # here we have the distance between loop_start_point and loop_end_point following the ring forward (distance0) and backward (distance1)
+  if distance0 > distance1:
+    
+    if debug:
+      print("reverse direction")
+    distance0,distance1 = distance1,distance0
+    loop_start_point,loop_end_point = loop_end_point,loop_start_point
+    start_point_index,end_point_index = end_point_index,start_point_index
+
+  if debug:  
+    print("loop_start_point: {}, loop_end_point: {}".format(loop_start_point, loop_end_point))
+    print("start_point_index: {}, end_point_index: {}, length of new_loop: {}".format(start_point_index, end_point_index, len(new_loop)))
+  
+  element_length = (float)(distance0) / (n_points-1)
+  
+  if debug:
+    print("{} points, element_length: {}".format(n_points, element_length))
+  
+  markers_result = []
+  # sample points in ring section
+  point_index = start_point_index
+  
+  result_points = [loop_start_point]
+  
+  previous_point = loop_start_point
+  current_point = np.array(new_loop[point_index])
+  
+  t = 0.0
+  while True:
+    
+    distance_current_previous = np.linalg.norm(current_point - previous_point)
+    while t + distance_current_previous > element_length:
+      alpha = (element_length-t) / distance_current_previous
+      new_point = (1.-alpha)*previous_point + alpha*current_point
+      result_points.append(new_point)
+      
+      markers_result.append([previous_point, new_point, current_point])
+      
+      previous_point = new_point
+      t = 0.0
+      distance_current_previous = np.linalg.norm(current_point - previous_point)
+      
+    t += distance_current_previous  # < element_length
+    
+    # if end is reached
+    if point_index == end_point_index:
+      break
+      
+    # go to next point
+    previous_point = current_point
+    point_index = (point_index+1) % len(new_loop)
+    current_point = np.array(new_loop[point_index])
+  
+    # if end is reached
+    if point_index == end_point_index:
+      
+      if debug:
+        print("reached end point")
+      current_point = loop_end_point
+  
+  if not np.allclose(result_points[-1], loop_end_point):    
+    if debug:
+      print("add end point")
+    result_points.append(loop_end_point)
+  
+    
+  # result_points = [loop_start_point]
+  # element_distance = 0
+  # previous_element_distance = 0
+    
+  # previous_point = loop_start_point
+  # current_point = np.array(new_loop[point_index])
+    
+  # element_distance += np.linalg.norm(current_point - previous_point)
+  # while True:
+    # print("element_distance: {}".format(element_distance))
+    # #current_point = np.array(new_loop[point_index])
+      
+    # #element_distance += np.linalg.norm(current_point - previous_point)
+      
+    # if element_distance > element_length:
+      # t = (element_length-previous_element_distance) / (element_distance-previous_element_distance)
+      # new_point = previous_point + t*(current_point - previous_point)
+      # result_points.append(new_point)
+      # print("    point {} between {} and {}, t={}".format(new_point, previous_point, current_point, t))
+      # previous_point = new_point
+      # element_distance = 0
+      # distance_current_previous = np.linalg.norm(current_point - previous_point)
+      # previous_element_distance = element_distance
+      # element_distance += distance_current_previous
+    # else:
+        
+      # if point_index == end_point_index:
+        # break
+      # # go to next point
+      # point_index = (point_index+1) % len(new_loop)
+      # print("    go to next point index {}, end_point_index: {}".format(point_index, end_point_index))
+      # previous_point = current_point
+      # current_point = np.array(new_loop[point_index])
+      # distance_current_previous = np.linalg.norm(current_point - previous_point)
+      # previous_element_distance = element_distance
+      # element_distance += distance_current_previous
+    
+  if debug:
+    print ("result contains {} points".format(len(result_points)))
+      
+  
+  # transform points from numpy array to simple list
+  result = []
+  for point in result_points:
+    result.append([point[0], point[1], point[2]])
+      
+  if write_output_mesh:
+
+    # create markers
+    markers_loop = []
+    for point in new_loop:
+      create_point_marker(point, markers_loop)
+      
+    markers_start_end = []
+    markers_loop_start_end = []
+    create_point_marker(start_point, markers_start_end)
+    create_point_marker(end_point, markers_start_end)
+    create_point_marker(loop_start_point, markers_loop_start_end, 0.04)
+    create_point_marker(loop_end_point, markers_loop_start_end, 0.08)
+        
+    
+    for point in result_points:
+      create_point_marker(point, markers_result, 0.01)
+      
+    #---------------------------------------
+    # Create the mesh
+    out_mesh = mesh.Mesh(np.zeros(len(markers_start_end), dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(markers_start_end):
+      out_mesh.vectors[i] = f
+      #for j in range(3):
+        #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+        
+    #out_mesh.update_normals()
+
+    outfile = "mesh_start_end.stl"
+    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    print("saved {} triangles to \"{}\" (start,end)".format(len(markers_start_end),outfile))
+
+    #---------------------------------------
+    # Create the mesh
+    out_mesh = mesh.Mesh(np.zeros(len(markers_loop_start_end), dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(markers_loop_start_end):
+      out_mesh.vectors[i] = f
+      #for j in range(3):
+        #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+        
+    #out_mesh.update_normals()
+
+    outfile = "mesh_loop_start_end.stl"
+    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    print("saved {} triangles to \"{}\" (loop start,end)".format(len(markers_loop_start_end),outfile))
+
+    #---------------------------------------
+    out_mesh = mesh.Mesh(np.zeros(len(markers_loop), dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(markers_loop):
+      out_mesh.vectors[i] = f
+      #for j in range(3):
+        #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+        
+    #out_mesh.update_normals()
+
+    outfile = "mesh_loop.stl"
+    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    print("saved {} triangles to \"{}\" (markers_loop)".format(len(markers_loop),outfile))
+
+    #---------------------------------------
+    out_mesh = mesh.Mesh(np.zeros(len(markers_result), dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(markers_result):
+      out_mesh.vectors[i] = f
+      #for j in range(3):
+        #print("set (",i,",",j,")=",f[j]," (=",stl_mesh.vectors[i][j],")"
+        
+    #out_mesh.update_normals()
+
+    outfile = "mesh_result.stl"
+    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    print("saved {} triangles to \"{}\" (start,end)".format(len(markers_result),outfile))
+
+      
+  return result
+    

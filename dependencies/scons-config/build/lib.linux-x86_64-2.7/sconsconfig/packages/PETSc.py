@@ -102,8 +102,12 @@ class PETSc(Package):
         
         # if installation of petsc fails, retry without mumps
         if not res[0]:
-          ctx.Log('Retry without MUMPS')
+          ctx.Log('Retry without MUMPS\n')
           ctx.Message('Retry to install PETSc without MUMPS ...')
+          if "PETSC_REDOWNLOAD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REDOWNLOAD')
+          if "PETSC_REBUILD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REBUILD')
           
           # Setup the build handler.
           self.set_build_handler([

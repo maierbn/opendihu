@@ -27,7 +27,8 @@ config = {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
     "bottomZClip":  37.0,   # top z value of the muscle volume
     "topZClip": 300.0,      # bottom z value of the muscle volume
-    "nElementsZPerSubdomain": 13,  # number of elements in z-direction per subdomain
+    "nElementsZPerSubdomain": 4,  # number of elements in z-direction per subdomain
+    "maxLevel": 1,          # maximum level
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

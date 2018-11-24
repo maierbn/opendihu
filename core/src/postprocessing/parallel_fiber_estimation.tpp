@@ -27,6 +27,10 @@ ParallelFiberEstimation(DihuContext context) :
 
   // ensure nBorderPointsX is odd
   nBorderPointsX_ = 2*int(nBorderPointsX_/2)+1;
+
+
+  // run stl_create_mesh.rings_to_border_points
+  // "Standardize every ring to be in counter-clockwise direction and starting with the point with lowest x coordinate, then sample border points"
 }
 
 template<typename BasisFunctionType>
@@ -35,7 +39,22 @@ initialize()
 {
   LOG(TRACE) << "ParallelFiberEstimation::initialize";
 
-  data_.initialize();
+  // load python modules
+  moduleStlCreateRings_ = PyImport_ImportModule("stl_create_rings");
+  PythonUtility::checkForError();
+  if (moduleStlCreateRings_ == NULL)
+  {
+    LOG(FATAL) << "Could not load python module stl_create_rings. Ensure that the PYTHONPATH environment variable contains the path to opendihu/scripts/geometry_manipulation" << std::endl
+      << "Execute the following: " << std::endl << "export PYTHONPATH=$PYTHONPATH:" << OPENDIHU_HOME << "/scripts/geometry_manipulation";
+  }
+
+  moduleStlCreateMesh_ = PyImport_ImportModule("stl_create_mesh");
+  PythonUtility::checkForError();
+  assert(moduleStlCreateMesh_);
+
+  moduleStlDebugOutput_ = PyImport_ImportModule("stl_debug_output");
+  PythonUtility::checkForError();
+  assert(moduleStlDebugOutput_);
 }
 
 template<typename BasisFunctionType>
@@ -54,39 +73,34 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 generateParallelMesh()
 {
-  LOG(DEBUG) << "generateParallelMesh";
+  LOG(DEBUG) << "generateParallelMesh, nBorderPointsX: " << nBorderPointsX_;
 
-  nBorderPointsX_ = 5;
-  int nBorderPoints = 4*nBorderPointsX_;
+  // prepare rankSubset
+  currentRankSubset_ = std::make_shared<Partition::RankSubset>(0);  // rankSubset with only the master rank (rank no 0)
+  nRanksPerCoordinateDirection_.fill(1);
 
   // get loops of whole domain
 
   // run python script to generate loops for the whole volume
   // run stl_create_rings.create_rings
   // "Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip"
-  moduleStlCreateRings_ = PyImport_ImportModule("stl_create_rings");
 
-  if (moduleStlCreateRings_ == NULL)
-  {
-    LOG(FATAL) << "Could not load python module stl_create_rings. Ensure that the PYTHONPATH environment variable contains the path to opendihu/scripts/geometry_manipulation" << std::endl
-      << "Execute the following: " << std::endl << "export PYTHONPATH=$PYTHONPATH:" << OPENDIHU_HOME << "/scripts/geometry_manipulation";
-  }
 
   PyObject* functionCreateRings = PyObject_GetAttrString(moduleStlCreateRings_, "create_rings");
   assert(functionCreateRings);
 
-  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s i i i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsX_-1, Py_False);
+  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s i i i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsX_, Py_False);
+  PythonUtility::checkForError();
   assert(loopsPy);
 
   // run stl_create_mesh.rings_to_border_points
   // "Standardize every ring to be in counter-clockwise direction and starting with the point with lowest x coordinate, then sample border points"
-  moduleStlCreateMesh_ = PyImport_ImportModule("stl_create_mesh");
-  assert(moduleStlCreateMesh_);
 
   PyObject* functionRingsToBorderPoints = PyObject_GetAttrString(moduleStlCreateMesh_, "rings_to_border_points");
   assert(functionRingsToBorderPoints);
 
-  PyObject* returnValue = PyObject_CallFunction(functionRingsToBorderPoints, "O i", loopsPy, nBorderPoints);
+  PyObject* returnValue = PyObject_CallFunction(functionRingsToBorderPoints, "O i", loopsPy, 4*(nBorderPointsX_-1));
+  PythonUtility::checkForError();
   if (returnValue == NULL)
   {
     LOG(FATAL) << "rings_to_border_points did not return a valid value";
@@ -111,11 +125,29 @@ generateParallelMesh()
   assert(functionRingsToBorderPoints);
 
   PyObject* borderPointLoops = PyObject_CallFunction(functionBorderPointLoopsToList, "O", borderPointsPy);
-
+  PythonUtility::checkForError();
 
   std::vector<std::vector<Vec3>> loops = PythonUtility::convertFromPython<std::vector<std::vector<Vec3>>>::get(borderPointLoops);
   std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
-  //LOG(DEBUG) << "loops: " << loops << ", lengths: " << lengths;
+  //LOG(DEBUG) << "loops: " << loops << " (size: " << loops.size() << ")" << ", lengths: " << lengths;
+
+#ifndef NDEBUG
+  // output the loops
+  PyObject* functionOutputPoints = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
+  assert(functionOutputPoints);
+
+  std::vector<Vec3> outputPoints;
+  for (int loopIndex = 0; loopIndex < loops.size(); loopIndex++)
+  {
+    for (int pointIndex = 0; pointIndex < loops[loopIndex].size(); pointIndex++)
+    {
+      outputPoints.push_back(loops[loopIndex][pointIndex]);
+    }
+  }
+  PyObject_CallFunction(functionOutputPoints, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(outputPoints), 3.0);
+  PythonUtility::checkForError();
+#endif
 
   // rearrange the border points from the loops to the portions of the faces
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
@@ -134,6 +166,8 @@ generateParallelMesh()
     {
       borderPoints[face][zIndex].resize(nBorderPointsX_);
 
+      VLOG(1) << "face " << face << ", zIndex " << zIndex << " nloops: " << loops[zIndex].size();
+
       if (face == Mesh::face_t::face1Minus)
       {
         std::copy(loops[zIndex].begin(), loops[zIndex].begin() + (nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
@@ -148,21 +182,17 @@ generateParallelMesh()
       }
       else if (face == Mesh::face_t::face0Minus)
       {
-        std::reverse_copy(loops[zIndex].begin() + 3*(nBorderPointsX_-1), loops[zIndex].begin() + 4*(nBorderPointsX_-1), borderPoints[face][zIndex].begin());
-        borderPoints[face][zIndex][nBorderPointsX_-1] = loops[zIndex].front();
+        std::reverse_copy(loops[zIndex].begin() + 3*(nBorderPointsX_-1), loops[zIndex].begin() + 4*(nBorderPointsX_-1), borderPoints[face][zIndex].begin()+1);
+        borderPoints[face][zIndex][0] = loops[zIndex].front();
       }
     }
   }
-
-  // prepare rankSubset
-  currentRankSubset_ = std::make_shared<Partition::RankSubset>(0);  // rankSubset with only the master rank (rank no 0)
-  nRanksPerCoordinateDirection_.fill(1);
 
   std::array<bool,4> subdomainIsAtBorder;
   subdomainIsAtBorder[Mesh::face_t::face0Minus] = true;
   subdomainIsAtBorder[Mesh::face_t::face0Plus] = true;
   subdomainIsAtBorder[Mesh::face_t::face1Minus] = true;
-  subdomainIsAtBorder[Mesh::face_t::face0Plus] = true;
+  subdomainIsAtBorder[Mesh::face_t::face1Plus] = true;
 
   generateParallelMeshRecursion(borderPoints, subdomainIsAtBorder);
 }
@@ -172,6 +202,15 @@ void ParallelFiberEstimation<BasisFunctionType>::
 generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<bool,4> subdomainIsAtBorder)
 {
   LOG(DEBUG) << "generateParallelMeshRecursion";
+
+#ifndef NDEBUG
+  PyObject* functionOutputBorderPoints = PyObject_GetAttrString(moduleStlDebugOutput_, "output_border_points");
+  assert(functionOutputBorderPoints);
+
+  PyObject_CallFunction(functionOutputBorderPoints, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
+                        PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 2.0);
+  PythonUtility::checkForError();
+#endif
 
   //! new border points for the next subdomain, these are computed on the local subdomain and then send to the sub-subdomains
   std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index]
@@ -205,21 +244,26 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         borderPoints[face][zLevelIndex].resize(nBorderPointsNew);
         Vec3 previousPoint = borderPointsOld[face][zLevelIndex][0];
 
-        for (int pointIndex = 0; pointIndex < nBorderPointsX_-1; pointIndex++)
+        borderPoints[face][zLevelIndex][0] = previousPoint;
+
+        for (int pointIndex = 1; pointIndex < nBorderPointsX_; pointIndex++)
         {
           const Vec3 &currentPoint = borderPointsOld[face][zLevelIndex][pointIndex];
-          borderPoints[face][zLevelIndex][2*pointIndex+0] = currentPoint;
+          borderPoints[face][zLevelIndex][2*pointIndex-1] = 0.5*(currentPoint + previousPoint);
 
           // interpolate point in between
-          borderPoints[face][zLevelIndex][2*pointIndex+1] = 0.5*(currentPoint + previousPoint);
+          borderPoints[face][zLevelIndex][2*pointIndex+0] = currentPoint;
 
           previousPoint = currentPoint;
         }
-
-        // copy the last point
-        borderPoints[face][zLevelIndex][nBorderPointsNew-1] = borderPointsOld[face][zLevelIndex][nBorderPointsX_-1];
       }
     }
+
+#ifndef NDEBUG
+    PyObject_CallFunction(functionOutputBorderPoints, "s i O f", "02_border_points", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 1.0);
+    PythonUtility::checkForError();
+#endif
 
     // dimensions of borderPoints[face_t][z-level][pointIndex]: borderPoints[4][nBorderPointsX_][nBorderPointsNew]
 
@@ -233,13 +277,13 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     PyObject *borderPointsFacesPy = PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints);
     PythonUtility::checkForError();
 
-    LOG(DEBUG) << PythonUtility::getString(borderPointsFacesPy);
+    //LOG(DEBUG) << PythonUtility::getString(borderPointsFacesPy);
     LOG(DEBUG) << "call function create_3d_mesh_from_border_points_faces";
 
     PyObject *meshData = PyObject_CallFunction(functionCreate3dMeshFromBorderPointsFaces, "(O)", borderPointsFacesPy);
     PythonUtility::checkForError();
 
-    LOG(DEBUG) << PythonUtility::getString(meshData);
+    //LOG(DEBUG) << PythonUtility::getString(meshData);
     // return value:
     //data = {
     //  "node_positions": node_positions,
@@ -388,12 +432,17 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // solve the laplace problem, globally
     problem_->run();
 
+    // initialize data object to allocate gradient field
+    data_.setFunctionSpace(this->functionSpace_);
+    data_.initialize();
+
     // compute a gradient field from the solution
     problem_->data().solution()->computeGradientField(data_.gradient());
 
     // output the results
     this->outputWriterManager_.writeOutput(problem_->data());
 
+    LOG(DEBUG) << "\nConstruct ghost elements";
 
     struct GhostValues
     {
@@ -413,6 +462,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     {
       if (!subdomainIsAtBorder[face])
       {
+        LOG(DEBUG) << "make ghost elements for face " << face;
+
         // get information about neighbouring rank and boundary elements for face
         int neighbourRankNo;
         std::vector<dof_no_t> dofNos;
@@ -542,6 +593,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     if (level == maxLevel_)
     {
+      LOG(DEBUG) << "final level";
+
       // trace final fibers
       std::vector<Vec3> seedPoints;
 
@@ -557,6 +610,15 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
           seedPoints.push_back(0.25*(p0 + p1 + p2 + p3));
         }
       }
+
+#ifndef NDEBUG
+      PyObject* functionOutputPoints = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
+      assert(functionOutputPoints);
+
+      PyObject_CallFunction(functionOutputPoints, "s i O f", "03_final_seed_points", currentRankSubset_->ownRankNo(),
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 1.0);
+      PythonUtility::checkForError();
+#endif
 
       // trace streamlines from seed points
       int nStreamlines = seedPoints.size();
@@ -666,6 +728,15 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
                                              0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
     }
 
+#ifndef NDEBUG
+      PyObject* functionOutputPoints = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
+      assert(functionOutputPoints);
+
+      PyObject_CallFunction(functionOutputPoints, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 1.0);
+      PythonUtility::checkForError();
+#endif
+
     // trace streamlines from seed points
     int nStreamlines = seedPoints.size();
     std::vector<std::vector<Vec3>> streamlinePoints(nStreamlines);
@@ -680,6 +751,15 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       }
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
+
+#ifndef NDEBUG
+      std::stringstream name;
+      name << "04_streamline_" << i << "_";
+      PyObject_CallFunction(functionOutputPoints, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 1.0);
+      PythonUtility::checkForError();
+#endif
+
     }
 
     // send end points of streamlines to next rank that continues the streamline
@@ -739,6 +819,13 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         previousPoint = currentPoint;
       }
 
+#ifndef NDEBUG
+      std::stringstream name;
+      name << "05_sampled_streamline_" << i << "_";
+      PyObject_CallFunction(functionOutputPoints, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints[i]), 1.0);
+      PythonUtility::checkForError();
+#endif
       assert(streamlineZPoints[i].size() == nBorderPointsNew);
     }
 
@@ -748,6 +835,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     reorganizeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, subdomainIsAtBorder);
+
+#ifndef NDEBUG
+    PyObject_CallFunction(functionOutputBorderPoints, "s i O f", "06_border_points_subdomain", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::array<std::array<std::vector<std::vector<Vec3>>,4>,8>>::get(borderPointsSubdomain), 1.0);
+    PythonUtility::checkForError();
+#endif
 
     // fill points that are on the border of the domain
     // loop over z levels
@@ -782,6 +875,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         PyObject *startPointPy = PythonUtility::convertToPython<Vec3>::get(startPoint);
         PyObject *endPointPy = PythonUtility::convertToPython<Vec3>::get(endPoint);
         PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection, "s O O f i", stlFilename_.c_str(), startPointPy, endPointPy, currentZ, nBorderPointsNew);
+        PythonUtility::checkForError();
         //  create_ring_section(input_filename, start_point, end_point, z_value, n_points)
         assert(loopSectionPy);
 
@@ -831,6 +925,11 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     }
 
 
+#ifndef NDEBUG
+    PyObject_CallFunction(functionOutputBorderPoints, "s i O f", "07_border_points_subdomain_filled", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::array<std::array<std::vector<std::vector<Vec3>>,4>,8>>::get(borderPointsSubdomain), 1.0);
+    PythonUtility::checkForError();
+#endif
 
     // output points for debugging
 #ifndef NDEBUG
@@ -948,6 +1047,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequest.size(), sendRequest.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   nBorderPointsX_ = 2*nBorderPointsX_-1;
+
+  LOG(FATAL) << "done";
 
   // call method recursively
   generateParallelMeshRecursion(borderPointsNew, subdomainIsAtBorderNew);

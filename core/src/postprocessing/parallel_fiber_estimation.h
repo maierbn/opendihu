@@ -66,8 +66,9 @@ protected:
   int nBorderPointsX_;    ///< number of subdivisions of the line
   int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
 
-  PyObject* moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
-  PyObject* moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
+  PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
+  PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
+  PyObject *moduleStlDebugOutput_;   ///< python module, file "stl_debug_output.py"
   std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
   std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm
 

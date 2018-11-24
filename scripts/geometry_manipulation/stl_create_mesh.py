@@ -1549,20 +1549,30 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   n_loops = len(border_points_0minus)
   print("border_points_0minus: {}".format(border_points_0minus))
   
+  #   ^ --(1+)-> ^
+  # ^ 0-         0+
+  # | | --(1-)-> |
+  # +-->
+
   border_point_loops = []
   for loop_no in range(n_loops):
     border_point_loop = []
     
-    for point in border_points_1minus[loop_no]:
+    # do not consider last point of border_points which is the same as the first of the next face
+    for point in border_points_1minus[loop_no][0:-1]:
       border_point_loop.append(np.array(point))
 
-    for point in border_points_0plus[loop_no]:
+    for point in border_points_0plus[loop_no][0:-1]:
       border_point_loop.append(np.array(point))
 
-    for point in reversed(border_points_1plus[loop_no]):
+    for i,point in enumerate(reversed(border_points_1plus[loop_no])):
+      if i == len(border_points_1plus[loop_no])-1:
+        break
       border_point_loop.append(np.array(point))
 
-    for point in reversed(border_points_0minus[loop_no]):
+    for i,point in enumerate(reversed(border_points_0minus[loop_no])):
+      if i == len(border_points_0minus[loop_no])-1:
+        break
       border_point_loop.append(np.array(point))
 
     border_point_loops.append(border_point_loop)
@@ -1581,6 +1591,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
 
     print("")
     print("Loop {}/{} with {} border points".format(loop_no, n_loops, n_points))
+    print("border points: ", border_points)
     
     # create 2D mesh with border_points
     show_plot = False

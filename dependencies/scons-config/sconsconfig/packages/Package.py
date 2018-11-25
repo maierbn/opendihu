@@ -262,6 +262,18 @@ class Package(object):
           res = self.try_location_subtree(ctx, cd, **kwargs)
           if res[0]:
             break
+            
+    disable_checks = False
+    if self.have_option(env, "DISABLE_CHECKS"):
+      if ctx.env.get('DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because DISABLE_CHECKS is set')
+        disable_checks = True
+    if self.have_option(env, upp + '_DISABLE_CHECKS'):
+      if ctx.env.get(upp + '_DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because '+upp + '_DISABLE_CHECKS is set')
+        disable_checks = True
+    if disable_checks:
+      res = (True,'')
     return res
 
   def try_location_subtree(self, ctx, base_dirs, **kwargs):
@@ -336,10 +348,12 @@ class Package(object):
   def add_options(self, vars):
     name = self.name
     upp = name.upper()
+    vars.Add(BoolVariable('DISABLE_CHECKS', help='Allow failure of checks for all packages.', default=False))
     vars.Add(upp + '_DIR', help='Location of %s.'%name)
     vars.Add(upp + '_INC_DIR', help='Location of %s header files.'%name)
     vars.Add(upp + '_LIB_DIR', help='Location of %s libraries.'%name)
     vars.Add(upp + '_LIBS', help='%s libraries.'%name)
+    vars.Add(upp + '_DISABLE_CHECKS', help='Allow failure of check for %s.'%name)
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
@@ -770,14 +784,15 @@ class Package(object):
         ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
-    ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
-    ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
-    ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
-    ctx.Log("  CC:       "+str(ctx.env["CC"])+"\n")
-    ctx.Log("  CXX:      "+str(ctx.env["CXX"])+"\n")
-    ccflags = ctx.env["CCFLAGS"]
-    for i in ccflags:
-      ctx.Log("  CCFLAGS: "+str(i)+"\n")
+    if "LIBS" in ctx.env: ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
+    if "LINKFLAGS" in ctx.env: ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    if "LIBPATH" in ctx.env: ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
+    if "CC" in ctx.env: ctx.Log("  CC:       "+str(ctx.env["CC"])+"\n")
+    if "CXX" in ctx.env: ctx.Log("  CXX:      "+str(ctx.env["CXX"])+"\n")
+    if "CCFLAGS" in ctx.env: 
+      ccflags = ctx.env["CCFLAGS"]
+      for i in ccflags:
+        ctx.Log("  CCFLAGS: "+str(i)+"\n")
     ctx.Log("=============")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
         

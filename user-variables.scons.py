@@ -62,6 +62,8 @@ EASYLOGGINGPP_DOWNLOAD=True
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
 #MPI_DIR="/usr/lib64/mpich/"
+#MPI_DOWNLOAD=True
+#MPI_IGNORE_MPICC=True    # this downloads and builds mpich
 
 # automatically set MPI_DIR for ubuntu 18.04
 try:

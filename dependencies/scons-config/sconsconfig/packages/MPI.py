@@ -31,7 +31,6 @@ int main(int argc, char* argv[])
 }
 '''
 
-
   def check(self, ctx):
     if os.environ.get("PE_ENV") is not None:
       ctx.Message('Not checking for MPI ... ')
@@ -42,6 +41,29 @@ int main(int argc, char* argv[])
     ctx.Message('Checking for MPI ... ')
     self.check_options(env)
 
+    self.headers = ['mpi.h']
+    self.libs=[
+      [],                          # nothing
+      ['mpich'],                   # mpich/mpich2
+      ['pmpich', 'mpich'],         # mpich2
+      ['mpich', 'mpl'],            # mpich2
+      ['pmpich', 'mpich', 'mpl'],  # mpich2
+      ['mpi', 'mpi_cxx'],          # openmpi
+      ['mpi'],                     # openmpi
+    ]
+    self.extra_libs=[
+      [],
+      ['rt'],
+      ['pthread', 'rt'],
+      ['dl'],
+      ['dl', 'rt'],
+      ['dl', 'pthread'],
+      ['dl', 'pthread', 'rt']
+    ]
+    self.set_build_handler([
+      'mkdir -p ${PREFIX}',
+      'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} CC='+env["cc"]+' CXX='+env["CC"]+' && make && make install',
+    ])
     use_showme = True
     use_mpi_dir = False
     
@@ -79,27 +101,13 @@ int main(int argc, char* argv[])
     
     if use_mpi_dir:
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
-      self.headers = ['mpi.h']
-      self.libs=[
-        [],                          # nothing
-        ['mpich'],                   # mpich/mpich2
-        ['pmpich', 'mpich'],         # mpich2
-        ['mpich', 'mpl'],            # mpich2
-        ['pmpich', 'mpich', 'mpl'],  # mpich2
-        ['mpi', 'mpi_cxx'],          # openmpi
-        ['mpi'],                     # openmpi
-      ]
-      self.extra_libs=[
-        [],
-        ['rt'],
-        ['pthread', 'rt'],
-        ['dl'],
-        ['dl', 'rt'],
-        ['dl', 'pthread'],
-        ['dl', 'pthread', 'rt']
-      ]
       res = super(MPI, self).check(ctx)
     
     self.check_required(res[0], ctx)
+    
+    if not res[0]:
+      # build with build handler
+      res = super(MPI, self).check(ctx)
+    
     ctx.Result(res[0])
     return res[0]

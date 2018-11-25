@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
               'mkdir -p ${PREFIX}',
               'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
             ])
-            self.number_output_lines = 18788
+            self.number_output_lines = 19129
         
           self.libs = ["openblas"]
           self.headers = ["lapacke.h"]

@@ -4,6 +4,7 @@
 #include <control/types.h>
 #include <memory>
 #include "partition/mesh_partition/00_mesh_partition_base.h"
+#include "control/python_config.h"
 
 namespace Mesh
 {
@@ -18,7 +19,7 @@ class Mesh
 {
 public:
   //! construct mesh from python settings
-  Mesh(PyObject *specificSettings);
+  Mesh(PythonConfig specificSettings);
   virtual ~Mesh() {}
   
   //! dimensionality of the mesh
@@ -46,7 +47,7 @@ public:
   std::string meshName();
 protected:
   std::string meshName_;  ///< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
-  PyObject *specificSettings_;  ///< the python object of the settings for this mesh
+  PythonConfig specificSettings_;  ///< the python object of the settings for this mesh
 };
 
 /**
@@ -57,7 +58,9 @@ class MeshOfDimension : public Mesh
 {
 public:
   //! construct mesh from python settings
-  MeshOfDimension(PyObject *specificSettings);
+  MeshOfDimension(PythonConfig specificSettings);
+
+  //! destructor
   virtual ~MeshOfDimension() {}
 
   //! return the dimension/template argument D as method. This is also accessible from the base class.

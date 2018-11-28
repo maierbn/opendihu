@@ -31,7 +31,7 @@ applyBoundaryConditions()
 {
   if (!boundaryConditionHandlingEnabled_)
   {
-    if (PythonUtility::hasKey(this->specificSettings_, "dirichletBoundaryConditions"))
+    if (this->specificSettings_.hasKey("dirichletBoundaryConditions"))
     {
       LOG(WARNING) << "You have specified dirichlet boundary conditions in FiniteElementMethod via the key \"dirichletBoundaryConditions\". "
         << "They are not used here, e.g. because the FiniteElementMethod is wrapped by a time stepping scheme. Consider only setting dirichlet boundary conditions in the time stepping scheme.";

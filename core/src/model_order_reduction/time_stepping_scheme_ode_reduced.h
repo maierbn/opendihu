@@ -2,8 +2,6 @@
 
 #include "control/dihu_context.h"
 
-#include "data_management/solution_vector_mapping.h"
-
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 
@@ -45,7 +43,7 @@ public:
   //! reset state such that new initialization becomes necessary
   virtual void reset();
 
-  ///! return whether the scheme has a specified mesh type and is not independent of the mesh type
+  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
 
 protected:

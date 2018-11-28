@@ -39,7 +39,7 @@ public:
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
 
   //! for a specific component, get values from their local dof no.s, as vector
-  void getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const;
+  void getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get values from their local dof no.s for all components
   template<int N>

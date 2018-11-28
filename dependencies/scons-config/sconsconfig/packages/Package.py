@@ -47,6 +47,7 @@ class Package(object):
   ## Default include/library sub-directories to search.
   DEFAULT_SUB_DIRS = [('include', 'lib'), ('include', 'lib64')]
   one_shot_options = []  # options that should only be applied once per call to scons, e.g. REDOWNLOAD should only happen for the first target, not again for further targets
+  compilers_checked = False  # if the C and CXX compilers have been checked
 
   ##
   # @param[in] required Boolean indicating whether the configuration should fail if this package
@@ -78,8 +79,63 @@ class Package(object):
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
     self._used_libs = None
-    
 
+
+  def check_compilers(self, ctx):
+    
+    if Package.compilers_checked:
+      return True
+    
+    ctx.Log("CC: {}, CXX: {}\n".format(ctx.env["CC"], ctx.env["CXX"]))
+    for compiler in [ctx.env["CC"], ctx.env["CXX"]]:
+      cmd = "{} --version".format(compiler)
+      
+      ctx.Log("Checking compiler {}\n".format(compiler))
+
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      try:
+        subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+        
+        # get output
+        with file('stdout.log') as f:
+          output = f.read()
+        ctx.Log("$"+cmd+"\n")
+        ctx.Log(output+"\n")
+      except:
+        self.command_running = False
+        stdout_log.close()
+        with file('stdout.log') as f:
+          output = f.read()
+        ctx.Log("Command failed: \n"+output)
+        
+        # try again with "-V" instead of "--version" (for cray compiler)
+        cmd = "{} -V".format(compiler)
+        
+        # Make a file to log stdout from the commands.
+        stdout_log = open('stdout.log', 'w')
+        try:
+          subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
+          
+          # get output
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("$"+cmd+"\n")
+          ctx.Log(output+"\n")
+        except:
+          self.command_running = False
+          stdout_log.close()
+          with file('stdout.log') as f:
+            output = f.read()
+          ctx.Log("Command failed: \n"+output)
+          
+          sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
+          ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
+          return False
+
+    Package.compilers_checked = True
+    return True
+    
   ##
   # TODO: Make more general
   def include_directories(self):
@@ -105,6 +161,10 @@ class Package(object):
     sub_dirs = self.sub_dirs
 
     upp = name.upper()
+
+    # check if compiler works
+    if not self.check_compilers(ctx):
+      return (False, 0)
     
     #ctx.Log("ctx.env.items: "+str(ctx.env.items())+"\n")
     
@@ -202,6 +262,18 @@ class Package(object):
           res = self.try_location_subtree(ctx, cd, **kwargs)
           if res[0]:
             break
+            
+    disable_checks = False
+    if self.have_option(env, "DISABLE_CHECKS"):
+      if ctx.env.get('DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because DISABLE_CHECKS is set')
+        disable_checks = True
+    if self.have_option(env, upp + '_DISABLE_CHECKS'):
+      if ctx.env.get(upp + '_DISABLE_CHECKS', []):
+        ctx.Log('Disable checks because '+upp + '_DISABLE_CHECKS is set')
+        disable_checks = True
+    if disable_checks:
+      res = (True,'')
     return res
 
   def try_location_subtree(self, ctx, base_dirs, **kwargs):
@@ -276,10 +348,12 @@ class Package(object):
   def add_options(self, vars):
     name = self.name
     upp = name.upper()
+    vars.Add(BoolVariable('DISABLE_CHECKS', help='Allow failure of checks for all packages.', default=False))
     vars.Add(upp + '_DIR', help='Location of %s.'%name)
     vars.Add(upp + '_INC_DIR', help='Location of %s header files.'%name)
     vars.Add(upp + '_LIB_DIR', help='Location of %s libraries.'%name)
     vars.Add(upp + '_LIBS', help='%s libraries.'%name)
+    vars.Add(upp + '_DISABLE_CHECKS', help='Allow failure of check for %s.'%name)
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
@@ -646,9 +720,9 @@ class Package(object):
           self.command_running = False
           if not allow_errors:
             stdout_log.close()
+            sys.stdout.write('failed.\n')
             with file('stdout.log') as f:
              output = f.read()
-            sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
             return False
 
@@ -689,9 +763,8 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text
+    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
     bkp = env_setup(ctx.env, **kwargs)
-    ctx.env.MergeFlags("-ldl -lm -lX11 -lutil")
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
     # add sources directly to test program
@@ -707,24 +780,33 @@ class Package(object):
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:
-      ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
+      if os.environ.get("PE_ENV") != "CRAY":
+        ctx.env.PrependUnique(CCFLAGS = "-std=c++14")
       
     #ctx.Log(ctx.env.Dump())
-    ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
-    ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
-    ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
-    ccflags = ctx.env["CCFLAGS"]
-    for i in ccflags:
-      ctx.Log("  CCFLAGS "+str(i)+"\n")
+    if "LIBS" in ctx.env: ctx.Log("  LIBS:     "+str(ctx.env["LIBS"])+"\n")
+    if "LINKFLAGS" in ctx.env: ctx.Log("  LINKFLAGS:"+str(ctx.env["LINKFLAGS"])+"\n")
+    if "LIBPATH" in ctx.env: ctx.Log("  LIBPATH:  "+str(ctx.env["LIBPATH"])+"\n")
+    if "CC" in ctx.env: ctx.Log("  CC:       "+str(ctx.env["CC"])+"\n")
+    if "CXX" in ctx.env: ctx.Log("  CXX:      "+str(ctx.env["CXX"])+"\n")
+    if "CCFLAGS" in ctx.env: 
+      ccflags = ctx.env["CCFLAGS"]
+      for i in ccflags:
+        ctx.Log("  CCFLAGS: "+str(i)+"\n")
+    ctx.Log("=============")
     #ctx.Log("  CCFLAGS:  "+str(ctx.env["CCFLAGS"])+"\n")    # cannot do str(..CCFLAGS..) when it is a tuple
-    
+        
     # compile / run test program
     if self.run:
       res = ctx.TryRun(text, self.ext)
+      
+      if not res[0] and os.environ.get("PE_ENV") is not None:
+        ctx.Log("Run failed on hazelhen, try again, this time only link")
+        res = (ctx.TryLink(text, self.ext), '')
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
-    # remove C++11 and C++14 flags
+    # remove C++11 and C++14 flags, only for the test program
     if 'cpp' in self.ext:
       ccflags = ctx.env["CCFLAGS"]
       ccflags_new = []
@@ -763,7 +845,10 @@ class Package(object):
       for e in extra_libs:
         e = conv.to_iter(e)
         # add extra lib
-        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=ctx.env['LINKFLAGS'])
+        linkflags = None
+        if 'LINKFLAGS' in ctx.env:
+          linkflags = ctx.env['LINKFLAGS']
+        e_bkp = env_setup(ctx.env, LIBS=ctx.env.get('LIBS', []) + e, LINKFLAGS=linkflags)
         
         # try to link or run program
         res = self.try_link(ctx, **kwargs)

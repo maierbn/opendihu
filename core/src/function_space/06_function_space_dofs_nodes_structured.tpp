@@ -153,11 +153,11 @@ setHermiteDerivatives()
       {
         distance0 = 0.5*(distance0Minus + distance0Plus);
       }
-      else if(neighbour0MinusNodeNoLocal != -1)
+      else if (neighbour0MinusNodeNoLocal != -1)
       {
         distance0 = distance0Minus;
       }
-      else if(neighbour0PlusNodeNoLocal != -1)
+      else if (neighbour0PlusNodeNoLocal != -1)
       {
         distance0 = distance0Plus;
       }
@@ -200,11 +200,11 @@ setHermiteDerivatives()
         {
           distance1 = 0.5*(distance1Minus + distance1Plus);
         }
-        else if(neighbour1MinusNodeNoLocal != -1)
+        else if (neighbour1MinusNodeNoLocal != -1)
         {
           distance1 = distance1Minus;
         }
-        else if(neighbour1PlusNodeNoLocal != -1)
+        else if (neighbour1PlusNodeNoLocal != -1)
         {
           distance1 = distance1Plus;
         }
@@ -249,11 +249,11 @@ setHermiteDerivatives()
         {
           distance2 = 0.5*(distance2Minus + distance2Plus);
         }
-        else if(neighbour2MinusNodeNoLocal != -1)
+        else if (neighbour2MinusNodeNoLocal != -1)
         {
           distance2 = distance2Minus;
         }
-        else if(neighbour2PlusNodeNoLocal != -1)
+        else if (neighbour2PlusNodeNoLocal != -1)
         {
           distance2 = distance2Plus;
         }

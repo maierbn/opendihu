@@ -21,7 +21,7 @@ setStiffnessMatrix()
   LOG(TRACE) << "setStiffnessMatrix " << D << "D using integration, FunctionSpaceType: " << typeid(FunctionSpaceType).name() << ", QuadratureType: " << typeid(QuadratureType).name();
 
   // get prefactor value
-  const double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  const double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;

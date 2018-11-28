@@ -54,24 +54,26 @@ class PETSc(Package):
         self.sub_dirs = [('include','lib')]
         self.libs = [['petsc'], ['petscksp', 'petscvec', 'petsc']]
 
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-          if os.environ.get("PE_ENV") == "GNU":
-            self.libs = ["craypetsc_gnu_real"]
-            self.extra_libs = ["sci_gnu_71_mpi_mp"]
-            print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
-          else:
-            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+        self.check_text = petsc_text
+        self.static = False
+        
+        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+          
+          #if os.environ.get("PE_ENV") == "GNU":
+          #  self.libs = ["craypetsc_gnu_real"]
+          #  self.extra_libs = ["sci_gnu_71_mpi_mp"]
+          #  print("{} environment detected, using \"{}\" for Petsc".format(os.environ.get("PE_ENV"), self.libs[0]))
+          #else:
+          #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+          print("Same for Petsc.")
         
           # on hazel hen login node do not run MPI test program because this is not possible (only compile)
           self.run = False
           
-        self.check_text = petsc_text
-        self.static = False
-        
         # Setup the build handler. This needs bison installed.
         self.set_build_handler([
-            'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-            ./configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+            #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
             --with-mpi-dir=${MPI_DIR}\
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch \
@@ -87,19 +89,25 @@ class PETSc(Package):
         self.number_output_lines = 4121
         
     def check(self, ctx):
+        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+          ctx.Message('Not checking for PETSc ... ')
+          ctx.Result(True)
+          return True
+      
         env = ctx.env
         ctx.Message('Checking for PETSc ... ')
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-
-        self.check_required(res[0], ctx)
-        ctx.Result(res[0])
         
         # if installation of petsc fails, retry without mumps
         if not res[0]:
-          ctx.Log('Retry without MUMPS')
+          ctx.Log('Retry without MUMPS\n')
           ctx.Message('Retry to install PETSc without MUMPS ...')
+          if "PETSC_REDOWNLOAD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REDOWNLOAD')
+          if "PETSC_REBUILD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REBUILD')
           
           # Setup the build handler.
           self.set_build_handler([
@@ -122,6 +130,6 @@ class PETSc(Package):
           res = super(PETSc, self).check(ctx, loc_callback=find_conf)
 
           self.check_required(res[0], ctx)
-          ctx.Result(res[0])
-          
+        
+        ctx.Result(res[0])
         return res[0]

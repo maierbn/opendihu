@@ -7,7 +7,7 @@
 
 #include "easylogging++.h"
 #include "solver/nonlinear.h"
-#include "data_management/finite_elements_solid_mechanics.h"
+#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"
 #include "control/performance_measurement.h"
 
 namespace SpatialDiscretization
@@ -161,7 +161,7 @@ debug()
 {
   LOG(DEBUG) << "------- debug method ------";
 
-  //bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
+  //bool useAnalyticJacobian = this->specificSettings_.getOptionBool("analyticJacobian", true);
   PetscErrorCode ierr;
 
   //Mat &tangentStiffnessMatrix = this->data_.tangentStiffnessMatrix();
@@ -250,7 +250,7 @@ debug()
     }
 
   }
-  else if(FunctionSpaceType::dim() == 2)
+  else if (FunctionSpaceType::dim() == 2)
   {
 
 #if 0   // 1 element
@@ -415,8 +415,8 @@ solve()
 {
   LOG(TRACE) << "FiniteElementMethod::solve (nonlinear)";
 
-  bool useAnalyticJacobian = PythonUtility::getOptionBool(this->specificSettings_, "analyticJacobian", true);
-  bool useNumericJacobian = PythonUtility::getOptionBool(this->specificSettings_, "numericJacobian", true);
+  bool useAnalyticJacobian = this->specificSettings_.getOptionBool("analyticJacobian", true);
+  bool useNumericJacobian = this->specificSettings_.getOptionBool("numericJacobian", true);
 
   if (!useAnalyticJacobian && !useNumericJacobian)
   {
@@ -488,7 +488,7 @@ solve()
   // set jacobian
   if (useAnalyticJacobian)
   {
-    if(useNumericJacobian)   // use combination of analytic jacobian also with finite differences
+    if (useNumericJacobian)   // use combination of analytic jacobian also with finite differences
     {
       Mat &solverMatrixTangentStiffnessFiniteDifferences = this->data_.solverMatrixTangentStiffnessFiniteDifferences();
       ierr = MatDuplicate(solverMatrixTangentStiffness, MAT_DO_NOT_COPY_VALUES, &solverMatrixTangentStiffnessFiniteDifferences); CHKERRV(ierr);
@@ -510,9 +510,9 @@ solve()
 
   // prepare log file
   std::shared_ptr<std::ofstream> logFile = nullptr;
-  if (PythonUtility::hasKey(this->specificSettings_, "logfile"))
+  if (this->specificSettings_.hasKey("logfile"))
   {
-    std::string logFileName = PythonUtility::getOptionString(this->specificSettings_, "logfile", "residual_norm.txt");
+    std::string logFileName = this->specificSettings_.getOptionString("logfile", "residual_norm.txt");
 
     logFile = std::make_shared<std::ofstream>(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
 

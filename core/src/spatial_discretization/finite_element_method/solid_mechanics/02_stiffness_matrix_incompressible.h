@@ -84,7 +84,7 @@ public:
 protected:
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
-  const int nLocalUnknowns();
+  int nLocalUnknowns();
 
   //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
   void preparePressureInterpolation(element_no_t elementNo) override;
@@ -96,7 +96,7 @@ protected:
   void computeIncompressibilityConstraint(Vec &result);
 
   //! get the index offset for the pressure part in the solverSolutionVariable, this is equal to the number of displacements unknown, either reduced or not, depending on this->data_.computeWithReducedVectors()
-  const dof_no_t getPressureDofOffset();
+  dof_no_t getPressureDofOffset();
 
 
   std::array<double,LowOrderFunctionSpaceType::nDofsPerElement()> pressureValuesCurrentElement_;  ///< the pressure values of the current element, to be used for interpolating the pressure. They are set by preparePressureInterpolation and used by getPressure
@@ -132,7 +132,7 @@ public:
 protected:
 
   //! get the number of unknowns, also counting displacement values for which Dirichlet BC are set as unknown, for mixed formulation sum of u and p unknowns
-  const int nLocalUnknowns();
+  int nLocalUnknowns();
 
   //! For mixed formulation get the pressure values for the element and store them, to be able to compute the interpolated pressure, by getPressure
   void preparePressureInterpolation(element_no_t elementNo) override;

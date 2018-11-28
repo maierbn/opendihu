@@ -3,7 +3,7 @@ namespace Mesh
 {
 
 template<int D>
-MeshOfDimension<D>::MeshOfDimension(PyObject *specificSettings) : Mesh(specificSettings)
+MeshOfDimension<D>::MeshOfDimension(PythonConfig specificSettings) : Mesh(specificSettings)
 {
 }
 

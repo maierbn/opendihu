@@ -41,7 +41,7 @@ checkNansInfs(int componentNo) const
   // determine if there are nans or high values
   int nNans = 0;
   int nHighValues = 0;
-  for(int i = 0; i < values.size(); i++)
+  for (int i = 0; i < values.size(); i++)
   {
     if (std::isnan(values[i]))
       nNans++;

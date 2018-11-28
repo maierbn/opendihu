@@ -21,11 +21,11 @@ output_timestep = 1e-1             # timestep for output files
 end_time = 500.0                   # end simulation time
 #end_time = dt_0D
 
-Am = 0.001
+Am = 0.2    # 500 
 
 # input files
 #mesh_file = "../input/mesh_tiny"
-mesh_file = "../input/mesh_small"
+mesh_file = "../input/scaled_mesh_small"
 #mesh_file = "../input/mesh_normal"
 #mesh_file = "../input/mesh_big"
 cellml_file = "../input/hodgkin_huxley_1952.c"

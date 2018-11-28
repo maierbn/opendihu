@@ -423,6 +423,8 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
   {
     assert(false);
   }
+
+  return 0;  // should not happen, but cray compiler does not recognize it
 }
 
 // local node no of neighbour node, may be a ghost node, for 2D
@@ -505,6 +507,7 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
   {
     assert(false);
   }
+  return 0;  // should not happen, but cray compiler does not recognize it
 }
 
 // local node no of neighbour node, may be a ghost node, for 3D
@@ -676,6 +679,7 @@ getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const
   {
     assert(false);
   }
+  return 0;  // should not happen, but cray compiler does not recognize it
 }
 
 // get local node no from the coordinates (x), may be a ghost node, for 1D
@@ -737,6 +741,7 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
       return this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
     }
   }
+  return 0;  // should not happen, but cray compiler does not recognize it
 }
 
 // get local node no from the coordinates (x,y,z), may be a ghost node, for 3D
@@ -836,7 +841,7 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
     return this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(1)*localZ
       + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
   }
+  return 0;  // should not happen, but cray compiler does not recognize it
 }
-
 
 };  // namespace

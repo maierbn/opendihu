@@ -5,6 +5,7 @@
 
 #include "interfaces/discretizable_in_time.h"
 #include "interfaces/runnable.h"
+#include "postprocessing/streamline_tracer_base.h"
 #include "data_management/streamline_tracer.h"
 
 namespace Postprocessing
@@ -12,9 +13,13 @@ namespace Postprocessing
 
 /** A class that traces streamlines through a given solution field.
  *  DiscretizableInTimeType can be e.g. FiniteElements module.
+ *  This class also does some postprocessing like resampling of the streamlines to create equidistant elements.
+ *  The actual tracing is done in the base class.
  */
 template<typename DiscretizableInTimeType>
-class StreamlineTracer : public Runnable
+class StreamlineTracer :
+  public StreamlineTracerBase<typename DiscretizableInTimeType::FunctionSpace>,
+  public Runnable
 {
 public:
   //! constructor
@@ -28,9 +33,6 @@ public:
 
 protected:
 
-  //! trace the streamline starting from startingPoint in the element initialElementNo, direction is either 1. or -1. depending on the direction
-  void traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points);
-  
   //! trace the streamlines starting from seed points
   void traceStreamlines();
   
@@ -42,13 +44,10 @@ protected:
 
   Data::StreamlineTracer<typename DiscretizableInTimeType::FunctionSpace, typename DiscretizableInTimeType::Data> data_;    ///< the data object that holds the gradient field variable
 
-  PyObject *specificSettings_;   ///< the specific python config for this module
-  double lineStepWidth_;     ///< the line step width used for integrating the streamlines
+  PythonConfig specificSettings_;   ///< the specific python config for this module
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
-  int maxNIterations_;   ///< the maximum number of iterations to trace for a streamline
-  bool useGradientField_;  ///< There are 2 implementations of streamline tracing. The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. // The first one seems more stable, because the gradient is zero and the position of the boundary conditions.
 
   double targetElementLength_;   ///< the final length of each element of the traced streamlines. After the streamlines were traced using the fine lineStepWidth_, it gets resampled with this width.
   double targetLength_;           ///< the final length of the longest streamline, 0 means disabled

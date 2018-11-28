@@ -27,18 +27,18 @@ setRightHandSide()
   std::vector<double> localValues;
   
   // parse values from config
-  bool inputMeshIsGlobal = PythonUtility::getOptionBool(this->specificSettings_, "inputMeshIsGlobal", true);
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   if (inputMeshIsGlobal)
   {
     global_no_t nUnknownsGlobal = this->data_.nUnknownsGlobal();
-    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", (int)nUnknownsGlobal, localValues);
+    this->specificSettings_.getOptionVector("rightHandSide", (int)nUnknownsGlobal, localValues);
 
     std::shared_ptr<Mesh::Mesh> functionSpace = this->data_.functionSpace();
     functionSpace->meshPartitionBase()->extractLocalDofsWithoutGhosts(localValues);
   }
   else 
   {
-    PythonUtility::getOptionVector(this->specificSettings_, "rightHandSide", nUnknownsLocal, localValues);
+    this->specificSettings_.getOptionVector("rightHandSide", nUnknownsLocal, localValues);
   }
 
   // assign read values to rightHandSide variable. They are now stored in "strong form" and need to be transformed to "weak form" by multiplying with mass matrix

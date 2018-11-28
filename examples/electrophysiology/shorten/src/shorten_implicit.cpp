@@ -16,11 +16,11 @@ int main(int argc, char *argv[])
   
   LOG(DEBUG)<<std::string(80, '=');
   
-  OperatorSplitting::Godunov<
-    TimeSteppingScheme::ExplicitEuler<
+  OperatorSplitting::Strang<
+    TimeSteppingScheme::Heun<
       CellmlAdapter<57>
     >,
-    TimeSteppingScheme::ImplicitEuler<
+    TimeSteppingScheme::CrankNicolson<
       SpatialDiscretization::FiniteElementMethod<
         Mesh::StructuredRegularFixedOfDimension<1>,
         BasisFunction::LagrangeOfOrder<1>,

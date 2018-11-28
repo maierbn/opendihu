@@ -11,20 +11,6 @@
 
 #include "control/types.h"
 
-// With python3+ PyString_* was renamed to PyBytes_*
-//(This ugly check should be removed when decided if python2.7 or python3 will be used. Recently we changed from python2.7 to python3.6)
-#if PY_MAJOR_VERSION >= 3
-#else   // python 2.7
-#define PyUnicode_FromString PyString_FromString
-#define PyUnicode_CheckExact PyString_CheckExact
-#define PyUnicode_Check PyString_Check
-
-#define PyLong_Check PyInt_Check
-#define PyLong_AsLong PyInt_AsLong
-#define PyLong_FromLong PyInt_FromLong
-#define PyLong_CheckExact PyInt_CheckExact
-#endif
-
 /** Utility class that handles parsing of python config data to c type objects
  */
 class PythonUtility
@@ -48,69 +34,69 @@ public:
   static bool isTypeList(const PyObject *object);
 
   //! given a python dictionary in settings, extract the value of given key and check if it is again a dict. Returns NULL, if the key does not exist. Then also a warning is printed.
-  static PyObject *getOptionPyObject(const PyObject *settings, std::string key);
+  static PyObject *getOptionPyObject(const PyObject *settings, std::string key, std::string pathString, PyObject *defaultValue = Py_None);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
-  static double getOptionDouble(const PyObject *settings, std::string key, double defaultValue, ValidityCriterion validityCriterion = None);
+  static double getOptionDouble(const PyObject *settings, std::string key, std::string pathString, double defaultValue, ValidityCriterion validityCriterion = None);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
-  static int getOptionInt(const PyObject *settings, std::string key, int defaultValue, ValidityCriterion validityCriterion = None);
+  static int getOptionInt(const PyObject *settings, std::string key, std::string pathString, int defaultValue, ValidityCriterion validityCriterion = None);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
-  static bool getOptionBool(const PyObject *settings, std::string key, bool defaultValue=true);
+  static bool getOptionBool(const PyObject *settings, std::string key, std::string pathString, bool defaultValue = true);
 
   //! return the option value given by key in the python dictionary settings. If not found, return the defaultValue
-  static std::string getOptionString(const PyObject *settings, std::string key, std::string defaultValue);
+  static std::string getOptionString(const PyObject *settings, std::string key, std::string pathString, std::string defaultValue);
 
   //! return the option value given by key in the python dictionary settings. If not found, return NULL
-  static PyObject *getOptionFunction(const PyObject *settings, std::string key);
+  static PyObject *getOptionFunction(const PyObject *settings, std::string key, std::string pathString);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
   template<class ValueType, int D>
-  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::array<ValueType, D> defaultValue,
+  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, std::array<ValueType, D> defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
   template<class ValueType, int D>
-  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, ValueType defaultValue,
+  static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, ValueType defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 
   //! Consider a Python dictionary in settings with key keyString. Set an internal iterator to the beginning and return the first key,value pair
   template<typename Key, typename Value>
-  static std::pair<Key, Value> getOptionDictBegin(const PyObject *settings, std::string keyString);
+  static std::pair<Key, Value> getOptionDictBegin(const PyObject *settings, std::string keyString, std::string pathString);
 
   //! If the internal iterator on the current dictionary is at the end of the dictionary
-  static bool getOptionDictEnd(const PyObject *settings, std::string keyString);
+  static bool getOptionDictEnd(const PyObject *settings, std::string keyString, std::string pathString);
 
   //! Increment the internal iterator of the dictionary and set the next key,value pair in nextPair
   template<typename Key, typename Value>
-  static void getOptionDictNext(const PyObject *settings, std::string keyString, std::pair<Key, Value> &nextPair);
+  static void getOptionDictNext(const PyObject *settings, std::string keyString, std::string pathString, std::pair<Key, Value> &nextPair);
 
   //! Consider a Python list in settings with key keyString. Set an internal iterator to the beginning and return the first key,value pair
   template<typename Value>
-  static Value getOptionListBegin(const PyObject *settings, std::string keyString);
+  static Value getOptionListBegin(const PyObject *settings, std::string keyString, std::string pathString);
 
   //! If the internal iterator on the current list is at the end of the list
-  static bool getOptionListEnd(const PyObject *settings, std::string keyString);
+  static bool getOptionListEnd(const PyObject *settings, std::string keyString, std::string pathString);
 
   //! Increment the internal iterator of the list and set the next key,value pair in nextPair
   template<typename Value>
-  static void getOptionListNext(const PyObject *settings, std::string keyString, Value &value);
+  static void getOptionListNext(const PyObject *settings, std::string keyString, std::string pathString, Value &value);
 
   //! extract a vector with exactly the specified number of nEntries, can be a dict or list, not specified entries are set to 0
-  static void getOptionVector(const PyObject *settings, std::string keyString, int nEntries, std::vector<double> &values);
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, int nEntries, std::vector<double> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<double> &values);
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<double> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<int> &values);
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<int> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<std::string> &values);
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<std::string> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::vector<PyObject *> &values);
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<PyObject *> &values);
 
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);

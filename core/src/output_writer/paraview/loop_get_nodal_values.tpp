@@ -13,7 +13,7 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
                    std::vector<std::vector<double>> &values
@@ -52,8 +52,8 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       std::vector<double> retrievedLocalValues;
-      currentFieldVariable->getValues(componentNo, currentFieldVariable->functionSpace()->meshPartition()->dofNosLocalNaturalOrdering(),
-                              retrievedLocalValues);
+      const std::vector<dof_no_t> &dofNosLocalNaturalOrdering = currentFieldVariable->functionSpace()->meshPartition()->dofNosLocalNaturalOrdering();
+      currentFieldVariable->getValues(componentNo, dofNosLocalNaturalOrdering, retrievedLocalValues);
 
       const int nDofsPerNode = CurrentFieldVariableType::element_type::FunctionSpace::nDofsPerNode();
       const node_no_t nNodesLocal = currentFieldVariable->functionSpace()->meshPartition()->nNodesLocalWithGhosts();

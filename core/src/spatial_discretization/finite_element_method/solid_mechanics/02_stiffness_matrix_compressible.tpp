@@ -19,8 +19,8 @@ template<typename FunctionSpaceType, typename MixedQuadratureType>
 void FiniteElementMethodStiffnessMatrix<FunctionSpaceType, MixedQuadratureType, Equation::Static::CompressibleMooneyRivlin, Mesh::isDeformable<typename FunctionSpaceType::Mesh>>::
 initialize()
 {
-  kappa_ = PythonUtility::getOptionDouble(this->specificSettings_, "kappa", 1000, PythonUtility::Positive);
-  std::array<double,2> materialConstants = PythonUtility::getOptionArray<double,2>(this->specificSettings_, "c");
+  kappa_ = this->specificSettings_.getOptionDouble("kappa", 1000, PythonUtility::Positive);
+  std::array<double,2> materialConstants = this->specificSettings_.getOptionArray<double,2>("c");
 
   c1_ = materialConstants[0];
   c2_ = materialConstants[1];

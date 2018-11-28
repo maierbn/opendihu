@@ -47,7 +47,7 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
     LOG(DEBUG) << "filename is [" << filename << "]";
     
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
    
     // build python object for data
     PyObject *pyData = Python<typename DataType::FunctionSpace, typename DataType::OutputFieldVariables>::
@@ -64,11 +64,11 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
     // open file, to see if directory needs to be created
     std::ofstream ofile = openFile(filename);
-    if(ofile.is_open())
+    if (ofile.is_open())
       ofile.close();
 
     // pickle is the python library to serialize objects
-    bool usePickle = PythonUtility::getOptionBool(specificSettings_, "binary", false);
+    bool usePickle = specificSettings_.getOptionBool("binary", false);
 
     std::string writeFlag = (usePickle? "wb" : "w");
 

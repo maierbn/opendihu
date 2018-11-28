@@ -134,6 +134,16 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
 }
 
 template<int D, typename BasisFunctionType>
+std::array<int,D> MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getCoordinatesLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  // because we have no parallel execution, global coordinates are the same as local coordinates and isOnLocalDomain is always true
+  isOnLocalDomain = true;
+  std::array<int,D> coordinatesLocal(coordinatesGlobal.begin(), coordinatesGlobal.end());
+  return coordinatesLocal;
+}
+
+template<int D, typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 {

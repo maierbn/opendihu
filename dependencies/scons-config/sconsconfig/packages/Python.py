@@ -35,7 +35,7 @@ class Python(Package):
             Py_Initialize();
             return EXIT_SUCCESS;
           }
-        '''
+'''
     
         # Setup the build handler.
         self.libs = ["python3.6m"]

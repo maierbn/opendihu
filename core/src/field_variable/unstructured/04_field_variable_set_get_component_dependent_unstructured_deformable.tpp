@@ -21,7 +21,7 @@ getValue(node_no_t dofLocalNo) const
   std::array<double,nComponents> resultVector;
   assert(this->values_);
 
-  for(int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
   {
     // get values and assign them to result values vector
     this->values_->getValues(componentIndex, 1, &dofLocalNo, resultVector.data() + componentIndex);
@@ -55,6 +55,14 @@ getValue(node_no_t dofLocalNo) const
   double result;
   this->values_->getValues(0, 1, (PetscInt *)&dofLocalNo, &result);
   return result;
+}
+
+//! get a single value from local dof no. for the single component
+template<int D, typename BasisFunctionType>
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,1>::
+getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
+{
+  this->getValues(0, dofLocalNo, values);
 }
 
 //! get all stored local values

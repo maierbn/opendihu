@@ -25,8 +25,11 @@
 #include "control/performance_measurement.h"
 
 #include "easylogging++.h"
-#include "control/use_numpy.h"
+#include "control/settings_file_name.h"
 #include "utility/mpi_utility.h"
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
 
 //INITIALIZE_EASYLOGGINGPP
 
@@ -39,21 +42,35 @@ bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 
 // copy-constructor
-DihuContext::DihuContext(const DihuContext &rhs)
+DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
+
   doNotFinalizeMpi_ = rhs.doNotFinalizeMpi_;
-  pythonConfig_ = rhs.pythonConfig_;
-  Py_XINCREF(pythonConfig_);
+}
+
+
+DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig) :
+  pythonConfig_(pythonConfig), doNotFinalizeMpi_(doNotFinalizeMpi)
+{
+  nObjects_++;
+  VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
 }
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
   pythonConfig_(NULL), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(c), nObjects = " << nObjects_;
 
   if (!initialized_)
   {
+
+#ifdef HAVE_PAT
+    PAT_record(PAT_STATE_OFF);
+#endif
+
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
@@ -84,7 +101,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     }
 
     // determine settings filename
-    std::string filename = "settings.py";
+    Control::settingsFileName = "settings.py";
 
     // check if the first command line argument is *.py, only then it is treated as config file
     bool explicitConfigFileGiven = false;
@@ -94,7 +111,7 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
       if (firstArgument.rfind(".py") == firstArgument.size() - 3)
       {
         explicitConfigFileGiven = true;
-        filename = argv[1];
+        Control::settingsFileName = argv[1];
       }
       else
       {
@@ -179,9 +196,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
     argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);
 
-    if (VLOG_IS_ON(1) && pythonConfig_)
+    if (VLOG_IS_ON(1) && pythonConfig_.pyObject())
     {
-      PythonUtility::printDict(pythonConfig_);
+      PythonUtility::printDict(pythonConfig_.pyObject());
     }
 
     // pass reduced list of command line arguments to python script
@@ -221,9 +238,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     VLOG(2) << "python buildInfo: " << buildInfo;
 
     // load python script
-    if(settingsFromFile)
+    if (settingsFromFile)
     {
-      loadPythonScriptFromFile(filename);
+      loadPythonScriptFromFile(Control::settingsFileName);
     }
 
     initialized_ = true;
@@ -256,13 +273,14 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   DihuContext(argc, argv, doNotFinalizeMpi, false)
 {
   nObjects_++;
+  VLOG(1) << "DihuContext(d), nObjects = " << nObjects_;
   // This constructor is called when creating the context object from unit tests.
 
   // load python config script as given by parameter
   loadPythonScript(pythonSettings);
   if (VLOG_IS_ON(1))
   {
-    PythonUtility::printDict(pythonConfig_);
+    PythonUtility::printDict(pythonConfig_.pyObject());
   }
 
   partitionManager_ = nullptr;
@@ -279,10 +297,8 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
   
 }
 
-PyObject* DihuContext::getPythonConfig() const
+PythonConfig DihuContext::getPythonConfig() const
 {
-  //if (!pythonConfig_)
-  //  LOG(FATAL) << "Python config is not available!";
   return pythonConfig_;
 }
 
@@ -329,34 +345,17 @@ DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;
   char **argv = NULL;
-  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_);
-
-  // if requested child context exists in config
-  if (PythonUtility::hasKey(pythonConfig_, keyString))
-  {
-    dihuContext.pythonConfig_ = PythonUtility::getOptionPyObject(pythonConfig_, keyString);
-    Py_XINCREF(dihuContext.pythonConfig_);
-  }
-  else
-  {
-    // if config does not contain the requested child dict, create the needed context from the same level in config
-    dihuContext.pythonConfig_ = pythonConfig_;
-    Py_XINCREF(dihuContext.pythonConfig_);
-    LOG(FATAL) << "Dict does not contain key \"" <<keyString<< "\".";
-  }
-  LOG(TRACE) << "DihuContext::operator[](\"" <<keyString<< "\")";
+  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, PythonConfig(pythonConfig_, keyString));
 
   return dihuContext;
 }
 
-DihuContext DihuContext::createSubContext(PyObject *settings)
+//! create a context object, like with the operator[] but with given config
+DihuContext DihuContext::createSubContext(PythonConfig config)
 {
   int argc = 0;
   char **argv = NULL;
-  DihuContext dihuContext(argc, argv);
-
-  dihuContext.pythonConfig_ = settings;
-  Py_XINCREF(dihuContext.pythonConfig_);
+  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, config);
 
   return dihuContext;
 }
@@ -431,21 +430,23 @@ void DihuContext::loadPythonScript(std::string text)
 
   // load main module and extract config
   PyObject *mainModule = PyImport_AddModule("__main__");
-  pythonConfig_ = PyObject_GetAttrString(mainModule, "config");
+  PyObject *config = PyObject_GetAttrString(mainModule, "config");
   VLOG(4) << "create pythonConfig_ (initialize ref to 1)";
 
 
   // check if type is valid
-  if (pythonConfig_ == NULL || !PyDict_Check(pythonConfig_))
+  if (config == NULL || !PyDict_Check(config))
   {
     LOG(FATAL) << "Python config file does not contain a dict named \"config\".";
   }
 
+  pythonConfig_.setPyObject(config);
+
   // parse scenario name
   std::string scenarioName = "";
-  if (PythonUtility::hasKey(pythonConfig_, "scenarioName"))
+  if (pythonConfig_.hasKey("scenarioName"))
   {
-    scenarioName = PythonUtility::getOptionString(pythonConfig_, "scenarioName", "");
+    scenarioName = pythonConfig_.getOptionString("scenarioName", "");
   }
   Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
 }

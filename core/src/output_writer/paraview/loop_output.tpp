@@ -14,10 +14,10 @@ namespace ParaviewLoopOverTuple
  /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables,
-           std::string meshName, std::string filename, PyObject *specificSettings
+           std::string meshName, std::string filename, PythonConfig specificSettings
 )
 {
   // call what to do in the loop body
@@ -33,7 +33,7 @@ loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldV
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
-       std::string filename, PyObject *specificSettings)
+       std::string filename, PythonConfig specificSettings)
 {
   // if mesh name is the specified meshName
   if (currentFieldVariable->functionSpace()->meshName() == meshName)
@@ -57,7 +57,7 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 output(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
-       std::string filename, PyObject *specificSettings)
+       std::string filename, PythonConfig specificSettings)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
@@ -72,7 +72,7 @@ output(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fi
 template<typename TupleType, typename AllOutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 output(TupleType currentFieldVariableTuple, const AllOutputFieldVariablesType &fieldVariables, std::string meshName, 
-       std::string filename, PyObject *specificSettings)
+       std::string filename, PythonConfig specificSettings)
 {
   // call for tuple element
   loopOutput<TupleType, AllOutputFieldVariablesType>(currentFieldVariableTuple, fieldVariables, meshName, filename, specificSettings);

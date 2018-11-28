@@ -30,33 +30,32 @@ initializeRhsRoutine()
    * this means: "Save time where possible!"
    */
   std::string libraryFilename;
-  useGivenLibrary_ = PythonUtility::getOptionBool(this->specificSettings_, "useGivenLibrary", false);
+  useGivenLibrary_ = this->specificSettings_.getOptionBool("useGivenLibrary", false);
 
   // output warning if the old option forceRecompileRhs is still used
-  if (PythonUtility::hasKey(this->specificSettings_, "forceRecompileRhs"))
+  if (this->specificSettings_.hasKey("forceRecompileRhs"))
   {
     LOG(WARNING) << "Option \"forceRecompileRhs\" was recently changed to \"useGivenLibrary\" but with different semantics!.";
   }
 
-  if(useGivenLibrary_)
+  if (useGivenLibrary_)
   { //try open library file
-    if (!PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    if (!this->specificSettings_.hasKey("libraryFilename"))
     {
       LOG(WARNING) << "Option key \"libraryFilename\" is missing in python config file but \"useGivenLibrary\" is True.";
-      //default set in PythonUtility::getOptionString(...)
     }
 
-    libraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+    libraryFilename = this->specificSettings_.getOptionString("libraryFilename", "lib.so");
   }
   else // useGivenLibrary_ is set false
   { // will compile lib new
     std::string gpuSourceFilename;
     std::string simdSourceFilename;
-    std::string SourceFilenameToUse;
+    std::string sourceFilenameToUse;
     std::stringstream compileCommand;
     std::string compileCommandOptions;
 
-    if(PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    if (this->specificSettings_.hasKey("gpuSourceFilename"))
     {
       // todo: would like to check whether source File "gpuSourceFilename" already is a matching one.
       //
@@ -66,16 +65,23 @@ initializeRhsRoutine()
       {
          LOG(ERROR) << "Could not create a gpu version for CellML RHS.";
       }
-      SourceFilenameToUse = gpuSourceFilename;
+      sourceFilenameToUse = gpuSourceFilename;
+
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -fopenmp -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
 #ifdef NDEBUG
-      compileCommandOptions = "gcc -fPIC -fopenmp -O3 -shared -lm -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #else
-      compileCommandOptions = "gcc -fPIC -fopenmp -O0 -ggdb -shared -lm -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #endif
     }
     else // use simd version if there was no simd- or gpu- sourceFilename key specified at all in python config.
     {
-      if(!PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
+      if (!this->specificSettings_.hasKey("simdSourceFilename"))
       {
         LOG(DEBUG) << "No key named \"gpuSourceFilename\" or \"simdSourceFilename\" specified in python config. Using simd version." ;
       }
@@ -87,14 +93,22 @@ initializeRhsRoutine()
       {
          LOG(ERROR) << "Could not create a simd version for CellML RHS.";
       }
-      SourceFilenameToUse = simdSourceFilename;
+      sourceFilenameToUse = simdSourceFilename;
+
+      // load compiler flags     
+      std::string compilerFlags = this->specificSettings_.getOptionString("compilerFlags", "-fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
 #ifdef NDEBUG
       // other possible options
       // -fopt-info-vec-missed=vectorizer_missed.log
       // -fopt-info-vec-all=vectorizer_all.log
-      compileCommandOptions = "gcc -fPIC -O3 -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared -lm -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O3 " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #else
-      compileCommandOptions = "gcc -fPIC -O0 -ggdb -shared -lm -x c ";
+      std::stringstream s;
+      s << C_COMPILER_COMMAND << " -O0 -ggdb " << compilerFlags << " ";
+      compileCommandOptions = s.str();
 #endif
     }
     // compile source file to a library
@@ -102,9 +116,9 @@ initializeRhsRoutine()
     s << "lib/"+StringUtility::extractBasename(this->sourceFilename_) << "_" << this->nInstances_ << ".so";
     libraryFilename = s.str();
 
-    if (PythonUtility::hasKey(this->specificSettings_, "libraryFilename"))
+    if (this->specificSettings_.hasKey("libraryFilename"))
     {
-      std::string unusedLibraryFilename = PythonUtility::getOptionString(this->specificSettings_, "libraryFilename", "lib.so");
+      std::string unusedLibraryFilename = this->specificSettings_.getOptionString("libraryFilename", "lib.so");
       LOG(WARNING) << "You have specified a libraryFilename called \"" << unusedLibraryFilename << "\", but useLibraryFile is set to False. "
         << "If you want to use the provided library, set useLibraryFile to True in the config. The generated library file will be \"" << libraryFilename << "\".";
     }
@@ -168,7 +182,7 @@ initializeRhsRoutine()
 
       // compile library to filename with "*.rankNoWorldCommunicator", then wait (different wait times for ranks), then rename file to without "*.rankNoWorldCommunicator"
       compileCommand << compileCommandOptions
-        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << SourceFilenameToUse
+        << " -o " << libraryFilename << "." << rankNoWorldCommunicator << " " << sourceFilenameToUse
         //<< " && sleep " << int((rankNoWorldCommunicator%100)/10+1)
         << " && mv " << libraryFilename << "." << rankNoWorldCommunicator << " " << libraryFilename;
 
@@ -212,7 +226,7 @@ loadRhsLibrary(std::string libraryFilename)
   for (int i = 0; handle==NULL && i < 50; i++)  // wait maximum 5 seconds for rank 1 to finish
   {
     handle = dlopen((currentWorkingDirectory+libraryFilename).c_str(), RTLD_LOCAL | RTLD_LAZY);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }
 
   if (handle)
@@ -258,7 +272,7 @@ loadRhsLibrary(std::string libraryFilename)
         cellmlAdapter->getNumbers(nInstances, nIntermediates, nParameters);
 
         // call the standard rhs routine for every instance of the CellML problem
-        for(int instanceNo = 0; instanceNo < nInstances; instanceNo++)
+        for (int instanceNo = 0; instanceNo < nInstances; instanceNo++)
         {
           // create vectors that contain the values for a single instance
           std::vector<double> states(nStates);
@@ -404,7 +418,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
             << "Use the option \"simdSourceFilename\" instead.";
           return true;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
 	{
 	  LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" is ment for GPU-ization, not for SIMD-usage. "
 	    << "Use the option \"gpuSourceFilename\" instead.";
@@ -434,7 +448,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -450,7 +464,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -580,7 +594,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
         else
         {
           // add pragma omp here
-          simdSource << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -622,15 +636,15 @@ createSimdSourceFile(std::string &simdSourceFilename)
     std::stringstream s;
     s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_simd.c";  // standard file name for SIMD source is subfolder "src" and "_simd.c" suffix
     simdSourceFilename = s.str();
-    if (PythonUtility::hasKey(this->specificSettings_, "simdSourceFilename"))
+    if (this->specificSettings_.hasKey("simdSourceFilename"))
     {
-      simdSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "simdSourceFilename", "");
+      simdSourceFilename = this->specificSettings_.getOptionString("simdSourceFilename", "");
     }
 
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
     int rankNoWorldCommunicator = DihuContext::ownRankNo();
-    s << simdSourceFilename << "." << rankNoWorldCommunicator;
+    s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 
     std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());
@@ -743,7 +757,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
           gpuSourceFilename="";
           return false;
         }
-        else if(line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
+        else if (line.find("void computeGPUCellMLRightHandSide") != std::string::npos)
         {
           LOG(WARNING) << "The given source file \"" << this->sourceFilename_<< "\" contains already a GPU version of the rhs routine."
             << "Use the option \"gpuSourceFilename\" instead of \"sourceFilename\" or \"simdSourceFilename\".";
@@ -773,7 +787,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         }
       }
       // line contains OpenCMISS assignment
-      else if(line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
+      else if (line.find("OC_WANTED") == 0 || line.find("OC_RATE") == 0 || line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
         // parse line
         struct entry_t
@@ -789,7 +803,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         VLOG(2) << "line: [" << line << "]";
 
         size_t currentPos = 0;
-        for(int i = 0; currentPos <= line.length(); i++)
+        for (int i = 0; currentPos <= line.length(); i++)
         {
           VLOG(2);
           VLOG(2) << "currentPos: " << currentPos << " code from there: \"" << line.substr(currentPos, 20) << "\"";
@@ -918,7 +932,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
         }
         else
         {
-          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for(int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+          gpuSource << std::endl << "#pragma omp teams distribute parallel for" << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -952,7 +966,7 @@ createGPUSourceFile(std::string &gpuSourceFilename)
       // every other line
       else
       {
-        if(line.find("}")!= 0)
+        if (line.find("}")!= 0)
         {
           gpuSource << line << std::endl;
         }
@@ -967,9 +981,9 @@ createGPUSourceFile(std::string &gpuSourceFilename)
     std::stringstream s;
     s << "src/" << StringUtility::extractBasename(this->sourceFilename_) << "_gpu.c";
     gpuSourceFilename = s.str();
-    if (PythonUtility::hasKey(this->specificSettings_, "gpuSourceFilename"))
+    if (this->specificSettings_.hasKey("gpuSourceFilename"))
     {
-      gpuSourceFilename = PythonUtility::getOptionString(this->specificSettings_, "gpuSourceFilename", "");
+      gpuSourceFilename = this->specificSettings_.getOptionString("gpuSourceFilename", "");
     }
 
     std::ofstream gpuSourceFile = OutputWriter::Generic::openFile(gpuSourceFilename.c_str());
@@ -1035,7 +1049,7 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
         pos = line.find("= ");
         double value = atof(line.substr(pos+2).c_str());
 
-        if (variableName == "OC_STATE" && index >= 0 && index < (unsigned int)nStates)
+        if (variableName == "OC_STATE" && index < (unsigned int)nStates)
         {
           // store initial value for state
           statesInitialValues[index] = value;
@@ -1043,7 +1057,7 @@ scanSourceFile(std::string sourceFilename, std::array<double,nStates> &statesIni
           // store name of the state that was parsed from the comment in the previous line
           this->stateNames_[index] = name;
         }
-        else if (variableName == "OC_KNOWN" && index >= 0)
+        else if (variableName == "OC_KNOWN")
         {
           // store initial value for parameter
           if (this->parameters_.size() < index+1)

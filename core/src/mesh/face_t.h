@@ -18,6 +18,12 @@ enum face_t
 //! parse the face value from a string
 face_t parseFace(std::string str);
 
+//! get the opposite face, i.e. face0Minus <--> face0Plus, face1Minus <--> face1Plus, face2Minus <--> face2Plus
+face_t oppositeFace(face_t face);
+
+//! get the string "0-", "0+", "1-", "1+", "2-" or "2+"
+std::string getString(face_t face);
+
 //! return the outward normal vector to the face
 template<int D>
 std::array<double,D> getNormal(face_t face);

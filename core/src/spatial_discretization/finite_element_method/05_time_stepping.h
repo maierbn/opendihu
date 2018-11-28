@@ -14,9 +14,11 @@ template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 class FiniteElementMethodTimeStepping :
   public AssembleRightHandSide<FunctionSpaceType, QuadratureType, Term>,
   public DiscretizableInTime,
-  public Splitable
+  public Splittable
 {
 public:
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;  // type of return value of getSolutionForTransferInOperatorSplitting
+
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
   FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace = nullptr);
@@ -52,6 +54,10 @@ public:
 
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the solution_vector_mapping class
+  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 

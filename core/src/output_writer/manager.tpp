@@ -15,7 +15,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   // start duration measurement
   Control::PerformanceMeasurement::start("write output");
 
-  for(auto &outputWriter : this->outputWriter_)
+  for (auto &outputWriter : this->outputWriter_)
   {
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {

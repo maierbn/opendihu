@@ -47,7 +47,7 @@ void Exfile::outputComFile()
     << "# run by cmgui " << basename << ".com" << std::endl << std::endl;
   file << "# read files" << std::endl;
 
-  std::string sphereSize = PythonUtility::getOptionString(this->specificSettings_, "sphereSize", "0.005*0.005*0.01");
+  std::string sphereSize = this->specificSettings_.getOptionString("sphereSize", "0.005*0.005*0.01");
   
   std::string lastMeshName;
   int lastDimensionality = 3;

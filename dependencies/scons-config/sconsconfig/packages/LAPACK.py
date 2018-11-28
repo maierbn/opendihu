@@ -56,14 +56,15 @@ int main(int argc, char* argv[]) {
           run_in_docker = True
         
         # Setup the build handler.
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:
         #if os.environ.get("LIBSCI_BASE_DIR") is not None:
         #  self.libs = ["sci_cray_mpi_mp"]
-          if os.environ.get("PE_ENV") == "GNU":
-            self.libs = ["sci_gnu_71_mpi_mp"]
-            print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
-          else:
-            print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+          #if os.environ.get("PE_ENV") == "GNU":
+          #  self.libs = ["sci_gnu_71_mpi_mp"]
+          #  print("{} environment detected, using \"{}\" for LAPACK".format(os.environ.get("PE_ENV"), self.libs[0]))
+          #else:
+          #  print("WARNING: The PE environment seems to be {}, not GNU, this is not supported".format(os.environ.get("PE_ENV")))
+          print("Hazelhen detected, PrgEnv {}\nDo not do anything for LAPACK, because it is assumed that all flags are set correctly by the compiler wrapper CC.".format(os.environ.get("PE_ENV")))
 
         elif False:
           # reference blas, make based, only static libraries
@@ -116,12 +117,17 @@ int main(int argc, char* argv[]) {
               'mkdir -p ${PREFIX}',
               'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
             ])
-            self.number_output_lines = 18788
+            self.number_output_lines = 19129
         
           self.libs = ["openblas"]
           self.headers = ["lapacke.h"]
 
     def check(self, ctx):
+        if os.environ.get("PE_ENV") is not None:
+          ctx.Message('Not checking for LAPACK ... ')
+          ctx.Result(True)
+          return True
+          
         env = ctx.env
         ctx.Message('Checking for LAPACK ... ')
         self.check_options(env)

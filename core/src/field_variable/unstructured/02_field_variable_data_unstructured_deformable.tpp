@@ -1002,7 +1002,7 @@ haveSameExfileRepresentation(element_no_t element1, element_no_t element2)
   // loop over components
   for (auto &component : component_)
   {
-    if(!component.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
+    if (!component.exfileRepresentation()->haveSameExfileRepresentation(element1, element2))
     {
       LOG(DEBUG) << "  component " << component << " has different exfileRepr for elements " << element1 << " and " << element2;
       return false;

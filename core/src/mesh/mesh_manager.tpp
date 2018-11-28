@@ -11,28 +11,28 @@ namespace Mesh
 
 //! return previously created mesh or create on the fly
 template<typename FunctionSpaceType>
-std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
+std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << typeid(FunctionSpaceType).name();
 
   // if mesh was already created earlier
-  if (PythonUtility::hasKey(settings, "meshName"))
+  if (settings.hasKey("meshName"))
   {
-    std::string meshName = PythonUtility::getOptionString(settings, "meshName", "");
+    std::string meshName = settings.getOptionString("meshName", "");
     if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
     {
       LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is " << typeid(functionSpaces_[meshName]).name()
         << ", cast to " << typeid(FunctionSpaceType).name();
       return std::static_pointer_cast<FunctionSpaceType>(functionSpaces_[meshName]);
     }
-    else if(meshConfiguration_.find(meshName) != meshConfiguration_.end())
+    else if (meshConfiguration_.find(meshName) != meshConfiguration_.end())
     {
       // mesh was preconfigured, create new mesh from stored meshConfiguration
       LOG(DEBUG) << "Mesh configuration for \"" << meshName << "\" found and requested, will be created now. "
         << "Type is " << typeid(FunctionSpaceType).name() << ".";
       
       // get mesh configuration that was parsed earlier
-      PyObject *meshConfiguration = meshConfiguration_.at(meshName);
+      PythonConfig meshConfiguration = meshConfiguration_.at(meshName);
       
       if (hasFunctionSpace(meshName))
       {
@@ -46,9 +46,9 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
       std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(meshName, meshConfiguration);
 
       std::string logKey;
-      if (PythonUtility::hasKey(meshConfiguration, "logKey"))
+      if (meshConfiguration.hasKey("logKey"))
       {
-        logKey = PythonUtility::getOptionString(meshConfiguration, "logKey", "");
+        logKey = meshConfiguration.getOptionString("logKey", "");
       }
 
       Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
@@ -78,9 +78,9 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PyObject *settings)
   std::shared_ptr<FunctionSpaceType> functionSpace = createFunctionSpace<FunctionSpaceType>(anonymousName.str(), settings);
 
   std::string logKey;
-  if (PythonUtility::hasKey(settings, "logKey"))
+  if (settings.hasKey("logKey"))
   {
-    logKey = PythonUtility::getOptionString(settings, "logKey", "");
+    logKey = settings.getOptionString("logKey", "");
   }
 
   Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());

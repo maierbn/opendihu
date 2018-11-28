@@ -27,6 +27,9 @@ purge_dependencies:
 
 rebuild: purge_dependencies purge clean debug release
 
+rebuild_hazelhen:
+	rm -rf dependencies/easyloggingpp/install dependencies/easyloggingpp/src dependencies/python/install dependencies/python/src  dependencies/base64/install dependencies/base64/src dependencies/numpyc/install dependencies/numpyc/src dependencies/semt/src dependencies/semt/install && rm -rf core/build_release && $(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE; cd dependencies/matplotlib && ../python/install/bin/pip3 install *.whl
+
 # the following targets are just for convenience and could also be deleted
 release_without_tests:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True
@@ -57,6 +60,9 @@ fibers:
 
 hodgkin_huxley:
 	cd examples/electrophysiology/hodgkin_huxley && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+shorten:
+	cd examples/electrophysiology/shorten && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 cellml:
 	cd examples/electrophysiology/cellml && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

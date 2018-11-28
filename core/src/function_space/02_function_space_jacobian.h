@@ -30,10 +30,10 @@ public:
     VLOG(3) << "computeJacobian generic for " << xi;
     std::array<Vec3,MeshType::dim()> jacobian;
     // loop over columns
-    for(int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
+    for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
     {
       jacobian[dimNo] = Vec3({0.0});
-      for(int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
+      for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
       {
         double coefficient = FunctionSpaceFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, dimNo, xi);
         jacobian[dimNo] += coefficient * geometryField[dofIndex];

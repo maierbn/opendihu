@@ -11,7 +11,7 @@ namespace FunctionSpace
 
 template<typename MeshType,typename BasisFunctionType>
 FunctionSpacePartitionBase<MeshType,BasisFunctionType>:: 
-FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PyObject *specificSettings) : 
+FunctionSpacePartitionBase(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings) :
   FunctionSpaceJacobian<MeshType,BasisFunctionType>(specificSettings), partitionManager_(partitionManager)
 {
 }

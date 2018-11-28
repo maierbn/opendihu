@@ -12,8 +12,7 @@
 namespace Data
 {
 
-/**  The datastructures used for streamline tracer.
- *   BaseDataType is a Data class that provides the solution field variable for the streamline tracer to operate on.
+/**  Multiple instances of a time setpping
  */
 template<typename FunctionSpaceType, typename BaseTimesteppingType>
 class MultipleInstances :
@@ -39,13 +38,10 @@ public:
 
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithGhosts();
-  
+
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nUnknownsLocalWithoutGhosts();
 
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Meshfiber;
-  typedef FieldVariable::FieldVariable<Meshfiber,3> FieldVariablefiberGeometry;
-  
   //! field variables that will be output by outputWriters
   typedef std::tuple<std::vector<typename BaseDataType::OutputFieldVariables>> OutputFieldVariables;
 

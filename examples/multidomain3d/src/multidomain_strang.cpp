@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
     Control::MultipleInstances<
       TimeSteppingScheme::Heun<
         CellmlAdapter<
-          4   // 57 for Hodgkin-Huxley
+          4,   // 57 for Hodgkin-Huxley
+          FunctionSpace::FunctionSpace<MeshType,BasisFunction::LagrangeOfOrder<1>>  // same function space as for anisotropic diffusion
         >  
       >
     >,
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
       SpatialDiscretization::FiniteElementMethod<   // anisotropic diffusion
         MeshType,
         BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<3>,
+        Quadrature::Gauss<5>,
         Equation::Dynamic::DirectionalDiffusion
       >
     >

@@ -11,30 +11,30 @@ namespace Postprocessing
 template<typename DiscretizableInTimeType>
 StreamlineTracer<DiscretizableInTimeType>::
 StreamlineTracer(DihuContext context) :
-  context_(context["StreamlineTracer"]), problem_(context_), data_(context_)
+  context_(context["StreamlineTracer"]), problem_(context_), data_(context_), specificSettings_(context_.getPythonConfig())
 {
   LOG(TRACE) << "StreamlineTracer::StreamlineTracer()";
 
-  specificSettings_ = context_.getPythonConfig();
   VLOG(2) << "in StreamlineTracer(), specificSettings_: " << specificSettings_;
   outputWriterManager_.initialize(context_, specificSettings_);
 
-  lineStepWidth_ = PythonUtility::getOptionDouble(specificSettings_, "lineStepWidth", 1e-2, PythonUtility::Positive);
-  targetElementLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetElementLength", 0.0, PythonUtility::Positive);
-  targetLength_ = PythonUtility::getOptionDouble(specificSettings_, "targetLength", 0.0, PythonUtility::Positive);
-  discardRelativeLength_ = PythonUtility::getOptionDouble(specificSettings_, "discardRelativeLength", 0.0, PythonUtility::Positive);
-  maxNIterations_ = PythonUtility::getOptionInt(specificSettings_, "maxIterations", 100000, PythonUtility::Positive);
-  useGradientField_ = PythonUtility::getOptionBool(specificSettings_, "useGradientField", false);
-  csvFilename_ = PythonUtility::getOptionString(specificSettings_, "csvFilename", "");
-  csvFilenameBeforePostprocessing_ = PythonUtility::getOptionString(specificSettings_, "csvFilenameBeforePostprocessing", "");
+  this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
+  this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
+  this->useGradientField_ = specificSettings_.getOptionBool("useGradientField", false);
+
+  targetElementLength_ = specificSettings_.getOptionDouble("targetElementLength", 0.0, PythonUtility::Positive);
+  targetLength_ = specificSettings_.getOptionDouble("targetLength", 0.0, PythonUtility::Positive);
+  discardRelativeLength_ = specificSettings_.getOptionDouble("discardRelativeLength", 0.0, PythonUtility::Positive);
+  csvFilename_ = specificSettings_.getOptionString("csvFilename", "");
+  csvFilenameBeforePostprocessing_ = specificSettings_.getOptionString("csvFilenameBeforePostprocessing", "");
   
   // get the first seed position from the list
-  PyObject *pySeedPositions = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "seedPoints");
+  PyObject *pySeedPositions = specificSettings_.getOptionListBegin<PyObject *>("seedPoints");
 
   // loop over other entries of list
   for (;
-      !PythonUtility::getOptionListEnd(specificSettings_, "seedPoints");
-      PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "seedPoints", pySeedPositions))
+      !specificSettings_.getOptionListEnd("seedPoints");
+      specificSettings_.getOptionListNext<PyObject *>("seedPoints", pySeedPositions))
   {
     Vec3 seedPosition = PythonUtility::convertFromPython<Vec3>::get(pySeedPositions);
     seedPositions_.push_back(seedPosition);
@@ -53,6 +53,11 @@ initialize()
   // initialize streamline tracer data object
   data_.setBaseData(std::make_shared<typename DiscretizableInTimeType::Data>(problem_.data()));
   data_.initialize();
+
+  // initialize values in base class
+  this->functionSpace_ = problem_.data().functionSpace();
+  this->solution_ = problem_.data().solution();
+  this->gradient_ = data_.gradient();
 }
 
 template<typename DiscretizableInTimeType>
@@ -73,107 +78,6 @@ run()
 
 template<typename DiscretizableInTimeType>
 void StreamlineTracer<DiscretizableInTimeType>::
-traceStreamline(element_no_t initialElementNo, std::array<double,(unsigned long int)3> xi, Vec3 startingPoint, double direction, std::vector<Vec3> &points)
-{
-  const int D = DiscretizableInTimeType::FunctionSpace::dim();
-  
-  const int nDofsPerElement = DiscretizableInTimeType::FunctionSpace::nDofsPerElement();
-  
-  Vec3 currentPoint = startingPoint;
-  element_no_t elementNo = initialElementNo;
-  
-    std::array<Vec3,nDofsPerElement> elementalGradientValues;
-    std::array<double,nDofsPerElement> elementalSolutionValues;
-    std::array<Vec3,nDofsPerElement> geometryValues;
-
-   // get gradient values for element
-   // There are 2 implementations of streamline tracing. 
-   // The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. 
-   // The first one seems more stable, because the gradient is zero and the position of the boundary conditions and should be used with a linear discretization of the potential field. 
-   // The second one is more accurate.
-   if (useGradientField_)
-   {
-     // use the precomputed gradient field
-     data_.gradient()->getElementValues(elementNo, elementalGradientValues);
-   }
-   else 
-   {
-     // get the local gradient value at the current position
-     problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
-
-     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-     problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
-   }
-   
-   VLOG(2) << "streamline starts in element " << elementNo;
-   
-   // loop over length of streamline, avoid loops by limiting the number of iterations
-   for(int iterationNo = 0; iterationNo <= maxNIterations_; iterationNo++)
-   {
-     if (iterationNo == maxNIterations_)
-     {
-       LOG(WARNING) << "streamline reached maximum number of iterations (" << maxNIterations_ << ")";
-       points.clear();
-       break;
-     }
-    
-     // check if element_no is still valid
-     if (!problem_.data().functionSpace()->pointIsInElement(currentPoint, elementNo, xi))
-     {
-       bool positionFound = problem_.data().functionSpace()->findPosition(currentPoint, elementNo, xi);
-
-       // if no position was found, the streamline exits the domain
-       if (!positionFound)
-       {
-         VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
-         break;
-       }
-           
-       // get values for element that are later needed to compute the gradient
-       if (useGradientField_)      
-       {
-         data_.gradient()->getElementValues(elementNo, elementalGradientValues);
-       }
-       else 
-       {
-         problem_.data().solution()->getElementValues(elementNo, elementalSolutionValues);
-           
-         // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-         problem_.data().functionSpace()->getElementGeometry(elementNo, geometryValues);
-       }
-       
-       VLOG(2) << "streamline enters element " << elementNo;
-     }
-
-     // get value of gradient
-     Vec3 gradient;
-     if (useGradientField_)
-     {       
-       gradient = problem_.data().functionSpace()->template interpolateValueInElement<3>(elementalGradientValues, xi);
-       VLOG(2) << "use gradient field";
-     }
-     else 
-     {
-       // compute the gradient value in the current value
-       Tensor2<D> inverseJacobian = problem_.data().functionSpace()->getInverseJacobian(geometryValues, elementNo, xi);
-       gradient = problem_.data().functionSpace()->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
-       
-       VLOG(2) << "use direct gradient";
-     }
-     
-     // integrate streamline
-     VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient) << ", lineStepWidth: " << lineStepWidth_;
-     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
-     
-     VLOG(2) << "              to " << currentPoint;
-     
-     points.push_back(currentPoint);
-   }
-}
-
-
-template<typename DiscretizableInTimeType>
-void StreamlineTracer<DiscretizableInTimeType>::
 traceStreamlines()
 {
   LOG(TRACE) << "traceStreamlines";
@@ -181,7 +85,6 @@ traceStreamlines()
   // compute a gradient field from the solution
   problem_.data().solution()->computeGradientField(data_.gradient());
  
-  std::array<double,(unsigned long int)3> xi;
   const int nSeedPoints = seedPositions_.size();
   //const int nSeedPoints = 1;
   std::vector<std::vector<Vec3>> streamlines(nSeedPoints);
@@ -194,27 +97,22 @@ traceStreamlines()
   {
     // get starting point
     Vec3 startingPoint = seedPositions_[seedPointNo];
-    //streamlines[seedPointNo].push_back(startingPoint);
-
-    element_no_t initialElementNo = 0;
     
-    // find out initial element no and xi value where the current Point lies
-    bool positionFound = problem_.data().functionSpace()->findPosition(startingPoint, initialElementNo, xi);
-    if (!positionFound)
+    // trace streamline forwards
+    std::vector<Vec3> forwardPoints;
+    this->traceStreamline(startingPoint, 1.0, forwardPoints);
+    
+    if (forwardPoints.empty())  // if there was not even the first point found
     {
       LOG(ERROR) << "Seed point " << startingPoint << " is outside of domain.";
       continue;
     }
-    
-    // trace streamline forwards
-    std::vector<Vec3> forwardPoints;
-    traceStreamline(initialElementNo, xi, startingPoint, 1.0, forwardPoints);
-    
+
     // trace streamline backwards
     std::vector<Vec3> backwardPoints;
-    traceStreamline(initialElementNo, xi, startingPoint, -1.0, backwardPoints);
+    this->traceStreamline(startingPoint, -1.0, backwardPoints);
   
-    // copy collected points to result vector 
+    // copy collected points to result vector, note avoiding this additional copy-step is not really possible, since it would require a push_front which is only efficient with lists, but we need a vector here
     streamlines[seedPointNo].insert(streamlines[seedPointNo].begin(), backwardPoints.rbegin(), backwardPoints.rend());
     streamlines[seedPointNo].insert(streamlines[seedPointNo].end(), startingPoint);
     streamlines[seedPointNo].insert(streamlines[seedPointNo].end(), forwardPoints.begin(), forwardPoints.end());
@@ -331,7 +229,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
       }
     }
     
-    auto lastValidStreamline = std::remove_if(streamlines.begin(), streamlines.end(), 
+    auto lastValidStreamline = std::remove_if (streamlines.begin(), streamlines.end(), 
                                               [](const std::vector<Vec3> &a)-> bool{return a.empty();});
     
     // remove previously cleared streamlines
@@ -346,10 +244,11 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
   if (targetLength_ != 0)
   {
     scalingFactor = targetLength_/maximumLength;
+    LOG(INFO) << "Scaling factor for streamlines: " << scalingFactor;
   }
   
   // resample streamlines
-  if (targetElementLength_ != 0.0 && targetElementLength_ != lineStepWidth_)
+  if (targetElementLength_ != 0.0 && targetElementLength_ != this->lineStepWidth_)
   {
     // loop over streamlines
     for (int i = 0; i < streamlines.size(); i++)
@@ -363,7 +262,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
       else 
       {
         std::vector<Vec3> newStreamline;
-        int presumedLength = int(currentStreamline.size()*targetElementLength_/lineStepWidth_+10);
+        int presumedLength = int(currentStreamline.size()*targetElementLength_/this->lineStepWidth_+10);
         newStreamline.reserve(presumedLength);
         
         VLOG(1) << "streamline no " << i << ", reserve length " << presumedLength;
@@ -409,7 +308,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
           }
           firstPoint = false;
         }
-        LOG(DEBUG) << "Scaled streamline by factor " << scalingFactor << ", resampled from lineStepWidth " << lineStepWidth_ << " to targetElementLength " << targetElementLength_ 
+        LOG(DEBUG) << "Scaled streamline by factor " << scalingFactor << ", resampled from lineStepWidth " << this->lineStepWidth_ << " to targetElementLength " << targetElementLength_
           << ", now it has " << newStreamline.size() << " points, length " << lengths[i]*scalingFactor;
         streamlines[i] = newStreamline;
       }

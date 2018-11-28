@@ -5,11 +5,11 @@
 namespace Solver
 {
 
-Nonlinear::Nonlinear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string name) :
+Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::string name) :
   Solver(specificSettings, name)
 {
   // parse options
-  relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);
+  relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
 
   // set up SNES object
   snes_ = std::make_shared<SNES>();

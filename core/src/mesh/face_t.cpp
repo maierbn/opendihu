@@ -21,6 +21,39 @@ face_t parseFace(std::string str)
   return face_t::face0Minus;
 }
 
+std::string getString(face_t face)
+{
+  switch(face)
+  {
+  case face0Minus:
+    return std::string("0-");
+  case face0Plus:
+    return std::string("0+");
+  case face1Minus:
+    return std::string("1-");
+  case face1Plus:
+    return std::string("1+");
+  case face2Minus:
+    return std::string("2-");
+  case face2Plus:
+    return std::string("2+");
+  }
+  return std::string("");
+}
+face_t oppositeFace(face_t face)
+{
+  switch(face)
+  {
+  case face0Minus:
+  case face1Minus:
+  case face2Minus:
+    return face_t((int)face + 1);
+  default:
+    return face_t((int)face - 1);
+  }
+  return face0Minus;
+}
+
 template<>
 Vec3 getNormal<3>(face_t face)
 {

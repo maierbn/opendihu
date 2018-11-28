@@ -15,7 +15,7 @@
 #include "interfaces/runnable.h"
 #include "control/dihu_context.h"
 #include "utility/petsc_utility.h"
-#include "data_management/finite_elements.h"
+#include "data_management/finite_element_method/finite_elements.h"
 #include "equation/laplace.h"
 #include "equation/poisson.h"
 #include "equation/type_traits.h"
@@ -41,7 +41,7 @@ setStiffnessMatrix()
   double elementLength = functionSpace->meshWidth();
 
   double integralFactor = 1./elementLength;
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   integralFactor = prefactor*integralFactor;
 
@@ -126,7 +126,7 @@ setStiffnessMatrix()
   }
 
   double integralFactor = 1.;
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   integralFactor = prefactor*integralFactor;
 
@@ -348,7 +348,7 @@ setStiffnessMatrix()
   }
 
   double integralFactor = elementLength0;
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
+  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
 
   integralFactor = prefactor*integralFactor;
 

@@ -16,7 +16,7 @@ class Manager
 public:
   
   //! constructor
-  Manager(PyObject *settings);
+  Manager(PythonConfig settings);
  
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedMesh
   template<typename FunctionSpace>
@@ -54,7 +54,7 @@ public:
   
 private:
  
-  PyObject *specificSettings_;  ///< the settings object for the partition manager
+  PythonConfig specificSettings_;  ///< the settings object for the partition manager
  
   int nRanksCommWorld_;  ///< number of MPI ranks, processes
   int rankNoCommWorld_;   ///< own process no.

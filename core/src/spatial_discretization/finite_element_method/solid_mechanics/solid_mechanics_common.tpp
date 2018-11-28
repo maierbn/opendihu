@@ -1360,7 +1360,7 @@ initialize()
     VLOG(1) << "-- initially computed dW_ext: " << PetscUtility::getStringVector(this->data_.externalVirtualWork().valuesLocal());
   }
 
-  this->outputIntermediateSteps_ = PythonUtility::getOptionBool(this->specificSettings_, "outputIntermediateSteps", false);
+  this->outputIntermediateSteps_ = this->specificSettings_.getOptionBool("outputIntermediateSteps", false);
 
   this->printBoundaryConditions();
 
@@ -1374,7 +1374,7 @@ void SolidMechanicsCommon<FunctionSpaceType,FunctionSpaceTypeForUtility,Quadratu
 initializeMaterialParameters()
 {
   std::array<double,Term::nMaterialParameters> parameters
-    = PythonUtility::template getOptionArray<double, Term::nMaterialParameters>(this->specificSettings_, "materialParameters", 0.0);
+    = this->specificSettings_.template getOptionArray<double, Term::nMaterialParameters>("materialParameters", 0.0);
 
   LOG(DEBUG) << "Material has " << Term::nMaterialParameters << " parameters, parsed from \"materialParameters\": " << parameters;
 

@@ -43,7 +43,7 @@ advanceTimeSpan()
   
   // loop over time steps
   double currentTime = this->timestepping_.startTime_;
-  for(int timeStepNo = 0; timeStepNo < this->timestepping_.numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->timestepping_.numberTimeSteps_;)
   {
     if (timeStepNo % this->timestepping_.timeStepOutputInterval_ == 0)
     {

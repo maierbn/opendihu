@@ -6,7 +6,7 @@
 namespace Solver
 {
 
-Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string name) :
+Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::string name) :
   Solver(specificSettings, name)
 {
   if (VLOG_IS_ON(1))
@@ -18,8 +18,8 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string
   }
 
   // parse options
-  relativeTolerance_ = PythonUtility::getOptionDouble(specificSettings, "relativeTolerance", 1e-5, PythonUtility::Positive);
-  maxIterations_ = PythonUtility::getOptionDouble(specificSettings, "maxIterations", 10000, PythonUtility::Positive);
+  relativeTolerance_ = this->specificSettings_.getOptionDouble("relativeTolerance", 1e-5, PythonUtility::Positive);
+  maxIterations_ = this->specificSettings_.getOptionDouble("maxIterations", 10000, PythonUtility::Positive);
   
   // set up KSP object
   //KSP *ksp;
@@ -45,7 +45,7 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string
   ierr = PCSetType(pc, pcType); CHKERRV(ierr);
 
   // for multigrid set number of levels to 5
-  if (pcType == PCGAMG)
+  if (pcType == std::string(PCGAMG))
   {
     int nLevels = 5;
     ierr = PCMGSetLevels(pc, nLevels, NULL); CHKERRV(ierr);
@@ -61,10 +61,10 @@ Linear::Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string
 void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
 {
   // parse solver type
-  std::string solverType = PythonUtility::getOptionString(this->specificSettings_, "solverType", "gmres");
+  std::string solverType = this->specificSettings_.getOptionString("solverType", "gmres");
 
   // parse preconditioner type
-  std::string preconditionerType = PythonUtility::getOptionString(this->specificSettings_, "preconditionerType", "none");
+  std::string preconditionerType = this->specificSettings_.getOptionString("preconditionerType", "none");
 
   // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
   pcType = PCNONE;

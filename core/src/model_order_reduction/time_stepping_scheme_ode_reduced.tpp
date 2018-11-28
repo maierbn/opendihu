@@ -24,7 +24,7 @@ TimeSteppingSchemeOdeReduced(DihuContext context):
   if (VLOG_IS_ON(1))
   {
     VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-    PythonUtility::printDict(this->specificSettings_);
+    PythonUtility::printDict(this->specificSettings_.pyObject());
   }
 }
 
@@ -67,7 +67,7 @@ initialize()
   
   LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
   
-  this->nReducedBases_ = PythonUtility::getOptionInt(specificSettings_, "nReducedBases", 10, PythonUtility::Positive);
+  this->nReducedBases_ = specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
   
   std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
   std::array<double, 1> physicalExtent({0.0});

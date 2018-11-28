@@ -1,8 +1,7 @@
 #pragma once
 
 #include "control/dihu_context.h"
-#include "data_management/solution_vector_mapping.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping/time_stepping.h"
 #include "interfaces/discretizable_in_time.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
 #include "data_management/data.h"

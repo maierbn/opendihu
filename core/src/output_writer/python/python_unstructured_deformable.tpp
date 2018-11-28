@@ -51,7 +51,7 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   int ownRankNo = mesh->meshPartition()->ownRankNo();
 
   // start critical section for python API calls
-  PythonUtility::GlobalInterpreterLock lock;
+  // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *pyElementalDofs = Python<FunctionSpaceType,OutputFieldVariablesType>::
     buildPyElementalDofsObject(meshBase, onlyNodalValues);

@@ -45,6 +45,7 @@ public:
 
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::getElementValues;
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValue;
+  using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValues;
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValuesWithGhosts;
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::getValuesWithoutGhosts;
   using FieldVariableSetGetStructured<FunctionSpaceType,1>::setValuesWithGhosts;
@@ -57,6 +58,9 @@ public:
 
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo) const;
+
+  //! get values from their local dof no.s, as vector
+  void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get all stored local values
   void getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues=false) const;

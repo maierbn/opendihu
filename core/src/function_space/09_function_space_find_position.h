@@ -50,7 +50,7 @@ protected:
   int targetY_ = 0;   //! the y index of the neighbour (-1,0, or 1) where the last neighbouring element was found
   int targetZ_ = 0;   //! the z index of the neighbour (-1,0, or 1) where the last neighbouring element was found
 
-  std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_ = {nullptr};   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
+  std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_;   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
 };
 
 /** Partial specialization for unstructured meshes

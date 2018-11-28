@@ -3,7 +3,6 @@
 #include "control/dihu_context.h"
 
 #include "data_management/solution_vector_mapping.h"
-#include "data_management/solution_vector_mapping.h"
 
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
@@ -19,7 +18,8 @@ class TimeSteppingSchemeOdeReduced :
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
+  typedef ::FunctionSpace::Generic FunctionSpace;
+  typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
 
   //! constructor
   TimeSteppingSchemeOdeReduced(DihuContext context);

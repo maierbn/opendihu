@@ -10,7 +10,7 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>
   {
   public:
-    typdef typename FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
+    typedef typename TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::FunctionSpace FunctionSpace;
     
     //! constructor
     TimeSteppingSchemeOdeReducedImplicit(DihuContext context);

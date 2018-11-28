@@ -2,7 +2,7 @@
 
 #include "control/dihu_context.h"
 #include "model_order_reduction/time_stepping_scheme_ode_reduced.h"
-
+#include "function_space/function_space.h"
 
 
 namespace ModelOrderReduction
@@ -12,6 +12,7 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>
   {
   public:
+    typedef typename TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::FunctionSpace FunctionSpace;
     
     //! constructor
     TimeSteppingSchemeOdeReducedExplicit(DihuContext context);

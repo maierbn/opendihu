@@ -78,7 +78,7 @@ initialize()
   
   //assert(this->data_);
   this->data_->setFunctionSpace(functionSpaceRed);
-  this->data_->setFullFunctionSpace(timestepping_.discretizableInTime().data().functionSpace());
+  this->data_->setFullFunctionSpace(timestepping_.discretizableInTime().functionSpace());
   this->data_->initialize();
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();

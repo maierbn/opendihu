@@ -33,7 +33,9 @@ namespace ModelOrderReduction
   void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
   {
-    this->timestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);   
+    this->timestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);
+    //ISCreateGeneral(comm,n, idx[],mode,&is);
+    //VecGetSubVector(X,is,&Y) should it be called every time step?
   }
    
   template<typename TimeSteppingExplicitType>

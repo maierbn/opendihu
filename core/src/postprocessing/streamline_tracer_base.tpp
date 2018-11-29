@@ -12,7 +12,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   const int D = FunctionSpace::dim();
   const int nDofsPerElement = FunctionSpace::nDofsPerElement();
   
-  LOG(DEBUG) << "traceStreamline(startingPoint " << startingPoint << ", direction " << direction << ")";
+  LOG(DEBUG) << "traceStreamline(startingPoint " << startingPoint << ", direction " << direction << ", maxNIterations_: " << maxNIterations_ << ")";
 
   Vec3 currentPoint = startingPoint;
   element_no_t elementNo;

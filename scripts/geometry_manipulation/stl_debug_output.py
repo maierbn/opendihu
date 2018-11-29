@@ -50,7 +50,7 @@ def output_border_points(filename, rankNo, points, size):
       
   #out_mesh.update_normals()
 
-  outfile = "{}_{}.stl".format(filename, rankNo)
+  outfile = "{}.{}.stl".format(filename, rankNo)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 

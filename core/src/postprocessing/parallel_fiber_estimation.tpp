@@ -20,13 +20,20 @@ ParallelFiberEstimation(DihuContext context) :
   outputWriterManager_.initialize(context_, specificSettings_);
 
   stlFilename_ = specificSettings_.getOptionString("stlFilename", "");
-  bottomZClip_ = specificSettings_.getOptionInt("bottomZClip", 0);
-  topZClip_ = specificSettings_.getOptionInt("topZClip", 100);
-  nBorderPointsX_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13)+1;
+  bottomZClip_ = specificSettings_.getOptionDouble("bottomZClip", 0);
+  topZClip_ = specificSettings_.getOptionDouble("topZClip", 100);
+  nBorderPointsZ_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13)+1;
+  nBorderPointsX_ = specificSettings_.getOptionInt("nElementsXPerSubdomain", 13)+1;
   maxLevel_ = specificSettings_.getOptionInt("maxLevel", 2);
+
+  this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
+  this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
+  this->useGradientField_ = specificSettings_.getOptionBool("useGradientField", false);
 
   // ensure nBorderPointsX is odd
   nBorderPointsX_ = 2*int(nBorderPointsX_/2)+1;
+  // ensure nBorderPointsZ is odd
+  nBorderPointsZ_ = 2*int(nBorderPointsZ_/2)+1;
 
 
   // run stl_create_mesh.rings_to_border_points
@@ -89,7 +96,7 @@ generateParallelMesh()
   PyObject* functionCreateRings = PyObject_GetAttrString(moduleStlCreateRings_, "create_rings");
   assert(functionCreateRings);
 
-  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s i i i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsX_, Py_False);
+  PyObject* loopsPy = PyObject_CallFunction(functionCreateRings, "s f f i O", stlFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, Py_False);
   PythonUtility::checkForError();
   assert(loopsPy);
 
@@ -161,8 +168,8 @@ generateParallelMesh()
 
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    borderPoints[face].resize(nBorderPointsX_);
-    for (int zIndex = 0; zIndex < nBorderPointsX_; zIndex++)
+    borderPoints[face].resize(nBorderPointsZ_);
+    for (int zIndex = 0; zIndex < nBorderPointsZ_; zIndex++)
     {
       borderPoints[face][zIndex].resize(nBorderPointsX_);
 
@@ -229,19 +236,19 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   if (currentRankSubset_->ownRankIsContained())
   {
     refineSubdomainsOnThisRank = true;
-    int nBorderPointsNew = nBorderPointsX_*2-1;
+    int nBorderPointsXNew = nBorderPointsX_*2-1;
 
     // refine borderPoints to twice the precision, only in x and y direction, stays the same in z direction
-    // then we have nBorderPointsNew points per x,y-direction and nBorderPointsX_ in z direction, each time also including first and list border point
+    // then we have nBorderPointsXNew points per x,y-direction and nBorderPointsZ_ in z direction, each time also including first and list border point
     // borderPoints[face_t][z-level][pointIndex]
     std::array<std::vector<std::vector<Vec3>>,4> borderPoints;
     for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
     {
 
-      borderPoints[face].resize(nBorderPointsX_);
-      for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
+      borderPoints[face].resize(nBorderPointsZ_);
+      for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
       {
-        borderPoints[face][zLevelIndex].resize(nBorderPointsNew);
+        borderPoints[face][zLevelIndex].resize(nBorderPointsXNew);
         Vec3 previousPoint = borderPointsOld[face][zLevelIndex][0];
 
         borderPoints[face][zLevelIndex][0] = previousPoint;
@@ -265,7 +272,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     PythonUtility::checkForError();
 #endif
 
-    // dimensions of borderPoints[face_t][z-level][pointIndex]: borderPoints[4][nBorderPointsX_][nBorderPointsNew]
+    // dimensions of borderPoints[face_t][z-level][pointIndex]: borderPoints[4][nBorderPointsZ_][nBorderPointsXNew]
 
     // create mesh in own domain, using python, harmonic maps
 
@@ -379,7 +386,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // set the same amount of values 0.0 for the BC values
     boundaryConditionValues.resize(boundaryConditionNonGhostDofLocalNosSet.size());
-    std::fill(boundaryConditionValues.begin(), boundaryConditionValues.end(),  std::array<double,1>({0.0}));
+    std::fill(boundaryConditionValues.begin(), boundaryConditionValues.end(), std::array<double,1>({0.0}));
     boundaryConditionNonGhostDofLocalNosSet.clear();
 
     // set top nodes to 1
@@ -561,6 +568,10 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       }
     }
 
+    // initialize values in base class
+    this->functionSpace_ = problem_->data().functionSpace();
+    this->solution_ = problem_->data().solution();
+    this->gradient_ = data_.gradient();
 
     // determine seed points
     // nodePositions contains all node positions in the current 3D mesh
@@ -579,6 +590,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     int nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
     int nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
+    LOG(DEBUG) << "nNodes: " << nNodesX << " x " << nNodesY << " x " << nNodesZ;
+
+    assert(nNodesX == nBorderPointsXNew);
+    assert(nNodesY == nBorderPointsXNew);
+    assert(nNodesZ == nBorderPointsZ_);
+
     int rankZNo = meshPartition->ownRankPartitioningIndex(2);
     int nRanksZ = meshPartition->nRanks(2);
     bool streamlineDirectionUpwards = rankZNo > nRanksZ/2;
@@ -591,17 +608,23 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       streamlineDirection = -1.0;
     }
 
+    if (nRanksZ == 1)
+    {
+      // if there is only one rank, start the streamlines at the center and trace towards top and bottom
+      zIndex = nNodesZ/2;
+    }
+
+    // trace final fibers
     if (level == maxLevel_)
     {
       LOG(DEBUG) << "final level";
 
-      // trace final fibers
       std::vector<Vec3> seedPoints;
 
       // create seed points
-      for (int j = 0; j < nBorderPointsNew-1; j++)
+      for (int j = 0; j < nBorderPointsXNew-1; j++)
       {
-        for (int i = 0; i < nBorderPointsNew-1; i++)
+        for (int i = 0; i < nBorderPointsXNew-1; i++)
         {
           Vec3 p0 = nodePositions[zIndex*nNodesX*nNodesY + j*nNodesX + i];
           Vec3 p1 = nodePositions[zIndex*nNodesX*nNodesY + j*nNodesX + i+1];
@@ -644,7 +667,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // boundary indices for face0Minus and face0Plus (vertical direction)
     int iBeginVertical = 0;
-    int iEndVertical = nBorderPointsNew;
+    int iEndVertical = nBorderPointsXNew;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
       iBeginVertical += 1;
@@ -654,7 +677,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // boundary indices for face1Minus and face1Plus (horizontal direction)
     int iBeginHorizontal = 0;
-    int iEndHorizontal = nBorderPointsNew;
+    int iEndHorizontal = nBorderPointsXNew;
 
     if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
       iBeginHorizontal += 1;
@@ -710,100 +733,173 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       seedPoints.push_back(nodePositions[zIndex*nNodesX*nNodesY + i*nNodesX + int(nNodesX/2)]);
     }
 
-    // determine if seedPoints are used or if they are received from neighbouring rank
-    if (nRanksZ > 1 && rankZNo != int(nRanksZ/2) && rankZNo != int(nRanksZ/2+1))
-    {
-      int neighbourRankNo;
-      if (streamlineDirectionUpwards)
-      {
-        neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Minus);
-      }
-      else
-      {
-        neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Plus);
-      }
-
-      // receive seed points
-      MPIUtility::handleReturnValue(MPI_Recv(seedPoints.data(), seedPoints.size(), MPI_DOUBLE, neighbourRankNo,
-                                             0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
-    }
-
 #ifndef NDEBUG
       PyObject* functionOutputPoints = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
       assert(functionOutputPoints);
 
       PyObject_CallFunction(functionOutputPoints, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 1.0);
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.6);
       PythonUtility::checkForError();
 #endif
 
-    // trace streamlines from seed points
+    // trace streamlines
     int nStreamlines = seedPoints.size();
     std::vector<std::vector<Vec3>> streamlinePoints(nStreamlines);
-    for (int i = 0; i < nStreamlines; i++)
-    {
-      Vec3 &startingPoint = seedPoints[i];
-      streamlinePoints[i].push_back(startingPoint);
 
+    if (nRanksZ == 1)
+    {
+      // if there is only one rank, trace streamline from the center in both directions
       for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
       {
         this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
       }
 
-      this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
-
-#ifndef NDEBUG
-      std::stringstream name;
-      name << "04_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputPoints, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 1.0);
-      PythonUtility::checkForError();
-#endif
-
-    }
-
-    // send end points of streamlines to next rank that continues the streamline
-    if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
-    {
-      // fill send buffer
-      std::vector<double> sendBuffer(nStreamlines);
-      for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
+      // trace streamlines from seed points
+      int nStreamlines = seedPoints.size();
+      LOG(DEBUG) << " on 1 rank, trace " << nStreamlines << " streamlines";
+      for (int i = 0; i < nStreamlines; i++)
       {
-        for (int i = 0; i < 3; i++)
+        // get starting point
+        Vec3 &startingPoint = seedPoints[i];
+
+        // trace streamlines forwards
+        std::vector<Vec3> forwardPoints;
+
+        this->traceStreamline(startingPoint, 1.0, forwardPoints);
+
+        if (forwardPoints.empty())  // if there was not even the first point found
         {
-          sendBuffer[streamlineIndex] = streamlinePoints[streamlineIndex].back()[i];
+          LOG(ERROR) << "Seed point " << startingPoint << " is outside of domain.";
+          continue;
+        }
+
+        // trace streamline backwards
+        std::vector<Vec3> backwardPoints;
+        this->traceStreamline(startingPoint, -1.0, backwardPoints);
+
+        // copy collected points to result vector, note avoiding this additional copy-step is not really possible, since it would require a push_front which is only efficient with lists, but we need a vector here
+        streamlinePoints[i].insert(streamlinePoints[i].begin(), backwardPoints.rbegin(), backwardPoints.rend());
+        streamlinePoints[i].insert(streamlinePoints[i].end(), startingPoint);
+        streamlinePoints[i].insert(streamlinePoints[i].end(), forwardPoints.begin(), forwardPoints.end());
+
+        // now streamline is in order from bottom (Z-) to top (Z+)
+        LOG(DEBUG) << "i=" << i << ", n points in streamline: " << streamlinePoints[i].size();
+        VLOG(1) << "streamline: " << streamlinePoints[i];
+
+  #ifndef NDEBUG
+        std::stringstream name;
+        name << "04_streamline_" << i << "_";
+        PyObject_CallFunction(functionOutputPoints, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+                              PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.5);
+        PythonUtility::checkForError();
+  #endif
+      }
+    }
+    else
+    {
+      // multiple ranks
+
+      // determine if previously set seedPoints are used or if they are received from neighbouring rank
+      if (nRanksZ > 1 && rankZNo != int(nRanksZ/2) && rankZNo != int(nRanksZ/2+1))
+      {
+        int neighbourRankNo;
+        if (streamlineDirectionUpwards)
+        {
+          neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Minus);
+        }
+        else
+        {
+          neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Plus);
+        }
+
+        // receive seed points
+        MPIUtility::handleReturnValue(MPI_Recv(seedPoints.data(), seedPoints.size(), MPI_DOUBLE, neighbourRankNo,
+                                              0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+      }
+
+      LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
+
+      // trace streamlines from seed points
+      for (int i = 0; i < nStreamlines; i++)
+      {
+        Vec3 &startingPoint = seedPoints[i];
+        streamlinePoints[i].push_back(startingPoint);
+
+        for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
+        {
+          this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
+        }
+
+        this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
+
+  #ifndef NDEBUG
+        std::stringstream name;
+        name << "04_streamline_" << i << "_";
+        PyObject_CallFunction(functionOutputPoints, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+                              PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 1.0);
+        PythonUtility::checkForError();
+  #endif
+
+      }
+
+      // send end points of streamlines to next rank that continues the streamline
+      if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
+      {
+        // fill send buffer
+        std::vector<double> sendBuffer(nStreamlines);
+        for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
+        {
+          for (int i = 0; i < 3; i++)
+          {
+            sendBuffer[streamlineIndex] = streamlinePoints[streamlineIndex].back()[i];
+          }
+        }
+
+        int neighbourRankNo;
+        if (streamlineDirectionUpwards)
+        {
+          neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Plus);
+        }
+        else
+        {
+          neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Minus);
+        }
+
+        // send end points of streamlines
+        MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                              0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+      }
+
+      // reorder streamline points such that they go from bottom to top
+      if (streamlineDirection < 0)
+      {
+        for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
+        {
+          std::reverse(streamlinePoints[streamlineIndex].begin(), streamlinePoints[streamlineIndex].end());
         }
       }
-
-      int neighbourRankNo;
-      if (streamlineDirectionUpwards)
-      {
-        neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Plus);
-      }
-      else
-      {
-        neighbourRankNo = meshPartition->neighbourRank(Mesh::face_t::face2Minus);
-      }
-
-      // send end points of streamlines
-      MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                             0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
     }
 
     // sample streamlines at equidistant z points
     std::vector<std::vector<Vec3>> streamlineZPoints(nStreamlines);
 
+    int nBorderPointsZNew = nBorderPointsZ_*2 - 1;
     double currentZ = bottomZClip_;
-    double zIncrement = (topZClip_ - bottomZClip_) / (nBorderPointsNew-1);
+    double zIncrement = double(topZClip_ - bottomZClip_) / (nBorderPointsZNew - 1.0);
+
+    LOG(DEBUG) << "z bounds: " << bottomZClip_ << ", " << topZClip_ << ", zIncrement: " << zIncrement;
 
     for (int i = 0; i < nStreamlines; i++)
     {
+      LOG(DEBUG) << " streamline " << i << " has " << streamlinePoints[i].size() << " points.";
+
       assert(streamlinePoints[i].size() > 1);
 
       Vec3 previousPoint = streamlinePoints[i].front();
-      streamlineZPoints[i].reserve(nBorderPointsNew);
+      streamlineZPoints[i].reserve(nBorderPointsZNew);
       streamlineZPoints[i].push_back(previousPoint);
-      currentZ += zIncrement;
+      currentZ = bottomZClip_ + zIncrement;
+      LOG(DEBUG) << "first point: " << streamlinePoints[i].front() << ", currentZ: " << currentZ;
 
       for (std::vector<Vec3>::const_iterator iter = streamlinePoints[i].begin()+1; iter != streamlinePoints[i].end(); iter++)
       {
@@ -826,7 +922,15 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints[i]), 1.0);
       PythonUtility::checkForError();
 #endif
-      assert(streamlineZPoints[i].size() == nBorderPointsNew);
+
+      LOG(DEBUG) << "n sampled points: " << streamlineZPoints[i].size() << ", nBorderPointsXNew: " << nBorderPointsXNew << ", nBorderPointsZNew: " << nBorderPointsZNew;
+
+      if (streamlineZPoints[i].size() != nBorderPointsZNew)
+      {
+        LOG(ERROR) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" "
+          << std::endl << "Try adjusting \"bottomZClip\" and \"topZClip\" or mesh width.";
+      }
+      //assert(streamlineZPoints[i].size() == nBorderPointsZNew);
     }
 
 
@@ -844,9 +948,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // fill points that are on the border of the domain
     // loop over z levels
-    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
-      currentZ = bottomZClip_ + double(zLevelIndex) / (nBorderPointsNew-1) * (topZClip_ - bottomZClip_);
+      currentZ = bottomZClip_ + double(zLevelIndex) / (nBorderPointsZNew-1) * (topZClip_ - bottomZClip_);
 
       Vec3 startPoint;
       Vec3 endPoint;
@@ -859,12 +963,12 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
           if (zLevelIndex % 2 == 0)
           {
             startPoint = borderPoints[face][zLevelIndex/2][0];
-            endPoint = borderPoints[face][zLevelIndex/2][nBorderPointsNew-1];
+            endPoint = borderPoints[face][zLevelIndex/2][nBorderPointsXNew-1];
           }
           else
           {
             startPoint = 0.5 * (borderPoints[face][zLevelIndex/2][0] + borderPoints[face][zLevelIndex/2+1][0]);
-            endPoint = 0.5 * (borderPoints[face][zLevelIndex/2][nBorderPointsNew-1] + borderPoints[face][zLevelIndex/2][nBorderPointsNew-1]);
+            endPoint = 0.5 * (borderPoints[face][zLevelIndex/2][nBorderPointsXNew-1] + borderPoints[face][zLevelIndex/2][nBorderPointsXNew-1]);
           }
 
         // determine boundary points between startPoint and endPoint, with same zLevel value
@@ -874,7 +978,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
         PyObject *startPointPy = PythonUtility::convertToPython<Vec3>::get(startPoint);
         PyObject *endPointPy = PythonUtility::convertToPython<Vec3>::get(endPoint);
-        PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection, "s O O f i", stlFilename_.c_str(), startPointPy, endPointPy, currentZ, nBorderPointsNew);
+        PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection, "s O O f i", stlFilename_.c_str(), startPointPy, endPointPy, currentZ, nBorderPointsXNew);
         PythonUtility::checkForError();
         //  create_ring_section(input_filename, start_point, end_point, z_value, n_points)
         assert(loopSectionPy);
@@ -907,7 +1011,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         }
 
         // bottom subdomain
-        if (zLevelIndex <= nBorderPointsX_)
+        if (zLevelIndex <= nBorderPointsZ_)
         {
           int zLevelIndexSubdomain = zLevelIndex;
           std::copy(loopSection.begin(), loopSection.begin()+nBorderPointsX_, borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain].begin());
@@ -915,9 +1019,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
         }
 
         // top subdomain
-        if (zLevelIndex >= nBorderPointsX_)
+        if (zLevelIndex >= nBorderPointsZ_)
         {
-          int zLevelIndexSubdomain = zLevelIndex - nBorderPointsX_;
+          int zLevelIndexSubdomain = zLevelIndex - nBorderPointsZ_;
           std::copy(loopSection.begin(), loopSection.begin()+nBorderPointsX_, borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain].begin());
           std::copy(loopSection.begin()+nBorderPointsX_-1, loopSection.end(), borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain].begin());
         }
@@ -1046,8 +1150,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequest.size(), sendRequest.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-  nBorderPointsX_ = 2*nBorderPointsX_-1;
-
   LOG(FATAL) << "done";
 
   // call method recursively
@@ -1109,12 +1211,13 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
 
   // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
 
-  int nBorderPointsNew = nBorderPointsX_*2-1;
+  int nBorderPointsXNew = nBorderPointsX_*2-1;
+  int nBorderPointsZNew = nBorderPointsZ_*2 - 1;
   int streamlineIndex = 0;
 
   // boundary indices for face0Minus and face0Plus (vertical)
   int iBeginVertical = 0;
-  int iEndVertical = nBorderPointsNew;
+  int iEndVertical = nBorderPointsXNew;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
     iBeginVertical += 1;
@@ -1124,7 +1227,7 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
 
   // boundary indices for face1Minus and face1Plus (horizontal)
   int iBeginHorizontal = 0;
-  int iEndHorizontal = nBorderPointsNew;
+  int iEndHorizontal = nBorderPointsXNew;
 
   if (subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])
     iBeginHorizontal += 1;
@@ -1140,14 +1243,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 0;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 4;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1160,14 +1263,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 2;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 6;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1183,14 +1286,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 1;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 5;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1203,14 +1306,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 3;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 7;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1226,14 +1329,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 0;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 4;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1246,14 +1349,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 1;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 5;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1269,14 +1372,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 2;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 6;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1289,14 +1392,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
     for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
     {
       // loop over bottom half of the streamline points
-      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+      for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
       {
         const int subdomainIndex = 3;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
       }
 
       // loop over top half of the streamline points
-      for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+      for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
       {
         const int subdomainIndex = 7;
         borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1310,14 +1413,17 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 0;
+      LOG(DEBUG) << borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus].size() << " levels ";
+      LOG(DEBUG) << borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex].size() << " points";
+      LOG(DEBUG) << "z: " << zLevelIndex << ", i=" << i;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 4;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1330,14 +1436,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 1;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 5;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1349,14 +1455,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = iBeginHorizontal; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 2;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 6;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1369,14 +1475,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = nBorderPointsX_-1; i < iEndHorizontal; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 3;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 7;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1389,14 +1495,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 0;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 4;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1409,14 +1515,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 1;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 5;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1428,14 +1534,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = iBeginVertical; i < nBorderPointsX_; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 2;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 6;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
@@ -1448,14 +1554,14 @@ reorganizeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, st
   for (int i = nBorderPointsX_-1; i < iEndVertical; i++, streamlineIndex++, pointIndex++)
   {
     // loop over bottom half of the streamline points
-    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsX_; zLevelIndex++)
+    for (int zLevelIndex = 0; zLevelIndex <= nBorderPointsZ_; zLevelIndex++)
     {
       const int subdomainIndex = 3;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
     }
 
     // loop over top half of the streamline points
-    for (int zLevelIndex = nBorderPointsX_; zLevelIndex < nBorderPointsNew; zLevelIndex++)
+    for (int zLevelIndex = nBorderPointsZ_; zLevelIndex < nBorderPointsZNew; zLevelIndex++)
     {
       const int subdomainIndex = 7;
       borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][zLevelIndex][pointIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];

@@ -61,9 +61,10 @@ protected:
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
   std::string stlFilename_;   ///< the filename of the STL file
-  int bottomZClip_;   ///< bottom z-value of the volume to consider
-  int topZClip_;   ///< top z-value of the volume to consider
+  double bottomZClip_;   ///< bottom z-value of the volume to consider
+  double topZClip_;   ///< top z-value of the volume to consider
   int nBorderPointsX_;    ///< number of subdivisions of the line
+  int nBorderPointsZ_;    ///< number of subdivisions in z direction
   int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
 
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"

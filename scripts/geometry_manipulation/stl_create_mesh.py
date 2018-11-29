@@ -1547,7 +1547,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   border_points_1minus = border_points_faces[2]
   border_points_1plus = border_points_faces[3]
   n_loops = len(border_points_0minus)
-  print("border_points_0minus: {}".format(border_points_0minus))
+  #print("border_points_0minus: {}".format(border_points_0minus))
   
   #   ^ --(1+)-> ^
   # ^ 0-         0+
@@ -1591,7 +1591,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
 
     print("")
     print("Loop {}/{} with {} border points".format(loop_no, n_loops, n_points))
-    print("border points: ", border_points)
+    #print("border points: ", border_points)
     
     # create 2D mesh with border_points
     show_plot = False

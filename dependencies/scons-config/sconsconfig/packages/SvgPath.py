@@ -77,7 +77,7 @@ class SvgPath(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for svg.path ... ')
+        ctx.Message('Checking for svg.path ...      ')
         self.check_options(env)
 
         res = super(SvgPath, self).check(ctx)

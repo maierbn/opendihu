@@ -19,16 +19,19 @@ bc = {}
 config = {
   "Solvers": {
     "linearSolver": {
-      "relativeTolerance": 1e-15,
+      "relativeTolerance": 1e-12,
       "maxIterations": 500000,
     }
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
-    "bottomZClip":  37.0,   # top z value of the muscle volume
-    "topZClip": 300.0,      # bottom z value of the muscle volume
-    "nElementsZPerSubdomain": 4,  # number of elements in z-direction per subdomain
+    "bottomZClip":  60.0,   # top z value of the muscle volume
+    "topZClip": 250.0,      # bottom z value of the muscle volume
+    "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
+    "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
+    "useGradientField": False,
     "maxLevel": 1,          # maximum level
+    "lineStepWidth":  0.1,  # line width for tracing of fibers
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

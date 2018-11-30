@@ -15,7 +15,7 @@ template<typename FullFunctionSpace>
 class MORBase
 {
 public:
-  typedef Data::ModelOrderReduction<FullFunctionSpace> Data; //type of Data object
+  typedef Data::ModelOrderReduction<FullFunctionSpace> DataMOR; //type of Data object
   
   //! constructor
   MORBase(DihuContext context);
@@ -26,7 +26,7 @@ public:
   void setBasis();
   
   //! data object for model order reduction
-  Data &data();
+  DataMOR &dataMOR();
   
   virtual void initialize();
    
@@ -34,7 +34,7 @@ protected:
   //! Set the reduced system matrix, A_R=V^T A V
   virtual void setRedSysMatrix(Mat &A, Mat &A_R);
   
-  std::shared_ptr<Data> data_;
+  std::shared_ptr<DataMOR> dataMOR_;
   int nReducedBases_;             ///< dimension of the reduced space
   bool initialized_;
 };

@@ -3,28 +3,29 @@
 #include "control/dihu_context.h"
 
 #include "function_space/function_space.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
-
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "data_management/time_stepping/time_stepping_reduced.h"
 #include "model_order_reduction/mor.h"
 
 namespace ModelOrderReduction
 {
 
-template<typename TimeSteppingType>
+  template<typename TimeSteppingType>
 class TimeSteppingSchemeOdeReduced :
   public MORBase<typename TimeSteppingType::FunctionSpace>,
-  public TimeSteppingScheme::TimeSteppingScheme
+    public TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
 {
 public:
-  typedef ::FunctionSpace::Generic FunctionSpace;
+  //typedef ::FunctionSpace::Generic FunctionSpace;
   typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
-
+  typedef Data::TimeSteppingReduced<typename TimeSteppingType::FunctionSpace> DataReduced; //type of Data object  
+  
   //! constructor
-  TimeSteppingSchemeOdeReduced(DihuContext context);
+  TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);
 
   //! destructor
   virtual ~TimeSteppingSchemeOdeReduced(){};
-
+  
   //! run simulation
   virtual void run();
 
@@ -33,6 +34,9 @@ public:
 
   //!
   virtual void advanceTimeSpan()=0;
+  
+  //! data object for model order reduction
+  //DataReduced &redData();
 
   //! return the Petsc solution vector
   std::shared_ptr<FieldVariableType> &solution();
@@ -41,7 +45,7 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
 
   //! reset state such that new initialization becomes necessary
-  virtual void reset();
+  //virtual void reset();
 
   //! return whether the scheme has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
@@ -49,7 +53,9 @@ public:
 protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
-
+  
+  //std::shared_ptr<DataReduced> redData_;
+  
   TimeSteppingType timestepping_;
 
 private:

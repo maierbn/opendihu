@@ -4,18 +4,18 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include<petscmat.h>
-
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "mesh/mesh_manager.h"
+#include "function_space/function_space.h"
 
 namespace ModelOrderReduction
 {
-template<typename TimeSteppingType>
+  template<typename TimeSteppingType>
 TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-TimeSteppingSchemeOdeReduced(DihuContext context):
+TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  TimeSteppingScheme(context["ModelOrderReduction"]),
+  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>(context["ModelOrderReduction"],name),
   timestepping_(context["ModelOrderReduction"]), initialized_(false)
-{  
+{ /* 
   this->specificSettings_ = this->context_.getPythonConfig();
 
   // initialize output writers
@@ -26,6 +26,7 @@ TimeSteppingSchemeOdeReduced(DihuContext context):
     VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
     PythonUtility::printDict(this->specificSettings_.pyObject());
   }
+  */
 }
 
 template<typename TimesteppingType>
@@ -38,14 +39,16 @@ solution()
 template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
 {
+  /*
   PetscErrorCode ierr;
-  
-  Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();
-  Vec &redSolution=this->data_->redSolution()->getValuesContiguous();
-  Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
+   
+  Vec &solution = this->discretizableInTime_.data().solution()->getValuesContiguous();
+  Vec &redSolution=this->data_->solution()->getValuesContiguous();
+  Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // reduction step
-  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);   
+  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr); 
+  */
 }
 
 template<typename TimeSteppingType>
@@ -54,6 +57,8 @@ initialize()
 {
   if (initialized_)
     return;
+  
+  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::initialize();
   
   LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
   
@@ -67,18 +72,20 @@ initialize()
   
   LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
   
-  this->nReducedBases_ = specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
+  this->nReducedBases_ = this->specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
   
   std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
   std::array<double, 1> physicalExtent({0.0});
   
+  typedef FunctionSpace::Generic GenericFunctionSpace;
+  
   // create the functionspace for the reduced order
-  std::shared_ptr<::FunctionSpace::Generic> functionSpaceRed 
-    = context_.meshManager()->createFunctionSpace<::FunctionSpace::Generic>("functionSpaceReduced", nElements, physicalExtent);
+  std::shared_ptr<GenericFunctionSpace> functionSpaceRed 
+    = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElements, physicalExtent);
   
   //assert(this->data_);
   this->data_->setFunctionSpace(functionSpaceRed);
-  this->data_->setFullFunctionSpace(timestepping_.discretizableInTime().functionSpace());
+  this->dataMOR_->setFullFunctionSpace(this->discretizableInTime_.functionSpace());
   this->data_->initialize();
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();
@@ -100,20 +107,10 @@ run()
 }
   
 template<typename TimeSteppingType>
-void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-reset()
+bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+knowsMeshType()
 {
-  TimeSteppingScheme::reset();
-  timestepping_.reset();
-  
-  initialized_ = false;
+  return false;
 }
-  
-  template<typename TimeSteppingType>
-  bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-  knowsMeshType()
-  {
-    return false;
-  }
   
 } //namespace

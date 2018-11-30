@@ -17,6 +17,7 @@ class TimeSteppingSchemeOdeBase :
   public TimeSteppingScheme
 {
 public:
+  typedef DiscretizableInTimeType DiscretizableInTime_Type;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   typedef Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
   typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;

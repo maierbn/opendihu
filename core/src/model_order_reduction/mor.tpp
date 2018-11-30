@@ -9,7 +9,7 @@ namespace ModelOrderReduction
 template<typename FullFunctionSpaceType>
 MORBase<FullFunctionSpaceType>::
 MORBase(DihuContext context):
-  data_(std::make_shared<Data>(context)), initialized_(false)
+  dataMOR_(std::make_shared<DataMOR>(context)), initialized_(false)
 { 
 }
 
@@ -23,12 +23,12 @@ template<typename FullFunctionSpaceType>
 void MORBase<FullFunctionSpaceType>::
 setBasis()
 {
-  Mat &basisTransp=this->data_->basisTransp()->valuesGlobal();
+  Mat &basisTransp=this->dataMOR_->basisTransp()->valuesGlobal();
   
   PetscErrorCode ierr;
   ierr=MatShift(basisTransp, 1); CHKERRV(ierr); //identitty matrix to check
   
-  Mat &basis=this->data_->basis()->valuesGlobal();
+  Mat &basis=this->dataMOR_->basis()->valuesGlobal();
   
   ierr=MatShift(basis, 1); CHKERRV(ierr); //identitty matrix to check
   
@@ -38,9 +38,9 @@ setBasis()
 
 template<typename FullFunctionSpaceType>
 Data::ModelOrderReduction<FullFunctionSpaceType> &MORBase<FullFunctionSpaceType>::
-data()
+dataMOR()
 {
-  return *data_;
+  return *dataMOR_;
 }
 
 template<typename FullFunctionSpaceType>

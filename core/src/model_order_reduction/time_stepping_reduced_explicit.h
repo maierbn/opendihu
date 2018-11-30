@@ -1,9 +1,8 @@
 #pragma once 
 
 #include "control/dihu_context.h"
-#include "model_order_reduction/time_stepping_scheme_ode_reduced.h"
 #include "function_space/function_space.h"
-
+#include "model_order_reduction/time_stepping_scheme_ode_reduced.h"
 
 namespace ModelOrderReduction
 {

@@ -53,11 +53,11 @@ namespace ModelOrderReduction
     
     Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
     Vec &increment = this->timestepping_.data().increment()->getValuesContiguous();
-    Vec &redSolution= this->data_->redSolution()->getValuesContiguous();
-    Vec &redIncrement= this->data_->redIncrement()->getValuesContiguous();
+    Vec &redSolution= this->data_->solution()->getValuesContiguous();
+    Vec &redIncrement= this->data_->increment()->getValuesContiguous();
     
-    Mat &basis = this->data_->basis()->valuesGlobal();
-    Mat &basisTransp = this->data_->basisTransp()->valuesGlobal();
+    Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+    Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     // loop over time steps
     double currentTime = this->startTime_;

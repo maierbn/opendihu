@@ -1,4 +1,4 @@
-#include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.h"
+#include "model_order_reduction/time_stepping_reduced_explicit.h"
 
 #include <Python.h>
 #include<petscmat.h>
@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingExplicitType>
   TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context), initialized_(false) 
+  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEuler"), initialized_(false) 
   {
   }
   

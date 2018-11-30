@@ -40,4 +40,4 @@ namespace ModelOrderReduction
   
 } // namespace
 
-#include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.tpp"
+#include "model_order_reduction/time_stepping_reduced_explicit.tpp"

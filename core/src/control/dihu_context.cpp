@@ -40,6 +40,7 @@ std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
 
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
+int DihuContext::nRanksCommWorld_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 
 // copy-constructor
 DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_)
@@ -73,6 +74,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
+
+    // get global number of MPI ranks
+    MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
 
     // load configuration from file if it exits
     initializeLogging(argc, argv);
@@ -182,17 +186,16 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // add rank no and nRanks
     // get own rank no and number of ranks
-    int rankNo, nRanks;
+    int rankNo;
     MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-    MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
 
     Control::PerformanceMeasurement::setParameter("rankNo", rankNo);
-    Control::PerformanceMeasurement::setParameter("nRanks", nRanks);
+    Control::PerformanceMeasurement::setParameter("nRanks", nRanksCommWorld_);
 
     // convert to wchar_t
     std::stringstream rankNoStr, nRanksStr;
     rankNoStr << rankNo;
-    nRanksStr << nRanks;
+    nRanksStr << nRanksCommWorld_;
     argumentToConfigWChar[nArgumentsToConfig-2] = Py_DecodeLocale(rankNoStr.str().c_str(), NULL);
     argumentToConfigWChar[nArgumentsToConfig-1] = Py_DecodeLocale(nRanksStr.str().c_str(), NULL);
 
@@ -505,17 +508,15 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf;
   conf.setToDefault();
 
-  int nRanks;
   int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
   MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
   
   // set prefix for output that includes current rank no
   std::string prefix;
-  if (nRanks > 1)
+  if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << rankNo << "/" << nRanks << " ";
+    s << rankNo << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
   
@@ -523,7 +524,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'
-  if (nRanks > 1)
+  if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
     s << logFilesPath << rankNo << "_opendihu.log";

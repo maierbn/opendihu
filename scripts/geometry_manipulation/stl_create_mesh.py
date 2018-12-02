@@ -42,6 +42,8 @@ import scipy.integrate
 import scipy.optimize
 import timeit
 
+import stl_debug_output
+
 def triangle_contains_point(triangle, point):
   """ check if a point lies inside a triangle, 2D """
   # barycentric coordinates
@@ -249,7 +251,7 @@ def compute_mean_distances(grid_points_world_space,n_grid_points_x,n_grid_points
 def standardize_loop(loop, lengths):
   """
   Rearrange the points in the loop such that the point with the lowest x value is the first and then the direction of the next points is counter-clockwise.
-  :param loop: list of points
+  :param loop: list of points, first and last point is the same
   :param lengths: the length of the loop gets computed and will be appended to the list lengths
   """
   
@@ -282,7 +284,16 @@ def standardize_loop(loop, lengths):
   # if orientation is clockwise, reverse order of points in loop
   if np.sign(np.dot(up, np.array([0,0,1.0]))) < 0:
     sorted_loop = sorted_loop[::-1]
-    
+  
+  # check if length is correct
+  if debug:
+    l = 0
+    p0 = sorted_loop[0]
+    for p in sorted_loop[1:]:
+      l += np.linalg.norm(p-p0)
+      p0 = p
+    print("computed length: {}, stated length: {}".format(l, length))
+
   if debug:
     print("loop")
     print(loop)
@@ -295,93 +306,125 @@ def standardize_loop(loop, lengths):
     
   return sorted_loop
     
-def sample_border_points(loop, length, n_points):
+def sample_border_points(loop, length, n_points, target_x):
   """
   Given a loops of points (which are spaces like the initial STL triangles were), sample the loops at n_points equidistant points
-  :param loop:
-  :param n_points:
+  :param loop:   List of points that form the loop to be sampled.
+  :param length:  The length of the loop, should be measured previously
+  :param n_points: Number of points that will be created.
+  :param target_x: a plane x=target_x that will determine the start point in the loop. The start point lies on that plane and is the one left (in x- direction) of the center.
   """
   
   debug = False
-  
   border_points = []
-  h = float(length) / n_points
+  h = float(length) / n_points  # parameter increment
   
-  # loop over points of loop
-  previous_loop_point = None
-  for loop_point in loop:
+  # determine start point
+  center_point = sum(loop)/len(loop)
+  if target_x is None:
+    target_x = 0   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
+  
+  if debug:
+    print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}\n".format(len(loop), length, n_points, target_x, h))
+  
+  if debug:
+    # check if length is correct
+    l = 0
+    p0 = loop[0]
+    for p in loop[1:]:
+      l += np.linalg.norm(p-p0)
+      p0 = p
+    print("computed length: {}, stated length: {}".format(l, length))
+  
+  point_index = 0
+  previous_loop_point = loop[point_index]
+  point_index = 1
+  start_point_reached = False
+  loop_iteration_no = 0
+  
+  # loop over points
+  while True:
+    loop_point = loop[point_index]
     
-    # for the start of the loop
-    if previous_loop_point is None:
-      previous_loop_point = loop_point
+    # if the current edge contains a point that is horizontal in y-direction to the center point and left of it
+    if previous_loop_point[1] < center_point[1] and loop_point[1] < center_point[1] \
+      and (previous_loop_point[0] <= target_x <= loop_point[0] or \
+        loop_point[0] <= target_x <= previous_loop_point[0]):
+      
+      # if we meet this point again, the loop is closed
+      if start_point_reached:
+        break
+      start_point_reached = True
+      
+      edge = -previous_loop_point + loop_point 
+      edge_length = np.linalg.norm(edge)
+      alpha = (target_x - previous_loop_point[0]) / edge_length
+      start_point = previous_loop_point + alpha*edge
       
       # add starting point of loop as first border points
-      border_points.append(loop_point)
+      border_points.append(start_point)
       if debug:
         print("add start point: ",border_points)
       
+      previous_loop_point = start_point
+      
       t_previous_loop_point = 0
       t_next_border_point = h
-      continue
-    
-    if debug:
-      print("current previous_loop_point: {}, t_previous_loop_point: {}".format(previous_loop_point,t_previous_loop_point) )
-    
-    # compute current edge
-    edge = -previous_loop_point + loop_point 
-    edge_length = np.linalg.norm(edge) 
-    
-    n_on_edge = 0
-    
-    # collect all border points on current edge
-    while t_next_border_point <= t_previous_loop_point + edge_length:
+          
+    if start_point_reached:
+      # compute current edge
+      edge = -previous_loop_point + loop_point 
+      edge_length = np.linalg.norm(edge) 
       
-      border_point = previous_loop_point + edge * (t_next_border_point - t_previous_loop_point) / edge_length
-      border_points.append(border_point)
+      n_on_edge = 0
+      
+      # collect all border points on current edge
+      while t_next_border_point <= t_previous_loop_point + edge_length:
+        
+        border_point = previous_loop_point + edge * (t_next_border_point - t_previous_loop_point) / edge_length
+        border_points.append(border_point)
+        
+        if debug:
+          print("border point {}, t previous: {}, edge length: {}, next: {},  t_previous_loop_point + edge_length: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point,  t_previous_loop_point + edge_length))
+        
+        t_next_border_point += h
+        if debug:
+          n_on_edge += 1
+          print("new t_next_border_point: ",t_next_border_point)
       
       if debug:
-        print("border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point))
+        print("edge length ",edge_length," n_on_edge: ",n_on_edge," t_previous_loop_point: ",t_previous_loop_point," t_next_border_point:",t_next_border_point)
       
-      t_next_border_point += h
-      if debug:
-        n_on_edge += 1
-    
-    if debug:
-      print("n_on_edge: ",n_on_edge)
+      # move on to next edge
+      t_previous_loop_point += edge_length
       
-      
-    # move on to next edge
-    t_previous_loop_point += edge_length
     previous_loop_point = loop_point
-  
-  # handle edge back to first point
-  loop_point = loop[0]
-
-  # compute current edge
-  edge = -previous_loop_point + loop_point 
-  edge_length = np.linalg.norm(edge) 
-  
-  # collect all border points on current edge
-  while t_previous_loop_point + edge_length >= t_next_border_point:
+    point_index = (point_index+1)%len(loop)
     
-    border_point = previous_loop_point + edge * (t_next_border_point - t_previous_loop_point)
-    border_points.append(border_point)
+    loop_iteration_no += 1
+    if loop_iteration_no == 2*len(loop):
+      print("Warning: target plane y={} does not intersect loop, center_point: {}!".format(target_x, center_point))
+      target_x = center_point[0]
+      loop_iteration_no = 0
     
-    if debug:
-      print("border point {}, t previous: {}, edge length: {}, next: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point))
-    
-    t_next_border_point += h
-    
+  if debug:
+    p0 = border_points[0]
+    for p in border_points[1:]:
+      print(np.linalg.norm(p0-p))
+      p0 = p
   
   # if there were too many points collected, due to rounding errors
   if len(border_points) > n_points:
-    if debug:
-      print("too many points: {}, n_points: {}".format(len(border_points), n_points))
+    #if debug:
+    print("too many points: {}, n_points: {}".format(len(border_points), n_points))
     border_points = border_points[:n_points]
   
   if debug:
     print("border points: ",len(border_points))
     print(border_points)
+    print("h: ",h)
+    print("distances: ")
+    
   
     print("n border points: {}".format(len(border_points)))
   
@@ -406,6 +449,10 @@ def rings_to_border_points(loops, n_points):
     sorted_loop = standardize_loop(loop, lengths)
     sorted_loops.append(sorted_loop)
   
+  # get center of gravity of the cogs of each loop
+  #mean_point = sum(sum(loop)/len(loop) for loop in loops)/len(loops)
+  #target_x = mean_point[1]
+  
   # sample border points for each ring
   border_point_loops = []
   for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
@@ -413,8 +460,21 @@ def rings_to_border_points(loops, n_points):
     if not loop:
       continue
     
+    # determine target_x
+    center_points = []
+    smoothing_width = min(loop_no, len(sorted_loops)-loop_no-1, 5)
+    for i in range(-smoothing_width,smoothing_width+1):
+      loop_index = loop_no + i
+      if 0 <= loop_index < len(sorted_loops):
+        loop0 = sorted_loops[loop_index]
+        center_point = sum(loop0)/len(loop0)
+        center_points.append(center_point)
+    
+    center_point = sum(center_points)/len(center_points)
+    target_x = center_point[0]
+    
     # sample loop with n_points equidistant points
-    border_points = sample_border_points(loop, length, n_points)
+    border_points = sample_border_points(loop, length, n_points, target_x)
     border_point_loops.append(border_points)
     
   return border_point_loops,lengths
@@ -1595,11 +1655,32 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
     
     # create 2D mesh with border_points
     show_plot = False
+    if debugging_stl_output:
+      out_triangulation_world_space = []
+      markers_border_points_world_space = []
+      out_triangulation_parametric_space = []
+      grid_triangles_world_space = []
+      grid_triangles_parametric_space = []
+      markers_grid_points_parametric_space = []
+      markers_grid_points_world_space = []
+      debugging_output_lists = [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+    else:
+      debugging_output_lists = []
+    
     grid_points_world_space,duration_1d = create_planar_mesh(border_points, loop_no, n_points, \
-      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, [])
+      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
+      
+    if debugging_stl_output:
+      stl_debug_output.output_triangles("2dmesh_loop_{}_triangles".format(loop_no), grid_triangles_world_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_markers".format(loop_no), markers_grid_points_world_space)
         
     # store grid points in world space of current loop
     loop_grid_points.append(grid_points_world_space)
-
-  data = create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, [])
+  
+  triangles_3dmesh = []
+  data = create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, triangles_3dmesh)
+  
+  if debugging_stl_output:
+    stl_debug_output.output_triangles("3dmesh", triangles_3dmesh)
+  
   return data

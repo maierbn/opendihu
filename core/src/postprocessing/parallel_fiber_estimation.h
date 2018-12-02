@@ -70,6 +70,14 @@ protected:
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
   PyObject *moduleStlDebugOutput_;   ///< python module, file "stl_debug_output.py"
+  PyObject *functionCreateRingSection_;  ///< python function create_ring_section
+  PyObject *functionCreateRings_;               ///< create_rings
+  PyObject *functionRingsToBorderPoints_;       ///< rings_to_border_points
+  PyObject *functionBorderPointLoopsToList_;    ///< border_point_loops_to_list
+  PyObject *functionOutputPoints_;              ///< output_points
+  PyObject *functionOutputBorderPoints_;        ///< output_border_points
+  PyObject *functionCreate3dMeshFromBorderPointsFaces_;       ///< create_3d_mesh_from_border_points_faces
+
   std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
   std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm
 

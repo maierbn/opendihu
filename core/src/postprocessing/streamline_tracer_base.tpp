@@ -15,7 +15,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   LOG(DEBUG) << "traceStreamline(startingPoint " << startingPoint << ", direction " << direction << ", maxNIterations_: " << maxNIterations_ << ")";
 
   Vec3 currentPoint = startingPoint;
-  element_no_t elementNo;
+  element_no_t elementNo = 0;
   int ghostMeshNo = -1;
   std::array<double,(unsigned long int)3> xi;
   

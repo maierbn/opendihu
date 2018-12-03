@@ -2036,6 +2036,12 @@ Now a Lagrange multiplier $p$ is added to the functional which enforces the inco
     \Pi_\text{int}(\bfu,p) = \ds\int_{\Omega} \bigg(p \big(J(\bfu) - 1\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)\big)\bigg)\,\d V.
   \end{array}
 \end{equation*}
+In this case the volumetric potential is defined as
+$$\Psi_{\text{vol}} (\bfu) = p(J(\bfu)-1)$$
+as a function of $\bfu$, and
+$$\left.\Psi(\bfC)\right|_{\text{vol}}  = \frac{1}{2}p(J(\bfC)-1)$$
+as function of $\bfC$ (volumetric part of $\Psi(\bfC)$).
+
 The Lagrange multiplier, $p$, is the real hydrostatic pressure in this case. The field variable $p$ needs to be discretized in addition to the displacement field $\bfu$.
 
 The principle of virtual work in this case has the form (compare Holzapfel p.405)

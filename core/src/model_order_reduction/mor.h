@@ -36,6 +36,7 @@ protected:
   
   std::shared_ptr<DataMOR> dataMOR_;
   int nReducedBases_;             ///< dimension of the reduced space
+  PythonConfig specificSettingsMOR_;    ///< python object containing the value of the python config dict with corresponding key
   bool initialized_;
 };
 

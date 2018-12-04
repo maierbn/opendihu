@@ -14,19 +14,11 @@ TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
   TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>(context["ModelOrderReduction"],name),
-  timestepping_(context["ModelOrderReduction"]), initialized_(false)
-{ /* 
-  this->specificSettings_ = this->context_.getPythonConfig();
-
-  // initialize output writers
-  this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
+  fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
+{  
+  this->specificSettingsMOR_ = this->context_.getPythonConfig(); 
+  this->data_ = std::make_shared <Data::TimeStepping<typename TimeSteppingType::FunctionSpace, TimeSteppingType::DiscretizableInTime_Type::nComponents()>>(context); // create data object
   
-  if (VLOG_IS_ON(1))
-  {
-    VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-    PythonUtility::printDict(this->specificSettings_.pyObject());
-  }
-  */
 }
 
 template<typename TimesteppingType>
@@ -58,39 +50,46 @@ initialize()
   if (initialized_)
     return;
   
-  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::initialize();
-  
   LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
   
-  this->timestepping_.initialize();
+  this->fullTimestepping_.initialize();
   
-  this->startTime_=timestepping_.startTime();
-  this->endTime_=timestepping_.endTime();
-  this->timeStepWidth_=timestepping_.timeStepWidth();
-  this->numberTimeSteps_=timestepping_.numberTimeSteps();
-  this->timeStepOutputInterval_=timestepping_.timeStepOutputInterval();
+  LOG(TRACE) << "Finished fullTimestepping_.initialize()==============================";
   
-  LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
   
-  this->nReducedBases_ = this->specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
+  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
+  ::initialize();  
   
-  std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
+  LOG(TRACE) << "Finished TimeSteppingSchemeOdeBase.initialize()==============================";
+  
+  if (this->specificSettingsMOR_.hasKey("nReducedBases"))
+  {
+    this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
+    LOG(TRACE) << "nReducedBases: " << this->nReducedBases_;
+  }
+  
+  std::array<element_no_t, 1> nElements({(this -> nReducedBases_ - 1)*this->discretizableInTime_.nComponents()});
   std::array<double, 1> physicalExtent({0.0});
   
   typedef FunctionSpace::Generic GenericFunctionSpace;
   
   // create the functionspace for the reduced order
   std::shared_ptr<GenericFunctionSpace> functionSpaceRed 
-    = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElements, physicalExtent);
-  
+    = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElements, physicalExtent);  
+   
+  //TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::initialize(functionSpaceRed);  
+  //assert(functionSpaceRed->meshPartition());
   //assert(this->data_);
-  this->data_->setFunctionSpace(functionSpaceRed);
+  //assert(TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::data_);
+  //this->data_->setFunctionSpace(functionSpaceRed);
+  
+  //this->data_->initialize();
+    
+  this->dataMOR_->setFunctionSpace(functionSpaceRed);
   this->dataMOR_->setFullFunctionSpace(this->discretizableInTime_.functionSpace());
-  this->data_->initialize();
+  MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   
-  MORBase<typename TimeSteppingType::FunctionSpace>::initialize();
-  
-  setInitialValues();
+  //setInitialValues();
     
   initialized_=true;
 }

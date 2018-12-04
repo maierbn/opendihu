@@ -33,7 +33,7 @@ namespace ModelOrderReduction
   void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
   {
-    this->timestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);
+    this->fullTimestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);
     //ISCreateGeneral(comm,n, idx[],mode,&is);
     //VecGetSubVector(X,is,&Y) should it be called every time step?
   }
@@ -49,10 +49,10 @@ namespace ModelOrderReduction
     << " n steps: " << this->numberTimeSteps_;
     
     // debugging output of matrices
-    //this->timestepping_.data().print();
+    //this->fullTimestepping_.data().print();
     
-    Vec &solution = this->timestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-    Vec &increment = this->timestepping_.data().increment()->getValuesContiguous();
+    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
+    Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
     Vec &redSolution= this->data_->solution()->getValuesContiguous();
     Vec &redIncrement= this->data_->increment()->getValuesContiguous();
     
@@ -63,20 +63,20 @@ namespace ModelOrderReduction
     double currentTime = this->startTime_;
     for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
     {
-      if (timeStepNo % this->timestepping_.timeStepOutputInterval() == 0)
+      if (timeStepNo % this->fullTimestepping_.timeStepOutputInterval() == 0)
       {
         std::stringstream threadNumberMessage;
         threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
         LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
       }
       
-      VLOG(1) << "starting from solution: " << this->timestepping_.data().solution();
+      VLOG(1) << "starting from solution: " << this->fullTimestepping_.data().solution();
       
       // advance computed value
       // compute next delta_u = f(u)
       this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
       
-      VLOG(1) << "computed increment: " << this->timestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
+      VLOG(1) << "computed increment: " << this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
       
       PetscErrorCode ierr;
       
@@ -93,13 +93,13 @@ namespace ModelOrderReduction
       timeStepNo++;
       currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
       
-      VLOG(1) << "solution after integration: " << this->timestepping_.data().solution();
+      VLOG(1) << "solution after integration: " << this->fullTimestepping_.data().solution();
       
       // write current output values
-      this->outputWriterManager_.writeOutput(this->timestepping_.data(), timeStepNo, currentTime);
+      this->outputWriterManager_.writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
     }
     
-    this->timestepping_.data().solution()->restoreValuesContiguous();
+    this->fullTimestepping_.data().solution()->restoreValuesContiguous();
     
   }
   

@@ -10,14 +10,13 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  PyObject *topLevelSettings = settings.getPythonConfig();
+  PythonConfig topLevelSettings = settings.getPythonConfig();
   
-  if(PythonUtility::hasKey(topLevelSettings, "ModelOrderReduction"))
+  if(topLevelSettings.hasKey("ModelOrderReduction"))
   {
     DihuContext settings_timestepping=settings["ModelOrderReduction"];
-    PyObject *topLevelSettings_timeStepping = settings_timestepping.getPythonConfig();
-  
-    if(PythonUtility::hasKey(topLevelSettings_timeStepping, "ExplicitEuler"))
+    PythonConfig topLevelSettings_timeStepping = settings_timestepping.getPythonConfig();
+    if(topLevelSettings_timeStepping.hasKey("ExplicitEuler"))
   {
     LOG(INFO) << "Reduced order ExplicitEuler";
     ModelOrderReduction::TimeSteppingSchemeOdeReducedExplicit<
@@ -35,7 +34,7 @@ int main(int argc, char *argv[])
   
     return EXIT_SUCCESS;
   } 
-  else if(PythonUtility::hasKey(topLevelSettings, "ImplicitEuler"))
+  else if(topLevelSettings_timeStepping.hasKey("ImplicitEuler"))
   {
     LOG(INFO) << "ImplicitEuler";
     
@@ -52,7 +51,7 @@ int main(int argc, char *argv[])
     
     return EXIT_SUCCESS;
   }
-  else if(PythonUtility::hasKey(topLevelSettings, "CrankNicolson"))
+  else if(topLevelSettings_timeStepping.hasKey("CrankNicolson"))
   {
     LOG(INFO) << "CrankNicolson";
     

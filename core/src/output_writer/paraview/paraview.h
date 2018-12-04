@@ -15,7 +15,7 @@ class Paraview : public Generic
 public:
 
   //! constructor
-  Paraview(DihuContext context, PyObject *specificSettings);
+  Paraview(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
@@ -64,14 +64,17 @@ protected:
   //! write some ascii data to the file as a collective shared operation. Only rank 0 writes, but the other ranks wait and the shared file pointer is incremented.
   void writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::string writeBuffer);
 
-  //! write the values vector combined to the file, correctly encoded
+  //! write the values vector combined to the file, correctly encoded, identifier is an id to access cached values
   template<typename T>
-  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values);
+  void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
   bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5
 
   bool combineFiles_;   ///< if the output data should be combined for 1D meshes into a single PolyData output file (*.vtp) and for 2D and 3D meshes to normal *.vtu,*.vts or *.vtr files. This is needed when the number of output files should be reduced.
+
+  std::vector<int> globalValuesSize_;   ///< cached values used in writeCombinedValuesVector
+  std::vector<int> nPreviousValues_;    ///< cached values used in writeCombinedValuesVector
 };
 
 };  // namespace

@@ -285,7 +285,7 @@ setStiffnessMatrix(std::shared_ptr<PartitionedPetscMat<HighOrderFunctionSpaceTyp
 }
 
 template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
-const dof_no_t FiniteElementMethodMatrix<
+dof_no_t FiniteElementMethodMatrix<
   FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,
@@ -548,7 +548,7 @@ getPressure(double deformationGradientDeterminant, VecD<HighOrderFunctionSpaceTy
 }
 
 template<typename LowOrderFunctionSpaceType, typename HighOrderFunctionSpaceType, typename MixedQuadratureType, typename Term>
-const int FiniteElementMethodMatrix<
+int FiniteElementMethodMatrix<
   FunctionSpace::Mixed<LowOrderFunctionSpaceType,HighOrderFunctionSpaceType>,
   MixedQuadratureType,
   Term,

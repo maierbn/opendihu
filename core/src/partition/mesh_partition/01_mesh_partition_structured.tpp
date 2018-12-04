@@ -10,7 +10,7 @@ namespace Partition
 template<typename MeshType,typename BasisFunctionType>
 MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shared_ptr<RankSubset> rankSubset) :
-  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false})
+  MeshPartitionBase(rankSubset), nElementsGlobal_(nElementsGlobal), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   VLOG(1) << "create MeshPartition where only the global size is known, " 
     << "nElementsGlobal: " << nElementsGlobal_ << ", rankSubset: " << *rankSubset << ", mesh dimension: " << MeshType::dim();
@@ -23,6 +23,9 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   {
     // determine partitioning of elements
     this->createDmElements();
+
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
 
     // initialize dof vectors
     this->createLocalDofOrderings();
@@ -41,7 +44,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
               std::array<int,MeshType::dim()> beginElementGlobal, 
               std::array<int,MeshType::dim()> nRanks, std::shared_ptr<RankSubset> rankSubset) :
   MeshPartitionBase(rankSubset), beginElementGlobal_(beginElementGlobal), nElementsLocal_(nElementsLocal), nElementsGlobal_(nElementsGlobal), 
-  nRanks_(nRanks), hasFullNumberOfNodes_({false})
+  nRanks_(nRanks), hasFullNumberOfNodes_({false}), nDofsLocalWithoutGhosts_(-1)
 {
   // partitioning is already prescribed as every rank knows its own local size
  
@@ -71,6 +74,10 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
 
     setOwnRankPartitioningIndex();
+
+    // initialize the cached value of nDofsLocalWithoutGhosts
+    this->setNDofsLocalWithoutGhosts();
+
     this->createLocalDofOrderings();
   }
 
@@ -200,6 +207,7 @@ initialize1NodeMesh()
   dofNosLocalNaturalOrdering_.resize(1);
   dofNosLocalNaturalOrdering_[0] = 0;
   localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
 
   this->dofNosLocal_.resize(1);
   this->dofNosLocal_[0] = 0;
@@ -273,6 +281,12 @@ createDmElements()
     ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
+
+    std::array<int,2> meshIsPeriodicInDimension({false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   else if (MeshType::dim() == 3)
   {
@@ -303,6 +317,13 @@ createDmElements()
     localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
     localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
     localSizesOnRanks_[2].assign(lzData, lzData + nRanks_[2]);
+
+    // create cartesian communciator using MPI_Cart_Create
+    std::array<int,3> meshIsPeriodicInDimension({false,false,false});
+    MPI_Comm cartesianCommunicator;
+    MPIUtility::handleReturnValue(
+      MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
+    "MPI_Cart_create");
   }
   
   initializeHasFullNumberOfNodes();
@@ -315,7 +336,16 @@ createDmElements()
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_
     << ", ownRankPartitioningIndex/nRanks: " << ownRankPartitioningIndex_ << " / " << nRanks_;
 }
-  
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+setNDofsLocalWithoutGhosts()
+{
+  // compute nDofsLocalWithoutGhosts
+  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
+  this->nDofsLocalWithoutGhosts_ = nNodesLocalWithoutGhosts() * nDofsPerNode;
+}
+
 //! get the local to global mapping for the current partition
 template<typename MeshType,typename BasisFunctionType>
 ISLocalToGlobalMapping MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
@@ -373,9 +403,7 @@ template<typename MeshType,typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nDofsLocalWithoutGhosts() const
 {
-  const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-
-  return nNodesLocalWithoutGhosts() * nDofsPerNode;
+  return this->nDofsLocalWithoutGhosts_;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -445,7 +473,7 @@ nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
 
 //! number of nodes in the local partition
 template<typename MeshType,typename BasisFunctionType>
-node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsLocal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
@@ -456,7 +484,7 @@ nElementsLocal(int coordinateDirection) const
 
 //! number of nodes in total
 template<typename MeshType,typename BasisFunctionType>
-node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 nElementsGlobal(int coordinateDirection) const
 {
   assert(0 <= coordinateDirection);
@@ -594,7 +622,9 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   else
   {
     assert(false);
+    return -1;
   }
+  return 0;   // will not be reached
 }
   
 template<typename MeshType,typename BasisFunctionType>
@@ -923,6 +953,7 @@ nNodesGlobalPetscInPreviousPartitions(std::array<int,MeshType::dim()> partitionI
   {
     assert(false);
   }
+  return 0;  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 //! fill the dofLocalNo vectors
@@ -1033,7 +1064,10 @@ createLocalDofOrderings()
       }
     }
   }
-  
+
+  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal()
+    << ", nGhostDofs: " << nGhostDofs << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
+
   // create localToGlobalPetscMappingDofs_
   PetscErrorCode ierr;
   Vec temporaryVector;
@@ -1044,7 +1078,6 @@ createLocalDofOrderings()
   ierr = VecGetLocalToGlobalMapping(temporaryVector, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
   //ierr = VecDestroy(&temporaryVector); CHKERRV(ierr);
 
-  VLOG(1) << "VecCreateGhost, nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts() << ", nDofsGlobal: " << nDofsGlobal() << ", ghostDofNosGlobalPetsc_: " << ghostDofNosGlobalPetsc_;
   // VecCreateGhost(MPI_Comm comm,PetscInt n,PetscInt N,PetscInt nghost,const PetscInt ghosts[],Vec *vv)
 
   VLOG(1) << "n=" << nDofsLocalWithoutGhosts() << ", N=" << nDofsGlobal() << ", nghost=" << nGhostDofs << " ghosts:" << ghostDofNosGlobalPetsc_;
@@ -1091,6 +1124,7 @@ getNodeNoGlobalPetsc(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) 
   {
     assert(false);
   }
+  return 0;  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 //! get the node no in global petsc ordering from a local node no
@@ -1146,6 +1180,7 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
   {
     assert(false);
   }
+  return 0;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1373,6 +1408,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
   {
     assert(false);
   }
+  return std::array<global_no_t,MeshType::dim()>({0});  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
 
@@ -1406,6 +1442,59 @@ getCoordinatesLocal(node_no_t nodeNoLocal) const
 }
 
 
+  //! get the local coordinates for a local element no
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementCoordinatesLocal(element_no_t elementNoLocal) const
+{
+  std::array<int,MeshType::dim()> result;
+  if (MeshType::dim() == 1)
+  {
+    result[0] = elementNoLocal;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    result[1] = int(elementNoLocal / nElementsLocal_[0]);
+    result[0] = elementNoLocal % nElementsLocal_[0];
+  }
+  else if (MeshType::dim() == 3)
+  {
+    result[2] = int(elementNoLocal / (nElementsLocal_[0] * nElementsLocal_[1]));
+    result[1] = int((elementNoLocal % (nElementsLocal_[0] * nElementsLocal_[1])) / nElementsLocal_[0]);
+    result[0] = elementNoLocal % nElementsLocal_[0];
+  }
+  else
+  {
+    assert(false);
+  }
+  return result;
+}
+
+  //! get the local element no. from coordinates
+template<typename MeshType,typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return elementCoordinates[0];
+  }
+  else if (MeshType::dim() == 2)
+  {
+    return elementCoordinates[1]*nElementsLocal_[0] + elementCoordinates[0];
+  }
+  else if (MeshType::dim() == 3)
+  {
+    return elementCoordinates[2]*nElementsLocal_[0]*nElementsLocal_[1] + elementCoordinates[1]*nElementsLocal_[0] + elementCoordinates[0];
+  }
+  else
+  {
+    assert(false);
+  }
+  return 0;
+}
+
+
 template<typename MeshType,typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getNodeNoGlobalNatural(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) const
@@ -1433,6 +1522,29 @@ node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>
 getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
 {
   return (node_no_t)(nodeNoGlobalPetsc - nNodesGlobalPetscInPreviousPartitions(ownRankPartitioningIndex_));
+}
+
+template<typename MeshType,typename BasisFunctionType>
+std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  const int D = MeshType::dim();
+  std::array<int,D> coordinatesLocal;
+  isOnLocalDomain = true;
+  for (int coordinateDirection = 0; coordinateDirection < D; coordinateDirection++)
+  {
+    coordinatesLocal[coordinateDirection] = coordinatesGlobal[coordinateDirection] - this->beginNodeGlobalNatural(coordinateDirection);
+
+    // check if the computed local coordinate is in the local range of nodes
+    if (coordinatesLocal[coordinateDirection] < 0 || coordinatesLocal[coordinateDirection] >= nNodesLocalWithoutGhosts(coordinateDirection))
+    {
+      isOnLocalDomain = false;
+    }
+  }
+
+  return coordinatesLocal;
+
+  //node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -1588,6 +1700,272 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
   {
     assert(false);
   }
+  return false;  // this is only needed for cray compiler, it will not be reached
+}
+
+template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+neighbourRank(Mesh::face_t face)
+{
+  /*
+  face0Minus = 0, face0Plus,
+  face1Minus, face1Plus,
+  face2Minus, face2Plus
+   * */
+  if (face == Mesh::face_t::face0Minus)
+  {
+    // if this subdomain is at the left end of the global domain
+    if (ownRankPartitioningIndex_[0] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      return this->ownRankNo()-1;
+    }
+  }
+  else if (face == Mesh::face_t::face0Plus)
+  {
+    // if this subdomain is at the right end of the global domain
+    if (ownRankPartitioningIndex_[0] == nRanks_[0]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      return this->ownRankNo()+1;
+    }
+  }
+  else if (face == Mesh::face_t::face1Minus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the front end of the global domain
+    if (ownRankPartitioningIndex_[1] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]-1)*nRanks_[0] + ownRankPartitioningIndex_[0];  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_t::face1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the back end of the global domain
+    if (ownRankPartitioningIndex_[1] == nRanks_[1]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]+1)*nRanks_[0] + ownRankPartitioningIndex_[0];  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus)
+  {
+    assert(MeshType::dim() == 3);
+
+    // if this subdomain is at the bottom end of the global domain
+    if (ownRankPartitioningIndex_[2] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      return (ownRankPartitioningIndex_[2]-1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus)
+  {
+    assert(MeshType::dim() == 3);
+
+    // if this subdomain is at the top end of the global domain
+    if (ownRankPartitioningIndex_[2] == nRanks_[2]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      return (ownRankPartitioningIndex_[2]+1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
+    }
+  }
+  return -1;  // does not happen (but intel compiler does not recognize it)
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos)
+{
+  neighbourRankNo = neighbourRank(face);
+
+  // if there is no neighbouring rank, do not fill data structures
+  if (neighbourRankNo == -1)
+  {
+    return;
+  }
+
+  /*
+  face0Minus = 0, face0Plus,
+  face1Minus, face1Plus,
+  face2Minus, face2Plus
+   */
+
+  std::array<element_no_t,MeshType::dim()> boundaryElementIndexStart;
+
+  if (face == Mesh::face_t::face0Minus || face == Mesh::face_t::face0Plus)
+  {
+    if (face == Mesh::face_t::face0Minus)
+    {
+      boundaryElementIndexStart[0] = 0;
+      nBoundaryElements[0] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[0] = nElementsLocal_[0]-1;
+      nBoundaryElements[0] = 1;
+    }
+
+    if (MeshType::dim() >= 2)
+    {
+      boundaryElementIndexStart[1] = 0;
+      nBoundaryElements[1] = nElementsLocal_[1];
+    }
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_t::face1Minus || face == Mesh::face_t::face1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    if (face == Mesh::face_t::face1Minus)
+    {
+      boundaryElementIndexStart[1] = 0;
+      nBoundaryElements[1] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[1] = nElementsLocal_[1]-1;
+      nBoundaryElements[1] = 1;
+    }
+
+    boundaryElementIndexStart[0] = 0;
+    nBoundaryElements[0] = nElementsLocal_[0];
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_t::face2Minus || face == Mesh::face_t::face2Plus)
+  {
+    assert(MeshType::dim() == 3);
+
+    if (face == Mesh::face_t::face2Minus)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = 1;
+    }
+    else
+    {
+      boundaryElementIndexStart[2] = nElementsLocal_[2]-1;
+      nBoundaryElements[2] = 1;
+    }
+
+    boundaryElementIndexStart[0] = 0;
+    nBoundaryElements[0] = nElementsLocal_[0];
+
+    boundaryElementIndexStart[1] = 0;
+    nBoundaryElements[1] = nElementsLocal_[1];
+  }
+
+  int nBoundaryElementsTotal = 1;
+  switch (MeshType::dim())
+  {
+  case 1:
+    nBoundaryElementsTotal = nBoundaryElements[0];
+    break;
+  case 2:
+    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1];
+    break;
+  case 3:
+    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1]*nBoundaryElements[2];
+    break;
+  }
+
+  // determine dofs of all nodes adjacent to the boundary elements
+  dofNos.resize(nBoundaryElementsTotal);
+
+  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+
+  std::array<dof_no_t,MeshType::dim()> nDofs;
+  std::array<dof_no_t,MeshType::dim()> boundaryDofIndexStart;
+  for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
+  {
+    nDofs[dimensionIndex] = nBoundaryElements[dimensionIndex]*averageNDofsPerElement1D + nDofsPerNode;
+    boundaryDofIndexStart[dimensionIndex] = boundaryElementIndexStart[dimensionIndex]*averageNDofsPerElement1D;
+  }
+
+  if (MeshType::dim() == 1)
+  {
+    int dofIndex = 0;
+    for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+    {
+      dofNos[dofIndex] = dofNosLocalNaturalOrdering_[i];
+    }
+  }
+  else if (MeshType::dim() == 2)
+  {
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
+    int dofIndex = 0;
+    for (int j = boundaryDofIndexStart[1]; j < boundaryDofIndexStart[1]+nDofs[1]; j++)
+    {
+      for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+      {
+        dofNos[dofIndex] = dofNosLocalNaturalOrdering_[j*nDofsRow + i];
+      }
+    }
+  }
+  else if (MeshType::dim() == 3)
+  {
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
+    int nDofsPlane = (nElementsLocal_[1]*averageNDofsPerElement1D + averageNDofsPerElement1D) * nDofsRow;
+    int dofIndex = 0;
+    for (int k = boundaryDofIndexStart[2]; k < boundaryDofIndexStart[2]+nDofs[2]; k++)
+    {
+      for (int j = boundaryDofIndexStart[1]; j < boundaryDofIndexStart[1]+nDofs[1]; j++)
+      {
+        for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
+        {
+          dofNos[dofIndex] = dofNosLocalNaturalOrdering_[k*nDofsPlane + j*nDofsRow + i];
+        }
+      }
+    }
+  }
+}
+
+template<typename MeshType,typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+ownRankPartitioningIndex(int coordinateDirection)
+{
+  return ownRankPartitioningIndex_[coordinateDirection];
 }
 
 template<typename MeshType,typename BasisFunctionType>

@@ -22,8 +22,11 @@ public:
     std::vector<std::pair<int,ValueType>> elementalDofIndex;   ///< the element-local dof index and the value of the boundary condition on this dof
   };
 
+  //! constructor
+  DirichletBoundaryConditionsBase();
+
   //! initialize data structures by parsing boundary conditions from python config, key "dirichletBoundaryConditions"
-  void initialize(PyObject *specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace);
+  void initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace);
 
   //! initialize directly from given vectors
   void initialize(std::shared_ptr<FunctionSpaceType> functionSpace, std::vector<ElementWithNodes> &boundaryConditionElements_,
@@ -39,7 +42,7 @@ protected:
   virtual void initializeGhostElements(){};
 
   //! parse config and extract boundary conditions specified under key "dirichletBoundaryConditions", store in boundaryConditions
-  void parseBoundaryConditions(PyObject *settings, std::shared_ptr<FunctionSpaceType> functionSpace,
+  void parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType> functionSpace,
                                std::vector<std::pair<int,std::array<double,nComponents>>> &boundaryConditions);
 
   //! parse boundary conditions from config and store them in boundaryConditionElements_, boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
@@ -48,7 +51,7 @@ protected:
   //! print the data of Dirichlet Boundary Conditions to VLOG(1)
   void printDebuggingInfo();
 
-  PyObject *specificSettings_;            ///< the python config that contains the boundary conditions
+  PythonConfig specificSettings_;            ///< the python config that contains the boundary conditions
   std::shared_ptr<FunctionSpaceType> functionSpace_;     ///< function space for which boundary conditions are specified
 
   std::vector<ElementWithNodes> boundaryConditionElements_;   ///< nodes grouped by elements on which boundary conditions are specified
@@ -60,6 +63,8 @@ template<typename FunctionSpaceType, int nComponents>
 class DirichletBoundaryConditions :
   public DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>
 {
+  //! use constructor of base class
+  using DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::DirichletBoundaryConditionsBase;
 };
 
 /* Specialization for variables with 1 component as used in normal finite element computations.
@@ -69,6 +74,8 @@ class DirichletBoundaryConditions<FunctionSpaceType,1> :
   public DirichletBoundaryConditionsBase<FunctionSpaceType,1>
 {
 public:
+  //! use constructor of base class
+  using DirichletBoundaryConditionsBase<FunctionSpaceType,1>::DirichletBoundaryConditionsBase;
 
   //! set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1. Store the cleared matrix values in boundaryConditionsRightHandSideSummand such that they can be used for adjusting the rhs vector afterwards
   void applyInSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrix,

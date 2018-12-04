@@ -62,7 +62,7 @@ void ExfileElementRepresentation::parseFromExelemFile(std::string content)
       else if (line.find("Value indices:") != std::string::npos)
       {
         extractUntil(line, "Value indices:");
-        for(int i=0; i<nValues; i++)
+        for (int i=0; i<nValues; i++)
         {
           trim(line);
           node_[nodeNo-1].valueIndices[i] = atoi(line.c_str())-1;
@@ -73,7 +73,7 @@ void ExfileElementRepresentation::parseFromExelemFile(std::string content)
       else if (line.find("Scale factor indices:") != std::string::npos)
       {
         extractUntil(line, "Scale factor indices:");
-        for(int i=0; i<nValues; i++)
+        for (int i=0; i<nValues; i++)
         {
           trim(line);
           node_[nodeNo-1].scaleFactorIndices[i] = atoi(line.c_str())-1;

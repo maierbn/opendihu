@@ -982,10 +982,15 @@ def Initializers(env):
     env.AddMethod(InstallVersionedLib)
 
 def FindTool(tools, env):
+#    print("FindTool among {}".format(tools))
     for tool in tools:
+#        print ("tool {} ".format(tool))
         t = Tool(tool)
         if t.exists(env):
+#            print("exists")
             return tool
+#        else:
+#            print ("does not exist")
     return None
 
 def FindAllTools(tools, env):
@@ -1069,11 +1074,11 @@ def tool_list(platform, env):
         ars = ['ar', 'mslib']
     else:
         "prefer GNU tools on all other platforms"
-        linkers = ['gnulink', 'mslink', 'ilink']
-        c_compilers = ['gcc', 'msvc', 'intelc', 'icc', 'cc']
-        cxx_compilers = ['g++', 'msvc', 'intelc', 'icc', 'c++']
+        linkers = ['gnulink', 'ilink']
+        c_compilers = ['gcc', 'cc', 'intelc', 'icc']
+        cxx_compilers = ['g++', 'c++', 'intelc', 'icc']
         assemblers = ['gas', 'nasm', 'masm']
-        fortran_compilers = ['gfortran', 'g77', 'ifort', 'ifl', 'f95', 'f90', 'f77']
+        fortran_compilers = ['gfortran', 'fortran', 'g77', 'ifort', 'ifl', 'f95', 'f90', 'f77']
         ars = ['ar', 'mslib']
 
     if not str(platform) == 'win32':

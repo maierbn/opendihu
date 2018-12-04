@@ -12,7 +12,7 @@ getGeometry(node_no_t dofGlobalNo) const
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->template getValue(dofGlobalNo);
+  return this->geometryField_->getValue(dofGlobalNo);
 }
 
 //! return an array containing all geometry entries for an element

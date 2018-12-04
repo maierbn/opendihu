@@ -16,7 +16,7 @@ class Linear : public Solver
 {
 public:
   //! construct solver from python settings
-  Linear(PyObject *specificSettings, MPI_Comm mpiCommunicator, std::string name);
+  Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::string name);
 
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();

@@ -1,5 +1,5 @@
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
-#include "discretizable_in_time/discretizable_in_time.h"
+#include "interfaces/discretizable_in_time.h"
 
 #include <Python.h>
 #include <iostream>

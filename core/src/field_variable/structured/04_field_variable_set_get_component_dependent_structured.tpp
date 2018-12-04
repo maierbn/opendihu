@@ -56,6 +56,14 @@ getValue(node_no_t dofLocalNo) const
 //! get all stored local values, for 1 component
 template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
+getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
+{
+  this->getValues(0, dofLocalNo, values);
+}
+
+//! get all stored local values, for 1 component
+template<typename FunctionSpaceType>
+void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 getValuesWithGhosts(std::vector<double> &values, bool onlyNodalValues) const
 {
   this->getValuesWithGhosts(0, values, onlyNodalValues);

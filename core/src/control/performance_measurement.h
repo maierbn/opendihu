@@ -4,7 +4,7 @@
 #include <map>
 
 #include "dihu_context.h"
-#include "runnable.h"
+#include "interfaces/runnable.h"
 
 namespace Control
 {

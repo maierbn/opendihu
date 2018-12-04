@@ -4,6 +4,7 @@
 #include <petscvec.h>
 
 #include "field_variable/structured/02_field_variable_data_structured.h"
+#include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 
 namespace FieldVariable
 {
@@ -32,7 +33,10 @@ public:
   void getValues(int componentNo, std::array<dof_no_t,N> dofLocalNo, std::array<double,N> &values) const;
 
   //! for a specific component, get values from their local dof no.s, as vector
-  void getValues(int componentNo, std::vector<dof_no_t> dofLocalNo, std::vector<double> &values) const;
+  void getValues(int componentNo, const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
+
+  //! get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, ..., comp1, comp1, ...]
+  void getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const;
 
   //! get values from their local dof no.s for all components
   template<int N>
@@ -47,8 +51,15 @@ public:
   //! for a specific component, get a single value from local dof no.
   double getValue(int componentNo, node_no_t dofLocalNo) const;
 
-  //! extract the specified component from the field variable and store it in the given field variable (which already has the data allocated)
-  void extractComponent(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+  //! extract the specified component from the field variable (by copying it) and store it in the given field variable (which already has the data allocated)
+  void extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
+  //! extract the specified component from the field variable by using the raw data array in the given field variable. Afterwards this field variable is invalid and can only be used again after restoreExtractedComponent has been called
+  void extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable);
+
+  //! restore the extracted raw array to petsc and make the field variable usable again
+  template<int nComponents2>
+  void restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec);
 
   //! set the values for the given component from a petsc Vec
   void setValues(int componentNo, Vec petscVector);

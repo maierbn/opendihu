@@ -15,6 +15,10 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
+# set compiler
+cc="gcc"   # c compiler
+CC="g++"   # c++ compiler
+
 # LAPACK, includes also BLAS, current OpenBLAS is used
 LAPACK_DOWNLOAD=True
 
@@ -35,9 +39,9 @@ SCIPY_DOWNLOAD=True
 
 # Matplotlib and other python dependencies
 BZIP2_DOWNLOAD=True
-MATPLOTLIB_DOWNLOAD=True
-NUMPYSTL_DOWNLOAD=True
-SVGPATH_DOWNLOAD=True
+MATPLOTLIB_DOWNLOAD=False
+NUMPYSTL_DOWNLOAD=False
+SVGPATH_DOWNLOAD=False
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -58,6 +62,8 @@ EASYLOGGINGPP_DOWNLOAD=True
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
 #MPI_DIR="/usr/lib64/mpich/"
+#MPI_DOWNLOAD=True
+#MPI_IGNORE_MPICC=True    # this downloads and builds mpich
 
 # automatically set MPI_DIR for ubuntu 18.04
 try:
@@ -83,12 +89,22 @@ except:
 
 # other variables for hazelhen
 import os
-if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
-  MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
-  LAPACK_DOWNLOAD = False
-  LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
-  PETSC_DOWNLOAD = False
-  PETSC_DIR = os.environ.get("PETSC_DIR")
+if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+  cc="cc"   # C compiler
+  CC="CC"   # C++ compiler
+  mpiCC="CC"  # mpi C++ compiler
+
+  # use cray-pat for profiling
+  USE_CRAY_PAT=False
+
+  # use -hpl option with cray compiler to create an optimization program library
+  USE_HPL=False
+
+  #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
+  #LAPACK_DOWNLOAD = False
+  #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
+  #PETSC_DOWNLOAD = False
+  #PETSC_DIR = os.environ.get("PETSC_DIR")
 
 # module restore opendihu
 # or 

@@ -24,14 +24,14 @@ class Manager
 {
 public:
   //! constructor
-  Manager(PyObject *specificSettings);
+  Manager(PythonConfig specificSettings);
 
   //! store the pointer to the partition manager
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
   
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
-  std::shared_ptr<FunctionSpaceType> functionSpace(PyObject *settings);
+  std::shared_ptr<FunctionSpaceType> functionSpace(PythonConfig settings);
 
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
@@ -66,10 +66,10 @@ private:
 
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
   
-  PyObject *specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
+  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 
-  std::map<std::string, PyObject *> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
+  std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
 };
 

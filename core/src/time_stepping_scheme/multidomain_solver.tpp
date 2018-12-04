@@ -4,15 +4,15 @@
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
-#include "data_management/multidomain.h"
+#include "data_management/time_stepping/multidomain.h"
 
 //#define MONODOMAIN
 
 namespace TimeSteppingScheme
 {
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 MultidomainSolver(DihuContext context) :
   TimeSteppingScheme(context["MultidomainSolver"]),
   dataMultidomain_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
@@ -26,11 +26,18 @@ MultidomainSolver(DihuContext context) :
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
   // parse number of motor units
-  nCompartments_ = PythonUtility::getOptionInt(this->specificSettings_, "nCompartments", 1, PythonUtility::NonNegative);
+  nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
+
+  // create finiteElement objects for diffusion in compartments
+  finiteElementMethodDiffusionCompartment_.reserve(nCompartments_);
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    finiteElementMethodDiffusionCompartment_.emplace_back(this->context_["Activation"]);
+  }
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -43,63 +50,21 @@ advanceTimeSpan()
   LOG(DEBUG) << "MultidomainSolver::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
-  PetscErrorCode ierr;
-
   // loop over time steps
   double currentTime = this->startTime_;
 
   // loop over time steps
-  for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "Multidomain solver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
+      LOG(INFO) << "Multidomain diffusion, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
-    VLOG(1) << "Godunov splitting";
-    VLOG(1) << "---- reaction term";
-
-    // Godunov splitting
-    // advance cellml
-    for (int k = 0; k < nCompartments_; k++)
-    {
-      VLOG(2) << "k=" << k;
-
-      // get subcellular variable vectors
-      Vec subcellularStates = dataMultidomain_.subcellularStates(k)->getValuesContiguous();
-      Vec subcellularIncrement = dataMultidomain_.subcellularIncrement(k)->getValuesContiguous();
-
-      // compute next delta_y = f(y)
-      cellMLAdapters_[k].evaluateTimesteppingRightHandSideExplicit(subcellularStates, subcellularIncrement, timeStepNo, currentTime);
-
-      // compute next subcellular states (y += dt*f(y) ), now subcellularStates[0] contains Vm_k^{(*)} = Vm_k^{i} - dt/Cm_k*I_ion(Vm_k^{i})
-      ierr = VecAXPY(subcellularStates, this->timeStepWidth_, subcellularIncrement); CHKERRV(ierr);
-
-      //VLOG(2) << "subcellularStates: " << *dataMultidomain_.subcellularStates(k);
-      //VLOG(2) << "subcellularIncrement: " << *dataMultidomain_.subcellularIncrement(k);
-
-      // extract ionicCurrent (-1/Cm I_ion(Vm^(i+1))) from all rates (subcellularIncrement)
-      //dataMultidomain_.subcellularIncrement(k)->extractComponent(0, dataMultidomain_.ionicCurrent(k));
-      //VLOG(2) << "ionicCurrent (should be first component of subcellularIncrement): " << *ionicCurrent;
-
-      VLOG(2) << " rhs before: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
-
-      // compute the right hand side entry as rhs[k] = Vm_k^{*} = Vm_k^{i} - dt/Cm_k*I_ion(Vm_k^{i})
-      // extract the 0th component of the subcellular states which is Vm at the intermediate timestep
-      dataMultidomain_.subcellularStates(k)->extractComponent(0, dataMultidomain_.transmembranePotential(k));    // set representation of transmembranePotential to local
-      //dataMultidomain_.transmembranePotential(k)->setRepresentationGlobal();   // set representation to global because this vector is the subvectorRightHandSide, but it shares memory with the local vector therefore this is not needed
-
-      // this is also not needed, because transmembranePotential(k) is already set as the right hand side subvector
-      //ierr = VecCopy(dataMultidomain_.transmembranePotential(k)->valuesGlobal(), subvectorsRightHandSide_[k]); CHKERRV(ierr);   /// rhs[k] = Vm_k^{*}
-
-      VLOG(2) << "dt = " << this->timeStepWidth_;
-      VLOG(2) << "k=" << k << ", rhs after: " << PetscUtility::getStringVector(subvectorsRightHandSide_[k]);
-    }
 
     LOG(DEBUG) << " Vm: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
@@ -120,28 +85,18 @@ advanceTimeSpan()
     // write the solution from the nested vector back to data
     // Note, thte subvectors are actually the global vectors for component 0 of dataMultidomain_.subcellularStates(k).
     // dataMultidomain_.subcellularStates(k) is currently stored in contiguous representation. The setValues(0, subVectors[k]) copies the data to the contiguous vector.
-    int nSubVectors = 0;
+
+    /*int nSubVectors = 0;
     Vec *subVectors;
     ierr = VecNestGetSubVecs(solution_, &nSubVectors, &subVectors); CHKERRV(ierr);
     assert(nSubVectors == nCompartments_+1);
-
-    for (int k = 0; k < nCompartments_; k++)
-    {
-      // copy the transmembrane potential from the subvector back to the subcellularStates vector, component 0 which is Vm
-      dataMultidomain_.subcellularStates(k)->setValues(0, subVectors[k]);   // note, subcellularStates is in contiguous representation
-      VLOG(2) << *dataMultidomain_.subcellularStates(k);
-    }
-
-    VLOG(2) << "copy phi_e";
+*/
+    //VLOG(2) << "copy phi_e";
 
     // get phi_e
     //dataMultidomain_.extraCellularPotential()->setValues(subVectors[nCompartments_]);
 
-    LOG(DEBUG) << " Vm: ";
-    dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
-    LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
-
-    LOG(DEBUG) << " extraCellularPotential: " << PetscUtility::getStringVector(subVectors[nCompartments_]);
+    LOG(DEBUG) << " extraCellularPotential: " << PetscUtility::getStringVector(subvectorsSolution_[nCompartments_]);
     LOG(DEBUG) << *dataMultidomain_.extraCellularPotential();
 
     // stop duration measurement
@@ -161,8 +116,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapter,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapter,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 run()
 {
   // initialize everything
@@ -171,8 +126,8 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initialize()
 {
   if (this->initialized_)
@@ -181,7 +136,7 @@ initialize()
   TimeSteppingScheme::initialize();
 
   LOG(DEBUG) << "initialize multidomain_solver, " << nCompartments_ << " compartments";
-  assert(this->specificSettings_);
+  assert(this->specificSettings_.pyObject());
 
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
@@ -204,22 +159,26 @@ initialize()
   LOG(DEBUG) << "flow potential: " << *dataMultidomain_.flowPotential();
   LOG(DEBUG) << "fiber direction: " << *dataMultidomain_.fiberDirection();
 
-  //MPI_Barrier(MPI_COMM_WORLD);
-  //LOG(FATAL) << "end";
+  initializeCompartmentRelativeFactors();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
-  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection());
+  // diffusion object without prefactor, for normal diffusion (2nd multidomain eq.)
+  finiteElementMethodDiffusion_.initialize(dataMultidomain_.fiberDirection(), nullptr);
   finiteElementMethodDiffusion_.initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
-  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), true);
 
-  initializeCellMLAdapters();
+  // diffusion objects with spatially varying prefactors (f_r), needed for the bottom row of the matrix eq. or the 1st multidomain eq.
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    finiteElementMethodDiffusionCompartment_[k].initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.compartmentRelativeFactor(k));
+    finiteElementMethodDiffusionCompartment_[k].initializeForImplicitTimeStepping(); // this performs extra initialization for implicit timestepping methods, i.e. it sets the inverse lumped mass matrix
+  }
+
+  finiteElementMethodDiffusionTotal_.initialize(dataMultidomain_.fiberDirection(), dataMultidomain_.relativeFactorTotal(), true);
 
   // parse parameters
-  PythonUtility::getOptionVector(this->specificSettings_, "am", nCompartments_, am_);
-  PythonUtility::getOptionVector(this->specificSettings_, "cm", nCompartments_, cm_);
+  this->specificSettings_.getOptionVector("am", nCompartments_, am_);
+  this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
-
-  initializeCompartmentRelativeFactors();
 
   // initialize system matrix
   setSystemMatrix(this->timeStepWidth_);
@@ -249,7 +208,7 @@ initialize()
   for (int k = 0; k < nCompartments_; k++)
   {
     subvectorsRightHandSide_[k] = dataMultidomain_.transmembranePotential(k)->valuesGlobal();
-    subvectorsSolution_[k] = dataMultidomain_.subcellularStates(k)->valuesGlobal(0);
+    subvectorsSolution_[k] = dataMultidomain_.transmembranePotentialSolution(k)->valuesGlobal(0);
   }
 
   // set values for phi_e
@@ -266,59 +225,58 @@ initialize()
   this->initialized_ = true;
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initializeCompartmentRelativeFactors()
 {
-  if (PythonUtility::hasKey(this->specificSettings_, "compartmentRelativeFactors"))
-  {
-    LOG(FATAL) << "compartmentRelativeFactors not yet implemented";
-  }
-  else
-  {
-    double fr = 1./nCompartments_;
+  // parse relative factors f_r for compartments
+  bool inputIsGlobal = this->specificSettings_.getOptionBool("inputIsGlobal", true);
 
-    //initialize vectors with default values
-    for (int k = 0; k < nCompartments_; k++)
+  std::vector<PythonConfig> compartmentFields;
+  this->specificSettings_.getOptionVector("compartmentRelativeFactors", compartmentFields);
+  if (compartmentFields.size() < nCompartments_)
+  {
+    LOG(FATAL) << "Only " << compartmentFields.size() << " relative factors specified under \"compartmentRelativeFactors\". "
+      << "Number of compartments is " << nCompartments_ << ".";
+  }
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    std::vector<double> values = PythonUtility::convertFromPython<std::vector<double>>::get(compartmentFields[k].pyObject());
+
+    // if parsed node positions in vector localNodePositions_ actually contains global node positions, extract local positions
+    if (inputIsGlobal)
     {
-      dataMultidomain_.compartmentRelativeFactor(k)->setValues(fr);
+      dataMultidomain_.functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(values);
     }
-  }
-}
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
-initializeCellMLAdapters()
-{
-  if (VLOG_IS_ON(2))
+    if (values.size() < dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts())
+    {
+      LOG(FATAL) << "\"compartmentRelativeFactors\" for compartment " << k << " contains only " << values.size() << " entries, "
+        << dataMultidomain_.compartmentRelativeFactor(k)->nDofsLocalWithoutGhosts() << " are needed.";
+    }
+
+    dataMultidomain_.compartmentRelativeFactor(k)->setValuesWithoutGhosts(values);
+  }
+
+  // compute relative Factor total as sum f_r
+  dataMultidomain_.relativeFactorTotal()->zeroEntries();
+  PetscErrorCode ierr;
+  for (int k = 0; k < nCompartments_; k++)
   {
-    VLOG(2) << "CellMLAdapters settings: ";
-    PythonUtility::printDict(this->specificSettings_);
+    ierr = VecAXPY(dataMultidomain_.relativeFactorTotal()->valuesGlobal(), 1.0, dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal()); CHKERRV(ierr);
   }
 
-  std::vector<PyObject *> cellMLConfigs;
-  PythonUtility::getOptionVector(this->specificSettings_, "CellMLAdapters", cellMLConfigs);
-
-  // initialize cellml adapters
-  cellMLAdapters_.reserve(nCompartments_);
-  if (cellMLConfigs.size() < nCompartments_)
-  {
-    LOG(FATAL) << "Number of CellMLAdapters (" << cellMLConfigs.size() << ") is smaller than number of compartments (" << nCompartments_ << ")";
-  }
 
   for (int k = 0; k < nCompartments_; k++)
   {
-
-    cellMLAdapters_.emplace_back(this->context_.createSubContext(cellMLConfigs[k]));
-    cellMLAdapters_[k].initialize();
-
-    // initialize cellml states
-    cellMLAdapters_[k].setInitialValues(dataMultidomain_.subcellularStates(k));
+    LOG(DEBUG) << "compartmentRelativeFactor(k=" << k << "): " << *dataMultidomain_.compartmentRelativeFactor(k);
   }
+  LOG(DEBUG) << "relativeFactorTotal: " << *dataMultidomain_.relativeFactorTotal();
+
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 setSystemMatrix(double timeStepWidth)
 {
   std::vector<Mat> submatrices(MathUtility::sqr(nCompartments_+1),NULL);
@@ -326,14 +284,15 @@ setSystemMatrix(double timeStepWidth)
   LOG(TRACE) << "setSystemMatrix";
 
   // fill submatrices, empty submatrices may be NULL
-
-  PetscErrorCode ierr;
+  // stiffnessMatrix and inverse lumped mass matrix without prefactor
   Mat stiffnessMatrix = finiteElementMethodDiffusion_.data().stiffnessMatrix()->valuesGlobal();
   Mat inverseLumpedMassMatrix = finiteElementMethodDiffusion_.data().inverseLumpedMassMatrix()->valuesGlobal();
 
+  PetscErrorCode ierr;
   // set all submatrices
   for (int k = 0; k < nCompartments_; k++)
   {
+
     // right column matrix
     double prefactor = -this->timeStepWidth_ / (am_[k]*cm_[k]);
 
@@ -381,15 +340,53 @@ setSystemMatrix(double timeStepWidth)
     // ---
     // bottom row matrices
     // create matrix as copy of stiffnessMatrix
+    Mat stiffnessMatrixWithPrefactor = finiteElementMethodDiffusionCompartment_[k].data().stiffnessMatrix()->valuesGlobal();
+
     Mat matrixOnBottomRow;
-    ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
+    ierr = MatConvert(stiffnessMatrixWithPrefactor, MATSAME, MAT_INITIAL_MATRIX, &matrixOnBottomRow); CHKERRV(ierr);
+
+#if 0
+    // debugging test, gives slightly different results due to approximation of test
+    Mat test;
+    ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &test); CHKERRV(ierr);
 
     // get the relative factor of the compartment
     Vec compartmentRelativeFactor = dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal();
 
-    // MatDiagonalScale(A,l,NULL) computes A = diag(l)*A, this scales the rows of A with the values in l (each row with one entry of l)
-    ierr = MatDiagonalScale(matrixOnBottomRow, compartmentRelativeFactor, NULL); CHKERRV(ierr);
+    int i = 0;double v = 0;
+    MatGetValues(test,1,&i,1,&i,&v);
+    LOG(DEBUG) << "compartmentRelativeFactor: " << PetscUtility::getStringVector(compartmentRelativeFactor);
+    LOG(DEBUG) << "test[0][0] = " << v;
 
+    // MatDiagonalScale(A,l,NULL) computes A = diag(l)*A, this scales the rows of A with the values in l (each row with one entry of l)
+    ierr = MatDiagonalScale(test, compartmentRelativeFactor, NULL); CHKERRV(ierr);
+
+    MatGetValues(test,1,&i,1,&i,&v);
+    LOG(DEBUG) << "MatdiagonalScale";
+    LOG(DEBUG) << "test[0][0] = " << v;
+
+    // test if "test" and matrixOnBottomRow yield the same matrices
+    PetscInt nRows, nColumns;
+    ierr = MatGetSize(matrixOnBottomRow,&nRows,&nColumns); CHKERRV(ierr);
+    double max_diff = 0;
+    for (int column = 0; column < nColumns; column++)
+    {
+      for (int row = 0; row < nRows; row++)
+      {
+        double value1, value2;
+        ierr = MatGetValues(matrixOnBottomRow,1,&row,1,&column,&value1); CHKERRV(ierr);
+        ierr = MatGetValues(test,1,&row,1,&column,&value2); CHKERRV(ierr);
+        double difference = fabs(value1-value2);
+        max_diff = std::max(max_diff, difference);
+        if (difference > 1e-5)
+        {
+          LOG(DEBUG) << "bottom matrix entry row=" << row << ", column=" << column << " is different: " << value1 << "," << value2 << ", diff: " << difference;
+
+        }
+      }
+    }
+    LOG(FATAL) << "max_diff:" << max_diff;
+#endif
     if (VLOG_IS_ON(2))
     {
       VLOG(2) << "matrixOnBottomRow: " << PetscUtility::getStringMatrix(matrixOnBottomRow);
@@ -429,8 +426,8 @@ setSystemMatrix(double timeStepWidth)
                        nCompartments_+1, NULL, nCompartments_+1, NULL, submatrices.data(), &this->systemMatrix_); CHKERRV(ierr);
 }
 
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-void MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
   PetscErrorCode ierr;
@@ -459,11 +456,24 @@ solveLinearSystem()
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-template<typename FiniteElementMethodPotentialFlow,typename CellMLAdapterType,typename FiniteElementMethodDiffusion>
-bool MultidomainSolver<FiniteElementMethodPotentialFlow,CellMLAdapterType,FiniteElementMethodDiffusion>::
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+bool MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 knowsMeshType()
 {
   return true;
+}
+
+//! get the data that will be transferred in the operator splitting to the other term of the splitting
+//! the transfer is done by the solution_vector_mapping class
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
+MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+getSolutionForTransferInOperatorSplitting()
+{
+  LOG(DEBUG) << "getSolutionForTransferInOperatorSplitting, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
+
+  return std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>>(
+    this->subvectorsSolution_, this->dataMultidomain_.transmembranePotential());
 }
 
 } // namespace TimeSteppingScheme

@@ -6,7 +6,7 @@
 
 #include "control/types.h"
 #include "output_writer/generic.h"
-#include "data_management/finite_elements.h"
+#include "data_management/finite_element_method/finite_elements.h"
 
 namespace OutputWriter
 {
@@ -15,7 +15,7 @@ class PythonFile : public Generic
 {
 public:
   //! constructor
-  PythonFile(DihuContext context, PyObject *specificSettings);
+  PythonFile(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution to file, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>

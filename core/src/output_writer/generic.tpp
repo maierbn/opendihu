@@ -22,26 +22,19 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
 
   timeStepNo_ = timeStepNo;
   currentTime_ = currentTime;
-  int outputInterval = PythonUtility::getOptionInt(specificSettings_, "outputInterval", 1, PythonUtility::Positive);
 
   int oldWriteCallCount = writeCallCount_;
   writeCallCount_++;
 
-  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval;
+  VLOG(2) << " Generic::prepareWrite, writeCallCount_=" << writeCallCount_ << ", outputInterval: " << outputInterval_;
   
   // if no output should be written, because of interval, return false
-  if (oldWriteCallCount % outputInterval != 0)
+  if (oldWriteCallCount % outputInterval_ != 0)
   {
     VLOG(2) << " do not write";
     return false;
   }
 
-  // determine filename base
-  if (filenameBase_.empty()
-    && PythonUtility::getOptionString(specificSettings_, "format", "Callback") != "Callback")
-  {
-    filenameBase_ = PythonUtility::getOptionString(specificSettings_, "filename", "out");
-  }
 
   // add time step number to file name base
   std::stringstream s;

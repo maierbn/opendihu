@@ -29,6 +29,9 @@ public:
   //! get the own rank id of the mpi Communicator
   element_no_t ownRankNo();
 
+  //! check if the own rank from MPICommWorld is contained in the current rankSubset
+  bool ownRankIsContained() const;
+
   //! first entry of the rank list
   std::set<int>::const_iterator begin();
   

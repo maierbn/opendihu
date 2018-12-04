@@ -1,5 +1,9 @@
 #include "control/multiple_instances.h"
 
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
+
 #include <omp.h>
 #include <sstream>
 
@@ -14,28 +18,34 @@ namespace Control
 template<class TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
-  context_(context["MultipleInstances"]), data_(context_)
+  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
 {
-  specificSettings_ = context_.getPythonConfig();
+// #ifdef HAVE_PAT
+  // PAT_record(PAT_STATE_OFF);
+  // std::string label = "initialization";
+  // PAT_region_begin(1, label.c_str());
+  // LOG(INFO) << "PAT_region_begin(" << label << ")";
+// #endif
+
   outputWriterManager_.initialize(context_, specificSettings_);
   
   //VLOG(1) << "MultipleInstances constructor, settings: " << specificSettings_;
   
   // extract the number of instances
-  nInstances_ = PythonUtility::getOptionInt(specificSettings_, "nInstances", 1, PythonUtility::Positive);
+  nInstances_ = specificSettings_.getOptionInt("nInstances", 1, PythonUtility::Positive);
    
   // parse all instance configs 
-  std::vector<PyObject *> instanceConfigs;
+  std::vector<PythonConfig> instanceConfigs;
   
   // get the config for the first InstancesDataset instance from the list
-  PyObject *instanceConfig = PythonUtility::getOptionListBegin<PyObject *>(specificSettings_, "instances");
+  PyObject *instanceConfig = specificSettings_.getOptionListBegin<PyObject *>("instances");
 
   int i = 0;
-  for(;
-      !PythonUtility::getOptionListEnd(specificSettings_, "instances") && i < nInstances_; 
-      PythonUtility::getOptionListNext<PyObject *>(specificSettings_, "instances", instanceConfig), i++)
+  for (;
+      !specificSettings_.getOptionListEnd("instances") && i < nInstances_;
+      specificSettings_.template getOptionListNext<PyObject *>("instances", instanceConfig), i++)
   {
-    instanceConfigs.push_back(instanceConfig);
+    instanceConfigs.push_back(PythonConfig(specificSettings_, "instances", instanceConfig));
     VLOG(3) << "i = " << i << ", instanceConfig = " << instanceConfig;
   }
     
@@ -45,7 +55,7 @@ MultipleInstances(DihuContext context) :
     nInstances_ = i;
   }
     
-  if (!PythonUtility::getOptionListEnd(specificSettings_, "instances"))
+  if (!specificSettings_.getOptionListEnd("instances"))
   {
     LOG(ERROR) << "Only " << nInstances_ << " instances were created, but more configurations are given.";
   }
@@ -57,7 +67,7 @@ MultipleInstances(DihuContext context) :
   // determine all ranks of all computed instances
   std::set<int> ranksAllComputedInstances;
   nInstancesComputedGlobally_ = 0;
-  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PyObject *>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
+  std::vector<std::tuple<std::shared_ptr<Partition::RankSubset>, bool, PythonConfig>> rankSubsets(nInstances_);  // <rankSubset, computeOnThisRank, instanceConfig>
 
   int ownRankNoWorldCommunicator = this->context_.partitionManager()->rankNoCommWorld();
   int nRanksCommWorld = this->context_.partitionManager()->nRanksCommWorld();
@@ -65,11 +75,11 @@ MultipleInstances(DihuContext context) :
   // parse the rank lists for all instances
   for (int instanceConfigNo = 0; instanceConfigNo < nInstances_; instanceConfigNo++)
   {
-    PyObject *instanceConfig = instanceConfigs[instanceConfigNo];
+    PythonConfig instanceConfig = instanceConfigs[instanceConfigNo];
     std::get<2>(rankSubsets[instanceConfigNo]) = instanceConfig;
    
     // extract ranks for this instance
-    if (!PythonUtility::hasKey(instanceConfig, "ranks"))
+    if (!instanceConfig.hasKey("ranks"))
     {
       LOG(ERROR) << "Instance " << instanceConfigs << " has no \"ranks\" settings.";
 
@@ -81,7 +91,7 @@ MultipleInstances(DihuContext context) :
     {
       // extract rank list
       std::vector<int> ranks;
-      PythonUtility::getOptionVector(instanceConfig, "ranks", ranks);
+      instanceConfig.getOptionVector("ranks", ranks);
       
       VLOG(2) << "instance " << instanceConfigNo << " on ranks: " << ranks;
 
@@ -133,7 +143,7 @@ MultipleInstances(DihuContext context) :
   {
     std::shared_ptr<Partition::RankSubset> rankSubset = std::get<0>(rankSubsets[instanceConfigNo]);
     bool computeOnThisRank = std::get<1>(rankSubsets[instanceConfigNo]);
-    PyObject *instanceConfig = std::get<2>(rankSubsets[instanceConfigNo]);
+    PythonConfig instanceConfig = std::get<2>(rankSubsets[instanceConfigNo]);
 
     if (!computeOnThisRank)
     {
@@ -183,6 +193,10 @@ initialize()
   }
   
   data_.setInstancesData(instancesLocal_);
+
+// #ifdef HAVE_PAT
+  // PAT_region_end(1);    // end region "initialization", id 1
+// #endif
 }
 
 template<class TimeSteppingScheme>
@@ -193,6 +207,13 @@ run()
  
   LOG(INFO) << "MultipleInstances: " << nInstancesComputedGlobally_ << " instance" << (nInstancesComputedGlobally_ != 1? "s" : "")
     << " to be computed in total.";
+
+#ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
+  std::string label = "computation";
+  PAT_region_begin(2, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
+#endif
 
   //#pragma omp parallel for // does not work with the python interpreter
   for (int i = 0; i < nInstancesLocal_; i++)
@@ -208,6 +229,11 @@ run()
     instancesLocal_[i].run();
   }
   
+#ifdef HAVE_PAT
+  PAT_region_end(2);    // end region "computation", id 
+  PAT_record(PAT_STATE_OFF);
+#endif
+
   this->outputWriterManager_.writeOutput(this->data_);
 }
 
@@ -219,13 +245,36 @@ knowsMeshType()
   assert(nInstances_ > 0);
   return instancesLocal_[0].knowsMeshType();
 }
-
+/*
 template<class TimeSteppingScheme>
 Vec &MultipleInstances<TimeSteppingScheme>::
 solution()
 {
   assert(nInstances_ > 0);
   return instancesLocal_[0].solution();
+}*/
+
+template<class TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+reset()
+{
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    reset();
+  }
+}
+
+template<class TimeSteppingScheme>
+typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
+getSolutionForTransferInOperatorSplitting()
+{
+  std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> output(nInstancesLocal_);
+
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    output[i] = instancesLocal_[i].getSolutionForTransferInOperatorSplitting();
+  }
+  return output;
 }
 
 };

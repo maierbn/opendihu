@@ -14,17 +14,17 @@ TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
   TimeSteppingScheme(context["ModelOrderReduction"]),
-  timestepping_(context["ModelOrderReduction"]), solutionVectorMapping_(SolutionVectorMapping()), initialized_(false)
+  timestepping_(context["ModelOrderReduction"]), initialized_(false)
 {  
   this->specificSettings_ = this->context_.getPythonConfig();
-  
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, timestepping_.specificSettings());
   
   if (VLOG_IS_ON(1))
   {
     VLOG(1) << "specificSettings in TimeSteppingSchemeOdeReduced:";
-    PythonUtility::printDict(this->specificSettings_);
+    PythonUtility::printDict(this->specificSettings_.pyObject());
   }
 }
 
@@ -33,13 +33,6 @@ std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeS
 solution()
 {  
   return this->data_->redSolution();
-}
-
-template<typename TimeSteppingType>
-SolutionVectorMapping &TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-solutionVectorMapping()
-{
-  return solutionVectorMapping_;
 }
 
 template<typename TimeSteppingType>
@@ -74,7 +67,7 @@ initialize()
   
   LOG(DEBUG) << "timestepping_.timeStepOutputInterval() in TimeSteppingSchemeOdeReduced::initialize", timestepping_.timeStepOutputInterval();
   
-  this->nReducedBases_ = PythonUtility::getOptionInt(specificSettings_, "nReducedBases", 10, PythonUtility::Positive);
+  this->nReducedBases_ = specificSettings_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
   
   std::array<element_no_t, 1> nElements({this -> nReducedBases_ - 1});
   std::array<double, 1> physicalExtent({0.0});

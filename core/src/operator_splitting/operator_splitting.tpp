@@ -1,7 +1,11 @@
 #include "operator_splitting/operator_splitting.h"
 
+#ifdef HAVE_PAT
+#include <pat_api.h>    // perftools, only available on hazel hen
+#endif
+
 #include "utility/python_utility.h"
-#include "data_management/time_stepping.h"
+#include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
 
 namespace OperatorSplitting
@@ -14,9 +18,9 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   timeStepping1_(context_[schemeName]["Term1"]),
   timeStepping2_(context_[schemeName]["Term2"]), initialized_(false)
 {
-  PyObject *topLevelSettings = context_.getPythonConfig();
-  specificSettings_ = PythonUtility::getOptionPyObject(topLevelSettings, schemeName);
-  outputWriterManager_.initialize(context_, specificSettings_);
+
+  PythonConfig topLevelSettings = context_.getPythonConfig();
+  specificSettings_ = PythonConfig(topLevelSettings, schemeName);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -38,7 +42,7 @@ initialize()
 
   TimeSteppingScheme::initialize();
 
-  timeStepOutputInterval_ = PythonUtility::getOptionInt(specificSettings_, "timeStepOutputInterval", 100, PythonUtility::Positive);
+  timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_;
@@ -60,9 +64,6 @@ initialize()
     timeStepping2_.initialize();
   }
 
-  outputData1_ = PythonUtility::getOptionBool(specificSettings_, "outputData1", true);
-  outputData2_ = PythonUtility::getOptionBool(specificSettings_, "outputData2", true);
-  
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);
 
@@ -92,8 +93,21 @@ run()
   // initialize data structurures
   initialize();
 
+#ifdef HAVE_PAT
+  PAT_record(PAT_STATE_ON);
+  std::string label = "computation";
+  PAT_region_begin(2, label.c_str());
+  LOG(INFO) << "PAT_region_begin(" << label << ")";
+#endif
+
   // run simulation
   advanceTimeSpan();
+
+#ifdef HAVE_PAT
+  PAT_region_end(2);    // end region "computation", id 
+  PAT_record(PAT_STATE_OFF);
+#endif
+
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

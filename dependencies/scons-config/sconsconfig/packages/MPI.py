@@ -31,60 +31,83 @@ int main(int argc, char* argv[])
 }
 '''
 
-
   def check(self, ctx):
+    if os.environ.get("PE_ENV") is not None:
+      ctx.Message('Not checking for MPI ... ')
+      ctx.Result(True)
+      return True
+        
     env = ctx.env
     ctx.Message('Checking for MPI ... ')
     self.check_options(env)
 
+    self.headers = ['mpi.h']
+    self.libs=[
+      [],                          # nothing
+      ['mpich'],                   # mpich/mpich2
+      ['pmpich', 'mpich'],         # mpich2
+      ['mpich', 'mpl'],            # mpich2
+      ['pmpich', 'mpich', 'mpl'],  # mpich2
+      ['mpi', 'mpi_cxx'],          # openmpi
+      ['mpi'],                     # openmpi
+    ]
+    self.extra_libs=[
+      [],
+      ['rt'],
+      ['pthread', 'rt'],
+      ['dl'],
+      ['dl', 'rt'],
+      ['dl', 'pthread'],
+      ['dl', 'pthread', 'rt']
+    ]
+    self.set_build_handler([
+      'mkdir -p ${PREFIX}',
+      'cd ${SOURCE_DIR} && ./configure --prefix=${PREFIX} CC='+env["cc"]+' CXX='+env["CC"]+' && make && make install',
+    ])
+    use_showme = True
+    use_mpi_dir = False
+    
     # on hazel hen login node do not run MPI test program because this is not possible (only compile)
-    if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+    if os.environ.get("PE_ENV") is not None:
       self.run = False
+      use_showme = False
+      use_mpi_dir = True
       
-    try:
-      # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
-      
-      cflags = subprocess.check_output("mpic++ --showme:compile", shell=True)
-      ldflags = subprocess.check_output("mpic++ --showme:link", shell=True)
+    if use_showme:
+      try:
+        # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
+        
+        cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
+        ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
 
-      # remove trailing newline
-      if cflags[-1] == '\n':
-        cflags = cflags[:-1]
-      if ldflags[-1] == '\n':
-        ldflags = ldflags[:-1]
+        # remove trailing newline
+        if cflags[-1] == '\n':
+          cflags = cflags[:-1]
+        if ldflags[-1] == '\n':
+          ldflags = ldflags[:-1]
 
-      ctx.Log("extracted cflags from mpic++: \n{}\n\n".format(cflags))
-      ctx.Log("extracted ldflags from mpic++: \n{}\n\n".format(ldflags))
+        ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
+        ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))
 
-      env.MergeFlags(cflags)
-      env.MergeFlags(ldflags)
-      
-      res = self.try_link(ctx)
-      
-    except Exception as e: 
-      ctx.Message("MPI mpic++ --showme failed: \n"+str(e)+"\nNow using MPI_DIR\n")
-      
+        env.MergeFlags(cflags)
+        env.MergeFlags(ldflags)
+        
+        res = self.try_link(ctx)
+        use_mpi_dir = False
+        
+      except Exception as e: 
+        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
+        use_mpi_dir = True
+    
+    if use_mpi_dir:
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual
-      self.headers = ['mpi.h']
-      self.libs=[
-        ['mpich'],                   # mpich/mpich2
-        ['pmpich', 'mpich'],         # mpich2
-        ['mpich', 'mpl'],            # mpich2
-        ['pmpich', 'mpich', 'mpl'],  # mpich2
-        ['mpi', 'mpi_cxx'],          # openmpi
-        ['mpi'],                     # openmpi
-      ]
-      self.extra_libs=[
-        [],
-        ['rt'],
-        ['pthread', 'rt'],
-        ['dl'],
-        ['dl', 'rt'],
-        ['dl', 'pthread'],
-        ['dl', 'pthread', 'rt']
-      ]
       res = super(MPI, self).check(ctx)
     
     self.check_required(res[0], ctx)
+    
+    if not res[0]:
+      # build with build handler
+      res = super(MPI, self).check(ctx)
+    
     ctx.Result(res[0])
     return res[0]

@@ -11,7 +11,7 @@ namespace LoopOverTuple
 /** Static recursive loop from 0 to number of entries in the tuple
  * Loop body
  */
-template<typename OutputFieldVariablesType, int i=0>
+template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCountNFieldVariablesOfMesh(const OutputFieldVariablesType &fieldVariables, std::string meshName,
                                int &nFieldVariablesOfMesh)

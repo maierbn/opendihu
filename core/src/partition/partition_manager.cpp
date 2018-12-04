@@ -9,7 +9,7 @@
 namespace Partition
 {
 
-Manager::Manager(PyObject *specificSettings) : specificSettings_(specificSettings), nextRankSubset_(nullptr)
+Manager::Manager(PythonConfig specificSettings) : specificSettings_(specificSettings), nextRankSubset_(nullptr)
 {
   MPIUtility::handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanksCommWorld_));
   MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNoCommWorld_));

@@ -34,10 +34,10 @@ std::array<T,nComponents> operator-(const std::array<T,nComponents> &vector1)
 }
 
 //! vector addition
-template<std::size_t nComponents>
-std::array<double,nComponents> operator+(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator+(const std::array<T,nComponents> vector1, const std::array<T,nComponents> vector2)
 {
-  std::array<double,nComponents> result;
+  std::array<T,nComponents> result;
 
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)
@@ -48,8 +48,8 @@ std::array<double,nComponents> operator+(const std::array<double,nComponents> ve
 }
 
 //! vector increment operation
-template<std::size_t nComponents>
-std::array<double,nComponents> &operator+=(std::array<double,nComponents> &vector1, const std::array<double,nComponents> vector2)
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> &operator+=(std::array<T,nComponents> &vector1, const std::array<T,nComponents> vector2)
 {
   //#pragma omp simd
   for (int i = 0; i < nComponents; i++)
@@ -250,7 +250,7 @@ template<typename T1, typename T2>
 std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map)
 {
   bool first = true;
-  for(typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
+  for (typename std::map<T1,T2>::const_iterator iter = map.cbegin(); iter != map.cend(); iter++)
   {
     if (!first)
       stream << ", ";
@@ -266,7 +266,7 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
 {
   stream << "{";
   bool first = true;
-  for(typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
+  for (typename std::set<T>::const_iterator iter = set.cbegin(); iter != set.cend(); iter++)
   {
     if (!first)
       stream << ", ";

@@ -42,7 +42,14 @@ createPetscObjects()
   //assert(this->functionSpace_);
   
   // create field variables on local partition
-  //this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
+  this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> ParallelFiberEstimation<FunctionSpaceType>::
+gradient()
+{
+  return this->gradient_;
 }
 
 template<typename FunctionSpaceType>
@@ -53,7 +60,7 @@ print()
     return;
 
   VLOG(4) << "======================";
-  //VLOG(4) << *this->gradient_;
+  VLOG(4) << *this->gradient_;
   VLOG(4) << "======================";
 }
 
@@ -62,7 +69,7 @@ typename ParallelFiberEstimation<FunctionSpaceType>::OutputFieldVariables Parall
 getOutputFieldVariables()
 {
   return std::tuple_cat(
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>()
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_)
   );
 }
 

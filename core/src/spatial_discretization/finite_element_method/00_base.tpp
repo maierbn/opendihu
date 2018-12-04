@@ -25,15 +25,23 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
-  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), initialized_(false)
+  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
-  specificSettings_ = context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
 
   // Create mesh or retrieve existing mesh from meshManager. This already creates meshPartition in functionSpace.initialize(), see function_space/03_function_space_partition_structured.tpp
   if (!functionSpace)
   {
+    LOG(DEBUG) << "FiniteElementMethodBase constructor, create new function space from settings";
     functionSpace = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
+  }
+  else
+  {
+    LOG(DEBUG) << "FiniteElementMethodBase constructor, use given functionSpace \"" << functionSpace->meshName() << "\"";
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "geometry field: " << functionSpace->geometryField();
+    }
   }
 
   // store mesh in data
@@ -172,10 +180,10 @@ solve()
 
     // compute f = matrix * solution
 
-    for(int i=0; i<vectorSize; i++)
+    for (int i=0; i<vectorSize; i++)
     {
       f[i] = 0.0;
-      for(int j=0; j<vectorSize; j++)
+      for (int j=0; j<vectorSize; j++)
       {
         f[i] += matrixValues[i*nColumns + j] * solution[j];
       }
@@ -183,7 +191,7 @@ solve()
 
     // compute residual norm
     double res = 0.0;
-    for(int i=0; i<vectorSize; i++)
+    for (int i=0; i<vectorSize; i++)
     {
       res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
       LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
@@ -196,12 +204,14 @@ solve()
 
 template<typename FunctionSpaceType,typename QuadratureType>
 void FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::
-initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction, int multidomainNCompartments)
+initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
+           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
+           bool useAdditionalDiffusionTensor)
 {
   LOG(DEBUG) << "FiniteElementMethodInitializeData::initialize";
 
-  // initialize the DiffusionTensorFieldVariable object
-  this->data_.initialize(direction, multidomainNCompartments);
+  // initialize the DiffusionTensorDirectional object
+  this->data_.initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 
   // call normal initialize, this does not initialize the data object again
   FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();

@@ -15,7 +15,7 @@ template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PyObject *specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
   // write a RectilinearGrid
 
@@ -26,12 +26,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   std::vector<std::string> namesScalars, namesVectors;
   ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
 
-  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  if (specificSettings.hasKey("binaryOutput"))
   {
     LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
   }
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
-  bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
+  bool binaryOutput = specificSettings.getOptionBool("binary", true);
+  bool fixedFormat = specificSettings.getOptionBool("fixedFormat", true);
 
   // determine file name
   std::stringstream s;
@@ -188,7 +188,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     coordinates[dimensionNo].resize(nNodes);
 
-    for(node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
+    for (node_no_t nodeNo = 0; nodeNo < nNodes; nodeNo++)
     {
       double coordinate = (mesh->meshPartition()->beginNodeGlobalNatural(dimensionNo) + nodeNo) * meshWidth;
       VLOG(1) << "coordinate: " << coordinate << ", nodeNo=" << nodeNo;
@@ -197,7 +197,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // set other coordinates to 0
-  for(; dimensionNo < 3; dimensionNo++)
+  for (; dimensionNo < 3; dimensionNo++)
   {
     coordinates[dimensionNo].resize(1);
     coordinates[dimensionNo][0] = 0.0;
@@ -290,7 +290,7 @@ template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PyObject *specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
   // write a StructuredGrid
 
@@ -301,12 +301,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   std::vector<std::string> namesScalars, namesVectors;
   ParaviewLoopOverTuple::loopCollectFieldVariablesNames(fieldVariables, meshName, namesScalars, namesVectors);
 
-  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  if (specificSettings.hasKey("binaryOutput"))
   {
     LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
   }
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
-  bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
+  bool binaryOutput = specificSettings.getOptionBool("binary", true);
+  bool fixedFormat = specificSettings.getOptionBool("fixedFormat", true);
 
   // determine file name
   std::stringstream s;
@@ -493,7 +493,7 @@ template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
 void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
 outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PyObject *specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings)
 {
   // write an UnstructuredGrid
   // determine file name
@@ -511,12 +511,12 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   
   // name of value field
-  if (PythonUtility::hasKey(specificSettings, "binaryOutput"))
+  if (specificSettings.hasKey("binaryOutput"))
   {
     LOG(ERROR) << "Key \"binaryOutput\" for Paraview output was recently changed to \"binary\"!";
   }
-  bool binaryOutput = PythonUtility::getOptionBool(specificSettings, "binary", true);
-  bool fixedFormat = PythonUtility::getOptionBool(specificSettings, "fixedFormat", true);
+  bool binaryOutput = specificSettings.getOptionBool("binary", true);
+  bool fixedFormat = specificSettings.getOptionBool("fixedFormat", true);
 
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl

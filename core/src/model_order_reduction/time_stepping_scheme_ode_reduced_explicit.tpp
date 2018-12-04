@@ -59,7 +59,7 @@ namespace ModelOrderReduction
     
     // loop over time steps
     double currentTime = this->startTime_;
-    for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
+    for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
     {
       if (timeStepNo % this->timestepping_.timeStepOutputInterval() == 0)
       {

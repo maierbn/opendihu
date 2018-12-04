@@ -6,7 +6,7 @@
 
 #include "control/types.h"
 #include "output_writer/generic.h"
-#include "data_management/finite_elements.h"
+#include "data_management/finite_element_method/finite_elements.h"
 
 namespace OutputWriter
 {

@@ -100,6 +100,16 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
 template<int D>
 void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
 
+/** pow as constexpr function
+ *  https://stackoverflow.com/a/27270730/10290071
+ */
+template<typename T, typename U>
+T constexpr pow(T base, U exponent)
+{
+  static_assert(std::is_integral<U>(), "exponent must be integral");
+  return exponent == 0 ? 1 : base * pow(base, exponent - 1);
+}
+
 }  // namespace
 
 #include "utility/math_utility.tpp"

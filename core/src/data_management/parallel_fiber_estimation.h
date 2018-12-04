@@ -27,7 +27,7 @@ public:
   //! destructur
   ~ParallelFiberEstimation();
 
-  //! return a reference to the solution vector, the PETSc Vec can be obtained via fieldVariable->valuesGlobal()
+  //! return a reference to the gradient vector field
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient();
 
   //! print all stored data to stdout
@@ -50,6 +50,7 @@ protected:
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;  ///< the gradient field of the Laplace flow solution
 };
 
 } // namespace Data

@@ -9,7 +9,6 @@
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
 #include "mesh/structured_regular_fixed.h"
-#include "data_management/solution_vector_mapping.h"
 #include "mesh/mesh_manager.h"
 
 //#include <libcellml>    // libcellml not used here
@@ -17,7 +16,8 @@
 template<int nStates_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
-  CallbackHandler<nStates_,FunctionSpaceType>(context)
+  CallbackHandler<nStates_,FunctionSpaceType>(context),
+  Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor";
 }
@@ -33,6 +33,7 @@ template<int nStates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,FunctionSpaceType>::
 reset()
 {
+  this->internalTimeStepNo_ = 0;
 }
   
 template<int nStates_, typename FunctionSpaceType>
@@ -48,14 +49,9 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  int outputStateIndex = PythonUtility::getOptionInt(this->specificSettings_, "outputStateIndex", 0, PythonUtility::NonNegative);
-  double prefactor = PythonUtility::getOptionDouble(this->specificSettings_, "prefactor", 1.0);
-
-  // The solutionVectorMapping_ object stores the information which component of the solution will be further used
-  // in methods that use the result of this method, e.g. in operator splitting.
-  // The solutionVectorMapping object also scales the solution after transfer.
-  this->solutionVectorMapping_.setOutputComponentNo(outputStateIndex);
-  this->solutionVectorMapping_.setScalingFactor(prefactor);
+  this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
+  this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  this->internalTimeStepNo_ = 0;
 }
 
 template<int nStates_, typename FunctionSpaceType>
@@ -75,6 +71,8 @@ template<int nStates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
+  this->internalTimeStepNo_++;
+
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
   PetscErrorCode ierr;
@@ -95,17 +93,37 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   //LOG(DEBUG) << " evaluateTimesteppingRightHandSide: nInstances=" << this->nInstances_ << ", nStates_=" << nStates_;
   
   // get new values for parameters, call callback function of python config
-  if (this->setParameters_ && timeStepNo % this->setParametersCallInterval_ == 0)
+  if (this->setParameters_ && this->internalTimeStepNo_ % this->setParametersCallInterval_ == 0)
   {
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call setParameters";
-    this->setParameters_((void *)this, this->nInstances_, timeStepNo, currentTime, this->parameters_);
+    this->setParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
+  }
+
+  // get new values for parameters, call callback function of python config
+  if (this->setSpecificParameters_ && this->internalTimeStepNo_ % this->setSpecificParametersCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    VLOG(1) << "call setSpecificParameters";
+    this->setSpecificParameters_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, this->parameters_);
+  }
+
+  // get new values for parameters, call callback function of python config
+  if (this->setSpecificStates_ && this->internalTimeStepNo_ % this->setSpecificStatesCallInterval_ == 0)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
   }
 
   //              this          STATES, RATES, WANTED,                KNOWN
-  if(this->rhsRoutine_)
+  if (this->rhsRoutine_)
   {
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
@@ -115,16 +133,16 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   }
 
   // handle intermediates, call callback function of python config
-  if (this->handleResult_ && timeStepNo % this->handleResultCallInterval_ == 0)
+  if (this->handleResult_ && this->internalTimeStepNo_ % this->handleResultCallInterval_ == 0)
   {
     int nStatesInput;
     VecGetSize(input, &nStatesInput);
 
     // start critical section for python API calls
-    PythonUtility::GlobalInterpreterLock lock;
+    // PythonUtility::GlobalInterpreterLock lock;
     
     VLOG(1) << "call handleResult with in total " << nStatesInput << " states, " << this->intermediates_.size() << " intermediates";
-    this->handleResult_((void *)this, this->nInstances_, timeStepNo, currentTime, states, this->intermediates_.data());
+    this->handleResult_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states, this->intermediates_.data());
   }
 
   //PetscUtility::setVector(rates_, output);

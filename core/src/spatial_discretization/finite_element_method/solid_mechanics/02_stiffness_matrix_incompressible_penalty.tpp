@@ -127,7 +127,7 @@ getPressure(double deformationGradientDeterminant, VecD<FunctionSpaceType::dim()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-const int FiniteElementMethodMatrix<
+int FiniteElementMethodMatrix<
   FunctionSpaceType,
   QuadratureType,
   Term,

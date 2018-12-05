@@ -1,13 +1,14 @@
 # Diffusion 1D
 n = 20   # number of elements
-k = 21   # maximum could be equal to the number of nodes= n+1
+k = 20   
 
 config = {
   "ModelOrderReduction": {
+    "nFullBases" : k,
     "nReducedBases" : k,   
     "ExplicitEuler" : {
       "numberTimeSteps": 1000,
-      "endTime": 1,
+      "endTime": 3,
       "initialValues": [2,2,4,5,2,2],      
       "FiniteElementMethod" : {
         "nElements": n,

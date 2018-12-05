@@ -30,17 +30,15 @@ solution()
 
 template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
-{
-  /*
+{  
   PetscErrorCode ierr;
    
-  Vec &solution = this->discretizableInTime_.data().solution()->getValuesContiguous();
-  Vec &redSolution=this->data_->solution()->getValuesContiguous();
+  Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
+  Vec &redSolution= this->data_->solution()->getValuesContiguous();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // reduction step
-  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr); 
-  */
+  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);  
 }
 
 template<typename TimeSteppingType>
@@ -53,14 +51,9 @@ initialize()
   LOG(TRACE) << "TimeSteppingSchemeOdeReduced::initialize()";
   
   this->fullTimestepping_.initialize();
-  
-  LOG(TRACE) << "Finished fullTimestepping_.initialize()==============================";
-  
-  
+   
   TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
   ::initialize();  
-  
-  LOG(TRACE) << "Finished TimeSteppingSchemeOdeBase.initialize()==============================";
   
   if (this->specificSettingsMOR_.hasKey("nReducedBases"))
   {
@@ -68,28 +61,56 @@ initialize()
     LOG(TRACE) << "nReducedBases: " << this->nReducedBases_;
   }
   
-  std::array<element_no_t, 1> nElements({(this -> nReducedBases_ - 1)*this->discretizableInTime_.nComponents()});
+  if (this->specificSettingsMOR_.hasKey("nFullBases"))
+  {
+    this->nFullBases_ = this->specificSettingsMOR_.getOptionInt("nFullBases", 10, PythonUtility::Positive);
+    LOG(TRACE) << "nFullBases: " << this->nFullBases_;
+  }
+  
+  std::array<element_no_t, 1> nElementsRed({(this -> nReducedBases_+1)*this->discretizableInTime_.nComponents()-1});
+  std::array<element_no_t, 1> nElementsFull({(this -> nFullBases_+1)*this->discretizableInTime_.nComponents()-1});
   std::array<double, 1> physicalExtent({0.0});
   
   typedef FunctionSpace::Generic GenericFunctionSpace;
+  //std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
+  //std::shared_ptr<GenericFunctionSpace> functionSpaceFull;
   
-  // create the functionspace for the reduced order
-  std::shared_ptr<GenericFunctionSpace> functionSpaceRed 
-    = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElements, physicalExtent);  
-   
-  //TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::initialize(functionSpaceRed);  
-  //assert(functionSpaceRed->meshPartition());
-  //assert(this->data_);
-  //assert(TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>::data_);
-  //this->data_->setFunctionSpace(functionSpaceRed);
-  
-  //this->data_->initialize();
+  if(this->functionSpaceRed!=NULL)
+  {
+    LOG(TRACE) << "functionSpaceRed set to NULL============================";
     
-  this->dataMOR_->setFunctionSpace(functionSpaceRed);
-  this->dataMOR_->setFullFunctionSpace(this->discretizableInTime_.functionSpace());
+    this->functionSpaceRed= NULL;
+    this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);      
+  }
+  else
+  {
+    // create the functionspace for the reduced order
+    this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);   
+  
+    LOG(TRACE) << "functionSpaceRed============================";
+  }
+  
+  if(this->functionSpaceFull!=NULL)
+  {
+    LOG(TRACE) << "functionSpaceFull set to NULL============================";
+    
+    this->functionSpaceFull=nullptr;
+    this->functionSpaceFull = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);     
+  }
+  else
+  {
+    this->functionSpaceFull = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);  
+    
+    LOG(TRACE) << "functionSpaceFull============================";
+  }  
+    
+  this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
+  this->dataMOR_->setFullFunctionSpace(this->functionSpaceFull);
+  //this->dataMOR_->setFullFunctionSpace(this->fullTimestepping_.discretizableInTime_.functionSpace());
+  
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   
-  //setInitialValues();
+  setInitialValues();
     
   initialized_=true;
 }

@@ -35,6 +35,12 @@ setBasis()
   
   ierr=MatShift(basis, 1); CHKERRV(ierr); //identitty matrix to check
   
+  /*
+  PetscInt mat_sz_1, mat_sz_2;
+  MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+  LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2" << mat_sz_2 << "==============";
+  */
+  
   //to be implemented
   
 }

@@ -5,6 +5,7 @@
 #include "control/dihu_context.h"
 #include "data_management/data.h"
 #include "data_management/model_order_reduction.h"
+#include "function_space/function_space.h"
 
 namespace ModelOrderReduction
 {
@@ -16,6 +17,7 @@ class MORBase
 {
 public:
   typedef Data::ModelOrderReduction<FullFunctionSpace> DataMOR; //type of Data object
+  typedef FunctionSpace::Generic GenericFunctionSpace;
   
   //! constructor
   MORBase(DihuContext context);
@@ -35,7 +37,12 @@ protected:
   virtual void setRedSysMatrix(Mat &A, Mat &A_R);
   
   std::shared_ptr<DataMOR> dataMOR_;
-  int nReducedBases_;             ///< dimension of the reduced space
+  int nReducedBases_;    
+  int nFullBases_;///< dimension of the reduced space
+  
+  std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
+  std::shared_ptr<GenericFunctionSpace> functionSpaceFull;
+  
   PythonConfig specificSettingsMOR_;    ///< python object containing the value of the python config dict with corresponding key
   bool initialized_;
 };

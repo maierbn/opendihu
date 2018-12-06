@@ -124,7 +124,7 @@ generateParallelMesh()
 
   // get loops of whole domain
 
-#if 1     // normal execution
+#if 0     // normal execution
 
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
   std::array<bool,4> subdomainIsAtBorder;
@@ -379,7 +379,7 @@ checkTraceFinalFibers(int &level)
   {
     if (nRanksAvailable < currentRankSubset_->size()*8)
     {
-      LOG(WARNING) << "Cannot run algorithm until level " << maxLevel_ << ", current at level " << level
+      LOG(WARNING) << "Cannot run algorithm until level " << maxLevel_ << ", currently at level " << level
         << ", total number of ranks is " << nRanksAvailable << ", number needed for next level would be " << currentRankSubset_->size()*8 << ".";
       //traceFinalFibers = true;
     }
@@ -1697,44 +1697,6 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::vector<std::vector<Vec3>>,4> &borderPointsNew, std::array<bool,4> &subdomainIsAtBorderNew)
-{
-  int ownRankNo = currentRankSubset_->ownRankNo();
-  std::array<int,3> rankIndex;
-  rankIndex[0] = ownRankNo % nRanksPerCoordinateDirection_[0];
-  rankIndex[1] = int((ownRankNo % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
-  rankIndex[2] = int(ownRankNo / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
-
-  subdomainIsAtBorderNew[(int)Mesh::face_t::face0Minus] = rankIndex[0] == 0;
-  subdomainIsAtBorderNew[(int)Mesh::face_t::face0Plus] = rankIndex[0] == nRanksPerCoordinateDirection_[0]-1;
-  subdomainIsAtBorderNew[(int)Mesh::face_t::face1Minus] = rankIndex[1] == 0;
-  subdomainIsAtBorderNew[(int)Mesh::face_t::face1Plus] = rankIndex[1] == nRanksPerCoordinateDirection_[1]-1;
-
-  int rankToReceiveFrom = int(rankIndex[2]/2)*(nRanksPerCoordinateDirectionPreviously*nRanksPerCoordinateDirectionPreviously) + int(rankIndex[1]/2)*nRanksPerCoordinateDirectionPreviously + int(rankIndex[0]/2);
-
-  LOG(DEBUG) << "receive from rank " << rankToReceiveFrom;
-
-  std::vector<double> recvBuffer(4*nBorderPointsX_*nBorderPointsX_);
-  MPIUtility::handleReturnValue(MPI_Recv(recvBuffer.data(), recvBuffer.size(), MPI_DOUBLE, rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
-
-  // extract received values
-  int recvBufferIndex = 0;
-  for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
-  {
-    borderPointsNew[faceNo].resize(nBorderPointsX_);
-    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
-    {
-      borderPointsNew[faceNo][zLevelIndex].resize(nBorderPointsX_);
-      for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++, recvBufferIndex+=3)
-      {
-        borderPointsNew[faceNo][zLevelIndex][pointIndex] = Vec3({recvBuffer[recvBufferIndex], recvBuffer[recvBufferIndex+1], recvBuffer[recvBufferIndex+2]});
-      }
-    }
-  }
-}
-
-template<typename BasisFunctionType>
-void ParallelFiberEstimation<BasisFunctionType>::
 sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::vector<MPI_Request> &sendRequests)
 {
   sendRequests.resize(8);
@@ -1758,6 +1720,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
       }
     }
 
+    // determine rank so to which the border points should be sent to
     std::array<int,3> oldRankIndex;
 
     for (int i = 0; i < 3; i++)
@@ -1772,7 +1735,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
     int subdomainRankNo = subdomainRankIndex[2]*(nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]) + subdomainRankIndex[1]*nRanksPerCoordinateDirection_[0] + subdomainRankIndex[0];
 
-
+    // determine if the subdomain is at any border of the whole domain
     std::array<int,3> rankIndex;
     rankIndex[0] = subdomainIndex % nRanksPerCoordinateDirection_[0];
     rankIndex[1] = int((subdomainIndex % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
@@ -1788,18 +1751,24 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
     LOG(DEBUG) << "subdomain " << subdomainIndex << ", rankIndex: " << rankIndex << ", subdomainIsAtBorderNew: " << subdomainIsAtBorderNew << ", nRanksPerCoordinateDirection_: " << nRanksPerCoordinateDirection_;
 
+    LOG(DEBUG) << "sendBuffer size: " << sendBuffer.size() << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:" << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
+
+    // save subdomains to be send to a file
 #if 1
     std::stringstream filename;
     filename << "borderPoints_subdomain_" << subdomainRankNo << ".csv";
     std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
     assert(file.is_open());
 
+    // header
     file << borderPointsSubdomain[subdomainIndex][0].size() << ";" << borderPointsSubdomain[subdomainIndex][0][0].size() << ";";
     for (int i = 0; i < 4; i++)
     {
       file << (subdomainIsAtBorderNew[i]? "1" : "0") << ";";
     }
     file << std::endl;
+
+    // data
     for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
     {
       for (int zLevelIndex = 0; zLevelIndex < borderPointsSubdomain[subdomainIndex][faceNo].size(); zLevelIndex++)
@@ -1821,6 +1790,42 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
     LOG(DEBUG) << "oldRankIndex: " << oldRankIndex << ", new subdomainIndex: " << subdomainIndex << ", subdomainRankIndex: " << subdomainRankIndex << ", send from rank " << currentRankSubset_->ownRankNo() << " to " << subdomainRankNo;
     MPIUtility::handleReturnValue(MPI_Isend(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
+  }
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::vector<std::vector<Vec3>>,4> &borderPointsNew, std::array<bool,4> &subdomainIsAtBorderNew)
+{
+  int ownRankNo = currentRankSubset_->ownRankNo();
+
+  // determine rank from which to receive the border points
+  std::array<int,3> rankIndex;
+  rankIndex[0] = ownRankNo % nRanksPerCoordinateDirection_[0];
+  rankIndex[1] = int((ownRankNo % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
+  rankIndex[2] = int(ownRankNo / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
+
+  int rankToReceiveFrom = int(rankIndex[2]/2)*(nRanksPerCoordinateDirectionPreviously*nRanksPerCoordinateDirectionPreviously) + int(rankIndex[1]/2)*nRanksPerCoordinateDirectionPreviously + int(rankIndex[0]/2);
+
+  int recvBufferSize = 4*nBorderPointsX_*nBorderPointsZ_*3;
+  LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
+
+  std::vector<double> recvBuffer(recvBufferSize);
+  MPIUtility::handleReturnValue(MPI_Recv(recvBuffer.data(), recvBuffer.size(), MPI_DOUBLE, rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+
+  // extract received values, assign them to borderPointsNew
+  int recvBufferIndex = 0;
+  for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
+  {
+    borderPointsNew[faceNo].resize(nBorderPointsX_);
+    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
+    {
+      borderPointsNew[faceNo][zLevelIndex].resize(nBorderPointsX_);
+      for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++, recvBufferIndex+=3)
+      {
+        borderPointsNew[faceNo][zLevelIndex][pointIndex] = Vec3({recvBuffer[recvBufferIndex], recvBuffer[recvBufferIndex+1], recvBuffer[recvBufferIndex+2]});
+      }
+    }
   }
 }
 
@@ -2015,7 +2020,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   // send border points to ranks that will handle the new subdomains
   std::vector<MPI_Request> sendRequests;
-  if (refineSubdomainsOnThisRank)
+  if (refineSubdomainsOnThisRank)     // if this rank has created new subdomains (was part of the previous rank subset)
   {
     sendBorderPoints(borderPointsSubdomain, sendRequests);
   }

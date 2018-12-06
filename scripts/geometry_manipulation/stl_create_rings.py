@@ -386,6 +386,13 @@ def create_point_marker(point, markers, size=None):
     [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
   ]
 
+
+def get_stl_mesh(input_filename):
+  """
+  Get an stl mesh object from the stl file given in input_filename, for use with function create_ring_section_mesh
+  """
+  return mesh.Mesh.from_file(input_filename)
+  
 def create_ring_section(input_filename, start_point, end_point, z_value, n_points):
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
@@ -397,13 +404,30 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   :param z_value: the z level of the line on the surface
   :param n_points: number of points on the border
   """
+  stl_mesh = get_stl_mesh(input_filename)
+  return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)
+      
+def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points):
+  """
+  Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
+  From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
+  The direction is such that the distance of the curve
+  :param stl_mesh: stl mesh that contains the closed surface mesh of the muscle, aligned with the z-axis, can be retrieved by get_stl_mesh
+  :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
+  :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
+  :param z_value: the z level of the line on the surface
+  :param n_points: number of points on the border
+  """
   
-  print("create_ring_section, input_filename={}, start_point={}, end_point={}, z_value={}, n_points={}".format(input_filename, start_point, end_point, z_value, n_points))
+  print("create_ring_section, start_point={}, end_point={}, z_value={}, n_points={}".format(start_point, end_point, z_value, n_points))
   
   debug = False                 # set this to true to enable debugging output
   write_output_mesh = False    # set this to true to output 4 stl meshes that explain the algorithm
   
-  stl_mesh = mesh.Mesh.from_file(input_filename)
+  if z_value == 155:
+    print("z_value = 155, set debug to true")
+    debug = True
+    write_output_mesh = True
   
   # create a full loop at the given z_value
   loop = []

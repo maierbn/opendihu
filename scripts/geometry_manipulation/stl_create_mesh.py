@@ -23,7 +23,7 @@ import matplotlib
 
 havedisplay = False
 if not havedisplay:
-  print("use Agg backend")
+  #print("use Agg backend")
   matplotlib.use('Agg')
 else:
   print("use Tk backend")
@@ -91,7 +91,7 @@ def triangle_contains_point(triangle, point):
   
   return (condition, xi)
   
-def transform_to_world_space(x,y,triangles_parametric_space,triangle_list):
+def transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape):
 
   # transform to world space
   # find triangle in parametric space which contains grid point
@@ -529,8 +529,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
 
   if debugging_stl_output:
     # for debugging create markers at border points
+    factor = 1.0
     for point in points:
-      size = 0.2
+      factor *= 1.02
+      if factor >= 3:
+        factor = 3
+      size = 0.1*factor
       diag0 = np.array([-size,-size,-size])
       diag1 = np.array([size,-size,-size])
       diag2 = np.array([-size,size,-size])
@@ -1104,13 +1108,19 @@ def create_planar_mesh(border_points, loop_no, n_points, \
               
               y = np.sin(phi)*a
               x = (1./np.sqrt(2.) + (np.cos(phi) - 1./np.sqrt(2.))*a)*a
-              
+           
+        # rotate by pi*3/4 
+        phi = np.arctan2(y, x) + np.pi/4 + np.pi/2
+        r = np.sqrt(x*x + y*y)
+        x = np.cos(phi)*r
+        y = np.sin(phi)*r
+        
         if n_grid_points_x%2 == 1 and i == int(n_grid_points_x/2) and j == int(n_grid_points_y/2):   # center point
           x = 0.
           y = 0.
           
       # transform to world space
-      point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list)
+      point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
     
       if point_world_space is None:
         grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
@@ -1136,7 +1146,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           if i > 0 and i < n_grid_points_x-1 and j > 0 and j < n_grid_points_y-1:
             
             p = inner_grid_points_parametric[(j-1)*(n_grid_points_x-2)+(i-1),:]
-            point_world = transform_to_world_space(p[0],p[1],triangles_parametric_space,triangle_list)
+            point_world = transform_to_world_space(p[0],p[1],triangles_parametric_space,triangle_list,parametric_space_shape)
           
             if point_world is None:
               grid_points_world[j*n_grid_points_x+i,:] = np.array([0,0,0])
@@ -1180,7 +1190,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         y = grid_points_parametric_space[j*n_grid_points_x+i,1]
       
         # transform to world space
-        point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list)
+        point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
       
         #print("point_world_space:",point_world_space
       
@@ -1207,6 +1217,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     min_y = 100000
     max_x = -100000
     max_y = -100000
+    factor = 1.0
     
     # loop over grid points in parametric space
     for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
@@ -1217,7 +1228,10 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     
         # for debugging create markers at grid points in parametric space
         point = np.array(np.array([x*scale+x_offset, y*scale+y_offset, z_value]))
-        size = 0.2
+        factor *= 1.04
+        if factor >= 3:
+          factor = 3
+        size = 0.1*factor
         diag0 = np.array([-size,-size,-size])
         diag1 = np.array([size,-size,-size])
         diag2 = np.array([-size,size,-size])
@@ -1237,7 +1251,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
 
         # for debugging create markers at grid points in world space
         point = grid_points_world_space[j*n_grid_points_x+i]
-        size = 0.2
+        size = 0.1*factor
         diag0 = np.array([-size,-size,-size])
         diag1 = np.array([size,-size,-size])
         diag2 = np.array([-size,size,-size])
@@ -1599,10 +1613,10 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   triangulation_type = 2  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
   max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
-  show_plot = False
-  debugging_stl_output = False
+  show_plot = True
+  debugging_stl_output = True
 
-  border_points_0minus = border_points_faces[0]
+  border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
   border_points_0plus = border_points_faces[1]
   border_points_1minus = border_points_faces[2]
   border_points_1plus = border_points_faces[3]
@@ -1671,8 +1685,11 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
       n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
       
     if debugging_stl_output:
-      stl_debug_output.output_triangles("2dmesh_loop_{}_triangles".format(loop_no), grid_triangles_world_space)
-      stl_debug_output.output_triangles("2dmesh_loop_{}_markers".format(loop_no), markers_grid_points_world_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_w_triangulation".format(loop_no), out_triangulation_world_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_p_triangulation".format(loop_no), out_triangulation_parametric_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_p_grid".format(loop_no), grid_triangles_parametric_space + markers_grid_points_parametric_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_w_border".format(loop_no), markers_border_points_world_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_w_grid".format(loop_no), grid_triangles_world_space + markers_grid_points_world_space)
         
     # store grid points in world space of current loop
     loop_grid_points.append(grid_points_world_space)

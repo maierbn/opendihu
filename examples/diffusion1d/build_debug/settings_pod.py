@@ -4,7 +4,7 @@ k = 20
 
 config = {
   "ModelOrderReduction": {
-    "nFullBases" : k,
+    "nRowsSnapshots" : k,
     "nReducedBases" : k,   
     "ExplicitEuler" : {
       "numberTimeSteps": 1000,

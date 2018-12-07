@@ -19,6 +19,7 @@ public:
   //typedef ::FunctionSpace::Generic FunctionSpace;
   typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
   //typedef Data::TimeSteppingReduced<typename TimeSteppingType::FunctionSpace> DataReduced; //type of Data object  
+  typedef FunctionSpace::Generic GenericFunctionSpace;
   
   //! constructor
   TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);
@@ -60,6 +61,9 @@ protected:
   //std::shared_ptr<DataReduced> redData_;     ///< data object that holds all PETSc vectors and matrices
   
   //std::shared_ptr<DataReduced> redData_;
+  
+  std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
+  std::shared_ptr<GenericFunctionSpace> functionSpaceRowsSnapshots;
   
   TimeSteppingType fullTimestepping_;
 

@@ -6,6 +6,7 @@
 #include<petscmat.h>
 #include "mesh/mesh_manager.h"
 #include "function_space/function_space.h"
+#include "time_stepping_scheme/time_stepping_scheme.h"
 
 namespace ModelOrderReduction
 {
@@ -16,16 +17,65 @@ TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>(context["ModelOrderReduction"],name),
   fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
 {  
-  this->specificSettingsMOR_ = this->context_.getPythonConfig(); 
-  this->data_ = std::make_shared <Data::TimeStepping<typename TimeSteppingType::FunctionSpace, TimeSteppingType::DiscretizableInTime_Type::nComponents()>>(context); // create data object
+  this->specificSettingsMOR_ = this->context_.getPythonConfig();
   
+  if (this->specificSettingsMOR_.hasKey("nReducedBases"))
+  {
+    this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
+    LOG(TRACE) << "nReducedBases: " << this->nReducedBases_;
+  }
+  
+  if (this->specificSettingsMOR_.hasKey("nRowsSnapshots"))
+  {
+    this->nRowsSnapshots_ = this->specificSettingsMOR_.getOptionInt("nRowsSnapshots", 10, PythonUtility::Positive);
+    LOG(TRACE) << "nRowsSnapshots: " << this->nRowsSnapshots_;
+  }
+  
+  std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
+  std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
+  std::array<double, 1> physicalExtent({0.0}); 
+  
+  typedef FunctionSpace::Generic GenericFunctionSpace;
+  
+  if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
+  {
+    LOG(TRACE) << "functionSpaceRed set to NULL============================";
+    this->functionSpaceRed= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceReduced");
+    //this->functionSpaceRed= NULL;
+    //this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);      
+  }
+  else
+  {
+    // create the functionspace for the reduced order
+    this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);   
+    
+    LOG(TRACE) << "functionSpaceRed============================";
+  }
+  
+  if(this->context_.meshManager()->hasFunctionSpace("functionSpaceRowsSnapshots"))
+  {
+    LOG(TRACE) << "functionSpaceRowsSnapshots set to NULL============================";
+    this->functionSpaceRowsSnapshots= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots");
+    
+    //this->functionSpaceRowsSnapshots=nullptr;
+    //this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);     
+  }
+  else
+  {
+    this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsRows, physicalExtent);  
+    
+    LOG(TRACE) << "functionSpaceRowsSnapshots============================";
+  }
+  
+  this->data_ = std::make_shared <Data::TimeStepping<typename TimeSteppingType::FunctionSpace, TimeSteppingType::DiscretizableInTime_Type::nComponents()>>(context); // create data object
+
 }
 
 template<typename TimesteppingType>
 std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeSteppingSchemeOdeReduced<TimesteppingType>::
 solution()
 {  
-  return this->data_->redSolution();
+  return this->data_->solution();
 }
 
 template<typename TimeSteppingType>
@@ -36,6 +86,17 @@ void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
   Vec &redSolution= this->data_->solution()->getValuesContiguous();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+  
+  PetscInt mat_sz_1, mat_sz_2;
+  PetscInt solution_size, redSolution_size;
+  
+  VecGetSize(solution,&solution_size);
+  VecGetSize(redSolution,&redSolution_size);
+  MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+  
+  LOG(DEBUG) << "solution_size: " << solution_size << "========================";
+  LOG(DEBUG) << "redSolution_size: " << redSolution_size; 
+  LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 << "========================";;
   
   // reduction step
   ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);  
@@ -55,32 +116,31 @@ initialize()
   TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
   ::initialize();  
   
+  /*
   if (this->specificSettingsMOR_.hasKey("nReducedBases"))
   {
     this->nReducedBases_ = this->specificSettingsMOR_.getOptionInt("nReducedBases", 10, PythonUtility::Positive);
     LOG(TRACE) << "nReducedBases: " << this->nReducedBases_;
   }
-  
-  if (this->specificSettingsMOR_.hasKey("nFullBases"))
+ 
+  if (this->specificSettingsMOR_.hasKey("nRowsSnapshots"))
   {
-    this->nFullBases_ = this->specificSettingsMOR_.getOptionInt("nFullBases", 10, PythonUtility::Positive);
-    LOG(TRACE) << "nFullBases: " << this->nFullBases_;
+    this->nFullBases_ = this->specificSettingsMOR_.getOptionInt("nRowsSnapshots", 10, PythonUtility::Positive);
+    LOG(TRACE) << "nRowsSnapshots: " << this->nRowsSnapshots_;
   }
   
-  std::array<element_no_t, 1> nElementsRed({(this -> nReducedBases_+1)*this->discretizableInTime_.nComponents()-1});
-  std::array<element_no_t, 1> nElementsFull({(this -> nFullBases_+1)*this->discretizableInTime_.nComponents()-1});
+  std::array<element_no_t, 1> nElementsRed({this -> nReducedBases_});
+  std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
   std::array<double, 1> physicalExtent({0.0});
   
   typedef FunctionSpace::Generic GenericFunctionSpace;
-  //std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
-  //std::shared_ptr<GenericFunctionSpace> functionSpaceFull;
-  
-  if(this->functionSpaceRed!=NULL)
+
+  if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
   {
     LOG(TRACE) << "functionSpaceRed set to NULL============================";
-    
-    this->functionSpaceRed= NULL;
-    this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);      
+    this->functionSpaceRed= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceReduced");
+    //this->functionSpaceRed= NULL;
+    //this->functionSpaceRed= this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceReduced", nElementsRed, physicalExtent);      
   }
   else
   {
@@ -90,23 +150,24 @@ initialize()
     LOG(TRACE) << "functionSpaceRed============================";
   }
   
-  if(this->functionSpaceFull!=NULL)
+  if(this->context_.meshManager()->hasFunctionSpace("functionSpaceRowsSnapshots"))
   {
-    LOG(TRACE) << "functionSpaceFull set to NULL============================";
+    LOG(TRACE) << "functionSpaceRowsSnapshots set to NULL============================";
+    this->functionSpaceRowsSnapshots= this->context_.meshManager()->template functionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots");
     
-    this->functionSpaceFull=nullptr;
-    this->functionSpaceFull = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);     
+    //this->functionSpaceRowsSnapshots=nullptr;
+    //this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);     
   }
   else
   {
-    this->functionSpaceFull = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceFull", nElementsFull, physicalExtent);  
+    this->functionSpaceRowsSnapshots = this->context_.meshManager()->template createFunctionSpace<GenericFunctionSpace>("functionSpaceRowsSnapshots", nElementsFull, physicalExtent);  
     
-    LOG(TRACE) << "functionSpaceFull============================";
+    LOG(TRACE) << "functionSpaceRowsSnapshots============================";
   }  
-    
+  */
+
   this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
-  this->dataMOR_->setFullFunctionSpace(this->functionSpaceFull);
-  //this->dataMOR_->setFullFunctionSpace(this->fullTimestepping_.discretizableInTime_.functionSpace());
+  this->dataMOR_->setFullFunctionSpace(this->functionSpaceRowsSnapshots);
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   

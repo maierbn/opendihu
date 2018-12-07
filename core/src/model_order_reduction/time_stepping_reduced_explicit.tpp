@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingExplicitType>
   TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEuler"), initialized_(false) 
+  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEulerReduced"), initialized_(false) 
   {
   }
   
@@ -80,13 +80,14 @@ namespace ModelOrderReduction
       
       PetscErrorCode ierr;
       PetscInt increment_size, redIncrement_size, mat_sz_1, mat_sz_2;
+      
       VecGetSize(increment,&increment_size);
       VecGetSize(redIncrement,&redIncrement_size);
       MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
       
       LOG(DEBUG) << "increment_size: " << increment_size << "========================";
       LOG(DEBUG) << "redIncrement_size: " << redIncrement_size;
-      LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2" << mat_sz_2;
+      LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2: " << mat_sz_2;
       // reduction step
       ierr=MatMult(basisTransp, increment, redIncrement); CHKERRV(ierr); 
       

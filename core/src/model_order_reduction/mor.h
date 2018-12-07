@@ -38,10 +38,7 @@ protected:
   
   std::shared_ptr<DataMOR> dataMOR_;
   int nReducedBases_;    
-  int nFullBases_;///< dimension of the reduced space
-  
-  std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
-  std::shared_ptr<GenericFunctionSpace> functionSpaceFull;
+  int nRowsSnapshots_;///< rows of the snapshot matrix
   
   PythonConfig specificSettingsMOR_;    ///< python object containing the value of the python config dict with corresponding key
   bool initialized_;

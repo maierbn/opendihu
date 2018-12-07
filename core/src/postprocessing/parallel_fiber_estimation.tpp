@@ -1914,6 +1914,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // set boundary conditions to the problem
     problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
+    problem_->reset();
     problem_->initialize();
 
     // solve the laplace problem, globally
@@ -1921,6 +1922,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // initialize data object to allocate gradient field
     data_.setFunctionSpace(this->functionSpace_);
+    data_.reset();
     data_.initialize();
 
     // compute a gradient field from the solution

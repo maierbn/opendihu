@@ -24,7 +24,7 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::Func
   PartitionedPetscMatBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name),
   nComponents_(nComponents)
 {
-  VLOG(1) << "create PartitionedPetscMat<structured> (square dens matrix) with " << nComponents_ << " components from meshPartition " << meshPartition;
+  VLOG(1) << "create PartitionedPetscMat<structured> (square dense matrix) with " << nComponents_ << " components from meshPartition " << meshPartition;
 
   MatType matrixType = MATDENSE;  // dense matrix type
   createMatrix(matrixType, 0, 0);
@@ -77,6 +77,16 @@ PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::Func
   this->globalMatrix_ = globalMatrix;
 
   createLocalMatrix();
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+PartitionedPetscMat<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+~PartitionedPetscMat()
+{
+  LOG(DEBUG) << "destroy PartitionedPetscMat";
+  PetscErrorCode ierr;
+  ierr = MatDestroy(&this->globalMatrix_); CHKERRV(ierr);
+  ierr = MatDestroy(&this->localMatrix_); CHKERRV(ierr);
 }
 
 //! create a distributed Petsc matrix, according to the given partition

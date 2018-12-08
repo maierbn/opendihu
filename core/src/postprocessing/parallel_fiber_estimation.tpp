@@ -392,6 +392,30 @@ void ParallelFiberEstimation<BasisFunctionType>::
 createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal,
            int &nNodesX, int &nNodesY, int &nNodesZ)
 {
+
+#if 0  // load from file
+  std::stringstream filename;
+  filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
+  std::ifstream file(filename.str().c_str());
+
+  file >> nNodesX >> nNodesY >> nNodesZ;
+  nElementsPerCoordinateDirectionLocal[0] = nNodesX-1;
+  nElementsPerCoordinateDirectionLocal[1] = nNodesY-1;
+  nElementsPerCoordinateDirectionLocal[2] = nNodesZ-1;
+
+  while(!file.eof())
+  {
+    Vec3 nodePosition;
+    for (int i = 0; i < 3; i++)
+    {
+      file >> nodePosition[i];
+    }
+    nodePositions.push_back(nodePosition);
+  }
+
+  file.close();
+
+#else
   // call stl_create_mesh.create_3d_mesh_from_border_points_faces
   PyObject *borderPointsFacesPy = PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints);
   PythonUtility::checkForError();
@@ -451,6 +475,26 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
   //std::vector<Vec3> &nodePositions = nodePositionsOrderReversed;
 
+#if 1
+  std::stringstream filename;
+  filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
+  std::ofstream file(filename.str().c_str());
+  assert(file.is_open());
+
+  file << nNodesX << " " << nNodesY << " " << nNodesZ << " " << std::endl;
+  for (std::vector<Vec3>::iterator iter = nodePositions.begin(); iter != nodePositions.end(); iter++)
+  {
+    for (int i = 0; i < 3; i++)
+    {
+      file << (*iter)[i] << " ";
+    }
+  }
+
+  file.close();
+
+#endif
+
+#endif
   LOG(DEBUG) << "nodePositions: " << nodePositions;
   LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 

@@ -1914,7 +1914,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // set boundary conditions to the problem
     problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
-    problem_->reset();
+    //problem_->reset();
     problem_->initialize();
 
     // solve the laplace problem, globally

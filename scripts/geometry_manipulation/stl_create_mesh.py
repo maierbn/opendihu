@@ -1613,8 +1613,8 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   triangulation_type = 2  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
   max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
-  show_plot = True
-  debugging_stl_output = True
+  show_plot = False
+  debugging_stl_output = False
 
   border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
   border_points_0plus = border_points_faces[1]
@@ -1668,7 +1668,6 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
     #print("border points: ", border_points)
     
     # create 2D mesh with border_points
-    show_plot = False
     if debugging_stl_output:
       out_triangulation_world_space = []
       markers_border_points_world_space = []

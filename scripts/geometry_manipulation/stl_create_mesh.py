@@ -1159,7 +1159,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           
       #print("grid_points_world:",grid_points_world
       
-      distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world)
+      distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world, n_grid_points_x, n_grid_points_y)
       #print("objective, std: {}".format(np.std(relative_distances_current_loop))
       return np.std(relative_distances_current_loop)
     

@@ -27,8 +27,8 @@ Am = 0.2
 
 # input files
 #mesh_file = "../input/scaled_mesh_tiny"
-#mesh_file = "../input/scaled_mesh_small"
-mesh_file = "../input/scaled_mesh_normal"
+mesh_file = "../input/scaled_mesh_small"
+#mesh_file = "../input/scaled_mesh_normal"
 #mesh_file = "../input/scaled_mesh_big"
 fiber_file = "../input/laplace3d_structured_linear"
 cellml_file = "../input/hodgkin_huxley_1952.c"

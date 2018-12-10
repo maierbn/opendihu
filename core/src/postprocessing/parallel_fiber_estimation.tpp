@@ -7,6 +7,9 @@
 #include "mesh/face_t.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 
+#define USE_STORED_BORDER_POINTS
+#define USE_CHECKPOINT_MESH
+
 namespace Postprocessing
 {
 
@@ -124,7 +127,7 @@ generateParallelMesh()
 
   // get loops of whole domain
 
-#if 1     // normal execution
+#ifndef USE_STORED_BORDER_POINTS     // normal execution
 
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
   std::array<bool,4> subdomainIsAtBorder;
@@ -393,7 +396,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
            int &nNodesX, int &nNodesY, int &nNodesZ)
 {
 
-#if 1  // load from file
+#if USE_CHECKPOINT_MESH  // load from file
   std::stringstream filename;
   filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
   std::ifstream file(filename.str().c_str());
@@ -1798,7 +1801,7 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     LOG(DEBUG) << "sendBuffer size: " << sendBuffer.size() << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:" << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
 
     // save subdomains to be send to a file
-#if 1
+#if 0
     std::stringstream filename;
     filename << "borderPoints_subdomain_" << subdomainRankNo << ".csv";
     std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
@@ -1980,6 +1983,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // output the results
     this->outputWriterManager_.writeOutput(problem_->data());
 
+    LOG(FATAL) << "done";
     LOG(DEBUG) << "\nConstruct ghost elements";
 
     std::array<std::shared_ptr<FunctionSpaceType>,4> ghostMesh;

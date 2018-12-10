@@ -1983,7 +1983,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // output the results
     this->outputWriterManager_.writeOutput(problem_->data());
 
-    LOG(FATAL) << "done";
     LOG(DEBUG) << "\nConstruct ghost elements";
 
     std::array<std::shared_ptr<FunctionSpaceType>,4> ghostMesh;
@@ -2091,7 +2090,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-  LOG(FATAL) << "done";
+  //LOG(FATAL) << "done";
 
   // call method recursively
   generateParallelMeshRecursion(borderPointsNew, subdomainIsAtBorderNew);

@@ -124,7 +124,7 @@ generateParallelMesh()
 
   // get loops of whole domain
 
-#if 0     // normal execution
+#if 1     // normal execution
 
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
   std::array<bool,4> subdomainIsAtBorder;
@@ -393,7 +393,7 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
            int &nNodesX, int &nNodesY, int &nNodesZ)
 {
 
-#if 0  // load from file
+#if 1  // load from file
   std::stringstream filename;
   filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
   std::ifstream file(filename.str().c_str());
@@ -1906,6 +1906,11 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   bool traceFinalFibers = checkTraceFinalFibers(level);
 
   bool refineSubdomainsOnThisRank = false;
+
+  if (!currentRankSubset_->ownRankIsContained())
+  {
+    LOG(DEBUG) << "own rank is not contained in currentRankSubset_";
+  }
 
   // here we have the border points of our subdomain, now the borders that split this subdomain in 8 more are computed
   if (currentRankSubset_->ownRankIsContained())

@@ -39,17 +39,21 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   if (nproc > 0)
   {
     stream << "0=";
-    for (int j = 0; j < numprocs[0]; j++) 
+    for (int j = 0; j < std::min(numprocs[0], 100); j++)
     {
       stream << indices[0][j] << " ";
+      if (j == 99)
+        stream << "(" << numprocs[0] << " total, only showing first 100)";
     }
   }
   for (int i = 1; i < nproc; i++)
   {
     stream << "; " << i << "=";
-    for (int j = 0; j < numprocs[i]; j++) 
+    for (int j = 0; j < std::min(numprocs[i], 100); j++)
     {
       stream << indices[i][j] << " ";
+      if (j == 99)
+        stream << "(" << numprocs[i] << " total, only showing first 100)";
     }
   }
   stream << "), ";

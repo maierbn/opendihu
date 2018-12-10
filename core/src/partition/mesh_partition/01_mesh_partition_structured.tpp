@@ -48,7 +48,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
 {
   // partitioning is already prescribed as every rank knows its own local size
  
-  VLOG(1) << "create MeshPartition where every rank already knows its own local size. " 
+  LOG(DEBUG) << "create MeshPartition where every rank already knows its own local size. "
     << "nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal 
     << ", beginElementGlobal: " << beginElementGlobal << ", nRanks: " << nRanks << ", rankSubset: " << *rankSubset;
     
@@ -1118,6 +1118,13 @@ getNodeNoGlobalPetsc(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) 
       + (coordinatesGlobal[2]-beginNodeGlobalNatural(2,partitionIndex[2]))*nNodesLocalWithoutGhosts(1,partitionIndex[1])*nNodesLocalWithoutGhosts(0,partitionIndex[0])
       + (coordinatesGlobal[1]-beginNodeGlobalNatural(1,partitionIndex[1]))*nNodesLocalWithoutGhosts(0,partitionIndex[0])
       + (coordinatesGlobal[0]-beginNodeGlobalNatural(0,partitionIndex[0]));   // in-partition local no
+
+    VLOG(1) << "coordinates global: " << coordinatesGlobal << ", partitionIndex: " << partitionIndex
+      << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << "," << nNodesLocalWithoutGhosts(1,partitionIndex[1]) << "," << nNodesLocalWithoutGhosts(2,partitionIndex[2]) << ")"
+      << ", beginNodeGlobalNatural: (" << beginNodeGlobalNatural(0,partitionIndex[0]) << "," << beginNodeGlobalNatural(1,partitionIndex[1]) << "," << beginNodeGlobalNatural(2,partitionIndex[2]) << "), "
+      << "nodeNoGlobalPetsc: " << nodeNoGlobalPetsc
+      << " = " << nNodesGlobalPetscInPreviousPartitions(partitionIndex) << ", ";
+
     return nodeNoGlobalPetsc;
   }
   else
@@ -1563,6 +1570,9 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(nodeNoLocal);
 
+  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal
+    << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+
   if (nodeNoLocal < nNodesLocalWithoutGhosts())
   {
     return true;
@@ -1631,6 +1641,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at top (z+): " << neighbourRankNo;
           return false;
         }
       }
@@ -1642,6 +1653,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at y+: " << neighbourRankNo;
           return false;
         }
         else    // node is at z+
@@ -1650,6 +1662,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at y+,z+: " << neighbourRankNo;
           return false;
         }
       }
@@ -1664,6 +1677,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0] + 1;
+          VLOG(2) << "node is at x+: " << neighbourRankNo;
           return false;
         }
         else      // node is at z+
@@ -1672,6 +1686,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0] + 1;
+          VLOG(2) << "node is at x+,z+: " << neighbourRankNo;
           return false;
         }
       }
@@ -1680,17 +1695,19 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
         if (coordinatesLocal[2] < nNodesLocalWithoutGhosts(2) || hasFullNumberOfNodes(2))      // node is not at z+
         {
           // node is at x+,y+
-          neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
+          neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
-            + ownRankPartitioningIndex_[0];
+            + (ownRankPartitioningIndex_[0] + 1);
+          VLOG(2) << "node is at x+,y+: " << neighbourRankNo;
           return false;
         }
         else      // node is at x+,y+,z+
         {
-          // node is at y+,z+
+          // node is at x+,y+,z+
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
-            + ownRankPartitioningIndex_[0] + 1;
+            + (ownRankPartitioningIndex_[0] + 1);
+          VLOG(2) << "node is at x+,y+,z+: " << neighbourRankNo;
           return false;
         }
       }

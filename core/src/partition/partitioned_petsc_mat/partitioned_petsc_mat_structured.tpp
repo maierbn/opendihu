@@ -1,6 +1,7 @@
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
 
 #include "partition/mesh_partition/01_mesh_partition.h"
+#include "petscis.h"
 
 //! constructor, create square sparse matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
@@ -140,8 +141,9 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
     // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
     // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
     // It is recommended that you call both of the above preallocation routines for simplicity.
-    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
     ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
+    LOG(DEBUG) << "Mat SetPreallocation, diagonalNonZeros: " << diagonalNonZeros << ", offdiagonalNonZeros: " << offdiagonalNonZeros;
   }
 
   createLocalMatrix();
@@ -161,7 +163,7 @@ createLocalMatrix()
   int nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
-  LOG(DEBUG) << "matrix created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
+  LOG(DEBUG) << "matrix \"" << this->name_ << "\" created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
 
   // get the local submatrix from the global matrix
   ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
@@ -177,7 +179,7 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
     stream << "\"" << this->name_ << "\" setValue " << (mode==INSERT_VALUES? "(insert)" : "(add)") << ", row " << row << ", col " << col << ", value " << value;
     VLOG(2) << stream.str();
   }
-  
+
   // this wraps the standard PETSc MatSetValue on the local matrix
   PetscErrorCode ierr;
   ierr = MatSetValuesLocal(this->localMatrix_, 1, &row, 1, &col, &value, mode); CHKERRV(ierr);

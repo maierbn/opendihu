@@ -39,7 +39,8 @@ config = {
       "prefactor": 1.0,
     },
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+name, "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/bin", "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/txt", "binary": False, "fixedFormat": False, "combineFiles": False},
       {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2, "sphereSize": "0.005*0.005*0.01"},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
     ]

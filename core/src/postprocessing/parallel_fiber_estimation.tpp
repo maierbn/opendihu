@@ -7,8 +7,8 @@
 #include "mesh/face_t.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 
-#define USE_STORED_BORDER_POINTS
-#define USE_CHECKPOINT_MESH
+//#define USE_STORED_BORDER_POINTS
+//#define USE_CHECKPOINT_MESH
 
 namespace Postprocessing
 {

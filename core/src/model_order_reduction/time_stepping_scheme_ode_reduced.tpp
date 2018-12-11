@@ -71,12 +71,12 @@ TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
 
 }
 
-template<typename TimesteppingType>
-std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeSteppingSchemeOdeReduced<TimesteppingType>::
-solution()
-{  
-  return this->data_->solution();
-}
+//template<typename TimesteppingType>
+//std::shared_ptr<FieldVariable::FieldVariable<::FunctionSpace::Generic,1>> &TimeSteppingSchemeOdeReduced<TimesteppingType>::
+//solution()
+//{  
+//  return this->data_->solution();
+//}
 
 template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
@@ -94,9 +94,9 @@ void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   VecGetSize(redSolution,&redSolution_size);
   MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
   
-  LOG(DEBUG) << "solution_size: " << solution_size << "========================";
-  LOG(DEBUG) << "redSolution_size: " << redSolution_size; 
-  LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 << "========================";;
+  LOG(DEBUG) << "setInitialValues() solution_size: " << solution_size << "========================";
+  LOG(DEBUG) << "setInitialValues() redSolution_size: " << redSolution_size; 
+  LOG(DEBUG) << "setInitialValues() mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 << "========================";;
   
   // reduction step
   ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);  
@@ -114,7 +114,9 @@ initialize()
   this->fullTimestepping_.initialize();
    
   TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
-  ::initialize();  
+  ::initialize(); 
+  
+  this->data_->setOutputComponentNo(outputComponentNo);
   
   /*
   if (this->specificSettingsMOR_.hasKey("nReducedBases"))
@@ -171,9 +173,16 @@ initialize()
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   
-  setInitialValues();
+  //setInitialValues();
     
   initialized_=true;
+}
+
+template<int nStates, typename FunctionSpaceType>
+void TimeSteppingSchemeOdeReduced<CellmlAdapter<nStates, FunctionSpaceType>>::
+initialize()
+{
+  
 }
 
 template<typename TimeSteppingType>

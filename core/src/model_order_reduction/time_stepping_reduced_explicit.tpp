@@ -77,8 +77,10 @@ namespace ModelOrderReduction
       this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
       
       VLOG(1) << "computed increment: " << this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
-      
+            
       PetscErrorCode ierr;
+      
+      /*
       PetscInt increment_size, redIncrement_size, mat_sz_1, mat_sz_2;
       
       VecGetSize(increment,&increment_size);
@@ -88,8 +90,18 @@ namespace ModelOrderReduction
       LOG(DEBUG) << "increment_size: " << increment_size << "========================";
       LOG(DEBUG) << "redIncrement_size: " << redIncrement_size;
       LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2: " << mat_sz_2;
-      // reduction step
-      ierr=MatMult(basisTransp, increment, redIncrement); CHKERRV(ierr); 
+      
+      // check the dimensions
+      if(mat_sz_2==increment_size)
+      {
+        // reduction step
+        ierr=MatMult(basisTransp, increment, redIncrement); CHKERRV(ierr);
+      }
+      else
+        LOG(ERROR) << "To be implemented";     
+      */
+      // modified version of MatMult for MOR
+      this->MatMultReduced(basisTransp, increment, redIncrement);
       
       // integrate, z += dt * delta_z
       VecAXPY(redSolution, this->timeStepWidth_, redIncrement);

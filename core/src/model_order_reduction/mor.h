@@ -36,6 +36,9 @@ protected:
   //! Set the reduced system matrix, A_R=V^T A V
   virtual void setRedSysMatrix(Mat &A, Mat &A_R);
   
+  //! Modification to MatMult in case that size of vector x does not match to the columns of the matrix.
+  virtual void MatMultReduced(Mat mat,Vec x,Vec y);
+  
   std::shared_ptr<DataMOR> dataMOR_;
   int nReducedBases_;    
   int nRowsSnapshots_;///< rows of the snapshot matrix

@@ -40,7 +40,7 @@ public:
   //DataReduced &redData();
 
   //! return the Petsc solution vector
-  std::shared_ptr<FieldVariableType> &solution();
+  //std::shared_ptr<FieldVariableType> &solution();
   
   //! return the data object
   //DataReduced &redData();

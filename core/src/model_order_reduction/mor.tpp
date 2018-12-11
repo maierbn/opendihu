@@ -1,6 +1,6 @@
 #include "model_order_reduction/mor.h"
 #include "data_management/data.h"
-
+//#include <petscmat.h>
 #include <array>
 
 namespace ModelOrderReduction
@@ -84,6 +84,26 @@ setRedSysMatrix(Mat &A, Mat &A_R)
   //ISCreatGeneral //(2-1-b)creat the index set for the indices that we require.
   //VecGetSubVector //(2-2-b) uses the above index set
   
+}
+template<typename FullFunctionSpaceType>
+void MORBase<FullFunctionSpaceType>::
+MatMultReduced(Mat mat,Vec x,Vec y)
+{
+  PetscErrorCode ierr;
+  
+  int vec_sz,mat_sz_1,mat_sz_2;
+  VecGetSize(x,&vec_sz);
+  MatGetSize(mat,&mat_sz_1,&mat_sz_2);
+  
+  if(mat_sz_2==vec_sz)
+  {
+    ierr=MatMult(mat,x,y);
+    CHKERRV(ierr);
+  }
+  else
+  {
+    LOG(ERROR) << "MatMultReduced be done!";
+  }
 }
 
 } //namespace

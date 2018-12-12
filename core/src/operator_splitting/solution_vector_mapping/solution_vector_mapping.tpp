@@ -55,7 +55,7 @@ void SolutionVectorMapping<
   }
 }
 
-/** Transfer between two field variables with given component number
+/** Transfer between two field variables, the first is scalar, the second is vector-values, store to given component number
  */
 template<typename FunctionSpaceType1, typename FunctionSpaceType2, int nComponents2>
 void SolutionVectorMapping<
@@ -111,7 +111,7 @@ void SolutionVectorMapping<
   }
 }
 
-/** Transfer between two field variables with given component number
+/** Transfer between two field variables, the first is vector-valued, use given component number, store in second, which is scalar
  */
 template<typename FunctionSpaceType1, int nComponents1, typename FunctionSpaceType2>
 void SolutionVectorMapping<
@@ -148,6 +148,8 @@ void SolutionVectorMapping<
   else
   {
     LOG(DEBUG) << "SolutionVectorMapping extractComponentShared (3)";
+    // this retrieves the raw memory pointer from the Petsc vector in fieldVariable1 and reuses it for fieldVariable2
+    // that means that fieldVariable cannot be used anymore, only after restoreExtractedComponent was called on fieldVariable1. This is done in the other solution_vector_mapping transfer call.
     fieldVariable1->extractComponentShared(componentNo1, fieldVariable2);
   }
 

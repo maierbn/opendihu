@@ -22,15 +22,40 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
+    LOG(DEBUG) << "PythonUtility::convertFromPython array int";
+
     std::array<ValueType,nComponents> result;
     if (PyList_Check(object))
     {
+      LOG(DEBUG) << "PyList: " << PythonUtility::getString(object);
+      LOG(DEBUG) << "size: " << PyTuple_Size(object);
+
       int i = 0;
       int iEnd = std::min((int)PyList_Size(object), nComponents);
 
       for (;i < iEnd; i++)
       {
         result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
+    else if (PyTuple_Check(object))
+    {
+      LOG(DEBUG) << "PyTuple: " << PythonUtility::getString(object);
+      LOG(DEBUG) << "size: " << PyTuple_Size(object);
+
+      int i = 0;
+      int iEnd = std::min((int)PyTuple_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
       }
 
       // fill rest of values with default values
@@ -88,6 +113,8 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::array<ValueType,nComponents> get(PyObject *object)
   {
+    LOG(DEBUG) << "PythonUtility::convertFromPython array int (non default)";
+
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
@@ -101,6 +128,8 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
   static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
   {
+    LOG(DEBUG) << "PythonUtility::convertFromPython array global_no_t";
+
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
 
@@ -122,79 +151,14 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
       }
       return result;
     }
-    /*
-  #ifdef HAVE_NUMPYC
-    else if (PyArray_Check(object))
+    else if (PyTuple_Check(object))
     {
-      LOG(DEBUG) << "object is a pyarray ";
-
-      const PyArrayObject *arrayObject = (PyArrayObject*)object;
-
-      int nElementsInNumpyArray = PyArray_Size(object);
-      int nElementsToCopy = std::min(nComponents, nElementsInNumpyArray);
-
-      int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
-
-      if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
-      {
-        PyArray_DescrFromType(typenumber)->f->copyswapn(
-        result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
-      }
-      else
-      {
-        LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
-        nElementsToCopy = 0;
-      }
-
-      // fill rest of values with default values
-      for (int i = nElementsToCopy; i < nComponents; i++)
-      {
-        result[i] = defaultValue[i];
-      }
-      LOG(DEBUG) << "converted to " << nComponents << " entries: " << result;
-    }
-  #endif
-  */
-    else
-    {
-      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object, defaultValue[0]);
-
-      result[0] = valueDouble;
-      std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
-
-      return result;
-    }
-    return defaultValue;
-  }
-
-  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
-  static std::array<ValueType,nComponents> get(PyObject *object)
-  {
-    std::array<ValueType,nComponents> defaultValue;
-    defaultValue.fill(ValueType());
-    return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
-  }
-};
-
-//partial specialization for std::array
-template<typename ValueType, unsigned long nComponents>
-struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
-{
-  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
-  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
-  {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-
-    std::array<ValueType,nComponents> result;
-    if (PyList_Check(object))
-    {
-      unsigned long i = 0;
-      unsigned long iEnd = std::min((unsigned long)PyList_Size(object), nComponents);
+      int i = 0;
+      int iEnd = std::min((global_no_t)PyTuple_Size(object), nComponents);
 
       for (;i < iEnd; i++)
       {
-        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), (ValueType)defaultValue[i]);
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
       }
 
       // fill rest of values with default values
@@ -252,6 +216,114 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
   static std::array<ValueType,nComponents> get(PyObject *object)
   {
+    LOG(DEBUG) << "PythonUtility::convertFromPython array global_no_t (no defaults)";
+
+    std::array<ValueType,nComponents> defaultValue;
+    defaultValue.fill(ValueType());
+    return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);
+  }
+};
+
+//partial specialization for std::array
+template<typename ValueType, unsigned long nComponents>
+struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::array<ValueType,nComponents> get(PyObject *object, std::array<ValueType,nComponents> defaultValue)
+  {
+    LOG(DEBUG) << "PythonUtility::convertFromPython array unsigned long: " << PythonUtility::getString(object);
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::array<ValueType,nComponents> result;
+    if (PyList_Check(object))
+    {
+      LOG(DEBUG) << "PythonUtility::convertFromPython pylist";
+
+      unsigned long i = 0;
+      unsigned long iEnd = std::min((unsigned long)PyList_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyList_GetItem(object, (Py_ssize_t)i), (ValueType)defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
+    else if (PyTuple_Check(object))
+    {
+      LOG(DEBUG) << "PythonUtility::convertFromPython pytuple";
+
+      int i = 0;
+      int iEnd = std::min((unsigned long)PyTuple_Size(object), nComponents);
+
+      for (;i < iEnd; i++)
+      {
+        result[i] = PythonUtility::convertFromPython<ValueType>::get(PyTuple_GetItem(object, (Py_ssize_t)i), defaultValue[i]);
+      }
+
+      // fill rest of values with default values
+      for (;i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      return result;
+    }
+    /*
+  #ifdef HAVE_NUMPYC
+    else if (PyArray_Check(object))
+    {
+      LOG(DEBUG) << "object is a pyarray ";
+
+      const PyArrayObject *arrayObject = (PyArrayObject*)object;
+
+      int nElementsInNumpyArray = PyArray_Size(object);
+      int nElementsToCopy = std::min(nComponents, nElementsInNumpyArray);
+
+      int typenumber = PyArray_TYPE(arrayObject);  // get the type of the contained data in the numpy array, e.g. NPY_DOUBLE
+
+      if (sizeof(ValueType) == PyArray_ITEMSIZE(arrayObject))
+      {
+        PyArray_DescrFromType(typenumber)->f->copyswapn(
+        result.data(), 1, PyArray_DATA((PyArrayObject*)arrayObject), 1, nElementsToCopy, 0, NULL);
+      }
+      else
+      {
+        LOG(ERROR) << "Could not convert numpy array with itemsize " << PyArray_ITEMSIZE(arrayObject) << " bytes to type " << typeid(ValueType).name() << " with size " << sizeof(ValueType) << ".";
+        nElementsToCopy = 0;
+      }
+
+      // fill rest of values with default values
+      for (int i = nElementsToCopy; i < nComponents; i++)
+      {
+        result[i] = defaultValue[i];
+      }
+      LOG(DEBUG) << "converted to " << nComponents << " entries: " << result;
+    }
+  #endif
+  */
+    else
+    {
+      ValueType valueDouble = PythonUtility::convertFromPython<ValueType>::get(object, defaultValue[0]);
+
+      result[0] = valueDouble;
+      std::copy(defaultValue.begin()+1, defaultValue.end(), result.begin()+1);
+
+      return result;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static std::array<ValueType,nComponents> get(PyObject *object)
+  {
+    LOG(DEBUG) << "PythonUtility::convertFromPython array unsigned long (no defaults)";
+
     std::array<ValueType,nComponents> defaultValue;
     defaultValue.fill(ValueType());
     return convertFromPython<std::array<ValueType,nComponents>>::get(object, defaultValue);

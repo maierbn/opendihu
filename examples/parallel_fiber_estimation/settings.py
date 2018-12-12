@@ -19,16 +19,19 @@ bc = {}
 config = {
   "Solvers": {
     "linearSolver": {
-      "relativeTolerance": 1e-15,
+      "relativeTolerance": 1e-12,
       "maxIterations": 500000,
     }
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
-    "bottomZClip":  37.0,   # top z value of the muscle volume
-    "topZClip": 300.0,      # bottom z value of the muscle volume
-    "nElementsZPerSubdomain": 4,  # number of elements in z-direction per subdomain
-    "maxLevel": 1,          # maximum level
+    "bottomZClip":  62.0,   # top z value of the muscle volume
+    "topZClip": 250.0,      # bottom z value of the muscle volume
+    "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
+    "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
+    "useGradientField": False,
+    "maxLevel": 2,          # maximum level
+    "lineStepWidth":  0.1,  # line width for tracing of fibers
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
@@ -36,7 +39,8 @@ config = {
       "prefactor": 1.0,
     },
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+name, "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/bin", "binary": True, "fixedFormat": False, "combineFiles": False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/txt", "binary": False, "fixedFormat": False, "combineFiles": False},
       {"format": "ExFile", "filename": "out/"+name, "outputInterval": 2, "sphereSize": "0.005*0.005*0.01"},
       #{"format": "PythonFile", "filename": "out/"+name, "binary":False, "onlyNodalValues":True},
     ]

@@ -82,15 +82,13 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   
   if (D >= 2) 
   {
-    rankGridCoordinate[1] = int(rankNoSubsetCommunicator / nRanks[0]);
+    rankGridCoordinate[1] = int((rankNoSubsetCommunicator % (nRanks[0]*nRanks[1])) / nRanks[0]);
   }
   if (D >= 3)
   {
     rankGridCoordinate[2] = int(rankNoSubsetCommunicator / (nRanks[0]*nRanks[1]));
   }
 
-  LOG(DEBUG) << "rankGridCoordinate: " << rankGridCoordinate;
-  
   // expand nRanks to 3 entries where not valid entries are set to 1
   std::array<int,3> nRanks3({1});
   for (int i = 0; i < D; i++)
@@ -126,6 +124,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
     MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,
                    &oneDimensionCommunicator[2]));
+    VLOG(1) << "rankGridCoordinate: " << rankGridCoordinate << ", nRanks:" << nRanks << ", z color: " << oneDimensionCommunicatorColor;
   }
   
   // reduce the global sizes in the coordinate directions

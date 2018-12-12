@@ -33,6 +33,9 @@ public:
   //! initialize the object, create all stored data
   virtual void initialize() override;
 
+  //! reset the object and deallocate matrices
+  virtual void reset() override;
+
   //! return reference to a right hand side vector, the PETSc Vec can be obtained via fieldVariable.valuesGlobal()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> rightHandSide();
 

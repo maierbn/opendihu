@@ -42,9 +42,9 @@ setStiffnessMatrix()
 
   // initialize values to zero
   int cntr = 1;
-  
+
   LOG(DEBUG) << " nElementsLocal: " << functionSpace->nElementsLocal();
-  
+
   // loop over elements
   for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
   {
@@ -54,7 +54,9 @@ setStiffnessMatrix()
     {
       for (int j=0; j<nDofsPerElement; j++)
       {
-        VLOG(3) << " initialize stiffnessMatrix entry ( " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (no. " << cntr++ << ")";
+        VLOG(3) << " initialize stiffnessMatrix entry for element " << elementNo << " elementalDofs (" << i << "," << j << "), "
+          << "localDofs " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (entry no. " << cntr++ << ")";
+
         //LOG(DEBUG) << " initialize stiffnessMatrix entry ( " << dofNosLocal[i] << "," << dofNosLocal[j] << ") (no. " << cntr++ << ")";
         stiffnessMatrix->setValue(dofNosLocal[i], dofNosLocal[j], 0, INSERT_VALUES);
       }

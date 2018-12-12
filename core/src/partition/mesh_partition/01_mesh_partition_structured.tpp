@@ -48,7 +48,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
 {
   // partitioning is already prescribed as every rank knows its own local size
  
-  VLOG(1) << "create MeshPartition where every rank already knows its own local size. " 
+  LOG(DEBUG) << "create MeshPartition where every rank already knows its own local size. "
     << "nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal 
     << ", beginElementGlobal: " << beginElementGlobal << ", nRanks: " << nRanks << ", rankSubset: " << *rankSubset;
     
@@ -1118,6 +1118,13 @@ getNodeNoGlobalPetsc(std::array<global_no_t,MeshType::dim()> coordinatesGlobal) 
       + (coordinatesGlobal[2]-beginNodeGlobalNatural(2,partitionIndex[2]))*nNodesLocalWithoutGhosts(1,partitionIndex[1])*nNodesLocalWithoutGhosts(0,partitionIndex[0])
       + (coordinatesGlobal[1]-beginNodeGlobalNatural(1,partitionIndex[1]))*nNodesLocalWithoutGhosts(0,partitionIndex[0])
       + (coordinatesGlobal[0]-beginNodeGlobalNatural(0,partitionIndex[0]));   // in-partition local no
+
+    VLOG(1) << "coordinates global: " << coordinatesGlobal << ", partitionIndex: " << partitionIndex
+      << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0,partitionIndex[0]) << "," << nNodesLocalWithoutGhosts(1,partitionIndex[1]) << "," << nNodesLocalWithoutGhosts(2,partitionIndex[2]) << ")"
+      << ", beginNodeGlobalNatural: (" << beginNodeGlobalNatural(0,partitionIndex[0]) << "," << beginNodeGlobalNatural(1,partitionIndex[1]) << "," << beginNodeGlobalNatural(2,partitionIndex[2]) << "), "
+      << "nodeNoGlobalPetsc: " << nodeNoGlobalPetsc
+      << " = " << nNodesGlobalPetscInPreviousPartitions(partitionIndex) << ", ";
+
     return nodeNoGlobalPetsc;
   }
   else
@@ -1563,6 +1570,9 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(nodeNoLocal);
 
+  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal
+    << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+
   if (nodeNoLocal < nNodesLocalWithoutGhosts())
   {
     return true;
@@ -1631,6 +1641,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at top (z+): " << neighbourRankNo;
           return false;
         }
       }
@@ -1642,6 +1653,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at y+: " << neighbourRankNo;
           return false;
         }
         else    // node is at z+
@@ -1650,6 +1662,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
             + ownRankPartitioningIndex_[0];
+          VLOG(2) << "node is at y+,z+: " << neighbourRankNo;
           return false;
         }
       }
@@ -1664,6 +1677,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0] + 1;
+          VLOG(2) << "node is at x+: " << neighbourRankNo;
           return false;
         }
         else      // node is at z+
@@ -1672,6 +1686,7 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + ownRankPartitioningIndex_[1]*nRanks_[0]
             + ownRankPartitioningIndex_[0] + 1;
+          VLOG(2) << "node is at x+,z+: " << neighbourRankNo;
           return false;
         }
       }
@@ -1680,17 +1695,19 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
         if (coordinatesLocal[2] < nNodesLocalWithoutGhosts(2) || hasFullNumberOfNodes(2))      // node is not at z+
         {
           // node is at x+,y+
-          neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
+          neighbourRankNo = ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
-            + ownRankPartitioningIndex_[0];
+            + (ownRankPartitioningIndex_[0] + 1);
+          VLOG(2) << "node is at x+,y+: " << neighbourRankNo;
           return false;
         }
         else      // node is at x+,y+,z+
         {
-          // node is at y+,z+
+          // node is at x+,y+,z+
           neighbourRankNo = (ownRankPartitioningIndex_[2] + 1)*nRanks_[0]*nRanks_[1]
             + (ownRankPartitioningIndex_[1] + 1)*nRanks_[0]
-            + ownRankPartitioningIndex_[0] + 1;
+            + (ownRankPartitioningIndex_[0] + 1);
+          VLOG(2) << "node is at x+,y+,z+: " << neighbourRankNo;
           return false;
         }
       }
@@ -1895,25 +1912,29 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
     nBoundaryElements[1] = nElementsLocal_[1];
   }
 
-  int nBoundaryElementsTotal = 1;
+  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+
+  int nBoundaryDofsTotal = 1;
   switch (MeshType::dim())
   {
   case 1:
-    nBoundaryElementsTotal = nBoundaryElements[0];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 2:
-    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 3:
-    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1]*nBoundaryElements[2];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[2]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   }
 
-  // determine dofs of all nodes adjacent to the boundary elements
-  dofNos.resize(nBoundaryElementsTotal);
+  LOG(DEBUG) << "nBoundaryElements: " << nBoundaryElements[0] << "x" << nBoundaryElements[1] << "x" << nBoundaryElements[2]
+    << ", nBoundaryDofsTotal: " << nBoundaryDofsTotal;
 
-  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+  // determine dofs of all nodes adjacent to the boundary elements
+  dofNos.resize(nBoundaryDofsTotal);
+
 
   std::array<dof_no_t,MeshType::dim()> nDofs;
   std::array<dof_no_t,MeshType::dim()> boundaryDofIndexStart;
@@ -1954,6 +1975,7 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
       {
         for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
         {
+          //LOG(DEBUG) << "i,j,k = " << i << "," << j << "," << k << ", dofIndex=" << dofIndex << "<" << nBoundaryDofsTotal << ", i " << k*nDofsPlane + j*nDofsRow + i << " < " << dofNosLocalNaturalOrdering_.size();
           dofNos[dofIndex] = dofNosLocalNaturalOrdering_[k*nDofsPlane + j*nDofsRow + i];
         }
       }

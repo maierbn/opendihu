@@ -1912,25 +1912,29 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
     nBoundaryElements[1] = nElementsLocal_[1];
   }
 
-  int nBoundaryElementsTotal = 1;
+  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
+  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+
+  int nBoundaryDofsTotal = 1;
   switch (MeshType::dim())
   {
   case 1:
-    nBoundaryElementsTotal = nBoundaryElements[0];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 2:
-    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 3:
-    nBoundaryElementsTotal = nBoundaryElements[0]*nBoundaryElements[1]*nBoundaryElements[2];
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[2]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   }
 
-  // determine dofs of all nodes adjacent to the boundary elements
-  dofNos.resize(nBoundaryElementsTotal);
+  LOG(DEBUG) << "nBoundaryElements: " << nBoundaryElements[0] << "x" << nBoundaryElements[1] << "x" << nBoundaryElements[2]
+    << ", nBoundaryDofsTotal: " << nBoundaryDofsTotal;
 
-  const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
-  const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerNode();
+  // determine dofs of all nodes adjacent to the boundary elements
+  dofNos.resize(nBoundaryDofsTotal);
+
 
   std::array<dof_no_t,MeshType::dim()> nDofs;
   std::array<dof_no_t,MeshType::dim()> boundaryDofIndexStart;
@@ -1971,6 +1975,7 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
       {
         for (int i = boundaryDofIndexStart[0]; i < boundaryDofIndexStart[0]+nDofs[0]; i++, dofIndex++)
         {
+          //LOG(DEBUG) << "i,j,k = " << i << "," << j << "," << k << ", dofIndex=" << dofIndex << "<" << nBoundaryDofsTotal << ", i " << k*nDofsPlane + j*nDofsRow + i << " < " << dofNosLocalNaturalOrdering_.size();
           dofNos[dofIndex] = dofNosLocalNaturalOrdering_[k*nDofsPlane + j*nDofsRow + i];
         }
       }

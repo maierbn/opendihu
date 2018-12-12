@@ -7,8 +7,8 @@
 #include "mesh/face_t.h"
 #include "partition/mesh_partition/01_mesh_partition.h"
 
-//#define USE_STORED_BORDER_POINTS
-//#define USE_CHECKPOINT_MESH
+#define USE_STORED_BORDER_POINTS
+#define USE_CHECKPOINT_MESH
 
 namespace Postprocessing
 {
@@ -392,28 +392,36 @@ checkTraceFinalFibers(int &level)
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal,
-           int &nNodesX, int &nNodesY, int &nNodesZ)
+createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal)
 {
+  int subdomainNNodesX;
+  int subdomainNNodesY;
+  int subdomainNNodesZ;
 
-#if USE_CHECKPOINT_MESH  // load from file
+#ifdef USE_CHECKPOINT_MESH  // load from file
   std::stringstream filename;
   filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
   std::ifstream file(filename.str().c_str());
 
-  file >> nNodesX >> nNodesY >> nNodesZ;
-  nElementsPerCoordinateDirectionLocal[0] = nNodesX-1;
-  nElementsPerCoordinateDirectionLocal[1] = nNodesY-1;
-  nElementsPerCoordinateDirectionLocal[2] = nNodesZ-1;
+  file >> subdomainNNodesX >> subdomainNNodesY >> subdomainNNodesZ;
+  nElementsPerCoordinateDirectionLocal[0] = subdomainNNodesX-1;
+  nElementsPerCoordinateDirectionLocal[1] = subdomainNNodesY-1;
+  nElementsPerCoordinateDirectionLocal[2] = subdomainNNodesZ-1;
 
   while(!file.eof())
   {
     Vec3 nodePosition;
-    for (int i = 0; i < 3; i++)
+    int i = 0;
+    for (i = 0; i < 3; i++)
     {
       file >> nodePosition[i];
+      if (file.eof())
+        break;
     }
-    nodePositions.push_back(nodePosition);
+    if (i == 3)
+    {
+      nodePositions.push_back(nodePosition);
+    }
   }
 
   file.close();
@@ -446,32 +454,26 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
   nodePositions = PythonUtility::convertFromPython<std::vector<Vec3>>::get(object);
   nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", "", std::array<int,3>({0,0,0}));
 
-#ifndef NDEBUG
-  PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_mesh_points", currentRankSubset_->ownRankNo(),
-                        PythonUtility::convertToPython<std::vector<Vec3>>::get(nodePositions), 0.05);
-  PythonUtility::checkForError();
-#endif
+  subdomainNNodesX = nElementsPerCoordinateDirectionLocal[0]+1;
+  subdomainNNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
+  subdomainNNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
 
-  nNodesX = nElementsPerCoordinateDirectionLocal[0]+1;
-  nNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
-  nNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
+  LOG(DEBUG) << "subdomainNNodes: " << subdomainNNodesX << " x " << subdomainNNodesY << " x " << subdomainNNodesZ;
 
-  LOG(DEBUG) << "nNodes: " << nNodesX << " x " << nNodesY << " x " << nNodesZ;
-
-  assert(nNodesX == nBorderPointsXNew_);
-  assert(nNodesY == nBorderPointsXNew_);
-  assert(nNodesZ == nBorderPointsZ_);
+  assert(subdomainNNodesX == nBorderPointsXNew_);
+  assert(subdomainNNodesY == nBorderPointsXNew_);
+  assert(subdomainNNodesZ == nBorderPointsZ_);
 /*
   // revert order of node positions
   std::vector<Vec3> nodePositions(nodePositionsOrderReversed.size());
-  for (int z = 0; z < nNodesZ; z++)
+  for (int z = 0; z < subdomainNNodesZ; z++)
   {
-    for (int y = 0; y < nNodesY; y++)
+    for (int y = 0; y < subdomainNNodesY; y++)
     {
-      for (int x = 0; x < nNodesX; x++)
+      for (int x = 0; x < subdomainNNodesX; x++)
       {
-        nodePositions[z * nNodesX*nNodesY + y * nNodesY + x]
-          = nodePositionsOrderReversed[z * nNodesX*nNodesY + (nNodesY-1-y) * nNodesY + (nNodesX-1-x)];
+        nodePositions[z * subdomainNNodesX*subdomainNNodesY + y * subdomainNNodesY + x]
+          = nodePositionsOrderReversed[z * subdomainNNodesX*subdomainNNodesY + (subdomainNNodesY-1-y) * subdomainNNodesY + (subdomainNNodesX-1-x)];
       }
     }
   }*/
@@ -481,10 +483,10 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 #if 1
   std::stringstream filename;
   filename << "checkpoint_mesh_" << currentRankSubset_->ownRankNo() << ".csv";
-  std::ofstream file(filename.str().c_str());
+  std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
   assert(file.is_open());
 
-  file << nNodesX << " " << nNodesY << " " << nNodesZ << " " << std::endl;
+  file << subdomainNNodesX << " " << subdomainNNodesY << " " << subdomainNNodesZ << " " << std::endl;
   for (std::vector<Vec3>::iterator iter = nodePositions.begin(); iter != nodePositions.end(); iter++)
   {
     for (int i = 0; i < 3; i++)
@@ -498,9 +500,14 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 #endif
 
 #endif
-  LOG(DEBUG) << "nodePositions: " << nodePositions;
+  //LOG(DEBUG) << "nodePositions: " << nodePositions;
   LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
+#ifndef NDEBUG
+  PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_mesh_points", currentRankSubset_->ownRankNo(),
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(nodePositions), 0.05);
+  PythonUtility::checkForError();
+#endif
 }
 
 template<typename BasisFunctionType>
@@ -624,7 +631,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
   {
     if (!subdomainIsAtBorder[face])
     {
-      LOG(DEBUG) << "make ghost elements for face " << face;
+      LOG(DEBUG) << "make ghost elements for face " << Mesh::getString((Mesh::face_t)face);
 
       // get information about neighbouring rank and boundary elements for face
       int neighbourRankNo;
@@ -707,7 +714,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
       std::stringstream meshName;
       meshName << this->functionSpace_->meshName() << "_ghost_" << Mesh::getString((Mesh::face_t)face);
 
-      // transform the node Position data from vector of double to vector of Vec3
+      // transform the node position data from vector of double to vector of Vec3
       int nNodes = ghostValuesBuffer[face].nodePositionValues.size() / 3;
       std::vector<Vec3> nodePositions(nNodes);
 
@@ -718,7 +725,10 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
         nodePositions[nodeIndex][2] = ghostValuesBuffer[face].nodePositionValues[nodeIndex*3 + 2];
       }
 
+      std::shared_ptr<Partition::RankSubset> rankSubsetSingleRank = std::make_shared<Partition::RankSubset>(currentRankSubset_->ownRankNo(), currentRankSubset_->mpiCommunicator());
+      context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetSingleRank);
       ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection);
+
       ghostSolution[face] = ghostMesh[face]->template createFieldVariable<1>("solution");
       ghostSolution[face]->setValuesWithGhosts(ghostValuesBuffer[face].solutionValues);
       ghostGradient[face] = ghostMesh[face]->template createFieldVariable<3>("gradient");
@@ -738,8 +748,11 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, int nNodesX, int nNodesY, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints)
+createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints)
 {
+  int subdomainNNodesX = nBorderPointsXNew_;
+  int subdomainNNodesY = nBorderPointsXNew_;
+
   // boundary indices for face0Minus and face0Plus (vertical direction)
   int iBeginVertical = 0;
   int iEndVertical = nBorderPointsXNew_;
@@ -765,7 +778,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   {
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
-      seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + i*nNodesX + 0]);
+      seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + 0]);
     }
   }
 
@@ -774,7 +787,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   {
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
-      seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + i*nNodesX + (nNodesX-1)]);
+      seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + (subdomainNNodesX-1)]);
     }
   }
 
@@ -783,7 +796,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   {
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
-      seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + i]);
+      seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i]);
     }
   }
 
@@ -792,7 +805,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   {
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
-      seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + (nNodesY-1)*nNodesX + i]);
+      seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + (subdomainNNodesY-1)*subdomainNNodesX + i]);
     }
   }
 
@@ -802,7 +815,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   // horizontal center line (with corner points)
   for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
   {
-    seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + int(nNodesY/2)*nNodesX + i]);
+    seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + int(subdomainNNodesY/2)*subdomainNNodesX + i]);
   }
 
   LOG(DEBUG) << "seedPoints: starting with vertical center line, streamlineIndex = " << seedPoints.size();
@@ -810,7 +823,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
   // vertical center line (with corner points and center point)
   for (int i = iBeginVertical; i < iEndVertical; i++)
   {
-    seedPoints.push_back(nodePositions[seedPointsZIndex*nNodesX*nNodesY + i*nNodesX + int(nNodesX/2)]);
+    seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + i*subdomainNNodesX + int(subdomainNNodesX/2)]);
   }
 
   LOG(DEBUG) << "seedPoints: end, streamlineIndex = " << seedPoints.size();
@@ -825,10 +838,12 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, int nNodesX, int nNodesY, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh)
+traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh)
 {
   LOG(DEBUG) << "final level";
 
+  int subdomainNNodesX = nBorderPointsXNew_;
+  int subdomainNNodesY = nBorderPointsXNew_;
   std::vector<Vec3> seedPoints;
 
   // create seed points
@@ -836,10 +851,10 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   {
     for (int i = 0; i < nBorderPointsXNew_-1; i++)
     {
-      Vec3 p0 = nodePositions[seedPointsZIndex*nNodesX*nNodesY + j*nNodesX + i];
-      Vec3 p1 = nodePositions[seedPointsZIndex*nNodesX*nNodesY + j*nNodesX + i+1];
-      Vec3 p2 = nodePositions[seedPointsZIndex*nNodesX*nNodesY + (j+1)*nNodesX + i];
-      Vec3 p3 = nodePositions[seedPointsZIndex*nNodesX*nNodesY + (j+1)*nNodesX + i+1];
+      Vec3 p0 = nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i];
+      Vec3 p1 = nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i+1];
+      Vec3 p2 = nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + (j+1)*subdomainNNodesX + i];
+      Vec3 p3 = nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + (j+1)*subdomainNNodesX + i+1];
       seedPoints.push_back(0.25*(p0 + p1 + p2 + p3));
     }
   }
@@ -1929,8 +1944,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // create mesh in own domain, using python, harmonic maps
     std::vector<Vec3> nodePositions;
     std::array<int,3> nElementsPerCoordinateDirectionLocal;
-    int nNodesX, nNodesY, nNodesZ;
-    createMesh(borderPoints, nodePositions, nElementsPerCoordinateDirectionLocal, nNodesX, nNodesY, nNodesZ);
+    createMesh(borderPoints, nodePositions, nElementsPerCoordinateDirectionLocal);
 
     std::array<global_no_t,3> nElementsPerCoordinateDirectionGlobal;
 
@@ -1947,10 +1961,57 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     std::stringstream meshName;
     meshName << "meshLevel" << level;
 
+    int nNodePositionsWithoutGhostsX = nBorderPointsXNew_ - 1;
+    int nNodePositionsWithoutGhostsY = nBorderPointsXNew_ - 1;
+    int nNodePositionsWithoutGhostsZ = nBorderPointsZ_ - 1;
+
+    if (meshPartition_->hasFullNumberOfNodes(0))
+      nNodePositionsWithoutGhostsX += 1;
+    if (meshPartition_->hasFullNumberOfNodes(1))
+      nNodePositionsWithoutGhostsY += 1;
+    if (meshPartition_->hasFullNumberOfNodes(2))
+      nNodePositionsWithoutGhostsZ += 1;
+
+    int nNodePositionsWithoutGhosts = nNodePositionsWithoutGhostsX * nNodePositionsWithoutGhostsY * nNodePositionsWithoutGhostsZ;
+    std::vector<Vec3> nodePositionsWithoutGhosts(nNodePositionsWithoutGhosts);
+
+    LOG(DEBUG) << "nNodePositionsWithoutGhosts: " << nNodePositionsWithoutGhosts << ", nNodePositionsWithGhosts: " << nodePositions.size();
+    LOG(DEBUG) << nNodePositionsWithoutGhostsX << "x" << nNodePositionsWithoutGhostsY << "x" << nNodePositionsWithoutGhostsZ;
+    LOG(DEBUG) << nBorderPointsXNew_ << "x" << nBorderPointsXNew_ << "x" << nBorderPointsZ_ << "=" << nBorderPointsZ_*nBorderPointsXNew_*nBorderPointsXNew_;
+
+    for (dof_no_t z = 0; z < nBorderPointsZ_; z++)
+    {
+      for (dof_no_t y = 0; y < nBorderPointsXNew_; y++)
+      {
+        for (dof_no_t x = 0; x < nBorderPointsXNew_; x++)
+        {
+          dof_no_t indexWithoutGhosts = z*nNodePositionsWithoutGhostsX*nNodePositionsWithoutGhostsY + y*nNodePositionsWithoutGhostsX + x;
+          dof_no_t indexWithGhosts = z*nBorderPointsXNew_*nBorderPointsXNew_ + y*nBorderPointsXNew_ + x;
+
+          if (z < nNodePositionsWithoutGhostsZ && y < nNodePositionsWithoutGhostsY && x < nNodePositionsWithoutGhostsX)
+          {
+            assert(indexWithGhosts < nodePositions.size());
+            assert(indexWithoutGhosts < nodePositionsWithoutGhosts.size());
+
+            nodePositionsWithoutGhosts[indexWithoutGhosts] = nodePositions[indexWithGhosts];
+          }
+        }
+      }
+    }
+
     context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(currentRankSubset_);
     this->functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
-      meshName.str(), meshPartition_, nodePositions, nElementsPerCoordinateDirectionLocal);
+      meshName.str(), meshPartition_, nodePositionsWithoutGhosts, nElementsPerCoordinateDirectionLocal);
 
+    LOG(DEBUG) << "n nodePositions with ghosts: " << nodePositions.size();
+    LOG(DEBUG) << "n nodePositions without ghosts: " << nodePositionsWithoutGhosts.size();
+    LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+    LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
+
+    LOG(DEBUG) << "nodePositions: " << nodePositions;
+    std::vector<Vec3> geometryFieldValues;
+    this->functionSpace_->geometryField().getValuesWithoutGhosts(geometryFieldValues);
+    LOG(DEBUG) << "geometryFieldValues: " << geometryFieldValues;
     /*
     std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
       const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
@@ -1960,13 +2021,22 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // create problem
     problem_ = std::make_shared<FiniteElementMethodType>(context_, this->functionSpace_);
 
+#ifndef NDEBUG
+    std::vector<Vec3> geometryValues;
+    problem_->data().functionSpace()->geometryField().getValuesWithGhosts(geometryValues);
+
+    PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_geometry_values", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::vector<Vec3>>::get(geometryValues), 0.1);
+    PythonUtility::checkForError();
+#endif
+
     // create dirichlet boundary condition object
     std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> dirichletBoundaryConditions;
     createDirichletBoundaryConditions(nElementsPerCoordinateDirectionLocal, dirichletBoundaryConditions);
 
     // set boundary conditions to the problem
     problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
-    //problem_->reset();
+    problem_->reset();
     problem_->initialize();
 
     // solve the laplace problem, globally
@@ -1983,6 +2053,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // output the results
     this->outputWriterManager_.writeOutput(problem_->data());
 
+    LOG(FATAL) << "end";
     LOG(DEBUG) << "\nConstruct ghost elements";
 
     std::array<std::shared_ptr<FunctionSpaceType>,4> ghostMesh;
@@ -2016,26 +2087,26 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     double streamlineDirection = 1.0;
     if (!streamlineDirectionUpwards)
     {
-      seedPointsZIndex = nNodesZ-1;
+      seedPointsZIndex = nBorderPointsZ_-1;
       streamlineDirection = -1.0;
     }
 
     if (nRanksZ == 1)
     {
       // if there is only one rank, start the streamlines at the center and trace towards top and bottom
-      seedPointsZIndex = nNodesZ/2;
+      seedPointsZIndex = nBorderPointsZ_/2;
     }
 
     // trace final fibers
     if (traceFinalFibers)
     {
-      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, nNodesX, nNodesY, ghostMesh);
+      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, ghostMesh);
 
       // algorithm is finished
       return;
     }
 
-    createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nNodesX, nNodesY, nodePositions, seedPoints);
+    createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nodePositions, seedPoints);
 
     // trace streamlines
     std::vector<std::vector<Vec3>> streamlinePoints;

@@ -551,7 +551,7 @@ initializeGhostElements()
       receiveBufferValuesSize += receiveBuffer[i][2*ghostElementIndex+1];
     }
 
-    VLOG(1) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
+    LOG(DEBUG) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
 
     receiveBufferGhostElements[i] = new long [receiveBufferSize];
     receiveBufferValues[i] = new double [receiveBufferValuesSize];

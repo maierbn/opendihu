@@ -34,22 +34,26 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   VLOG(1) << "initialized as COMM_WORLD: " << rankNo_;
 }
   
-RankSubset::RankSubset(int singleRank) : ownRankNo_(-1)
+RankSubset::RankSubset(int singleRank) : RankSubset::RankSubset(singleRank, MPI_COMM_WORLD)
+{
+}
+
+RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1)
 {
   rankNo_.clear();
   rankNo_.insert(singleRank);
-  
+
   // get the own current MPI rank
   int currentRank;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &currentRank), "MPI_Comm_rank");
+  MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator, &currentRank), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
-  
+
   // if currentRank is contained in rank subset
   if (singleRank == currentRank)
     color = 1;
-  
+
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+  MPIUtility::handleReturnValue(MPI_Comm_split(mpiCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 
   // all ranks that are not part of the communicator will store "MPI_COMM_NULL" as mpiCommunicator_
 }

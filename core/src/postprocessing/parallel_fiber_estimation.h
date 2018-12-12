@@ -54,8 +54,7 @@ protected:
   void refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<std::vector<std::vector<Vec3>>,4> &borderPoints);
 
   //! create the mesh with given borderPoints, using harmonic maps by calling the python script
-  void createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal,
-                  int &nNodesX, int &nNodesY, int &nNodesZ);
+  void createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal);
 
   //! check if the algorithm is at the stage where no more subdomains are created and the final fibers are traced
   bool checkTraceFinalFibers(int &level);
@@ -67,10 +66,10 @@ protected:
   void exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
 
   //! create the seed points in form of a cross at the center of the current domain
-  void createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, int nNodesX, int nNodesY, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints);
+  void createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints);
 
   //! trace the fibers that are evenly distributed in the subdomain, this is the final step of the algorithm
-  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, int nNodesX, int nNodesY, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
+  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
 
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
   void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);

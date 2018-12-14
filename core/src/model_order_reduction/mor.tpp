@@ -6,8 +6,8 @@
 namespace ModelOrderReduction
 {
 
-template<typename FullFunctionSpaceType>
-MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+MORBase<FunctionSpaceRowsType>::
 MORBase(DihuContext context):
 //dataMOR_(std::make_shared<DataMOR>(context)),
 initialized_(false)
@@ -15,14 +15,14 @@ initialized_(false)
   this->dataMOR_ = std::make_shared <DataMOR>(context);
 }
 
-template<typename FullFunctionSpaceType>
-MORBase<FullFunctionSpaceType>
+template<typename FunctionSpaceRowsType>
+MORBase<FunctionSpaceRowsType>
 ::~MORBase()
 {    
 }
 
-template<typename FullFunctionSpaceType>
-void MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+void MORBase<FunctionSpaceRowsType>::
 setBasis()
 {
   assert(dataMOR_);
@@ -45,15 +45,15 @@ setBasis()
   
 }
 
-template<typename FullFunctionSpaceType>
-Data::ModelOrderReduction<FullFunctionSpaceType> &MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+Data::ModelOrderReduction<FunctionSpaceRowsType> &MORBase<FunctionSpaceRowsType>::
 dataMOR()
 {
   return *dataMOR_;
 }
 
-template<typename FullFunctionSpaceType>
-void MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+void MORBase<FunctionSpaceRowsType>::
 initialize()
 {  
   if (initialized_)
@@ -69,8 +69,8 @@ initialize()
   
 }
 
-template<typename FullFunctionSpaceType>
-void MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+void MORBase<FunctionSpaceRowsType>::
 setRedSysMatrix(Mat &A, Mat &A_R)
 {
   //to be implemented
@@ -85,8 +85,8 @@ setRedSysMatrix(Mat &A, Mat &A_R)
   //VecGetSubVector //(2-2-b) uses the above index set
   
 }
-template<typename FullFunctionSpaceType>
-void MORBase<FullFunctionSpaceType>::
+template<typename FunctionSpaceRowsType>
+void MORBase<FunctionSpaceRowsType>::
 MatMultReduced(Mat mat,Vec x,Vec y)
 {
   PetscErrorCode ierr;
@@ -102,7 +102,7 @@ MatMultReduced(Mat mat,Vec x,Vec y)
   }
   else
   {
-    LOG(ERROR) << "MatMultReduced be done!";
+    LOG(ERROR) << "MORBase::MatMultReduced to be implemented!";
   }
 }
 

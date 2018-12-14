@@ -12,11 +12,11 @@ namespace ModelOrderReduction
 
 /** A class for model order reduction techniques.
  */
-template<typename FullFunctionSpace>
+template<typename FunctionSpaceRows>
 class MORBase
 {
 public:
-  typedef Data::ModelOrderReduction<FullFunctionSpace> DataMOR; //type of Data object
+  typedef Data::ModelOrderReduction<FunctionSpaceRows> DataMOR; //type of Data object
   typedef FunctionSpace::Generic GenericFunctionSpace;
   
   //! constructor

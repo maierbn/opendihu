@@ -7,6 +7,8 @@
 #include "mesh/mesh_manager.h"
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "data_management/time_stepping/time_stepping.h"
 
 namespace ModelOrderReduction
 {
@@ -14,7 +16,7 @@ namespace ModelOrderReduction
 TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
-  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>(context["ModelOrderReduction"],name),
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
   fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
 {  
   this->specificSettingsMOR_ = this->context_.getPythonConfig();
@@ -67,7 +69,7 @@ TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
     LOG(TRACE) << "functionSpaceRowsSnapshots============================";
   }
   
-  this->data_ = std::make_shared <Data::TimeStepping<typename TimeSteppingType::FunctionSpace, TimeSteppingType::DiscretizableInTime_Type::nComponents()>>(context); // create data object
+  this->data_ = std::make_shared <::Data::TimeStepping<::FunctionSpace::Generic,1>>(context); // create data object
 
 }
 
@@ -113,10 +115,9 @@ initialize()
   
   this->fullTimestepping_.initialize();
    
-  TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
-  ::initialize(); 
+  ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>::initialize(); 
   
-  this->data_->setOutputComponentNo(outputComponentNo);
+  //this->data_->setOutputComponentNo(outputComponentNo);
   
   /*
   if (this->specificSettingsMOR_.hasKey("nReducedBases"))
@@ -177,14 +178,14 @@ initialize()
     
   initialized_=true;
 }
-
+/*
 template<int nStates, typename FunctionSpaceType>
 void TimeSteppingSchemeOdeReduced<CellmlAdapter<nStates, FunctionSpaceType>>::
 initialize()
 {
   
 }
-
+*/
 template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 run()

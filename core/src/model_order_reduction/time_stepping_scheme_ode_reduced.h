@@ -4,6 +4,7 @@
 
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "data_management/time_stepping/time_stepping_reduced.h"
 #include "model_order_reduction/mor.h"
 
@@ -13,7 +14,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingType>
 class TimeSteppingSchemeOdeReduced :
   public MORBase<typename TimeSteppingType::FunctionSpace>,
-    public TimeSteppingScheme::TimeSteppingSchemeOdeBase<typename TimeSteppingType::DiscretizableInTime_Type>
+  public ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>
 {
 public:
   //typedef ::FunctionSpace::Generic FunctionSpace;

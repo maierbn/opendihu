@@ -33,6 +33,9 @@ public:
   //! initialize, generate petsc objects, this has to be called after setFunctionSpace
   virtual void initialize();
 
+  //! initialize, generate petsc objects, this has to be called after setFunctionSpace
+  virtual void reset();
+
   //! set the subset of ranks that will compute the work
   virtual void setRankSubset(Partition::RankSubset rankSubset);
   

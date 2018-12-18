@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for googletest ... ')
+        ctx.Message('Checking for googletest ...    ')
         self.check_options(env)
 
         res = super(googletest, self).check(ctx)

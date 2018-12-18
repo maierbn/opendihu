@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
       return True
         
     env = ctx.env
-    ctx.Message('Checking for MPI ... ')
+    ctx.Message('Checking for MPI ...           ')
     self.check_options(env)
 
     self.headers = ['mpi.h']

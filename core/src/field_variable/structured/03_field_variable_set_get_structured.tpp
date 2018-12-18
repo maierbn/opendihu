@@ -16,7 +16,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
- 
+
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
   if (onlyNodalValues)
@@ -24,11 +24,11 @@ getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodal
     const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
     nValues /= nDofsPerNode;
   }
-  
+
   // resize output vector
   VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
   values.resize(nValues);
-  
+
   // get values
   this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data());
 }
@@ -39,7 +39,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
- 
+
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
   if (onlyNodalValues)
@@ -47,14 +47,79 @@ getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNo
     const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
     nValues /= nDofsPerNode;
   }
-  
+
   // resize output vector
   std::size_t previousSize = values.size();
   values.resize(previousSize+nValues);
   VLOG(2) << "Field variable structured, getValues, resize values vector to " << previousSize+nValues << " entries.";
-  
+
   // get values
   this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), values.data()+previousSize);
+}
+
+//! get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // resize output vector
+  VLOG(2) << "Field variable structured, getValues, resize values vector to " << nValues << " entries.";
+  values.resize(nValues);
+
+  // loop over components and get data component-wise
+  std::vector<double> buffer(nValues);
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), buffer.data());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < nValues; valueIndex++)
+    {
+      values[valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
+}
+
+//! get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
+  dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  if (onlyNodalValues)
+  {
+    const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+    nValues /= nDofsPerNode;
+  }
+
+  // resize output vector
+  std::size_t previousSize = values.size();
+  values.resize(previousSize+nValues);
+  VLOG(2) << "Field variable structured, getValues, resize values vector to " << previousSize+nValues << " entries.";
+
+  // loop over components and get data component-wise
+  std::vector<double> buffer(nValues);
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->values_->getValues(componentNo, nValues, this->functionSpace_->meshPartition()->dofNosLocal(onlyNodalValues).data(), buffer.data());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < nValues; valueIndex++)
+    {
+      values[previousSize+valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
 }
 
 //! for a specific component, get values from their local dof no.s

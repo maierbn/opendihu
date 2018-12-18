@@ -87,6 +87,14 @@ initialize()
 
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
+reset()
+{
+  data_.reset();
+  initialized_ = false;
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 run()
 {
   initialize();

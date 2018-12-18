@@ -80,7 +80,7 @@ class Matplotlib(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Matplotlib ... ')
+        ctx.Message('Checking for Matplotlib ...    ')
         self.check_options(env)
 
         res = super(Matplotlib, self).check(ctx)

@@ -117,7 +117,7 @@ class SciPy(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Scipy ... ')
+        ctx.Message('Checking for Scipy ...         ')
         self.check_options(env)
 
         res = super(SciPy, self).check(ctx)

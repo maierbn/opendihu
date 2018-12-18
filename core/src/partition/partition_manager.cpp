@@ -25,7 +25,7 @@ int Manager::rankNoCommWorld()
   return rankNoCommWorld_;
 }
 
-void Manager::setRankSubsetForNextCreatedMesh(std::shared_ptr<RankSubset> nextRankSubset)
+void Manager::setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset)
 {
   nextRankSubset_ = nextRankSubset;
 }

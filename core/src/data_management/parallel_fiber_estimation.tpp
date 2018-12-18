@@ -43,6 +43,7 @@ createPetscObjects()
   
   // create field variables on local partition
   this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
+  this->dirichletValues_ = this->functionSpace_->template createFieldVariable<1>("dirichletValues");
 }
 
 template<typename FunctionSpaceType>
@@ -50,6 +51,13 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> ParallelFiber
 gradient()
 {
   return this->gradient_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiberEstimation<FunctionSpaceType>::
+ dirichletValues()
+{
+  return this->dirichletValues_;
 }
 
 template<typename FunctionSpaceType>

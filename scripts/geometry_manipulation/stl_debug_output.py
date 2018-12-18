@@ -84,9 +84,9 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
   n_nodes = [n_elements[0]+1, n_elements[1]+1, n_elements[2]+1]
   
   print("output_ghost_elements, filename {}".format(filename))
-  print("point_values: {}".format(point_values))
-  print("n_points: {}".format(n_points))
-  print("n_elements: {}".format(n_elements))
+  #print("point_values: {}".format(point_values))
+  #print("n_points: {}".format(n_points))
+  #print("n_elements: {}".format(n_elements))
   
   factor = 1.0
   for z in range(n_elements[2]):

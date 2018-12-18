@@ -157,7 +157,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   {
     file << std::string(3, '\t') << "<PDataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Int32\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" ";
 
     if (binaryOutput)
@@ -174,18 +174,18 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
     // write normal data element
     file << std::string(4, '\t') << "<DataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Int32\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" ";
 
     std::string stringData;
 
     // get own rank no
-    int ownRankNoCommWorld;
+    int ownRankNoCommWorld = 0;
     MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld));
 
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<int> values(nNodesLocal, ownRankNoCommWorld);
+    std::vector<double> values(nNodesLocal, (double)ownRankNoCommWorld);
 
     if (binaryOutput)
     {

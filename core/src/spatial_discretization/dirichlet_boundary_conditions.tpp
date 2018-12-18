@@ -639,6 +639,24 @@ applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nCo
   VLOG(1) << "applied boundary conditions, local dofs: " << boundaryConditionNonGhostDofLocalNos_ << ", values: " << boundaryConditionValues_;
 }
 
+
+//! get a reference to the vector of bc local dofs
+template<typename FunctionSpaceType,int nComponents>
+const std::vector<dof_no_t> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionNonGhostDofLocalNos() const
+{
+  return boundaryConditionNonGhostDofLocalNos_;
+}
+
+//! get a reference to the vector of bc local dofs
+template<typename FunctionSpaceType,int nComponents>
+const std::vector<typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ValueType> &DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+boundaryConditionValues() const
+{
+  return boundaryConditionValues_;
+}
+
+
 // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
 template<typename FunctionSpaceType>
 void DirichletBoundaryConditions<FunctionSpaceType,1>::
@@ -842,6 +860,14 @@ applyInRightHandSide(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceT
   // set boundary condition dofs to prescribed values, only non-ghost dofs
   rightHandSide->setValues(this->boundaryConditionNonGhostDofLocalNos_,
                           this->boundaryConditionValues_, INSERT_VALUES);
+}
+
+
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs)
+{
+  stream << "{el." << rhs.elementNoLocal << ", (dof,v):" << rhs.elementalDofIndex << "}";
+  return stream;
 }
 
 }  // namespace

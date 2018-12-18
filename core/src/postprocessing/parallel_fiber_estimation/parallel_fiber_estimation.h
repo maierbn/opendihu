@@ -128,4 +128,4 @@ protected:
 
 };  // namespace
 
-#include "postprocessing/parallel_fiber_estimation.tpp"
+#include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.tpp"

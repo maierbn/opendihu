@@ -26,14 +26,20 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, Pyt
 
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
-FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirection) :
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions, const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
  
   this->noGeometryField_ = false;
-  this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirection;
-  LOG(DEBUG) << "set number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_;
+  this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirectionLocal;
+  this->forcePartitioningCreationFromLocalNumberOfElements_ = true;     // this is defined in 03_function_space_partition.h
+
+  // forcePartitioningCreationFromLocalNumberOfElements_ is set to true, this means that the partitioning is created considering
+  // this->nElementsPerCoordinateDirectionLocal_ and not depending on values of inputMeshIsGlobal
+
+  LOG(DEBUG) << "set local number of elements per coordinate direction: " << this->nElementsPerCoordinateDirectionLocal_;
+  LOG(DEBUG) << "set forcePartitioningCreationFromLocalNumberOfElements_ to true";
 
   localNodePositions_.reserve(localNodePositions.size() * D);
 

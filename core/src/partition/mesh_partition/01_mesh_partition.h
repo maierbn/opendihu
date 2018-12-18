@@ -200,7 +200,7 @@ public:
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
   int neighbourRank(Mesh::face_t face);
 
-  //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction
+  //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);
 
 protected:

@@ -30,6 +30,9 @@ public:
   //! return a reference to the gradient vector field
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient();
 
+  //! return a reference to the dirichletValues field
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues();
+
   //! print all stored data to stdout
   virtual void print();
 
@@ -51,6 +54,7 @@ protected:
   virtual void createPetscObjects();
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;  ///< the gradient field of the Laplace flow solution
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues_;  ///< values of dirichlet BC or -1, where no dirichlet BC is prescribed
 };
 
 } // namespace Data

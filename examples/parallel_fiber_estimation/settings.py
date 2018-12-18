@@ -25,8 +25,8 @@ config = {
   },
   "ParallelFiberEstimation" : {
     "stlFilename": "../../../testing/system_testing/tests/fibers/meshes/biceps_full.stl",
-    "bottomZClip":  62.0,   # top z value of the muscle volume
-    "topZClip": 250.0,      # bottom z value of the muscle volume
+    "bottomZClip":  72.0,   # 82, bottom z value of the muscle volume  
+    "topZClip": 220.0,      # 250, top z value of the muscle volume
     "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
     "useGradientField": False,

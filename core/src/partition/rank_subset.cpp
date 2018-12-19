@@ -58,9 +58,12 @@ RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1
   // all ranks that are not part of the communicator will store "MPI_COMM_NULL" as mpiCommunicator_
 
   // get number of ranks
-  int nRanks;
-  MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");
-  assert(nRanks == 1);
+  if (ownRankIsContained)
+  {
+    int nRanks;
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");
+    assert(nRanks == 1);
+  }
 }
 
 std::set<int>::const_iterator RankSubset::begin()

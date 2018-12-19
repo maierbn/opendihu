@@ -52,7 +52,7 @@ RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1
 
   // if currentRank is contained in rank subset
   if (singleRank == currentRank)
-    color = 1;
+    color = singleRank;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(mpiCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");

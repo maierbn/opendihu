@@ -62,6 +62,10 @@ RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1
   {
     int nRanks;
     MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");
+    if (nRanks != 1)
+    {
+      LOG(DEBUG) << "nRanks: " << nRanks;
+    }
     assert(nRanks == 1);
   }
 }

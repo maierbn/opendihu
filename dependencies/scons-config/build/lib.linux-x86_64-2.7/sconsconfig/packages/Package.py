@@ -455,16 +455,18 @@ class Package(object):
     ctx.Log("  unpack_dir:  ["+unpack_dir+"] (where to unpack)\n")
 
     # Download if the file is not already available.
-    if not os.path.exists(filename) or force_redownload:
-      if not self.auto_download(ctx, filename):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(filename) or force_redownload:
+        if not self.auto_download(ctx, filename):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Unpack if there is not already a build directory by the same name.
-    if not os.path.exists(unpack_dir) or force_redownload:
-      if not self.auto_unpack(ctx, filename, unpack_dir):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(unpack_dir) or force_redownload:
+        if not self.auto_unpack(ctx, filename, unpack_dir):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Move into the build directory. Most archives will place themselves
     # in a single directory which we should then move into.

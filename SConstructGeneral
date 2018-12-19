@@ -48,7 +48,7 @@ sconsconfig.select(
     #packages.Matplotlib(required=False),   # Matplotlib, again to make it available in the config python files, where you could generate plots in callbacks as the simulation is running. This also installs from a whl using pip, so no extra compilation.
     #packages.NumpySTL(required=False),   # numpy-stl, used for manipulation of stl meshes in fiber test case
     #packages.SvgPath(required=False),   # svg.path python package for manipulating svg paths
-    packages.pythonUtils(required=False),   # all further python utils that can be installed via pip
+    packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),  # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
     #packages.libxml2(required=True),

@@ -45,3 +45,4 @@ from NumpySTL import NumpySTL
 from SvgPath import SvgPath
 from bison import bison
 from flex import flex
+from pythonUtils import pythonUtils

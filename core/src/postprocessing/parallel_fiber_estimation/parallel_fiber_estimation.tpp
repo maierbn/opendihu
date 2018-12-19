@@ -9,7 +9,7 @@
 #include "spatial_discretization/dirichlet_boundary_conditions.h"
 
 #define USE_CHECKPOINT_BORDER_POINTS
-//#define USE_CHECKPOINT_MESH
+#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
 

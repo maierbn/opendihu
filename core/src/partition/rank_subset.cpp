@@ -48,6 +48,8 @@ RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1
   MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator, &currentRank), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
 
+  LOG(DEBUG) << "currentRank: " << currentRank << ", singleRank for which to create RankSubset: " << singleRank;
+
   // if currentRank is contained in rank subset
   if (singleRank == currentRank)
     color = 1;

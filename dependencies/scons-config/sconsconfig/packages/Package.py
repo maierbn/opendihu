@@ -440,7 +440,10 @@ class Package(object):
     ctx.Log("Downloading into " + base_dir + "\n")
 
     # Setup the filename and build directory name and destination directory.
-    filename = self.download_url[self.download_url.rfind('/') + 1:]
+    if self.download_url == "":
+      filename = ""
+    else:
+      filename = self.download_url[self.download_url.rfind('/') + 1:]
     unpack_dir = "src"
     install_dir = os.path.abspath(os.path.join(base_dir, "install"))
     ctx.Log("Building into " + install_dir + "\n")

@@ -79,11 +79,11 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
   
   triangles = []
   
-  n_points = len(point_values)/3
+  n_points = (int)(len(point_values)/3)
   
   n_nodes = [n_elements[0]+1, n_elements[1]+1, n_elements[2]+1]
   
-  print("output_ghost_elements, filename {}".format(filename))
+  #print("output_ghost_elements, filename {}, n_elements: {}, n points: {}, n_nodes: {}, n_points: {}".format(filename, n_elements, len(point_values), n_nodes, n_points))
   #print("point_values: {}".format(point_values))
   #print("n_points: {}".format(n_points))
   #print("n_elements: {}".format(n_elements))
@@ -98,9 +98,10 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
           for j in range(2):
             for i in range(2):
               index = (z+k) * n_nodes[0]*n_nodes[1] + (y+j) * n_nodes[0] + (x+i)
+              #print("index: {}".format(index))
               p0 = np.array([point_values[index], point_values[n_points+index], point_values[2*n_points+index]])
               p.append(p0)
-        print("x: {}, y: {}, z: {}, points: {}".format(x,y,z,p))
+        #print("x: {}, y: {}, z: {}, points: {}".format(x,y,z,p))
               
         triangles += [
           [p[0],p[3],p[1]],[p[0],p[2],p[3]],  # bottom
@@ -117,7 +118,7 @@ def output_ghost_elements(filename, rankNo, point_values, n_elements, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}_{}.stl".format(filename, rankNo)
+  outfile = "{}.{}.stl".format(filename, rankNo)
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))

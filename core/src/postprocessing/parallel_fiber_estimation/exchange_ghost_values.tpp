@@ -24,7 +24,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
   {
     if (!subdomainIsAtBorder[face])
     {
-      LOG(DEBUG) << "make ghost elements for face " << Mesh::getString((Mesh::face_t)face);
+      LOG(DEBUG) << "determine ghost elements for face " << Mesh::getString((Mesh::face_t)face);
 
       // get information about neighbouring rank and boundary elements for face
       int neighbourRankNo;
@@ -32,9 +32,16 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
       meshPartition_->getBoundaryElements((Mesh::face_t)face, neighbourRankNo, ghostValuesBuffer[face].nElementsPerCoordinateDirection, dofNos);
 
       LOG(DEBUG) << "getBoundaryElements for face " << Mesh::getString((Mesh::face_t)face) << " returned neighbourRankNo=" << neighbourRankNo
-        << ", nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection << ", " << dofNos.size() << dofNos;
+        << ", nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection << ", " << dofNos.size();
 
       // get relevant values in own domain that will be send to the neighbouring domain
+      problem_->data().functionSpace()->geometryField().setRepresentationGlobal();
+      problem_->data().solution()->setRepresentationGlobal();
+      data_.gradient()->setRepresentationGlobal();
+      problem_->data().functionSpace()->geometryField().startGhostManipulation();
+      problem_->data().solution()->startGhostManipulation();
+      data_.gradient()->startGhostManipulation();
+
       problem_->data().functionSpace()->geometryField().getValues(dofNos, boundaryValues[face].nodePositionValues);
       problem_->data().solution()->getValues(dofNos, boundaryValues[face].solutionValues);
       data_.gradient()->getValues(dofNos, boundaryValues[face].gradientValues);

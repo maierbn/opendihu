@@ -64,10 +64,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     LOG(DEBUG) << "use previously set rankSubset " << *rankSubset;
   }
   
-  int rankNoSubsetCommunicator;
-  int nRanksSubsetCommunicator;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(rankSubset->mpiCommunicator(), &rankNoSubsetCommunicator));
-  MPIUtility::handleReturnValue(MPI_Comm_size(rankSubset->mpiCommunicator(), &nRanksSubsetCommunicator));
+  int rankNoSubsetCommunicator = rankSubset->ownRankNo();
+  int nRanksSubsetCommunicator = rankSubset->size();
+
   int nRanksTotal = 1;
   for (int i = 0; i < D; i++)
   {

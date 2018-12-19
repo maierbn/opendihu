@@ -23,7 +23,7 @@ purge: clean
 	rm -rf core/build_release
 
 purge_dependencies:
-	cd dependencies; rm -rf base64/ bzip2/ cython/ easyloggingpp/ googletest/ lapack/ matplotlib/ numpyc/ petsc/ python/ scipy/ semt/; cd -
+	cd dependencies; rm -rf base64/ bzip2/ cython/ easyloggingpp/ googletest/ lapack/ matplotlib/ numpyc/ petsc/ python/ scipy/ semt/ pythonpackages; cd -
 
 rebuild: purge_dependencies purge clean debug release
 

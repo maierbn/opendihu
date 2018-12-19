@@ -741,21 +741,30 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       # map from phi to phi
       
       def get_modified_phi(phi_in):
-        # determine position of phi between border points
         
+        # normalize phi to [0,2*np.pi)
         if phi_in < 0:
           phi_in += 2*np.pi
         
+        # determine position of phi between regular grid border points
         phi_increment = (2*np.pi) / n_regular_grid_border_points
         previous_border_point_index = (int)(phi_in / phi_increment)
         
+        # determine factor between previous and next border point
         alpha = (phi_in - previous_border_point_index*phi_increment) / phi_increment
         
-        phi_out = original_point_phi_value[previous_border_point_index] + \
-          alpha * (original_point_phi_value[previous_border_point_index+1] - original_point_phi_value[previous_border_point_index])
+        # determine positions of phi in the new border points
+        next_phi_value = 2*np.pi
+        if previous_border_point_index+1 < len(original_point_phi_value):
+          next_phi_value = original_point_phi_value[previous_border_point_index+1]
+          
+        previous_phi_value = original_point_phi_value[previous_border_point_index]
+        
+        # compute phi value with alpha between new border points
+        phi_out = previous_phi_value + alpha * (next_phi_value - previous_phi_value)
         
         #print("phi_in: {}, phi_increment: {}, previous_border_point_index:{} [{},{}], alpha:{} new:[{},{}], phi_out: {}".format(phi_in, phi_increment, previous_border_point_index, previous_border_point_index*phi_increment, (previous_border_point_index+1)*phi_increment, alpha,\
-        #  original_point_phi_value[previous_border_point_index], original_point_phi_value[previous_border_point_index+1], phi_out))
+        #  previous_phi_value, next_phi_value, phi_out))
         
         return phi_out
     
@@ -2822,7 +2831,13 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   """
   
   print("create_3d_mesh_from_border_points_faces")
-  
+
+  if False:
+    filename = "dump_border_points_faces_{}.py".format(os.getpid())
+    print("dump to filename:{}".format(filename))
+    with open(filename, 'wb') as f:
+      pickle.dump(border_points_faces, f)
+          
   # constant parameters
   triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
@@ -2894,7 +2909,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
     else:
       debugging_output_lists = []
     
-    if loop_no == 0:
+    if loop_no == 0 and False:
       output = (border_points, loop_no, n_points, n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot)
       filename = "dump_mesh_2d_{}.py".format(os.getpid())
       print("dump to filename:{}".format(filename))

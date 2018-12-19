@@ -136,8 +136,10 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
       LOG(DEBUG) << "create ghost mesh with nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection;
 
       // create ghost mesh
+      std::array<int,3> nRanks({1,1,1});
       context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetSingleRank);
-      ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection);
+      ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(
+        meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection, nRanks);
 
       ghostSolution[face] = ghostMesh[face]->template createFieldVariable<1>("solution");
       ghostSolution[face]->setValuesWithGhosts(ghostValuesBuffer[face].solutionValues);

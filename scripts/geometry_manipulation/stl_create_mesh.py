@@ -624,6 +624,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     # settings
     determine_additional_points_on_ring = True
     rescale_phi = True
+    modify_phi = True
     
     # normal implementation without searching for additional border points on ring that the triangulation created
     if not determine_additional_points_on_ring:
@@ -711,9 +712,14 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 point_indices_list[i][point_no] = point_index + n_additional_points_on_ring - n_additional_points_on_ring_before_point_index
                 break
       
+      # points has the following structure: [<list of original border points>, <list of new border points>, <list of interior points>]
+      # original_points has the following structure: [<list of original border points>, <list of new border points>]
       points = np.array(new_points)
       triangle_list = points[point_indices_list]
+      n_regular_grid_border_points = n_original_points
       n_original_points += n_additional_points_on_ring
+      
+      previous_original_point_phi_value = list(original_point_phi_value)
       
       # set phi values
       if rescale_phi:
@@ -729,6 +735,29 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       #print("previous border points: {}, n_original_points: {}, n_additional_points_on_ring: {}, interior: {}, n_points: {}".\
       #  format(n_original_points-n_additional_points_on_ring, n_original_points, n_additional_points_on_ring, n_points-n_original_points, n_points))
       #print("additional_points_on_ring: {}".format(additional_points_on_ring))
+      
+      # setup map between parameter space regular grid in the circle and the transformed parameter space grid with the additional border points
+      # this is done by defining a map for phi
+      # map from phi to phi
+      
+      def get_modified_phi(phi_in):
+        # determine position of phi between border points
+        
+        if phi_in < 0:
+          phi_in += 2*np.pi
+        
+        phi_increment = (2*np.pi) / n_regular_grid_border_points
+        previous_border_point_index = (int)(phi_in / phi_increment)
+        
+        alpha = (phi_in - previous_border_point_index*phi_increment) / phi_increment
+        
+        phi_out = original_point_phi_value[previous_border_point_index] + \
+          alpha * (original_point_phi_value[previous_border_point_index+1] - original_point_phi_value[previous_border_point_index])
+        
+        #print("phi_in: {}, phi_increment: {}, previous_border_point_index:{} [{},{}], alpha:{} new:[{},{}], phi_out: {}".format(phi_in, phi_increment, previous_border_point_index, previous_border_point_index*phi_increment, (previous_border_point_index+1)*phi_increment, alpha,\
+        #  original_point_phi_value[previous_border_point_index], original_point_phi_value[previous_border_point_index+1], phi_out))
+        
+        return phi_out
     
   elif triangulation_type == 2 or triangulation_type == 3:
     # 2: simple custom triangulation with triangles around one center point in CoG
@@ -1125,6 +1154,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   n_grid_points = n_grid_points_x*n_grid_points_y
   grid_points_world_space = np.empty((n_grid_points,3))
   grid_points_parametric_space = np.empty((n_grid_points,2))
+  grid_points_parametric_space_modified = np.empty((n_grid_points,2))
   
   # loop over grid points in parametric space
   for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
@@ -1233,12 +1263,23 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         x = np.cos(phi)*r
         y = np.sin(phi)*r
         
+        # modified
+        phi_modified = get_modified_phi(phi)
+        x_modified = np.cos(phi_modified)*r
+        y_modified = np.sin(phi_modified)*r
+        
         if n_grid_points_x%2 == 1 and i == int(n_grid_points_x/2) and j == int(n_grid_points_y/2):   # center point
           x = 0.
           y = 0.
+          x_modified = 0.
+          y_modified = 0.
           
       # transform to world space
-      point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
+      # if there were additional border points from the triangulation that also got Dirichlet BC, and modifiy_phi is set to true, compute world points differently
+      if modify_phi:
+        point_world_space = transform_to_world_space(x_modified,y_modified,triangles_parametric_space,triangle_list,parametric_space_shape)
+      else:
+        point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
     
       if point_world_space is None:
         grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
@@ -1246,6 +1287,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       if point_world_space is not None:
         grid_points_world_space[j*n_grid_points_x+i] = point_world_space
         grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
+        grid_points_parametric_space_modified[j*n_grid_points_x+i] = np.array([x_modified,y_modified])
     
   if parametric_space_shape == 4:
     # move grid points such that mean distance between points in world space gets optimal
@@ -2185,7 +2227,9 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     patches_parametric = []
     patches_world = []
     patches_world_improved = []
+    patches_parametric_modified = []
     parametric_points = []
+    parametric_points_modified = []
     min_x = 100000
     min_y = 100000
     max_x = -100000
@@ -2309,6 +2353,19 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         polygon = patches.Polygon(quadrilateral, True)
         patches_parametric.append(polygon)
         
+        quadrilateral = np.zeros((4,2))
+        quadrilateral[0] = grid_points_parametric_space_modified[j*n_grid_points_x+i]
+        quadrilateral[1] = grid_points_parametric_space_modified[j*n_grid_points_x+(i+1)%n_grid_points_x]
+        quadrilateral[2] = grid_points_parametric_space_modified[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+        quadrilateral[3] = grid_points_parametric_space_modified[(j+1)%n_grid_points_y*n_grid_points_x+i]
+        parametric_points_modified.append(quadrilateral[0])
+        parametric_points_modified.append(quadrilateral[1])
+        parametric_points_modified.append(quadrilateral[2])
+        parametric_points_modified.append(quadrilateral[3])
+        #print("parametric: ",quadrilateral
+        polygon = patches.Polygon(quadrilateral, True)
+        patches_parametric_modified.append(polygon)
+        
   t_stop = timeit.default_timer()
   duration = t_stop - t_start
 
@@ -2381,24 +2438,45 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     ax[0,1].set_aspect('equal')
     
     # parametric space
-    p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
-    ax[0,2].add_collection(p)
-    ax[0,2].plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
-    ax[0,2].plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ro')
-    
-    for j in range(n_grid_points_y):
-      for i in range(n_grid_points_x):
-        p = grid_points_parametric_space[j*n_grid_points_x+i]
-        if j == 0:
-          ax[0,2].plot(p[0], p[1], 'ro')
-        elif j == n_grid_points_y-1:
-          ax[0,2].plot(p[0], p[1], 'go')
-        elif i == 0: 
-          ax[0,2].plot(p[0], p[1], 'bo')
-        elif i == n_grid_points_x-1: 
-          ax[0,2].plot(p[0], p[1], 'yo')
-        else:
-          ax[0,2].plot(p[0], p[1], 'ko')
+    if determine_additional_points_on_ring:
+      p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
+      ax[0,2].add_collection(p)
+      ax[0,2].plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
+      ax[0,2].set_xlim(-1.1,1.1)
+      ax[0,2].set_ylim(-1.1,1.1)
+      plt.axis('equal')
+        
+      for j in range(n_grid_points_y):
+        for i in range(n_grid_points_x):
+          p = grid_points_parametric_space_modified[j*n_grid_points_x+i]
+          if j == 0:
+            ax[0,2].plot(p[0], p[1], 'ro')
+          elif j == n_grid_points_y-1:
+            ax[0,2].plot(p[0], p[1], 'go')
+          elif i == 0: 
+            ax[0,2].plot(p[0], p[1], 'bo')
+          elif i == n_grid_points_x-1: 
+            ax[0,2].plot(p[0], p[1], 'yo')
+          else:
+            ax[0,2].plot(p[0], p[1], 'ko')
+    else:
+      p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
+      ax[0,2].add_collection(p)
+      ax[0,2].plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
+      
+      for j in range(n_grid_points_y):
+        for i in range(n_grid_points_x):
+          p = grid_points_parametric_space[j*n_grid_points_x+i]
+          if j == 0:
+            ax[0,2].plot(p[0], p[1], 'ro')
+          elif j == n_grid_points_y-1:
+            ax[0,2].plot(p[0], p[1], 'go')
+          elif i == 0: 
+            ax[0,2].plot(p[0], p[1], 'bo')
+          elif i == n_grid_points_x-1: 
+            ax[0,2].plot(p[0], p[1], 'yo')
+          else:
+            ax[0,2].plot(p[0], p[1], 'ko')
         
     ax[0,2].set_title('quadrangulation in parametric space')
     ax[0,2].set_xlim(-1.1,1.1)
@@ -2476,6 +2554,35 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         plt.show()
       plt.close()
     
+    # parametric space with modified phi
+    if determine_additional_points_on_ring:
+      fig, ax = plt.subplots(figsize=(10,10))
+    
+      p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
+      ax.add_collection(p)
+      ax.plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
+      ax.set_xlim(-1.1,1.1)
+      ax.set_ylim(-1.1,1.1)
+      plt.axis('equal')
+        
+      for j in range(n_grid_points_y):
+        for i in range(n_grid_points_x):
+          p = grid_points_parametric_space_modified[j*n_grid_points_x+i]
+          if j == 0:
+            ax.plot(p[0], p[1], 'ro')
+          elif j == n_grid_points_y-1:
+            ax.plot(p[0], p[1], 'go')
+          elif i == 0: 
+            ax.plot(p[0], p[1], 'bo')
+          elif i == n_grid_points_x-1: 
+            ax.plot(p[0], p[1], 'yo')
+          else:
+            ax.plot(p[0], p[1], 'ko')
+      plt.savefig("out/loop_{:03}_p{}_modified_parametric_mesh.png".format(loop_no, os.getpid()));
+      if show_plot:
+        plt.show()
+      plt.close()
+      
     # world space
     fig, ax = plt.subplots(figsize=(20,20))
       

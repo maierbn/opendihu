@@ -449,7 +449,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(currentRankSubset_);
     this->functionSpace_ = context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FunctionSpaceType>(
-      meshName.str(), meshPartition_, nodePositionsWithoutGhosts, nElementsPerCoordinateDirectionLocal);
+      meshName.str(), meshPartition_, nodePositionsWithoutGhosts, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection_);
 
     LOG(DEBUG) << "n nodePositions with ghosts: " << nodePositions.size();
     LOG(DEBUG) << "n nodePositions without ghosts: " << nodePositionsWithoutGhosts.size();

@@ -36,6 +36,13 @@ ParallelFiberEstimation<FunctionSpaceType>::
 
 template<typename FunctionSpaceType>
 void ParallelFiberEstimation<FunctionSpaceType>::
+setProblem(std::shared_ptr<FiniteElementMethodType> problem)
+{
+  problem_ = problem;
+}
+
+template<typename FunctionSpaceType>
+void ParallelFiberEstimation<FunctionSpaceType>::
 createPetscObjects()
 {
   LOG(DEBUG) << "ParallelFiberEstimation<FunctionSpaceType>::createPetscObjects()" << std::endl;
@@ -76,8 +83,11 @@ template<typename FunctionSpaceType>
 typename ParallelFiberEstimation<FunctionSpaceType>::OutputFieldVariables ParallelFiberEstimation<FunctionSpaceType>::
 getOutputFieldVariables()
 {
+  assert(problem_);
   return std::tuple_cat(
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_)
+    problem_->data().getOutputFieldVariables(),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_)
   );
 }
 

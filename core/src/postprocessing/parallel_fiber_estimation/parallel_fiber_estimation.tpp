@@ -12,6 +12,8 @@
 #define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
+//#define WRITE_CHECKPOINT_GHOST_MESH
+#define USE_CHECKPOINT_GHOST_MESH
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
@@ -468,6 +470,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // solve laplace problem globally
     // create problem
     problem_ = std::make_shared<FiniteElementMethodType>(context_, this->functionSpace_);
+    data_.setProblem(problem_);
 
 #ifndef NDEBUG
     std::vector<Vec3> geometryValues;
@@ -493,9 +496,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     data_.dirichletValues()->setValues(-1);
     data_.dirichletValues()->setValues(dirichletDofs, dirichletValues);
 
-    this->outputWriterManager_.writeOutput(data_);  // output debugging data
-
-
     // set boundary conditions to the problem
     problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
     problem_->reset();
@@ -507,9 +507,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // compute a gradient field from the solution
     problem_->data().solution()->computeGradientField(data_.gradient());
 
-    // output the results
-    this->outputWriterManager_.writeOutput(problem_->data());   // output solution and rhs of laplace flow
+    data_.gradient()->setRepresentationGlobal();
 
+    // output the results
     this->outputWriterManager_.writeOutput(data_);  // output gradient
 
     if (level > 1)

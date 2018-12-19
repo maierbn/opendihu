@@ -39,6 +39,7 @@ void SolutionVectorMapping<
       PetscErrorCode ierr;
       ierr = VecScale(transmembranePotential[k]->valuesGlobal(), prefactor); CHKERRV(ierr);
     }
+    LOG(DEBUG) << "transmembranePotential[" << k << "]: " << *transmembranePotential[k];
   }
 }
 
@@ -79,5 +80,7 @@ void SolutionVectorMapping<
     // copy the values to their location in subcellularStatesFieldVariable, this copy cannot be avoided
     subcellularStatesFieldVariable->setRepresentationGlobal();
     subcellularStatesFieldVariable->setValues(outputStateIndex, subVectors[k]);
+
+    LOG(DEBUG) << "subcellularStates[" << k << "]: " << *subcellularStatesFieldVariable;
   }
 }

@@ -520,7 +520,11 @@ void DihuContext::initializeLogging(int argc, char *argv[])
     prefix = s.str();
   }
   
+#ifdef NDEBUG      // if release
+  conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
+#else
   conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
+#endif
 
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'

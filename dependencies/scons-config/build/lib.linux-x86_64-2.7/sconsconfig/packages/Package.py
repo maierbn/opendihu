@@ -357,7 +357,7 @@ class Package(object):
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
-      vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler

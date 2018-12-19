@@ -18,6 +18,7 @@ namespace TimeSteppingScheme
   public TimeSteppingScheme
   {
   public:
+    typedef FunctionSpaceType FunctionSpace;
     typedef Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
     typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
     
@@ -51,7 +52,7 @@ namespace TimeSteppingScheme
     virtual void reset();
     
     //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
-    bool knowsMeshType();
+    //bool knowsMeshType();
     
   protected:
     
@@ -69,7 +70,7 @@ namespace TimeSteppingScheme
 /** This is the base class for all ode solvers.
  */
 template<typename DiscretizableInTimeType>
-class TimeSteppingSchemeOde:
+class TimeSteppingSchemeOdeBaseDiscretizable:
 public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
@@ -79,14 +80,14 @@ public:
   ///typedef Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> Data;   // type of Data object
   ///typedef typename Data::TransferableSolutionDataType TransferableSolutionDataType;
 
-  using TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
-  TimeSteppingSchemeOdeBase;
+  //using TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
+  //TimeSteppingSchemeOdeBase;
   
   //! constructor
-  ///TimeSteppingSchemeOdeBase(DihuContext context, std::string name);
+  TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
 
   //! destructor
-  ///virtual ~TimeSteppingSchemeOdeBase() {}
+  virtual ~TimeSteppingSchemeOdeBaseDiscretizable() {}
 
   //! run simulation
   ///virtual void run();
@@ -109,7 +110,7 @@ public:
   DiscretizableInTimeType &discretizableInTime();
   
   //! set the subset of ranks that will compute the work
-  ///void setRankSubset(Partition::RankSubset rankSubset);
+  void setRankSubset(Partition::RankSubset rankSubset);
   
   //! reset state such that new initialization becomes necessary
   virtual void reset();
@@ -120,7 +121,7 @@ public:
 protected:
 
   //! read initial values from settings and set field accordingly
-  ///void setInitialValues();
+  void setInitialValues();
 
   ///std::shared_ptr<Data> data_;     ///< data object that holds all PETSc vectors and matrices
 
@@ -134,33 +135,29 @@ protected:
     SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
   > dirichletBoundaryConditions_;  ///< object that stores Dirichlet boundary condition values
 };
-/*
+
 template<typename DiscretizableInTimeType>
 class TimeSteppingSchemeOde :
-  //public TimeSteppingSchemeOdeBase<DiscretizableInTimeType>
-  public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
-{
+  public TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>
+  {
 public:
   //! use constructor of parent class
-  //using TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TimeSteppingSchemeOdeBase;
-  using TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::TimeSteppingSchemeOdeBase;
-
+  using TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSchemeOdeBaseDiscretizable;
+  
 };
-*/
+
 
 /**
  * Specialization for CellmlAdapter
  */
 template<int nStates, typename FunctionSpaceType>
-class TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>> :
-  //public TimeSteppingSchemeOdeBase<CellmlAdapter<nStates, FunctionSpaceType>>
-  public TimeSteppingSchemeOdeBase<FunctionSpaceType,nStates>
+class TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>:
+  public TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>
 {
 public:
   //! use constructor of parent class
-  //using TimeSteppingSchemeOdeBase<CellmlAdapter<nStates, FunctionSpaceType>>::TimeSteppingSchemeOdeBase;
-  using TimeSteppingSchemeOdeBase<FunctionSpaceType,nStates>::TimeSteppingSchemeOdeBase;
-
+  using TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>::TimeSteppingSchemeOdeBaseDiscretizable;
+  
   //! initialize CellMLAdapter and get outputStateIndex and prefactor from CellMLAdapter to set them in data_
   virtual void initialize();
 };

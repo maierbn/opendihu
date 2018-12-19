@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   {
     DihuContext settings_timestepping=settings["ModelOrderReduction"];
     PythonConfig topLevelSettings_timeStepping = settings_timestepping.getPythonConfig();
-    if(topLevelSettings_timeStepping.hasKey("ExplicitEuler"))
+    if(topLevelSettings_timeStepping.hasKey("ExplicitEulerReduced"))
   {
     LOG(INFO) << "Reduced order ExplicitEuler";
     ModelOrderReduction::TimeSteppingSchemeOdeReducedExplicit<

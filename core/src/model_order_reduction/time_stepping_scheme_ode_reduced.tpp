@@ -37,7 +37,7 @@ TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   std::array<element_no_t, 1> nElementsRows({this -> nRowsSnapshots_});
   std::array<double, 1> physicalExtent({0.0}); 
   
-  typedef FunctionSpace::Generic GenericFunctionSpace;
+  typedef ::FunctionSpace::Generic GenericFunctionSpace;
   
   if(this->context_.meshManager()->hasFunctionSpace("functionSpaceReduced"))
   {
@@ -86,7 +86,7 @@ void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   PetscErrorCode ierr;
    
   Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
-  Vec &redSolution= this->data_->solution()->getValuesContiguous();
+  Vec &redSolution= this->data().solution()->getValuesContiguous();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   PetscInt mat_sz_1, mat_sz_2;
@@ -170,7 +170,12 @@ initialize()
   */
 
   this->dataMOR_->setFunctionSpace(this->functionSpaceRed);
-  this->dataMOR_->setFullFunctionSpace(this->functionSpaceRowsSnapshots);
+  this->dataMOR_->setFunctionSpaceRows(this->functionSpaceRowsSnapshots);
+  
+  assert(functionSpaceRowsSnapshots->meshPartition());   // assert that the function space was retrieved correctly
+  data_->setFunctionSpace(functionSpaceRowsSnapshots);
+  this->data().setOutputComponentNo(0);
+  this->data_->initialize();
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   

@@ -118,7 +118,7 @@ namespace TimeSteppingScheme
     
     //data_->print();
     
-    //initialized_ = true;
+    initialized_ = true;
   }
   
   template<typename FunctionSpaceType, int nComponents>
@@ -140,23 +140,24 @@ namespace TimeSteppingScheme
 ///  }
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///template<typename DiscretizableInTimeType>
-///TimeSteppingSchemeOdeBase<DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>::
-///TimeSteppingSchemeOdeBase(DihuContext context, std::string name) :
-///  TimeSteppingScheme(context), discretizableInTime_(context[name]), initialized_(false)
-///{
-  // get python config
-  ///PythonConfig topLevelSettings = this->context_.getPythonConfig();
-  ///this->specificSettings_ = PythonConfig(topLevelSettings, name);
+template<typename DiscretizableInTimeType>
+TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name) :
+TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
+TimeSteppingSchemeOdeBase(context,name), discretizableInTime_(context[name]), initialized_(false)
+{
+  //get python config
+  PythonConfig topLevelSettings = this->context_.getPythonConfig();
+  this->specificSettings_ = PythonConfig(topLevelSettings, name);
 
-  // initialize output writers
-  //this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
+  //initialize output writers
+  this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 
-  // create dirichlet Boundary conditions object
-  ///this->dirichletBoundaryConditions_ = std::make_shared<
-    ///SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
-  ///>();
-///}
+  //create dirichlet Boundary conditions object
+  this->dirichletBoundaryConditions_ = std::make_shared<
+  SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+  >();
+}
 /*
 template<typename DiscretizableInTimeType>
 Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
@@ -165,9 +166,9 @@ data()
   return *data_;
 }
 */
-/*
+
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -193,11 +194,11 @@ setInitialValues()
   VLOG(1) << "set initial values to " << localValues;
 
   // set the first component of the solution variable by the given values
-  data_->solution()->setValuesWithoutGhosts(0, localValues);
+  this->data_->solution()->setValuesWithoutGhosts(0, localValues);
 
-  VLOG(1) << data_->solution();
+  VLOG(1) << this->data_->solution();
 }
-*/
+
 /*
 template<typename DiscretizableInTimeType>
 std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
@@ -214,33 +215,34 @@ getSolutionForTransferInOperatorSplitting()
 }
 */
 template<typename DiscretizableInTimeType>
-DiscretizableInTimeType &TimeSteppingSchemeOde<DiscretizableInTimeType>::
+DiscretizableInTimeType &TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 discretizableInTime()
 {
   return this->discretizableInTime_;
 }
-/*
-template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-setRankSubset(Partition::RankSubset rankSubset)
-{
-  data_->setRankSubset(rankSubset);
-  discretizableInTime_.setRankSubset(rankSubset);
-} 
-*/
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+setRankSubset(Partition::RankSubset rankSubset)
+{
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::Functionspace,DiscretizableInTimeType::nComponents()>::
+  setRankSubset(rankSubset);
+  discretizableInTime_.setRankSubset(rankSubset);
+} 
+
+template<typename DiscretizableInTimeType>
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 reset()
 {
-  TimeSteppingScheme::reset();
+  TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>::
+  reset();
   discretizableInTime_.reset();
   
   initialized_ = false;
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOde<DiscretizableInTimeType>::
+void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 initialize()
 {
   if (initialized_)
@@ -299,7 +301,7 @@ template<int nStates, typename FunctionSpaceType>
 void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
 initialize()
 {
-  TimeSteppingSchemeOdeBase<FunctionSpaceType,nStates>::initialize();
+  TimeSteppingSchemeOdeBaseDiscretizable<CellmlAdapter<nStates, FunctionSpaceType>>::initialize();
   double prefactor = this->discretizableInTime_.prefactor();
   int outputComponentNo = this->discretizableInTime_.outputStateIndex();
 
@@ -321,7 +323,7 @@ run()
 }
 */
 template<typename DiscretizableInTimeType>
-bool TimeSteppingSchemeOde<DiscretizableInTimeType>::
+bool TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 knowsMeshType()
 {
   return this->discretizableInTime_.knowsMeshType();

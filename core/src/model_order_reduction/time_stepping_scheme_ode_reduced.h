@@ -17,10 +17,10 @@ class TimeSteppingSchemeOdeReduced :
   public ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>
 {
 public:
-  //typedef ::FunctionSpace::Generic FunctionSpace;
+  typedef ::FunctionSpace::Generic FunctionSpace;
   typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
   //typedef Data::TimeSteppingReduced<typename TimeSteppingType::FunctionSpace> DataReduced; //type of Data object  
-  typedef FunctionSpace::Generic GenericFunctionSpace;
+  typedef ::FunctionSpace::Generic GenericFunctionSpace;
   
   //! constructor
   TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);

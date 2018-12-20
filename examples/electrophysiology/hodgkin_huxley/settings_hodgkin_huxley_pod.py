@@ -185,13 +185,7 @@ config = {
       "logKey": "Fiber",
       "inputMeshIsGlobal": True,
     },
-    "MeshFibreReduced_CellML": {
-      "nElements": n_elements,
-      "physicalExtent": n_elements/10., #not really consistent 
-      "logKey": "Fiber",
-      "inputMeshIsGlobal": True,
-    },
-    "MeshFibreReduced_Diff": {
+    "MeshFibreReduced": {
       "nElements": n_total,
       "physicalExtent": n_total/40.,
       "logKey": "Fiber",
@@ -217,7 +211,7 @@ config = {
      "ModelOrderReduction": {
       "nRowsSnapshots" : n_total,
       "nReducedBases" : n_reduced,
-      "nRowsComponents" : 4,
+      "nRowsComponents" : 1,
       "ExplicitEuler" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
@@ -282,7 +276,7 @@ config = {
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "meshName": "MeshFibreReduced_CellML",
+          "meshName": "MeshFibreReduced",
           "prefactor": 1.0,
         },
         
@@ -327,7 +321,7 @@ config = {
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
         "FiniteElementMethod" : {
-          "meshName": "MeshFibreReduced_Diff",
+          "meshName": "MeshFibreReduced",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "implicitSolver",
         },

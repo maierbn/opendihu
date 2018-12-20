@@ -107,7 +107,7 @@ namespace ModelOrderReduction
       VecAXPY(redSolution, this->timeStepWidth_, redIncrement);
       
       // full state recovery
-      ierr=MatMult(basis, redSolution , solution); CHKERRV(ierr);
+      this->MatMultFull(basis, redSolution , solution); CHKERRV(ierr);
       
       // advance simulation time
       timeStepNo++;

@@ -36,8 +36,11 @@ protected:
   //! Set the reduced system matrix, A_R=V^T A V
   virtual void setRedSysMatrix(Mat &A, Mat &A_R);
   
-  //! Modification to MatMult in case that size of vector x does not match to the columns of the matrix.
+  //! Modification to MatMult in case that size of vector x does not match to the columns of the matrix. Purpose is to transfer to the reduced order space. 
   virtual void MatMultReduced(Mat mat,Vec x,Vec y);
+  
+  //! Modification to MatMult in case that size of vector y does not match to the rows of the matrix. Purpose is to transfer to the full order space.
+  virtual void MatMultFull(Mat mat,Vec x,Vec y);
   
   std::shared_ptr<DataMOR> dataMOR_;
   int nReducedBases_;    

@@ -38,7 +38,7 @@ checkTraceFinalFibers(int &level)
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh)
+traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions)
 {
   LOG(DEBUG) << "final level";
 
@@ -72,11 +72,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   {
     Vec3 &startingPoint = seedPoints[i];
     streamlinePoints[i].push_back(startingPoint);
-
-    for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
-    {
-      this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
-    }
 
     this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
   }

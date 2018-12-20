@@ -150,6 +150,14 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
       zIncrement = -1;
     }
 
+    // if z+/z- ghost meshes were not provided, do not consider z
+    if (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr && ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr)
+    {
+      zBegin = 0;
+      zEnd = 1;
+      zIncrement = 1;
+    }
+
     int yBegin = -1;
     int yEnd = +2;
     int yIncrement = +1;
@@ -223,6 +231,8 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
     std::array<int,3> neighbourCoordinatesLocal;
     element_no_t neighbourElementNo;
 
+    FunctionSpaceFindPosition<MeshType,BasisFunctionType> *functionSpace = this;
+
     for (int z = zBegin; z != zEnd; z += zIncrement)
     {
       for (int y = yBegin; y != yEnd; y += yIncrement)
@@ -244,9 +254,26 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 
           neighbourCoordinatesLocal = coordinatesLocal + std::array<int,3>({x,y,z});
 
-          FunctionSpaceFindPosition<MeshType,BasisFunctionType> *functionSpace = this;
+          // do not consider diagonal ghost meshes, e.g. x+/y+
+          int nGhostTargets = 0;
+          if (neighbourCoordinatesLocal[2] == this->meshPartition_->nElementsLocal(2) || neighbourCoordinatesLocal[2] == -1)
+          {
+            nGhostTargets++;
+          }
+          if (neighbourCoordinatesLocal[1] == this->meshPartition_->nElementsLocal(1) || neighbourCoordinatesLocal[1] == -1)
+          {
+            nGhostTargets++;
+          }
+          if (neighbourCoordinatesLocal[0] == this->meshPartition_->nElementsLocal(0) || neighbourCoordinatesLocal[0] == -1)
+          {
+            nGhostTargets++;
+          }
+          if (nGhostTargets > 1)
+            continue;
 
-          VLOG(2) << "(x,y,z) = (" << x << "," << y << "," << z << "), index = " << index << ", neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
+          functionSpace = this;
+
+          //LOG(DEBUG) << "(x,y,z) = (" << x << "," << y << "," << z << "), index = " << index << ", neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
 
           if (neighbourCoordinatesLocal[0] == -1)  // if at left boundary
           {
@@ -256,6 +283,13 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({0,neighbourCoordinatesLocal[1],neighbourCoordinatesLocal[2]});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+
+              VLOG(1) << "0- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
+            }
+            else
+            {
+              // at this position outside of the normal subdomain no ghost mesh was specified
+              continue;
             }
           }
           else if (neighbourCoordinatesLocal[0] == this->meshPartition_->nElementsLocal(0))  // if at right boundary
@@ -266,6 +300,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({0,neighbourCoordinatesLocal[1],neighbourCoordinatesLocal[2]});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+              VLOG(1) << "0+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
+            }
+            else
+            {
+              // at this position outside of the normal subdomain no ghost mesh was specified
+              continue;
             }
           }
           else if (neighbourCoordinatesLocal[1] == -1)  // if at front boundary
@@ -276,6 +316,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({neighbourCoordinatesLocal[0],0,neighbourCoordinatesLocal[2]});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+              VLOG(1) << "1- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
             }
           }
           else if (neighbourCoordinatesLocal[1] == this->meshPartition_->nElementsLocal(1))  // if at back boundary
@@ -286,6 +327,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({neighbourCoordinatesLocal[0],0,neighbourCoordinatesLocal[2]});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+              VLOG(1) << "1+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
+            }
+            else
+            {
+              // at this position outside of the normal subdomain no ghost mesh was specified
+              continue;
             }
           }
           else if (neighbourCoordinatesLocal[2] == -1)  // if at bottom boundary
@@ -296,6 +343,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({neighbourCoordinatesLocal[0],neighbourCoordinatesLocal[1],0});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+              VLOG(1) << "2- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
+            }
+            else
+            {
+              // at this position outside of the normal subdomain no ghost mesh was specified
+              continue;
             }
           }
           else if (neighbourCoordinatesLocal[2] == this->meshPartition_->nElementsLocal(2))  // if at top boundary
@@ -306,6 +359,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               functionSpace = ghostMesh_[ghostMeshNo].get();
               std::array<int,3> ghostMeshCoordinates({neighbourCoordinatesLocal[0],neighbourCoordinatesLocal[1],0});
               neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
+              VLOG(1) << "2+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates;
+            }
+            else
+            {
+              // at this position outside of the normal subdomain no ghost mesh was specified
+              continue;
             }
           }
           else if (0 <= neighbourCoordinatesLocal[0] && neighbourCoordinatesLocal[0] <= this->meshPartition_->nElementsLocal(0)
@@ -313,7 +372,11 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             && 0 <= neighbourCoordinatesLocal[2] && neighbourCoordinatesLocal[2] <= this->meshPartition_->nElementsLocal(2))
           {
             neighbourElementNo = this->meshPartition_->getElementNoLocal(neighbourCoordinatesLocal);
+            functionSpace = this;
+            ghostMeshNo = -1;
+            VLOG(1) << "normal, neighbourElementNo: " << neighbourElementNo << " nElementsLocal: " << this->nElementsLocal() << "=" << functionSpace->nElementsLocal();
           }
+          else LOG(FATAL) << "Neighbour coordinates invalid";
 
           // check if point is in current neighbour element
           if (neighbourElementNo != -1)

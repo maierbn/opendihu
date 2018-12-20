@@ -5,19 +5,13 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh)
+traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
   int nStreamlines = seedPoints.size();
   streamlinePoints.resize(nStreamlines);
 
   if (nRanksZ == 1)
   {
-    // if there is only one rank, trace streamline from the center in both directions
-    for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
-    {
-      this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
-    }
-
     // trace streamlines from seed points
     int nStreamlines = seedPoints.size();
     LOG(DEBUG) << " on 1 rank, trace " << nStreamlines << " streamlines";
@@ -88,11 +82,6 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     {
       Vec3 &startingPoint = seedPoints[i];
       streamlinePoints[i].push_back(startingPoint);
-
-      for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face1Plus; face++)
-      {
-        this->functionSpace_->setGhostMesh(Mesh::face_t::face0Minus, ghostMesh[face]);
-      }
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
 

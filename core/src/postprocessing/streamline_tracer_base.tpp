@@ -18,6 +18,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   element_no_t elementNo = 0;
   int ghostMeshNo = -1;
   std::array<double,(unsigned long int)3> xi;
+  std::shared_ptr<FunctionSpace> functionSpace = functionSpace_;  ///< the function space to use, this can be set to one of the ghost meshes
   
   // There are 2 implementations of streamline tracing.
   // The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution_ field.
@@ -45,8 +46,11 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       startSearchInCurrentElement = false;
     }
     else
+    {
       startSearchInCurrentElement = true;
+    }
 
+    // look for the element and xi value of the currentPoint, also considers ghost meshes if they are set
     bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement);
 
     // if no position was found, the streamline exits the domain
@@ -56,31 +60,61 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       break;
     }
 
-    // get values for element that are later needed to compute the gradient
-    if (useGradientField_)
-    {
-      gradient_->getElementValues(elementNo, elementalGradientValues);
-    }
-    else
-    {
-      solution_->getElementValues(elementNo, elementalSolutionValues);
+    VLOG(1) << " findPosition returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo;
 
-      // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
-      functionSpace_->getElementGeometry(elementNo, geometryValues);
+    // get values for element that are later needed to compute the gradient
+
+    // if the streamline passes a normal element
+    if (ghostMeshNo == -1)
+    {
+      VLOG(1) << "use normal mesh";
+
+      functionSpace = functionSpace_;
+
+      if (useGradientField_)
+      {
+        gradient_->getElementValues(elementNo, elementalGradientValues);
+      }
+      else
+      {
+        solution_->getElementValues(elementNo, elementalSolutionValues);
+
+        // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+        functionSpace->getElementGeometry(elementNo, geometryValues);
+      }
+    }
+    else    // if the streamline is in an element of a ghost mesh
+    {
+      VLOG(1) << "use ghost mesh";
+
+      // use ghost mesh as current function space
+      functionSpace = ghostMesh_[ghostMeshNo];
+
+      if (useGradientField_)
+      {
+        ghostMeshGradient_[ghostMeshNo]->getElementValues(elementNo, elementalGradientValues);
+      }
+      else
+      {
+        ghostMeshSolution_[ghostMeshNo]->getElementValues(elementNo, elementalSolutionValues);
+
+        // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+        functionSpace->getElementGeometry(elementNo, geometryValues);
+      }
     }
 
     // get value of gradient
     Vec3 gradient;
     if (useGradientField_)
     {
-      gradient = functionSpace_->template interpolateValueInElement<3>(elementalGradientValues, xi);
+      gradient = functionSpace->template interpolateValueInElement<3>(elementalGradientValues, xi);
       VLOG(2) << "use gradient field";
     }
     else
     {
       // compute the gradient value in the current value
-      Tensor2<D> inverseJacobian = functionSpace_->getInverseJacobian(geometryValues, elementNo, xi);
-      gradient = functionSpace_->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+      Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNo, xi);
+      gradient = functionSpace->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
 
       VLOG(2) << "use direct gradient";
     }

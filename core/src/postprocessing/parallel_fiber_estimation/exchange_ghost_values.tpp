@@ -5,7 +5,7 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh)
+exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 {
   struct GhostValues
   {
@@ -103,8 +103,8 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
       int size1, size2, size3;
       fileIn >> size1 >> size2 >> size3;
       ghostValuesBuffer[face].nodePositionValues.resize(size1);
-      ghostValuesBuffer[face].solutionValues.resize(size1);
-      ghostValuesBuffer[face].gradientValues.resize(size1);
+      ghostValuesBuffer[face].solutionValues.resize(size2);
+      ghostValuesBuffer[face].gradientValues.resize(size3);
 
       for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
         fileIn >> ghostValuesBuffer[face].nodePositionValues[i];
@@ -170,8 +170,6 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
   }
 
   // create ghost element meshes from received data
-  std::array<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,4> ghostSolution;
-  std::array<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,4> ghostGradient;
 
   LOG(DEBUG) << "split rank subset, own rank: " << currentRankSubset_->ownRankNo();
   std::shared_ptr<Partition::RankSubset> rankSubsetSingleRank = std::make_shared<Partition::RankSubset>(currentRankSubset_->ownRankNo(), currentRankSubset_->mpiCommunicator());
@@ -199,13 +197,19 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
       // create ghost mesh
       std::array<int,3> nRanks({1,1,1});
       context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetSingleRank);
-      ghostMesh[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(
+      this->ghostMesh_[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(
         meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection, nRanks);
 
-      ghostSolution[face] = ghostMesh[face]->template createFieldVariable<1>("solution");
-      ghostSolution[face]->setValuesWithGhosts(ghostValuesBuffer[face].solutionValues);
-      ghostGradient[face] = ghostMesh[face]->template createFieldVariable<3>("gradient");
+      // create solution field variable for ghost mesh
+      LOG(DEBUG) << "create solution field variable on ghost mesh";
+      this->ghostMeshSolution_[face] = this->ghostMesh_[face]->template createFieldVariable<1>("solution");
+      this->ghostMeshSolution_[face]->setValuesWithGhosts(ghostValuesBuffer[face].solutionValues);
+
+      LOG(DEBUG) << "create gradient field variable on ghost mesh";
+      // create gradient field variable for ghost mesh
+      this->ghostMeshGradient_[face] = this->ghostMesh_[face]->template createFieldVariable<3>("gradient");
       int nGradientValues = ghostValuesBuffer[face].gradientValues.size()/3;
+
       std::vector<Vec3> gradientValues(nGradientValues);
       for (int i = 0; i < nGradientValues; i++)
       {
@@ -213,8 +217,14 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<st
         gradientValues[i][1] = ghostValuesBuffer[face].gradientValues[3*i + 1];
         gradientValues[i][2] = ghostValuesBuffer[face].gradientValues[3*i + 2];
       }
-      ghostGradient[face]->setValuesWithGhosts(gradientValues);
+      this->ghostMeshGradient_[face]->setValuesWithGhosts(gradientValues);
     }
+    else
+    {
+      this->ghostMesh_[face] = nullptr;
+    }
+
+    this->functionSpace_->setGhostMesh((Mesh::face_t)face, this->ghostMesh_[face]);
   }
 
 }

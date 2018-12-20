@@ -516,8 +516,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       LOG(FATAL) << "end";
     LOG(DEBUG) << "\nConstruct ghost elements";
 
-    std::array<std::shared_ptr<FunctionSpaceType>,4> ghostMesh;
-    exchangeGhostValues(subdomainIsAtBorder, ghostMesh);
+    exchangeGhostValues(subdomainIsAtBorder);
 
     // initialize values in base class
     this->functionSpace_ = problem_->data().functionSpace();
@@ -560,7 +559,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // trace final fibers
     if (traceFinalFibers)
     {
-      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, ghostMesh);
+      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions);
 
       // algorithm is finished
       return;
@@ -570,7 +569,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // trace streamlines
     std::vector<std::vector<Vec3>> streamlinePoints;
-    traceStreamlines(nRanksZ, rankZNo, streamlineDirection, streamlineDirectionUpwards, seedPoints, streamlinePoints, ghostMesh);
+    traceStreamlines(nRanksZ, rankZNo, streamlineDirection, streamlineDirectionUpwards, seedPoints, streamlinePoints);
 
     // sample streamlines at equidistant z points
     nBorderPointsZNew_ = nBorderPointsZ_*2 - 1;

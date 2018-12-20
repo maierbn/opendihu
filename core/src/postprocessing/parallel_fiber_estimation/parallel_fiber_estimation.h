@@ -63,16 +63,16 @@ protected:
   void createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions);
 
   //! communicate ghost values for gradient and solution value to neighbouring processes, the ghost elements are obtained from the mesh partition
-  void exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder, std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
+  void exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder);
 
   //! create the seed points in form of a cross at the center of the current domain
   void createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints);
 
   //! trace the fibers that are evenly distributed in the subdomain, this is the final step of the algorithm
-  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
+  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions);
 
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
-  void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints, const std::array<std::shared_ptr<FunctionSpaceType>,4> &ghostMesh);
+  void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
 
   //! sample the streamlines at equidistant z points
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, std::vector<std::vector<Vec3>> &streamlineZPoints);

@@ -6,7 +6,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                       std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid)
+                         std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid)
 {
   // borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex]
   // borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex]
@@ -26,6 +26,7 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   }
 
   // fill invalid streamlines
+
 }
 
 };  // namespace

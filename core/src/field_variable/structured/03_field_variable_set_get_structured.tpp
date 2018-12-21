@@ -206,6 +206,7 @@ getElementValues(int componentNo, element_no_t elementNo,
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
     indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
+    //LOG(DEBUG) << "getElementValues el. " << elementNo << ", dof " << indices[dofIndex];
   }
   
   // get the values

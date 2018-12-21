@@ -153,13 +153,23 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       LOG(DEBUG) << "ghostValuesBuffer[face].gradientValues: " << ghostValuesBuffer[face].gradientValues;
 
       for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << std::endl;
+      {
+        if (i % int(ghostValuesBuffer[face].nodePositionValues.size()/3) == 0)
+          fileOut << std::endl;
+
+        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";
+      }
+      fileOut << std::endl;
 
       for (int i = 0; i < ghostValuesBuffer[face].solutionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].solutionValues[i] << std::endl;
+        fileOut << ghostValuesBuffer[face].solutionValues[i] << " ";
+
+      fileOut << std::endl;
 
       for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].gradientValues[i] << std::endl;
+        fileOut << ghostValuesBuffer[face].gradientValues[i] << " ";
+
+      fileOut << std::endl;
 
       fileOut.close();
       LOG(DEBUG) << "Wrote ghost meshes (" << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
@@ -195,6 +205,26 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       LOG(DEBUG) << "Loaded ghost meshes (" << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
         << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
         << " gradient values) from checkpoint file " << filenameIn.str();
+
+
+      int elementNo = 392;
+      // element coordinates 0,0,49
+      if (neighbourRankNo == 1 && Mesh::getString((Mesh::face_t)face) == "0+")
+      {
+        LOG(DEBUG) << "special element " << elementNo;
+        //int
+        // 0+
+        // element coordinates: (0,0,49) / (1,8,50)
+        int dof[8] = {49*(2*9), 49*(2*9)+1, 49*(2*9) + 1*2, 49*(2*9) + 1*2 + 1,
+                      50*(2*9), 50*(2*9)+1, 50*(2*9) + 1*2, 50*(2*9) + 1*2 + 1};
+        for (int i = 0; i < 8; i++)
+        {
+          LOG(DEBUG) << ghostValuesBuffer[face].nodePositionValues[dof[i]] << ","
+            << ghostValuesBuffer[face].nodePositionValues[918 + dof[i]] << ","
+            << ghostValuesBuffer[face].nodePositionValues[918*2 + dof[i]];
+        }
+      }
+
 #endif
 
 #if 1

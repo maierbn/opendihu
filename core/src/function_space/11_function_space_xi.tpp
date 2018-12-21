@@ -47,6 +47,8 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   std::array<Vec3,nDofsPerElement> geometryValues;
   this->getElementGeometry(elementNo, geometryValues);
 
+  VLOG(2) << "point " << point << ", geometryValues: " << geometryValues;
+
   Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
   VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";

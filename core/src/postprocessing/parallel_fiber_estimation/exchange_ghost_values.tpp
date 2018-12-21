@@ -148,6 +148,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       LOG(DEBUG) << " output " << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
         << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
         << " gradient values to file " << filenameOut.str();
+      LOG(DEBUG) << "ghostValuesBuffer[face].nodePositionValues: " << ghostValuesBuffer[face].nodePositionValues;
 
       for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
         fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";

@@ -124,6 +124,8 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
   MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
+  LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requessts, " << receiveRequests.size() << " receiveRefquests) complete";
+
   // handle received values
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
@@ -143,6 +145,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
         << ghostValuesBuffer[face].solutionValues.size() << " "
         << ghostValuesBuffer[face].gradientValues.size() << " ";
 
+      LOG(DEBUG) << " output " << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
+        << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
+        << " gradient values to file " << filenameOut.str();
 
       for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
         fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";

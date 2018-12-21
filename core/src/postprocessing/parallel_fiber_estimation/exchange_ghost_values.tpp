@@ -66,7 +66,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
       LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << ": nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
 
-#if !defined(WRITE_CHECKPOINT_GHOST_MESH) && !defined(USE_CHECKPOINT_GHOST_MESH)
+#if !defined(USE_CHECKPOINT_GHOST_MESH)
       for (int i = 0; i < 2; i++)
       {
 

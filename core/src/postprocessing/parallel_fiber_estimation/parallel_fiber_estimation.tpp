@@ -12,8 +12,8 @@
 #define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
-//#define WRITE_CHECKPOINT_GHOST_MESH
-#define USE_CHECKPOINT_GHOST_MESH
+#define WRITE_CHECKPOINT_GHOST_MESH
+//#define USE_CHECKPOINT_GHOST_MESH
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
@@ -520,7 +520,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     exchangeGhostValues(subdomainIsAtBorder);
 
     // initialize values in base class
-    this->functionSpace_ = problem_->data().functionSpace();
     this->solution_ = problem_->data().solution();
     this->gradient_ = data_.gradient();
 

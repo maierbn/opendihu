@@ -10,6 +10,7 @@
 namespace FunctionSpace
 {
 
+// structured mesh
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceFindPosition<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
 findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement)
@@ -22,6 +23,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
   if (startSearchInCurrentElement)
   {
+    VLOG(2) << "findPosition: startSearchInCurrentElement";
 
     // check if point is already in current element
     FunctionSpaceFindPosition<MeshType,BasisFunctionType> *functionSpace = this;
@@ -71,9 +73,17 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
     // point is not in current element, consider the neighbouring elements and ghost meshes
 
+    VLOG(2) << "point is not in current element, now check neighoubring elements";
+
     // set the neighbouring element nos, also considering ghost meshes
     if (checkNeighbouringElements(point, elementNo, ghostMeshNo, xi))
+    {
       return true;
+    }
+    else
+    {
+      VLOG(2) << "point was also not found among neighoubring elements (including ghost meshes), now check all elements";
+    }
   }
 
   // search among all elements
@@ -82,7 +92,8 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
   element_no_t elementNoStart = (elementNo - 2 + nElements) % nElements;
   element_no_t elementNoEnd = (elementNo - 3 + nElements) % nElements;
 
-  VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements;
+  VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements
+    << "(" << this->meshPartition_->nElementsLocal(0) << "x" << this->meshPartition_->nElementsLocal(1) << "x" << this->meshPartition_->nElementsLocal(2) << ")";
 
   for (element_no_t currentElementNo = elementNoStart; currentElementNo != elementNoEnd; currentElementNo++)
   {
@@ -93,6 +104,8 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
       if (elementNoEnd == currentElementNo)
         break;
     }
+
+    VLOG(4) << "check element " << currentElementNo;
 
     if (this->pointIsInElement(point, currentElementNo, xi))
     {
@@ -113,7 +126,6 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
   return false;
 }
 
-
 template<typename MeshType, typename BasisFunctionType>
 void FunctionSpaceFindPosition<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
 setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh)
@@ -121,13 +133,26 @@ setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,Bas
   assert(0 <= face);
   assert(face < 6);
   ghostMesh_[face] = ghostMesh;
+  VLOG(1) << "set ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << " to " << (ghostMesh == nullptr? " null" : "x");
+}
+
+template<typename MeshType, typename BasisFunctionType>
+void FunctionSpaceFindPosition<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
+debugOutputGhostMeshSet()
+{
+  VLOG(1) << "ghost mesh 0- is " << (ghostMesh_[(int)Mesh::face_t::face0Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0+ is " << (ghostMesh_[(int)Mesh::face_t::face0Plus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 1- is " << (ghostMesh_[(int)Mesh::face_t::face1Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 1+ is " << (ghostMesh_[(int)Mesh::face_t::face1Plus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 2- is " << (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 2+ is " << (ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr? "not" : "") << " set";
 }
 
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceFindPosition<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
 checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi)
 {
-  VLOG(1) << "getNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNO = " << ghostMeshNo << ")";
+  VLOG(1) << "getNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ")";
 
   if (MeshType::dim() == 3)
   {
@@ -226,7 +251,10 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
     }
 
     VLOG(1) << "nElementsLocal: [" << this->meshPartition_->nElementsLocal(0) << "," << this->meshPartition_->nElementsLocal(1)
-      << "," << this->meshPartition_->nElementsLocal(2) << "] coordinatesLocal: " << coordinatesLocal;
+      << "," << this->meshPartition_->nElementsLocal(2) << "] coordinatesLocal: " << coordinatesLocal
+      << " interation z in [" << zBegin << "," << zEnd << "), y in " << yBegin << "," << yEnd << ") x in [" << xBegin << "," << xEnd << ")";
+
+    debugOutputGhostMeshSet();
 
     std::array<int,3> neighbourCoordinatesLocal;
     element_no_t neighbourElementNo;
@@ -273,7 +301,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 
           functionSpace = this;
 
-          //LOG(DEBUG) << "(x,y,z) = (" << x << "," << y << "," << z << "), index = " << index << ", neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
+          VLOG(1) << "(x,y,z) = (" << x << "," << y << "," << z << "), index = " << index << ", neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
 
           if (neighbourCoordinatesLocal[0] == -1)  // if at left boundary
           {
@@ -388,6 +416,10 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
               targetZ_ = z;
               elementNo = neighbourElementNo;
               return true;
+            }
+            else
+            {
+              VLOG(1) << "  point is not in element " << neighbourElementNo << ".";
             }
           }
         }  // z

@@ -78,7 +78,9 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
 
     // trace streamlines from seed points
-    for (int i = 0; i < nStreamlines; i++)
+    //for (int i = 0; i < nStreamlines; i++)  /*TODO: debug, uncomment for loop*/
+    int i = 0;
+    if (currentRankSubset_->ownRankNo() == 0)   /*TODO: debug remove */
     {
       Vec3 &startingPoint = seedPoints[i];
       streamlinePoints[i].push_back(startingPoint);

@@ -40,6 +40,9 @@ public:
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 11_function_space_xi.h
   virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi) = 0;
 
+  //! print via VLOG(1) << which ghostMesh_ variables are set
+  void debugOutputGhostMeshSet();
+
 protected:
 
   //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours

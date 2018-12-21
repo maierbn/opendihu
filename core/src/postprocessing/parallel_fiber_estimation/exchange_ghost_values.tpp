@@ -66,58 +66,6 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
       LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << ": nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
 
-#ifdef WRITE_CHECKPOINT_GHOST_MESH
-      std::stringstream filenameOut;
-      filenameOut << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face);
-      std::ofstream fileOut;
-      fileOut.open(filenameOut.str().c_str(), std::ios::out | std::ios::trunc);
-
-      assert(fileOut.is_open());
-
-      fileOut << ghostValuesBuffer[face].nodePositionValues.size() << " "
-        << ghostValuesBuffer[face].solutionValues.size() << " "
-        << ghostValuesBuffer[face].gradientValues.size() << " ";
-
-
-      for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";
-
-      for (int i = 0; ghostValuesBuffer[face].solutionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].solutionValues[i] << " ";
-
-      for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].gradientValues[i] << " ";
-
-      fileOut.close();
-#endif
-
-#ifdef USE_CHECKPOINT_GHOST_MESH
-
-      std::stringstream filenameIn;
-      filenameIn << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face);
-      std::ifstream fileIn;
-      fileIn.open(filenameIn.str().c_str(), std::ios::in);
-
-      assert(fileIn.is_open());
-
-      int size1, size2, size3;
-      fileIn >> size1 >> size2 >> size3;
-      ghostValuesBuffer[face].nodePositionValues.resize(size1);
-      ghostValuesBuffer[face].solutionValues.resize(size2);
-      ghostValuesBuffer[face].gradientValues.resize(size3);
-
-      for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
-        fileIn >> ghostValuesBuffer[face].nodePositionValues[i];
-
-      for (int i = 0; i < ghostValuesBuffer[face].solutionValues.size(); i++)
-        fileIn >> ghostValuesBuffer[face].solutionValues[i];
-
-      for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
-        fileIn >> ghostValuesBuffer[face].gradientValues[i];
-
-      fileIn.close();
-#endif
-
 #if !defined(WRITE_CHECKPOINT_GHOST_MESH) && !defined(USE_CHECKPOINT_GHOST_MESH)
       for (int i = 0; i < 2; i++)
       {
@@ -166,6 +114,65 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
         }
       }
 #endif
+
+#ifdef WRITE_CHECKPOINT_GHOST_MESH
+      std::stringstream filenameOut;
+      filenameOut << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      std::ofstream fileOut;
+      fileOut.open(filenameOut.str().c_str(), std::ios::out | std::ios::trunc);
+
+      assert(fileOut.is_open());
+
+      fileOut << ghostValuesBuffer[face].nodePositionValues.size() << " "
+        << ghostValuesBuffer[face].solutionValues.size() << " "
+        << ghostValuesBuffer[face].gradientValues.size() << " ";
+
+
+      for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";
+
+      for (int i = 0; ghostValuesBuffer[face].solutionValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].solutionValues[i] << " ";
+
+      for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].gradientValues[i] << " ";
+
+      fileOut.close();
+      LOG(DEBUG) << "Wrote ghost meshes (" << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
+        << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
+        << " gradient values) to checkpoint file " << filenameOut.str();
+#endif
+
+#ifdef USE_CHECKPOINT_GHOST_MESH
+
+      std::stringstream filenameIn;
+      filenameIn << "checkpoint_ghost_mesh_" << neighbourRankNo << "_" << Mesh::getString((Mesh::face_t)face) << ".txt";
+      std::ifstream fileIn;
+      fileIn.open(filenameIn.str().c_str(), std::ios::in);
+
+      assert(fileIn.is_open());
+
+      int size1, size2, size3;
+      fileIn >> size1 >> size2 >> size3;
+      ghostValuesBuffer[face].nodePositionValues.resize(size1);
+      ghostValuesBuffer[face].solutionValues.resize(size2);
+      ghostValuesBuffer[face].gradientValues.resize(size3);
+
+      for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
+        fileIn >> ghostValuesBuffer[face].nodePositionValues[i];
+
+      for (int i = 0; i < ghostValuesBuffer[face].solutionValues.size(); i++)
+        fileIn >> ghostValuesBuffer[face].solutionValues[i];
+
+      for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
+        fileIn >> ghostValuesBuffer[face].gradientValues[i];
+
+      fileIn.close();
+      LOG(DEBUG) << "Loaded ghost meshes (" << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "
+        << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
+        << " gradient values) from checkpoint file " << filenameIn.str();
+#endif
+
 #if 1
       if (neighbourRankNo != -1)
       {
@@ -212,6 +219,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       this->ghostMesh_[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(
         meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection, nRanks);
 
+
+      LOG(DEBUG) << "created ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << ".";
+
       // create solution field variable for ghost mesh
       LOG(DEBUG) << "create solution field variable on ghost mesh";
       this->ghostMeshSolution_[face] = this->ghostMesh_[face]->template createFieldVariable<1>("solution");
@@ -234,9 +244,12 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
     else
     {
       this->ghostMesh_[face] = nullptr;
+      LOG(DEBUG) << "ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << " is null, because ghostValuesBuffer[face].nodePositionValues is empty()";
     }
 
     this->functionSpace_->setGhostMesh((Mesh::face_t)face, this->ghostMesh_[face]);
+    LOG(DEBUG) << "after settings ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << ": ";
+    this->functionSpace_->debugOutputGhostMeshSet();
   }
 
 }

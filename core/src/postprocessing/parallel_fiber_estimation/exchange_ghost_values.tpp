@@ -74,19 +74,19 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
       assert(fileOut.is_open());
 
-      fileOut << boundaryValues[face].nodePositionValues.size() << " "
-        << boundaryValues[face].solutionValues.size() << " "
-        << boundaryValues[face].gradientValues.size() << " ";
+      fileOut << ghostValuesBuffer[face].nodePositionValues.size() << " "
+        << ghostValuesBuffer[face].solutionValues.size() << " "
+        << ghostValuesBuffer[face].gradientValues.size() << " ";
 
 
-      for (int i = 0; i < boundaryValues[face].nodePositionValues.size(); i++)
-        fileOut << boundaryValues[face].nodePositionValues[i] << " ";
+      for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";
 
-      for (int i = 0; i < boundaryValues[face].solutionValues.size(); i++)
-        fileOut << boundaryValues[face].solutionValues[i] << " ";
+      for (int i = 0; ghostValuesBuffer[face].solutionValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].solutionValues[i] << " ";
 
-      for (int i = 0; i < boundaryValues[face].gradientValues.size(); i++)
-        fileOut << boundaryValues[face].gradientValues[i] << " ";
+      for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].gradientValues[i] << " ";
 
       fileOut.close();
 #endif

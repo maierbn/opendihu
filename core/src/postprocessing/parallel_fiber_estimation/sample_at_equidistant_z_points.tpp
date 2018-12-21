@@ -18,13 +18,17 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, std
   {
     LOG(DEBUG) << " streamline " << i << " has " << streamlinePoints[i].size() << " points.";
 
+    // the streamline is expected to have at least one point, the seed point
+    assert(!streamlinePoints[i].empty());
+
+    Vec3 previousPoint = streamlinePoints[i].front();
+    streamlineZPoints[i].reserve(nBorderPointsZNew_);
+    streamlineZPoints[i].push_back(previousPoint);
+
     if (streamlinePoints[i].size() > 1)
     {
       assert(streamlinePoints[i].size() > 1);
 
-      Vec3 previousPoint = streamlinePoints[i].front();
-      streamlineZPoints[i].reserve(nBorderPointsZNew_);
-      streamlineZPoints[i].push_back(previousPoint);
       currentZ = bottomZClip_ + zIncrement;
       LOG(DEBUG) << "first point: " << streamlinePoints[i].front() << ", currentZ: " << currentZ;
 
@@ -57,6 +61,7 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, std
     {
       LOG(ERROR) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" "
         << std::endl << "Try adjusting \"bottomZClip\" and \"topZClip\" or mesh width.";
+      streamlineZPoints[i].resize(1);
     }
     //assert(streamlineZPoints[i].size() == nBorderPointsZNew_);
   }

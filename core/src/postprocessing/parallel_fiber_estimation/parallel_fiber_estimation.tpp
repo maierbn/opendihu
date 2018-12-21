@@ -590,7 +590,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     fillBorderPoints(borderPoints, borderPointsSubdomain, subdomainIsAtBorder);
 
     // fill in missing points
-    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid);
+    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards);
 
   }  // if own rank is part of this stage of the algorithm
 

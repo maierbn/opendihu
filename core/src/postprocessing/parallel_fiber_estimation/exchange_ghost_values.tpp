@@ -166,7 +166,19 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
         }
       }
 #endif
+#if 1
+      if (neighbourRankNo != -1)
+      {
+        std::stringstream s;
+        s << "05_received_ghost_elements_face_" << Mesh::getString((Mesh::face_t)face);
+        PyObject_CallFunction(functionOutputGhostElements_, "s i O O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
+                              PythonUtility::convertToPython<std::vector<double>>::get(ghostValuesBuffer[face].nodePositionValues),
+                              PythonUtility::convertToPython<std::array<element_no_t,3>>::get(ghostValuesBuffer[face].nElementsPerCoordinateDirection), 0.05);
+        PythonUtility::checkForError();
+      }
+#endif
     }
+
   }
 
   // create ghost element meshes from received data

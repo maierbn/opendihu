@@ -58,7 +58,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // multiple ranks
 
     // determine if previously set seedPoints are used or if they are received from neighbouring rank
-    if (nRanksZ > 1 && rankZNo != int(nRanksZ/2) && rankZNo != int(nRanksZ/2+1))
+    if (nRanksZ > 1 && rankZNo != int(nRanksZ/2)-1 && rankZNo != int(nRanksZ/2+1)-1)
     {
       int neighbourRankNo;
       if (streamlineDirectionUpwards)
@@ -89,7 +89,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       std::stringstream name;
       name << "04_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 1.0);
+                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
 #endif
 

@@ -87,7 +87,7 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
 #ifndef NDEBUG
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
-                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.6);
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.1);
   PythonUtility::checkForError();
 #endif
 

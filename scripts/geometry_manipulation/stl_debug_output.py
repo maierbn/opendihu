@@ -16,9 +16,9 @@ def output_points(filename, rankNo, points, size):
   for p in points:
     point = np.array([p[0], p[1], p[2]])
     stl_create_rings.create_point_marker(point, triangles, size*factor)
-    factor *= 1.1
-    if factor > 3:
-      factor = 3.0
+    #factor *= 1.1
+    #if factor > 3:
+    #  factor = 3.0
 
   #---------------------------------------
   # Create the mesh
@@ -27,7 +27,7 @@ def output_points(filename, rankNo, points, size):
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  outfile = "{}_{}.stl".format(filename, rankNo)
+  outfile = "{}_{}_{}.stl".format(filename[0:7], rankNo, filename[7:])
   #out_mesh.save(outfile, mode=stl.Mode.ASCII)
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
@@ -44,9 +44,9 @@ def output_border_points(filename, rankNo, points, size):
       for p3 in p2:
         point = np.array([p3[0], p3[1], p3[2]])
         stl_create_rings.create_point_marker(point, triangles, size*factor)
-        factor *= 1.1
-        if factor > 3:
-          factor = 3.0
+        #factor *= 1.1
+        #if factor > 3:
+        #  factor = 3.0
 
   #---------------------------------------
   # Create the mesh
@@ -58,7 +58,7 @@ def output_border_points(filename, rankNo, points, size):
       
   #out_mesh.update_normals()
 
-  outfile = "{}.{}.stl".format(filename, rankNo)
+  outfile = "{}_{}_{}.stl".format(filename[0:7], rankNo, filename[7:])
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
 

@@ -11,12 +11,20 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
   PythonUtility::checkForError();
   assert(stlMeshPy);
 
-  // fill points that are on the border of the domain
+  int nRanksZ = meshPartition_->nRanks(2);
+  int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
+
+  double zRangeTotal = topZClip_ - bottomZClip_;
+  double zRangeCurrentLevel = zRangeTotal / nRanksZ;
+  double bottomZClip = bottomZClip_ + zRangeCurrentLevel*rankZNo;
+  double topZClip = bottomZClip_ + zRangeCurrentLevel*(rankZNo+1);
+
+  // fill in points that are on the border of the domain
   // loop over z levels
   double currentZ;
   for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
   {
-    currentZ = bottomZClip_ + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip_ - bottomZClip_);
+    currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
 
     Vec3 startPoint;
     Vec3 endPoint;
@@ -72,6 +80,8 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         assert(loopSectionPy);
 
         std::vector<Vec3> loopSection = PythonUtility::convertFromPython<std::vector<Vec3>>::get(loopSectionPy);
+        if (loopSection.size() != nBorderPointsXNew_)
+          LOG(ERROR) << "Ring section from python script contains only " << loopSection.size() << " points, " << nBorderPointsXNew_ << " requested.";
         assert(loopSection.size() == nBorderPointsXNew_);
 
         LOG(DEBUG) << "got result " << loopSection;

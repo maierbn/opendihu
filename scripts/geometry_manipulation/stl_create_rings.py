@@ -411,7 +411,6 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
   From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
-  The direction is such that the distance of the curve
   :param stl_mesh: stl mesh that contains the closed surface mesh of the muscle, aligned with the z-axis, can be retrieved by get_stl_mesh
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
@@ -423,11 +422,6 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   
   debug = False                 # set this to true to enable debugging output
   write_output_mesh = False    # set this to true to output 4 stl meshes that explain the algorithm
-  
-  if z_value == 155:
-    print("z_value = 155, set debug to true")
-    debug = True
-    write_output_mesh = True
   
   # create a full loop at the given z_value
   loop = []
@@ -755,10 +749,10 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
       
     markers_start_end = []
     markers_loop_start_end = []
-    create_point_marker(start_point, markers_start_end)
-    create_point_marker(end_point, markers_start_end)
-    create_point_marker(loop_start_point, markers_loop_start_end, 0.04)
-    create_point_marker(loop_end_point, markers_loop_start_end, 0.08)
+    create_point_marker(start_point, markers_start_end, 0.1)
+    create_point_marker(end_point, markers_start_end, 0.1)
+    create_point_marker(loop_start_point, markers_loop_start_end, 0.08)
+    create_point_marker(loop_end_point, markers_loop_start_end, 0.16)
         
     
     for point in result_points:

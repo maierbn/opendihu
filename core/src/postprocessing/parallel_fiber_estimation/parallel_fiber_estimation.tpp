@@ -13,7 +13,7 @@
 //#define WRITE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
-#define USE_CHECKPOINT_GHOST_MESH
+//#define USE_CHECKPOINT_GHOST_MESH
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
@@ -21,6 +21,7 @@
 #include "postprocessing/parallel_fiber_estimation/create_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_ghost_values.tpp"
 #include "postprocessing/parallel_fiber_estimation/fill_border_points.tpp"
+#include "postprocessing/parallel_fiber_estimation/fix_incomplete_streamlines.tpp"
 #include "postprocessing/parallel_fiber_estimation/rearrange_streamline_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/refine_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/sample_at_equidistant_z_points.tpp"
@@ -580,11 +581,16 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     //std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
-    rearrangeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, subdomainIsAtBorder);
+    std::array<std::array<std::vector<bool>,4>,8> borderPointsSubdomainAreValid;
+    rearrangeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
     LOG(DEBUG) << "nBorderPointsZ_: " << nBorderPointsZ_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
+    // fill the streamline points that are at the boundary
     fillBorderPoints(borderPoints, borderPointsSubdomain, subdomainIsAtBorder);
+
+    // fill in missing points
+    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid);
 
   }  // if own rank is part of this stage of the algorithm
 

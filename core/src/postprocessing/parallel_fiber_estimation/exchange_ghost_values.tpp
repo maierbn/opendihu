@@ -149,15 +149,17 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
         << ghostValuesBuffer[face].solutionValues.size() << " solution values, " << ghostValuesBuffer[face].gradientValues.size()
         << " gradient values to file " << filenameOut.str();
       LOG(DEBUG) << "ghostValuesBuffer[face].nodePositionValues: " << ghostValuesBuffer[face].nodePositionValues;
+      LOG(DEBUG) << "ghostValuesBuffer[face].solutionValues: " << ghostValuesBuffer[face].solutionValues;
+      LOG(DEBUG) << "ghostValuesBuffer[face].gradientValues: " << ghostValuesBuffer[face].gradientValues;
 
       for (int i = 0; i < ghostValuesBuffer[face].nodePositionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << " ";
+        fileOut << ghostValuesBuffer[face].nodePositionValues[i] << std::endl;
 
-      for (int i = 0; ghostValuesBuffer[face].solutionValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].solutionValues[i] << " ";
+      for (int i = 0; i < ghostValuesBuffer[face].solutionValues.size(); i++)
+        fileOut << ghostValuesBuffer[face].solutionValues[i] << std::endl;
 
       for (int i = 0; i < ghostValuesBuffer[face].gradientValues.size(); i++)
-        fileOut << ghostValuesBuffer[face].gradientValues[i] << " ";
+        fileOut << ghostValuesBuffer[face].gradientValues[i] << std::endl;
 
       fileOut.close();
       LOG(DEBUG) << "Wrote ghost meshes (" << ghostValuesBuffer[face].nodePositionValues.size() << " node position values, "

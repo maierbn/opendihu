@@ -64,6 +64,8 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
               }
               LOG(DEBUG) << "interpolate in subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face)
                 << " streamline " << invalidStreamlineIndex << " from " << lastValid << " and " << pointIndex << ", alpha: " << alpha;
+              LOG(DEBUG) << "invalid seed: " << borderPointsSubdomain[subdomainIndex][face][0][invalidStreamlineIndex] << ", lastValid start: " << borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid]
+                << " next valid: " << borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
             }
           }
           lastStreamlinesWereInvalid = false;

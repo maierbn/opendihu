@@ -87,7 +87,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
 #ifndef NDEBUG
       std::stringstream name;
-      name << "04_streamline_" << i << "_";
+      name << "00_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
@@ -132,6 +132,9 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       }
     }
   }
+
+  MPI_Barrier(currentRankSubset_->mpiCommunicator());
+  LOG(FATAL) << "end after all streamlines were traced";
 }
 
 };  // namespace

@@ -73,7 +73,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
     // point is not in current element, consider the neighbouring elements and ghost meshes
 
-    VLOG(2) << "point is not in current element, now check neighoubring elements";
+    VLOG(2) << "point is not in current element, now check neighbouring elements";
 
     // set the neighbouring element nos, also considering ghost meshes
     if (checkNeighbouringElements(point, elementNo, ghostMeshNo, xi))
@@ -82,7 +82,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     }
     else
     {
-      VLOG(2) << "point was also not found among neighoubring elements (including ghost meshes), now check all elements";
+      VLOG(2) << "point was also not found among neighbouring elements (including ghost meshes), xi: " << xi << ", now check all elements";
     }
   }
 
@@ -152,60 +152,67 @@ template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceFindPosition<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>>::
 checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi)
 {
-  VLOG(1) << "getNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ")";
+  VLOG(1) << "getNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
   if (MeshType::dim() == 3)
   {
-    // this is implemented in a generic way such that we could also set different sizes of the box of considered neighbours here (however, not tested)
-    const int xLeft = -1;
-    const int xRight = 1;
-    const int yLeft = -1;
-    const int yRight = 1;
-    const int zLeft = -1;
-    const int zRight = 1;
+    static std::array<int,3> xOffset;
+    static std::array<int,3> yOffset;
+    static std::array<int,3> zOffset;
 
-    // set loop boundaries, such that the last successful case is first
-    int zBegin = -1;
-    int zEnd = +2;
-    int zIncrement = +1;
-    if (targetZ_ == +1)
+    // x direction
+    if (xi[0] < 0)
     {
-      zBegin = +1;
-      zEnd = -2;
-      zIncrement = -1;
+      xOffset = {-1, 0, 1};
+    }
+    else if (xi[0] > 1.0)
+    {
+      xOffset = {1, 0, -1};
+    }
+    else if (xi[0] > 0.5)
+    {
+      xOffset = {0, 1, -1};
+    }
+    else
+    {
+      xOffset = {0, -1, 1};
     }
 
-    // if z+/z- ghost meshes were not provided, do not consider z
-    if (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr && ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr)
+    // y direction
+    if (xi[1] < 0)
     {
-      zBegin = 0;
-      zEnd = 1;
-      zIncrement = 1;
+      yOffset = {-1, 0, 1};
+    }
+    else if (xi[1] > 1.0)
+    {
+      yOffset = {1, 0, -1};
+    }
+    else if (xi[1] > 0.5)
+    {
+      yOffset = {0, 1, -1};
+    }
+    else
+    {
+      yOffset = {0, -1, 1};
     }
 
-    int yBegin = -1;
-    int yEnd = +2;
-    int yIncrement = +1;
-    if (targetY_ == +1)
+    // z direction
+    if (xi[2] < 0)
     {
-      yBegin = +1;
-      yEnd = -2;
-      yIncrement = -1;
+      zOffset = {-1, 0, 1};
     }
-
-    int xBegin = -1;
-    int xEnd = +2;
-    int xIncrement = +1;
-    if (targetX_ == +1)
+    else if (xi[2] > 1.0)
     {
-      xBegin = +1;
-      xEnd = -2;
-      xIncrement = -1;
+      zOffset = {1, 0, -1};
     }
-
-    int nNeighbours = (xRight-xLeft+1) * (yRight-yLeft+1) * (zRight-zLeft+1) - 1;
-    assert(nNeighbours == 26);
-    //neighbouringElements.resize(nNeighbours);
+    else if (xi[2] > 0.5)
+    {
+      zOffset = {0, 1, -1};
+    }
+    else
+    {
+      zOffset = {0, -1, 1};
+    }
 
     // get local coordinates of element
     std::array<int,3> coordinatesLocal;
@@ -252,7 +259,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 
     VLOG(1) << "nElementsLocal: [" << this->meshPartition_->nElementsLocal(0) << "," << this->meshPartition_->nElementsLocal(1)
       << "," << this->meshPartition_->nElementsLocal(2) << "] coordinatesLocal: " << coordinatesLocal
-      << " interation z in [" << zBegin << "," << zEnd << "), y in " << yBegin << "," << yEnd << ") x in [" << xBegin << "," << xEnd << ")";
+      << " interation z in " << zOffset << ", y in " << yOffset << " x in " << xOffset << "";
 
     debugOutputGhostMeshSet();
 
@@ -261,31 +268,46 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 
     FunctionSpaceFindPosition<MeshType,BasisFunctionType> *functionSpace = this;
 
-    for (int z = zBegin; z != zEnd; z += zIncrement)
+    for (int zIndex = 0; zIndex != 3; zIndex++)
     {
-      for (int y = yBegin; y != yEnd; y += yIncrement)
+      int z = zOffset[zIndex];
+      for (int yIndex = 0; yIndex != 3; yIndex++)
       {
-        for (int x = xBegin; x != xEnd; x += xIncrement)
+        int y = yOffset[yIndex];
+        for (int xIndex = 0; xIndex != 3; xIndex++)
         {
+          int x = xOffset[xIndex];
+
           // do not handle the center point
           if (x == 0 && y == 0 && z == 0)
           {
             continue;
           }
 
-          // compute index of neighbouringElements for the current element
-          int index = (z-zLeft)*(xRight-xLeft+1)*(yRight-yLeft+1) + (y-yLeft)*(xRight-xLeft+1) + (x-xLeft);
-          if (index >= nNeighbours/2)
-            index--;
-
           neighbourElementNo = -1;   // set to invalid
 
           neighbourCoordinatesLocal = coordinatesLocal + std::array<int,3>({x,y,z});
+
+          VLOG(1) << "(x,y,z) = (" << x << "," << y << "," << z << "), neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
+
+          if (neighbourCoordinatesLocal[2] > this->meshPartition_->nElementsLocal(2) || neighbourCoordinatesLocal[2] < -1
+            || neighbourCoordinatesLocal[1] > this->meshPartition_->nElementsLocal(1) || neighbourCoordinatesLocal[1] < -1
+            || neighbourCoordinatesLocal[0] > this->meshPartition_->nElementsLocal(0) || neighbourCoordinatesLocal[0] < -1)
+          {
+            VLOG(1) << "outside ghost layer";
+            continue;
+          }
 
           // do not consider diagonal ghost meshes, e.g. x+/y+
           int nGhostTargets = 0;
           if (neighbourCoordinatesLocal[2] == this->meshPartition_->nElementsLocal(2) || neighbourCoordinatesLocal[2] == -1)
           {
+            // if top and bottom ghost meshes were not provided, continue
+            if (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr && ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr)
+            {
+              VLOG(1) << "z+/z- ghost meshes not set, do not consider respective neighbours";
+              continue;
+            }
             nGhostTargets++;
           }
           if (neighbourCoordinatesLocal[1] == this->meshPartition_->nElementsLocal(1) || neighbourCoordinatesLocal[1] == -1)
@@ -297,11 +319,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             nGhostTargets++;
           }
           if (nGhostTargets > 1)
+          {
+            VLOG(1) << "edge ghost element";
             continue;
+          }
 
           functionSpace = this;
-
-          VLOG(1) << "(x,y,z) = (" << x << "," << y << "," << z << "), index = " << index << ", neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
 
           if (neighbourCoordinatesLocal[0] == -1)  // if at left boundary
           {
@@ -410,22 +433,18 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshNo = -1;
             VLOG(1) << "normal, neighbourElementNo: " << neighbourElementNo << " nElementsLocal: " << this->nElementsLocal() << "=" << functionSpace->nElementsLocal();
           }
-          else LOG(FATAL) << "Neighbour coordinates invalid";
 
           // check if point is in current neighbour element
           if (neighbourElementNo != -1)
           {
             if (functionSpace->pointIsInElement(point, neighbourElementNo, xi))
             {
-              targetX_ = x;
-              targetY_ = y;
-              targetZ_ = z;
               elementNo = neighbourElementNo;
               return true;
             }
             else
             {
-              VLOG(1) << "  point is not in element " << neighbourElementNo << ".";
+              VLOG(1) << "  point is not in element " << neighbourElementNo << " (xi: " << xi << ").";
             }
           }
         }  // z

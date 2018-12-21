@@ -9,8 +9,9 @@
 namespace FunctionSpace
 {
 
-const int N_NEWTON_ITERATIONS = 4;    // (5) number of newton iterations to find out if a point is inside an element
-const double POINT_IN_ELEMENT_EPSILON = 1e-5;    // (1e-12)
+const double POINT_IN_ELEMENT_EPSILON = 1e-2;    // (1e-5) (1e-12)
+const int N_NEWTON_ITERATIONS = 7;    // (4) (5) number of newton iterations to find out if a point is inside an element
+const double RESIDUUM_NORM_TOLERANCE = 1e-2;    // usually 1e-2 takes 2-3 iterations
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
@@ -51,9 +52,12 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
   Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
-  VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+  }
   
-  for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > 1e-10; iterationNo++)
+  for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
   {
     Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
     xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
@@ -61,7 +65,10 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
     residuumNormSquared = MathUtility::normSquared<3>(residuum);
     
-    VLOG(2) << " xi_i = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << " xi_i = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    }
   }
   
   // Phi(xi) = point

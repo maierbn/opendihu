@@ -49,10 +49,6 @@ protected:
   //! set elementNo, ghostMeshNo and xi appropriately
   bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
 
-  int targetX_ = 0;   //! the x index of the neighbour (-1,0, or 1) where the last neighbouring element was found
-  int targetY_ = 0;   //! the y index of the neighbour (-1,0, or 1) where the last neighbouring element was found
-  int targetZ_ = 0;   //! the z index of the neighbour (-1,0, or 1) where the last neighbouring element was found
-
   std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_;   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
 };
 

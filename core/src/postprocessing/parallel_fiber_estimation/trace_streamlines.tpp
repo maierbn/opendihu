@@ -78,9 +78,7 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
 
     // trace streamlines from seed points
-    //for (int i = 0; i < nStreamlines; i++)  /*TODO: debug, uncomment for loop*/
-    int i = 0;
-    if (currentRankSubset_->ownRankNo() == 0)   /*TODO: debug remove */
+    for (int i = 0; i < nStreamlines; i++)
     {
       Vec3 &startingPoint = seedPoints[i];
       streamlinePoints[i].push_back(startingPoint);
@@ -135,8 +133,8 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     }
   }
 
-  MPI_Barrier(currentRankSubset_->mpiCommunicator());
-  LOG(FATAL) << "end after all streamlines were traced";
+  //MPI_Barrier(currentRankSubset_->mpiCommunicator());
+  //LOG(FATAL) << "end after all streamlines were traced";
 }
 
 };  // namespace

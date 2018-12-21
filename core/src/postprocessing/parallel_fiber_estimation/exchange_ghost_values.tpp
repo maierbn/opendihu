@@ -259,9 +259,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
       for (node_no_t nodeIndex = 0; nodeIndex < nNodes; nodeIndex++)
       {
-        nodePositions[nodeIndex][0] = ghostValuesBuffer[face].nodePositionValues[nodeIndex*3 + 0];
-        nodePositions[nodeIndex][1] = ghostValuesBuffer[face].nodePositionValues[nodeIndex*3 + 1];
-        nodePositions[nodeIndex][2] = ghostValuesBuffer[face].nodePositionValues[nodeIndex*3 + 2];
+        nodePositions[nodeIndex][0] = ghostValuesBuffer[face].nodePositionValues[nodeIndex];
+        nodePositions[nodeIndex][1] = ghostValuesBuffer[face].nodePositionValues[nNodes + nodeIndex];
+        nodePositions[nodeIndex][2] = ghostValuesBuffer[face].nodePositionValues[2*nNodes + nodeIndex];
       }
 
       LOG(DEBUG) << "create ghost mesh with nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection;

@@ -52,7 +52,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       startSearchInCurrentElement = true;
     }
 
-    LOG(DEBUG) << "startSearchInCurrentElement=" << startSearchInCurrentElement << ", elementNo: " << elementNo << " ghostMeshNo: " << ghostMeshNo;
+    VLOG(1) << "startSearchInCurrentElement=" << startSearchInCurrentElement << ", elementNo: " << elementNo << " ghostMeshNo: " << ghostMeshNo;
 
     // look for the element and xi value of the currentPoint, also considers ghost meshes if they are set
     bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement);
@@ -64,14 +64,14 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       break;
     }
 
-    LOG(DEBUG) << " findPosition returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi;
+    VLOG(1) << " findPosition returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi;
 
     // get values for element that are later needed to compute the gradient
 
     // if the streamline passes a normal element
     if (ghostMeshNo == -1)
     {
-      LOG(DEBUG) << "use normal mesh";
+      VLOG(1) << "use normal mesh";
 
       functionSpace = functionSpace_;
 
@@ -89,7 +89,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
     else    // if the streamline is in an element of a ghost mesh
     {
-      LOG(DEBUG) << "use ghost mesh";
+      VLOG(1) << "use ghost mesh";
 
       // use ghost mesh as current function space
       functionSpace = ghostMesh_[ghostMeshNo];

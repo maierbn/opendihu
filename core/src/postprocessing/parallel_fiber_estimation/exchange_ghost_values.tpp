@@ -17,6 +17,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   std::array<GhostValues,4> ghostValuesBuffer;  ///< [face], data for meshes containing ghost elements for the sides, face0Minus, face0Plus, face1Minus, face1Plus
   std::array<GhostValues,4> boundaryValues;  ///< [face], data to be send
 
+  std::vector<MPI_Request> receiveRequests;
+  std::vector<MPI_Request> sendRequests;
+
   // communicate ghost elements to neighbouring subdomains
   // determine elements on own domain that are to be send to the neighbouring domain
   // loop over faces: face0Minus = 0, face0Plus, face1Minus, face1Plus
@@ -67,53 +70,66 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << ": nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
 
 #if !defined(USE_CHECKPOINT_GHOST_MESH)
-      for (int i = 0; i < 2; i++)
-      {
 
-        if (((face == Mesh::face_t::face0Minus || face == Mesh::face_t::face1Minus) && i == 0)
-          ||((face == Mesh::face_t::face0Plus || face == Mesh::face_t::face1Plus) && i == 1))
-        {
-          LOG(DEBUG) << "receive from rank " << neighbourRankNo;
+      assert (neighbourRankNo != -1);
+      LOG(DEBUG) << "receive from rank " << neighbourRankNo;
 
-          // receive from neighbouring process
-          // blocking receive call to receive node position values
-          ghostValuesBuffer[face].nodePositionValues.resize(nNodePositionValues);
-          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+      // receive from neighbouring process
+      // post non-blocking receive call to receive node position values
+      MPI_Request receiveRequest;
+      ghostValuesBuffer[face].nodePositionValues.resize(nNodePositionValues);
+      MPIUtility::handleReturnValue(MPI_Irecv(ghostValuesBuffer[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+      receiveRequests.push_back(receiveRequest);
 
-          // blocking receive call to receive solution values
-          ghostValuesBuffer[face].solutionValues.resize(nSolutionValues);
-          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+      // post non-blocking receive call to receive solution values
+      ghostValuesBuffer[face].solutionValues.resize(nSolutionValues);
+      MPIUtility::handleReturnValue(MPI_Irecv(ghostValuesBuffer[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+      receiveRequests.push_back(receiveRequest);
 
-          // blocking receive call to receive gradient values
-          ghostValuesBuffer[face].gradientValues.resize(nGradientValues);
-          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+      // post non-blocking receive call to receive gradient values
+      ghostValuesBuffer[face].gradientValues.resize(nGradientValues);
+      MPIUtility::handleReturnValue(MPI_Irecv(ghostValuesBuffer[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+      receiveRequests.push_back(receiveRequest);
 
-          LOG(DEBUG) << "receive from rank " << neighbourRankNo << " completed";
-        }
-        else
-        {
-          LOG(DEBUG) << "send to rank " << neighbourRankNo;
+      LOG(DEBUG) << "receive from rank " << neighbourRankNo << " completed";
 
-          // send values to neighbouring process
-          // blocking send call to send solution values
-          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+      LOG(DEBUG) << "send to rank " << neighbourRankNo;
 
-          // blocking send call to send solution values
-          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+      // send values to neighbouring process
+      // post non-blocking send call to send solution values
+      MPI_Request sendRequest;
+      MPIUtility::handleReturnValue(MPI_Isend(boundaryValues[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+      sendRequests.push_back(sendRequest);
 
-          // blocking send call to send gradient values
-          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
-                                                 neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+      // post non-blocking send call to send solution values
+      MPIUtility::handleReturnValue(MPI_Isend(boundaryValues[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+      sendRequests.push_back(sendRequest);
 
-          LOG(DEBUG) << "send to rank " << neighbourRankNo << " completed";
-        }
-      }
+      // post non-blocking send call to send gradient values
+      MPIUtility::handleReturnValue(MPI_Isend(boundaryValues[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
+                                              neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+      sendRequests.push_back(sendRequest);
+
+      LOG(DEBUG) << "send to rank " << neighbourRankNo << " completed";
 #endif
+    }
+  }
+
+  // wait for non-blocking communication to finish
+  MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  // handle received values
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    if (!subdomainIsAtBorder[face])
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
 
 #ifdef WRITE_CHECKPOINT_GHOST_MESH
       std::stringstream filenameOut;
@@ -185,7 +201,6 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       }
 #endif
     }
-
   }
 
   // create ghost element meshes from received data

@@ -261,7 +261,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
       << "," << this->meshPartition_->nElementsLocal(2) << "] coordinatesLocal: " << coordinatesLocal
       << " interation z in " << zOffset << ", y in " << yOffset << " x in " << xOffset << "";
 
-    debugOutputGhostMeshSet();
+    //debugOutputGhostMeshSet();
 
     std::array<int,3> neighbourCoordinatesLocal;
     element_no_t neighbourElementNo;

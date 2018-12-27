@@ -1391,6 +1391,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   if improve_mesh:   # optimize points
     import copy
     import random
+    random.seed(0)
     print("improving")
     
     grid_points_world_space_improved = copy.deepcopy(grid_points_world_space)

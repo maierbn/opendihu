@@ -1388,7 +1388,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   # improve grid_points_world_space
   grid_points_world_space_improved = grid_points_world_space
   
-  if improveMesh:   # optimize points
+  if improve_mesh:   # optimize points
     import copy
     import random
     print("improving")

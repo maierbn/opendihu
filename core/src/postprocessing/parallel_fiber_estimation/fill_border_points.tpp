@@ -92,12 +92,12 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
         //       1+
         //    _________
-        //   |    x    |
+        //   *    x    *
         //   |  2 | 3  |
         //0- |x___|___x|  0+
         //   |    |    |
         //   |  0 | 1  |
-        //   |____x____|
+        //   *____x____*
         //
         //       1-
         // x = points that are not set by streamlines, but need to be set by the border
@@ -108,6 +108,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         int facePerpendicular0 = 0;
         int facePerpendicular1 = 0;
         int pointIndexEdge = 0;
+        int pointIndexCorner = 0;
 
         if (face == (int)Mesh::face_t::face0Minus)
         {
@@ -116,6 +117,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           facePerpendicular0 = (int)Mesh::face_t::face1Plus;
           facePerpendicular1 = (int)Mesh::face_t::face1Minus;
           pointIndexEdge = 0;
+          pointIndexCorner = 0;
         }
         else if (face == (int)Mesh::face_t::face0Plus)
         {
@@ -124,6 +126,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           facePerpendicular0 = (int)Mesh::face_t::face1Plus;
           facePerpendicular1 = (int)Mesh::face_t::face1Minus;
           pointIndexEdge = nBorderPointsX_-1;
+          pointIndexCorner = nBorderPointsXNew_-1;
         }
         else if (face == (int)Mesh::face_t::face1Minus)
         {
@@ -132,6 +135,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           facePerpendicular0 = (int)Mesh::face_t::face0Plus;
           facePerpendicular1 = (int)Mesh::face_t::face0Minus;
           pointIndexEdge = 0;
+          pointIndexCorner = 0;
         }
         else if (face == (int)Mesh::face_t::face1Plus)
         {
@@ -140,6 +144,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           facePerpendicular0 = (int)Mesh::face_t::face0Plus;
           facePerpendicular1 = (int)Mesh::face_t::face0Minus;
           pointIndexEdge = nBorderPointsX_-1;
+          pointIndexCorner = nBorderPointsXNew_-1;
         }
 
         // bottom subdomain
@@ -167,9 +172,13 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
             borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain][i] = *loopPointIter;
           }
 
-          // set end point of line of inner cross that does not have a traced streamline there, because it is at the border
+          // set end point of line of inner cross that does not have a traced streamline there, because it is at the border ("x" in figure)
           borderPointsSubdomain[subdomainIndex0][facePerpendicular0][zLevelIndexSubdomain][pointIndexEdge] = loopSection[nBorderPointsX_-1];
           borderPointsSubdomain[subdomainIndex1][facePerpendicular1][zLevelIndexSubdomain][pointIndexEdge] = loopSection[nBorderPointsX_-1];
+
+          // set neighbouring border point at the end ("*" in figure)
+          borderPointsSubdomain[subdomainIndex0][facePerpendicular1][zLevelIndexSubdomain][pointIndexCorner] = loopSection[0];
+          borderPointsSubdomain[subdomainIndex1][facePerpendicular0][zLevelIndexSubdomain][pointIndexCorner] = loopSection[nBorderPointsXNew_-1];
 
 #ifndef NDEBUG
 #if 0
@@ -217,8 +226,13 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
             borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain][i] = *loopPointIter;
           }
 
+          // set "center point" of loop section ("x" in figure)
           borderPointsSubdomain[subdomainIndex0][facePerpendicular0][zLevelIndexSubdomain][pointIndexEdge] = loopSection[nBorderPointsX_-1];
           borderPointsSubdomain[subdomainIndex1][facePerpendicular1][zLevelIndexSubdomain][pointIndexEdge] = loopSection[nBorderPointsX_-1];
+
+          // set neighbouring border point at the end ("*" in figure)
+          borderPointsSubdomain[subdomainIndex0][facePerpendicular1][zLevelIndexSubdomain][pointIndexCorner] = loopSection[0];
+          borderPointsSubdomain[subdomainIndex1][facePerpendicular0][zLevelIndexSubdomain][pointIndexCorner] = loopSection[nBorderPointsXNew_-1];
 
 #ifndef NDEBUG
 #if 0

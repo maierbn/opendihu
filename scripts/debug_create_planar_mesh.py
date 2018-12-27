@@ -65,8 +65,8 @@ triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3
 parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
 max_area_factor = 80.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
 show_plot = False
+improve_mesh = True
 
-
-grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(data[0], data[1], data[2], data[3], data[4], triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
+grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(data[0], data[1], data[2], data[3], data[4], triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, debugging_output_lists)
   
 print("duration: {}".format(duration_1d))

@@ -1836,6 +1836,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     local_algorithm = True
     spring_algorithm = False
     
+    random.seed(1)
     if local_algorithm:
       for k in range(20):
         

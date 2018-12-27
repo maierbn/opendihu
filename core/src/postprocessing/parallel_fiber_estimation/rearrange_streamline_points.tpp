@@ -512,7 +512,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[0][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       borderPointsSubdomainAreValid[4][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[2][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[0][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
 
     // check if streamline is valid, i.e. goes from bottom to top, only then use it otherwise approximate streamline from neighbouring streamlines

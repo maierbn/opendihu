@@ -20,7 +20,7 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
       for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++)
       {
         LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", streamline " << pointIndex << ": "
-          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][(int)Mesh::face_t::face0Minus][pointIndex];
+          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex];
       }
     }
   }

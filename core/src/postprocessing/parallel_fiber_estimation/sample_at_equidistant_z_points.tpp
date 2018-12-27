@@ -5,15 +5,23 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, std::vector<std::vector<Vec3>> &streamlineZPoints)
+sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints)
 {
-  double currentZ = bottomZClip_;
-  double zIncrement = double(topZClip_ - bottomZClip_) / (nBorderPointsZNew_ - 1.0);
+  // determine z range of current subdomain
+  int nRanksZ = meshPartition_->nRanks(2);
+  int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
 
-  LOG(DEBUG) << "z bounds: " << bottomZClip_ << ", " << topZClip_ << ", zIncrement: " << zIncrement;
+  double zRangeTotal = topZClip_ - bottomZClip_;
+  double zRangeCurrentLevel = zRangeTotal / nRanksZ;
+  double bottomZClip = bottomZClip_ + zRangeCurrentLevel*rankZNo;
+  double topZClip = bottomZClip_ + zRangeCurrentLevel*(rankZNo+1);
+
+  LOG(DEBUG) << "z bounds: " << bottomZClip << ", " << topZClip;
 
   int nStreamlines = streamlinePoints.size();
   streamlineZPoints.resize(nStreamlines);
+
+  // loop over all traced streamlines in this subdomain
   for (int i = 0; i < nStreamlines; i++)
   {
     LOG(DEBUG) << " streamline " << i << " has " << streamlinePoints[i].size() << " points.";
@@ -21,50 +29,93 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, std
     // the streamline is expected to have at least one point, the seed point
     assert(!streamlinePoints[i].empty());
 
-    Vec3 previousPoint = streamlinePoints[i].front();
-    streamlineZPoints[i].reserve(nBorderPointsZNew_);
-    streamlineZPoints[i].push_back(previousPoint);
-
-    if (streamlinePoints[i].size() > 1)
+    if (streamlinePoints[i].size() == 1)
     {
-      assert(streamlinePoints[i].size() > 1);
+      streamlineZPoints[i].push_back(streamlinePoints[i][0]);
+      continue;
+    }
 
-      currentZ = bottomZClip_ + zIncrement;
-      LOG(DEBUG) << "first point: " << streamlinePoints[i].front() << ", currentZ: " << currentZ;
+    // here streamlinePoints contains at least 2 points
+    std::vector<Vec3>::const_iterator streamlineIter = streamlinePoints[i].begin();
 
-      for (std::vector<Vec3>::const_iterator iter = streamlinePoints[i].begin()+1; iter != streamlinePoints[i].end(); iter++)
+    // loop over z levels
+    double currentZ;
+    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
+    {
+      currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
+      VLOG(1) << "currentZ: " << currentZ;
+
+      while(streamlineIter != streamlinePoints[i].end())
       {
-        const Vec3 &currentPoint = *iter;
-        if (currentPoint[2] > currentZ || iter+1 == streamlinePoints[i].end())
-        {
-          double alpha = (currentZ - previousPoint[2]) / (currentPoint[2] - previousPoint[2]);
-          Vec3 point = (1.-alpha) * previousPoint + alpha * currentPoint;
-          streamlineZPoints[i].push_back(point);
+        VLOG(1) << "  z: " << (*streamlineIter)[2];
+        if ((*streamlineIter)[2] > currentZ + 1e-9)
+          break;
 
-          currentZ += zIncrement;
-        }
-        previousPoint = currentPoint;
+        streamlineIter++;
+        if (streamlineIter == streamlinePoints[i].end())
+          break;
       }
 
-  #ifndef NDEBUG
-      std::stringstream name;
-      name << "05_sampled_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints[i]), 1.0);
-      PythonUtility::checkForError();
-  #endif
+      if (streamlineIter == streamlinePoints[i].end())
+      {
+        VLOG(1) << "end";
+        streamlineIter--;
+      }
 
-      LOG(DEBUG) << "n sampled points: " << streamlineZPoints[i].size() << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
+      Vec3 currentPoint = *streamlineIter;
+      Vec3 previousPoint = currentPoint;
+
+      // if there was no point before the current z, this means the streamline begins way higher than the current z
+      if (streamlineIter == streamlinePoints[i].begin())
+      {
+        VLOG(1) << "no previous point, skip. first currentPoint: " << currentPoint;
+        continue;
+      }
+      else
+      {
+        previousPoint = *(streamlineIter-1);
+      }
+
+      VLOG(1) << "currentPoint: " << currentPoint << ", previousPoint: " << previousPoint;
+
+      // now previousPoint is the last point under currentZ and currentPoint is the first over currentZ
+      if (fabs(currentPoint[2] - previousPoint[2]) < 1e-9)
+      {
+        VLOG(1) << "same, continue";
+        continue;
+      }
+
+      double alpha = (currentZ - previousPoint[2]) / (currentPoint[2] - previousPoint[2]);
+      Vec3 point = (1.-alpha) * previousPoint + alpha * currentPoint;
+      streamlineZPoints[i].push_back(point);
+      VLOG(1) << "alpha: " << alpha;
     }
 
+    LOG(DEBUG) << " n sampled points: " << streamlineZPoints[i].size() << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+//#ifdef STL_OUTPUT_VERBOSE
+    std::stringstream name;
+    name << "05_sampled_streamline_" << i << "_";
+    PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints[i]), 0.1);
+    PythonUtility::checkForError();
+//#endif
+#endif
+#endif
+
+    // if streamline is not complete
     if (streamlineZPoints[i].size() != nBorderPointsZNew_)
     {
-      LOG(ERROR) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" "
-        << std::endl << "Try adjusting \"bottomZClip\" and \"topZClip\" or mesh width.";
+      LOG(ERROR) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
+
+      // assign seed point instead of incomplete streamline
       streamlineZPoints[i].resize(1);
+      streamlineZPoints[i][0] = seedPoints[i];
     }
-    //assert(streamlineZPoints[i].size() == nBorderPointsZNew_);
   }
+
 }
 
 };  // namespace

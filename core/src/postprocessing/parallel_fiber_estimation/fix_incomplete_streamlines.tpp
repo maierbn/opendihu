@@ -25,12 +25,12 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
     }
   }
 
-  // fill invalid streamlines
-  for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
+  // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
+  for (int subdomainIndex = 0; subdomainIndex < 4; subdomainIndex++)
   {
     for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
     {
-      int lastValid = 0;
+      int lastValid = -1;
       bool lastStreamlinesWereInvalid = false;
       for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++)
       {
@@ -39,33 +39,65 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
         {
           if (lastStreamlinesWereInvalid)
           {
+            LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face)
+              << ", invalid streamlines " << lastValid+1 << " - " << pointIndex-1 << ", lastValid: " << lastValid << ", nextValid: " << pointIndex;
+
             // loop over streamlines between lastValid and pointIndex, these are all invalid, interpolate them
             for (int invalidStreamlineIndex = lastValid+1; invalidStreamlineIndex < pointIndex; invalidStreamlineIndex++)
             {
-              int zLevelIndex = 0;
+              int seedPointZLevelIndex = 0;
+              int seedPointSubdomainIndex = subdomainIndex;
               if (streamlineDirectionUpwards)
               {
-                zLevelIndex = 0;
+                seedPointZLevelIndex = 0;
               }
               else
               {
-                zLevelIndex = nBorderPointsZNew_-1;
+                seedPointZLevelIndex = nBorderPointsZ_-1;
+                seedPointSubdomainIndex += 4;
               }
 
-              double alpha = MathUtility::norm<3>(borderPointsSubdomain[subdomainIndex][face][0][invalidStreamlineIndex] - borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid])
-                / MathUtility::norm<3>(borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex] - borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid]);
+              LOG(DEBUG) << "invalidStreamline " << invalidStreamlineIndex << ", seedPointZLevelIndex: " << seedPointZLevelIndex
+                << ", seedPointSubdomainIndex: " << seedPointSubdomainIndex;
 
-              //loop over points of streamline from bottom to top
-              for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
+              // if there is a previous valid streamline
+              if (lastValid != -1)
               {
-                borderPointsSubdomain[subdomainIndex][face][zLevelIndex][invalidStreamlineIndex]
-                  = (1.-alpha) * borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid]
-                    + alpha * borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
+                LOG(DEBUG) << borderPointsSubdomain[subdomainIndex][face].size();
+                LOG(DEBUG) << borderPointsSubdomain[seedPointSubdomainIndex][face].size();
+                LOG(DEBUG) << borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex].size();
+
+                Vec3 seedPointInvalid = borderPointsSubdomain[subdomainIndex][face][0][invalidStreamlineIndex];
+                Vec3 seedPointLastValid = borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex][lastValid];
+                Vec3 seedPointCurrent = borderPointsSubdomain[seedPointSubdomainIndex][face][seedPointZLevelIndex][pointIndex];
+
+                LOG(DEBUG) << "seedPointInvalid: " << seedPointInvalid;
+                LOG(DEBUG) << "seedPointLastValid: " << seedPointLastValid;
+                LOG(DEBUG) << "seedPointCurrent: " << seedPointCurrent;
+
+                double alpha = MathUtility::norm<3>(seedPointInvalid - seedPointLastValid) / MathUtility::norm<3>(seedPointCurrent - seedPointLastValid);
+
+                LOG(DEBUG) << "alpha: " << alpha;
+
+                //loop over points of streamline from bottom to top
+                for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
+                {
+                  borderPointsSubdomain[subdomainIndex][face][zLevelIndex][invalidStreamlineIndex]
+                    = (1.-alpha) * borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid]
+                      + alpha * borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
+
+                  borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][invalidStreamlineIndex]
+                    = (1.-alpha) * borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][lastValid]
+                      + alpha * borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
+                }
+                LOG(DEBUG) << "interpolate in subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face)
+                  << " streamline " << invalidStreamlineIndex << " from " << lastValid << " and " << pointIndex << ", alpha: " << alpha;
               }
-              LOG(DEBUG) << "interpolate in subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face)
-                << " streamline " << invalidStreamlineIndex << " from " << lastValid << " and " << pointIndex << ", alpha: " << alpha;
-              LOG(DEBUG) << "invalid seed: " << borderPointsSubdomain[subdomainIndex][face][0][invalidStreamlineIndex] << ", lastValid start: " << borderPointsSubdomain[subdomainIndex][face][zLevelIndex][lastValid]
-                << " next valid: " << borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
+              else
+              {
+                LOG(WARNING) << "Could not fix incomplete streamline on subdomain " << subdomainIndex
+                  << ", face " << Mesh::getString((Mesh::face_t)face) << ", no " << invalidStreamlineIndex;
+              }
             }
           }
           lastStreamlinesWereInvalid = false;
@@ -78,9 +110,6 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
       }
     }
   }
-
-
-
 }
 
 };  // namespace

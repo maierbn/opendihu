@@ -117,9 +117,11 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
   LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_mesh_points", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(nodePositions), 0.05);
   PythonUtility::checkForError();
+#endif
 #endif
 }
 

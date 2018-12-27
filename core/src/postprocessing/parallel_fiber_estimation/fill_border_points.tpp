@@ -5,7 +5,8 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<bool,4> &subdomainIsAtBorder)
+fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                 std::array<bool,4> &subdomainIsAtBorder)
 {
   PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
   PythonUtility::checkForError();
@@ -52,18 +53,21 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
+#ifdef STL_OUTPUT_VERBOSE
         if (zLevelIndex == 0 || (zLevelIndex >= nBorderPointsZ_-1 && zLevelIndex <= nBorderPointsZ_+1))
         {
           std::vector<Vec3> p;
           p.push_back(startPoint);
           p.push_back(endPoint);
           std::stringstream s;
-          s << "06_start_end_point_face_" << Mesh::getString((Mesh::face_t)face) << "_z" << zLevelIndex;
+          s << "07_start_end_point_face_" << Mesh::getString((Mesh::face_t)face) << "_z" << zLevelIndex;
           PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                                 PythonUtility::convertToPython<std::vector<Vec3>>::get(p), 0.5);
           PythonUtility::checkForError();
         }
-
+#endif
+#endif
 #endif
 
         LOG(DEBUG) << "z: " << zLevelIndex << ", face " << Mesh::getString(Mesh::face_t(face)) << ", startPoint: " << startPoint << ", endPoint: " << endPoint << ", currentZ: " << currentZ << ", nBorderPointsXNew_: " << nBorderPointsXNew_;
@@ -84,7 +88,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           LOG(ERROR) << "Ring section from python script contains only " << loopSection.size() << " points, " << nBorderPointsXNew_ << " requested.";
         assert(loopSection.size() == nBorderPointsXNew_);
 
-        LOG(DEBUG) << "got result " << loopSection;
+        //LOG(DEBUG) << "got result " << loopSection;
 
         //       1+
         //    _________
@@ -143,14 +147,14 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         {
           int zLevelIndexSubdomain = zLevelIndex;
           assert(zLevelIndexSubdomain < nBorderPointsZ_);
-          LOG(DEBUG) << "save for subdomains " << subdomainIndex0 << " and " << subdomainIndex1 << ", zLevelIndex " << zLevelIndexSubdomain;
+          //LOG(DEBUG) << "save for subdomains " << subdomainIndex0 << " and " << subdomainIndex1 << ", zLevelIndex " << zLevelIndexSubdomain;
           int i = 0;
           for (std::vector<Vec3>::const_iterator loopPointIter = loopSection.begin(); loopPointIter != loopSection.begin()+nBorderPointsX_; loopPointIter++, i++)
           {
-            if (face == 1 && subdomainIndex0==1 && i == 0)
+            /*if (face == 1 && subdomainIndex0==1 && i == 0)
             {
               LOG(DEBUG) << "set borderPointsSubdomain[" << subdomainIndex0 << "][" << face << "][" << zLevelIndexSubdomain << "][" << i << "] to " << *loopPointIter;
-            }
+            }*/
 
             assert(i < nBorderPointsX_);
             borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain][i] = *loopPointIter;
@@ -169,16 +173,18 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
 #ifndef NDEBUG
 #if 0
+#ifdef STL_OUTPUT
           s.str("");
-          s << "07_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex0;
+          s << "08_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex0;
           PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                                 PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain]), 0.2);
           PythonUtility::checkForError();
           s.str("");
-          s << "07_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex1;
+          s << "08_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex1;
           PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                                 PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain]), 0.2);
           PythonUtility::checkForError();
+#endif
 #endif
 #endif
           //std::copy(loopSection.begin(), loopSection.begin()+nBorderPointsX_, borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain].begin());
@@ -193,7 +199,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           int zLevelIndexSubdomain = zLevelIndex - (nBorderPointsZ_-1);
           assert(zLevelIndexSubdomain < nBorderPointsZ_);
 
-          LOG(DEBUG) << "save for subdomains " << subdomainIndex0 << " and " << subdomainIndex1 << ", zLevelIndex " << zLevelIndexSubdomain;
+          //LOG(DEBUG) << "save for subdomains " << subdomainIndex0 << " and " << subdomainIndex1 << ", zLevelIndex " << zLevelIndexSubdomain;
           //std::copy(loopSection.begin(), loopSection.begin()+nBorderPointsX_, borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain].begin());
           //std::copy(loopSection.begin()+nBorderPointsX_-1, loopSection.end(), borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain].begin());
 
@@ -216,16 +222,18 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
 #ifndef NDEBUG
 #if 0
+#ifdef STL_OUTPUT
           s.str("");
-          s << "07_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex0;
+          s << "08_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex0;
           PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                                 PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsSubdomain[subdomainIndex0][face][zLevelIndexSubdomain]), 0.2);
           PythonUtility::checkForError();
           s.str("");
-          s << "07_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex1;
+          s << "08_border_points_filled_face_" << Mesh::getString((Mesh::face_t)face) << "_z_" << zLevelIndexSubdomain << "_subdomain_" << subdomainIndex1;
           PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                                 PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsSubdomain[subdomainIndex1][face][zLevelIndexSubdomain]), 0.2);
           PythonUtility::checkForError();
+#endif
 #endif
 #endif
         }
@@ -235,14 +243,18 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
   }
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
+#ifdef STL_OUTPUT_VERBOSE
   for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
   {
     std::stringstream s;
-    s << "07_border_points_filled_subdomain_" << subdomainIndex;
+    s << "08_border_points_filled_subdomain_" << subdomainIndex;
     PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 0.1);
     PythonUtility::checkForError();
   }
+#endif
+#endif
 #endif
 
   // output points for debugging

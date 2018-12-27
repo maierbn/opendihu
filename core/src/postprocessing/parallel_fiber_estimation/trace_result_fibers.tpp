@@ -60,9 +60,11 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   }
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_final_seed_points", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 1.0);
   PythonUtility::checkForError();
+#endif
 #endif
 
   // trace streamlines from seed points

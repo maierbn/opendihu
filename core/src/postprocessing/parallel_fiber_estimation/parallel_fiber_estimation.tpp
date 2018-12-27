@@ -15,6 +15,9 @@
 //#define WRITE_CHECKPOINT_GHOST_MESH
 #define USE_CHECKPOINT_GHOST_MESH
 
+#define STL_OUTPUT
+//#define STL_OUTPUT_VERBOSE
+
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
 #include "postprocessing/parallel_fiber_estimation/create_mesh.tpp"
@@ -22,6 +25,7 @@
 #include "postprocessing/parallel_fiber_estimation/exchange_ghost_values.tpp"
 #include "postprocessing/parallel_fiber_estimation/fill_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/fix_incomplete_streamlines.tpp"
+#include "postprocessing/parallel_fiber_estimation/output_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/rearrange_streamline_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/refine_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/sample_at_equidistant_z_points.tpp"
@@ -195,8 +199,8 @@ generateParallelMesh()
     std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
     //LOG(DEBUG) << "loops: " << loops << " (size: " << loops.size() << ")" << ", lengths: " << lengths;
 
-  #ifndef NDEBUG
-
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
     // output the loops
     std::vector<Vec3> outputPoints;
     for (int loopIndex = 0; loopIndex < loops.size(); loopIndex++)
@@ -209,7 +213,8 @@ generateParallelMesh()
     PyObject_CallFunction(functionOutputPoints_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::vector<Vec3>>::get(outputPoints), 0.1);
     PythonUtility::checkForError();
-  #endif
+#endif
+#endif
 
     // rearrange the border points from the loops to the portions of the faces
     //std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
@@ -336,6 +341,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   LOG(DEBUG) << "generateParallelMeshRecursion";
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
+#ifdef STL_OUTPUT_VERBOSE
   if (currentRankSubset_->ownRankIsContained())
   {
     PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
@@ -351,7 +358,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       PythonUtility::checkForError();
     }
   }
-
+#endif
+#endif
 #endif
 
   // check if all vectors are filled with points
@@ -385,14 +393,15 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   if (currentRankSubset_->ownRankIsContained())
   {
     refineSubdomainsOnThisRank = true;
-    nBorderPointsXNew_ = nBorderPointsX_*2-1;
+    nBorderPointsXNew_ = nBorderPointsX_*2-1;   // number of border points per coordinate direction of the logical rectangle, for the subdomain
 
+    // refine the given border points in x and y direction, i.e. horizontally, to yield twice the number of points on each border
     std::array<std::vector<std::vector<Vec3>>,4> borderPoints;    // [face_t][z-level][pointIndex]
     refineBorderPoints(borderPointsOld, borderPoints);
 
     // dimensions of borderPoints[face_t][z-level][pointIndex]: borderPoints[4][nBorderPointsZ_][nBorderPointsXNew_]
 
-    // create mesh in own domain, using python, harmonic maps
+    // create 3D mesh in own subdomain, using python, algorithm with harmonic maps
     std::vector<Vec3> nodePositions;
     std::array<int,3> nElementsPerCoordinateDirectionLocal;
     createMesh(borderPoints, nodePositions, nElementsPerCoordinateDirectionLocal);
@@ -468,18 +477,21 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
       const std::array<int,FunctionSpace::dim()> nRanks
     * */
+
     // solve laplace problem globally
     // create problem
     problem_ = std::make_shared<FiniteElementMethodType>(context_, this->functionSpace_);
     data_.setProblem(problem_);
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
     std::vector<Vec3> geometryValues;
     problem_->data().functionSpace()->geometryField().getValuesWithGhosts(geometryValues);
 
     PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_geometry_values", currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::vector<Vec3>>::get(geometryValues), 0.1);
     PythonUtility::checkForError();
+#endif
 #endif
 
     // create dirichlet boundary condition object
@@ -502,7 +514,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     problem_->reset();
     problem_->initialize();
 
-    // solve the laplace problem, globally
+    // solve the laplace problem, globally on all subdomains on all ranks of the current rank subset
     problem_->run();
 
     // compute a gradient field from the solution
@@ -515,6 +527,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     if (level > 1)
       LOG(FATAL) << "end";
+
+    // exchange layer of ghost elements (not nodes) between neighbouring ranks,
+    // then every subdomain knows one layer of elements around it (only in x/y direction)
     LOG(DEBUG) << "\nConstruct ghost elements";
 
     exchangeGhostValues(subdomainIsAtBorder);
@@ -523,8 +538,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     this->solution_ = problem_->data().solution();
     this->gradient_ = data_.gradient();
 
-    // determine seed points
+    // determine seed points for streamlines
     // nodePositions contains all node positions in the current 3D mesh
+    // naming of borders: (0-,1-,0+,1+)
     //     ___1+__
     //    |   |   |
     // 0- |___|___| 0+
@@ -556,7 +572,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       seedPointsZIndex = nBorderPointsZ_/2;
     }
 
-    // trace final fibers
+    // if this is the end of the recursion, trace final fibers
     if (traceFinalFibers)
     {
       traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions);
@@ -565,19 +581,21 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       return;
     }
 
+    // determine the seed points of the streamlines
     createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nodePositions, seedPoints);
 
-    // trace streamlines
+    // trace streamlines from seed points
     std::vector<std::vector<Vec3>> streamlinePoints;
     traceStreamlines(nRanksZ, rankZNo, streamlineDirection, streamlineDirectionUpwards, seedPoints, streamlinePoints);
 
     // sample streamlines at equidistant z points
     nBorderPointsZNew_ = nBorderPointsZ_*2 - 1;
     std::vector<std::vector<Vec3>> streamlineZPoints;
-    sampleAtEquidistantZPoints(streamlinePoints, streamlineZPoints);
+    sampleAtEquidistantZPoints(streamlinePoints, seedPoints, streamlineZPoints);
 
+    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     // save streamline points to the portions of the faces
-    //std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index
+    //std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index]
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     std::array<std::array<std::vector<bool>,4>,8> borderPointsSubdomainAreValid;
@@ -585,12 +603,24 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     LOG(DEBUG) << "nBorderPointsZ_: " << nBorderPointsZ_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
+    // write border points to file
+    outputBorderPoints(borderPointsSubdomain, "09_traced");
+
     // fill the streamline points that are at the boundary
     fillBorderPoints(borderPoints, borderPointsSubdomain, subdomainIsAtBorder);
+
+    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+    // write border points to file
+    outputBorderPoints(borderPointsSubdomain, "10_filled");
 
     // fill in missing points
     fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards);
 
+    // write border points to file
+    outputBorderPoints(borderPointsSubdomain, "11_fixed");
+
+    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+    LOG(FATAL) << "end after streamlines are done";
   }  // if own rank is part of this stage of the algorithm
 
   LOG(DEBUG) << "create subdomains";

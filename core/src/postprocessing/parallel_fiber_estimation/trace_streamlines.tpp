@@ -45,11 +45,15 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       VLOG(1) << "streamline: " << streamlinePoints[i];
 
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
+#ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.5);
       PythonUtility::checkForError();
+#endif
+#endif
 #endif
     }
   }
@@ -85,12 +89,22 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
 
+      // if everything was cleared, at seed point
+      if (streamlinePoints[i].empty())
+        streamlinePoints[i].push_back(startingPoint);
+
+
+
 #ifndef NDEBUG
+#ifdef STL_OUTPUT
+#ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
-      name << "00_streamline_" << i << "_";
+      name << "04_raw_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
+#endif
+#endif
 #endif
 
     }
@@ -126,9 +140,12 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // reorder streamline points such that they go from bottom to top
     if (streamlineDirection < 0)
     {
+      VLOG(1) << "reverse streamlines direction";
       for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
       {
+        //VLOG(1) << streamlineIndex << " has " << streamlinePoints[streamlineIndex].size() << " points, before: " << streamlinePoints[streamlineIndex];
         std::reverse(streamlinePoints[streamlineIndex].begin(), streamlinePoints[streamlineIndex].end());
+        //LOG(DEBUG) << streamlineIndex << " after: " << streamlinePoints[streamlineIndex];
       }
     }
   }

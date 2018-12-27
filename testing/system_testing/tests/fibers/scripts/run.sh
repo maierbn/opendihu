@@ -38,4 +38,4 @@ mv rings_created rings
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x>]]]]"
 
 ./create_mesh.py $triangulation_type $parametric_space_shape $n_points_x
-
+ln -s mesh mesh_normal

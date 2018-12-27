@@ -11,6 +11,7 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   // borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex]
   // borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex]
 
+#ifndef NDEBUG
   LOG(DEBUG) << "valid streamlines:";
   // output which streamlines are valid
   for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
@@ -19,11 +20,21 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
     {
       for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++)
       {
-        LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", streamline " << pointIndex << ": "
-          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex];
+        std::stringstream str;
+
+        std::vector<Vec3> points;
+        for (int i = 0; i < nBorderPointsZ_; i++)
+        {
+          points.push_back(borderPointsSubdomain[subdomainIndex][face][i][pointIndex]);
+        }
+        str << points;
+
+        LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", streamline " << pointIndex << " valid: "
+          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex] << ", points: " << str.str();
       }
     }
   }
+#endif
 
   // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
   for (int subdomainIndex = 0; subdomainIndex < 4; subdomainIndex++)
@@ -74,6 +85,18 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
                 LOG(DEBUG) << "seedPointInvalid: " << seedPointInvalid;
                 LOG(DEBUG) << "seedPointLastValid: " << seedPointLastValid;
                 LOG(DEBUG) << "seedPointCurrent: " << seedPointCurrent;
+
+                LOG(DEBUG) << "lastValid: " << lastValid << ", streamline: ";
+                for (int i = 0; i < nBorderPointsZ_; i++)
+                {
+                  LOG(DEBUG) << "zIndex: " << i << ": " << borderPointsSubdomain[seedPointSubdomainIndex][face][i][lastValid];
+                }
+
+                LOG(DEBUG) << "pointIndex: " << pointIndex << ", current streamline: ";
+                for (int i = 0; i < nBorderPointsZ_; i++)
+                {
+                  LOG(DEBUG) << "zIndex: " << i << ": " << borderPointsSubdomain[seedPointSubdomainIndex][face][i][pointIndex];
+                }
 
                 double alpha = MathUtility::norm<3>(seedPointInvalid - seedPointLastValid) / MathUtility::norm<3>(seedPointCurrent - seedPointLastValid);
 

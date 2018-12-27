@@ -156,7 +156,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[1][(int)Mesh::face_t::face0Plus][pointIndex] = false;
         borderPointsSubdomainAreValid[5][(int)Mesh::face_t::face0Plus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[1][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[1][(int)Mesh::face_t::face0Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
 
@@ -190,7 +190,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[3][(int)Mesh::face_t::face0Plus][pointIndex] = false;
         borderPointsSubdomainAreValid[7][(int)Mesh::face_t::face0Plus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[3][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[3][(int)Mesh::face_t::face0Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
   }
@@ -227,7 +227,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[0][(int)Mesh::face_t::face1Minus][pointIndex] = false;
         borderPointsSubdomainAreValid[4][(int)Mesh::face_t::face1Minus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[0][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[0][(int)Mesh::face_t::face1Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
 
@@ -261,7 +261,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[1][(int)Mesh::face_t::face1Minus][pointIndex] = false;
         borderPointsSubdomainAreValid[5][(int)Mesh::face_t::face1Minus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[1][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[1][(int)Mesh::face_t::face1Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
   }
@@ -298,7 +298,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[2][(int)Mesh::face_t::face1Plus][pointIndex] = false;
         borderPointsSubdomainAreValid[6][(int)Mesh::face_t::face1Plus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[2][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[2][(int)Mesh::face_t::face1Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
 
@@ -332,7 +332,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
         borderPointsSubdomainAreValid[3][(int)Mesh::face_t::face1Plus][pointIndex] = false;
         borderPointsSubdomainAreValid[7][(int)Mesh::face_t::face1Plus][pointIndex] = false;
         // set seed point at position 0
-        borderPointsSubdomain[3][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+        borderPointsSubdomain[3][(int)Mesh::face_t::face1Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
       }
     }
   }
@@ -372,7 +372,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[0][(int)Mesh::face_t::face1Plus][pointIndex] = false;
       borderPointsSubdomainAreValid[4][(int)Mesh::face_t::face1Plus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[0][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[0][(int)Mesh::face_t::face1Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
   }
 
@@ -406,7 +406,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[1][(int)Mesh::face_t::face1Plus][pointIndex] = false;
       borderPointsSubdomainAreValid[5][(int)Mesh::face_t::face1Plus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[1][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[1][(int)Mesh::face_t::face1Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
   }
 
@@ -440,7 +440,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[2][(int)Mesh::face_t::face1Minus][pointIndex] = false;
       borderPointsSubdomainAreValid[6][(int)Mesh::face_t::face1Minus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[2][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[2][(int)Mesh::face_t::face1Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
   }
 
@@ -475,7 +475,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[3][(int)Mesh::face_t::face1Minus][pointIndex] = false;
       borderPointsSubdomainAreValid[7][(int)Mesh::face_t::face1Minus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[3][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[3][(int)Mesh::face_t::face1Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
   }
 
@@ -512,7 +512,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[0][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       borderPointsSubdomainAreValid[4][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[0][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[0][(int)Mesh::face_t::face0Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
 
     // check if streamline is valid, i.e. goes from bottom to top, only then use it otherwise approximate streamline from neighbouring streamlines
@@ -586,7 +586,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomainAreValid[2][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       borderPointsSubdomainAreValid[6][(int)Mesh::face_t::face0Plus][pointIndex] = false;
       // set seed point at position 0
-      borderPointsSubdomain[2][(int)Mesh::face_t::face0Minus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
+      borderPointsSubdomain[2][(int)Mesh::face_t::face0Plus][0][pointIndex] = streamlineZPoints[streamlineIndex][0];
     }
 
     // check if streamline is valid, i.e. goes from bottom to top, only then use it otherwise approximate streamline from neighbouring streamlines

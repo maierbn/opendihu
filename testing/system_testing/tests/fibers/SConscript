@@ -16,6 +16,6 @@ testcases = [
   "laplace_unstructured_hermite",
 ]
 
-testcases = ["laplace_structured_linear"]
+#testcases = ["laplace_structured_linear"]
 for testcase in testcases:
   env.Program(target = testcase, source = "src/{}.cpp".format(testcase))

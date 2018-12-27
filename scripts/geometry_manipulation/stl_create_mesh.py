@@ -492,7 +492,7 @@ def border_point_loops_to_list(border_point_loops):
   return result
 
 def create_planar_mesh(border_points, loop_no, n_points, \
-    n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, stl_triangle_lists):
+    n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, stl_triangle_lists):
   """
   Create a 2d mesh using the harmonic map algorithm. Input is a list of border points which will be the boundary nodes of the mesh.
   :param border_points: list of points on the border that will be the nodes, (each point is again a list with 3 entries)
@@ -501,6 +501,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   :param triangulation_type: 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   :param parametric_space_shape: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
   :param max_area_factor: only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
+  :param improve_mesh: if the generated mesh should be smoothed afterwards
   :param show_plot: if the matplotlib plots of geometry and harmonic map should be generated
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
   :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
@@ -1387,7 +1388,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   # improve grid_points_world_space
   grid_points_world_space_improved = grid_points_world_space
   
-  if True:   # optimize points
+  if improveMesh:   # optimize points
     import copy
     import random
     print("improving")
@@ -2798,6 +2799,7 @@ def create_3d_mesh_simple(n_points_x, loops):
   show_plot = False
   debug = False  
   debugging_stl_output = False
+  improve_mesh = False
 
   n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
   n_grid_points_y = n_points_x+1
@@ -2823,7 +2825,7 @@ def create_3d_mesh_simple(n_points_x, loops):
     # create 2D mesh with border_points
     show_plot = False
     grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(border_points, loop_no, n_points, \
-      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, [])
+      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, [])
         
     # store grid points in world space of current loop
     loop_grid_points.append(grid_points_world_space)
@@ -2853,6 +2855,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False
   debugging_stl_output = False
+  improve_mesh = True    # post-smooth mesh
 
   border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
   border_points_0plus = border_points_faces[1]
@@ -2926,7 +2929,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
         pickle.dump(output, f)
     
     grid_points_world_space,duration_1d = create_planar_mesh(border_points, loop_no, n_points, \
-      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
+      n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, debugging_output_lists)
       
     if debugging_stl_output and False:
       stl_debug_output.output_triangles("2dmesh_loop_{}_w_triangulation".format(loop_no), out_triangulation_world_space)

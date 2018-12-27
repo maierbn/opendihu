@@ -571,7 +571,16 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     projected_points.append(np.array([point[0], point[1]]))
   
   projected_points = np.reshape(projected_points, (-1,2))
+
+  # define helper variables with default values that are only later used when triangulation_type == 2
+  def get_modified_phi(phi_in): 
+    phi_out = phi_in
+    return phi_out
+  modify_phi = False
+  determine_additional_points_on_ring = False
+  n_additional_points_on_ring = 0
   
+
   if debug:
     print("")
     print("projected_points:")

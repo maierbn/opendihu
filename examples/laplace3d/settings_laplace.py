@@ -4,7 +4,7 @@ import numpy as np
 
 nx = 10.
 ny = nx
-nz = nx*2
+nz = nx
 
 # Dirichlet boundary conditions
 bc = {}
@@ -35,7 +35,7 @@ config = {
     "preconditionerType": "none",
     "maxIterations": 10000,
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},      
       {"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
     ]
   },

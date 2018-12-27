@@ -14,7 +14,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   
   LOG(DEBUG) << "traceStreamline(startingPoint " << startingPoint << ", direction " << direction << ", maxNIterations_: " << maxNIterations_ << "), useGradientField_: " << useGradientField_;
 
-  functionSpace_->debugOutputGhostMeshSet();
+  //functionSpace_->debugOutputGhostMeshSet();
 
   Vec3 currentPoint = startingPoint;
   element_no_t elementNo = 0;

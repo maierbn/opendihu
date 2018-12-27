@@ -301,8 +301,8 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
     }
 
     this->functionSpace_->setGhostMesh((Mesh::face_t)face, this->ghostMesh_[face]);
-    LOG(DEBUG) << "after settings ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << ": ";
-    this->functionSpace_->debugOutputGhostMeshSet();
+    //LOG(DEBUG) << "after settings ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << ": ";
+    //this->functionSpace_->debugOutputGhostMeshSet();
   }
 
 }

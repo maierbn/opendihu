@@ -53,69 +53,48 @@ if rank_no == 0:
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
+# set values for cellml model
 if "shorten" in cellml_file:
-  parametersUsedAsIntermediate = [32]
-  parametersUsedAsConstant = [65]
-  parametersInitialValues = [0.0, 1.0]
+  parameters_used_as_intermediate = [32]
+  parameters_used_as_constant = [65]
+  parameters_initial_values = [0.0, 1.0]
+  nodal_stimulation_current = 400.
   
 elif "hodgkin_huxley" in cellml_file:
-  parametersUsedAsIntermediate = []
-  parametersUsedAsConstant = [2]
-  parametersInitialValues = [0.0]
-  
+  parameters_used_as_intermediate = []
+  parameters_used_as_constant = [2]
+  parameters_initial_values = [0.0]
+  nodal_stimulation_current = 40.
 
-def getMotorUnitNo(fibre_no):
+
+def get_motor_unit_no(fibre_no):
   return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
 
-def fibreGetsStimulated(fibre_no, frequency, current_time):
+def fibre_gets_stimulated(fibre_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = (int)(getMotorUnitNo(fibre_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(fibre_no)*0.8)
   
   # determine if fibre fires now
   index = int(current_time * frequency)
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
-  pass
-  
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
+# callback function that can set states, i.e. prescribed values for stimulation
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
   
   # determine if fibre gets stimulated at the current time
-  fibre_gets_stimulated = fibreGetsStimulated(fibre_no, stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
-  
-  # stimulation value
-  if fibre_gets_stimulated:
-    stimulation_current = 400.
-  else:
-    stimulation_current = 0.
-  
-  first_dof_global = dof_nos_global[0]
-  last_dof_global = dof_nos_global[-1]
-    
-  for node_no_global in nodes_to_stimulate_global:
-    if first_dof_global <= node_no_global <= last_dof_global:
-      # get local no for global no (1D)
-      dof_no_local = node_no_global - first_dof_global
-      parameters[dof_no_local] = stimulation_current
- 
-      #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
-  
-  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, getMotorUnitNo(fibre_no), fibre_gets_stimulated))
-    
-  #wait = input("Press any key to continue...")
-    
+  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+
+  if is_fibre_gets_stimulated:  
+    # determine nodes to stimulate (center node, left and right neighbour)
+    innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+    innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+    nodes_to_stimulate_global = [innervation_node_global]
+
+    for node_no_global in nodes_to_stimulate_global:
+      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
   pass
     
@@ -134,7 +113,7 @@ def get_instance_config(i):
       "timeStepWidth": dt_3D,  # 1e-1
       "logTimeStepWidthAsKey": "dt_3D",
       "durationLogKey": "duration_total",
-      "timeStepOutputInterval" : 1000,
+      "timeStepOutputInterval" : 1e5,
       "endTime": end_time,
       "outputData1": False,
       "outputData2": True,
@@ -155,14 +134,16 @@ def get_instance_config(i):
             #"libraryFilename": "cellml_simd_lib.so",   # compiled library
             "useGivenLibrary": False,
             #"statesInitialValues": [],
-            "setParametersFunction": set_parameters,    # callback function that sets parameters like stimulation current
-            "setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-            "setParametersFunctionAdditionalParameter": i,
+            #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
+            #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+            "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+            "additionalArgument": i,
             
             "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
-            "parametersUsedAsIntermediate": parametersUsedAsIntermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-            "parametersUsedAsConstant": parametersUsedAsConstant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-            "parametersInitialValues": parametersInitialValues,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+            "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFibre"+str(i),
             "prefactor": 1.0,
           },

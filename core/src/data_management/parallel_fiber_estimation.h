@@ -47,8 +47,8 @@ public:
   //! print all stored data to stdout
   virtual void print();
 
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> FunctionSpacefiber;
-  typedef FieldVariable::FieldVariable<FunctionSpacefiber,3> FieldVariablefiberGeometry;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> FunctionSpaceFiber;
+  typedef FieldVariable::FieldVariable<FunctionSpaceFiber,3> FieldVariableFiberGeometry;
   
   //! field variables that will be output by outputWriters
   typedef std::tuple<

@@ -46,16 +46,16 @@ public:
   virtual dof_no_t nNodesLocalWithoutGhosts();
 
   //! create a fiber mesh from the given node positions, store it in mesh manager and store a pointer to the geometry field in fiberGeometry
-  void createfiberMesh(const std::vector<Vec3> &nodePositions);
+  void createFiberMesh(const std::vector<Vec3> &nodePositions);
   
-  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> FunctionSpacefiber;
-  typedef FieldVariable::FieldVariable<FunctionSpacefiber,3> FieldVariablefiberGeometry;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> FunctionSpaceFiber;
+  typedef FieldVariable::FieldVariable<FunctionSpaceFiber,3> FieldVariableFiberGeometry;
   
   //! field variables that will be output by outputWriters
   typename BaseDataType::OutputFieldVariables dummy;
   typedef decltype(std::tuple_cat(dummy, std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
-    std::vector<std::shared_ptr<FieldVariablefiberGeometry>>   // geometry fields of meshes
+    std::vector<std::shared_ptr<FieldVariableFiberGeometry>>   // geometry fields of meshes
   >())) OutputFieldVariables;
 
   //! get pointers to all field variables that can be written by output writers
@@ -69,7 +69,7 @@ protected:
   std::shared_ptr<BaseDataType> baseData_;    ///< the data object that holds the field frorm which stream lines are generated
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    ///< the gradient field of the solution field variable
 
-  std::vector<std::shared_ptr<FieldVariablefiberGeometry>> fiberGeometry_;   ///< geometry fields of fibers
+  std::vector<std::shared_ptr<FieldVariableFiberGeometry>> fiberGeometry_;   ///< geometry fields of fibers
   
   int fiberNo_ = 0; ///< counter for names of generated fibers
 };

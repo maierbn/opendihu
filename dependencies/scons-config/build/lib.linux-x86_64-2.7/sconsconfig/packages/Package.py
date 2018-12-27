@@ -358,6 +358,9 @@ class Package(object):
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
     vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable('MPI_IGNORE_MPICC', help='Disable retrieving mpi compile information from mpicc --showme.', default=False))
+    vars.Add(BoolVariable('MPI_DEBUG', help='Build MPI with debugging support for memcheck.', default=False))
+    
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler
@@ -1003,7 +1006,7 @@ class Package(object):
         if res[0]:
           self.base_dir = base # set base directory
           
-          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.")
+          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.\n")
           return res
           #break
         env_restore(ctx.env, bkp)

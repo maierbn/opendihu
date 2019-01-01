@@ -135,11 +135,11 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
 
       /* debugging condition, TODO: remove */
-      int ownRankNo = currentRankSubset_->ownRankNo();
+      /*int ownRankNo = currentRankSubset_->ownRankNo();
       if (!((ownRankNo == 1)))
       {
         continue;
-      }
+      }*/
       /* end */
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);

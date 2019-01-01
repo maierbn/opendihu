@@ -55,10 +55,10 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   // +-->
 
   std::vector<std::tuple<int,int,int>> subdomainFacePointIndex = {
-    {0, Mesh::face_t::face0Minus, 0}, {0, Mesh::face_t::face1Minus, 0},
-    {1, Mesh::face_t::face1Minus, nBorderPointsX_-1}, {1, Mesh::face_t::face0Plus, 0},
-    {2, Mesh::face_t::face0Minus, nBorderPointsX_-1}, {1, Mesh::face_t::face1Plus, 0},
-    {3, Mesh::face_t::face1Plus, nBorderPointsX_-1}, {1, Mesh::face_t::face0Plus, nBorderPointsX_-1}
+    std::tuple<int,int,int>{0, Mesh::face_t::face0Minus, 0}, std::tuple<int,int,int>{0, Mesh::face_t::face1Minus, 0},
+    std::tuple<int,int,int>{1, Mesh::face_t::face1Minus, nBorderPointsX_-1}, std::tuple<int,int,int>{1, Mesh::face_t::face0Plus, 0},
+    std::tuple<int,int,int>{2, Mesh::face_t::face0Minus, nBorderPointsX_-1}, std::tuple<int,int,int>{1, Mesh::face_t::face1Plus, 0},
+    std::tuple<int,int,int>{3, Mesh::face_t::face1Plus, nBorderPointsX_-1}, std::tuple<int,int,int>{1, Mesh::face_t::face0Plus, nBorderPointsX_-1}
   };
 
   // TODO: center point

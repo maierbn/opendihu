@@ -118,6 +118,12 @@ initialize()
   functionOutputBorderPoints_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_border_points");
   assert(functionOutputBorderPoints_);
 
+  functionOutputStreamline_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_streamline");
+  assert(functionOutputStreamline_);
+
+  functionOutputStreamlines_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_streamlines");
+  assert(functionOutputStreamlines_);
+
   functionOutputGhostElements_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_ghost_elements");
   assert(functionOutputGhostElements_);
 
@@ -468,7 +474,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     LOG(DEBUG) << "n dofs local without ghosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
     LOG(DEBUG) << "nElementsPerCoordinateDirectionLocal: " << nElementsPerCoordinateDirectionLocal;
 
-    LOG(DEBUG) << "nodePositions: " << nodePositions;
+    //LOG(DEBUG) << "nodePositions: " << nodePositions;
     std::vector<Vec3> geometryFieldValues;
     this->functionSpace_->geometryField().getValuesWithoutGhosts(geometryFieldValues);
     LOG(DEBUG) << "geometryFieldValues: " << geometryFieldValues;
@@ -608,20 +614,23 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     LOG(DEBUG) << "nBorderPointsZ_: " << nBorderPointsZ_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
     // write border points to file
-    outputBorderPoints(borderPointsSubdomain, "09_traced");
+    outputStreamlines(borderPointsSubdomain, "09_traced");
 
+#if 0
     // fill the streamline points that are at the boundary
     fillBorderPoints(borderPoints, borderPointsSubdomain, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
     MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     // write border points to file
-    outputBorderPoints(borderPointsSubdomain, "10_filled");
+    outputStreamlines(borderPointsSubdomain, "10_filled");
+#endif
+    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
 
     // fill in missing points
-    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards);
+    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards, borderPoints);
 
     // write border points to file
-    outputBorderPoints(borderPointsSubdomain, "11_fixed");
+    outputStreamlines(borderPointsSubdomain, "11_fixed");
 
     MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     LOG(FATAL) << "end after streamlines are done";

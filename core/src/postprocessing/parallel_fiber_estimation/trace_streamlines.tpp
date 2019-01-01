@@ -62,7 +62,8 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // multiple ranks
 
     // determine if previously set seedPoints are used or if they are received from neighbouring rank
-    if (nRanksZ > 1 && rankZNo != int(nRanksZ/2)-1 && rankZNo != int(nRanksZ/2+1)-1)
+    LOG(DEBUG) << "rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards;
+    if (rankZNo != int(nRanksZ/2))
     {
       int neighbourRankNo;
       if (streamlineDirectionUpwards)
@@ -75,17 +76,71 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
       }
 
       // receive seed points
-      MPIUtility::handleReturnValue(MPI_Recv(seedPoints.data(), seedPoints.size(), MPI_DOUBLE, neighbourRankNo,
-                                            0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+      std::vector<double> receiveBuffer(seedPoints.size()*3);
+      MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                             0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+
+      // fill seed points from receive buffer
+      for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
+      {
+        for (int i = 0; i < 3; i++)
+        {
+          seedPoints[seedPointIndex][i] = receiveBuffer[seedPointIndex*3 + i];
+        }
+      }
+      //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
+
+    }
+
+    // on rank int(nRanksZ/2), send seed points to rank below
+    if (rankZNo == int(nRanksZ/2))
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+
+      // fill send buffer
+      std::vector<double> sendBuffer(seedPoints.size()*3);
+      for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
+      {
+        for (int i = 0; i < 3; i++)
+        {
+          sendBuffer[seedPointIndex*3 + i] = seedPoints[seedPointIndex][i];
+        }
+      }
+
+      //LOG(DEBUG) << "send " << seedPoints.size() << " seed points to rank " << neighbourRankNo << ": " << seedPoints;
+
+      // send seed points
+      MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
+                                             0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
     }
 
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+    PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+    PythonUtility::checkForError();
+#endif
+#endif
+
+    //MPI_Barrier(currentRankSubset_->mpiCommunicator());
+    //LOG(FATAL) << "end before tracing of streamlines";
 
     // trace streamlines from seed points
     for (int i = 0; i < nStreamlines; i++)
     {
       Vec3 &startingPoint = seedPoints[i];
       streamlinePoints[i].push_back(startingPoint);
+
+
+      /* debugging condition, TODO: remove */
+      int ownRankNo = currentRankSubset_->ownRankNo();
+      if (!((ownRankNo == 1)))
+      {
+        continue;
+      }
+      /* end */
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
 
@@ -94,13 +149,12 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
         streamlinePoints[i].push_back(startingPoint);
 
 
-
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
 #ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_raw_streamline_" << i << "_";
-      PyObject_CallFunction(functionOutputPoints_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
+      PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
 #endif
@@ -113,12 +167,12 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
     {
       // fill send buffer
-      std::vector<double> sendBuffer(nStreamlines);
+      std::vector<double> sendBuffer(nStreamlines*3);
       for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
       {
         for (int i = 0; i < 3; i++)
         {
-          sendBuffer[streamlineIndex] = streamlinePoints[streamlineIndex].back()[i];
+          sendBuffer[streamlineIndex*3+i] = streamlinePoints[streamlineIndex].back()[i];
         }
       }
 

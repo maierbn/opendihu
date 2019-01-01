@@ -85,14 +85,6 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
   LOG(DEBUG) << "seedPoints: end, streamlineIndex = " << seedPoints.size();
 
-#ifndef NDEBUG
-#ifdef STL_OUTPUT
-  PyObject_CallFunction(functionOutputPoints_, "s i O f", "03_seed_points", currentRankSubset_->ownRankNo(),
-                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
-  PythonUtility::checkForError();
-#endif
-#endif
-
 }
 
 };  // namespace

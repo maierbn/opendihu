@@ -120,6 +120,34 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
       return true;
     }
+    else
+    {
+      VLOG(4) << " no (xi=" << xi << ")";
+    }
+  }
+
+  // if point was still not found, search in ghost meshes
+  for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
+  {
+    VLOG(3) << "consider ghost mesh " << Mesh::getString((Mesh::face_t)face);
+    if (ghostMesh_[face] != nullptr)
+    {
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
+      if (ghostMesh_[face]->findPosition(point, elementNo, ghostMeshNo, xi, false))
+      {
+        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNo << ", xi " << xi;
+        ghostMeshNo = face;
+        return true;
+      }
+      else
+      {
+        VLOG(3) << "   not found";
+      }
+    }
+    else
+    {
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is not set";
+    }
   }
 
   VLOG(1) << "Could not find any containing element (streamline ends)";

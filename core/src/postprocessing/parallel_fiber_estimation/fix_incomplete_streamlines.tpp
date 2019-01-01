@@ -54,7 +54,7 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   // | | --(1-)-> |   | --(1-)-> |
   // +-->
 
-  std::vector<std::tuple<int,int,int>> subdomainFacePointIndex = {
+  std::vector<std::tuple<int,int,int>> subdomainFacePointIndex {
     {0, Mesh::face_t::face0Minus, 0}, {0, Mesh::face_t::face1Minus, 0},
     {1, Mesh::face_t::face1Minus, nBorderPointsX_-1}, {1, Mesh::face_t::face0Plus, 0},
     {2, Mesh::face_t::face0Minus, nBorderPointsX_-1}, {1, Mesh::face_t::face1Plus, 0},

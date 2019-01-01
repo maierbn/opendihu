@@ -35,7 +35,8 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       meshPartition_->getBoundaryElements((Mesh::face_t)face, neighbourRankNo, ghostValuesBuffer[face].nElementsPerCoordinateDirection, dofNos);
 
       LOG(DEBUG) << "getBoundaryElements for face " << Mesh::getString((Mesh::face_t)face) << " returned neighbourRankNo=" << neighbourRankNo
-        << ", nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection << ", " << dofNos.size();
+        << ", nElementsPerCoordinateDirection: " << ghostValuesBuffer[face].nElementsPerCoordinateDirection << ", " << dofNos.size() << " dofs: "
+        << dofNos;
 
       // get relevant values in own domain that will be send to the neighbouring domain
       problem_->data().functionSpace()->geometryField().setRepresentationGlobal();
@@ -124,7 +125,12 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
   MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-  LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requessts, " << receiveRequests.size() << " receiveRefquests) complete";
+  LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRefquests) complete";
+
+
+
+  //MPI_Barrier(currentRankSubset_->mpiCommunicator());
+  //LOG(FATAL) << "end after get ghost elements";
 
   // handle received values
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)

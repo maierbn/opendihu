@@ -272,7 +272,6 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       this->ghostMesh_[face] = context_.meshManager()->template createFunctionSpace<FunctionSpaceType>(
         meshName.str(), nodePositions, ghostValuesBuffer[face].nElementsPerCoordinateDirection, nRanks);
 
-
       LOG(DEBUG) << "created ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << ".";
 
       // create solution field variable for ghost mesh

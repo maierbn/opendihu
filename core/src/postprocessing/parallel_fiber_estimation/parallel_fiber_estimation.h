@@ -52,7 +52,8 @@ protected:
                                  std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
 
   //! interpolate points for invalid streamlines
-  void fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, bool streamlineDirectionUpwards);
+  void fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
+                                bool streamlineDirectionUpwards, std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
 
   //! refine the given border points (borderPointsOld) in x and y direction
   void refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<std::vector<std::vector<Vec3>>,4> &borderPoints);
@@ -94,6 +95,9 @@ protected:
   //! write all border points to a common file
   void outputBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::string name);
 
+  //! output border points as connected streamlines
+  void outputStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::string name);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 
@@ -126,6 +130,8 @@ protected:
   PyObject *functionOutputBorderPoints_;        ///< output_border_points
   PyObject *functionOutputGhostElements_;        ///< output_ghots_elements
   PyObject *functionCreate3dMeshFromBorderPointsFaces_;       ///< create_3d_mesh_from_border_points_faces
+  PyObject *functionOutputStreamline_;   ///< function to output connected points as streamline
+  PyObject *functionOutputStreamlines_;   ///< function to output border points as connected streamlines
 
   std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
   std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm

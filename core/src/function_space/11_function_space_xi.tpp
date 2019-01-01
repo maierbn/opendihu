@@ -9,9 +9,9 @@
 namespace FunctionSpace
 {
 
-const double POINT_IN_ELEMENT_EPSILON = 1e-2;    // (1e-5) (1e-12)
+const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
 const int N_NEWTON_ITERATIONS = 7;    // (4) (5) number of newton iterations to find out if a point is inside an element
-const double RESIDUUM_NORM_TOLERANCE = 1e-2;    // usually 1e-2 takes 2-3 iterations
+const double RESIDUUM_NORM_TOLERANCE = 1e-4;    // usually 1e-2 takes 2-3 iterations
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>

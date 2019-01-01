@@ -22,7 +22,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
       borderPointsSubdomain[subdomainIndex][faceNo].resize(nBorderPointsZ_);   // resize to number of z levels
       for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
       {
-        borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].resize(nBorderPointsX_);   // resize to number of points with same z level per face of subdomain
+        borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].resize(nBorderPointsX_,Vec3({0.0,0.0,0.0}));   // resize to number of points with same z level per face of subdomain
       }
     }
   }

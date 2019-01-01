@@ -1922,7 +1922,7 @@ neighbourRank(Mesh::face_t face)
       return (ownRankPartitioningIndex_[2]-1)*nRanks_[0]*nRanks_[1] + ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0];
     }
   }
-  else if (face == Mesh::face_t::face2Minus)
+  else if (face == Mesh::face_t::face2Plus)
   {
     assert(MeshType::dim() == 3);
 

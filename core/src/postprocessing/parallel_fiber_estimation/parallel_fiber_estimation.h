@@ -98,6 +98,18 @@ protected:
   //! output border points as connected streamlines
   void outputStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::string name);
 
+  //! if there are streamlines at the edge between two processes' subdomains that are valid on one process and invalid on the other, send them from the valid process to the invalid
+  void communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                                  std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid);
+
+  //! fill invalid streamlines at corners from border points
+  void fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
+                            std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
+
+  //! set invalid streamlines between two streamlines that are valid as a weighted sum of them
+  void fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                              std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, bool streamlineDirectionUpwards);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 

@@ -108,7 +108,7 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, con
     // if streamline is not complete
     if (streamlineZPoints[i].size() != nBorderPointsZNew_)
     {
-      LOG(ERROR) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
+      LOG(DEBUG) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
 
       // assign seed point instead of incomplete streamline
       streamlineZPoints[i].resize(1);

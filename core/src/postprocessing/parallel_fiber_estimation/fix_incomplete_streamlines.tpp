@@ -15,9 +15,6 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
 
   //TODO fix streamlines at the corner of the domain frmo the border points if they ar e invalid
 
-  goto fynn;
-  fynn:
-
 #ifndef NDEBUG
   LOG(DEBUG) << "valid streamlines:";
   // output which streamlines are valid
@@ -44,6 +41,355 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
 #endif
 
 
+
+  // if there are streamlines at the edge between two processes' subdomains that are valid on one process and invalid on the other, send them from the valid process to the invalid
+  communicateEdgeStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid);
+
+  // fill invalid streamlines at corners from border points
+  fixStreamlinesCorner(borderPointsSubdomain, borderPointsSubdomainAreValid, borderPoints);
+
+  // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
+  fixStreamlinesInterior(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards);
+
+#ifndef NDEBUG
+  LOG(DEBUG) << "after fixing, valid streamlines: ";
+
+  int nInvalid = 0;
+  // output which streamlines are valid
+  for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
+  {
+    for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+    {
+      for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++)
+      {
+
+        if (!borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex])
+        {
+          nInvalid++;
+        }
+        LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", streamline " << pointIndex << " valid: "
+          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex];
+      }
+    }
+  }
+  LOG(DEBUG) << "n invalid: " << nInvalid;
+#endif
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                           std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid)
+{
+  // if there are streamlines at the edge between two processes' subdomains that are valid on one process and invalid on the other, send them from the valid process to the invalid
+  LOG(DEBUG) << "communicateEdgeStreamlines";
+  MPI_Barrier(currentRankSubset_->mpiCommunicator());
+
+  //
+  //   ^ --(1+)-> ^   ^ --(1+)-> ^
+  //   0-   [2]   0+  0-   [3]   0+
+  //   | --(1-)-> |   | --(1-)-> |
+  //
+  //   ^ --(1+)-> ^   ^ --(1+)-> ^
+  // ^ 0-   [0]   0+  0-   [1]   0+
+  // | | --(1-)-> |   | --(1-)-> |
+  // +-->
+
+  std::vector<MPI_Request> receiveRequests;
+  std::vector<MPI_Request> sendRequests;
+
+  // communicate which streamlines are valid on the edges between processes
+  std::array<std::vector<char>,4> sendBufferValidity;
+  std::array<std::vector<char>,4> receiveBufferValidity;
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+
+    // if there is no neighbour in that direction
+    if (neighbourRankNo == -1)
+      continue;
+
+    sendBufferValidity[face].resize(nBorderPointsXNew_, 0);
+    for (int subdomainIndex = 0; subdomainIndex < 4; subdomainIndex++)
+    {
+      int subdomainX = subdomainIndex % 2;
+      int subdomainY = int(subdomainIndex / 2);
+
+      // only consider faces on the edge between processes' subdomains
+      if (face == (int)Mesh::face_t::face0Minus && subdomainX != 0)
+        continue;
+      if (face == (int)Mesh::face_t::face0Plus && subdomainX != 1)
+        continue;
+      if (face == (int)Mesh::face_t::face1Minus && subdomainY != 0)
+        continue;
+      if (face == (int)Mesh::face_t::face1Plus && subdomainY != 1)
+        continue;
+
+      int pointIndexStart = 0;
+      int pointIndexEnd = nBorderPointsXNew_;
+      switch ((Mesh::face_t)face)
+      {
+        case Mesh::face_t::face0Minus:
+        case Mesh::face_t::face0Plus:
+          pointIndexStart = subdomainY*(nBorderPointsX_-1);
+          pointIndexEnd = (subdomainY+1)*(nBorderPointsX_-1)+1;
+          break;
+
+        case Mesh::face_t::face1Minus:
+        case Mesh::face_t::face1Plus:
+          pointIndexStart = subdomainX*(nBorderPointsX_-1);
+          pointIndexEnd = (subdomainX+1)*(nBorderPointsX_-1)+1;
+          break;
+        default:
+          break;
+      };
+
+      LOG(DEBUG) << "face " << Mesh::getString((Mesh::face_t)face) << " subdomain " << subdomainIndex << ", streamlines [" << pointIndexStart << "," << pointIndexEnd << ") nBorderPointsXNew_: " << nBorderPointsXNew_;
+
+      for (int pointIndex = pointIndexStart; pointIndex != pointIndexEnd; pointIndex++)
+      {
+        LOG(DEBUG) << "   " << pointIndex << ": " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex-pointIndexStart];
+        sendBufferValidity[face][pointIndex] = borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex-pointIndexStart];
+      }
+    }
+
+#ifndef NDEBUG
+    std::stringstream str;
+    for (int pointIndex = 0; pointIndex < nBorderPointsXNew_; pointIndex++)
+    {
+      if (pointIndex != 0)
+        str << ",";
+      str << (sendBufferValidity[face][pointIndex] == 0? "false" : "true");
+    }
+    LOG(DEBUG) << "sendBufferValidity " << Mesh::getString((Mesh::face_t)face) << ": [" << str.str() << "], neighbourRankNo: " << neighbourRankNo;
+#endif
+
+    // post non-blocking receive call
+    MPI_Request receiveRequest;
+    receiveBufferValidity[face].resize(nBorderPointsXNew_, 0);
+    MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferValidity[face].data(), nBorderPointsXNew_, MPI_CHAR,
+                                            neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+    receiveRequests.push_back(receiveRequest);
+
+    // post non-blocking send call
+    LOG(DEBUG) << "send validity to rank " << neighbourRankNo;
+    MPI_Request sendRequest;
+    MPIUtility::handleReturnValue(MPI_Isend(sendBufferValidity[face].data(), nBorderPointsXNew_, MPI_CHAR,
+                                            neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+    sendRequests.push_back(sendRequest);
+  }
+
+  // wait for non-blocking communication to finish
+  MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRequests) complete";
+
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+    std::stringstream str;
+    for (int pointIndex = 0; pointIndex < nBorderPointsXNew_; pointIndex++)
+    {
+      if (pointIndex != 0)
+        str << ",";
+      str << (receiveBufferValidity[face][pointIndex] == 0? "false" : "true");
+    }
+    LOG(DEBUG) << "receiveBufferValidity " << Mesh::getString((Mesh::face_t)face) << ": [" << str.str() << "], neighbourRankNo: " << neighbourRankNo;
+  }
+
+  // send and receive streamline data
+  LOG(DEBUG) << "send and receive streamline data";
+  sendRequests.clear();
+  receiveRequests.clear();
+
+  std::array<std::vector<std::vector<double>>,4> sendBufferStreamline;
+  std::array<std::vector<std::vector<double>>,4> receiveBufferStreamline;
+
+  // loop over faces
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+
+    // if there is no neighbour in that direction
+    if (neighbourRankNo == -1)
+      continue;
+
+    sendBufferStreamline[face].resize(nBorderPointsXNew_);
+    receiveBufferStreamline[face].resize(nBorderPointsXNew_);
+
+    for (int pointIndex = 0; pointIndex != nBorderPointsXNew_; pointIndex++)
+    {
+      int subdomainIndex0 = 0;
+      int subdomainIndex1 = 0;
+      switch ((Mesh::face_t)face)
+      {
+        case Mesh::face_t::face0Minus:
+          subdomainIndex0 = 0;
+          subdomainIndex1 = 2;
+          break;
+        case Mesh::face_t::face0Plus:
+          subdomainIndex0 = 1;
+          subdomainIndex1 = 3;
+          break;
+        case Mesh::face_t::face1Minus:
+          subdomainIndex0 = 0;
+          subdomainIndex1 = 1;
+          break;
+        case Mesh::face_t::face1Plus:
+          subdomainIndex0 = 2;
+          subdomainIndex1 = 3;
+          break;
+        default:
+          break;
+      };
+
+      int subdomainIndex = subdomainIndex0;
+      int streamlineIndex = pointIndex;
+      if (pointIndex >= nBorderPointsX_-1)
+      {
+        subdomainIndex = subdomainIndex1;
+        streamlineIndex = pointIndex - (nBorderPointsX_-1);
+      }
+
+      if (sendBufferValidity[face][pointIndex] && !receiveBufferValidity[face][pointIndex])
+      {
+        // send streamline to neighbouring process
+        sendBufferStreamline[face][pointIndex].resize(nBorderPointsZNew_*3);
+
+        // bottom subdomain
+        for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
+        {
+          for (int i = 0; i < 3; i++)
+          {
+            sendBufferStreamline[face][pointIndex][3*zLevelIndex + i] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][streamlineIndex][i];
+          }
+        }
+
+        // top subdomain
+        for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
+        {
+          for (int i = 0; i < 3; i++)
+          {
+            sendBufferStreamline[face][pointIndex][3*(zLevelIndex + (nBorderPointsZ_-1)) + i] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][streamlineIndex][i];
+          }
+        }
+
+        // post non-blocking send call
+        LOG(DEBUG) << "send streamline to rank " << neighbourRankNo;
+        MPI_Request sendRequest;
+        assert(sendBufferStreamline[face][pointIndex].size() == nBorderPointsZNew_*3);
+        MPIUtility::handleReturnValue(MPI_Isend(sendBufferStreamline[face][pointIndex].data(), nBorderPointsZNew_*3, MPI_DOUBLE,
+                                                neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+        sendRequests.push_back(sendRequest);
+      }
+      else if (!sendBufferValidity[face][pointIndex] && receiveBufferValidity[face][pointIndex])
+      {
+        // receive streamline from neighbouring process
+        receiveBufferStreamline[face][pointIndex].resize(nBorderPointsZNew_*3);
+
+        // post non-blocking receive call
+        LOG(DEBUG) << "receive streamline from rank " << neighbourRankNo;
+        MPI_Request receiveRequest;
+        assert (sizeof(bool) == 1);
+        MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferStreamline[face][pointIndex].data(), nBorderPointsZNew_*3, MPI_DOUBLE,
+                                                neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+        receiveRequests.push_back(receiveRequest);
+      }
+    }
+  }
+
+  // wait for non-blocking communication to finish
+  MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+
+  LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRequests) complete";
+
+  // assign received streamline data
+  // loop over faces
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+
+    // if there is no neighbour in that direction
+    if (neighbourRankNo == -1)
+      continue;
+
+    for (int pointIndex = 0; pointIndex != nBorderPointsXNew_; pointIndex++)
+    {
+      if (!sendBufferValidity[face][pointIndex] && receiveBufferValidity[face][pointIndex])
+      {
+
+        int subdomainIndex0 = 0;
+        int subdomainIndex1 = 0;
+        switch ((Mesh::face_t)face)
+        {
+          case Mesh::face_t::face0Minus:
+            subdomainIndex0 = 0;
+            subdomainIndex1 = 2;
+            break;
+          case Mesh::face_t::face0Plus:
+            subdomainIndex0 = 1;
+            subdomainIndex1 = 3;
+            break;
+          case Mesh::face_t::face1Minus:
+            subdomainIndex0 = 0;
+            subdomainIndex1 = 1;
+            break;
+          case Mesh::face_t::face1Plus:
+            subdomainIndex0 = 2;
+            subdomainIndex1 = 3;
+            break;
+          default:
+            break;
+        };
+
+        int subdomainIndex = subdomainIndex0;
+        int streamlineIndex = pointIndex;
+        if (pointIndex >= nBorderPointsX_-1)
+        {
+          subdomainIndex = subdomainIndex1;
+          streamlineIndex = pointIndex - (nBorderPointsX_-1);
+        }
+
+        // bottom subdomain
+        for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
+        {
+          Vec3 point;
+          for (int i = 0; i < 3; i++)
+          {
+            point[i] = receiveBufferStreamline[face][pointIndex][3*zLevelIndex + i];
+          }
+          borderPointsSubdomain[subdomainIndex][face][zLevelIndex][streamlineIndex] = point;
+        }
+
+        // top subdomain
+        for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
+        {
+          Vec3 point;
+          for (int i = 0; i < 3; i++)
+          {
+            point[i] = receiveBufferStreamline[face][pointIndex][3*(zLevelIndex + (nBorderPointsZ_-1)) + i];
+          }
+          borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][streamlineIndex] = point;
+        }
+
+        // set fixed streamlines to valid
+        borderPointsSubdomainAreValid[subdomainIndex][face][streamlineIndex] = true;
+        borderPointsSubdomainAreValid[subdomainIndex+4][face][streamlineIndex] = true;
+      }
+    }
+  }
+
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                     std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
+                     std::array<std::vector<std::vector<Vec3>>,4> borderPoints)
+{
+  // fill invalid streamlines at corners from border points
   //
   //   ^ --(1+)-> ^   ^ --(1+)-> ^
   //   0-   [2]   0+  0-   [3]   0+
@@ -133,7 +479,13 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
       borderPointsSubdomainAreValid[subdomainIndex1+4][face1][pointIndex1] = true;
     }
   }
+}
 
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                       std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, bool streamlineDirectionUpwards)
+{
   // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
   for (int subdomainIndex = 0; subdomainIndex < 4; subdomainIndex++)
   {
@@ -235,30 +587,6 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
       }
     }
   }
-
-#ifndef NDEBUG
-  LOG(DEBUG) << "after fixing, valid streamlines: ";
-
-  int nInvalid = 0;
-  // output which streamlines are valid
-  for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
-  {
-    for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
-    {
-      for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++)
-      {
-
-        if (!borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex])
-        {
-          nInvalid++;
-        }
-        LOG(DEBUG) << "subdomain " << subdomainIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", streamline " << pointIndex << " valid: "
-          << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex];
-      }
-    }
-  }
-  LOG(DEBUG) << "n invalid: " << nInvalid;
-#endif
 }
 
 };  // namespace

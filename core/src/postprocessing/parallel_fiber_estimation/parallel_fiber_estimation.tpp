@@ -349,13 +349,13 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-#ifdef STL_OUTPUT_VERBOSE
+//#ifdef STL_OUTPUT_VERBOSE
   if (currentRankSubset_->ownRankIsContained())
   {
     PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.2);
     PythonUtility::checkForError();
-
+#if 0
     for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
     {
       std::stringstream s;
@@ -366,7 +366,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     }
   }
 #endif
+
 #endif
+//#endif
 #endif
 
   // check if all vectors are filled with points

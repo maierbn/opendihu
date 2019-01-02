@@ -364,8 +364,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsOld[face][0]), 0.2);
       PythonUtility::checkForError();
     }
-  }
 #endif
+  }
 
 #endif
 //#endif

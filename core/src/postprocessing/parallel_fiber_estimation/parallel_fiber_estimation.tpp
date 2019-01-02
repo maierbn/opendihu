@@ -8,12 +8,12 @@
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "spatial_discretization/dirichlet_boundary_conditions.h"
 
-#define USE_CHECKPOINT_BORDER_POINTS
-#define USE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_BORDER_POINTS
-//#define WRITE_CHECKPOINT_GHOST_MESH
-#define USE_CHECKPOINT_GHOST_MESH
+//#define USE_CHECKPOINT_BORDER_POINTS
+//#define USE_CHECKPOINT_MESH
+#define WRITE_CHECKPOINT_MESH
+#define WRITE_CHECKPOINT_BORDER_POINTS
+#define WRITE_CHECKPOINT_GHOST_MESH
+//#define USE_CHECKPOINT_GHOST_MESH
 
 #define STL_OUTPUT
 //#define STL_OUTPUT_VERBOSE
@@ -531,8 +531,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // output the results
     this->outputWriterManager_.writeOutput(data_);  // output gradient
 
-    if (level > 1)
-      LOG(FATAL) << "end";
+    //if (level > 1)
+    //  LOG(FATAL) << "end";
 
     // exchange layer of ghost elements (not nodes) between neighbouring ranks,
     // then every subdomain knows one layer of elements around it (only in x/y direction)
@@ -587,6 +587,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     {
       traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions);
 
+      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+      LOG(ERROR) << "algorithm is finished";
+
       // algorithm is finished
       return;
     }
@@ -632,8 +635,11 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "11_fixed");
 
-    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-    LOG(FATAL) << "end after streamlines are done";
+    if (level == 1)
+    {
+      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+      LOG(FATAL) << "end after streamlines are done";
+    }
   }  // if own rank is part of this stage of the algorithm
 
   LOG(DEBUG) << "create subdomains";

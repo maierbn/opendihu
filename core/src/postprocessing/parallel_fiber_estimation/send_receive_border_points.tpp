@@ -139,6 +139,7 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
       }
     }
   }
+  assert(recvBufferIndex == recvBufferSize);
 }
 
 };  // namespace

@@ -344,7 +344,8 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<bool,4> subdomainIsAtBorder)
 {
-  LOG(DEBUG) << "generateParallelMeshRecursion";
+  LOG(DEBUG) << "generateParallelMeshRecursion, n border points: "
+    << borderPointsOld[0].size() << "," << borderPointsOld[1].size() << "," << borderPointsOld[2].size() << "," << borderPointsOld[3].size();
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

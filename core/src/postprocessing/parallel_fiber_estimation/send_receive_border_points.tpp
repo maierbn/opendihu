@@ -129,8 +129,8 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   int recvBufferIndex = 0;
   for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
   {
-    borderPointsNew[faceNo].resize(nBorderPointsX_);
-    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsX_; zLevelIndex++)
+    borderPointsNew[faceNo].resize(nBorderPointsZ_);
+    for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZ_; zLevelIndex++)
     {
       borderPointsNew[faceNo][zLevelIndex].resize(nBorderPointsX_);
       for (int pointIndex = 0; pointIndex < nBorderPointsX_; pointIndex++, recvBufferIndex+=3)

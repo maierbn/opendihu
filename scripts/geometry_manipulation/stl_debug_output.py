@@ -107,8 +107,15 @@ def output_border_points(filename, rankNo, points, size):
   factor = 1.0
   for p1 in points:
     for p2 in p1:
+      previous_point = None
       for p3 in p2:
         point = np.array([p3[0], p3[1], p3[2]])
+        if np.linalg.norm(point) < 1e-3:
+          continue
+        if previous_point is not None:
+          triangles.append([previous_point, point, 0.5*(previous_point+point)])
+        previous_point = point
+        
         stl_create_rings.create_point_marker(point, triangles, size*factor)
         #factor *= 1.1
         #if factor > 3:

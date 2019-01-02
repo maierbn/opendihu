@@ -188,6 +188,11 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
     int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+
+    // if there is no neighbour in that direction
+    if (neighbourRankNo == -1)
+      continue;
+
     std::stringstream str;
     for (int pointIndex = 0; pointIndex < nBorderPointsXNew_; pointIndex++)
     {

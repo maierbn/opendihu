@@ -100,6 +100,15 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     MPIUtility::handleReturnValue(MPI_Isend(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
 
     LOG(DEBUG) << "subdomain " << subdomainIndex << " sendBuffer: " << sendBuffer;
+
+#if 1
+    std::stringstream debugFilename;
+    debugFilename << "01_border_points_to_send_subdomain_" << subdomainIndex;
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", debugFilename.str(), currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 0.1);
+    PythonUtility::checkForError();
+#endif
+
   }
 }
 
@@ -139,6 +148,15 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
       }
     }
   }
+
+#if 1
+    std::stringstream filename;
+    filename << "02_border_points_received";
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", filename.str(), currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsNew), 0.1);
+    PythonUtility::checkForError();
+#endif
+
   assert(recvBufferIndex == recvBufferSize);
 }
 

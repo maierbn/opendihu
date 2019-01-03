@@ -432,7 +432,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     }
 
     // if it is an interior border definitely fix it, because it may be corrupted by sending it between processes
-    if (!subdomainIsAtBorder[face0] && !subdomainisAtBorder[face1])
+    if (!subdomainIsAtBorder[face0] && !subdomainIsAtBorder[face1])
     {
       fixCorner = true;
     }

@@ -7,13 +7,11 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
                          std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, bool streamlineDirectionUpwards,
-                         std::array<std::vector<std::vector<Vec3>>,4> borderPoints)
+                         const std::array<bool,4> &subdomainIsAtBorder, std::array<std::vector<std::vector<Vec3>>,4> borderPoints)
 {
   // std::array<std::vector<std::vector<Vec3>>,4> borderPoints;    // [face_t][z-level][pointIndex]
   // borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex]
   // borderPointsSubdomainAreValid[subdomainIndex][face][pointIndex]
-
-  //TODO fix streamlines at the corner of the domain frmo the border points if they ar e invalid
 
 #ifndef NDEBUG
   LOG(DEBUG) << "valid streamlines:";
@@ -46,7 +44,7 @@ fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>
   communicateEdgeStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid);
 
   // fill invalid streamlines at corners from border points
-  fixStreamlinesCorner(borderPointsSubdomain, borderPointsSubdomainAreValid, borderPoints);
+  fixStreamlinesCorner(borderPointsSubdomain, borderPointsSubdomainAreValid, subdomainIsAtBorder, borderPoints);
 
   // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
   fixStreamlinesInterior(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards);
@@ -392,7 +390,7 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
                      std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
-                     std::array<std::vector<std::vector<Vec3>>,4> borderPoints)
+                     const std::array<bool,4> &subdomainIsAtBorder, std::array<std::vector<std::vector<Vec3>>,4> borderPoints)
 {
   // fill invalid streamlines at corners from border points
   //
@@ -412,7 +410,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     std::tuple<int,int,int>{3, Mesh::face_t::face1Plus, nBorderPointsX_-1}, std::tuple<int,int,int>{1, Mesh::face_t::face0Plus, nBorderPointsX_-1}
   };
 
-  // TODO: center point
+  // TODO: center point (not needed apparently)
 
   for (int i = 0; i < 8; i+=2)
   {
@@ -424,16 +422,30 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     int face1 = std::get<1>(subdomainFacePointIndex[i+1]);
     int pointIndex1 = std::get<2>(subdomainFacePointIndex[i+1]);
 
+    bool fixCorner = false;
+
     // if at least one of the two instances of the corner streamline is invalid
     if (!borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0]
       || !borderPointsSubdomainAreValid[subdomainIndex1][face1][pointIndex1])
     {
+      fixCorner = true;
+    }
+
+    // if it is an interior border definitely fix it, because it may be corrupted by sending it between processes
+    if (!subdomainIsAtBorder[face0] && !subdomainisAtBorder[face1])
+    {
+      fixCorner = true;
+    }
+
+    // if at least one of the two instances of the corner streamline is invalid
+    if (fixCorner)
+    {
       // derive the corner streamline from the initial border points
 
       LOG(DEBUG) << "subdomain " << subdomainIndex0 << " face " << Mesh::getString((Mesh::face_t)face0)
-        << " pointIndex " << pointIndex0 << " valid? " << borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0];
-      LOG(DEBUG) << "subdomain " << subdomainIndex1 << " face " << Mesh::getString((Mesh::face_t)face1)
-        << " pointIndex " << pointIndex1 << " valid? " << borderPointsSubdomainAreValid[subdomainIndex1][face1][pointIndex1];
+        << " pointIndex " << pointIndex0 << " valid: " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0];
+      LOG(DEBUG) << "          " << subdomainIndex1 << " face " << Mesh::getString((Mesh::face_t)face1)
+        << " pointIndex " << pointIndex1 << " valid: " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex1][face1][pointIndex1];
 
       // lower subdomain
       // loop over points of streamline from bottom to top

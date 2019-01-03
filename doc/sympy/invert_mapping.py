@@ -72,7 +72,7 @@ if False:
   print solve(Phi1 - xp1, xi1)
 
 # 2D linear quadrilateral
-if False:
+if True:
   Phi1 = (1-xi1)*(1-xi2)*x11 + xi1*(1-xi2)*x21 + (1-xi1)*xi2*x31 + xi1*xi2*x41
   Phi2 = (1-xi1)*(1-xi2)*x12 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x32 + xi1*xi2*x42
   Phi3 = (1-xi1)*(1-xi2)*x13 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x33 + xi1*xi2*x43

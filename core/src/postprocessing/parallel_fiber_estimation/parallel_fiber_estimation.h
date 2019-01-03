@@ -53,7 +53,7 @@ protected:
 
   //! interpolate points for invalid streamlines
   void fixIncompleteStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
-                                bool streamlineDirectionUpwards, std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
+                                bool streamlineDirectionUpwards, const std::array<bool,4> &subdomainIsAtBorder, std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
 
   //! refine the given border points (borderPointsOld) in x and y direction
   void refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<std::vector<std::vector<Vec3>>,4> &borderPoints);
@@ -73,14 +73,27 @@ protected:
   //! create the seed points in form of a cross at the center of the current domain
   void createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints);
 
-  //! trace the fibers that are evenly distributed in the subdomain, this is the final step of the algorithm
-  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions);
+  //! trace the fibers that are evenly distributed in the subdomain, this is the final step of the algorithm. It uses borderPointsSubdomain as starting dataset
+  void traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain);
 
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
   void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
 
+  //! send end points of streamlines to next rank that continues the streamline
+  void exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
+
+  //! determine if previously set seedPoints are used or if they are received from neighbouring rank, on rank int(nRanksZ/2), send seed points to rank below
+  void exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
+
   //! sample the streamlines at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints);
+
+  //! sample one streamline at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint, i is a number for debugging output
+  void sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const Vec3 &seedPoint, double bottomZClip, double topZClip,
+                                     std::vector<Vec3> &streamlineZPoints, int i = 0);
+
+  //! compute the starting end end value of z for the current subdomain, uses meshPartition_
+  void computeBottomTopZClip(double bottomZClip, double topZClip);
 
   //! fill in missing points at the borders, where no streamlines were traced
   void fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
@@ -105,7 +118,7 @@ protected:
 
   //! fill invalid streamlines at corners from border points
   void fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
-                            std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
+                            const std::array<bool,4> &subdomainIsAtBorder, std::array<std::vector<std::vector<Vec3>>,4> borderPoints);
 
   //! set invalid streamlines between two streamlines that are valid as a weighted sum of them
   void fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
@@ -132,6 +145,7 @@ protected:
   int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
   int nBorderPointsXNew_;  ///< the value of nBorderPointsX_ in the next subdomain
   int nBorderPointsZNew_;  ///< the value of nBorderPointsZ_ in the next subdomain
+  int nFineGridFibers_;   ///< the number of additional fibers between "key" fibers in one coordinate direction
 
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"

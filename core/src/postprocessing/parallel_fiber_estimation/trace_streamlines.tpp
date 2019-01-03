@@ -61,58 +61,12 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
   {
     // multiple ranks
 
-    // determine if previously set seedPoints are used or if they are received from neighbouring rank
-    LOG(DEBUG) << "rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards;
-    if (rankZNo != int(nRanksZ/2))
-    {
-      int neighbourRankNo;
-      if (streamlineDirectionUpwards)
-      {
-        neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
-      }
-      else
-      {
-        neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
-      }
+    // The overall picture is that global streamlines begin at the center (at rankZNo/2).
+    // Rank int(nRanksZ/2) send the initial seed points to the rank below (int(nRanksZ/2)-1)
+    // Then every rank traces its streamlines and sends the end points as new seed points to the next rank (lower or upper neighbour, depending on streamlineDirection)
 
-      // receive seed points
-      std::vector<double> receiveBuffer(seedPoints.size()*3);
-      MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                             0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
-
-      // fill seed points from receive buffer
-      for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
-      {
-        for (int i = 0; i < 3; i++)
-        {
-          seedPoints[seedPointIndex][i] = receiveBuffer[seedPointIndex*3 + i];
-        }
-      }
-      //LOG(DEBUG) << "received " << seedPoints.size() << " seed points from rank " << neighbourRankNo << ": " << seedPoints;
-
-    }
-
-    // on rank int(nRanksZ/2), send seed points to rank below
-    if (rankZNo == int(nRanksZ/2))
-    {
-      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
-
-      // fill send buffer
-      std::vector<double> sendBuffer(seedPoints.size()*3);
-      for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
-      {
-        for (int i = 0; i < 3; i++)
-        {
-          sendBuffer[seedPointIndex*3 + i] = seedPoints[seedPointIndex][i];
-        }
-      }
-
-      //LOG(DEBUG) << "send " << seedPoints.size() << " seed points to rank " << neighbourRankNo << ": " << seedPoints;
-
-      // send seed points
-      MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                             0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
-    }
+    // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
+    exchangeSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines";
 
@@ -144,52 +98,27 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
       this->traceStreamline(startingPoint, streamlineDirection, streamlinePoints[i]);
 
-      // if everything was cleared, at seed point
+      // if everything was cleared, add seed point
       if (streamlinePoints[i].empty())
         streamlinePoints[i].push_back(startingPoint);
 
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-#ifdef STL_OUTPUT_VERBOSE
+//#ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_raw_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
-#endif
+//#endif
 #endif
 #endif
 
     }
 
     // send end points of streamlines to next rank that continues the streamline
-    if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
-    {
-      // fill send buffer
-      std::vector<double> sendBuffer(nStreamlines*3);
-      for (int streamlineIndex = 0; streamlineIndex < nStreamlines; streamlineIndex++)
-      {
-        for (int i = 0; i < 3; i++)
-        {
-          sendBuffer[streamlineIndex*3+i] = streamlinePoints[streamlineIndex].back()[i];
-        }
-      }
-
-      int neighbourRankNo;
-      if (streamlineDirectionUpwards)
-      {
-        neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
-      }
-      else
-      {
-        neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
-      }
-
-      // send end points of streamlines
-      MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                            0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
-    }
+    exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlinePoints);
 
     // reorder streamline points such that they go from bottom to top
     if (streamlineDirection < 0)

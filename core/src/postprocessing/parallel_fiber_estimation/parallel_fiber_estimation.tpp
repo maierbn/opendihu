@@ -27,6 +27,7 @@
 #include "postprocessing/parallel_fiber_estimation/create_mesh.tpp"
 #include "postprocessing/parallel_fiber_estimation/create_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/exchange_ghost_values.tpp"
+#include "postprocessing/parallel_fiber_estimation/exchange_seed_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/fill_border_points.tpp"
 #include "postprocessing/parallel_fiber_estimation/fix_incomplete_streamlines.tpp"
 #include "postprocessing/parallel_fiber_estimation/output_border_points.tpp"
@@ -56,6 +57,7 @@ ParallelFiberEstimation(DihuContext context) :
   nBorderPointsZ_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13)+1;
   nBorderPointsX_ = specificSettings_.getOptionInt("nElementsXPerSubdomain", 13)+1;
   maxLevel_ = specificSettings_.getOptionInt("maxLevel", 2);
+  nFineGridFibers_ = specificSettings_.getOptionInt("nFineGridFibers", 2);
 
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
@@ -589,18 +591,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       seedPointsZIndex = nBorderPointsZ_/2;
     }
 
-    // if this is the end of the recursion, trace final fibers
-    if (traceFinalFibers)
-    {
-      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions);
-
-      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-      LOG(ERROR) << "algorithm is finished";
-
-      // algorithm is finished
-      return;
-    }
-
     // determine the seed points of the streamlines
     createSeedPoints(subdomainIsAtBorder, seedPointsZIndex, nodePositions, seedPoints);
 
@@ -636,10 +626,22 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
 
     // fill in missing points
-    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards, borderPoints);
+    fixIncompleteStreamlines(borderPointsSubdomain, borderPointsSubdomainAreValid, streamlineDirectionUpwards, subdomainIsAtBorder, borderPoints);
 
     // write border points to file
     outputStreamlines(borderPointsSubdomain, "11_fixed");
+
+    // if this is the end of the recursion, trace final fibers
+    if (traceFinalFibers)
+    {
+      traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain);
+
+      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+      LOG(ERROR) << "algorithm is finished";
+
+      // algorithm is finished
+      return;
+    }
 
     if (level == 1)
     {

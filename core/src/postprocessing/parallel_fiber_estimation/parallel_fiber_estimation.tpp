@@ -18,7 +18,7 @@
 #define STL_OUTPUT
 //#define STL_OUTPUT_VERBOSE
 
-#define FILE_COMMUNICATION
+//#define FILE_COMMUNICATION
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
@@ -663,9 +663,10 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   // send border points to ranks that will handle the new subdomains
   std::vector<MPI_Request> sendRequests;
+  std::vector<std::vector<double>> sendBuffers;
   if (refineSubdomainsOnThisRank)     // if this rank has created new subdomains (was part of the previous rank subset)
   {
-    sendBorderPoints(borderPointsSubdomain, sendRequests);
+    sendBorderPoints(borderPointsSubdomain, sendBuffers, sendRequests);
   }
 
   // receive border points
@@ -679,6 +680,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
+  sendBuffers.clear();
   //LOG(FATAL) << "done";
 
   // call method recursively

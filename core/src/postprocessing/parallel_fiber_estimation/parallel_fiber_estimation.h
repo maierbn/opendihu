@@ -87,7 +87,8 @@ protected:
                         std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, std::array<bool,4> &subdomainIsAtBorder);
 
   //! send border points to those ranks that will handle them in the next subdomain
-  void sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::vector<MPI_Request> &sendRequests);
+  void sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                        std::vector<std::vector<double>> &sendBuffers, std::vector<MPI_Request> &sendRequests);
 
   //! receive the border points
   void receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::vector<std::vector<Vec3>>,4> &borderPointsNew, std::array<bool,4> &subdomainIsAtBorderNew);

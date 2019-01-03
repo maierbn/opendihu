@@ -5,28 +5,36 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::vector<MPI_Request> &sendRequests)
+sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                 std::vector<std::vector<double>> &sendBuffers, std::vector<MPI_Request> &sendRequests)
 {
   sendRequests.resize(8);
+  sendBuffers.resize(8);
+
+  int sendBufferSize = 4*nBorderPointsX_*nBorderPointsZ_*3;
 
   // send border points to subdomains
   for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
   {
     // fill send buffer
-    std::vector<double> sendBuffer;
+    int sendBufferIndex = 0;
+    sendBuffers[subdomainIndex].resize(sendBufferSize);
+
     for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
     {
       for (int zLevelIndex = 0; zLevelIndex < borderPointsSubdomain[subdomainIndex][faceNo].size(); zLevelIndex++)
       {
         for (int pointIndex = 0; pointIndex < borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].size(); pointIndex++)
         {
-          for (int i = 0; i < 3; i++)
+          for (int i = 0; i < 3; i++, sendBufferIndex++)
           {
-            sendBuffer.push_back(borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][pointIndex][i]);
+            sendBuffers[subdomainIndex][sendBufferIndex] = borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex][pointIndex][i];
           }
         }
       }
     }
+
+    assert(sendBufferIndex == sendBufferSize);
 
     // determine rank so to which the border points should be sent to
     std::array<int,3> oldRankIndex;
@@ -41,7 +49,8 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     subdomainRankIndex[1] = oldRankIndex[1]*2 + int((subdomainIndex % 4) / 2);
     subdomainRankIndex[2] = oldRankIndex[2]*2 + int(subdomainIndex / 4);
 
-    int subdomainRankNo = subdomainRankIndex[2]*(nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]) + subdomainRankIndex[1]*nRanksPerCoordinateDirection_[0] + subdomainRankIndex[0];
+    int subdomainRankNo = subdomainRankIndex[2]*(nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])
+      + subdomainRankIndex[1]*nRanksPerCoordinateDirection_[0] + subdomainRankIndex[0];
 
     // determine if the subdomain is at any border of the whole domain
     std::array<int,3> rankIndex;
@@ -57,9 +66,11 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     subdomainIsAtBorderNew[(int)Mesh::face_t::face1Plus] = rankIndex[1] == nRanksPerCoordinateDirection_[1]-1;
 
 
-    LOG(DEBUG) << "subdomain " << subdomainIndex << ", rankIndex: " << rankIndex << ", subdomainIsAtBorderNew: " << subdomainIsAtBorderNew << ", nRanksPerCoordinateDirection_: " << nRanksPerCoordinateDirection_;
+    LOG(DEBUG) << "subdomain " << subdomainIndex << ", rankIndex: " << rankIndex << ", subdomainIsAtBorderNew: "
+      << subdomainIsAtBorderNew << ", nRanksPerCoordinateDirection_: " << nRanksPerCoordinateDirection_;
 
-    LOG(DEBUG) << "sendBuffer size: " << sendBuffer.size() << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:" << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
+    LOG(DEBUG) << "sendBuffer size: " << sendBufferSize << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:"
+      << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
 
     // save subdomains to be send to a file
 #ifdef WRITE_CHECKPOINT_BORDER_POINTS
@@ -104,9 +115,9 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     assert(file.is_open());
 
     // data
-    for (int i = 0; i < sendBuffer.size(); i++)
+    for (int i = 0; i < sendBufferSize; i++)
     {
-      file << sendBuffer[i] << " ";
+      file << sendBuffers[subdomainIndex][i] << " ";
     }
 
     file.close();
@@ -115,9 +126,9 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
 #ifndef FILE_COMMUNICATION
     LOG(DEBUG) << "oldRankIndex: " << oldRankIndex << ", new subdomainIndex: " << subdomainIndex << ", subdomainRankIndex: " << subdomainRankIndex << ", send from rank " << currentRankSubset_->ownRankNo() << " to " << subdomainRankNo;
-    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
+    MPIUtility::handleReturnValue(MPI_Isend(sendBuffers[subdomainIndex].data(), sendBufferSize, MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
 #endif
-    LOG(DEBUG) << "subdomain " << subdomainIndex << " sendBuffer: " << sendBuffer;
+    LOG(DEBUG) << "subdomain " << subdomainIndex << " sendBuffer: " << sendBuffers[subdomainIndex];
 
 #if 1
     std::stringstream debugFilename;
@@ -151,8 +162,12 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
 #ifdef FILE_COMMUNICATION
     std::stringstream filename;
     filename << "file_communication_borderPoints_from_" << rankToReceiveFrom << "_to_" << ownRankNo << ".txt";
-    std::ifstream file(filename.str().c_str(), std::ios::in);
-    assert(file.is_open());
+    std::ifstream file;
+    while(!file.is_open())
+    {
+      file.open(filename.str().c_str(), std::ios::in);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 
     // data
     for (int i = 0; i < recvBuffer.size(); i++)

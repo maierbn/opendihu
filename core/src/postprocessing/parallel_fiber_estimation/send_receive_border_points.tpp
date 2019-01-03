@@ -130,7 +130,10 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
 
   std::vector<double> recvBuffer(recvBufferSize);
-  MPIUtility::handleReturnValue(MPI_Recv(recvBuffer.data(), recvBuffer.size(), MPI_DOUBLE, rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+  MPI_Request receiveRequest;
+  MPIUtility::handleReturnValue(MPI_Irecv(recvBuffer.data(), recvBufferSize, MPI_DOUBLE,
+                                          rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+  MPIUtility::handleReturnValue(MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE), "MPI_Wait");
 
   LOG(DEBUG) << "recv buffer: " << recvBuffer;
 

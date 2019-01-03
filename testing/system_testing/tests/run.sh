@@ -3,6 +3,7 @@
 basedir=$(pwd)
 
 START_ALL=$(date +%s.%N)
+rm log.txt
 
 # for all tests
 for name in \
@@ -14,8 +15,8 @@ for name in \
 "monodomain_timestep_widths"
 do
 
-echo ""
-echo "$name, starting at $(date +%T)"
+echo "" | tee -a log.txt
+echo "$name, starting at $(date +%T)" | tee -a log.txt
 echo "=============================="
 
 # change directory to test directory
@@ -31,7 +32,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "compilation took $(date -u -d @$DIFF +%T)"
+echo "compilation took $(date -u -d @$DIFF +%T)" | tee -a log.txt
 echo ""
 
 
@@ -43,7 +44,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "running tests took $(date -u -d @$DIFF +%T)"
+echo "running tests took $(date -u -d @$DIFF +%T)" | tee -a log.txt
 echo ""
 
 
@@ -55,7 +56,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "postprocessing took $(date -u -d @$DIFF +%T)"
+echo "postprocessing took $(date -u -d @$DIFF +%T)" | tee -a log.txt
 echo ""
 
 done
@@ -67,6 +68,6 @@ make
 # output total duration
 END_ALL=$(date +%s.%N)
 DIFF_ALL=$(python -c "print $END_ALL - $START_ALL")
-echo ""
-echo "total duration of system tests: $(date -u -d @$DIFF_ALL +%T)"
+echo "" | tee -a log.txt
+echo "total duration of system tests: $(date -u -d @$DIFF_ALL +%T)" | tee -a log.txt
 echo ""

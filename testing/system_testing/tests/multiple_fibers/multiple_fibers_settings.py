@@ -2,7 +2,7 @@
 #
 # arguments: <n_processes_per_fiber>
 
-end_time = 10.0
+end_time = 30.0
 
 import numpy as np
 import matplotlib 
@@ -32,10 +32,10 @@ dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
 # input files
-#fibre_file = "../input/laplace3d_structured_quadratic"
-fibre_file = "../input/laplace3d_structured_linear"
-#fibre_file = "../input1000/laplace3d_structured_quadratic"
-fibre_distribution_file = "../input/MU_fibre_distribution_3780.txt"
+#fiber_file = "../input/laplace3d_structured_quadratic"
+fiber_file = "../input/laplace3d_structured_linear"
+#fiber_file = "../input1000/laplace3d_structured_quadratic"
+fiber_distribution_file = "../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../input/MU_firing_times_real.txt"
 firing_times_file = "../input/MU_firing_times_immediately.txt"
 
@@ -67,26 +67,26 @@ elif "hodgkin_huxley" in cellml_file:
   nodal_stimulation_current = 40.
 
 
-def get_motor_unit_no(fibre_no):
-  return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
+def get_motor_unit_no(fiber_no):
+  return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
 
-def fibre_gets_stimulated(fibre_no, frequency, current_time):
+def fiber_gets_stimulated(fiber_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = (int)(get_motor_unit_no(fibre_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(fiber_no)*0.8)
   
-  # determine if fibre fires now
+  # determine if fiber fires now
   index = int(current_time * frequency)
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
 # callback function that can set states, i.e. prescribed values for stimulation
-def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
   
-  # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  # determine if fiber gets stimulated at the current time
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
 
-  if is_fibre_gets_stimulated:  
+  if is_fiber_gets_stimulated:  
     # determine nodes to stimulate (center node, left and right neighbour)
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
@@ -113,7 +113,7 @@ def get_instance_config(i):
       "timeStepWidth": dt_3D,  # 1e-1
       "logTimeStepWidthAsKey": "dt_3D",
       "durationLogKey": "duration_total",
-      "timeStepOutputInterval" : 1e5,
+      "timeStepOutputInterval" : 1e3,
       "endTime": end_time,
       "outputData1": False,
       "outputData2": True,
@@ -169,10 +169,10 @@ def get_instance_config(i):
             "solverName": "implicitSolver",
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
-            #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-            #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
+            #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+            #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+            {"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
           ]
         },
       },
@@ -184,7 +184,7 @@ def get_instance_config(i):
 # create fibre meshes
 meshes = {}
 
-with open(fibre_file, "rb") as f:
+with open(fiber_file, "rb") as f:
   streamlines = pickle.load(f)
     
 nInstances = len(streamlines)
@@ -207,7 +207,7 @@ for i,streamline in enumerate(streamlines):
   }
     
 # load MU distribution and firing times
-fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
+fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
 # determine when the fibres will fire, for debugging output
@@ -215,14 +215,14 @@ if rank_no == 0:
   print("Debugging output about fibre firing: Taking input from file \"{}\"".format(firing_times_file))
   
   n_firing_times = np.size(firing_times,0)
-  for fibre_no_index in range(nInstances):
+  for fiber_no_index in range(nInstances):
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
-      if fibreGetsStimulated(fibre_no_index, stimulation_frequency, current_time):
+      if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
         first_stimulation = current_time
         break
   
-    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
+    print("   Fiber {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
 
 config = {
   "scenarioName": "1e3_fibers_1e4_cores",

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../dependencies/python/install/bin/python3
 # -*- coding: utf-8 -*-
 
 #

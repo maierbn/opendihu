@@ -7,6 +7,17 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZIndex, const std::vector<Vec3> &nodePositions, std::vector<Vec3> &seedPoints)
 {
+  // nodePositions contains all node positions in the current 3D mesh
+  // naming of borders: (0-,1-,0+,1+)
+  //     ___1+__
+  //    |   |   |
+  // 0- |___|___| 0+
+  // ^  |   |   |
+  // |  |___|___|
+  // +-->   1-
+
+  LOG(DEBUG) << "createSeedPoints, seedPointsZIndex: " << seedPointsZIndex << ", subdomainIsAtBorder: " << std::boolalpha << subdomainIsAtBorder;
+
   int subdomainNNodesX = nBorderPointsXNew_;
   int subdomainNNodesY = nBorderPointsXNew_;
 

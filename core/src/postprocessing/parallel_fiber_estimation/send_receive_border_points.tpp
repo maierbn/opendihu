@@ -53,21 +53,8 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
       + subdomainRankIndex[1]*nRanksPerCoordinateDirection_[0] + subdomainRankIndex[0];
 
     // determine if the subdomain is at any border of the whole domain
-    std::array<int,3> rankIndex;
-    rankIndex[0] = subdomainIndex % nRanksPerCoordinateDirection_[0];
-    rankIndex[1] = int((subdomainIndex % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
-    rankIndex[2] = int(subdomainIndex / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
-
     std::array<bool,4> subdomainIsAtBorderNew;
-
-    subdomainIsAtBorderNew[(int)Mesh::face_t::face0Minus] = rankIndex[0] == 0;
-    subdomainIsAtBorderNew[(int)Mesh::face_t::face0Plus] = rankIndex[0] == nRanksPerCoordinateDirection_[0]-1;
-    subdomainIsAtBorderNew[(int)Mesh::face_t::face1Minus] = rankIndex[1] == 0;
-    subdomainIsAtBorderNew[(int)Mesh::face_t::face1Plus] = rankIndex[1] == nRanksPerCoordinateDirection_[1]-1;
-
-
-    LOG(DEBUG) << "subdomain " << subdomainIndex << ", rankIndex: " << rankIndex << ", subdomainIsAtBorderNew: "
-      << subdomainIsAtBorderNew << ", nRanksPerCoordinateDirection_: " << nRanksPerCoordinateDirection_;
+    setSubdomainIsAtBorder(subdomainRankNo, subdomainIsAtBorderNew);
 
     LOG(DEBUG) << "sendBuffer size: " << sendBufferSize << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:"
       << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
@@ -143,17 +130,18 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::vector<std::vector<Vec3>>,4> &borderPointsNew, std::array<bool,4> &subdomainIsAtBorderNew)
+receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::vector<std::vector<Vec3>>,4> &borderPointsNew,
+                    std::array<bool,4> &subdomainIsAtBorderNew)
 {
   int ownRankNo = currentRankSubset_->ownRankNo();
 
   // determine rank from which to receive the border points
-  std::array<int,3> rankIndex;
-  rankIndex[0] = ownRankNo % nRanksPerCoordinateDirection_[0];
-  rankIndex[1] = int((ownRankNo % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
-  rankIndex[2] = int(ownRankNo / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
+  std::array<int,3> rankCoordinates;
+  rankCoordinates[0] = ownRankNo % nRanksPerCoordinateDirection_[0];
+  rankCoordinates[1] = int((ownRankNo % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
+  rankCoordinates[2] = int(ownRankNo / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
 
-  int rankToReceiveFrom = int(rankIndex[2]/2)*(nRanksPerCoordinateDirectionPreviously*nRanksPerCoordinateDirectionPreviously) + int(rankIndex[1]/2)*nRanksPerCoordinateDirectionPreviously + int(rankIndex[0]/2);
+  int rankToReceiveFrom = int(rankCoordinates[2]/2)*(nRanksPerCoordinateDirectionPreviously*nRanksPerCoordinateDirectionPreviously) + int(rankCoordinates[1]/2)*nRanksPerCoordinateDirectionPreviously + int(rankCoordinates[0]/2);
 
   int recvBufferSize = 4*nBorderPointsX_*nBorderPointsZ_*3;
   LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
@@ -180,6 +168,8 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
 
 #else
   MPI_Request receiveRequest;
+
+  // receive border points
   MPIUtility::handleReturnValue(MPI_Irecv(recvBuffer.data(), recvBufferSize, MPI_DOUBLE,
                                           rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
   MPIUtility::handleReturnValue(MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE), "MPI_Wait");
@@ -202,6 +192,9 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
     }
   }
 
+  // set subdomainIsAtBorderNew
+  setSubdomainIsAtBorder(currentRankSubset_->ownRankNo(), subdomainIsAtBorderNew);
+
 #if 1
     std::stringstream debugFilename;
     debugFilename << "02_border_points_received";
@@ -211,6 +204,26 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
 #endif
 
   assert(recvBufferIndex == recvBufferSize);
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew)
+{
+  // determine if the subdomain is at which borders, from rank no
+  std::array<int,3> rankCoordinates;
+  rankCoordinates[0] = rankNo % nRanksPerCoordinateDirection_[0];
+  rankCoordinates[1] = int((rankNo % (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])) / nRanksPerCoordinateDirection_[0]);
+  rankCoordinates[2] = int(rankNo / (nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1]));
+
+  subdomainIsAtBorderNew[(int)Mesh::face_t::face0Minus] = rankCoordinates[0] == 0;
+  subdomainIsAtBorderNew[(int)Mesh::face_t::face0Plus] = rankCoordinates[0] == nRanksPerCoordinateDirection_[0]-1;
+  subdomainIsAtBorderNew[(int)Mesh::face_t::face1Minus] = rankCoordinates[1] == 0;
+  subdomainIsAtBorderNew[(int)Mesh::face_t::face1Plus] = rankCoordinates[1] == nRanksPerCoordinateDirection_[1]-1;
+
+  LOG(DEBUG) << "subdomain rank " << rankNo << ", rankCoordinates: " << rankCoordinates << ", subdomainIsAtBorderNew: "
+    << subdomainIsAtBorderNew << ", nRanksPerCoordinateDirection_: " << nRanksPerCoordinateDirection_;
+
 }
 
 };  // namespace

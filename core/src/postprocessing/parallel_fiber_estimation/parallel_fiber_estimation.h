@@ -111,6 +111,9 @@ protected:
   void fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
                               std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid, bool streamlineDirectionUpwards);
 
+  //! determine if the subdomain is at which borders, from rank no
+  void setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 

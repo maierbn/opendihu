@@ -8,6 +8,7 @@
 #include "partition/mesh_partition/01_mesh_partition.h"
 #include "spatial_discretization/dirichlet_boundary_conditions.h"
 
+// write or load various checkpoints, this is for debugging to only run part of the algorithm on prescribed data
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
@@ -15,10 +16,11 @@
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
-#define STL_OUTPUT
-//#define STL_OUTPUT_VERBOSE
+// output STl files for debugging
+#define STL_OUTPUT                // output some stl files
+//#define STL_OUTPUT_VERBOSE     // output more stl files
 
-//#define FILE_COMMUNICATION
+//#define FILE_COMMUNICATION        // when sending border points between ranks, do not use MPI but file I/O instead
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"
@@ -611,7 +613,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     std::vector<std::vector<Vec3>> streamlineZPoints;
     sampleAtEquidistantZPoints(streamlinePoints, seedPoints, streamlineZPoints);
 
-    MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     // save streamline points to the portions of the faces
     //std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index]
 
@@ -678,7 +679,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     receiveBorderPoints(nRanksPerCoordinateDirectionPreviously, borderPointsNew, subdomainIsAtBorderNew);
   }
 
+#ifndef FILE_COMMUNICATION
   MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+#endif
 
   sendBuffers.clear();
   //LOG(FATAL) << "done";

@@ -10,13 +10,15 @@
 
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_MESH
-#define WRITE_CHECKPOINT_BORDER_POINTS
-#define WRITE_CHECKPOINT_GHOST_MESH
+//#define WRITE_CHECKPOINT_MESH
+//#define WRITE_CHECKPOINT_BORDER_POINTS
+//#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
 #define STL_OUTPUT
 //#define STL_OUTPUT_VERBOSE
+
+#define FILE_COMMUNICATION
 
 // include files that implement various methods of this class, these make use the previous defines
 #include "postprocessing/parallel_fiber_estimation/create_dirichlet_boundary_conditions.tpp"

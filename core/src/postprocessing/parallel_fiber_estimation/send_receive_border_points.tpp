@@ -96,9 +96,27 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     LOG(DEBUG) << " saved data for subdomain " << subdomainRankNo << " to file \"" << filename.str() << "\".";
 #endif
 
+#ifdef FILE_COMMUNICATION
+    std::stringstream filename;
+    int ownRankNo = currentRankSubset_->ownRankNo();
+    filename << "file_communication_borderPoints_from_" << ownRankNo << "_to_" << subdomainRankNo << ".txt";
+    std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
+    assert(file.is_open());
+
+    // data
+    for (int i = 0; i < sendBuffer.size(); i++)
+    {
+      file << sendBuffer[i] << " ";
+    }
+
+    file.close();
+    LOG(DEBUG) << " file communication, saved to file \"" << filename.str() << "\".";
+#endif
+
+#ifndef FILE_COMMUNICATION
     LOG(DEBUG) << "oldRankIndex: " << oldRankIndex << ", new subdomainIndex: " << subdomainIndex << ", subdomainRankIndex: " << subdomainRankIndex << ", send from rank " << currentRankSubset_->ownRankNo() << " to " << subdomainRankNo;
     MPIUtility::handleReturnValue(MPI_Isend(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
-
+#endif
     LOG(DEBUG) << "subdomain " << subdomainIndex << " sendBuffer: " << sendBuffer;
 
 #if 1
@@ -130,11 +148,28 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
 
   std::vector<double> recvBuffer(recvBufferSize);
+#ifdef FILE_COMMUNICATION
+    std::stringstream filename;
+    filename << "file_communication_borderPoints_from_" << rankToReceiveFrom << "_to_" << ownRankNo << ".txt";
+    std::ifstream file(filename.str().c_str(), std::ios::in);
+    assert(file.is_open());
+
+    // data
+    for (int i = 0; i < recvBuffer.size(); i++)
+    {
+      file >> recvBuffer[i];
+    }
+
+    file.close();
+    LOG(DEBUG) << " file communication, loaded from file \"" << filename.str() << "\".";
+
+#else
   MPI_Request receiveRequest;
   MPIUtility::handleReturnValue(MPI_Irecv(recvBuffer.data(), recvBufferSize, MPI_DOUBLE,
                                           rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
   MPIUtility::handleReturnValue(MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE), "MPI_Wait");
 
+#endif
   LOG(DEBUG) << "recv buffer: " << recvBuffer;
 
   // extract received values, assign them to borderPointsNew
@@ -153,9 +188,9 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   }
 
 #if 1
-    std::stringstream filename;
-    filename << "02_border_points_received";
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", filename.str().c_str(), currentRankSubset_->ownRankNo(),
+    std::stringstream debugFilename;
+    debugFilename << "02_border_points_received";
+    PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", debugFilename.str().c_str(), currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsNew), 0.1);
     PythonUtility::checkForError();
 #endif

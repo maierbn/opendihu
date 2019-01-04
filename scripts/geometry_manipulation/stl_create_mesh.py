@@ -2943,11 +2943,12 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   loop_grid_points = [[] for i in range(len(border_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
   
   # serial implementation
-  for loop_no,border_points in enumerate(border_point_loops):
-    loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+  if False:
+    for loop_no,border_points in enumerate(border_point_loops):
+      loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
   
   # concurrent execution, currently not working, but not clear why
-  if False:
+  if True:
     print("start concurrent call")
     # concurrently call handle_loop(loop_no, border_points) with the points in border_point_loops, this is the same as 
     # for loop_no,border_points in enumerate(border_point_loops):
@@ -2955,13 +2956,13 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
     #
     try:
       import concurrent.futures
-      with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+      with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         
         print("create futures")
         futures = {executor.submit(handle_loop, loop_no, border_points): loop_no for loop_no,border_points in enumerate(border_point_loops)}
         print("futures created")
-        concurrent.futures.wait(futures)
-        print("futures finished")
+        #concurrent.futures.wait(futures)
+        #print("futures finished")
         for future in concurrent.futures.as_completed(futures):
           loop_no = futures[future]
           print("{} has completed".format(loop_no))

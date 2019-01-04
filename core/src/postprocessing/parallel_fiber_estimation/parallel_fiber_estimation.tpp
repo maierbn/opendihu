@@ -407,6 +407,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   // here we have the border points of our subdomain, now the borders that split this subdomain in 8 more are computed
   if (currentRankSubset_->ownRankIsContained())
   {
+    assert(!borderPointsOld[0].empty());
+
     refineSubdomainsOnThisRank = true;
     nBorderPointsXNew_ = nBorderPointsX_*2-1;   // number of border points per coordinate direction of the logical rectangle, for the subdomain
 

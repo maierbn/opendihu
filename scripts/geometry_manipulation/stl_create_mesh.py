@@ -2896,6 +2896,11 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
 
   #print("border_point_loops: {}".format(border_point_loops))
 
+  n_points = len(border_point_loops[0])    
+  n_points_x = (int)(n_points/4)  
+  n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
+  n_grid_points_y = n_points_x+1
+    
   def handle_loop(loop_no, border_points):
     n_points = len(border_points)    
     n_points_x = (int)(n_points/4)  
@@ -2956,7 +2961,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
     #
     try:
       import concurrent.futures
-      with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+      with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         
         print("create futures")
         futures = {executor.submit(handle_loop, loop_no, border_points): loop_no for loop_no,border_points in enumerate(border_point_loops)}

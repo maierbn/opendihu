@@ -81,15 +81,14 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   int face = Mesh::face_t::face1Minus;
   int pointIndexStart = 0;
   int pointIndexStride = nFineGridFibers_ + 1;
+  int fibersPointIndex = pointIndexStart;
   for (int i = 0; i < subdomainIndices.size(); i++)
   {
-    for (int pointIndex = 0; pointIndex != nBorderPointsX_; pointIndex++)
+    const int subdomainIndex = subdomainIndices[i];
+    for (int pointIndex = 0; pointIndex != nBorderPointsX_-1; pointIndex++, fibersPointIndex += pointIndexStride)
     {
-      const int subdomainIndex = subdomainIndices[i];
-
       for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
       {
-        const int fibersPointIndex = pointIndexStart + pointIndex*pointIndexStride;
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
@@ -100,15 +99,14 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   subdomainIndices = std::vector<int>{2, 3};
   face = Mesh::face_t::face1Plus;
   pointIndexStart = nFibersX * (nFibersX-1);
+  fibersPointIndex = pointIndexStart;
   for (int i = 0; i < subdomainIndices.size(); i++)
   {
-    for (int pointIndex = 0; pointIndex != nBorderPointsX_; pointIndex++)
+    const int subdomainIndex = subdomainIndices[i];
+    for (int pointIndex = 0; pointIndex != nBorderPointsX_-1; pointIndex++, fibersPointIndex += pointIndexStride)
     {
-      const int subdomainIndex = subdomainIndices[i];
-
       for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
       {
-        const int fibersPointIndex = pointIndexStart + pointIndex*pointIndexStride;
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
@@ -120,15 +118,14 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   face = Mesh::face_t::face0Minus;
   pointIndexStart = 0;
   pointIndexStride = nFibersX;
+  fibersPointIndex = pointIndexStart;
   for (int i = 0; i < subdomainIndices.size(); i++)
   {
-    for (int pointIndex = 0; pointIndex != nBorderPointsX_; pointIndex++)
+    const int subdomainIndex = subdomainIndices[i];
+    for (int pointIndex = 0; pointIndex != nBorderPointsX_-1; pointIndex++, fibersPointIndex += pointIndexStride)
     {
-      const int subdomainIndex = subdomainIndices[i];
-
       for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
       {
-        const int fibersPointIndex = pointIndexStart + pointIndex*pointIndexStride;
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
@@ -140,15 +137,14 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   face = Mesh::face_t::face0Plus;
   pointIndexStart = nFibersX-1;
   pointIndexStride = nFibersX;
+  fibersPointIndex = pointIndexStart;
   for (int i = 0; i < subdomainIndices.size(); i++)
   {
-    for (int pointIndex = 0; pointIndex != nBorderPointsX_; pointIndex++)
+    const int subdomainIndex = subdomainIndices[i];
+    for (int pointIndex = 0; pointIndex != nBorderPointsX_-1; pointIndex++, fibersPointIndex += pointIndexStride)
     {
-      const int subdomainIndex = subdomainIndices[i];
-
       for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
       {
-        const int fibersPointIndex = pointIndexStart + pointIndex*pointIndexStride;
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
       }
@@ -255,6 +251,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 #endif
 
   // interpolate fibers in between
+  LOG(DEBUG) << "interpolate fibers in between key fibers, nFineGridFibers_: " << nFineGridFibers_;
+  int nFibersNotInterpolated = 0;
 
   // grid, x = key fibers which are traced, o = interpolated fibers for nFineGridFibers_ = 1
   //  _ _ _ _
@@ -274,6 +272,20 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       int keyFiberPointIndex1 = j * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
       int keyFiberPointIndex2 = (j+1) * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
       int keyFiberPointIndex3 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
+
+      if (fibers[keyFiberPointIndex0].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex1].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex2].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex3].size() != nBorderPointsZNew_)
+      {
+        LOG(DEBUG) << "fibers at (" << i << "," << j << ") are incomplete, sizes: " << fibers[keyFiberPointIndex0].size()
+          << "," << fibers[keyFiberPointIndex1].size()
+          << "," << fibers[keyFiberPointIndex2].size()
+          << "," << fibers[keyFiberPointIndex3].size();
+        nFibersNotInterpolated += MathUtility::sqr(nFineGridFibers_+1);
+        continue;
+      }
+      else
+      {
+        LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << ")";
+      }
 
       /*std::array<Vec3,4> quadrilateralPoints;
       quadrilateralPoints[0] = fibers[keyFiberPointIndex0][seedPointsZIndex];
@@ -316,6 +328,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "14_final", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
+
+  LOG(DEBUG) << "invalid fibers: " << nFibersNotInterpolated << ", valid fibers: " << nFibers - nFibersNotInterpolated;
 }
 
 };  // namespace

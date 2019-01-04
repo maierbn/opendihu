@@ -2943,12 +2943,12 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   loop_grid_points = [[] for i in range(len(border_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
   
   # serial implementation
-  if False:
+  if True:
     for loop_no,border_points in enumerate(border_point_loops):
       loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
   
   # concurrent execution, currently not working, but not clear why
-  if True:
+  if False:
     print("start concurrent call")
     # concurrently call handle_loop(loop_no, border_points) with the points in border_point_loops, this is the same as 
     # for loop_no,border_points in enumerate(border_point_loops):

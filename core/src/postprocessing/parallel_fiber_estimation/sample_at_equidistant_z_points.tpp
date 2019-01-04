@@ -28,7 +28,7 @@ sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, con
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-computeBottomTopZClip(double bottomZClip, double topZClip)
+computeBottomTopZClip(double &bottomZClip, double &topZClip)
 {
   // determine z range of current subdomain
   int nRanksZ = meshPartition_->nRanks(2);
@@ -57,13 +57,15 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   // here streamlinePoints contains at least 2 points
   std::vector<Vec3>::const_iterator streamlineIter = streamlinePoints.begin();
 
-  // loop over z levels
+  // loop over z levels of the streamline
   double currentZ;
   for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
   {
+    // compute current z level at which a point is searched
     currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
     VLOG(1) << "currentZ: " << currentZ;
 
+    // advance streamline until current z is reached
     while(streamlineIter != streamlinePoints.end())
     {
       VLOG(1) << "  z: " << (*streamlineIter)[2];
@@ -98,6 +100,8 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     VLOG(1) << "currentPoint: " << currentPoint << ", previousPoint: " << previousPoint;
 
     // now previousPoint is the last point under currentZ and currentPoint is the first over currentZ
+
+    // if point is a duplicate, skip
     if (fabs(currentPoint[2] - previousPoint[2]) < 1e-9)
     {
       VLOG(1) << "same, continue";
@@ -110,7 +114,10 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     VLOG(1) << "alpha: " << alpha;
   }
 
-  LOG(DEBUG) << " n sampled points: " << streamlineZPoints.size() << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
+  LOG(DEBUG) << " n sampled points: " << streamlineZPoints.size()
+    << ", clip: [" << bottomZClip << "," << topZClip << "], first: " << streamlineZPoints[0]
+    << ", last: " << streamlineZPoints[streamlineZPoints.size()-1]
+    << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

@@ -93,7 +93,7 @@ protected:
                                      std::vector<Vec3> &streamlineZPoints, int i = 0);
 
   //! compute the starting end end value of z for the current subdomain, uses meshPartition_
-  void computeBottomTopZClip(double bottomZClip, double topZClip);
+  void computeBottomTopZClip(double &bottomZClip, double &topZClip);
 
   //! fill in missing points at the borders, where no streamlines were traced
   void fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,

@@ -227,6 +227,19 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlineEndPoints);
 
+  // reorder streamline points such that they go from bottom to top
+  if (streamlineDirection < 0)
+  {
+    for (int j = 1; j < nBorderPointsXNew_-1; j++)
+    {
+      for (int i = 1; i < nBorderPointsXNew_-1; i++)
+      {
+        int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
+        std::reverse(fibers[fibersPointIndex].begin(), fibers[fibersPointIndex].end());
+      }
+    }
+  }
+
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "13_final_seed_points", currentRankSubset_->ownRankNo(),

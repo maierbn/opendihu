@@ -48,6 +48,8 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   // the streamline is expected to have at least one point, the seed point
   assert(!streamlinePoints.empty());
   streamlineZPoints.clear();
+  LOG(DEBUG) << "sampleStreamlineAtEquidistantZPoints, streamlinePoints: " << streamlinePoints.size()
+    << ", first: " << streamlinePoints[0] << ", last: " << streamlinePoints[streamlinePoints.size()-1];
 
   if (streamlinePoints.size() == 1)
   {

@@ -43,7 +43,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 {
   LOG(DEBUG) << "traceResultFibers, nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nFineGridFibers: " << nFineGridFibers_;
 
-
   // grid, x = key fibers which are traced, o = interpolated fibers for nFineGridFibers_ = 1
   //  _ _ _ _
   // |x o x o x|
@@ -240,6 +239,15 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 #ifdef STL_OUTPUT
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "13_final_seed_points", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+#endif
+#endif
+
+
+#ifndef NDEBUG
+#ifdef STL_OUTPUT
+  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "13_streamline_end_points", currentRankSubset_->ownRankNo(),
+                        PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(streamlineEndPoints), 0.2);
   PythonUtility::checkForError();
 #endif
 #endif

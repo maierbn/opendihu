@@ -2896,11 +2896,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
 
   #print("border_point_loops: {}".format(border_point_loops))
 
-  loop_grid_points = []  # list of grid point, for every slice, only contains loops that are not empty  
-  
-  # loop over all loops of border points
-  for loop_no,border_points in enumerate(border_point_loops):
-    
+  def handle_loop(loop_no, border_points):
     n_points = len(border_points)    
     n_points_x = (int)(n_points/4)  
     n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
@@ -2941,7 +2937,47 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
       stl_debug_output.output_triangles("2dmesh_loop_{}_w_grid".format(loop_no), grid_triangles_world_space + markers_grid_points_world_space)
         
     # store grid points in world space of current loop
-    loop_grid_points.append(grid_points_world_space)
+    #loop_grid_points.append(grid_points_world_space)
+    return grid_points_world_space
+  
+  loop_grid_points = [[] for i in range(len(border_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
+  
+  # serial implementation
+  for loop_no,border_points in enumerate(border_point_loops):
+    loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+  
+  # concurrent execution, currently not working, but not clear why
+  if False:
+    print("start concurrent call")
+    # concurrently call handle_loop(loop_no, border_points) with the points in border_point_loops, this is the same as 
+    # for loop_no,border_points in enumerate(border_point_loops):
+    #   loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+    #
+    try:
+      import concurrent.futures
+      with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
+        
+        print("create futures")
+        futures = {executor.submit(handle_loop, loop_no, border_points): loop_no for loop_no,border_points in enumerate(border_point_loops)}
+        print("futures created")
+        concurrent.futures.wait(futures)
+        print("futures finished")
+        for future in concurrent.futures.as_completed(futures):
+          loop_no = futures[future]
+          print("{} has completed".format(loop_no))
+          
+          try:
+            result = future.result()
+          except Exception as exc:
+            print("Loop {} generated an exception: {}".format(loop_no, exc))
+          else:
+            print("Loop {}/{} finished".format(loop_no,n_loops))
+            loop_grid_points[loop_no] = result
+    except Exception as e:
+      print(e)
+    else:
+      print("success")
+    print("after concurrent futures")
   
   triangles_3dmesh = []
   data = create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, triangles_3dmesh)

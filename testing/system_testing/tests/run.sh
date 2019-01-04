@@ -15,8 +15,8 @@ for name in \
 "monodomain_timestep_widths"
 do
 
-echo "" | tee -a log.txt
-echo "$name, starting at $(date +%T)" | tee -a log.txt
+echo "" | tee -a $basedir/log.txt
+echo "$name, starting at $(date +%T)" | tee -a $basedir/log.txt
 echo "=============================="
 
 # change directory to test directory
@@ -32,7 +32,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "compilation took $(date -u -d @$DIFF +%T)" | tee -a log.txt
+echo "compilation took $(date -u -d @$DIFF +%T)" | tee -a $basedir/log.txt
 echo ""
 
 
@@ -44,7 +44,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "running tests took $(date -u -d @$DIFF +%T)" | tee -a log.txt
+echo "running tests took $(date -u -d @$DIFF +%T)" | tee -a $basedir/log.txt
 echo ""
 
 
@@ -56,7 +56,7 @@ START=$(date +%s.%N)
 END=$(date +%s.%N)
 DIFF=$(python -c "print $END - $START")
 echo ""
-echo "postprocessing took $(date -u -d @$DIFF +%T)" | tee -a log.txt
+echo "postprocessing took $(date -u -d @$DIFF +%T)" | tee -a $basedir/log.txt
 echo ""
 
 done

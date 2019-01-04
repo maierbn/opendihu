@@ -52,6 +52,7 @@ ParallelFiberEstimation(DihuContext context) :
   outputWriterManager_.initialize(context_, specificSettings_);
 
   stlFilename_ = specificSettings_.getOptionString("stlFilename", "");
+  resultFilename_ = specificSettings_.getOptionString("resultFilename", "fibers.bin");
   bottomZClip_ = specificSettings_.getOptionDouble("bottomZClip", 0);
   topZClip_ = specificSettings_.getOptionDouble("topZClip", 100);
   nBorderPointsZ_ = specificSettings_.getOptionInt("nElementsZPerSubdomain", 13)+1;

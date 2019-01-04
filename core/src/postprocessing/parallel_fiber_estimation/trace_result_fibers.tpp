@@ -213,6 +213,12 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       // save end points of streamlines such that neighbouring rank can continue
       streamlineEndPoints[j*nBorderPointsXNew_+i][0] = streamlinePoints.back();
 
+      // reorder streamline points such that they go from bottom to top
+      if (streamlineDirection < 0)
+      {
+        std::reverse(streamlinePoints.begin(), streamlinePoints.end());
+      }
+
       // sample the streamline at equidistant z levels and store points in fibers vector
       int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
       sampleStreamlineAtEquidistantZPoints(streamlinePoints, seedPoint, bottomZClip, topZClip, fibers[fibersPointIndex], fibersPointIndex*1000);
@@ -221,19 +227,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlineEndPoints);
-
-  // reorder streamline points such that they go from bottom to top
-  if (streamlineDirection < 0)
-  {
-    for (int j = 1; j < nBorderPointsXNew_-1; j++)
-    {
-      for (int i = 1; i < nBorderPointsXNew_-1; i++)
-      {
-        int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
-        std::reverse(fibers[fibersPointIndex].begin(), fibers[fibersPointIndex].end());
-      }
-    }
-  }
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
@@ -338,6 +331,114 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   PythonUtility::checkForError();
 
   LOG(DEBUG) << "invalid fibers: " << nFibersNotInterpolated << ", valid fibers: " << nFibers - nFibersNotInterpolated;
+
+  // write fiber data to file
+  int ownRankNo = currentRankSubset_->ownRankNo();
+
+  LOG(DEBUG) << "open file \"" << resultFilename_ << "\".";
+  // open file
+  MPI_File fileHandle;
+  MPIUtility::handleReturnValue(MPI_File_open(currentRankSubset_->mpiCommunicator(), resultFilename_.c_str(),
+                                              //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
+                                              MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                                              MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+
+  // write file header
+  int nPointsWholeFiber = meshPartition_->nRanks(2) * (nBorderPointsZNew_-1) + 1;
+  int nFibersTotal = meshPartition_->nRanks(0)*meshPartition_->nRanks(1)*(nFibersX-1);
+
+  int headerOffset = 0;
+  if (ownRankNo == 0)
+  {
+    std::string writeBuffer("opendihu binary fibers file     ");
+
+    const int nParameters = 8;
+    union
+    {
+      int32_t parameters[nParameters];
+      char c[nParameters*sizeof(int32_t)];
+    };
+
+    parameters[0] = nFibersTotal;
+    parameters[1] = nPointsWholeFiber;
+    parameters[2] = nBorderPointsXNew_;
+    parameters[3] = nBorderPointsZNew_;
+    parameters[4] = nFineGridFibers_;
+    parameters[5] = currentRankSubset_->size();
+    parameters[6] = nRanksZ;
+    parameters[7] = nFibers;
+
+    LOG(DEBUG) << "nFibersTotal: " << nFibersTotal << ", nPointsWholeFiber: " << nPointsWholeFiber << ", nFibersPerRank: " << nFibers;
+
+    writeBuffer += c;
+
+    MPI_Status status;
+    MPIUtility::handleReturnValue(MPI_File_write(fileHandle, writeBuffer.c_str(), writeBuffer.length(), MPI_BYTE, &status), "MPI_File_write", &status);
+
+    headerOffset = writeBuffer.size();
+  }
+
+  // write fibers
+  LOG(DEBUG) << "write fibers, nFibersX: " << nFibersX << ", nRanks: (" << meshPartition_->nRanks(0) << "," << meshPartition_->nRanks(1) << "," << meshPartition_->nRanks(2) << ")";
+  for (int j = 0; j < nFibersX; j++)
+  {
+    // only consider last fiber in top row
+    if (j == nFibersX-1 && meshPartition_->ownRankPartitioningIndex(1) != meshPartition_->nRanks(1)-1)
+      continue;
+
+    for (int i = 0; i < nFibersX; i++)
+    {
+      // only consider last fiber in right column
+      if (i == nFibersX-1 && meshPartition_->ownRankPartitioningIndex(0) != meshPartition_->nRanks(0)-1)
+        continue;
+
+      // convert streamline data to bytes
+      int nPointsCurrentFiber = nBorderPointsZNew_;
+      if (meshPartition_->ownRankPartitioningIndex(2) != meshPartition_->nRanks(2)-1)
+      {
+        nPointsCurrentFiber = nBorderPointsZNew_-1;
+      }
+
+      int nValues = nPointsCurrentFiber*3;
+      int nBytes = nValues*sizeof(double);
+
+      std::vector<double> values(nValues);
+
+      // fill values vector
+      for (int zLevelIndex = 0; zLevelIndex < nPointsCurrentFiber; zLevelIndex++)
+      {
+        int fibersPointIndex = j * nFibersX + i;
+
+        for (int k = 0; k < 3; k++)
+        {
+          values[zLevelIndex*3 + k] = fibers[fibersPointIndex][zLevelIndex][k];
+        }
+      }
+      char *writeBuffer = reinterpret_cast<char *>(values.data());
+
+      // compute offset in file
+      int fiberIndex0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1) + i;
+      int fiberIndex1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1) + j;
+      int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) + 1;
+
+      int fiberIndex = fiberIndex1 * nFibersRow0 + fiberIndex0;
+      int pointOffset = fiberIndex * nPointsWholeFiber + meshPartition_->ownRankPartitioningIndex(2) * (nBorderPointsZNew_-1);
+
+      int offset = headerOffset + pointOffset * 3 * sizeof(double);
+
+      LOG(DEBUG) << "write fiber (" << i << "," << j << "), global (" << fiberIndex0 << "," << fiberIndex1 << "), global index "
+        << fiberIndex << ", nValues: " << nValues << ", nBytes: " << nBytes
+        << ", pointOffset: " << pointOffset << " (" << nPointsWholeFiber << " points per fiber), headerOffset: " << headerOffset << ", offset: " << offset;
+
+      // write to file
+      MPI_Status status;
+      MPIUtility::handleReturnValue(MPI_File_write_at(fileHandle, offset, writeBuffer, nBytes, MPI_BYTE, &status), "MPI_File_write_at", &status);
+    }
+  }
+
+  MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
+
+  LOG(DEBUG) << "Fibers written to file \"" << resultFilename_ << "\".";
 }
 
 };  // namespace

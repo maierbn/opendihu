@@ -137,7 +137,8 @@ protected:
   PythonConfig specificSettings_;   ///< the specific python config for this module
   std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
 
-  std::string stlFilename_;   ///< the filename of the STL file
+  std::string stlFilename_;   ///< the filename of the input STL file
+  std::string resultFilename_;  ///< the filename of the output result file
   double bottomZClip_;   ///< bottom z-value of the volume to consider
   double topZClip_;   ///< top z-value of the volume to consider
   int nBorderPointsX_;    ///< number of subdivisions of the line

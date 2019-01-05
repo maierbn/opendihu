@@ -294,9 +294,9 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       quadrilateralPoints[2] = fibers[keyFiberPointIndex2][seedPointsZIndex];
       quadrilateralPoints[3] = fibers[keyFiberPointIndex3][seedPointsZIndex];*/
 
-      for (int fineGridJ = 0; fineGridJ < nFineGridFibers_; fineGridJ++)
+      for (int fineGridJ = 0; fineGridJ < nFineGridFibers_+1; fineGridJ++)
       {
-        for (int fineGridI = 0; fineGridI < nFineGridFibers_; fineGridI++)
+        for (int fineGridI = 0; fineGridI < nFineGridFibers_+1; fineGridI++)
         {
           // do not consider key fiber
           if (fineGridJ == 0 && fineGridI == 0)
@@ -306,7 +306,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
           int fibersPointIndex = keyFiberPointIndex0 + fineGridJ*nFibersX + fineGridI;
 
 
-          Vec2 xi({(fineGridI+1) / (nFineGridFibers_ + 1.0), (fineGridJ+1) / (nFineGridFibers_ + 1.0)});
+          Vec2 xi({fineGridI / (nFineGridFibers_ + 1.0), fineGridJ / (nFineGridFibers_ + 1.0)});
 
           //Vec3 seedPoint = fibers[fibersPointIndex][seedPointsZIndex];
           // get baricentric coordinates of point seedPoint is quadrilateral

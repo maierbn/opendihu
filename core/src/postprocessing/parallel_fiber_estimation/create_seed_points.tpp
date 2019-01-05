@@ -121,6 +121,8 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
       << ", size of nodePositions: " << nodePositions.size();
     seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i]);
   }
+  LOG(DEBUG) << "seedPoints: after cornerStreamlines, streamlineIndex = " << seedPoints.size();
+
 }
 
 };  // namespace

@@ -620,6 +620,7 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
     }
   }
 
+  cornerStreamlines.resize(4);
   for (int cornerStreamlineIndex = 0; cornerStreamlineIndex != 4; cornerStreamlineIndex++, streamlineIndex++)
   {
     cornerStreamlines[cornerStreamlineIndex].resize(streamlineZPoints[streamlineIndex].size());

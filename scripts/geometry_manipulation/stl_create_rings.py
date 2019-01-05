@@ -226,7 +226,7 @@ def order_loop(loop, first_point):
     if not next_point_found:
       if debug: 
         print("no point found that continues loop")
-      print("Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no]))
+      print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][2]))
       break
   return new_loop
       

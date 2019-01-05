@@ -203,9 +203,31 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
       // trace streamline
       std::vector<Vec3> streamlinePoints;
-      streamlinePoints.push_back(seedPoint);
 
-      this->traceStreamline(seedPoint, streamlineDirection, streamlinePoints);
+      // for serial execution, the seed point is at the center of the streamline
+      if (nRanksZ == 1)
+      {
+        // trace streamlines forwards
+        std::vector<Vec3> forwardPoints;
+        this->traceStreamline(seedPoint, 1.0, forwardPoints);
+
+        // trace streamline backwards
+        std::vector<Vec3> backwardPoints;
+        this->traceStreamline(seedPoint, -1.0, backwardPoints);
+
+        // copy collected points to result vector, note avoiding this additional copy-step is not really possible, since it would require a push_front which is only efficient with lists, but we need a vector here
+        streamlinePoints.insert(streamlinePoints.begin(), backwardPoints.rbegin(), backwardPoints.rend());
+        streamlinePoints.insert(streamlinePoints.end(), seedPoint);
+        streamlinePoints.insert(streamlinePoints.end(), forwardPoints.begin(), forwardPoints.end());
+
+      }
+      else
+      {
+        // with parallel execution the seed point is at one end of the fiber
+        streamlinePoints.push_back(seedPoint);
+
+        this->traceStreamline(seedPoint, streamlineDirection, streamlinePoints);
+      }
 
       // if everything was cleared, add seed point
       if (streamlinePoints.empty())
@@ -215,7 +237,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       streamlineEndPoints[j*nBorderPointsXNew_+i][0] = streamlinePoints.back();
 
       // reorder streamline points such that they go from bottom to top
-      if (streamlineDirection < 0)
+      if (streamlineDirection < 0 && nRanksZ != 1)
       {
         std::reverse(streamlinePoints.begin(), streamlinePoints.end());
       }
@@ -286,7 +308,22 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         nFibersNotInterpolated += MathUtility::sqr(nFineGridFibers_+1);
         keyFibersInvalid = true;
       }
-      else
+
+      if (!keyFibersInvalid)
+      {
+        if (MathUtility::norm<3>(fibers[keyFiberPointIndex0][nBorderPointsZNew_/2]) < 1e-4 || MathUtility::norm<3>(fibers[keyFiberPointIndex1][nBorderPointsZNew_/2]) < 1e-4
+          || MathUtility::norm<3>(fibers[keyFiberPointIndex2][nBorderPointsZNew_/2]) < 1e-4 || MathUtility::norm<3>(fibers[keyFiberPointIndex3][nBorderPointsZNew_/2]) < 1e-4)
+        {
+          LOG(DEBUG) << "fibers at (" << i << "," << j << ") are invalid: " << std::endl
+            << fibers[keyFiberPointIndex0] << std::endl
+            << fibers[keyFiberPointIndex1] << std::endl
+            << fibers[keyFiberPointIndex2] << std::endl
+            << fibers[keyFiberPointIndex3];
+          keyFibersInvalid = true;
+        }
+      }
+
+      if (!keyFibersInvalid)
       {
         LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << "), index " << keyFiberPointIndex0;
       }

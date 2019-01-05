@@ -51,7 +51,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   // |o o o o o|
   // |x_o_x_o_x|
 
-  // total number of fibers per coordinate direction
+  // total number of fibers per coordinate direction, including the ones on the left and right borders
   int nFibersX = (nBorderPointsXNew_-1) * nFineGridFibers_ + nBorderPointsXNew_;
   //int nFibersX = nBorderPointsXNew_*(nFineGridFibers_+1) - nFineGridFibers_;
 
@@ -285,7 +285,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       }
       else
       {
-        LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << ")";
+        LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << "), index " << keyFiberPointIndex0;
       }
 
       /*std::array<Vec3,4> quadrilateralPoints;
@@ -312,6 +312,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
           // get baricentric coordinates of point seedPoint is quadrilateral
           //MathUtility::quadrilateralGetPointCoordinates(quadrilateralPoints, seedPoint, xi);
 
+          LOG(DEBUG) << "  fine fiber (" << fineGridI << "," << fineGridJ << ") index " << fibersPointIndex << ", xi: " << xi;
+
           for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZNew_; zLevelIndex++)
           {
             // barycentric interpolation
@@ -332,7 +334,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   LOG(DEBUG) << "invalid fibers: " << nFibersNotInterpolated << ", valid fibers: " << nFibers - nFibersNotInterpolated;
 
-  // write fiber data to file
+  // write fiber data to file, the (x+,x-,y+,y-) border fibers of the global borders are not written to the file because they
+  // were not traced but estimated from the border mesh which may be of bad quality
   int ownRankNo = currentRankSubset_->ownRankNo();
 
   LOG(DEBUG) << "open file \"" << resultFilename_ << "\".";
@@ -345,7 +348,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
   // write file header
   int nPointsWholeFiber = meshPartition_->nRanks(2) * (nBorderPointsZNew_-1) + 1;
-  int nFibersTotal = meshPartition_->nRanks(0)*meshPartition_->nRanks(1)*(nFibersX-1);
+  int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) - 1;
+  int nFibersTotal = MathUtility::sqr(nFibersRow0);
 
   int headerOffset = 0;
   if (ownRankNo == 0)
@@ -379,21 +383,22 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     LOG(DEBUG) << "headerOffset: " << headerOffset;
   }
 
-  //assert(headerOffset == 33 || ownRankNo != 0);
-  //headerOffset = 33;
+  // set hardcoded header offset
+  assert(headerOffset == 64 || ownRankNo != 0);
+  headerOffset = 64;
 
   // write fibers
   LOG(DEBUG) << "write fibers, nFibersX: " << nFibersX << ", nRanks: (" << meshPartition_->nRanks(0) << "," << meshPartition_->nRanks(1) << "," << meshPartition_->nRanks(2) << ")";
-  for (int j = 0; j < nFibersX; j++)
+  for (int j = 0; j < nFibersX-1; j++)
   {
-    // only consider last fiber in top row
-    if (j == nFibersX-1 && meshPartition_->ownRankPartitioningIndex(1) != meshPartition_->nRanks(1)-1)
+    // do not consider first fiber which of a border fiber
+    if (j == 0 && meshPartition_->ownRankPartitioningIndex(1) == 0)
       continue;
 
-    for (int i = 0; i < nFibersX; i++)
+    for (int i = 0; i < nFibersX-1; i++)
     {
       // only consider last fiber in right column
-      if (i == nFibersX-1 && meshPartition_->ownRankPartitioningIndex(0) != meshPartition_->nRanks(0)-1)
+      if (i == 0 && meshPartition_->ownRankPartitioningIndex(0) == 0)
         continue;
 
       // convert streamline data to bytes
@@ -423,7 +428,12 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       // compute offset in file
       int fiberIndex0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1) + i;
       int fiberIndex1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1) + j;
-      int nFibersRow0 = meshPartition_->nRanks(0) * (nFibersX-1) + 1;
+
+      if (meshPartition_->ownRankPartitioningIndex(0) != 0)
+        fiberIndex0--;
+
+      if (meshPartition_->ownRankPartitioningIndex(1) != 0)
+        fiberIndex1--;
 
       int fiberIndex = fiberIndex1 * nFibersRow0 + fiberIndex0;
       int pointOffset = fiberIndex * nPointsWholeFiber + meshPartition_->ownRankPartitioningIndex(2) * (nBorderPointsZNew_-1);

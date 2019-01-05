@@ -88,6 +88,13 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     {
       VLOG(1) << "end";
       streamlineIter--;
+
+      if (topZClip - (*streamlineIter)[2] > (topZClip - bottomZClip)*0.05)
+      {
+        LOG(DEBUG) << "Streamline does not reach topZClip: " << topZClip << ", but finishes at " << (*streamlineIter)[2]
+          << " (" << (topZClip - (*streamlineIter)[2]) / (topZClip - bottomZClip) * 100.0 << "% too early)";
+        break;
+      }
     }
 
     Vec3 currentPoint = *streamlineIter;

@@ -66,15 +66,16 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   {
     // compute current z level at which a point is searched
     currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
-    VLOG(1) << "currentZ: " << currentZ;
+    VLOG(1) << "zLevelIndex " << zLevelIndex << ", currentZ: " << currentZ;
 
     // advance streamline until current z is reached
     while(streamlineIter != streamlinePoints.end())
     {
-      VLOG(1) << "  z: " << (*streamlineIter)[2];
+      VLOG(1) << "  z: " << (*streamlineIter)[2] << ", currentZ+1e-9 = " << currentZ + 1e-9 << ", higher: " << std::boolalpha << ((*streamlineIter)[2] > currentZ + 1e-9);
       if ((*streamlineIter)[2] > currentZ + 1e-9)
         break;
 
+      VLOG(1) << "  streamlineIter++";
       streamlineIter++;
       if (streamlineIter == streamlinePoints.end())
         break;
@@ -97,6 +98,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     }
     else
     {
+      VLOG(1) << "previous point is streamlineIter-1";
       previousPoint = *(streamlineIter-1);
     }
 
@@ -114,7 +116,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     double alpha = (currentZ - previousPoint[2]) / (currentPoint[2] - previousPoint[2]);
     Vec3 point = (1.-alpha) * previousPoint + alpha * currentPoint;
     streamlineZPoints.push_back(point);
-    VLOG(1) << "alpha: " << alpha;
+    VLOG(1) << "alpha: " << alpha << ", take point " << point << ", streamline now has " << streamlineZPoints.size() << " points";
   }
 
   LOG(DEBUG) << " n sampled points: " << streamlineZPoints.size()

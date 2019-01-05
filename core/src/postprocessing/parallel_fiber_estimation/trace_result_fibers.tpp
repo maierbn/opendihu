@@ -140,7 +140,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   for (int i = 0; i < subdomainIndices.size(); i++)
   {
     const int subdomainIndex = subdomainIndices[i];
-    for (int pointIndex = 0; pointIndex != nBorderPointsX_-1; pointIndex++, fibersPointIndex += pointIndexStride)
+    for (int pointIndex = 0; pointIndex != nBorderPointsX_-(i==1? 0: 1); pointIndex++, fibersPointIndex += pointIndexStride)
     {
       for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
       {

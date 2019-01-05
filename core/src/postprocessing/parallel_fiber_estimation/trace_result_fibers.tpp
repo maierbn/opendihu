@@ -29,8 +29,9 @@ checkTraceFinalFibers(int &level)
     if (nRanksAvailable < currentRankSubset_->size()*8)
     {
       LOG(WARNING) << "Cannot run algorithm until level " << maxLevel_ << ", currently at level " << level
-        << ", total number of ranks is " << nRanksAvailable << ", number needed for next level would be " << currentRankSubset_->size()*8 << ".";
-      //traceFinalFibers = true;
+        << ", total number of ranks is " << nRanksAvailable << ", number needed for next level would be " << currentRankSubset_->size()*8 << "." << std::endl
+        << "Perform final step of algorithm now at level " << level;
+      traceFinalFibers = true;
     }
   }
   return traceFinalFibers;

@@ -645,12 +645,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       // algorithm is finished
       return;
     }
-
-    if (level == 1)
-    {
-      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-      LOG(FATAL) << "end after streamlines are done";
-    }
   }  // if own rank is part of this stage of the algorithm
 
   LOG(DEBUG) << "create subdomains";

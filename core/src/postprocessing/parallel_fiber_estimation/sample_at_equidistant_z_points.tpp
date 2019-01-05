@@ -72,7 +72,8 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     while(streamlineIter != streamlinePoints.end())
     {
       VLOG(1) << "  z: " << (*streamlineIter)[2]  << " (float: " << (*streamlineIter)[2] - int((*streamlineIter)[2])
-        << "), currentZ+1e-9 = " << currentZ + 1e-9 << " (float: " << (currentZ + 1e-9) - int(currentZ + 1e-9) << "), higher: " << std::boolalpha << ((*streamlineIter)[2] > currentZ + 1e-9);
+        << "), currentZ+1e-9 = " << currentZ + 1e-9 << " (float: " << (currentZ + 1e-9) - int(currentZ + 1e-9) << ") "
+        << "diff: " << ((*streamlineIter)[2] - (currentZ + 1e-9)) << ", higher: " << std::boolalpha << ((*streamlineIter)[2] > currentZ + 1e-9);
       if ((*streamlineIter)[2] > currentZ + 1e-9)
         break;
 

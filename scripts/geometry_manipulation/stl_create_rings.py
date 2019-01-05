@@ -262,7 +262,7 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   # loop over z samples
   for loop_no,z_value in enumerate(z_samples):
       
-    print("loop no {}/{}".format(loop_no,len(z_samples)))
+    print("Loop no {}/{}".format(loop_no,len(z_samples)))
 
     # compute all intersecting line segments that lie in the surface and have the specified z_value
     create_loop(z_value, stl_mesh, loops[loop_no])

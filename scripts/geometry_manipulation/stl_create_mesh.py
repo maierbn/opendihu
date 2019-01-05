@@ -372,7 +372,8 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
       else:
         t_start = (last_loop_start_point - p0).dot(u) / u.dot(u)
       
-      print("t: {}".format(t_start))
+      if debug:
+        print("t: {}".format(t_start))
       
       if t_start >= 0 and t_start <= 1:
         plumb_foot_point_start = p0 + t_start * u
@@ -397,7 +398,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     # determine candidate with lowest distance
     start_point_candidates.sort(key = lambda item: item[0])
     
-    if debug or True:
+    if debug:
       print("last_loop_start_point: {}, start_point_candidates (distance,point,index): {}".format(last_loop_start_point,start_point_candidates))
     
     # now we use the candidate with the lowest distance
@@ -3034,6 +3035,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   
   loop_grid_points = [[] for i in range(len(border_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
   
+  print("create 2D meshes on {} loops, then create a 3D mesh".format(len(border_point_loops)))
   # serial implementation
   if True:
     for loop_no,border_points in enumerate(border_point_loops):

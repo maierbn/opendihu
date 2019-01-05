@@ -9,6 +9,9 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
 {
   // determine if previously set seedPoints are used or if they are received from neighbouring rank
   LOG(DEBUG) << "rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards;
+  if (nRanksZ == 1)
+    return;
+
   if (rankZNo != int(nRanksZ/2))
   {
     int neighbourRankNo;
@@ -66,6 +69,9 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
+  if (nRanksZ == 1)
+    return;
+
   // send end points of streamlines to next rank that continues the streamline
   if (nRanksZ > 1 && rankZNo != nRanksZ-1 && rankZNo != 0)
   {

@@ -9,9 +9,9 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                  std::array<bool,4> &subdomainIsAtBorder)
 {
-  PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
-  PythonUtility::checkForError();
-  assert(stlMeshPy);
+  //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
+  //PythonUtility::checkForError();
+  //assert(stlMeshPy);
 
   int nRanksZ = meshPartition_->nRanks(2);
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);

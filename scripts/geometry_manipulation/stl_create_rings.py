@@ -316,9 +316,9 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
     print("")
     print("loops: ",loops)
           
-  print("The following rings have been extracted:")
+  print("The following loops have been extracted:")
   for (loop,z_value) in zip(loops,z_samples):
-    print("at z = {:0.3f} {} segments".format(z_value,len(loop)))
+    print("at z = {:0.3f} comprising {} segments".format(z_value,len(loop)))
           
   if write_output_mesh:
       

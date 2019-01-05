@@ -632,7 +632,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, borderPointsSubdomain);
 
       MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-      LOG(ERROR) << "algorithm is finished";
+      LOG(DEBUG) << "algorithm is finished";
 
       // algorithm is finished
       return;

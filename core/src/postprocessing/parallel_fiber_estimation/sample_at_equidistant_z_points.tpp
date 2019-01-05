@@ -61,6 +61,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   std::vector<Vec3>::const_iterator streamlineIter = streamlinePoints.begin();
 
   // loop over z levels of the streamline
+  const double epsilon = 1e-5;   // this has to be ~1e-5 because the seed points are perturbed by MPI communcation around this amount
   double currentZ;
   for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
   {
@@ -72,9 +73,9 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     while(streamlineIter != streamlinePoints.end())
     {
       VLOG(1) << "  z: " << (*streamlineIter)[2]  << " (float: " << (*streamlineIter)[2] - int((*streamlineIter)[2])
-        << "), currentZ+1e-9 = " << currentZ + 1e-9 << " (float: " << (currentZ + 1e-9) - int(currentZ + 1e-9) << ") "
-        << "diff: " << ((*streamlineIter)[2] - (currentZ + 1e-9)) << ", higher: " << std::boolalpha << ((*streamlineIter)[2] > currentZ + 1e-9);
-      if ((*streamlineIter)[2] > currentZ + 1e-9)
+        << "), currentZ+epsilon = " << currentZ + epsilon << " (float: " << (currentZ + epsilon) - int(currentZ + epsilon) << ") "
+        << "diff: " << ((*streamlineIter)[2] - (currentZ + epsilon)) << ", higher: " << std::boolalpha << ((*streamlineIter)[2] > currentZ + epsilon);
+      if ((*streamlineIter)[2] > currentZ + epsilon)
         break;
 
       VLOG(1) << "  streamlineIter++";
@@ -109,7 +110,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     // now previousPoint is the last point under currentZ and currentPoint is the first over currentZ
 
     // if point is a duplicate, skip
-    if (fabs(currentPoint[2] - previousPoint[2]) < 1e-9)
+    if (fabs(currentPoint[2] - previousPoint[2]) < epsilon)
     {
       VLOG(1) << "same, continue";
       continue;

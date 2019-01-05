@@ -232,7 +232,7 @@ def order_loop(loop, first_point):
       
 def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh):
   """
-  Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip
+  Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip (including those)
   :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
   :param bottom_clip: the bottom z-value where to clip the muscle
   :param top_clip: the top z-value where to clip the muscle
@@ -258,11 +258,13 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
 
   debug = False
 
+  print("Create {} loops for z in [{},{}] from the mesh {}.".format(n_loops, bottom_clip, top_clip, input_filename))
   # loop over z samples
   for loop_no,z_value in enumerate(z_samples):
       
     print("loop no {}/{}".format(loop_no,len(z_samples)))
 
+    # compute all intersecting line segments that lie in the surface and have the specified z_value
     create_loop(z_value, stl_mesh, loops[loop_no])
     
   if debug:      
@@ -316,7 +318,7 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
           
   print("The following rings have been extracted:")
   for (loop,z_value) in zip(loops,z_samples):
-    print("at z = {}, n segments: {}".format(z_value,len(loop)))
+    print("at z = {:0.3f} {} segments".format(z_value,len(loop)))
           
   if write_output_mesh:
       
@@ -447,7 +449,7 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   for i,edge in enumerate([[new_loop[i], new_loop[(i+1)%len(new_loop)]] for i in range(len(new_loop))]):
     p0 = np.array(edge[0])
     p1 = np.array(edge[1])
-    u = -p0 + p1
+    u = -p0 + p1   # edge
     
     if debug:
       print("edge {}, u: {}".format(edge, u))

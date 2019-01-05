@@ -306,13 +306,20 @@ def standardize_loop(loop, lengths):
     
   return sorted_loop
     
-def sample_border_points(loop, length, n_points, target_x):
+def sample_border_points(loop, length, n_points, target_x, last_loop_start_point):
   """
-  Given a loops of points (which are spaces like the initial STL triangles were), sample the loops at n_points equidistant points
+  Given a loops of points (which are spaced like the initial STL triangles were), sample the loops at n_points equidistant points.
+  The starting point is determined as follows: If last_loop_start_point is None, it determines the start point from target_x.
+  The start point lies on the intersection of the plane x=target_x with the loop. if there are multiple intersections, the first that is in y- direction from the cog is taken.
+  If last_loop_start_point is given, the start point is the point which has the lowest distance to last_loop_start_point., i.e. the connection line is perpendicular to the loop.
+  This is helpful to ensure that two neighbouring loops on different z-levels yield similar border point loops.
+  
   :param loop:   List of points that form the loop to be sampled.
   :param length:  The length of the loop, should be measured previously
   :param n_points: Number of points that will be created.
   :param target_x: a plane x=target_x that will determine the start point in the loop. The start point lies on that plane and is the one left (in x- direction) of the center.
+  :param last_loop_start_point: If None, target_x will be used to determine the start_point, if given the start_point is chosen in a way such that its distance to last_loop_start_point is minimal.
+  :return: start_point, border_points
   """
   
   debug = False
@@ -325,7 +332,7 @@ def sample_border_points(loop, length, n_points, target_x):
     target_x = 0   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
   
   if debug:
-    print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}\n".format(len(loop), length, n_points, target_x, h))
+    print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}, last_loop_start_point:{}\n".format(len(loop), length, n_points, target_x, h, last_loop_start_point))
   
   if debug:
     # check if length is correct
@@ -336,9 +343,75 @@ def sample_border_points(loop, length, n_points, target_x):
       p0 = p
     print("computed length: {}, stated length: {}".format(l, length))
   
-  point_index = 0
+  start_point = None
+  start_point_point_index = None
+  
+  #last_loop_start_point = None
+  
+  # determine if last_loop_start_point is used
+  use_last_loop_start_point = False
+  if last_loop_start_point is not None:
+    use_last_loop_start_point = True
+    
+  # determine start point from last_loop_start_point
+  if use_last_loop_start_point:
+    last_loop_start_point = np.array(last_loop_start_point)
+    
+    # add first point as candidate in case none is found
+    start_point_candidates = [[np.linalg.norm(np.array(loop[0])-last_loop_start_point), loop[0], 0]]
+    
+    # loop over loop points
+    for point_index in range(1,len(loop)):
+      p0 = np.array(loop[point_index-1])
+      p1 = np.array(loop[point_index])
+      u = -p0 + p1   # edge
+      
+      # determine loop_start_point as the point in the loop that is closest to the given last_loop_start_point
+      if u.dot(u) < 1e-10:
+        t_start = -1
+      else:
+        t_start = (last_loop_start_point - p0).dot(u) / u.dot(u)
+      
+      print("t: {}".format(t_start))
+      
+      if t_start >= 0 and t_start <= 1:
+        plumb_foot_point_start = p0 + t_start * u
+        
+        distance = np.linalg.norm(plumb_foot_point_start-last_loop_start_point)
+        start_point_candidates.append([distance, plumb_foot_point_start, point_index-1])
+        
+        if debug:
+          print("at point_index {}, t: {}, plumb_foot_point_start: {}".format(point_index, t_start, plumb_foot_point_start))
+      elif t_start < 0 and t_start != -1:
+        point = p0
+        
+        distance = np.linalg.norm(point-last_loop_start_point)
+        start_point_candidates.append([distance, point, point_index-1])
+      elif t_start > 1:
+        point = p1
+        
+        distance = np.linalg.norm(point-last_loop_start_point)
+        start_point_candidates.append([distance, point, point_index-1])
+        
+    
+    # determine candidate with lowest distance
+    start_point_candidates.sort(key = lambda item: item[0])
+    
+    if debug or True:
+      print("last_loop_start_point: {}, start_point_candidates (distance,point,index): {}".format(last_loop_start_point,start_point_candidates))
+    
+    # now we use the candidate with the lowest distance
+    start_point_best_candidate = start_point_candidates[0]
+    
+    start_point = start_point_best_candidate[1]
+    start_point_point_index = (start_point_best_candidate[2]+1)%len(loop)
+    point_index = start_point_best_candidate[2]
+    
+  else:
+    point_index = 0
+    
   previous_loop_point = loop[point_index]
-  point_index = 1
+  point_index = (point_index+1)%len(loop)
   start_point_reached = False
   loop_iteration_no = 0
   
@@ -346,20 +419,31 @@ def sample_border_points(loop, length, n_points, target_x):
   while True:
     loop_point = loop[point_index]
     
-    # if the current edge contains a point that is horizontal in y-direction to the center point and left of it
-    if previous_loop_point[1] < center_point[1] and loop_point[1] < center_point[1] \
+    if debug:
+      print("start_point: {}, point_index: {}, start_point_point_index: {}".format(start_point, point_index, start_point_point_index))
+    
+    # (if start_point was not determined) if the current edge contains a point that is horizontal in y-direction to the center point and left of it
+    # or (if start_point was determined) if the start point is the first one
+    if (not use_last_loop_start_point \
+      and previous_loop_point[1] < center_point[1] and loop_point[1] < center_point[1] \
       and (previous_loop_point[0] <= target_x <= loop_point[0] or \
-        loop_point[0] <= target_x <= previous_loop_point[0]):
-      
+        loop_point[0] <= target_x <= previous_loop_point[0])) \
+        \
+      or (use_last_loop_start_point and (not start_point_reached or point_index == start_point_point_index)):
+    #if previous_loop_point[1] < center_point[1] and loop_point[1] < center_point[1] \
+    #  and (previous_loop_point[0] <= target_x <= loop_point[0] or \
+    #    loop_point[0] <= target_x <= previous_loop_point[0]):
+        
       # if we meet this point again, the loop is closed
       if start_point_reached:
         break
       start_point_reached = True
       
-      edge = -previous_loop_point + loop_point 
-      edge_length = np.linalg.norm(edge)
-      alpha = (target_x - previous_loop_point[0]) / edge_length
-      start_point = previous_loop_point + alpha*edge
+      if start_point is None:
+        edge = -previous_loop_point + loop_point 
+        edge_length = np.linalg.norm(edge)
+        alpha = (target_x - previous_loop_point[0]) / edge_length
+        start_point = previous_loop_point + alpha*edge
       
       # add starting point of loop as first border points
       border_points.append(start_point)
@@ -420,6 +504,7 @@ def sample_border_points(loop, length, n_points, target_x):
     border_points = border_points[:n_points]
   
   if debug:
+    print("start point: ",start_point)
     print("border points: ",len(border_points))
     print(border_points)
     print("h: ",h)
@@ -428,7 +513,7 @@ def sample_border_points(loop, length, n_points, target_x):
   
     print("n border points: {}".format(len(border_points)))
   
-  return border_points
+  return start_point,border_points
     
 def rings_to_border_points(loops, n_points):
   """
@@ -455,6 +540,7 @@ def rings_to_border_points(loops, n_points):
   
   # sample border points for each ring
   border_point_loops = []
+  last_loop_start_point = None
   for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     
     if not loop:
@@ -474,7 +560,8 @@ def rings_to_border_points(loops, n_points):
     target_x = center_point[0]
     
     # sample loop with n_points equidistant points
-    border_points = sample_border_points(loop, length, n_points, target_x)
+    start_point,border_points = sample_border_points(loop, length, n_points, target_x, last_loop_start_point)
+    last_loop_start_point = start_point
     border_point_loops.append(border_points)
     
   return border_point_loops,lengths

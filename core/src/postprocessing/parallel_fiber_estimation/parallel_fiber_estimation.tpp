@@ -215,16 +215,8 @@ generateParallelMesh()
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
     // output the loops
-    std::vector<Vec3> outputPoints;
-    for (int loopIndex = 0; loopIndex < loops.size(); loopIndex++)
-    {
-      for (int pointIndex = 0; pointIndex < loops[loopIndex].size(); pointIndex++)
-      {
-        outputPoints.push_back(loops[loopIndex][pointIndex]);
-      }
-    }
-    PyObject_CallFunction(functionOutputPoints_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
-                          PythonUtility::convertToPython<std::vector<Vec3>>::get(outputPoints), 0.1);
+    PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "00_loops", currentRankSubset_->ownRankNo(),
+                          PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(loops), 0.1);
     PythonUtility::checkForError();
 #endif
 #endif

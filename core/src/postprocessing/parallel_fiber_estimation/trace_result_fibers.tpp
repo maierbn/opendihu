@@ -402,10 +402,10 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         continue;
 
       // convert streamline data to bytes
-      int nPointsCurrentFiber = nBorderPointsZNew_;
-      if (meshPartition_->ownRankPartitioningIndex(2) != meshPartition_->nRanks(2)-1)
+      int nPointsCurrentFiber = nBorderPointsZNew_ - 1;
+      if (meshPartition_->ownRankPartitioningIndex(2) == meshPartition_->nRanks(2)-1)
       {
-        nPointsCurrentFiber = nBorderPointsZNew_-1;
+        nPointsCurrentFiber = nBorderPointsZNew_;
       }
 
       int nValues = nPointsCurrentFiber*3;
@@ -426,14 +426,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       char *writeBuffer = reinterpret_cast<char *>(values.data());
 
       // compute offset in file
-      int fiberIndex0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1) + i;
-      int fiberIndex1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1) + j;
-
-      if (meshPartition_->ownRankPartitioningIndex(0) != 0)
-        fiberIndex0--;
-
-      if (meshPartition_->ownRankPartitioningIndex(1) != 0)
-        fiberIndex1--;
+      int fiberIndex0 = meshPartition_->ownRankPartitioningIndex(0) * (nFibersX-1) + i - 1;
+      int fiberIndex1 = meshPartition_->ownRankPartitioningIndex(1) * (nFibersX-1) + j - 1;
 
       int fiberIndex = fiberIndex1 * nFibersRow0 + fiberIndex0;
       int pointOffset = fiberIndex * nPointsWholeFiber + meshPartition_->ownRankPartitioningIndex(2) * (nBorderPointsZNew_-1);

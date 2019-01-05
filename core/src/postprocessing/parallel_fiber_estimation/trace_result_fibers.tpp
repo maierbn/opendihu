@@ -275,6 +275,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       int keyFiberPointIndex2 = (j+1) * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
       int keyFiberPointIndex3 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
 
+      // determine if key fibers are all valid
+      bool keyFibersInvalid = false;
       if (fibers[keyFiberPointIndex0].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex1].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex2].size() != nBorderPointsZNew_ || fibers[keyFiberPointIndex3].size() != nBorderPointsZNew_)
       {
         LOG(DEBUG) << "fibers at (" << i << "," << j << ") are incomplete, sizes: " << fibers[keyFiberPointIndex0].size()
@@ -282,18 +284,12 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
           << "," << fibers[keyFiberPointIndex2].size()
           << "," << fibers[keyFiberPointIndex3].size();
         nFibersNotInterpolated += MathUtility::sqr(nFineGridFibers_+1);
-        continue;
+        keyFibersInvalid = true;
       }
       else
       {
         LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << "), index " << keyFiberPointIndex0;
       }
-
-      /*std::array<Vec3,4> quadrilateralPoints;
-      quadrilateralPoints[0] = fibers[keyFiberPointIndex0][seedPointsZIndex];
-      quadrilateralPoints[1] = fibers[keyFiberPointIndex1][seedPointsZIndex];
-      quadrilateralPoints[2] = fibers[keyFiberPointIndex2][seedPointsZIndex];
-      quadrilateralPoints[3] = fibers[keyFiberPointIndex3][seedPointsZIndex];*/
 
       for (int fineGridJ = 0; fineGridJ < nFineGridFibers_+1; fineGridJ++)
       {
@@ -306,23 +302,30 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
           // get index of fiber in fibers vector
           int fibersPointIndex = keyFiberPointIndex0 + fineGridJ*nFibersX + fineGridI;
 
-
-          Vec2 xi({fineGridI / (nFineGridFibers_ + 1.0), fineGridJ / (nFineGridFibers_ + 1.0)});
-
-          //Vec3 seedPoint = fibers[fibersPointIndex][seedPointsZIndex];
-          // get baricentric coordinates of point seedPoint is quadrilateral
-          //MathUtility::quadrilateralGetPointCoordinates(quadrilateralPoints, seedPoint, xi);
-
-          LOG(DEBUG) << "  fine fiber (" << fineGridI << "," << fineGridJ << ") index " << fibersPointIndex << ", xi: " << xi;
-
-          for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZNew_; zLevelIndex++)
+          // if key fibers are invalid, set interpolated fibers to 0
+          if (keyFibersInvalid)
           {
-            // barycentric interpolation
-            fibers[fibersPointIndex][zLevelIndex] =
-                (1.0 - xi[0]) * (1.0 - xi[1]) * fibers[keyFiberPointIndex0][zLevelIndex]
-              + xi[0]         * (1.0 - xi[1]) * fibers[keyFiberPointIndex1][zLevelIndex]
-              + (1.0 - xi[0]) * xi[1]         * fibers[keyFiberPointIndex2][zLevelIndex]
-              + xi[0]         * xi[1]         * fibers[keyFiberPointIndex3][zLevelIndex];
+            for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZNew_; zLevelIndex++)
+            {
+              fibers[fibersPointIndex][zLevelIndex] = Vec3({0.0,0.0,0.0});
+            }
+          }
+          else
+          {
+            // interpolate fibers using key fibers
+            Vec2 xi({fineGridI / (nFineGridFibers_ + 1.0), fineGridJ / (nFineGridFibers_ + 1.0)});
+
+            LOG(DEBUG) << "  fine fiber (" << fineGridI << "," << fineGridJ << ") index " << fibersPointIndex << ", xi: " << xi;
+
+            for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZNew_; zLevelIndex++)
+            {
+              // barycentric interpolation
+              fibers[fibersPointIndex][zLevelIndex] =
+                  (1.0 - xi[0]) * (1.0 - xi[1]) * fibers[keyFiberPointIndex0][zLevelIndex]
+                + xi[0]         * (1.0 - xi[1]) * fibers[keyFiberPointIndex1][zLevelIndex]
+                + (1.0 - xi[0]) * xi[1]         * fibers[keyFiberPointIndex2][zLevelIndex]
+                + xi[0]         * xi[1]         * fibers[keyFiberPointIndex3][zLevelIndex];
+            }
           }
         }
       }
@@ -418,6 +421,12 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       for (int zLevelIndex = 0; zLevelIndex < nPointsCurrentFiber; zLevelIndex++)
       {
         int fibersPointIndex = j * nFibersX + i;
+
+        // if fibers are invalid, fill with 0.0
+        if (fibers[fibersPointIndex].size() < nPointsCurrentFiber)
+        {
+          fibers[fibersPointIndex].resize(nPointsCurrentFiber, Vec3({0.0,0.0,0.0}));
+        }
 
         for (int k = 0; k < 3; k++)
         {

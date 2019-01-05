@@ -370,13 +370,17 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
     LOG(DEBUG) << "nFibersTotal: " << nFibersTotal << ", nPointsWholeFiber: " << nPointsWholeFiber << ", nFibersPerRank: " << nFibers;
 
-    writeBuffer += c;
+    writeBuffer += std::string(c, nParameters*sizeof(int32_t));
 
     MPI_Status status;
     MPIUtility::handleReturnValue(MPI_File_write(fileHandle, writeBuffer.c_str(), writeBuffer.length(), MPI_BYTE, &status), "MPI_File_write", &status);
 
     headerOffset = writeBuffer.size();
+    LOG(DEBUG) << "headerOffset: " << headerOffset;
   }
+
+  //assert(headerOffset == 33 || ownRankNo != 0);
+  //headerOffset = 33;
 
   // write fibers
   LOG(DEBUG) << "write fibers, nFibersX: " << nFibersX << ", nRanks: (" << meshPartition_->nRanks(0) << "," << meshPartition_->nRanks(1) << "," << meshPartition_->nRanks(2) << ")";

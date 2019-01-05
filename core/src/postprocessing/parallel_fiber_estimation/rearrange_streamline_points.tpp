@@ -6,6 +6,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                          std::vector<std::vector<Vec3>> &cornerStreamlines,
                           std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                           std::array<bool,4> &subdomainIsAtBorder)
 {
@@ -619,6 +620,15 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
     }
   }
 
+  for (int cornerStreamlineIndex = 0; cornerStreamlineIndex != 4; cornerStreamlineIndex++, streamlineIndex++)
+  {
+    cornerStreamlines[cornerStreamlineIndex].resize(streamlineZPoints[streamlineIndex].size());
+    for (int zLevelIndex = 0; zLevelIndex < streamlineZPoints[streamlineIndex].size(); zLevelIndex++)
+    {
+      cornerStreamlines[cornerStreamlineIndex][zLevelIndex] = streamlineZPoints[streamlineIndex][zLevelIndex];
+    }
+  }
+
 #ifndef NDEBUG
   std::stringstream s;
   for (int subdomainIndex = 0; subdomainIndex < 8; subdomainIndex++)
@@ -629,6 +639,9 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsSubdomain[subdomainIndex]), 1.0);
     PythonUtility::checkForError();
   }
+  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "06_corner_streamlines", currentRankSubset_->ownRankNo(),
+                        PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(cornerStreamlines), 1.0);
+  PythonUtility::checkForError();
 #endif
 }
 

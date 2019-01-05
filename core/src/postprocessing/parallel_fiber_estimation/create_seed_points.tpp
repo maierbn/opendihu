@@ -96,6 +96,29 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
   LOG(DEBUG) << "seedPoints: end, streamlineIndex = " << seedPoints.size();
 
+
+  // create seed points at corners for border points
+  //     ___1+__
+  //    |   |   |
+  // 0- |___|___| 0+
+  // ^  |   |   |
+  // |  |___|___|
+  // +-->   1-
+
+  std::vector<std::pair<int,int>> coordinates =
+  {
+    std::pair<int,int>{1,1},    // bottom left
+    std::pair<int,int>{subdomainNNodesX-2, 1},    // bottom right
+    std::pair<int,int>{1, subdomainNNodesX-2},    // top left
+    std::pair<int,int>{subdomainNNodesX-2, subdomainNNodesX-2}    // top right
+  };
+
+  for (std::vector<std::pair<int,int>>::iterator iter = coordinates.begin(); iter != coordinates.end(); iter++)
+  {
+    int i = iter->first;
+    int j = iter->second;
+    seedPoints.push_back(nodePositions[seedPointsZIndex*subdomainNNodesX*subdomainNNodesY + j*subdomainNNodesX + i]);
+  }
 }
 
 };  // namespace

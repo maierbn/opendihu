@@ -6,7 +6,7 @@ namespace Postprocessing
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
-                 std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
+                 std::vector<std::vector<Vec3>> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
@@ -20,6 +20,10 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
   double zRangeCurrentLevel = zRangeTotal / nRanksZ;
   double bottomZClip = bottomZClip_ + zRangeCurrentLevel*rankZNo;
   double topZClip = bottomZClip_ + zRangeCurrentLevel*(rankZNo+1);
+
+  std::array<std::pair<int,int>,4> startEndCornerIndices = {
+    std::pair<int,int>{0,2}, std::pair<int,int>{1,3}, std::pair<int,int>{0,1}, std::pair<int,int>{2,3}
+  };
 
   // fill in points that are on the border of the domain
   // loop over z levels
@@ -52,6 +56,28 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           endPoint = 0.5 * (borderPoints[face][zLevelIndex/2][nBorderPointsXNew_-1] + borderPoints[face][zLevelIndex/2+1][nBorderPointsXNew_-1]);
         }
 
+        // use traced streamlines along corners [0],[1],[2],[3] to determine startPoint and endPoint for border mesh
+        //  [2]           [3]
+        //    ^ --(1+)-> ^
+        // ^  0-         0+
+        // |  | --(1-)-> |
+        // |[0]           [1]
+        // +-->
+
+        int beginIndex = startEndCornerIndices[face].first;
+        int endIndex = startEndCornerIndices[face].second;
+
+        if (cornerStreamlines[beginIndex].size() == nBorderPointsZNew_)
+        {
+          LOG(DEBUG) << "cornerStreamline " << beginIndex << "is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
+          startPoint = cornerStreamlines[beginIndex][zLevelIndex];
+        }
+
+        if (cornerStreamlines[endIndex].size() == nBorderPointsZNew_)
+        {
+          LOG(DEBUG) << "cornerStreamline " << endIndex << "is valid, use new end point " << cornerStreamlines[endIndex][zLevelIndex] << " instead of " << endPoint;
+          endPoint = cornerStreamlines[endIndex][zLevelIndex];
+        }
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

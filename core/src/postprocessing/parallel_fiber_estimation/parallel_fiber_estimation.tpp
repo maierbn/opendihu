@@ -603,7 +603,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // assign sampled points to the data structure borderPointsSubdomain, which contains the points for each subdomain and face, as list of points for each z level
     std::array<std::array<std::vector<bool>,4>,8> borderPointsSubdomainAreValid;
-    rearrangeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, borderPointsSubdomainAreValid, subdomainIsAtBorder);
+    std::vector<std::vector<Vec3>> cornerStreamlines;
+    rearrangeStreamlinePoints(streamlineZPoints, borderPointsSubdomain, cornerStreamlines, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
     LOG(DEBUG) << "nBorderPointsZ_: " << nBorderPointsZ_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
 
@@ -612,7 +613,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
 #if 1
     // fill the streamline points that are at the boundary
-    fillBorderPoints(borderPoints, borderPointsSubdomain, borderPointsSubdomainAreValid, subdomainIsAtBorder);
+    fillBorderPoints(borderPoints, borderPointsSubdomain, cornerStreamlines, borderPointsSubdomainAreValid, subdomainIsAtBorder);
 
     MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
     // write border points to file

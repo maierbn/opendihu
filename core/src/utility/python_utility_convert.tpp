@@ -324,6 +324,7 @@ struct PythonUtility::convertFromPython<std::vector<ValueType>>
     {
       int nEntries = (int)PyList_Size(object);
       result.resize(nEntries);
+      LOG(DEBUG) << "nEntries: " << nEntries;
 
       for (int i = 0; i < nEntries; i++)
       {

@@ -1705,6 +1705,8 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         plt.show()
       plt.close()
         
+    factor = (extent_x*extent_y)/2 * 5e-3
+    
     # try to resolve self-intersecting quadrilaterals
     # loop over elements
     for i in range(1,n_grid_points_x-2):
@@ -1772,9 +1774,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 s += "i"
               
               plt.savefig("out/{}_{}_areference_out_{}_{}.png".format(i,j,k,s))
-              
-            
-              
+                            
             n_tries = 0
             p_changed = np.array(p)
             while (does_overlap(p_changed,[p1,p3],[p7,p5]) \
@@ -1949,6 +1949,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
             p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
           
             characteristic_length = (extent_x+extent_y)/2.
+            factor = (extent_x*extent_y)/2 * 5e-3
             
             def objective(p_changed,output=False):
               # compute variance of areas
@@ -2017,12 +2018,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
               return element_score + variance_areas + variance_angles + overlapping_penalty
             
             old_score = objective(p)
-            
-            factor = (extent_x*extent_y)/2 * 5e-3
-            
             new_score = old_score
-            
-            
             
             use_nelder_mead = False
             if use_nelder_mead:

@@ -68,7 +68,6 @@ protected:
   
   TimeSteppingType fullTimestepping_;
 
-private:
   bool initialized_;     ///< if initialize() was already called
 
 };

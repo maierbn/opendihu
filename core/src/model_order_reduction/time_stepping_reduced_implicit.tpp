@@ -2,13 +2,18 @@
 
 #include <Python.h>
 #include "utility/python_utility.h"
+#include <petscksp.h>
+#include "solver/solver_manager.h"
+#include "solver/linear.h"
+#include "data_management/time_stepping/time_stepping_implicit.h"
 
 namespace ModelOrderReduction
 {
 template<typename TimeSteppingImplicitType>
 TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 TimeSteppingSchemeOdeReducedImplicit(DihuContext context):
-TimeSteppingSchemeOdeReduced<TimesteppingImplicitType>(context,"ImplicitEuler"), initialized_(false)
+TimeSteppingSchemeOdeReduced<TimesteppingImplicitType>(context,"ImplicitEulerReduced"),
+initialized_(false)
 {
 }
 
@@ -22,62 +27,72 @@ initialize()
   LOG(TRACE) << "TimeSteppingSchemeOdeReducedImplicit::initialize()";
   
   // TO BE IMPLEMENTED
+  TimeSteppingSchemeOdeReduced::initialize();
+  
+  // compute the system matrix
+  this->setSystemMatrix(this->timeStepWidth_);
+  
+  // initialize the linear solver that is used for solving the implicit system
+  initializeLinearSolver();
+  
+  // set matrix used for linear system and preconditioner to ksp context
+  Mat &redSysMatrix = this->dataMOR_->redSysMatrix()->valuesGlobal();
+  assert(this->ksp_);
+  PetscErrorCode ierr;
+  ierr = KSPSetOperators(*ksp_, redSysMatrix, redSysMatrix); CHKERRV(ierr);
+  
+  // TO BE IMPLEMENTED
+  
+  TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
+  
+  initialized_=true;
   
 }
 
 template<typename TimeSteppingImplicitType>
 void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
-advanceTimeSpan()
+solveLinearSystem(Vec &input, Vec &output)
 {
-  // compute timestep width
-  double timeSpan = this->timestepping_.endTime_ - this->timestepping_.startTime_;
+  // solve systemMatrix*output = input for output
+  Mat &redSysMatrix = this->dataMOR_->redSysMatrix()->valuesGlobal();
   
-  LOG(DEBUG) << "ReducedOrderImplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timestepping_.timeStepWidth_
-  << " n steps: " << this->timestepping_.numberTimeSteps_;
+  PetscErrorCode ierr;
+  PetscUtility::checkDimensionsMatrixVector(redSysMatrix, input);
   
-  // debugging output of matrices
-  //this->timestepping_.data_->print();
+  // solve the system, KSPSolve(ksp,b,x)
+  ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
   
-  Vec &solution = this->timestepping_.data_->solution().getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution= this->solution().getValuesContiguous();
+  int numberOfIterations = 0;
+  PetscReal residualNorm = 0.0;
+  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
+  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
   
-  // loop over time steps
-  double currentTime = this->timestepping_.startTime_;
-  for (int timeStepNo = 0; timeStepNo < this->timestepping_.numberTimeSteps_;)
+  KSPConvergedReason convergedReason;
+  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
+  
+  VLOG(1) << "Linear system of implicit time stepping solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
+  << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+}
+
+template<typename TimeSteppingImplicitType>
+void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
+initializeLinearSolver()
+{ 
+  if (linearSolver_ == nullptr)
   {
-    if (timeStepNo % this->timestepping_.timeStepOutputInterval_ == 0)
-    {
-      std::stringstream threadNumberMessage;
-      threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
-      LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->timestepping_.numberTimeSteps_<< ", t=" << currentTime;
-    }
+    LOG(DEBUG) << "Implicit time stepping: initialize linearSolver";
     
-    VLOG(1) << "starting from solution: " << this->timestepping_.data_->solution();
-    
-    ///
-    ///   TO IMPLEMENT
-    ///
-    
-    // advance simulation time
-    timeStepNo++;
-    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-    
-    VLOG(1) << "solution after integration: " << this->data_->solution();
-    
-    // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    // retrieve linear solver
+    linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+      this->specificSettings_, this->data_->functionSpace()->meshPartition()->mpiCommunicator());
+    ksp_ = linearSolver_->ksp();
   }
-  
-  this->data_->solution().restoreValuesContiguous();
-  
+  else 
+  {
+    VLOG(2) << ": linearSolver_ already set";
+  }
 }
 
-template<typename TimeSteppingImplicitType>
-void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
-run()
-{
-  TimeSteppingSchemeOdeReduced::run();
-  
-}
+
   
 } //namespace

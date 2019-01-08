@@ -9,37 +9,14 @@
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingExplicitType>
-  TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
-  TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEulerReduced"), initialized_(false) 
+  ExplicitEulerReduced<TimeSteppingExplicitType>::
+  ExplicitEulerReduced(DihuContext context):
+  TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>(context,"ExplicitEulerReduced"), initialized_(false) 
   {
-  }
-  
-  template<typename TimeSteppingExplicitType>
-  void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
-  initialize()
-  {
-    if (initialized_)
-      return;
-    
-    LOG(TRACE) << "TimeSteppingSchemeOdeReducedExplicit::initialize()";
-    
-    TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::initialize(); 
-    
-    initialized_=true;
-  }
-  
-  template<typename TimeSteppingExplicitType>
-  void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
-  evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
-  {
-    this->fullTimestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);
-    //ISCreateGeneral(comm,n, idx[],mode,&is);
-    //VecGetSubVector(X,is,&Y) should it be called every time step?
   }
    
   template<typename TimeSteppingExplicitType>
-  void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
+  void ExplicitEulerReduced<TimeSteppingExplicitType>::
   advanceTimeSpan()
   {
     // compute timestep width
@@ -124,15 +101,10 @@ namespace ModelOrderReduction
   }
   
   template<typename TimeSteppingExplicitType>
-  void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
+  void ExplicitEulerReduced<TimeSteppingExplicitType>::
   run()
-  {
-    // initialize
-    this->initialize();
-    
-    // do simulations
-    this->advanceTimeSpan();
-    
+  {    
+    TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::run();
   }
   
 } //namespace

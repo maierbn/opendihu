@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
   
     return EXIT_SUCCESS;
   } 
-  else if(topLevelSettings_timeStepping.hasKey("ImplicitEuler"))
+  else if(topLevelSettings_timeStepping.hasKey("ImplicitEulerReduced"))
   {
-    LOG(INFO) << "ImplicitEuler";
+    LOG(INFO) << "Reduced order ImplicitEuler";
     
     TimeSteppingScheme::ImplicitEuler<
     SpatialDiscretization::FiniteElementMethod<
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     
     return EXIT_SUCCESS;
   }
-  else if(topLevelSettings_timeStepping.hasKey("CrankNicolson"))
+  else if(topLevelSettings_timeStepping.hasKey("CrankNicolsonReduced"))
   {
-    LOG(INFO) << "CrankNicolson";
+    LOG(INFO) << "Reduced order CrankNicolson";
     
     TimeSteppingScheme::CrankNicolson<
     SpatialDiscretization::FiniteElementMethod<

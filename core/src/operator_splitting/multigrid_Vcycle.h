@@ -11,7 +11,7 @@ class multigrid_Vcycle :
 {
 public:
   //! constructor
-  MG(DihuContext context);
+  multigrid_Vcycle(DihuContext context);
 
   //! advance time stepping by span
   void advanceTimeSpan();

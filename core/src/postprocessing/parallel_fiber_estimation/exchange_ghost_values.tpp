@@ -50,29 +50,35 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       problem_->data().solution()->getValues(dofNos, boundaryValues[face].solutionValues);
       data_.gradient()->getValues(dofNos, boundaryValues[face].gradientValues);
 
+    }
+  }
+
+  for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+  {
+    if (!subdomainIsAtBorder[face])
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+      assert (neighbourRankNo != -1);
+#if 1
+      std::stringstream s;
+      s << "04_ghost_elements_face_" << Mesh::getString((Mesh::face_t)face);
+      PyObject_CallFunction(functionOutputGhostElements_, "s i O O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
+                            PythonUtility::convertToPython<std::vector<double>>::get(boundaryValues[face].nodePositionValues),
+                            PythonUtility::convertToPython<std::array<element_no_t,3>>::get(ghostValuesBuffer[face].nElementsPerCoordinateDirection), 0.05);
+      PythonUtility::checkForError();
+
+#endif
+
       int nNodePositionValues = boundaryValues[face].nodePositionValues.size();
       int nSolutionValues = boundaryValues[face].solutionValues.size();
       int nGradientValues = boundaryValues[face].gradientValues.size();
       assert(nSolutionValues*3 == nGradientValues);
       assert(nNodePositionValues == nGradientValues);
 
-#if 1
-      if (neighbourRankNo != -1)
-      {
-        std::stringstream s;
-        s << "04_ghost_elements_face_" << Mesh::getString((Mesh::face_t)face);
-        PyObject_CallFunction(functionOutputGhostElements_, "s i O O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
-                              PythonUtility::convertToPython<std::vector<double>>::get(boundaryValues[face].nodePositionValues),
-                              PythonUtility::convertToPython<std::array<element_no_t,3>>::get(ghostValuesBuffer[face].nElementsPerCoordinateDirection), 0.05);
-        PythonUtility::checkForError();
-      }
-#endif
-
       LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << ": nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
 
 #if !defined(USE_CHECKPOINT_GHOST_MESH)
 
-      assert (neighbourRankNo != -1);
       LOG(DEBUG) << "receive from rank " << neighbourRankNo;
 
       // receive from neighbouring process

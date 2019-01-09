@@ -7,6 +7,7 @@
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/performance_measurement.h"
+#include "mesh/mesh_manager.h"
 
 namespace OperatorSplitting
 {
@@ -41,7 +42,6 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   TimeSteppingScheme::initialize();
-
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 
   LOG(TRACE) << "  OperatorSplitting::initialize done, timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
@@ -63,6 +63,9 @@ initialize()
     LOG(DEBUG) << "  OperatorSplitting::initialize timeStepping2";
     timeStepping2_.initialize();
   }
+
+  Mesh::Manager::initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+    timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);

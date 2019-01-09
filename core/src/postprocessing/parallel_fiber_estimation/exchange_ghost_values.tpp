@@ -53,6 +53,10 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
     }
   }
 
+  // this barrier is needed such that VecGhostUpdate does not interfere with the following asynchronous communication
+  MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+  LOG(DEBUG) << "determined boundary elements, now communicate";
+
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
     if (!subdomainIsAtBorder[face])

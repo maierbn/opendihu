@@ -1,6 +1,7 @@
 // This file includes all header files that may be needed from an example
 #include "utility/python_utility.h"
 
+#include "control/coupling.h"
 #include "control/dihu_context.h"
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"

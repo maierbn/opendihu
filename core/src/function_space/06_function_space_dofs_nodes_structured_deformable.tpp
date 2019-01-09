@@ -84,6 +84,9 @@ initialize()
   
   // assign values of geometry field
   this->setGeometryFieldValues();
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
 // read in config nodes

@@ -21,7 +21,7 @@ std::string Mesh::meshName()
   return meshName_;
 }
 
-void Mesh::initialized()
+bool Mesh::initialized()
 {
   return initialized_;
 }

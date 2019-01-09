@@ -12,7 +12,7 @@ Manager::Manager(PythonConfig specificSettings) :
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
-  storeMeshMappings();
+  storeMappingsBetweenMeshes();
 }
 
 void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager)
@@ -97,12 +97,12 @@ void Manager::storeMappingsBetweenMeshes()
         }
         else
         {
-          std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>(value);
+          std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>::get(value);
           LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
 
           if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
           {
-            mappingsBetweenMeshes_[key].insert(std::pair<std::string,std::shared_ptr<MappingBetweenMeshes>>(targetMeshToMapTo,nullptr);
+            mappingsBetweenMeshes_[key].insert(std::pair<std::string,std::shared_ptr<MappingBetweenMeshesBase>>(targetMeshToMapTo,nullptr));
           }
         }
       }

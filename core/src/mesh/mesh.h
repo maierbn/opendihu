@@ -41,7 +41,7 @@ public:
   virtual void initialize() = 0;
 
   //! get if initialize was called previously and, thus, initialized_ is set to true
-  void initialized();
+  bool initialized();
   
   //! set the name of the mesh
   void setMeshName(std::string meshName);

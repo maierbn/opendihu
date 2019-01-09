@@ -28,7 +28,8 @@ int main(int argc, char *argv[])
         BasisFunction::LagrangeOfOrder<>,
         Quadrature::None,
         Equation::Dynamic::IsotropicDiffusion
-      >,
+	>
+	>,
       TimeSteppingScheme::ExplicitEuler<
       SpatialDiscretization::FiniteElementMethod<
       Mesh::StructuredRegularFixedOfDimension<1>,

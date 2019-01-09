@@ -167,7 +167,7 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
 }
 
 template<typename FunctionSpace1Type, typename FunctionSpace2Type>
-void Manager::initializeMappingsBetweenMeshes(std::shared_ptr<FunctionSpace1Type> functionSpace1, std::shared_ptr<FunctionSpace1Type> functionSpace2)
+void Manager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2)
 {
   // check if mapping functionSpace1 -> functionSpace2 is defined in config
   assert(functionSpaces_.find(functionSpace1->meshName()) != functionSpaces_.end());

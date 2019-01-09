@@ -28,11 +28,11 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
     // get node position of the source dof
     Vec3 position;
-    dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->dofNoGlobal(sourceDofNoLocal);
+    dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
     functionSpaceTarget->getGeometry(sourceDofNoGlobal);
 
     // find element no in the target mesh where the position is
-    if (!functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, startSearchInCurrentElement))
+    if (!functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement))
     {
       LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal << ", global " << sourceDofNoGlobal

@@ -64,7 +64,7 @@ initialize()
     timeStepping2_.initialize();
   }
 
-  Mesh::Manager::initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
+  context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
     timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
   // log endTime parameters

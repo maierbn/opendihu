@@ -32,7 +32,7 @@ public:
   
   //! check if a MappingBetweenMeshes object need to be created and initialized
   template<typename FunctionSpace1Type, typename FunctionSpace2Type>
-  void initializeMappingsBetweenMeshes(std::shared_ptr<FunctionSpace1Type> functionSpace1, std::shared_ptr<FunctionSpace1Type> functionSpace2);
+  void initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2);
 
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>

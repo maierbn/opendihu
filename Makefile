@@ -78,3 +78,9 @@ parallel_fiber_estimation:
 
 load_balancing:
 	cd examples/load_balancing && python ../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+multiple_fibers_cubes_partitioning:
+	cd examples/electrophysiology/multiple_fibers_cubes_partitioning && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	
+fibers_emg:
+	cd examples/electrophysiology/fibers_emg && python ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

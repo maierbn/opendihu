@@ -4,6 +4,7 @@
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/paraview/paraview.h"
 #include "output_writer/exfile/exfile.h"
+#include "output_writer/megamol/megamol.h"
 #include "control/performance_measurement.h"
 
 namespace OutputWriter
@@ -35,6 +36,11 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
     {
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
+      writer->write<DataType>(problemData, timeStepNo, currentTime);
+    }
+    else if (std::dynamic_pointer_cast<MegaMOL>(outputWriter) != nullptr)
+    {
+      std::shared_ptr<MegaMOL> writer = std::static_pointer_cast<MegaMOL>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
   }

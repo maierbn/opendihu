@@ -7,6 +7,7 @@
 #include "output_writer/python_file/python_file.h"
 #include "output_writer/paraview/paraview.h"
 #include "output_writer/exfile/exfile.h"
+#include "output_writer/megamol/megamol.h"
 
 namespace OutputWriter
 {
@@ -65,10 +66,14 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     {
       outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
     }
+    else if (typeString == "MegaMOL")
+    {
+      outputWriter_.push_back(std::make_shared<MegaMOL>(context, settings));
+    }
     else
     {
       LOG(WARNING) << "Unknown output writer type \"" << typeString<< "\". "
-        << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\"";
+        << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\", \"MegaMOL\"";
     }
   }
 }

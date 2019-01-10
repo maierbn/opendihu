@@ -39,13 +39,13 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
         << dofNos;
 
       // get relevant values in own domain that will be send to the neighbouring domain
-      problem_->data().functionSpace()->geometryField().setRepresentationGlobal();
+      /*problem_->data().functionSpace()->geometryField().setRepresentationGlobal();
       problem_->data().solution()->setRepresentationGlobal();
       data_.gradient()->setRepresentationGlobal();
       problem_->data().functionSpace()->geometryField().startGhostManipulation();
       problem_->data().solution()->startGhostManipulation();
       data_.gradient()->startGhostManipulation();
-
+*/
       problem_->data().functionSpace()->geometryField().getValues(dofNos, boundaryValues[face].nodePositionValues);
       problem_->data().solution()->getValues(dofNos, boundaryValues[face].solutionValues);
       data_.gradient()->getValues(dofNos, boundaryValues[face].gradientValues);

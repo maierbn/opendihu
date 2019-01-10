@@ -124,6 +124,10 @@ template<typename FunctionSpaceType>
 void FieldVariableSetGetComponent<FunctionSpaceType,1>::
 setValuesWithGhosts(const std::vector<double> &values, InsertMode petscInsertMode)
 {
+  if (values.size() != this->functionSpace_->meshPartition()->nDofsLocalWithGhosts())
+  {
+    LOG(ERROR) << "FieldVariable<1>::setValuesWithGhosts() values size: " << values.size() << ", nDofsWithGhosts: " << this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
+  }
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   assert(this->values_);
   

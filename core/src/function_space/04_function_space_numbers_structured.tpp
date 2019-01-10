@@ -257,28 +257,30 @@ getNodeNo(element_no_t elementNo, int nodeIndex) const
   if (!this->meshPartition()->hasFullNumberOfNodes(2) && elementZ == nElements[2]-1 && localZ == nNodesPerElement1D-1)
   {
     // node is a ghost node on the z+ border, i.e. lies in a x-y plane on top of the non-ghost dofs
+    // get number of first dof on z+ border
     node_no_t nodeNo = this->meshPartition()->nNodesLocalWithoutGhosts();
-    if (this->meshPartition()->hasFullNumberOfNodes(0))
+    if (this->meshPartition()->hasFullNumberOfNodes(0))     // if there are no ghosts on x+
     {
-      if (!this->meshPartition()->hasFullNumberOfNodes(1))
+      if (!this->meshPartition()->hasFullNumberOfNodes(1))    // if there are ghosts on y+
       {
         nodeNo += nodesPerRow0 * (elementZ * averageNNodesPerElement1D + localZ);
       }
     }
-    else 
+    else  // if there are ghosts on x+
     {
-      if (this->meshPartition()->hasFullNumberOfNodes(1))
+      if (this->meshPartition()->hasFullNumberOfNodes(1))   // if there are no ghosts on y+
       {
         node_no_t nodesPerRow1 = averageNNodesPerElement1D * nElements[1] + 1;
         nodeNo += nodesPerRow1 * (elementZ * averageNNodesPerElement1D + localZ);
       }
-      else 
+      else    // if there are ghosts on y+
       {
         node_no_t nodesPerRow1 = averageNNodesPerElement1D * nElements[1];
         nodeNo += (nodesPerRow0 + nodesPerRow1 + 1) * (elementZ * averageNNodesPerElement1D + localZ);
       }
     }
-    
+
+    // the z+ plane always has the full number of nodes in x and y direction (in lower z levels these are either ghost or non-ghost nodes)
     nodeNo += (averageNNodesPerElement1D * nElements[0] + 1) * (elementY * averageNNodesPerElement1D + localY);
     nodeNo += averageNNodesPerElement1D * elementX + localX;
     
@@ -757,7 +759,44 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
     << ", nNodesLocalWithoutGhosts: (" << this->meshPartition()->nNodesLocalWithoutGhosts(0) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(1) << "," << this->meshPartition()->nNodesLocalWithoutGhosts(2) << ")"
     << ", hasFullNumberOfNodes: (" << this->meshPartition()->hasFullNumberOfNodes(0) << "," << this->meshPartition()->hasFullNumberOfNodes(1) << "," << this->meshPartition()->hasFullNumberOfNodes(2) << ")";
 
-  if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0))   // point is on right ghost row (x+)
+  if (localZ == this->meshPartition()->nNodesLocalWithoutGhosts(2))  // point is on top ghost row
+  {
+    if (this->meshPartition()->hasFullNumberOfNodes(1)) // there is no ghosts at y+
+    {
+      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
+      {
+        // there are only ghosts at z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      }
+      else  // there are ghosts at x+
+      {
+        // there are ghosts at x+ and z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(1)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
+      }
+    }
+    else  // there are ghosts at y+
+    {
+      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
+      {
+        // there are ghosts at y+ and z+ and point is at z+
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
+      }
+      else  // there are ghosts at x+
+      {
+        // there are ghosts at x+, y+ and z+ and point is at z+
+        const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
+        return this->meshPartition()->nNodesLocalWithoutGhosts()
+          + nNodesPerL*this->meshPartition()->nNodesLocalWithoutGhosts(2)
+          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
+      }
+    }
+  }
+  else if (localX == this->meshPartition()->nNodesLocalWithoutGhosts(0))   // point is on right ghost row (x+)
   {
     if (this->meshPartition()->hasFullNumberOfNodes(1)) // there is no ghosts at y+
     {
@@ -796,43 +835,6 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
       const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
       return this->meshPartition()->nNodesLocalWithoutGhosts()
           + nNodesPerL*localZ + this->meshPartition()->nNodesLocalWithoutGhosts(1) + localX;
-    }
-  }
-  else if (localZ == this->meshPartition()->nNodesLocalWithoutGhosts(2))  // point is on top ghost row
-  {
-    if (this->meshPartition()->hasFullNumberOfNodes(1)) // there is no ghosts at y+
-    {
-      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
-      {
-        // there are only ghosts at z+ and point is at z+
-        return this->meshPartition()->nNodesLocalWithoutGhosts()
-          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
-      }
-      else  // there are ghosts at x+
-      {
-        // there are ghosts at x+ and z+ and point is at z+
-        return this->meshPartition()->nNodesLocalWithoutGhosts()
-          + this->meshPartition()->nNodesLocalWithoutGhosts(1)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
-          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
-      }
-    }
-    else  // there are ghosts at y+
-    {
-      if (this->meshPartition()->hasFullNumberOfNodes(0)) // there is no ghosts at x+
-      {
-        // there are ghosts at y+ and z+ and point is at z+
-        return this->meshPartition()->nNodesLocalWithoutGhosts()
-          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*this->meshPartition()->nNodesLocalWithoutGhosts(2)
-          + this->meshPartition()->nNodesLocalWithoutGhosts(0)*localY + localX;
-      }
-      else  // there are ghosts at x+
-      {
-        // there are ghosts at x+, y+ and z+ and point is at z+
-        const int nNodesPerL = this->meshPartition()->nNodesLocalWithoutGhosts(0) + this->meshPartition()->nNodesLocalWithGhosts(1);
-        return this->meshPartition()->nNodesLocalWithoutGhosts()
-          + nNodesPerL*this->meshPartition()->nNodesLocalWithoutGhosts(2)
-          + this->meshPartition()->nNodesLocalWithGhosts(0)*localY + localX;
-      }
     }
   }
   else

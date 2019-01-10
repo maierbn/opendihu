@@ -59,6 +59,7 @@ sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
 sconsconfig/packages/libxml2.py
 sconsconfig/packages/pugixml.py
+sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py
 sconsconfig/packages/sqlite3.py

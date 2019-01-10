@@ -521,7 +521,14 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   }
   
 #ifdef NDEBUG      // if release
-  conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
+  if (nRanksCommWorld_ > 1)
+  {
+    conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
+  }
+  else
+  {
+    conf.setGlobally(el::ConfigurationType::Format, "%msg");
+  }
 #else
   conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
 #endif

@@ -27,7 +27,8 @@ config = {
     "maxIterations": 10000,
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
-      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "MegaMOL", "outputInterval": 1}
     ]
   },
 }

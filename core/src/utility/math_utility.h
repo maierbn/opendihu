@@ -100,6 +100,9 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
 template<int D>
 void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
 
+//! compute the inverse Phi mapping, i.e. get the xi0, xi1 coordinates of a point in a quadrilateral
+void quadrilateralGetPointCoordinates(const std::array<Vec3,4> quadrilateral, const Vec3 point, Vec2 &xi);
+
 /** pow as constexpr function
  *  https://stackoverflow.com/a/27270730/10290071
  */

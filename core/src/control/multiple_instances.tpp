@@ -254,6 +254,14 @@ solution()
   return instancesLocal_[0].solution();
 }*/
 
+//! return the data object
+template<class TimeSteppingScheme>
+::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
+data()
+{
+  return data_;
+}
+
 template<class TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 reset()

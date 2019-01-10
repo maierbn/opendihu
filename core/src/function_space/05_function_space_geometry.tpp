@@ -23,6 +23,8 @@ getElementGeometry(element_no_t elementNo, std::array<Vec3, FunctionSpaceBaseDim
   // assert that geometry field variable is set
   assert (this->geometryField_);
   assert (elementNo >= 0);
+  if (elementNo >= this->nElementsLocal())
+    LOG(ERROR) << "FunctionSpace::getElementGeometry elementNo: " << elementNo << ", nElementsLocal: " << this->nElementsLocal();
   assert (elementNo < this->nElementsLocal());
 
   this->geometryField_->getElementValues(elementNo, values);

@@ -35,6 +35,11 @@ public:
   //! set the boundary condition dofs to the values
   void applyInVector(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> fieldVariable);
 
+  //! get a reference to the vector of bc local dofs
+  const std::vector<dof_no_t> &boundaryConditionNonGhostDofLocalNos() const;
+
+  //! get a reference to the vector of bc local dofs
+  const std::vector<ValueType> &boundaryConditionValues() const;
 
 protected:
 
@@ -100,7 +105,8 @@ protected:
   std::vector<GhostElement> ownGhostElements_;   ///< the ghost elements for this rank
 };
 
-
+template<typename FunctionSpaceType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes rhs);
 
 } // namespace
 

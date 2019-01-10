@@ -30,18 +30,21 @@ PETSC_DOWNLOAD=True
 PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
 PYTHON_REDOWNLOAD=False
 
+# Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
 # Numpy
-CYTHON_DOWNLOAD=True
-NUMPYC_DOWNLOAD=True
+#CYTHON_DOWNLOAD=True
+#NUMPYC_DOWNLOAD=True
 
 # SciPy
-SCIPY_DOWNLOAD=True
+#SCIPY_DOWNLOAD=True
 
 # Matplotlib and other python dependencies
-BZIP2_DOWNLOAD=True
-MATPLOTLIB_DOWNLOAD=False
-NUMPYSTL_DOWNLOAD=False
-SVGPATH_DOWNLOAD=False
+#BZIP2_DOWNLOAD=True
+#MATPLOTLIB_DOWNLOAD=False
+#NUMPYSTL_DOWNLOAD=False
+#SVGPATH_DOWNLOAD=False
+
+PYTHONPACKAGES_DOWNLOAD=True
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -52,7 +55,7 @@ GOOGLETEST_DOWNLOAD=True
 
 # SEMT
 SEMT_DOWNLOAD=True
-#SEMT_REDOWNLOAD=True  # you can comment out this, once it has reinstalled SEMT. This is only needed for the travis CI test cases which use an older docker container for the builds.
+#SEMT_REDOWNLOAD=True
 
 # EasyLoggingPP
 EASYLOGGINGPP_DOWNLOAD=True
@@ -62,8 +65,6 @@ EASYLOGGINGPP_DOWNLOAD=True
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for ubuntu 16.04
 #MPI_DIR="/usr/lib64/mpich/"
-#MPI_DOWNLOAD=True
-#MPI_IGNORE_MPICC=True    # this downloads and builds mpich
 
 # automatically set MPI_DIR for ubuntu 18.04
 try:
@@ -86,6 +87,13 @@ try:
 
 except:
   pass
+
+# download and build debugging MPI version
+if False:
+  del MPI_DIR
+  MPI_DOWNLOAD=True
+  MPI_IGNORE_MPICC=True    # this downloads and builds openmpi
+  MPI_DEBUG=True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # other variables for hazelhen
 import os

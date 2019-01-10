@@ -55,17 +55,18 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
+    LOG(DEBUG) << "create new rank subset " << *rankSubset;
   }
   else 
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
+    LOG(DEBUG) << "use previously set rankSubset " << *rankSubset;
   }
   
-  int rankNoSubsetCommunicator;
-  int nRanksSubsetCommunicator;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(rankSubset->mpiCommunicator(), &rankNoSubsetCommunicator));
-  MPIUtility::handleReturnValue(MPI_Comm_size(rankSubset->mpiCommunicator(), &nRanksSubsetCommunicator));
+  int rankNoSubsetCommunicator = rankSubset->ownRankNo();
+  int nRanksSubsetCommunicator = rankSubset->size();
+
   int nRanksTotal = 1;
   for (int i = 0; i < D; i++)
   {

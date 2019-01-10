@@ -12,6 +12,7 @@ Manager::Manager(PythonConfig specificSettings) :
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
+  storeMappingsBetweenMeshes();
 }
 
 void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager)
@@ -65,6 +66,46 @@ void Manager::storePreconfiguredMeshes()
         " by defining \"Meshes\": {\"<your custom mesh name>\": {<your mesh parameters>}} at the beginning of the"
         " config and \"meshName\": \"<your custom mesh name>\" where you currently have specified the mesh parameters."
         " This is required if you want to use the same mesh for multiple objects.";
+    }
+  }
+}
+
+void Manager::storeMappingsBetweenMeshes()
+{
+  LOG(TRACE) << "MeshManager::storeMappingsBetweenMeshes";
+  if (specificSettings_.pyObject())
+  {
+    std::string keyString("MappingsBetweenMeshes");
+    if (specificSettings_.hasKey(keyString))
+    {
+      std::pair<std::string, PyObject *> dictItem
+        = specificSettings_.getOptionDictBegin<std::string, PyObject *>(keyString);
+
+      for (; !specificSettings_.getOptionDictEnd(keyString);
+          specificSettings_.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
+      {
+        std::string key = dictItem.first;
+        PyObject *value = dictItem.second;
+
+        if (value == NULL)
+        {
+          LOG(WARNING) << "Could not extract dict for MappingsBetweenMeshes[\"" << key << "\"].";
+        }
+        else if (!PyUnicode_Check(value))
+        {
+          LOG(WARNING) << "Value for MappingsBetweenMeshes from mesh \"" << key << "\" should be a string (the name of the mesh to map to).";
+        }
+        else
+        {
+          std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>::get(value);
+          LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
+
+          if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
+          {
+            mappingsBetweenMeshes_[key].insert(std::pair<std::string,std::shared_ptr<MappingBetweenMeshesBase>>(targetMeshToMapTo,nullptr));
+          }
+        }
+      }
     }
   }
 }

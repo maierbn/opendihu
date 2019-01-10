@@ -133,6 +133,9 @@ initialize()
   this->geometryField_ = std::make_shared<GeometryFieldType>(thisMesh, "geometry", componentNames, true);
   
   // no need to set values of the geometry field, because there is no data explicitly stored
+
+  // set initalized_ to true which indicates that initialize has been called
+  this->initialized_ = true;
 }
 
 template<int D,typename BasisFunctionType>

@@ -19,7 +19,7 @@ echo "process ${name}"
 echo "----------------"
 
 # create plot "fig.pdf"
-python visualize_stl.py build_${variant}/${name}.stl
+./visualize_stl.py build_${variant}/${name}.stl
 
 # rename resulting plot and animation
 mv fig.pdf results/${name}.pdf || cp ../../document/no_plot.pdf results/${name}.pdf

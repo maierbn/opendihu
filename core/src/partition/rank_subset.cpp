@@ -48,14 +48,30 @@ RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1
   MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator, &currentRank), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
 
+  LOG(DEBUG) << "currentRank: " << currentRank << ", singleRank for which to create RankSubset: " << singleRank;
+
   // if currentRank is contained in rank subset
   if (singleRank == currentRank)
-    color = 1;
+    color = singleRank;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(mpiCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 
   // all ranks that are not part of the communicator will store "MPI_COMM_NULL" as mpiCommunicator_
+
+  // get number of ranks
+#if 0
+  if (ownRankIsContained())
+  {
+    int nRanks;
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanks), "MPI_Comm_size");
+    if (nRanks != 1)
+    {
+      LOG(DEBUG) << "nRanks: " << nRanks;
+    }
+    assert(nRanks == 1);
+  }
+#endif
 }
 
 std::set<int>::const_iterator RankSubset::begin()

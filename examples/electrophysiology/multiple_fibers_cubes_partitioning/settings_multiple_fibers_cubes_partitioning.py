@@ -224,7 +224,11 @@ n_ranks_x
 n_ranks_y
 n_ranks_z
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
-n_fibers_per_subdomain = 123
+n_fibers_per_subdomain_x = 123
+n_fibers_per_subdomain_y = 123
+n_ranks = n_ranks_x*n_ranks_y*n_ranks_z
+
+n_fibers_x = n_subdomains_x*n_fibers_per_subdomain_x
 
 config = {
   "scenarioName": scenario_name,
@@ -241,7 +245,7 @@ config = {
     "nInstances": n_subdomains_xy,
     "instances": 
     [{
-      "ranks": [],
+      "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
       "StrangSplitting": {
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_3D,  # 1e-1
@@ -255,7 +259,7 @@ config = {
             "nInstances": n_subdomains_z,
             "instances": 
             [{
-              "ranks": ranks,
+              "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
               "Heun" : {
                 "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey": "dt_0D",
@@ -281,18 +285,19 @@ config = {
                   "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                  "meshName": "MeshFibre"+str(xy_subdomain_no*n_fibers_per_subdomain + z_subdomain_no),
+                  "meshName": "MeshFibre_{}".format((subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x),
                   "prefactor": 1.0,
                 },
               },
-            } for z_subdomain_no in range(n_subdomains_z)],
+            } for fiber_in_subdomain_coordinate_x in range(n_fibers_per_subdomain_x) for fiber_in_subdomain_coordinate_y in range(n_fibers_per_subdomain_y)],
           }
         },
         "Term2": {     # Diffusion
           "MultipleInstances": {
-            "nInstances": n_subdomains_z,
+            "nInstances": n_fibers_per_subdomain_x*n_fibers_per_subdomain_y,
             "instances": 
             [{
+              "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
               "ImplicitEuler" : {
                 "initialValues": [],
                 #"numberTimeSteps": 1,
@@ -307,7 +312,7 @@ config = {
                   "maxIterations": 1e4,
                   "relativeTolerance": 1e-10,
                   "inputMeshIsGlobal": True,
-                  "meshName": "MeshFibre"+str(xy_subdomain_no*n_fibers_per_subdomain + z_subdomain_no),
+                  "meshName": "MeshFibre_{}".format((subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x),
                   "prefactor": Conductivity/(Am*Cm),
                   "solverName": "implicitSolver",
                 },
@@ -318,10 +323,10 @@ config = {
                   #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
-            } for z_subdomain_no in range(n_subdomains_z)]
+            } for fiber_in_subdomain_coordinate_x in range(n_fibers_per_subdomain_x) for fiber_in_subdomain_coordinate_y in range(n_fibers_per_subdomain_y)],
           },
         },
       }
-    } for xy_subdomain_no in range(n_subdomains_xy)]
+    } for subdomain_coordinate_x in range(n_subdomains_x) for subdomain_coordinate_y in range(n_subdomains_y)]
   }
 }

@@ -95,7 +95,7 @@ class PETSc(Package):
           return True
       
         env = ctx.env
-        ctx.Message('Checking for PETSc ... ')
+        ctx.Message('Checking for PETSc ...         ')
         self.check_options(env)
 
         res = super(PETSc, self).check(ctx, loc_callback=find_conf)

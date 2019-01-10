@@ -31,7 +31,7 @@ public:
   using FunctionSpaceNodes<MeshType,BasisFunctionType>::FunctionSpaceNodes;
 
   //! store a ghost mesh which is a neighouring mesh with only one layer of elements, this will be used by pointIsInElement and findPosition
-  void setGhostMesh(Mesh::face_t face, std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
+  void setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
 
   //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
   //! ghostMeshNo: -1 means main mesh, 0-5 means ghost Mesh with respecitve Mesh::face_t

@@ -38,6 +38,17 @@ initialize()
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 }
+template<typename FunctionSpaceType>
+void FiniteElementsBase<FunctionSpaceType>::
+reset()
+{
+  LOG(DEBUG) << "Data::FiniteElementsBase::reset";
+  // set initalize_ to false
+  Data<FunctionSpaceType>::reset();
+
+  // deallocate Petsc matrices
+  this->stiffnessMatrix_ = nullptr;
+}
 
 template<typename FunctionSpaceType>
 void FiniteElementsBase<FunctionSpaceType>::

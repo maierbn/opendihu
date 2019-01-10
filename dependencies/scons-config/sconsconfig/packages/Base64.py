@@ -166,7 +166,7 @@ class Base64(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Base64 ... ')
+        ctx.Message('Checking for Base64 ...        ')
         self.check_options(env)
 
         res = super(Base64, self).check(ctx)

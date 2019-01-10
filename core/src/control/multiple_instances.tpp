@@ -151,7 +151,7 @@ MultipleInstances(DihuContext context) :
     }
 
     // store the rank subset containing only the own rank for the mesh of the current instance
-    this->context_.partitionManager()->setRankSubsetForNextCreatedMesh(rankSubset);
+    this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
 
     VLOG(1) << "create sub context for instance no " << instanceConfigNo << ", rankSubset: " << *rankSubset;
     instancesLocal_.emplace_back(context_.createSubContext(instanceConfig));

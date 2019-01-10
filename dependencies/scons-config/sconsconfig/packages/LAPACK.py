@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
           return True
           
         env = ctx.env
-        ctx.Message('Checking for LAPACK ... ')
+        ctx.Message('Checking for LAPACK ...        ')
         self.check_options(env)
 
         res = super(LAPACK, self).check(ctx)

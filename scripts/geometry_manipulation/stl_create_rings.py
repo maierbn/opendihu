@@ -386,6 +386,13 @@ def create_point_marker(point, markers, size=None):
     [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
   ]
 
+
+def get_stl_mesh(input_filename):
+  """
+  Get an stl mesh object from the stl file given in input_filename, for use with function create_ring_section_mesh
+  """
+  return mesh.Mesh.from_file(input_filename)
+  
 def create_ring_section(input_filename, start_point, end_point, z_value, n_points):
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
@@ -397,11 +404,30 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   :param z_value: the z level of the line on the surface
   :param n_points: number of points on the border
   """
+  stl_mesh = get_stl_mesh(input_filename)
+  return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)
+      
+def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points):
+  """
+  Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
+  From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
+  The direction is such that the distance of the curve
+  :param stl_mesh: stl mesh that contains the closed surface mesh of the muscle, aligned with the z-axis, can be retrieved by get_stl_mesh
+  :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
+  :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
+  :param z_value: the z level of the line on the surface
+  :param n_points: number of points on the border
+  """
   
-  debug = False
-  write_output_mesh = False
+  print("create_ring_section, start_point={}, end_point={}, z_value={}, n_points={}".format(start_point, end_point, z_value, n_points))
   
-  stl_mesh = mesh.Mesh.from_file(input_filename)
+  debug = False                 # set this to true to enable debugging output
+  write_output_mesh = False    # set this to true to output 4 stl meshes that explain the algorithm
+  
+  if z_value == 155:
+    print("z_value = 155, set debug to true")
+    debug = True
+    write_output_mesh = True
   
   # create a full loop at the given z_value
   loop = []
@@ -450,12 +476,12 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
         print("")
       
       distance_start_point = np.linalg.norm(near_start_point - plumb_foot_point_start)
-      if distance_start_point < min_distance_start_point or min_distance_start_point is None:
+      if min_distance_start_point is None or distance_start_point < min_distance_start_point:
         min_distance_start_point = distance_start_point
         loop_start_point = plumb_foot_point_start
         edge_index_start = (i+1)%len(new_loop)
         
-    if np.linalg.norm(near_start_point - p0) < min_distance_start_point or min_distance_start_point is None:
+    if min_distance_start_point is None or np.linalg.norm(near_start_point - p0) < min_distance_start_point:
       min_distance_start_point = np.linalg.norm(near_start_point - p0)
       loop_start_point = p0
       edge_index_start = i
@@ -463,7 +489,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
       if debug:
         print("take p0 ({}), new min_distance_start_point: {}".format(p0,min_distance_start_point))
       
-    if np.linalg.norm(near_start_point - p1) < min_distance_start_point or min_distance_start_point is None:
+    if min_distance_start_point is None or np.linalg.norm(near_start_point - p1) < min_distance_start_point:
       min_distance_start_point = np.linalg.norm(near_start_point - p1)
       loop_start_point = p1
       edge_index_start = (i+1)%len(new_loop)
@@ -482,19 +508,19 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     
     if t_end >= 0 and t_end <= 1:
       plumb_foot_point_end = p0 + t_end * u
-      
-    if debug:
-      print("")
-      print("end point found, plumb_foot_point_end: ",plumb_foot_point_end)
-      print("")
+        
+      if debug:
+        print("")
+        print("end point found, plumb_foot_point_end: ",plumb_foot_point_end)
+        print("")
       
       distance_end_point = np.linalg.norm(near_end_point - plumb_foot_point_end)
-      if distance_end_point < min_distance_end_point or distance_end_point is None:
+      if min_distance_end_point is None or distance_end_point < min_distance_end_point:
         min_distance_end_point = distance_end_point
         loop_end_point = plumb_foot_point_end
         edge_index_end = (i+1)%len(new_loop)
       
-    if np.linalg.norm(near_end_point - p0) < min_distance_end_point or min_distance_end_point is None:
+    if min_distance_end_point is None or np.linalg.norm(near_end_point - p0) < min_distance_end_point:
       min_distance_end_point = np.linalg.norm(near_end_point - p0)
       loop_end_point = p0
       edge_index_end = i
@@ -502,14 +528,15 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
       if debug:
         print("take p0 ({}), new min_distance_end_point: {}".format(p0,min_distance_end_point))
       
-    if np.linalg.norm(near_end_point - p1) < min_distance_end_point or min_distance_end_point is None:
+    if min_distance_end_point is None or np.linalg.norm(near_end_point - p1) < min_distance_end_point:
       min_distance_end_point = np.linalg.norm(near_end_point - p1)
       loop_end_point = p1
       edge_index_end = (i+1)%len(new_loop)
       
       if debug:
         print("take p0 ({}), new min_distance_end_point: {}".format(p0,min_distance_end_point))
-  
+
+  # here edge_index_start and edge_index_end are the indices of the first loop points after the start point (loop_start_point) and end point (loop_end_point), which usually lie on an edge and not at a node of the loop
   
   if debug:
     print("start_point: {}".format(start_point))
@@ -519,7 +546,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     print("loop_start_point: {}".format(loop_start_point))
     print("loop_end_point: {}".format(loop_end_point))
   
-  # determine length of loop between loop_start_point and loop_end_point, in forward direction (distance0) and reverse direction (distance1)
+  # determine length of loop between loop_start_point and loop_end_point, from start to end (distance0) and from end to start (distance1), always in forward direction 
   # iterate over points of loop
   previous_point = np.array(new_loop[0])
   point_index = 1
@@ -527,11 +554,12 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   second_section = 0   # 0 = not yet started, 1 = currently running, 2 = finished
   distance0 = 0
   distance1 = 0
-  start_point_index = 0
-  end_point_index = 0
+  start_point_index = edge_index_start
+  end_point_index = edge_index_end
   
   while True:
     current_point = np.array(new_loop[point_index])
+    # always consider the edge between previous_point and current_point
     
     if debug:
       print("previous_point: {}, current_point: {}, first: {}, second: {}, d: {},{}".format(previous_point, current_point, first_section, second_section, distance0, distance1))
@@ -542,13 +570,12 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
       if debug:
         print("  add to distance1 {}, new: {}".format(np.linalg.norm(current_point - previous_point), distance1))
       
-    # if loop_end_point lies on the line between previous_point and end_point
+    # if loop_end_point lies on the line between previous_point and current_point
     if point_index == edge_index_end:
       
       if debug:
         print("line with loop_end_point found at point_index {}".format(point_index))
       
-      end_point_index = point_index
       if first_section == 1:
         distance0 += np.linalg.norm(loop_end_point - previous_point)
         
@@ -558,7 +585,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
       
       if second_section == 0:
         second_section = 1
-        distance1 = np.linalg.norm(loop_end_point - previous_point)
+        distance1 = np.linalg.norm(current_point - loop_end_point)
               
         if debug:
           print("set distance1: {}".format(distance1))
@@ -569,13 +596,12 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
       if debug:
         print("  add to distance0 {}, new: {}".format(np.linalg.norm(current_point - previous_point), distance0))
       
-    # if loop_start_point lies on the line between previous_point and end_point
+    # if loop_start_point lies on the line between previous_point and current_point
     if point_index == edge_index_start:
       
       if debug:
         print("line with loop_start_point found at point_index {}".format(point_index))
       
-      start_point_index = point_index   
       if first_section == 0:
         first_section = 1
         distance0 = np.linalg.norm(current_point - loop_start_point)
@@ -602,9 +628,11 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     if debug:
       print("distance0: {}, distance1: {}".format(distance0, distance1))
             
+  direction_reversed = False
   # here we have the distance between loop_start_point and loop_end_point following the ring forward (distance0) and backward (distance1)
   if distance0 > distance1:
     
+    direction_reversed = True
     if debug:
       print("reverse direction")
     distance0,distance1 = distance1,distance0
@@ -614,6 +642,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   if debug:  
     print("loop_start_point: {}, loop_end_point: {}".format(loop_start_point, loop_end_point))
     print("start_point_index: {}, end_point_index: {}, length of new_loop: {}".format(start_point_index, end_point_index, len(new_loop)))
+    print("distance0: {}".format(distance0))
   
   element_length = (float)(distance0) / (n_points-1)
   
@@ -708,12 +737,15 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   if debug:
     print ("result contains {} points".format(len(result_points)))
       
-  
   # transform points from numpy array to simple list
   result = []
-  for point in result_points:
-    result.append([point[0], point[1], point[2]])
-      
+  if direction_reversed:
+    for point in reversed(result_points):
+      result.append(point.tolist())
+  else:
+    for point in result_points:
+      result.append(point.tolist())
+        
   if write_output_mesh:
 
     # create markers
@@ -743,7 +775,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     #out_mesh.update_normals()
 
     outfile = "mesh_start_end.stl"
-    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    out_mesh.save(outfile)
     print("saved {} triangles to \"{}\" (start,end)".format(len(markers_start_end),outfile))
 
     #---------------------------------------
@@ -757,7 +789,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     #out_mesh.update_normals()
 
     outfile = "mesh_loop_start_end.stl"
-    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    out_mesh.save(outfile)
     print("saved {} triangles to \"{}\" (loop start,end)".format(len(markers_loop_start_end),outfile))
 
     #---------------------------------------
@@ -770,7 +802,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     #out_mesh.update_normals()
 
     outfile = "mesh_loop.stl"
-    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    out_mesh.save(outfile)
     print("saved {} triangles to \"{}\" (markers_loop)".format(len(markers_loop),outfile))
 
     #---------------------------------------
@@ -783,9 +815,10 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     #out_mesh.update_normals()
 
     outfile = "mesh_result.stl"
-    out_mesh.save(outfile, mode=stl.Mode.ASCII)
+    out_mesh.save(outfile)
     print("saved {} triangles to \"{}\" (start,end)".format(len(markers_result),outfile))
 
-      
+  if debug:
+    print("result:{}".format(result))
   return result
     

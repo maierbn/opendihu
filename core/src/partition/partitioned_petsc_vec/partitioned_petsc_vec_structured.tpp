@@ -967,7 +967,7 @@ output(std::ostream &stream)
       //VLOG(1) << "localValues: " << localValues;
 
       const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-      for (dof_no_t dofNoLocal = 0; dofNoLocal < this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal++)
+      for (dof_no_t dofNoLocal = 0; dofNoLocal < std::min(100,this->meshPartition_->nDofsLocalWithoutGhosts()); dofNoLocal++)
       {
         double value = localValuesWithGhosts[dofNoLocal];
 
@@ -981,10 +981,14 @@ output(std::ostream &stream)
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
 
         stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
+        if (dofNoLocal == 99)
+        {
+          stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 100)";
+        }
       }
       stream << "], ghosts: [";
 
-      for (dof_no_t dofNoLocal = this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal < this->meshPartition_->nDofsLocalWithGhosts(); dofNoLocal++)
+      for (dof_no_t dofNoLocal = this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal < std::min(100,this->meshPartition_->nDofsLocalWithGhosts()); dofNoLocal++)
       {
         double value = localValuesWithGhosts[dofNoLocal];
 
@@ -998,6 +1002,10 @@ output(std::ostream &stream)
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
 
         stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
+        if (dofNoLocal == 99)
+        {
+          stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 100)";
+        }
       }
       stream << "]" << std::endl;
 

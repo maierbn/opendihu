@@ -12,8 +12,11 @@ namespace Partition
 class RankSubset
 {
 public:
-  
+
   //! constructor that constructs a rank subset with a single rank
+  RankSubset(int singleRank, MPI_Comm mpiCommunicator);
+
+  //! constructor that constructs a rank subset with a single rank, from MPICommWorld
   RankSubset(int singleRank);
   
   //! constructor that constructs a whole set of ranks
@@ -22,7 +25,8 @@ public:
  
   //! constructor that constructs a rank subset with all ranks (MPICommWorld)
   RankSubset();
- 
+
+
   //! number of ranks in the current rank list
   element_no_t size() const;
 

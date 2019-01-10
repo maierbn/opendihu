@@ -35,6 +35,9 @@ setBasis()
   
   ierr=MatShift(basis, 1); CHKERRV(ierr); //identitty matrix to check
   
+  
+  //MatTransposeGetMat(Mat A,Mat *M)
+  
   /*
   PetscInt mat_sz_1, mat_sz_2;
   MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
@@ -71,20 +74,70 @@ initialize()
 
 template<typename FunctionSpaceRowsType>
 void MORBase<FunctionSpaceRowsType>::
-setRedSysMatrix(Mat &A, Mat &A_R)
+setRedSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_systemMatrix, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_redSystemMatrix)
 {
   //to be implemented
+  Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal(); 
   
-  //MatGetRow  //(1) to get each row of the V_k^T or V_k. Provides an array out of the row.
-  //VecGetValues //(2-1-a) To extract only the required part of vector. Output is probably an array not petsc vector. Indirect indexing is considered. It is local.
-  //VecCreateMPIWithArray  //(2-2-a)creating petsc vec from array
-  //VecMdot //(3) Vector dot products  for computing V_k^T A. We do not need to stor the required parts of V_k and V_k^T as new matrices.
+  Mat systemMatrix=ptr_systemMatrix->valuesGlobal();
+  Mat redSystemMatrix=ptr_redSystemMatrix->valuesGlobal();
   
-  //instead of (2-a) one can use the following:
-  //ISCreatGeneral //(2-1-b)creat the index set for the indices that we require.
-  //VecGetSubVector //(2-2-b) uses the above index set
+  PetscErrorCode ierr; 
+  
+  PetscInt mat_sz_1, mat_sz_2;
+  
+  MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+  PetscInt nrows_bs=mat_sz_1;
+  PetscInt ncols_bs=mat_sz_2;
+  
+  MatGetSize(systemMatrix,&mat_sz_1,&mat_sz_2);
+  PetscInt nrows_sys=mat_sz_1; //square matrix
+  //PetscInt ncols_sys=mat_sz_2; 
+  
+  if(ncols_bs == nrows_sys)
+  {
+    //! Reduction of the system matrix in case of compatible row spaces of the system matrix and reduced basis    
+    //D=A*B*C
+    MatMatMatMult(basisTransp,systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);      
+  }
+  else
+  {
+    
+    ////const std::shared_ptr<FunctionSpaceType> functionSpaceReduced=this->dataMOR->FunctionSpace();  
+    //std::shared_ptr<Partition::MeshPartition<::FunctionSpace::Generic>>
+    //meshPartitionRows_=this->dataMOR_->basisTransp()->meshPartitionRows();
+    
+    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>>
+    meshPartitionRows_=redSystemMatrix.meshPartitionRows();
+    
+    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>> 
+    meshPartitionColumns_=ptr_systemMatrix.meshPartitionRows(); //compatible for multiplication  
+    
+    std::shared_ptr<PartitionedPetscMat<ptr_systemMatrix.RowsFunctionSpace,redSystemMatrix.RowsFunctionSpace>> basis_submatrix;
+    std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,ptr_systemMatrix.RowsFunctionSpace>> basisTransp_submatrix;
+    
+    Mat &basis_sbm=basis_submatrix->valuesGlobal();
+    Mat &basisTransp_sbm=basisTransp_submatrix->valuesGlobal();
+    
+    const PetscScalar vals_total[ncols_bs];
+    const PetscScalar vals_sbm[nrows_sys];
+    
+    for( int row=0; row<nrows_bs;row++)
+    {
+      // to get each row of the V_k^T
+      MatGetRow(basisTransp,row,Null,Null,&vals_total); CHKERRV(ierr);    
+      MatSetValuesRow(basisTransp_sbm,row,vals_total); CHKERRV(ierr); //inconsistent sizes may work. Otherwise build vals_sbm.     
+    }
+    
+    MatTransposeGetMat(basisTransp_sbm,&basis_sbm); CHKERRV(ierr);
+    
+    //D=A*B*C
+    MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+  }
   
 }
+
 template<typename FunctionSpaceRowsType>
 void MORBase<FunctionSpaceRowsType>::
 MatMultReduced(Mat mat,Vec x,Vec y)

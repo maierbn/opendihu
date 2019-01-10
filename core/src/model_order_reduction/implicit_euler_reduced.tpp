@@ -34,6 +34,9 @@ advanceTimeSpan()
   Vec &solution = this->fullTimestepping_.data_->solution().getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
   Vec &redSolution= this->data().solution().getValuesContiguous();
   
+  Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
+  
   // loop over time steps
   double currentTime = this->.startTime_;
   
@@ -52,14 +55,18 @@ advanceTimeSpan()
     
     ///   TO IMPLEMENT
     
-    // adjust rhs vector such that boundary conditions are satisfied
+    // adjust the full-order rhs vector such that boundary conditions are satisfied
     this->fullTimestepping_->applyInRightHandSide(this->fullTimestepping_->solution(), this->fullTimestepping_->boundaryConditionsRightHandSideSummand());
     
-    // reduction
+    // transfer rhs to reduced space
+    MatMultReduced(basisTransp,solution,redSolution); 
     
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
-    this->solveLinearSystem(redSolution, redSolution); 
+    this->solveLinearSystem(redSolution, redSolution);
+    
+    // transfer to full-order space
+    MatMultFull(basis,redSolution,solution);
     
     ///   TO IMPLEMENT
     
@@ -89,10 +96,7 @@ void ImplicitEulerReduced<TimeSteppingImplicitType>::
 setSystemMatrix(double timeStepWidth)
 {
   this->fullTimestepping_.setSystemMatrix(timeStepWidth);
-  Mat systemMatrix=this->fullTimestepping_.dataImplicit_->systemMatrix()->valuesGlobal();
-  
-  Mat redSysMatrix=this->dataMOR_->redSysMatrix()->valuesGlobal();;
-  this->setRedSysMatrix(systemMatrix, redSysMatrix);
+  this->setRedSystemMatrix(this->fullTimestepping_.dataImplicit_->systemMatrix(), this->dataMOR_->redSystemMatrix());
 }
 
 template<typename TimeSteppingImplicitType>

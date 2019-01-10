@@ -33,8 +33,9 @@ public:
   virtual void initialize();
    
 protected:
+  
   //! Set the reduced system matrix, A_R=V^T A V
-  virtual void setRedSysMatrix(Mat &A, Mat &A_R);
+  virtual void setRedSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_systemMatrix, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_redSystemMatrix);
   
   //! Map to the reduced order space. Modification to MatMult in case that size of vector x does not match to the columns of the matrix.  
   virtual void MatMultReduced(Mat mat,Vec x,Vec y);

@@ -49,9 +49,9 @@ basisTransp()
 template<typename FunctionSpaceRows>  
 std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>
 &ModelOrderReduction<FunctionSpaceRows>::
-redSysMatrix()
+redSystemMatrix()
 {    
-  return this->redSysMatrix_; 
+  return this->redSystemMatrix_; 
 } 
  
 template<typename FunctionSpaceRows>  

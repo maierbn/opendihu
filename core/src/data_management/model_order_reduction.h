@@ -32,7 +32,7 @@ public:
   //void initializeBasis(Mat &basis);
    
   //! Reduced system matrix, A_R
-  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> &redSysMatrix();
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> &redSystemMatrix();
    
   //! initializes the redSysMatrix from an already existant Petsc Mat !?
   //void initializeRedSysMatrix(Mat &A_R);
@@ -49,7 +49,7 @@ private:
    
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceRowsType,::FunctionSpace::Generic>> basis_; // V
   std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRowsType>> basisTransp_; // V^T
-  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> redSysMatrix_;
+  std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> redSystemMatrix_;
    
   std::shared_ptr<FieldVariableType> redSolution_; //reduced solution
   std::shared_ptr<FieldVariableType> redIncrement_; //reduced increment

@@ -14,7 +14,7 @@ namespace MegaMOLLoopOverTuple
 template<typename OutputFieldVariablesType, typename FunctionSpaceType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::string meshName,
-                          FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                          std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                           std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   // call what to do in the loop body
@@ -30,7 +30,7 @@ template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
@@ -39,7 +39,7 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
     return false;  // do not break iteration
   }
 
-  geometryField = currentFieldVariable->functionSpace()->geometryField();
+  geometryField = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(currentFieldVariable->functionSpace()->geometryField());
 
   // number of components of currentFieldVariable is 1
   scalarFieldVariables.push_back(currentFieldVariable);
@@ -52,7 +52,7 @@ template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
@@ -61,7 +61,7 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
     return false;  // do not break iteration
   }
 
-  geometryField = currentFieldVariable->functionSpace()->geometryField();
+  geometryField = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(currentFieldVariable->functionSpace()->geometryField());
 
   return false;  // do not break iteration
 }
@@ -71,7 +71,7 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
 template<typename TupleType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 collectFieldVariables(TupleType currentFieldVariableTuple, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   // call for tuple element
@@ -84,7 +84,7 @@ collectFieldVariables(TupleType currentFieldVariableTuple, std::string meshName,
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 collectFieldVariables(VectorType currentFieldVariableVector, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)

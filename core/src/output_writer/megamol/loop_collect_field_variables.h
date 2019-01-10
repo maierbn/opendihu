@@ -22,7 +22,7 @@ namespace MegaMOLLoopOverTuple
 template<typename OutputFieldVariablesType, typename FunctionSpaceType, int i=0>
 inline typename std::enable_if<i == std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::string meshName,
-                          FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                          std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                           std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {}
 
@@ -32,7 +32,7 @@ loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::s
 template<typename OutputFieldVariablesType, typename FunctionSpaceType, int i=0>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::string meshName,
-                          FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                          std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                           std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
 
@@ -41,7 +41,7 @@ loopCollectFieldVariables(const OutputFieldVariablesType &fieldVariables, std::s
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 collectFieldVariables(VectorType currentFieldVariableVector, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
 /** Loop body for a tuple element
@@ -49,7 +49,7 @@ collectFieldVariables(VectorType currentFieldVariableVector, std::string meshNam
 template<typename TupleType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 collectFieldVariables(TupleType currentFieldVariableVector, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
 /**  Loop body for a pointer element
@@ -58,7 +58,7 @@ template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
 /**  Loop body for a pointer element
@@ -67,7 +67,7 @@ template<typename CurrentFieldVariableType, typename FunctionSpaceType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
                         && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
-                      FieldVariable::FieldVariable<FunctionSpaceType,3> &geometryField,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
 };  //namespace MegaMOLLoopOverTuple

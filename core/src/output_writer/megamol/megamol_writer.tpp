@@ -10,7 +10,7 @@ void MegaMOLWriter<FunctionSpaceType, OutputFieldVariablesType>::
 outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
            PythonConfig specificSettings)
 {
-  FieldVariable::FieldVariable<FunctionSpaceType,3> geometryField;
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField;
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> scalarFieldVariables;
 
   // collect the geometryField and all scalar field variables for the current mesh
@@ -20,7 +20,7 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
 
   // retrieve the geometry field values
   std::vector<Vec3> geometryFieldValues;
-  geometryField.getValuesWithoutGhosts(geometryFieldValues);
+  geometryField->getValuesWithoutGhosts(geometryFieldValues);
 
   LOG(DEBUG) << geometryFieldValues.size() << " geometryField values: " << geometryFieldValues;
 

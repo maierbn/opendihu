@@ -71,7 +71,7 @@ initialize()
   initialized_=true;
   
 }
-
+/*
 template<typename FunctionSpaceRowsType>
 void MORBase<FunctionSpaceRowsType>::
 setRedSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_systemMatrix, std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_redSystemMatrix)
@@ -137,7 +137,7 @@ setRedSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_s
   }
   
 }
-
+*/
 template<typename FunctionSpaceRowsType>
 void MORBase<FunctionSpaceRowsType>::
 MatMultReduced(Mat mat,Vec x,Vec y)

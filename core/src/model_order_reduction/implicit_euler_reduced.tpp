@@ -12,8 +12,6 @@ TimeSteppingSchemeOdeReducedImplicit<TimesteppingImplicitType>(context,"Implicit
 {
 }
 
-
-
 template<typename TimeSteppingImplicitType>
 void ImplicitEulerReduced<TimeSteppingImplicitType>::
 advanceTimeSpan()
@@ -93,14 +91,6 @@ advanceTimeSpan()
 
 template<typename TimeSteppingImplicitType>
 void ImplicitEulerReduced<TimeSteppingImplicitType>::
-setSystemMatrix(double timeStepWidth)
-{
-  this->fullTimestepping_.setSystemMatrix(timeStepWidth);
-  this->setRedSystemMatrix(this->fullTimestepping_.dataImplicit_->systemMatrix(), this->dataMOR_->redSystemMatrix());
-}
-
-template<typename TimeSteppingImplicitType>
-void ImplicitEulerReduced<TimeSteppingImplicitType>::
 run()
 {
   TimeSteppingSchemeOdeReduced::run();
@@ -108,4 +98,3 @@ run()
 }
   
 } //namespace
-ImplicitEulerReduced

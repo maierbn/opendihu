@@ -21,7 +21,7 @@ template<typename TimeSteppingImplicitType>
 void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 initialize()
 {
-  if (initialized_)
+  if (this->initialized_)
     return;
   
   LOG(TRACE) << "TimeSteppingSchemeOdeReducedImplicit::initialize()";
@@ -45,7 +45,82 @@ initialize()
   
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
-  initialized_=true;
+  this->initialized_=true;
+  
+}
+
+template<typename TimeSteppingImplicitType>
+void ImplicitEulerReduced<TimeSteppingImplicitType>::
+setSystemMatrix(double timeStepWidth)
+{
+  this->fullTimestepping_.setSystemMatrix(timeStepWidth);
+  this->setRedSystemMatrix(this->fullTimestepping_.dataImplicit_->systemMatrix(), this->dataMOR_->redSystemMatrix());
+}
+
+template<typename FunctionSpaceRowsType>
+void MORBase<FunctionSpaceRowsType>::
+setRedSystemMatrix()
+{
+  //to be implemented
+  Mat &basis = this->dataMOR_->basis()->valuesGlobal();
+  Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal(); 
+  
+  std::shared_ptr<PartitionedPetscMat<typename this->fullTimestepping_.FunctionSpace>> ptr_systemMatrix=this->fullTimestepping_.data().systemMatrix();
+  Mat systemMatrix=ptr_systemMatrix->valuesGlobal();
+  Mat redSystemMatrix=this->dataMOR_.redSystemMatrix()->valuesGlobal();
+  
+  PetscErrorCode ierr; 
+  
+  PetscInt mat_sz_1, mat_sz_2;
+  
+  MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+  PetscInt nrows_bs=mat_sz_1;
+  PetscInt ncols_bs=mat_sz_2;
+  
+  MatGetSize(systemMatrix,&mat_sz_1,&mat_sz_2);
+  PetscInt nrows_sys=mat_sz_1; //square matrix
+  //PetscInt ncols_sys=mat_sz_2; 
+  
+  if(ncols_bs == nrows_sys)
+  {
+    //! Reduction of the system matrix in case of compatible row spaces of the system matrix and reduced basis    
+    //D=A*B*C
+    MatMatMatMult(basisTransp,systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);      
+  }
+  else
+  {
+    
+    ////const std::shared_ptr<FunctionSpaceType> functionSpaceReduced=this->dataMOR->FunctionSpace();  
+    //std::shared_ptr<Partition::MeshPartition<::FunctionSpace::Generic>>
+    //meshPartitionRows_=this->dataMOR_->basisTransp()->meshPartitionRows();
+    
+    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>>
+    meshPartitionRows_=redSystemMatrix.meshPartitionRows();
+    
+    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>> 
+    meshPartitionColumns_=ptr_systemMatrix.meshPartitionRows(); //compatible for multiplication  
+    
+    std::shared_ptr<PartitionedPetscMat<ptr_systemMatrix.RowsFunctionSpace,redSystemMatrix.RowsFunctionSpace>> basis_submatrix;
+    std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,ptr_systemMatrix.RowsFunctionSpace>> basisTransp_submatrix;
+    
+    Mat &basis_sbm=basis_submatrix->valuesGlobal();
+    Mat &basisTransp_sbm=basisTransp_submatrix->valuesGlobal();
+    
+    const PetscScalar vals_total[ncols_bs];
+    const PetscScalar vals_sbm[nrows_sys];
+    
+    for( int row=0; row<nrows_bs;row++)
+    {
+      // to get each row of the V_k^T
+      MatGetRow(basisTransp,row,Null,Null,&vals_total); CHKERRV(ierr);    
+      MatSetValuesRow(basisTransp_sbm,row,vals_total); CHKERRV(ierr); //inconsistent sizes may work. Otherwise build vals_sbm.     
+    }
+    
+    MatTransposeGetMat(basisTransp_sbm,&basis_sbm); CHKERRV(ierr);
+    
+    //D=A*B*C
+    MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+  }
   
 }
 

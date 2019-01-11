@@ -35,7 +35,7 @@ public:
   virtual void initialize();
 
   //!
-  virtual void advanceTimeSpan()=0;
+  //virtual void advanceTimeSpan()=0;
   
   //! data object for model order reduction
   //DataReduced &redData();

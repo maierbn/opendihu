@@ -22,9 +22,6 @@ namespace ModelOrderReduction
     //! initialize timestepping member
     void initialize();
     
-    //! advance the simulation by the time step
-    virtual void advanceTimeSpan()=0;
-    
     //! evaluates the right hand side function 
     void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
     

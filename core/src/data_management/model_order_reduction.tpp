@@ -109,7 +109,7 @@ createPetscObjects()
     meshPartitionRows, meshPartitionColumns, 1, "basis");
   this->basisTransp_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRows>>(
     meshPartitionColumns, meshPartitionRows, 1, "basisTransp");
-  this->redSysMatrix_=std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
+  this->redSystemMatrix_=std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
     meshPartitionColumns, meshPartitionColumns, 1, "redSysMatrix");
 }
 

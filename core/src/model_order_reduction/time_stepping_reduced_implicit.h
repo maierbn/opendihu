@@ -21,7 +21,7 @@ namespace ModelOrderReduction
     virtual ~TimeSteppingSchemeOdeReducedImplicit(){};
     
     //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-    virtual void advanceTimeSpan() = 0;
+    //virtual void advanceTimeSpan() = 0;
     
     //! initialize timestepping member and set the system matrix
     void initialize();
@@ -29,7 +29,10 @@ namespace ModelOrderReduction
   protected:
     
     //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme
-    virtual void setSystemMatrix(double timeStepWidth) = 0;
+    virtual void setSystemMatrix(double timeStepWidth);
+    
+    //! Set the reduced system matrix, A_R=V^T A V
+    virtual void setRedSystemMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> ptr_systemMatrix, std::shared_ptr<PartitionedPetscMat<GenericFunctionSpace>> ptr_redSystemMatrix);
     
     //! initialize the linear solve that is needed for the solution of the implicit timestepping system
     void initializeLinearSolver();

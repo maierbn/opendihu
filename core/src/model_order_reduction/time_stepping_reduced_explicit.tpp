@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingExplicitType>
   TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEulerReduced"), initialized_(false) 
+  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEulerReduced")
   {
   }
   
@@ -19,14 +19,14 @@ namespace ModelOrderReduction
   void TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
   initialize()
   {
-    if (initialized_)
+    if (this->initialized_)
       return;
     
     LOG(TRACE) << "TimeSteppingSchemeOdeReducedExplicit::initialize()";
     
     TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>::initialize(); 
     
-    initialized_=true;
+    this->initialized_=true;
   }
   
   template<typename TimeSteppingExplicitType>

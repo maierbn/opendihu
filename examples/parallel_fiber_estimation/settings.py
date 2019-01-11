@@ -34,6 +34,8 @@ config = {
     "useGradientField": False,    # set to False
     "maxLevel": 0,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers
+    "nNodesPerFiber": (220.-72.) / 0.1,   # number of nodes in each final fiber
+    "improveMesh": False,     # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",

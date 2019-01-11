@@ -88,6 +88,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     s << " |  ";
   }
+  LOG(DEBUG) << s.str();
 
   if (!subdomainIsAtBorder[Mesh::face_t::face1Minus])
   {

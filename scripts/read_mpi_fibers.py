@@ -10,6 +10,7 @@ import numpy as np
 import struct
 import stl
 from stl import mesh
+import datetime
 
 input_filename = "fibers.bin"
 
@@ -33,7 +34,7 @@ with open(input_filename, "rb") as infile:
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
   parameters = []
-  for i in range(header_length/4. - 1):
+  for i in range(int(header_length/4) - 1):
     int_raw = infile.read(4)
     value = struct.unpack('i', int_raw)[0]
     parameters.append(value)
@@ -49,7 +50,7 @@ with open(input_filename, "rb") as infile:
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
   print("nFibersPerRank:    {}".format(parameters[7]))
-  print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime(parameters[8])))
+  print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.fromtimestamp(parameters[8])))
   
   streamlines = []
   for streamline_no in range(n_fibers_total):

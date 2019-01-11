@@ -612,32 +612,4 @@ void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
   matrix = rotationMatrixInverse * matrix * rotationMatrix;
 }
 
-void readPoint(std::fstream &file, Vec3 &point)
-{
-  union
-  {
-    char c[8];
-    double d;
-  };
-  for (int i = 0; i < 3; i++)
-  {
-    file.read(c, 8);
-    point[i] = d;
-  }
-}
-
-void writePoint(std::fstream &file, Vec3 &point)
-{
-  union
-  {
-    char c[8];
-    double d;
-  };
-  for (int i = 0; i < 3; i++)
-  {
-    point[i] = d;
-    file.write(c, 8);
-  }
-}
-
 }  // namespace

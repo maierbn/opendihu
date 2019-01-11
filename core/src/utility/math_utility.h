@@ -104,10 +104,12 @@ void rotateMatrix(Matrix<D,D> &matrix, Vec3 directionVector);
 void quadrilateralGetPointCoordinates(const std::array<Vec3,4> quadrilateral, const Vec3 point, Vec2 &xi);
 
 //! read a Vec3 from an open fstream at the current position of the file get pointer
-void readPoint(std::fstream &file, Vec3 &point);
+template<typename T>
+void readPoint(T &file, Vec3 &point);
 
 //! write a Vec3 to an open fstream at the current position of the file put pointer
-void writePoint(std::fstream &file, Vec3 &point);
+template<typename T>
+void writePoint(T &file, Vec3 &point);
 
 /** pow as constexpr function
  *  https://stackoverflow.com/a/27270730/10290071

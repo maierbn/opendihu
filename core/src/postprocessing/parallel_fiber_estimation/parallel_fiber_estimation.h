@@ -150,6 +150,8 @@ protected:
   int nBorderPointsXNew_;  ///< the value of nBorderPointsX_ in the next subdomain
   int nBorderPointsZNew_;  ///< the value of nBorderPointsZ_ in the next subdomain
   int nFineGridFibers_;   ///< the number of additional fibers between "key" fibers in one coordinate direction
+  int nNodesPerFiber_;    ///< the number of nodes of the final fiber, this is assured at the end, then the fibers get resampled to the required number of nodes per fiber
+  bool improveMesh_;      ///< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
 
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"

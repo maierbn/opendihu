@@ -59,6 +59,8 @@ ParallelFiberEstimation(DihuContext context) :
   nBorderPointsX_ = specificSettings_.getOptionInt("nElementsXPerSubdomain", 13)+1;
   maxLevel_ = specificSettings_.getOptionInt("maxLevel", 2);
   nFineGridFibers_ = specificSettings_.getOptionInt("nFineGridFibers", 2);
+  improveMesh_ = specificSettings_.getOptionBool("improveMesh", true);
+  nNodesPerFiber_ = specificSettings_.getOptionInt("nNodesPerFiber", 1000);
 
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
@@ -354,16 +356,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     PyObject_CallFunction(functionOutputBorderPoints_, "s i O f", "01_border_points_old", currentRankSubset_->ownRankNo(),
                           PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPointsOld), 0.2);
     PythonUtility::checkForError();
-#if 0
-    for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
-    {
-      std::stringstream s;
-      s << "01_border_points_old_face_" << Mesh::getString((Mesh::face_t)face);
-      PyObject_CallFunction(functionOutputPoints_, "s i O f", s.str().c_str(), currentRankSubset_->ownRankNo(),
-                            PythonUtility::convertToPython<std::vector<Vec3>>::get(borderPointsOld[face][0]), 0.2);
-      PythonUtility::checkForError();
-    }
-#endif
   }
 
 #endif

@@ -72,13 +72,13 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
         if (cornerStreamlines[beginIndex].size() == nBorderPointsZNew_)
         {
-          LOG(DEBUG) << "cornerStreamline " << beginIndex << "is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
+          LOG(DEBUG) << "cornerStreamline " << beginIndex << " is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
           startPoint = cornerStreamlines[beginIndex][zLevelIndex];
         }
 
         if (cornerStreamlines[endIndex].size() == nBorderPointsZNew_)
         {
-          LOG(DEBUG) << "cornerStreamline " << endIndex << "is valid, use new end point " << cornerStreamlines[endIndex][zLevelIndex] << " instead of " << endPoint;
+          LOG(DEBUG) << "cornerStreamline " << endIndex << " is valid, use new end point " << cornerStreamlines[endIndex][zLevelIndex] << " instead of " << endPoint;
           endPoint = cornerStreamlines[endIndex][zLevelIndex];
         }
 

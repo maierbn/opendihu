@@ -57,6 +57,49 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
   LOG(DEBUG) << "determined boundary elements, now communicate";
 
+  // output neighbouring ranks and own rank
+  if (!subdomainIsAtBorder[Mesh::face_t::face1Plus])
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face1Plus);
+    LOG(DEBUG) << "     " << std::setw(2) << neighbourRankNo;
+  }
+  else
+  {
+    LOG(DEBUG) << "     --  ";
+  }
+
+  std::stringstream s;
+  if (!subdomainIsAtBorder[Mesh::face_t::face0Minus])
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face0Minus);
+    s << " " << std::setw(2) << neighbourRankNo << " ";
+  }
+  else
+    s << "  | ";
+
+  s << " " << currentRankSubset_->ownRankNo() << " ";
+
+  if (!subdomainIsAtBorder[Mesh::face_t::face0Plus])
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face0Plus);
+    s << " " << std::setw(2) << neighbourRankNo << " ";
+  }
+  else
+  {
+    s << " |  ";
+  }
+
+  if (!subdomainIsAtBorder[Mesh::face_t::face1Minus])
+  {
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face1Minus);
+    LOG(DEBUG) << "     " << std::setw(2) << neighbourRankNo;
+  }
+  else
+  {
+    LOG(DEBUG) << "     --  ";
+  }
+
+  // loop over faces and communicate ghost elements to the neighbouring ranks
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
     if (!subdomainIsAtBorder[face])

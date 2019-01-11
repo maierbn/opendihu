@@ -191,8 +191,8 @@ generateParallelMesh()
     }
 
     // unpack the return value which is a tuple (borderPoints, lengths)
-    PyObject *borderPointsPy;
-    PyObject *lengthsPy;
+    PyObject *borderPointsPy = NULL;
+    PyObject *lengthsPy = NULL;
     if (PyTuple_Check(returnValue))
     {
       borderPointsPy = PyTuple_GetItem(returnValue, (Py_ssize_t)0);

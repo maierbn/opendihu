@@ -146,4 +146,4 @@ meshWidth() const
 }
 
 
-};  // namespace
+} // namespace

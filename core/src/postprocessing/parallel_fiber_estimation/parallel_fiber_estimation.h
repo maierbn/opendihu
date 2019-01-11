@@ -171,6 +171,6 @@ protected:
   OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
 };
 
-};  // namespace
+} // namespace
 
 #include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.tpp"

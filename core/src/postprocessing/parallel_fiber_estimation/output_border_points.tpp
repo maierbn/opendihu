@@ -72,4 +72,4 @@ outputStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bo
 #endif
 }
 
-};  // namespace
+} // namespace

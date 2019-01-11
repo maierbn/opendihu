@@ -255,4 +255,4 @@ getInverseJacobian(element_no_t elementNo, std::array<double,MeshType::dim()> xi
   return getInverseJacobian(geometryValues, elementNo, xi);
 }
 
-};  // namespace
+} // namespace

@@ -846,4 +846,4 @@ getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const
   return 0;  // should not happen, but cray compiler does not recognize it
 }
 
-};  // namespace
+} // namespace

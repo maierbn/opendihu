@@ -319,4 +319,4 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
 }
 
 
-};
+}  // namespace

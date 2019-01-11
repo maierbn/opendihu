@@ -13,7 +13,7 @@
 namespace OutputWriter
 {
 
-namespace MegaMOLLoopOverTuple
+namespace MegaMolLoopOverTuple
 {
  
  /** Static recursive loop from 0 to number of entries in the tuple
@@ -70,8 +70,8 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables);
 
-};  //namespace MegaMOLLoopOverTuple
+}  // namespace MegaMolLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/megamol/loop_collect_field_variables.tpp"

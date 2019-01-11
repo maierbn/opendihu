@@ -375,4 +375,4 @@ setGeometryFieldValues()
   VLOG(1) << "setGeometryField, geometryValues: " << geometryValues;
 }
 
-};  // namespace
+} // namespace

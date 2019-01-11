@@ -85,5 +85,5 @@ collectMeshProperties(TupleType currentFieldVariableTuple, const OutputFieldVari
   return false;  // do not break iteration 
 }
 
-};  //namespace ParaviewLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace ParaviewLoopOverTuple
+}  // namespace OutputWriter

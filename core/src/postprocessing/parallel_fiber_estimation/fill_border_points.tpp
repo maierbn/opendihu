@@ -382,4 +382,4 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 #endif
 }
 
-};  // namespace
+} // namespace

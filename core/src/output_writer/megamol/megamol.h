@@ -10,12 +10,12 @@
 namespace OutputWriter
 {
 
-class MegaMOL : public Generic
+class MegaMol : public Generic
 {
 public:
 
   //! constructor
-  MegaMOL(DihuContext context, PythonConfig specificSettings);
+  MegaMol(DihuContext context, PythonConfig specificSettings);
 
   //! write out solution to given filename, if timeStepNo is not -1, this value will be part of the filename
   template<typename DataType>
@@ -23,6 +23,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/megamol/megamol.tpp"

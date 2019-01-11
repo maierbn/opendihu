@@ -54,7 +54,8 @@ sconsconfig.select(
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=True),    # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.SEMT(required=True),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -79,6 +80,7 @@ vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
+vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
@@ -175,7 +177,9 @@ if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
-  env.MergeFlags('-Werror -Wall -Wno-sign-compare -Wno-error=sign-compare')
+  if not env["USE_MEGAMOL"]:
+    env.MergeFlags('-Werror')
+  env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
   env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -pg  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
   env.Append(LIBPATH = [os.path.join(opendihu_home, 'core/build_debug')])   # add debug version of opendihu library
   env.Prepend(LIBS = ['opendihud'])
@@ -222,9 +226,53 @@ if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")
 
+if env["USE_MEGAMOL"]:  # enable megamol
+  # add megamol linker flags
+  megamol_link_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/CMakeFiles/mmconsole.dir/link.txt")
+  #print("megamol_link_path: {}".format(megamol_link_path))
+  with open(megamol_link_path, "r") as f:
+    linker_flags = f.readline()
+    linker_flags = linker_flags[linker_flags.find(" "):]
+    #print(linker_flags)
+
+    new_linker_flags = ""
+    for item in linker_flags.split():
+      if item == "../mmconsole" or item == "-o":
+        continue
+      
+      if item[0] != "-" and item[0] != "/":
+        item = os.path.join(os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/"), item)
+      new_linker_flags += " "+item
+    
+    #print("new_linker_flags:")
+    #print(new_linker_flags)
+    env.MergeFlags(new_linker_flags)
+    
+  # manipulate Console.cpp
+  console_cpp_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.cpp")
+  with open(console_cpp_path, "r") as f:
+    console_content = f.readlines()
+
+  new_console_content = ""
+  for line in console_content:
+    if "main(int argc" in line:
+      line = "int megamol_main(int argc, char* argv[]) {\n"
+    new_console_content += line
+
+  with open(console_cpp_path, "w") as f:
+    f.write(new_console_content)
+    
+  # create header file
+  console_h_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.h")
+  with open(console_h_path, "w") as f:
+    f.write("#pragma once\nint megamol_main(int argc, char* argv[]);")
+
+  env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/megamol/src/megamol-master/console/src/')])
+  env.Append(CPPDEFINES = '-DHAVE_MEGAMOL')
+
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located
-env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add define of the directory where this file is located
+env.Append(CPPDEFINES = {'-DC_COMPILER_COMMAND': '\\"'+env["CC"]+'\\"'})   # add compile command, e.g. g++
 env.Append(CPPDEFINES = "-DELPP_NO_DEFAULT_LOG_FILE")  # disable creation of the "myeasylog.log" default log file
 
 # Set the include path for header files

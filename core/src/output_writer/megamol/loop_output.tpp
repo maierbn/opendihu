@@ -7,7 +7,7 @@
 namespace OutputWriter
 {
 
-namespace MegaMOLLoopOverTuple
+namespace MegaMolLoopOverTuple
 {
  
  /** Static recursive loop from 0 to number of entries in the tuple
@@ -41,7 +41,7 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
     typedef typename CurrentFieldVariableType::element_type::FunctionSpace FunctionSpace;
    
     // call exfile writer to output all field variables with the meshName
-    MegaMOLWriter<FunctionSpace, OutputFieldVariablesType>::outputData(fieldVariables, meshName, currentFieldVariable->functionSpace(), specificSettings);
+    MegaMolWriter<FunctionSpace, OutputFieldVariablesType>::outputData(fieldVariables, meshName, currentFieldVariable->functionSpace(), specificSettings);
    
     return true;  // break iteration
   }
@@ -76,5 +76,5 @@ output(TupleType currentFieldVariableTuple, const AllOutputFieldVariablesType &f
   return false;  // do not break iteration 
 }
 
-};  //namespace MegaMOLLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace MegaMolLoopOverTuple
+}  // namespace OutputWriter

@@ -703,4 +703,4 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   LOG(FATAL) << "SUCCESS";*/
 }
 
-};  // namespace
+} // namespace

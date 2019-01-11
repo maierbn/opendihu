@@ -48,4 +48,4 @@ getElementDofNosLocalWithoutGhosts(element_no_t elementNo, std::vector<dof_no_t>
 }
 
 
-};  // namespace
+} // namespace

@@ -13,7 +13,7 @@ namespace FunctionSpace
 {
 template<typename MeshType, typename BasisFunctionType>
 class FunctionSpace;
-};
+}
 
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
  *  For each component a local Vec is stored that holds all values of that component.

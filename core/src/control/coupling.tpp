@@ -10,4 +10,4 @@ Coupling(DihuContext context) :
 {
 }
 
-};    // namespace
+}  // namespace

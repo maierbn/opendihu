@@ -84,4 +84,5 @@ std::string Paraview::convertToAscii(const std::vector<int> &vector, bool fixedF
   }
   return result.str();
 }
-};
+
+}  // namespace

@@ -38,9 +38,9 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
-    else if (std::dynamic_pointer_cast<MegaMOL>(outputWriter) != nullptr)
+    else if (std::dynamic_pointer_cast<MegaMol>(outputWriter) != nullptr)
     {
-      std::shared_ptr<MegaMOL> writer = std::static_pointer_cast<MegaMOL>(outputWriter);
+      std::shared_ptr<MegaMol> writer = std::static_pointer_cast<MegaMol>(outputWriter);
       writer->write<DataType>(problemData, timeStepNo, currentTime);
     }
   }
@@ -49,4 +49,4 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   Control::PerformanceMeasurement::stop("write output");
 }
 
-};   // namespace
+}  // namespace

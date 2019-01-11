@@ -15,7 +15,7 @@
 namespace OutputWriter
 {
 
-namespace MegaMOLLoopOverTuple
+namespace MegaMolLoopOverTuple
 {
  
  /** Static recursive loop from 0 to number of entries in the tuple
@@ -58,8 +58,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
        PythonConfig specificSettings);
 
-};  //namespace MegaMOLLoopOverTuple
+}  // namespace MegaMolLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/megamol/loop_output.tpp"

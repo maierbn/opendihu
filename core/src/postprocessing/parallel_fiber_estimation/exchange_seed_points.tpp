@@ -102,4 +102,4 @@ exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectio
 
 }
 
-};  // namespace
+} // namespace

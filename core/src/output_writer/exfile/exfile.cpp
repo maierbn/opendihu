@@ -125,4 +125,4 @@ void Exfile::outputComFile()
   LOG(INFO) << "File \"" << filenameCom << "\" written.";
 }
 
-};
+}  // namespace

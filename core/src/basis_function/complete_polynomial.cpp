@@ -325,4 +325,4 @@ dphi_dxi(int dofIndex, int derivativeIdx, std::array<double,3> xi)
   return 0.0;   // should not be reached
 }
 
-};  //namespace
+}  // namespace

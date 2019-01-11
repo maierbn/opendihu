@@ -10,4 +10,4 @@ Godunov(DihuContext context) :
 {
 }
 
-};    // namespace
+}  // namespace

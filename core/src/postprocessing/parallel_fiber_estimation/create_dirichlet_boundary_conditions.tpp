@@ -121,4 +121,4 @@ createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinat
   dirichletBoundaryConditions->initialize(this->functionSpace_, boundaryConditionElements, boundaryConditionNonGhostDofLocalNos, boundaryConditionValues);
 }
 
-};  // namespace
+} // namespace

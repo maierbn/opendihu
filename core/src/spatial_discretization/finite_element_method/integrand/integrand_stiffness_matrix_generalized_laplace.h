@@ -45,6 +45,6 @@ public:
                                            const std::array<double,3> xi);
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_generalized_laplace.tpp"

@@ -84,4 +84,4 @@ getNodePositions(std::vector<double> &nodes) const
 }
 
 
-};  // namespace
+} // namespace

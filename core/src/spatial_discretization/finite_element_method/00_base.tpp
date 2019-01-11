@@ -226,4 +226,4 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Equation::Dynamic::DirectionalDiffusion>::initialize();
 }
 
-};
+} // namespace

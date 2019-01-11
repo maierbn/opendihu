@@ -5,7 +5,7 @@
 namespace OutputWriter
 {
 
-namespace MegaMOLLoopOverTuple
+namespace MegaMolLoopOverTuple
 {
  
 /** Static recursive loop from 0 to number of entries in the tuple
@@ -97,5 +97,5 @@ collectFieldVariables(VectorType currentFieldVariableVector, std::string meshNam
   return false;  // do not break iteration
 }
 
-};  //namespace MegaMOLLoopOverTuple
-};  //namespace OutputWriter
+}  // namespace MegaMolLoopOverTuple
+}  // namespace OutputWriter

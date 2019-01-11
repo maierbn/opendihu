@@ -24,11 +24,9 @@ LAPACK_DOWNLOAD=True
 
 # PETSc
 PETSC_DOWNLOAD=True
-#PETSC_REDOWNLOAD=True
 
 # Python
 PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
-PYTHON_REDOWNLOAD=False
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
 # Numpy
@@ -51,15 +49,16 @@ BASE64_DOWNLOAD=True
 
 # Google Test
 GOOGLETEST_DOWNLOAD=True
-#GOOGLETEST_REDOWNLOAD=True
 
 # SEMT
 SEMT_DOWNLOAD=True
-#SEMT_REDOWNLOAD=True
 
 # EasyLoggingPP
 EASYLOGGINGPP_DOWNLOAD=True
-#EASYLOGGINGPP_REDOWNLOAD=True
+
+# MegaMol
+MEGAMOL_DOWNLOAD=True     # install MegaMol from official git repo
+USE_MEGAMOL=True          # link to mmconsole main function and start megamol, if config["MegaMolArguments"] is set
 
 # MPI
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.

@@ -42,4 +42,4 @@ getBasisFunctionString()
   return std::string("Lagrange");
 }
 
-};  // namespace
+} // namespace

@@ -285,4 +285,4 @@ getSolutionForTransferInOperatorSplitting()
   return output;
 }
 
-};
+}  // namespace

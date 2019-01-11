@@ -103,6 +103,6 @@ public:
   void zeroEntries();
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/03_field_variable_set_get_structured.tpp"

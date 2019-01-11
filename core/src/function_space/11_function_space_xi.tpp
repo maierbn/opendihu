@@ -94,7 +94,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 #endif  
    VLOG(2) << "  " << (pointIsInElement? "inside" : "outside");
   return pointIsInElement;
-};
+}
 
 // regular fixed 1D
 template<typename BasisFunctionType>
@@ -110,7 +110,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   xi[0] = MathUtility::norm<3>(point - geometryValues[0]) / elementLength;
   
   return 0.0 <= xi[0] && xi[0] <= 1.0;
-};
+}
 
 // regular fixed 2D
 template<typename BasisFunctionType>
@@ -127,7 +127,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   const double xi2 = (point[1] - geometryValues[0][1]) / elementLength;
   
   return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
-};
+}
 
 // regular fixed 3D
 template<typename BasisFunctionType>
@@ -145,7 +145,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi)
   const double xi3 = (point[2] - geometryValues[0][2]) / elementLength;
   
   return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0) && (0.0 <= xi3 && xi3 <= 1.0);
-};
+}
 
 // 1D deformable meshes and linear shape function
 template<typename MeshType>
@@ -169,7 +169,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   xi[0] = xi1;
   
   return 0.0 <= xi1 && xi1 <= 1.0;
-};
+}
 
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
@@ -189,7 +189,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   const double xi2 = xi[1];
 
   return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
-};
+}
 
 // 3D deformable meshes and linear shape function
 
@@ -480,4 +480,4 @@ computeApproximateXiForPoint(Vec3 point, element_no_t elementNo, std::array<doub
     xi /= nSummands;
 }
 
-};  // namespace
+} // namespace

@@ -14,7 +14,7 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void MegaMOL::write(DataType& data, int timeStepNo, double currentTime)
+void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
 {
   // check if output should be written in this timestep and prepare filename
   if (!Generic::prepareWrite(data, timeStepNo, currentTime))
@@ -30,8 +30,8 @@ void MegaMOL::write(DataType& data, int timeStepNo, double currentTime)
   for (std::string meshName : meshNames)
   {
     // loop over all field variables and output those that are associated with the mesh given by meshName
-    MegaMOLLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, specificSettings_);
+    MegaMolLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, specificSettings_);
   }
 }
 
-};  // namespace
+} // namespace

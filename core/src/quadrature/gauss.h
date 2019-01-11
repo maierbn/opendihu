@@ -34,6 +34,6 @@ public:
   static ValueType computeIntegral(const typename std::array<ValueType,Gauss<NumberGaussPoints>::numberEvaluations()> &evaluations);
 };
 
-};
+}  // namespace
 
 #include "quadrature/gauss.tpp"

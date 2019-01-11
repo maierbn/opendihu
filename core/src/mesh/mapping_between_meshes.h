@@ -40,6 +40,6 @@ private:
   std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace] information where in the target to store the value from local dof No of the source
 };
 
-};    // namespace
+}  // namespace
 
 #include "mesh/mapping_between_meshes.tpp"

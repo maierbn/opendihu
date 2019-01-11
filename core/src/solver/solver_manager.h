@@ -39,5 +39,5 @@ private:
   std::map<MPI_Comm, std::map<std::string, std::shared_ptr<Solver>>> solvers_;    ///< for the mpi communcator the solvers with their string key
 };
 
-};  // namespace
+} // namespace
 #include "solver/solver_manager.tpp"

@@ -88,4 +88,4 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
   }
 }
 
-};
+}  // namespace

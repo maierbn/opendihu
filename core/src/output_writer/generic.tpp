@@ -56,4 +56,4 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   return true;
 }
 
-}; // namespace
+}  // namespace

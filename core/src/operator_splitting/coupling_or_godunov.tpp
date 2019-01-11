@@ -74,4 +74,4 @@ advanceTimeSpan()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
-};    // namespace
+}  // namespace

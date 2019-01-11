@@ -58,8 +58,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
                std::vector<std::vector<double>> &values);
 
-};  //namespace ParaviewLoopOverTuple
+}  // namespace ParaviewLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/paraview/loop_get_nodal_values.tpp"

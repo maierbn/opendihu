@@ -11,9 +11,9 @@
 namespace OutputWriter
 {
 
-MegaMOL::MegaMOL(DihuContext context, PythonConfig settings) :
+MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
   Generic(context, settings)
 {
 }
 
-};  // namespace
+} // namespace

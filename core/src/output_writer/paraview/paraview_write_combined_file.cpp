@@ -25,10 +25,10 @@ void Paraview::writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::str
   }
   else
   {
-    char b[0];
+    char b[1];
     MPI_Status status;
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
   }
 }
 
-};  // namespace
+} // namespace

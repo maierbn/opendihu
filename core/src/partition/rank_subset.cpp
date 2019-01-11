@@ -131,4 +131,4 @@ std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
   return stream;
 }
 
-};
+}  // namespace

@@ -71,6 +71,6 @@ protected:
   Data data_;  ///< the data object
 };
 
-};
+}  // namespace
 
 #include "control/multiple_instances.tpp"

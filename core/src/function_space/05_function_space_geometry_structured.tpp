@@ -26,4 +26,4 @@ getDofNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, int nod
   return -1;
 }
 
-};  // namespace
+} // namespace

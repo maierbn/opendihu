@@ -176,4 +176,4 @@ debugOutputGhostMeshSet()
   VLOG(1) << "ghost mesh 2+ is " << (ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr? "not" : "") << " set";
 }
 
-};  // namespace
+} // namespace

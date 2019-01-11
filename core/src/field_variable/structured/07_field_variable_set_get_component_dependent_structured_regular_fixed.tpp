@@ -57,4 +57,4 @@ getValue(node_no_t dofLocalNo) const
   return value;
 }
 
-};
+}  // namespace

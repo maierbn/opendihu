@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-class MegaMOLWriter
+class MegaMolWriter
 {
 public:
   //! output the given field variable data for one mesh
@@ -19,6 +19,6 @@ public:
                          PythonConfig specificSettings);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/megamol/megamol_writer.tpp"

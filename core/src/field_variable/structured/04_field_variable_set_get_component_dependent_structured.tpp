@@ -146,4 +146,4 @@ setValuesWithoutGhosts(const std::vector<double> &values, InsertMode petscInsert
   this->values_->setValues(0, values.size(), this->functionSpace_->meshPartition()->dofNosLocal().data(), values.data(), petscInsertMode);
 }
 
-};  // namespace
+} // namespace

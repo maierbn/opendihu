@@ -57,4 +57,4 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd) : ownRankNo_(-1)
   VLOG(1) << "RankSubset constructor for ranks " << rankNo_ << " done";
 }
 
-};
+}  // namespace

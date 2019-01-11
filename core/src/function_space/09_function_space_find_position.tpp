@@ -55,4 +55,4 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 }
 
 
-};  // namespace
+} // namespace

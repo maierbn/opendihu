@@ -39,4 +39,4 @@ initialize()
   this->initialized_ = true;
 }
 
-};  // namespace
+} // namespace

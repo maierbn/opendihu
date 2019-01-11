@@ -137,4 +137,4 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
   //LOG(FATAL) << "end after all streamlines were traced";
 }
 
-};  // namespace
+} // namespace

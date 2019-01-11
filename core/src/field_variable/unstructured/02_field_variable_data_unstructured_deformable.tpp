@@ -1090,4 +1090,4 @@ partitionedPetscVec()
   return values_; 
 }
 
-};  // namespace
+} // namespace

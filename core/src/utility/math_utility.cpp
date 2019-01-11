@@ -612,4 +612,4 @@ void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
   matrix = rotationMatrixInverse * matrix * rotationMatrix;
 }
 
-}; // namespace
+}  // namespace

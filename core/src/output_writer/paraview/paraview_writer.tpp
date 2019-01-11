@@ -640,4 +640,4 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << "</VTKFile>" << std::endl;
 }
   
-};
+}  // namespace

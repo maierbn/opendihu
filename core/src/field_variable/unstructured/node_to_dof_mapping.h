@@ -66,4 +66,4 @@ private:
 std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping &rhs);
 std::ostream &operator<<(std::ostream &stream, const NodeToDofMapping::NodeDofInformation::ElementLocalNode &rhs);
 
-};  // namespace
+} // namespace

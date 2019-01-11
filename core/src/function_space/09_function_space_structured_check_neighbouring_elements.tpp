@@ -559,4 +559,4 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   return false;
 }
 
-};  // namespace
+} // namespace

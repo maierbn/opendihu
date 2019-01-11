@@ -19,6 +19,6 @@ public:
   static PyObject *buildPyFieldVariablesObject(OutputFieldVariablesType fieldVariables, std::string meshName, bool onlyNodalValues, std::shared_ptr<Mesh::Mesh> &mesh);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python/python_base.tpp"

@@ -29,6 +29,6 @@ private:
   static void writeSolutionDim(DataType &data);
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/paraview/paraview_writer.tpp"

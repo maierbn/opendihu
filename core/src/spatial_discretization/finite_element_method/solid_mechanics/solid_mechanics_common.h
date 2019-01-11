@@ -80,6 +80,6 @@ protected:
   bool outputIntermediateSteps_ = false;    ///< if intermediate steps while solving should be output
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/solid_mechanics_common.tpp"

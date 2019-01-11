@@ -27,4 +27,4 @@ struct PolyDataPropertiesForMesh
 // output operator
 std::ostream &operator<<(std::ostream &stream, PolyDataPropertiesForMesh rhs);
 
-};
+}  // namespace

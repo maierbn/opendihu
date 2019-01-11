@@ -58,4 +58,4 @@ refineBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld
 #endif
 }
 
-};  // namespace
+} // namespace

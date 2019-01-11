@@ -241,5 +241,5 @@ config = {
   //assertFileMatchesContent("result_binary", referenceOutputSolution);
 }
 
-};
+}  // namespace
 

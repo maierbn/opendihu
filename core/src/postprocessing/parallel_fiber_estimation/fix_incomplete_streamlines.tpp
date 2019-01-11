@@ -620,4 +620,4 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
   LOG(DEBUG) << "fixStreamlinesInterior: " << nStreamlinesFixed << " fixed";
 }
 
-};  // namespace
+} // namespace

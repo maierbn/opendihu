@@ -6,7 +6,7 @@ namespace OutputWriter
 {
 
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void MegaMOLWriter<FunctionSpaceType, OutputFieldVariablesType>::
+void MegaMolWriter<FunctionSpaceType, OutputFieldVariablesType>::
 outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
            PythonConfig specificSettings)
 {
@@ -14,7 +14,7 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> scalarFieldVariables;
 
   // collect the geometryField and all scalar field variables for the current mesh
-  MegaMOLLoopOverTuple::loopCollectFieldVariables(fieldVariables, meshName, geometryField, scalarFieldVariables);
+  MegaMolLoopOverTuple::loopCollectFieldVariables(fieldVariables, meshName, geometryField, scalarFieldVariables);
 
   LOG(DEBUG) << "mesh \"" << meshName << "\", has " << scalarFieldVariables.size() << " scalar field variables";
 
@@ -33,5 +33,4 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   }
 }
   
-
-};
+}  // namespace

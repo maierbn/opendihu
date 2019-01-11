@@ -134,4 +134,4 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   }
 }
 
-};
+}  // namespace

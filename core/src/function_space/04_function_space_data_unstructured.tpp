@@ -137,4 +137,4 @@ nElementsGlobal() const
   return this->geometryField_->nElements();
 }
 
-};  // namespace
+} // namespace

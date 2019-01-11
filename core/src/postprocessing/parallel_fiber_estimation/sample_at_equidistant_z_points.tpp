@@ -158,4 +158,4 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
 
 }
 
-};  // namespace
+} // namespace

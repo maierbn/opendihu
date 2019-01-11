@@ -81,7 +81,7 @@ protected:
   
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.tpp"
 #include "spatial_discretization/finite_element_method/05_time_stepping_explicit.tpp"

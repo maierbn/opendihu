@@ -219,4 +219,4 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
   return meshPartition;
 }
 
-};    // namespace
+}  // namespace

@@ -35,6 +35,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/08_field_variable_gradient.tpp"

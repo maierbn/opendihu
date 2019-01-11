@@ -142,4 +142,4 @@ nLocalUnknowns()
   return nLocalUnknowns;
 }
 
-};    // namespace
+}  // namespace

@@ -226,4 +226,4 @@ setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew)
 
 }
 
-};  // namespace
+} // namespace

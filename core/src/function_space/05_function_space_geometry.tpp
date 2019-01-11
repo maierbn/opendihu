@@ -49,4 +49,4 @@ geometryField()
   return *this->geometryField_;
 }
 
-};  // namespace
+} // namespace

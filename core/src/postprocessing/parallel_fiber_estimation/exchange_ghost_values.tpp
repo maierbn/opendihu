@@ -322,4 +322,4 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
 }
 
-};  // namespace
+} // namespace

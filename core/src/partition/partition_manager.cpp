@@ -50,4 +50,4 @@ std::shared_ptr<RankSubset> Manager::rankSubsetForCollectiveOperations()
   return rankSubsetForCollectiveOperations_;
 }
 
-};    // namespace
+}  // namespace

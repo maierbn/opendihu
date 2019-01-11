@@ -131,5 +131,5 @@ std::ostream &operator<<(std::ostream &stream, const FieldVariableBase<FunctionS
   return stream;
 }
 
-}; // namespace
+}  // namespace
 #include "field_variable/00_field_variable_base.tpp"

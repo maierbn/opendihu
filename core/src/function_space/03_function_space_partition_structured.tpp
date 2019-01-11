@@ -55,4 +55,4 @@ initialize()
   assert(this->meshPartition_);
 }
 
-};  // namespace
+} // namespace

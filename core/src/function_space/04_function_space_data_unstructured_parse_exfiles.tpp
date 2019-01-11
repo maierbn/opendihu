@@ -424,4 +424,4 @@ initializeValuesVector()
   if (geometryField_) 
     this->geometryField_->initializeValuesVector();
 }
-};  // namespace
+} // namespace

@@ -646,4 +646,4 @@ rearrangeStreamlinePoints(std::vector<std::vector<Vec3>> &streamlineZPoints, std
 #endif
 }
 
-};  // namespace
+} // namespace

@@ -496,4 +496,4 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   LOG(DEBUG) << "Fibers written to file \"" << resultFilename_ << "\".";
 }
 
-};  // namespace
+} // namespace

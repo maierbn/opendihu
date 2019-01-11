@@ -66,14 +66,14 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     {
       outputWriter_.push_back(std::make_shared<Exfile>(context, settings));
     }
-    else if (typeString == "MegaMOL")
+    else if (typeString == "MegaMol")
     {
-      outputWriter_.push_back(std::make_shared<MegaMOL>(context, settings));
+      outputWriter_.push_back(std::make_shared<MegaMol>(context, settings));
     }
     else
     {
       LOG(WARNING) << "Unknown output writer type \"" << typeString<< "\". "
-        << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\", \"MegaMOL\"";
+        << "Valid options are: \"Paraview\", \"PythonCallback\", \"PythonFile\", \"Exfile\", \"MegaMol\"";
     }
   }
 }
@@ -83,4 +83,4 @@ bool Manager::hasOutputWriters()
   return !outputWriter_.empty();
 }
 
-};
+}  // namespace

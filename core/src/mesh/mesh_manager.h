@@ -9,7 +9,7 @@
 
 namespace Partition{
 class Manager;
-};
+}
 namespace Mesh
 {
 class NodePositionsTester;
@@ -85,6 +85,6 @@ private:
   std::map<std::string, std::map<std::string, std::shared_ptr<MappingBetweenMeshesBase>>> mappingsBetweenMeshes_;  ///<["key mesh from"]["key mesh to"] mapping between meshes
 };
 
-};    // namespace
+}  // namespace
 
 #include "mesh/mesh_manager.tpp"

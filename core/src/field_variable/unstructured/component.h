@@ -115,5 +115,5 @@ private:
 template<typename FunctionSpaceType,int nComponents>
 std::ostream &operator<<(std::ostream &stream, const Component<FunctionSpaceType,nComponents> &rhs);
 
-};  // namespace
+} // namespace
 #include "field_variable/unstructured/component.tpp"

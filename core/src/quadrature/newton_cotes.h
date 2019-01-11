@@ -42,6 +42,6 @@ public:
   static ValueType computeIntegral(const typename std::array<ValueType,numberEvaluations()> &evaluations);
 };
 
-};  // namespace
+} // namespace
 
 #include "quadrature/newton_cotes.tpp"

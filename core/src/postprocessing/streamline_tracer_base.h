@@ -36,6 +36,6 @@ protected:
   bool useGradientField_;  ///< There are 2 implementations of streamline tracing. The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution field. // The first one seems more stable, because the gradient is zero and the position of the boundary conditions.
 };
 
-};  // namespace
+} // namespace
 
 #include "postprocessing/streamline_tracer_base.tpp"

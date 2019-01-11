@@ -90,4 +90,4 @@ getSolutionForTransferInOperatorSplitting()
   return timeSteppingScheme_.getSolutionForTransferInOperatorSplitting();
 }
 
-};  // namespace
+} // namespace

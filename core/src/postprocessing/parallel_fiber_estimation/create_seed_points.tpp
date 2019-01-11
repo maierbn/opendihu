@@ -125,4 +125,4 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
 }
 
-};  // namespace
+} // namespace

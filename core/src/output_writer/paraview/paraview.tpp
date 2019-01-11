@@ -220,7 +220,7 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
 
   int encodedLength = Base64::EncodedLength(rawLength);
 
-  char raw[rawLength];
+  std::vector<char> raw(rawLength, char(0));
   // loop over vector entries and add bytes to raw buffer
   int i = 0;
   for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
@@ -230,7 +230,7 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
       char c[4];
     };
     d = (float)(*iter);
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+    memcpy(raw.data() + dataStartPos + i*sizeof(float), c, 4);
   }
 
   // prepend number of bytes as uint32
@@ -242,18 +242,18 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
     };
     i = rawLength;
 
-    memcpy(raw, c, 4);
+    memcpy(raw.data(), c, 4);
   }
 
-  char encoded[encodedLength+1];
+  std::vector<char> encoded(encodedLength+1, '\0');
 
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw.data(), rawLength, encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
 
   encoded[encodedLength] = '\0';
 
-  return std::string(encoded);
+  return std::string(encoded.begin(), encoded.end());
 }
 
 template <typename Iter>
@@ -274,7 +274,7 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
 
   int encodedLength = Base64::EncodedLength(rawLength);
 
-  char raw[rawLength];
+  std::vector<char> raw(rawLength, char(0));
   // loop over vector entries and add bytes to raw buffer
   int i = 0;
   for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
@@ -284,7 +284,7 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
       char c[4];
     };
     integer = (int)(*iter);
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+    memcpy(raw.data() + dataStartPos + i*sizeof(float), c, 4);
   }
 
   // prepend number of bytes as uint32
@@ -296,20 +296,20 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
     };
     i = dataLength;
 
-    memcpy(raw, c, 4);
+    memcpy(raw.data(), c, 4);
   }
 
-  char encoded[encodedLength+1];
+  std::vector<char> encoded(encodedLength+1, '\0');
 
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw.data(), rawLength, (char *)encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
 
 
   encoded[encodedLength] = '\0';
 
-  return std::string(encoded);
+  return std::string(encoded.begin(), encoded.end());
 }
 
 
-};  // namespace
+} // namespace

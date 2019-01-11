@@ -140,4 +140,4 @@ bool Manager::hasFunctionSpace(std::string meshName)
   return functionSpaces_.find(meshName) != functionSpaces_.end();
 }
 
-};  // namespace
+} // namespace

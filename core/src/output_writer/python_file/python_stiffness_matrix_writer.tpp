@@ -133,4 +133,4 @@ writeNumpySolution(DataType &data, std::string filename)
   */
 }
 
-};   // namespace
+}  // namespace

@@ -55,4 +55,4 @@ std::shared_ptr<KSP> Nonlinear::ksp()
   return ksp_;
 }
 
-};   //namespace
+}   //namespace

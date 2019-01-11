@@ -74,13 +74,6 @@ initialize()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-Vec &OperatorSplitting<TimeStepping1, TimeStepping2>::
-solution()
-{
-  return timeStepping1_.solution();
-}
-
-template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
 setRankSubset(Partition::RankSubset rankSubset)
 {
@@ -111,6 +104,13 @@ run()
   PAT_record(PAT_STATE_OFF);
 #endif
 
+}
+
+template<typename TimeStepping1, typename TimeStepping2>
+typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
+getSolutionForTransfer()
+{
+  return timeStepping2_.getSolutionForTransfer();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>

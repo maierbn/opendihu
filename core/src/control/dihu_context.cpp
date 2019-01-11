@@ -206,12 +206,12 @@ int DihuContext::ownRankNo()
   return rankNo;
 }
 
-std::shared_ptr<Mesh::Manager> DihuContext::meshManager() const
+std::shared_ptr<Mesh::Manager> DihuContext::meshManager()
 {
   return meshManager_;
 }
 
-std::shared_ptr<Partition::Manager> DihuContext::partitionManager() const
+std::shared_ptr<Partition::Manager> DihuContext::partitionManager()
 {
   return partitionManager_;
 }

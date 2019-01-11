@@ -31,9 +31,7 @@ output_timestep = 1e0             # timestep for output files
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-#fibre_file = "../../input/laplace3d_structured_quadratic"
-fibre_file = "../../input/laplace3d_structured_linear"
-#fibre_file = "../../input1000/laplace3d_structured_quadratic"
+fibre_file = "../../input/3000fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -175,14 +173,43 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
 # create fibre meshes
 meshes = {}
 
+# parse fibers from a binary fiber file that was created by parallel_fiber_estimation
 with open(fibre_file, "rb") as f:
-  streamlines = pickle.load(f)
+
+  # parse header
+  bytes_raw = infile.read(32)
+  header_str = struct.unpack('32s', bytes_raw)[0]
+  header_length_raw = infile.read(4)
+  header_length = struct.unpack('i', header_length_raw)[0]
+  
+  parameters = []
+  for i in range(header_length/4. - 1):
+    double_raw = infile.read(4)
+    value = struct.unpack('i', double_raw)[0]
+    parameters.append(value)
     
+  n_fibers_total = parameters[0]
+  n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
+  n_points_whole_fiber = parameters[1]
+  
+  print("nFibersTotal:      {} ({} x {})".format(parameters[0], n_fibers_x, n_fibers_x))
+  print("nPointsWholeFiber: {}".format(parameters[1]))
+  
+  streamlines = []
+  for streamline_no in range(n_fibers_total):
+    streamline = []
+    for point_no in range(n_points_whole_fiber):
+      point = []
+      for i in range(3):
+        double_raw = infile.read(8)
+        value = struct.unpack('d', double_raw)[0]
+        point.append(value)
+      streamline.append(point)
+    streamlines.append(streamline)
+      
 n_instances = len(streamlines)
 if rank_no == 0:
   print("n_instances: {}".format(n_instances))
-
-#n_instances = 1
     
 for i,streamline in enumerate(streamlines):
   
@@ -217,17 +244,19 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, get_motor_unit_no(fibre_no_index), first_stimulation))
 
 # compute partitioning
-n_subdomains_x
-n_subdomains_y
-n_subdomains_z
-n_ranks_x
-n_ranks_y
-n_ranks_z
-n_subdomains_xy = n_subdomains_x * n_subdomains_y
-n_fibers_per_subdomain_x = 123
-n_fibers_per_subdomain_y = 123
-n_ranks = n_ranks_x*n_ranks_y*n_ranks_z
+n_subdomains_x = 2
+n_subdomains_y = 1
+n_subdomains_z = 2
 
+if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
+  print("Error! Number of ranks {} does not match given partitioning {} x {} x {} ".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+  
+n_subdomains_xy = n_subdomains_x * n_subdomains_y
+n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
+n_fibers_per_subdomain_y = n_fibers_per_subdomain_x
+
+print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+print("{} x {} fibers, per partition: {} x {}".format(n_fibers_x, n_fibers_x, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
 n_fibers_x = n_subdomains_x*n_fibers_per_subdomain_x
 
 config = {
@@ -245,7 +274,7 @@ config = {
     "nInstances": n_subdomains_xy,
     "instances": 
     [{
-      "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
+      "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
       "StrangSplitting": {
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_3D,  # 1e-1
@@ -259,7 +288,7 @@ config = {
             "nInstances": n_subdomains_z,
             "instances": 
             [{
-              "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
+              "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
               "Heun" : {
                 "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey": "dt_0D",
@@ -297,7 +326,7 @@ config = {
             "nInstances": n_fibers_per_subdomain_x*n_fibers_per_subdomain_y,
             "instances": 
             [{
-              "ranks": range(subdomain_coordinate_y*n_ranks_x + subdomain_coordinate_x, n_ranks, n_ranks_x*n_ranks_y),
+              "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
               "ImplicitEuler" : {
                 "initialValues": [],
                 #"numberTimeSteps": 1,

@@ -17,7 +17,7 @@ class OperatorSplitting :
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
   typedef typename TimeStepping1::Data Data;
-  typedef typename TimeStepping1::TransferableSolutionDataType TransferableSolutionDataType;  // needed when this class is itself part of an operator splitting
+  typedef typename TimeStepping2::TransferableSolutionDataType TransferableSolutionDataType;  // needed when this class is itself part of an operator splitting
  
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
@@ -28,8 +28,8 @@ public:
   //! run the simulation
   void run();
 
-  //! return a solution vector
-  Vec &solution();
+  //! get the data to be reused in further computations
+  TransferableSolutionDataType getSolutionForTransfer();
 
   //! return whether the object has a specified mesh type or if it is independent of any mesh type
   bool knowsMeshType();

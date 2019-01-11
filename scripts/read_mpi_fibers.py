@@ -30,10 +30,12 @@ with open(input_filename, "rb") as infile:
   header_str = struct.unpack('32s', bytes_raw)[0]
   print("header: {}".format(header_str))
   
+  header_length_raw = infile.read(4)
+  header_length = struct.unpack('i', header_length_raw)[0]
   parameters = []
-  for i in range(8):
-    double_raw = infile.read(4)
-    value = struct.unpack('i', double_raw)[0]
+  for i in range(header_length/4. - 1):
+    int_raw = infile.read(4)
+    value = struct.unpack('i', int_raw)[0]
     parameters.append(value)
     
   n_fibers_total = parameters[0]
@@ -47,6 +49,7 @@ with open(input_filename, "rb") as infile:
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
   print("nFibersPerRank:    {}".format(parameters[7]))
+  print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime(parameters[8])))
   
   streamlines = []
   for streamline_no in range(n_fibers_total):
@@ -57,6 +60,8 @@ with open(input_filename, "rb") as infile:
         double_raw = infile.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
+      if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
+        print("Error: streamline {} is invalid".format(streamline_no))
       streamline.append(point)
     streamlines.append(streamline)
   

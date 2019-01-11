@@ -30,13 +30,9 @@ public:
   //! run simulation
   virtual void run();
 
-  /*
-  //! return the Petsc solution vector
-  std::shared_ptr<typename Data::FieldVariableType> solution();
-*/
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
   //! return the data object
   Data &data();

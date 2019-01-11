@@ -42,13 +42,13 @@ public:
   DihuContext createSubContext(PythonConfig config);
 
   //! return the mesh manager object that contains all meshes
-  std::shared_ptr<Mesh::Manager> meshManager() const;
+  static std::shared_ptr<Mesh::Manager> meshManager();
 
   //! return the solver manager object that contains all solvers
   std::shared_ptr<Solver::Manager> solverManager() const;
 
   //! return the partition manager object that creates partitionings
-  std::shared_ptr<Partition::Manager> partitionManager() const;
+  static std::shared_ptr<Partition::Manager> partitionManager();
 
   //! get the own MPI rank no in the world communicator
   static int ownRankNo();

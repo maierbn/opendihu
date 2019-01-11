@@ -127,6 +127,9 @@ protected:
   //! determine if the subdomain is at which borders, from rank no
   void setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew);
 
+  //! open the file again and interpolate all missing fibers
+  void fixInvalidFibersInFile();
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 

@@ -85,9 +85,9 @@ solution()
 //! the transfer is done by the solution_vector_mapping class
 template<class TimeSteppingScheme>
 typename LoadBalancing<TimeSteppingScheme>::TransferableSolutionDataType LoadBalancing<TimeSteppingScheme>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
-  return timeSteppingScheme_.getSolutionForTransferInOperatorSplitting();
+  return timeSteppingScheme_.getSolutionForTransfer();
 }
 
 } // namespace

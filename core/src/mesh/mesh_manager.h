@@ -63,6 +63,9 @@ public:
   //! \param name is the name of the Petsc Vec, used for debugging output.
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
 
+  //! get the mapping from source mesh to target mesh
+  std::shared_ptr<MappingBetweenMeshesBase> mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName);
+
   friend class NodePositionsTester;    ///< a class used for testing
 
 private:

@@ -140,4 +140,15 @@ bool Manager::hasFunctionSpace(std::string meshName)
   return functionSpaces_.find(meshName) != functionSpaces_.end();
 }
 
+std::shared_ptr<MappingBetweenMeshesBase> Manager::mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName)
+{
+  if (mappingsBetweenMeshes_.find(sourceMeshName) == mappingsBetweenMeshes_.end())
+    return nullptr;
+
+  if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) == mappingsBetweenMeshes_[sourceMeshName].end())
+    return nullptr;
+
+  return mappingsBetweenMeshes_[sourceMeshName][targetMeshName];
+}
+
 } // namespace

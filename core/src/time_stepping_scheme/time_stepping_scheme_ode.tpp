@@ -64,19 +64,12 @@ setInitialValues()
 
   VLOG(1) << data_->solution();
 }
-/*
-template<typename DiscretizableInTimeType>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-solution()
-{
-  return data_->solution();
-}*/
 
 template<typename DiscretizableInTimeType>
 typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
-  return data_->getSolutionForTransferInOperatorSplitting();
+  return data_->getSolutionForTransfer();
 }
 
 template<typename DiscretizableInTimeType>

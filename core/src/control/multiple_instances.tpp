@@ -245,14 +245,6 @@ knowsMeshType()
   assert(nInstances_ > 0);
   return instancesLocal_[0].knowsMeshType();
 }
-/*
-template<class TimeSteppingScheme>
-Vec &MultipleInstances<TimeSteppingScheme>::
-solution()
-{
-  assert(nInstances_ > 0);
-  return instancesLocal_[0].solution();
-}*/
 
 //! return the data object
 template<class TimeSteppingScheme>
@@ -274,13 +266,13 @@ reset()
 
 template<class TimeSteppingScheme>
 typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
   std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> output(nInstancesLocal_);
 
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    output[i] = instancesLocal_[i].getSolutionForTransferInOperatorSplitting();
+    output[i] = instancesLocal_[i].getSolutionForTransfer();
   }
   return output;
 }

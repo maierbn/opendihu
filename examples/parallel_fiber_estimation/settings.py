@@ -12,7 +12,7 @@ if len(sys.argv) > 0:
   if "check_results.py" not in sys.argv[0]:
     name = sys.argv[0]
     
-    print("name: \"{}\"".format(name))
+    #print("name: \"{}\"".format(name))
 
 bc = {}
 
@@ -30,9 +30,9 @@ config = {
     "topZClip": 220.0,      # 250 (220), top z value of the muscle volume
     "nElementsXPerSubdomain": 4,  # number of elements in x and y-direction per subdomain
     "nElementsZPerSubdomain": 50,  # number of elements in z-direction per subdomain
-    "nFineGridFibers": 1,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
+    "nFineGridFibers": 10,     # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField": False,    # set to False
-    "maxLevel": 1,          # maximum level (1=8 processes, 2=64 processes)
+    "maxLevel": 0,          # maximum level (1=8 processes, 2=64 processes)
     "lineStepWidth":  0.1,  # line width for tracing of fibers
     "FiniteElementMethod" : {
       "meshName": "potentialFlow",

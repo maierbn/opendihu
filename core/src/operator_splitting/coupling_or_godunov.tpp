@@ -50,7 +50,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping1 -> timeStepping2";
     // scale solution in timeStepping1 and transfer to timestepping2_
     SolutionVectorMapping<typename TimeStepping1::TransferableSolutionDataType, typename TimeStepping2::TransferableSolutionDataType>::
-      transfer(this->timeStepping1_.getSolutionForTransferInOperatorSplitting(), this->timeStepping2_.getSolutionForTransferInOperatorSplitting());
+      transfer(this->timeStepping1_.getSolutionForTransfer(), this->timeStepping2_.getSolutionForTransfer());
 
     LOG(DEBUG) << "  CouplingOrGodunov: timeStepping2 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping2
@@ -63,7 +63,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping2 -> timeStepping1";
     // scale solution in timeStepping2 and transfer to timestepping1_
     SolutionVectorMapping<typename TimeStepping2::TransferableSolutionDataType, typename TimeStepping1::TransferableSolutionDataType>::
-      transfer(this->timeStepping2_.getSolutionForTransferInOperatorSplitting(), this->timeStepping1_.getSolutionForTransferInOperatorSplitting());
+      transfer(this->timeStepping2_.getSolutionForTransfer(), this->timeStepping1_.getSolutionForTransfer());
 
     // advance simulation time
     timeStepNo++;

@@ -17,7 +17,7 @@ class FiniteElementMethodTimeStepping :
   public Splittable
 {
 public:
-  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;  // type of return value of getSolutionForTransferInOperatorSplitting
+  typedef std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> TransferableSolutionDataType;  // type of return value of getSolutionForTransfer
 
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
@@ -57,7 +57,7 @@ public:
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
   typedef FunctionSpaceType FunctionSpace;   ///< the FunctionSpace type needed for time stepping scheme
 

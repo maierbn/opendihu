@@ -127,43 +127,51 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       {
         if (faceNo % 2 == i)
         {
-          LOG(DEBUG) << "receive from rank " << neighbourRankNo;
 
           // receive from neighbouring process
           // blocking receive call to receive node position values
           ghostValuesBuffer[face].nodePositionValues.resize(nNodePositionValues);
+          LOG(DEBUG) << "receive " << nNodePositionValues << " (" << ghostValuesBuffer[face].nodePositionValues.size() << ") from rank " << neighbourRankNo;
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
                                                   neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
+
           // blocking receive call to receive solution values
           ghostValuesBuffer[face].solutionValues.resize(nSolutionValues);
+          LOG(DEBUG) << "    receive " << nSolutionValues << " (" << ghostValuesBuffer[face].solutionValues.size() << ") from rank " << neighbourRankNo;
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
-                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Irecv");
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+
 
           // blocking receive call to receive gradient values
           ghostValuesBuffer[face].gradientValues.resize(nGradientValues);
+          LOG(DEBUG) << "    receive " << nGradientValues << " (" << ghostValuesBuffer[face].gradientValues.size() << ") from rank " << neighbourRankNo;
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
-                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Irecv");
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
           LOG(DEBUG) << "receive from rank " << neighbourRankNo << " completed";
         }
         else
         {
 
-          LOG(DEBUG) << "send to rank " << neighbourRankNo;
+          LOG(DEBUG) << "send " << nNodePositionValues << " (" << boundaryValues[face].nodePositionValues.size() << ") to rank " << neighbourRankNo;
 
           // send values to neighbouring process
           // blocking send call to send solution values
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
-                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+
+          LOG(DEBUG) << "send " << nSolutionValues << " (" << boundaryValues[face].solutionValues.size() << ") to rank " << neighbourRankNo;
 
           // blocking send call to send solution values
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
-                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+
+          LOG(DEBUG) << "send " << nGradientValues << " (" << boundaryValues[face].gradientValues.size() << ") to rank " << neighbourRankNo;
 
           // blocking send call to send gradient values
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
-                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
 
           LOG(DEBUG) << "send to rank " << neighbourRankNo << " completed";
         }

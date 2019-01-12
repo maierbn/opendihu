@@ -52,6 +52,8 @@ with open(input_filename, "rb") as infile:
   print("nFibersPerRank:    {}".format(parameters[7]))
   print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.fromtimestamp(parameters[8])))
   
+  input("Press any key to continue.")
+  
   streamlines = []
   for streamline_no in range(n_fibers_total):
     streamline = []
@@ -67,7 +69,7 @@ with open(input_filename, "rb") as infile:
     streamlines.append(streamline)
   
   #streamlines = [streamlines[5]]
-  #print(streamlines)
+  #print(streamlines[0])
   
   triangles = []
   for points in streamlines:

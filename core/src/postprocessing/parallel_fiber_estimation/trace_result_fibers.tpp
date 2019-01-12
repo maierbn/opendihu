@@ -791,7 +791,7 @@ fixInvalidFibersInFile()
 
     fileNew.seekp(32+headerLength);
 
-    double oldZIncrement = bottomZClip_ + double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
+    double oldZIncrement = double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
 
     // loop over fibers in old file
     for (int fiberIndex = 0; fiberIndex != nFibers; fiberIndex++)
@@ -807,6 +807,8 @@ fixInvalidFibersInFile()
       {
         // compute the z value of the current point in the new fiber
         double currentZ = bottomZClip_ + zIndex * double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
+
+        //LOG(DEBUG) << "clip: " << bottomZClip_ << "," << topZClip_ << " zIndex: " << zIndex << "/" << nNodesPerFiber_ << ", currentZ: " << currentZ;
 
         // compute z indices of the point in the old fiber between which the new point will be
         int oldZIndexPrevious = int((currentZ-bottomZClip_) / oldZIncrement);
@@ -842,7 +844,7 @@ fixInvalidFibersInFile()
 
         if (fiberIndex < 10 || fiberIndex > nFibers-10)
         {
-          VLOG(2) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
+          LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
             << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
         }
 

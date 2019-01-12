@@ -601,15 +601,15 @@ fixInvalidFibersInFile()
     bufferHeaderLength, bufferNFibers, bufferNPointsPerFiber;
 
     // get length of header
-    file.read(bufferHeaderLength.c, 4*sizeof(int32_t));
+    file.read(bufferHeaderLength.c, 4);
     headerLength = bufferHeaderLength.i;
 
     // get number of fibers
-    file.read(bufferNFibers.c, 4*sizeof(int32_t));
+    file.read(bufferNFibers.c, 4);
     nFibers = bufferNFibers.i;
 
     // get number of points per fiber
-    file.read(bufferNPointsPerFiber.c, 4*sizeof(int32_t));
+    file.read(bufferNPointsPerFiber.c, 4);
     nPointsPerFiber = bufferNPointsPerFiber.i;
 
     // skip rest of header
@@ -792,6 +792,7 @@ fixInvalidFibersInFile()
     moveCommand << "mv " << resultFilename_ << " " << newFilename;
     int ret = std::system(moveCommand.str().c_str());
     ret++;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // open existing file to read
     std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
@@ -816,7 +817,7 @@ fixInvalidFibersInFile()
       // loop over nodes of the new fiber
       for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)
       {
-        double currentZ = bottomZClip_ + double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
+        double currentZ = bottomZClip_ + zIndex * double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
 
         int oldZIndexPrevious = int((currentZ-bottomZClip_) / oldZIncrement);
         int oldZIndexNext = oldZIndexPrevious + 1;
@@ -838,8 +839,11 @@ fixInvalidFibersInFile()
         double alpha = (currentZ - (bottomZClip_ + oldZIndexPrevious*oldZIncrement)) / oldZIncrement;
         Vec3 newPoint = (1.-alpha) * previousPoint + alpha * nextPoint;
 
-        LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
-          << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
+        if (fiberIndex < 10 || fiberIndex > nFibers-10)
+        {
+          LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
+            << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
+        }
         MathUtility::writePoint(fileNew, newPoint);
       }
     }

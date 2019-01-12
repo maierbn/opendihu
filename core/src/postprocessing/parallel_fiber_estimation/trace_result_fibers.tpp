@@ -128,9 +128,9 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       {
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
-        LOG(DEBUG) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
+        VLOG(1) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex << "] =" << fibers[fibersPointIndex][zLevelIndex];
-        LOG(DEBUG) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
+        VLOG(1) << "set value at left border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
     }
@@ -151,9 +151,9 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       {
         fibers[fibersPointIndex][zLevelIndex] = borderPointsSubdomain[subdomainIndex][face][zLevelIndex][pointIndex];
         fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)] = borderPointsSubdomain[subdomainIndex+4][face][zLevelIndex][pointIndex];
-        LOG(DEBUG) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
+        VLOG(1) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex << "] =" << fibers[fibersPointIndex][zLevelIndex];
-        LOG(DEBUG) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
+        VLOG(1) << "set value at right border, pointIndexStride: " << pointIndexStride << ", fibers[" << fibersPointIndex << "][z"
           << zLevelIndex+(nBorderPointsZ_-1) << "] =" << fibers[fibersPointIndex][zLevelIndex+(nBorderPointsZ_-1)];
       }
     }
@@ -257,7 +257,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   }
 
   // check which fibers are invalid
-  LOG(DEBUG) << "check which fibers are invalid 1";
   int nValid = 0;
   for (int j = 0; j < nBorderPointsXNew_; j++)
   {
@@ -287,6 +286,9 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       }
     }
   }
+
+  LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << MathUtility::sqr(nBorderPointsXNew_) - nValid;
+
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlineEndPoints);
 
@@ -312,39 +314,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
 #endif
-
-  // check which fibers are invalid
-  LOG(DEBUG) << "check which fibers are invalid 2";
-  nValid = 0;
-  for (int j = 0; j < nBorderPointsXNew_; j++)
-  {
-    for (int i = 0; i < nBorderPointsXNew_; i++)
-    {
-      int pointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
-
-      if (fibers[pointIndex].size() != nBorderPointsZNew_)
-      {
-        LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << ") is not long enough (size: " << fibers[pointIndex].size() << ")";
-      }
-      else if (MathUtility::norm<3>(fibers[pointIndex][0]) < 1e-4)
-      {
-        LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << "), first point is zero";
-      }
-      else if (MathUtility::norm<3>(fibers[pointIndex][1]) < 1e-4)
-      {
-        LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << "), second point is zero";
-      }
-      else if (MathUtility::norm<3>(fibers[pointIndex][nBorderPointsZNew_/2]) < 1e-4)
-      {
-        LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << "), center point is zero";
-      }
-      else
-      {
-        nValid++;
-      }
-    }
-  }
-  LOG(DEBUG) << "key fibers number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << MathUtility::sqr(nBorderPointsXNew_) - nValid;
 
   // interpolate fibers in between
   LOG(DEBUG) << "interpolate fibers in between key fibers, nFineGridFibers_: " << nFineGridFibers_;
@@ -397,7 +366,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
       if (!keyFibersInvalid)
       {
-        LOG(DEBUG) << "interpolate fine fibers at (" << i << "," << j << "), index " << keyFiberPointIndex0;
+        VLOG(1) << "interpolate fine fibers at (" << i << "," << j << "), index " << keyFiberPointIndex0;
       }
 
       for (int fineGridJ = 0; fineGridJ < nFineGridFibers_+1; fineGridJ++)
@@ -424,7 +393,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
             // interpolate fibers using key fibers
             Vec2 xi({fineGridI / (nFineGridFibers_ + 1.0), fineGridJ / (nFineGridFibers_ + 1.0)});
 
-            LOG(DEBUG) << "  fine fiber (" << fineGridI << "," << fineGridJ << ") index " << fibersPointIndex << ", xi: " << xi;
+            VLOG(1) << "  fine fiber (" << fineGridI << "," << fineGridJ << ") index " << fibersPointIndex << ", xi: " << xi;
 
             for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZNew_; zLevelIndex++)
             {
@@ -440,11 +409,11 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       }
     }
   }
-
+#if 0
   PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "14_final", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(fibers), 0.1);
   PythonUtility::checkForError();
-
+#endif
   LOG(DEBUG) << "invalid fibers: " << nFibersNotInterpolated << ", valid fibers: " << nFibers - nFibersNotInterpolated;
 
   // write fiber data to file, the (x+,x-,y+,y-) border fibers of the global borders are not written to the file because they
@@ -555,7 +524,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
       int offset = headerOffset + pointOffset * 3 * sizeof(double);
 
-      LOG(DEBUG) << "write fiber (" << i << "," << j << "), global (" << fiberIndex0 << "," << fiberIndex1 << "), global index "
+      VLOG(1) << "write fiber (" << i << "," << j << "), global (" << fiberIndex0 << "," << fiberIndex1 << "), global index "
         << fiberIndex << ", nValues: " << nValues << ", nBytes: " << nBytes
         << ", pointOffset: " << pointOffset << " (" << nPointsWholeFiber << " points per fiber), headerOffset: " << headerOffset << ", offset: " << offset;
 
@@ -644,7 +613,7 @@ fixInvalidFibersInFile()
       }
     }
 
-    LOG(DEBUG) << "fiberIsValid: " << fiberIsValid;
+    VLOG(2) << "fiberIsValid: " << fiberIsValid;
 
     // loop over invalid fibers and fix them from neighbouring fibers
     for (int fiberIndexY = 0; fiberIndexY != nFibersX; fiberIndexY++)
@@ -702,7 +671,7 @@ fixInvalidFibersInFile()
             }
           }
 
-          LOG(DEBUG) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
+          VLOG(2) << "fiber " << fiberIndexX << "," << fiberIndexY << ": neighbours x("
             << leftNeighbourIndex << "," << rightNeighbourIndex << ") y(" << frontNeighbourIndex << "," << backNeighbourIndex << ")";
 
           if (leftNeighbourIndex != -1 && rightNeighbourIndex != -1)
@@ -712,7 +681,7 @@ fixInvalidFibersInFile()
             double alpha0 = double(rightNeighbourIndex - fiberIndexX) / (rightNeighbourIndex - leftNeighbourIndex);
             double alpha1 = double(fiberIndexX - leftNeighbourIndex) / (rightNeighbourIndex - leftNeighbourIndex);
 
-            LOG(DEBUG) << "take left-right, alphas: " << alpha0 << ", " << alpha1;
+            VLOG(2) << "take left-right, alphas: " << alpha0 << ", " << alpha1;
 
             // loop over all points of the fiber
             for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
@@ -747,7 +716,7 @@ fixInvalidFibersInFile()
             double alpha0 = double(backNeighbourIndex - fiberIndexX) / (backNeighbourIndex - frontNeighbourIndex);
             double alpha1 = double(fiberIndexX - frontNeighbourIndex) / (backNeighbourIndex - frontNeighbourIndex);
 
-            LOG(DEBUG) << "take front-back, alphas: " << alpha0 << ", " << alpha1;
+            VLOG(2) << "take front-back, alphas: " << alpha0 << ", " << alpha1;
 
             // loop over all points of the fiber
             for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
@@ -786,6 +755,8 @@ fixInvalidFibersInFile()
 
   if (nPointsPerFiber != nNodesPerFiber_)
   {
+    // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
+
     // rename existing file
     std::string newFilename = resultFilename_ + std::string("_");
     std::stringstream moveCommand;
@@ -798,13 +769,27 @@ fixInvalidFibersInFile()
     std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
     assert (fileOld.is_open());
 
-    std::ofstream fileNew(resultFilename_.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
+    LOG(DEBUG) << "write to file " << resultFilename_;
+    std::ofstream fileNew(resultFilename_.c_str(), std::ios::out | std::ios::binary);
     assert (fileNew.is_open());
 
     // copy header
     std::vector<char> headerBuffer(32+headerLength);
     fileOld.read(headerBuffer.data(), 32+headerLength);
     fileNew.write(headerBuffer.data(), 32+headerLength);
+
+    // write new number of fibers
+    union
+    {
+      int32_t parameter;
+      char c[sizeof(int32_t)];
+    };
+    parameter = nNodesPerFiber_;
+
+    fileNew.seekp(32+8);
+    fileNew.write(c, 4);
+
+    fileNew.seekp(32+headerLength);
 
     double oldZIncrement = bottomZClip_ + double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
 
@@ -814,36 +799,54 @@ fixInvalidFibersInFile()
       Vec3 previousPoint;
       Vec3 nextPoint;
 
-      // loop over nodes of the new fiber
+      int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loadad in previousPoint
+      int oldZIndexNext0 = -1;        /// z index of the point that is currently loadad in nextPoint
+
+      // loop over nodes of the new fiber and write them to the new file
       for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)
       {
+        // compute the z value of the current point in the new fiber
         double currentZ = bottomZClip_ + zIndex * double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
 
+        // compute z indices of the point in the old fiber between which the new point will be
         int oldZIndexPrevious = int((currentZ-bottomZClip_) / oldZIncrement);
         int oldZIndexNext = oldZIndexPrevious + 1;
 
-        // load previous point
-        fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
-        MathUtility::readPoint(fileOld, previousPoint);
+        // load previous point, only if it was not already loaded
+        if (oldZIndexPrevious != oldZIndexPrevious0)
+        {
+          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
+          MathUtility::readPoint(fileOld, previousPoint);
+          oldZIndexPrevious0 = oldZIndexPrevious;
+        }
 
+        // load next point
         if (oldZIndexNext < nPointsPerFiber)
         {
-          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
-          MathUtility::readPoint(fileOld, nextPoint);
+          // only if it was not already loaded
+          if (oldZIndexNext != oldZIndexNext0)
+          {
+            fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
+            MathUtility::readPoint(fileOld, nextPoint);
+            oldZIndexNext0 = oldZIndexNext;
+          }
         }
         else
         {
           nextPoint = previousPoint;
         }
 
+        // compute new point by interpolation between previousPoint and nextPoint
         double alpha = (currentZ - (bottomZClip_ + oldZIndexPrevious*oldZIncrement)) / oldZIncrement;
         Vec3 newPoint = (1.-alpha) * previousPoint + alpha * nextPoint;
 
         if (fiberIndex < 10 || fiberIndex > nFibers-10)
         {
-          LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
+          VLOG(2) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
             << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
         }
+
+        // write point to file
         MathUtility::writePoint(fileNew, newPoint);
       }
     }

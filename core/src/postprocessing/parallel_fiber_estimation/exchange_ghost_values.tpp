@@ -100,6 +100,79 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
     LOG(DEBUG) << "     --  ";
   }
 
+
+  // blocking communication
+
+  // left: recv-send, right: send-recv
+  // bottom: recv-send, top: send-recv
+
+  std::vector<int> faces = {Mesh::face_t::face0Minus, Mesh::face_t::face0Plus, Mesh::face_t::face1Minus, Mesh::face_t::face1Plus};
+
+  for (int faceNo = 0; faceNo != 4; faceNo++)
+  {
+    int face = faces[faceNo];
+
+    if (!subdomainIsAtBorder[face])
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+      assert (neighbourRankNo != -1);
+
+      int nNodePositionValues = boundaryValues[face].nodePositionValues.size();
+      int nSolutionValues = boundaryValues[face].solutionValues.size();
+      int nGradientValues = boundaryValues[face].gradientValues.size();
+      assert(nSolutionValues*3 == nGradientValues);
+      assert(nNodePositionValues == nGradientValues);
+
+      for (int i = 0; i != 2; i++)
+      {
+        if (faceNo % 2 == i)
+        {
+          LOG(DEBUG) << "receive from rank " << neighbourRankNo;
+
+          // receive from neighbouring process
+          // blocking receive call to receive node position values
+          ghostValuesBuffer[face].nodePositionValues.resize(nNodePositionValues);
+          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+
+          // blocking receive call to receive solution values
+          ghostValuesBuffer[face].solutionValues.resize(nSolutionValues);
+          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Irecv");
+
+          // blocking receive call to receive gradient values
+          ghostValuesBuffer[face].gradientValues.resize(nGradientValues);
+          MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Irecv");
+
+          LOG(DEBUG) << "receive from rank " << neighbourRankNo << " completed";
+        }
+        else
+        {
+
+          LOG(DEBUG) << "send to rank " << neighbourRankNo;
+
+          // send values to neighbouring process
+          // blocking send call to send solution values
+          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+
+          // blocking send call to send solution values
+          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+
+          // blocking send call to send gradient values
+          MPIUtility::handleReturnValue(MPI_Send(boundaryValues[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
+                                                  neighbourRankNo, 0, currentRankSubset_->mpiCommunicator()), "MPI_Isend");
+
+          LOG(DEBUG) << "send to rank " << neighbourRankNo << " completed";
+        }
+      }
+    }
+  }
+
+// non-blocking communication, does not work with 64 processes
+#if 0
   // loop over faces and communicate ghost elements to the neighbouring ranks
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
@@ -180,7 +253,8 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRefquests) complete";
-
+#endif
+  LOG(DEBUG) << "ghost exchange communication done";
 
 
   MPI_Barrier(currentRankSubset_->mpiCommunicator());

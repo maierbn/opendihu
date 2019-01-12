@@ -49,7 +49,7 @@ void writePoint(T &file, Vec3 &point)
   };
   for (int i = 0; i < 3; i++)
   {
-    point[i] = d;
+    d = point[i];
     file.write(c, 8);
   }
 }

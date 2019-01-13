@@ -87,7 +87,7 @@ class PETSc(Package):
         ])
         
         # debugging build handler 
-        if self.have_option(env, "PETSC_DEBUG"):
+        if True:
           self.set_build_handler([
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \

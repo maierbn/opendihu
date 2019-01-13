@@ -86,8 +86,19 @@ class PETSc(Package):
             'make test',
         ])
         
+        self.number_output_lines = 4121
+        
+    def check(self, ctx):
+        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+          ctx.Message('Not checking for PETSc ... ')
+          ctx.Result(True)
+          return True
+      
+        env = ctx.env
+        
+        
         # debugging build handler 
-        if True:
+        if self.have_option(env, "PETSC_DEBUG"):
           print("PETSc debugging build is on!")
           self.set_build_handler([
             #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
@@ -101,15 +112,6 @@ class PETSc(Package):
             'make test',
         ])
         
-        self.number_output_lines = 4121
-        
-    def check(self, ctx):
-        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
-          ctx.Message('Not checking for PETSc ... ')
-          ctx.Result(True)
-          return True
-      
-        env = ctx.env
         ctx.Message('Checking for PETSc ...         ')
         self.check_options(env)
 

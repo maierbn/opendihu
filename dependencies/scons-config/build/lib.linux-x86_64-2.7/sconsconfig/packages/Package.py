@@ -75,6 +75,7 @@ class Package(object):
     self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
     self.static = False                 # if the compiled test program is a static library
     self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
+    self.link_flags = None              # additional linker flags that can directly be set by the derived class
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
@@ -485,7 +486,7 @@ class Package(object):
     source_dir = os.getcwd()
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
-    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success:"+str(not os.path.exists('scons_build_success'))+"\n")
+    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
@@ -786,6 +787,10 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
+      
+    if self.link_flags is not None:
+      ctx.Log("  link_flags is set, use additional link flags: {}".format(self.link_flags))
+      ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:

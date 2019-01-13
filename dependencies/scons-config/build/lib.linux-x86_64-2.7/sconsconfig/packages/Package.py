@@ -360,6 +360,7 @@ class Package(object):
     vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
     vars.Add(BoolVariable('MPI_IGNORE_MPICC', help='Disable retrieving mpi compile information from mpicc --showme.', default=False))
     vars.Add(BoolVariable('MPI_DEBUG', help='Build MPI with debugging support for memcheck.', default=False))
+    vars.Add(BoolVariable('PETSC_DEBUG', help='Build Petsc with debugging support.', default=False))
     
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 

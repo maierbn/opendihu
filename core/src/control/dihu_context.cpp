@@ -43,6 +43,8 @@ std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
+std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
+std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of adios
 
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
@@ -248,6 +250,8 @@ DihuContext DihuContext::operator[](std::string keyString)
   int argc = 0;
   char **argv = NULL;
   DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, PythonConfig(pythonConfig_, keyString));
+  dihuContext.io_ = io_;
+  dihuContext.adios_ = adios_;
 
   return dihuContext;
 }
@@ -258,6 +262,8 @@ DihuContext DihuContext::createSubContext(PythonConfig config)
   int argc = 0;
   char **argv = NULL;
   DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, config);
+  dihuContext.io_ = io_;
+  dihuContext.adios_ = adios_;
 
   return dihuContext;
 }

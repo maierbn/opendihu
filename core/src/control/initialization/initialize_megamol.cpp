@@ -11,8 +11,10 @@
 
 void DihuContext::initializeAdios(int argc, char *argv[])
 {
+  LOG(DEBUG) << "initializeAdios";
   adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
   io_ = std::make_shared<adios2::IO>(adios_->DeclareIO("Output"));
+  assert(io_);
 }
 
 void DihuContext::initializeMegaMol(int argc, char *argv[])
@@ -20,9 +22,9 @@ void DihuContext::initializeMegaMol(int argc, char *argv[])
   // extract MegaMol arguments from config
   if (pythonConfig_.hasKey("MegaMolArguments"))
   {
+    initializeAdios(argc, argv);
 #ifdef HAVE_MEGAMOL
 
-    initializeAdios(argc, argv);
 
     std::string megamolArgumentsOption = pythonConfig_.getOptionString("MegaMolArguments", "");
 

@@ -15,8 +15,10 @@ std::map<std::string, adios2::Variable<double>> MegaMolWriter<FunctionSpaceType,
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 void MegaMolWriter<FunctionSpaceType, OutputFieldVariablesType>::
 outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
-           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo)
+           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox)
 {
+  LOG(DEBUG) << "MegaMolWriter::outputData";
+
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField;
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> scalarFieldVariables;
 
@@ -42,27 +44,80 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   // determine the number of values on the local rank
   const long unsigned int nValuesGeometryTable = (long unsigned int) geometryFieldValues.size()*3;
 
-  // create ADIOS field variable
+  // create ADIOS fielddefine variable variable
   if (geometryTable_.find(meshName) == geometryTable_.end())
   {
-    geometryTable_[meshName] = adiosIo->DefineVariable<double>(meshName, {adios2::JoinedDim, nValuesGeometryTable}, {}, {1, nValuesGeometryTable});
+    std::stringstream variableName;
+    //variableName << meshName << "_geometry";
+    variableName << "xyz";
+
+
+    int localSize = nValuesGeometryTable;
+    int offset = 0;
+    MPI_Exscan(&localSize, &offset, 1, MPI_INT, MPI_SUM, functionSpace->meshPartition()->mpiCommunicator());
+    LOG(DEBUG) << "localSize: " << localSize << ", offset: " << offset << ", globalSize: " << geometryField->nDofsGlobal()*3;
+
+    LOG(DEBUG) << "define variable \"" << variableName.str() << "\". nValuesGeometryTable: " << nValuesGeometryTable;
+    geometryTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {(long unsigned int)geometryField->nDofsGlobal()*3}, {(long unsigned int)offset}, {(long unsigned int)nValuesGeometryTable});
 
     if (!values.empty())
     {
-      vmTable_[meshName] = adiosIo->DefineVariable<double>(meshName, {adios2::JoinedDim, nValuesGeometryTable}, {}, {1, nValuesGeometryTable});
+      std::stringstream variableName;
+      //variableName << meshName << "_vm";
+      variableName << "i";
+      LOG(DEBUG) << "define variable \"" << variableName.str() << "\". size: " << values[0].size();
+      vmTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {adios2::JoinedDim}, {}, {values[0].size()});
     }
   }
+  else
+  {
+    LOG(DEBUG) << "geometryTable[" << meshName << "] is already set:";
+    for(std::map<std::string, adios2::Variable<double>>::iterator iter = geometryTable_.begin(); iter != geometryTable_.end(); iter++)
+    {
+      LOG(DEBUG) << "key " << iter->first;
+    }
+  }
+
+  // compute local bounding box
+  if (!boundingBox.initialized)
+  {
+    boundingBox.min = geometryFieldValues[0];
+    boundingBox.max = geometryFieldValues[0];
+    boundingBox.initialized = true;
+  }
+  for(std::vector<Vec3>::iterator iter = geometryFieldValues.begin(); iter != geometryFieldValues.end(); iter++)
+  {
+    for (int i = 0; i < 3; i++)
+    {
+      if ((*iter)[i] < boundingBox.min[i])
+      {
+        boundingBox.min[i] = (*iter)[i];
+      }
+      if ((*iter)[i] > boundingBox.max[i])
+      {
+        boundingBox.max[i] = (*iter)[i];
+      }
+    }
+  }
+
+  LOG(DEBUG) << "local min: " << boundingBox.min << ", local max: " << boundingBox.max;
 
   // convert data to be send to ADIOS
   // geometryTable
   std::vector<double> geometryTableData(nValuesGeometryTable);
+  double maximum = 0;
   for (int i = 0; i < geometryFieldValues.size(); i++)
   {
     for (int j = 0; j != 3; j++)
     {
       geometryTableData[3*i + j] = geometryFieldValues[i][j];
+      maximum = std::max(maximum, geometryFieldValues[i][j]);
     }
   }
+  LOG(DEBUG) << "maximum of geometryFieldValues: " << maximum;
+
+  LOG(DEBUG) << "nValuesGeometryTable: " << nValuesGeometryTable << ", geometryTableData: " << geometryTableData;
+  LOG(DEBUG) << "values[0].size(): " << values[0].size() << ", values[0]: " << values[0];
 
   // vmTable
   if (!values.empty())

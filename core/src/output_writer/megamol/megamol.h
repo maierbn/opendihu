@@ -10,6 +10,12 @@
 namespace OutputWriter
 {
 
+struct BoundingBox
+{
+  Vec3 min, max;   // minimum,maximum value of bounding box
+  bool initialized = false;   // if values are set
+};
+
 class MegaMol : public Generic
 {
 public:
@@ -22,7 +28,8 @@ public:
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
 private:
-  std::shared_ptr<adios2::Engine> writer_;
+  std::shared_ptr<adios2::Engine> writer_;    //< adios writer
+  std::shared_ptr<adios2::Variable<double>> boxVariable_ = nullptr; ///< variable that contains bounding box
 };
 
 } // namespace

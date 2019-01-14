@@ -95,6 +95,6 @@ private:
   static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
   bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 
-  std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
-  std::shared_ptr<adios2::IO> io_;        ///< IO object of adios
+  static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
+  static std::shared_ptr<adios2::IO> io_;        ///< IO object of adios
 };

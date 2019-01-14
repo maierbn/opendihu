@@ -59,6 +59,7 @@ EASYLOGGINGPP_DOWNLOAD=True
 # MegaMol
 MEGAMOL_DOWNLOAD=True     # install MegaMol from official git repo
 USE_MEGAMOL=True          # link to mmconsole main function and start megamol, if config["MegaMolArguments"] is set
+ADIOS_DOWNLOAD=True
 
 # MPI
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.

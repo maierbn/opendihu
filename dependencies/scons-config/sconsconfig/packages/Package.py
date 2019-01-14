@@ -568,6 +568,11 @@ class Package(object):
         import tarfile
         tf = tarfile.open(filename)
         tf.extractall(unpack_dir)
+        
+        # get name of extracted directory
+        entries = os.listdir(unpack_dir)
+        print("entries: {}".format(entries))
+        #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
         try:

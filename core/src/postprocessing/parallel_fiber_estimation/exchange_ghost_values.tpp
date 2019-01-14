@@ -138,14 +138,14 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
 
           // blocking receive call to receive solution values
           ghostValuesBuffer[face].solutionValues.resize(nSolutionValues);
-          LOG(DEBUG) << "    receive " << nSolutionValues << " (" << ghostValuesBuffer[face].solutionValues.size() << ") from rank " << neighbourRankNo;
+          LOG(DEBUG) << "receive " << nSolutionValues << " (" << ghostValuesBuffer[face].solutionValues.size() << ") from rank " << neighbourRankNo;
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
                                                   neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
 
           // blocking receive call to receive gradient values
           ghostValuesBuffer[face].gradientValues.resize(nGradientValues);
-          LOG(DEBUG) << "    receive " << nGradientValues << " (" << ghostValuesBuffer[face].gradientValues.size() << ") from rank " << neighbourRankNo;
+          LOG(DEBUG) << "receive " << nGradientValues << " (" << ghostValuesBuffer[face].gradientValues.size() << ") from rank " << neighbourRankNo;
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[face].gradientValues.data(), nGradientValues, MPI_DOUBLE,
                                                   neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 

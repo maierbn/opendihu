@@ -55,7 +55,8 @@ sconsconfig.select(
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
     packages.SEMT(required=True),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
-    packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
+    #packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
+    #packages.ADIOS(required=False),       # ADIOS
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -227,48 +228,54 @@ if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
 env.MergeFlags("-lpthread -ldl -lutil -lm")
 
 if env["USE_MEGAMOL"] and False:  # enable megamol
-  # add megamol linker flags
-  megamol_link_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/CMakeFiles/mmconsole.dir/link.txt")
-  #print("megamol_link_path: {}".format(megamol_link_path))
-  with open(megamol_link_path, "r") as f:
-    linker_flags = f.readline()
-    linker_flags = linker_flags[linker_flags.find(" "):]
-    #print(linker_flags)
+  if True:
+    # add megamol linker flags
+    megamol_link_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/CMakeFiles/mmconsole.dir/link.txt")
+    #print("megamol_link_path: {}".format(megamol_link_path))
+    with open(megamol_link_path, "r") as f:
+      linker_flags = f.readline()
+      linker_flags = linker_flags[linker_flags.find(" "):]
+      #print(linker_flags)
 
-    new_linker_flags = ""
-    for item in linker_flags.split():
-      if item == "../mmconsole" or item == "-o":
-        continue
+      new_linker_flags = ""
+      for item in linker_flags.split():
+        if item == "../mmconsole" or item == "-o":
+          continue
+        
+        if item[0] != "-" and item[0] != "/":
+          item = os.path.join(os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/"), item)
+        new_linker_flags += " "+item
       
-      if item[0] != "-" and item[0] != "/":
-        item = os.path.join(os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/"), item)
-      new_linker_flags += " "+item
-    
-    #print("new_linker_flags:")
-    #print(new_linker_flags)
-    env.MergeFlags(new_linker_flags)
-    
-  # manipulate Console.cpp
-  console_cpp_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.cpp")
-  with open(console_cpp_path, "r") as f:
-    console_content = f.readlines()
+      print("new_linker_flags:")
+      print(new_linker_flags)
+      env.MergeFlags(new_linker_flags)
+      
+    # manipulate Console.cpp
+    console_cpp_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.cpp")
+    with open(console_cpp_path, "r") as f:
+      console_content = f.readlines()
 
-  new_console_content = ""
-  for line in console_content:
-    if "main(int argc" in line:
-      line = "int megamol_main(int argc, char* argv[]) {\n"
-    new_console_content += line
+    new_console_content = ""
+    for line in console_content:
+      if "main(int argc" in line:
+        line = "int megamol_main(int argc, char* argv[]) {\n"
+      new_console_content += line
 
-  with open(console_cpp_path, "w") as f:
-    f.write(new_console_content)
-    
-  # create header file
-  console_h_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.h")
-  with open(console_h_path, "w") as f:
-    f.write("#pragma once\nint megamol_main(int argc, char* argv[]);")
+    with open(console_cpp_path, "w") as f:
+      f.write(new_console_content)
+      
+    # create header file
+    console_h_path = os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/console/src/Console.h")
+    with open(console_h_path, "w") as f:
+      f.write("#pragma once\nint megamol_main(int argc, char* argv[]);")
 
   env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/megamol/src/megamol-master/console/src/')])
   env.Append(CPPDEFINES = '-DHAVE_MEGAMOL')
+
+# add values for adios
+env.Append(CPPPATH = [os.path.join(opendihu_home, 'dependencies/adios/install/include')])
+env.Append(LIBPATH = [os.path.join(opendihu_home, 'dependencies/adios/install/lib')])
+env.MergeFlags(' -ladios2_atl -ladios2_cmenet -ladios2_cmib -ladios2_cmmulticast -ladios2_cmselect -ladios2_cmsockets -ladios2_cmudp -ladios2_dill -ladios2_enet -ladios2_evpath -ladios2_ffs -ladios2_f -ladios2 -ladios2_sst ')
 
 # add defines that are used in the code
 env.Append(CPPDEFINES = {'-DOPENDIHU_HOME': '\\"'+str(opendihu_home)+'\\"'})   # add define of the directory where this file is located

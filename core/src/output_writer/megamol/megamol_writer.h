@@ -16,7 +16,11 @@ class MegaMolWriter
 public:
   //! output the given field variable data for one mesh
   static void outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
-                         PythonConfig specificSettings);
+                         PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo);
+private:
+
+  static std::map<std::string, adios2::Variable<double>> geometryTable_;
+  static std::map<std::string, adios2::Variable<double>> vmTable_;
 };
 
 } // namespace

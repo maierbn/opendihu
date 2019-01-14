@@ -238,6 +238,11 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   return solverManagerForThread_[threadId];
 }
 
+std::shared_ptr<adios2::IO> DihuContext::adiosIo()
+{
+  return io_;
+}
+
 DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;

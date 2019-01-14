@@ -21,6 +21,8 @@ public:
   template<typename DataType>
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
+private:
+  std::shared_ptr<adios2::Engine> writer_;
 };
 
 } // namespace

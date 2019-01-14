@@ -6,12 +6,24 @@
 #include "Console.h"     // contains megamol_main
 #endif
 
+
+#include <adios2.h>
+
+void DihuContext::initializeAdios(int argc, char *argv[])
+{
+  adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
+  io_ = std::make_shared<adios2::IO>(adios_->DeclareIO("Output"));
+}
+
 void DihuContext::initializeMegaMol(int argc, char *argv[])
 {
   // extract MegaMol arguments from config
   if (pythonConfig_.hasKey("MegaMolArguments"))
   {
 #ifdef HAVE_MEGAMOL
+
+    initializeAdios(argc, argv);
+
     std::string megamolArgumentsOption = pythonConfig_.getOptionString("MegaMolArguments", "");
 
     megamolArguments_.clear();

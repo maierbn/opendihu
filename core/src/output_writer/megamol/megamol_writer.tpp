@@ -1,11 +1,15 @@
 #include "output_writer/megamol/megamol_writer.h"
 
 #include "output_writer/megamol/loop_collect_field_variables.h"
+
+#ifdef HAVE_ADIOS
 #include <adios2.h>
+#endif
 
 namespace OutputWriter
 {
 
+#ifdef HAVE_ADIOS
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 std::map<std::string, adios2::Variable<double>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::geometryTable_;
 
@@ -128,5 +132,6 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   adiosWriter->Put<double>(geometryTable_[meshName], geometryTableData.data());
 
 }
-  
+#endif
+
 }  // namespace

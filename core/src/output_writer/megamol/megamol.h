@@ -28,8 +28,12 @@ public:
   void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
 
 private:
+
+#ifdef HAVE_ADIOS
   std::shared_ptr<adios2::Engine> writer_;    //< adios writer
   std::shared_ptr<adios2::Variable<double>> boxVariable_ = nullptr; ///< variable that contains bounding box
+#endif
+
 };
 
 } // namespace

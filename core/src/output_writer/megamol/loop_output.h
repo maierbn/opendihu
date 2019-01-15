@@ -12,12 +12,13 @@
  *  Call ParaviewWriter::output on the mesh with meshName. This outputs all field variables of the mesh to a paraview readable file.
  */
 
+#ifdef HAVE_ADIOS
 namespace OutputWriter
 {
 
 namespace MegaMolLoopOverTuple
 {
- 
+
  /** Static recursive loop from 0 to number of entries in the tuple
  *  Stopping criterion
  */
@@ -62,4 +63,5 @@ output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariables
 
 }  // namespace OutputWriter
 
+#endif
 #include "output_writer/megamol/loop_output.tpp"

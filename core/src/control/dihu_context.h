@@ -6,7 +6,10 @@
 #include <memory>
 #include <thread>
 #include <map>
+#ifdef HAVE_ADIOS
 #include <adios2.h>
+#endif
+
 #include "partition/partition_manager.h"
 #include "control/python_config.h"
 
@@ -54,8 +57,10 @@ public:
   //! get the own MPI rank no in the world communicator
   static int ownRankNo();
 
+#ifdef HAVE_ADIOS
   //! return the adios IO object
   std::shared_ptr<adios2::IO> adiosIo();
+#endif
 
   //! destructor
   virtual ~DihuContext();
@@ -95,6 +100,8 @@ private:
   static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
   bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 
+#ifdef HAVE_ADIOS
   static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
   static std::shared_ptr<adios2::IO> io_;        ///< IO object of adios
+#endif
 };

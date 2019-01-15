@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 
+#ifdef HAVE_ADIOS
 namespace OutputWriter
 {
 
@@ -78,3 +79,4 @@ output(TupleType currentFieldVariableTuple, const AllOutputFieldVariablesType &f
 
 }  // namespace MegaMolLoopOverTuple
 }  // namespace OutputWriter
+#endif

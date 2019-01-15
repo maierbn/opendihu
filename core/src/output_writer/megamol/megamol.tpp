@@ -21,6 +21,7 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
   {
     return;
   }
+#ifdef HAVE_ADIOS
 
   // get io object of adios from context
   std::shared_ptr<adios2::IO> adiosIo = context_.adiosIo();
@@ -109,7 +110,7 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
     LOG(ERROR) << "Exception";
     LOG(ERROR) << e.what();
   }
-
+#endif
 }
 
 } // namespace

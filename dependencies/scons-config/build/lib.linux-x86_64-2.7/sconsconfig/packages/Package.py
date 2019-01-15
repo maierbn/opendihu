@@ -76,6 +76,7 @@ class Package(object):
     self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
     self.static = False                 # if the compiled test program is a static library
     self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
+    self.link_flags = None              # additional link flags that are set by the inherited class
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
@@ -661,12 +662,13 @@ class Package(object):
       ctx.Log("Failed to locate build handler\n")
       return False
 
-    # Make a file to log stdout from the commands.
-    stdout_log = open('stdout.log', 'w')
 
     # Process each command in turn.
     for cmd in handler:
 
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      
       # It's possible to have a tuple, indicating a function and arguments.
       if isinstance(cmd, tuple):
         ctx.Log("Command is a Python function\n")
@@ -713,6 +715,7 @@ class Package(object):
     
         ctx.Log("  $"+cmd+"\n")
 
+        output = ""
         try:
           self.command_running = True
           t = Thread(target=self.monitor_progress, args=(self.number_output_lines,))
@@ -727,21 +730,26 @@ class Package(object):
     
           
           # get output
-          with file('stdout.log') as f:
-            output = f.read()
+          if os.path.exists('stdout.log'):
+            with file('stdout.log') as f:
+              output = f.read()    
+            stdout_log.close()
+            os.remove('stdout.log')
           ctx.Log(output+"\n")
         except:
           self.command_running = False
-          if not allow_errors:
-            stdout_log.close()
-            sys.stdout.write('failed.\n')
+          stdout_log.close()
+          if os.path.exists('stdout.log'):
             with file('stdout.log') as f:
-             output = f.read()
+              output = f.read()
+            stdout_log.close()
+            os.remove('stdout.log')
+          if not allow_errors:
+            sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
             return False
-
-    # Don't forget to close the log.
-    stdout_log.close()
+          else:
+            ctx.Log("Command failed (but allowed): \n"+output)
 
     # If it all seemed to work, write a dummy file to indicate this package has been built.
     success = open('scons_build_success', 'w')
@@ -793,6 +801,9 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
+      
+    if self.link_flags is not None:
+      ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:

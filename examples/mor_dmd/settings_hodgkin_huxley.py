@@ -5,8 +5,8 @@
 
 import sys
 
-end_time = 20.0   # [ms] end time of simulation
-n_elements = 100
+end_time = 1.0   # [ms] end time of simulation
+n_elements = 10
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -19,10 +19,10 @@ solver_type = "gmres"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e-1             # timestep for output files
+dt_1D = 0.01                      # timestep width of diffusion
+dt_0D = 0.01                      # timestep width of ODEs
+dt_3D = 0.01                      # overall timestep width of splitting
+output_timestep = 0.01             # timestep for output files
 
 # input files
 #cellml_file = "../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -197,7 +197,7 @@ config = {
     "endTime": end_time,
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval": 1000,
+    "timeStepOutputInterval": 1,
     "Term1": {      # CellML
       "ExplicitEuler" : {
         "timeStepWidth": dt_0D,  # 5e-5
@@ -240,7 +240,7 @@ config = {
       "ImplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",
         "inputMeshIsGlobal": True,
@@ -252,8 +252,8 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "onlyNodalValues": False},
-          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+#          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },
@@ -322,8 +322,8 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "onlyNodalValues": False},
-          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": False, "onlyNodalValues": False},
+#          {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/strang", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

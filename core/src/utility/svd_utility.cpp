@@ -6,7 +6,7 @@
 #include <fstream>
 using namespace std;
 
-
+// applies SVD and returns vt
 std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 {
   /*
@@ -49,6 +49,7 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
   return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);;
 }
 
+// reads CSV cell by cell as vector
 std::vector<double> SvdUtility::readCSV(string filename)
 {
   ifstream data(filename);
@@ -72,6 +73,7 @@ std::vector<double> SvdUtility::readCSV(string filename)
   return parsedCsv;
 }
 
+// reads specified rows of CSV cell by cell as vector
 std::vector<double> SvdUtility::readCSV(string filename, int rows)
 {
   ifstream data(filename);
@@ -90,6 +92,7 @@ std::vector<double> SvdUtility::readCSV(string filename, int rows)
   return parsedCsv;
 }
 
+// writes vector cell by cell as CSV
 void SvdUtility::writeCSV(string filename, std::vector<double> values, int m, int n)
 {
   ofstream data;
@@ -105,6 +108,7 @@ void SvdUtility::writeCSV(string filename, std::vector<double> values, int m, in
   data.close();
 }
 
+// returns number of rows of CSV
 int SvdUtility::getCSVRowCount(string filename)
 {
   ifstream data(filename);
@@ -118,6 +122,7 @@ int SvdUtility::getCSVRowCount(string filename)
   return i;
 }
 
+// returns number of columns of CSV
 int SvdUtility::getCSVColumnCount(string filename)
 {
   ifstream data(filename);

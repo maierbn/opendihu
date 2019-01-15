@@ -7,6 +7,7 @@
 using namespace std;
 
 // applies SVD and returns vt
+// m columns and n rows
 std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 {
   /*

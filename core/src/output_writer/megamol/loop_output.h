@@ -12,19 +12,20 @@
  *  Call ParaviewWriter::output on the mesh with meshName. This outputs all field variables of the mesh to a paraview readable file.
  */
 
+#ifdef HAVE_ADIOS
 namespace OutputWriter
 {
 
 namespace MegaMolLoopOverTuple
 {
- 
+
  /** Static recursive loop from 0 to number of entries in the tuple
  *  Stopping criterion
  */
 template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i == std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables, std::string meshName,
-           PythonConfig specificSettings
+           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox
 )
 {}
 
@@ -34,7 +35,7 @@ loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldV
 template<typename OutputFieldVariablesType, typename AllOutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldVariablesType &allFieldVariables, std::string meshName, 
-           PythonConfig specificSettings);
+           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
 
 
 /** Loop body for a vector element
@@ -42,24 +43,25 @@ loopOutput(const OutputFieldVariablesType &fieldVariables, const AllOutputFieldV
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 output(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
-       PythonConfig specificSettings);
+       PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
 output(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
-       PythonConfig specificSettings);
+       PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
 
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 output(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::string meshName, 
-       PythonConfig specificSettings);
+       PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
 
 }  // namespace MegaMolLoopOverTuple
 
 }  // namespace OutputWriter
 
+#endif
 #include "output_writer/megamol/loop_output.tpp"

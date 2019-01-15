@@ -47,3 +47,4 @@ from SvgPath import SvgPath
 #from flex import flex
 from pythonPackages import pythonPackages
 from MegaMol import MegaMol
+from ADIOS import ADIOS

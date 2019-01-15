@@ -1,5 +1,6 @@
 import os, sys, copy, shutil, subprocess, shlex
 import time
+import datetime
 from threading import Thread
 import sconsconfig.utils as utils
 from sconsconfig.utils import conv
@@ -570,6 +571,11 @@ class Package(object):
         import tarfile
         tf = tarfile.open(filename)
         tf.extractall(unpack_dir)
+        
+        # get name of extracted directory
+        entries = os.listdir(unpack_dir)
+        print("entries: {}".format(entries))
+        #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
         try:
@@ -657,12 +663,13 @@ class Package(object):
       ctx.Log("Failed to locate build handler\n")
       return False
 
-    # Make a file to log stdout from the commands.
-    stdout_log = open('stdout.log', 'w')
 
     # Process each command in turn.
     for cmd in handler:
 
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      
       # It's possible to have a tuple, indicating a function and arguments.
       if isinstance(cmd, tuple):
         ctx.Log("Command is a Python function\n")
@@ -709,6 +716,7 @@ class Package(object):
     
         ctx.Log("  $"+cmd+"\n")
 
+        output = ""
         try:
           self.command_running = True
           t = Thread(target=self.monitor_progress, args=(self.number_output_lines,))
@@ -723,21 +731,26 @@ class Package(object):
     
           
           # get output
-          with file('stdout.log') as f:
-            output = f.read()
+          if os.path.exists('stdout.log'):
+            with file('stdout.log') as f:
+              output = f.read()    
+            stdout_log.close()
+            os.remove('stdout.log')
           ctx.Log(output+"\n")
         except:
           self.command_running = False
-          if not allow_errors:
-            stdout_log.close()
-            sys.stdout.write('failed.\n')
+          stdout_log.close()
+          if os.path.exists('stdout.log'):
             with file('stdout.log') as f:
-             output = f.read()
+              output = f.read()
+            stdout_log.close()
+            os.remove('stdout.log')
+          if not allow_errors:
+            sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
             return False
-
-    # Don't forget to close the log.
-    stdout_log.close()
+          else:
+            ctx.Log("Command failed (but allowed): \n"+output)
 
     # If it all seemed to work, write a dummy file to indicate this package has been built.
     success = open('scons_build_success', 'w')
@@ -773,7 +786,9 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    
+    
     bkp = env_setup(ctx.env, **kwargs)
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     

@@ -68,7 +68,11 @@ void Manager::createOutputWriterFromSettings(DihuContext context, PythonConfig s
     }
     else if (typeString == "MegaMol")
     {
+#ifdef HAVE_ADIOS
       outputWriter_.push_back(std::make_shared<MegaMol>(context, settings));
+#else
+      LOG(ERROR) << "Not compiled with ADIOS, but a \"MegaMol\" output writer was specified. Ignoring this output writer.";
+#endif
     }
     else
     {

@@ -297,6 +297,14 @@ initialize()
   initialized_ = true;
 }
 
+template<typename DiscretizableInTimeType>
+std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace,DiscretizableInTimeType::nComponents()>>
+TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
+dirichletBoundaryConditions()
+{
+  return dirichletBoundaryConditions_;
+}
+
 template<int nStates, typename FunctionSpaceType>
 void TimeSteppingSchemeOde<CellmlAdapter<nStates, FunctionSpaceType>>::
 initialize()

@@ -3,12 +3,13 @@
 #include <Python.h>
 #include "utility/python_utility.h"
 
+
 namespace ModelOrderReduction
 {
 template<typename TimeSteppingImplicitType>
 ImplicitEulerReduced<TimeSteppingImplicitType>::
 ImplicitEulerReduced(DihuContext context):
-TimeSteppingSchemeOdeReducedImplicit<TimesteppingImplicitType>(context,"ImplicitEuler"), initialized_(false)
+TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>(context,"ImplicitEuler")
 {
 }
 
@@ -21,24 +22,24 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::start(this->durationLogKey_);
   
   // compute timestep width
-  double timeSpan = this->timestepping_.endTime_ - this->timestepping_.startTime_;
+  double timeSpan = this->endTime_ - this->startTime_;
   
-  LOG(DEBUG) << "ReducedOrderImplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timestepping_.timeStepWidth_
-  << " n steps: " << this->timestepping_.numberTimeSteps_;
+  LOG(DEBUG) << "ReducedOrderImplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+  << " n steps: " << this->numberTimeSteps_;
   
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
-  Vec &solution = this->fullTimestepping_.data_->solution().getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution= this->data().solution().getValuesContiguous();
+  Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &redSolution= this->data().solution()->getValuesContiguous();
   
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // loop over time steps
-  double currentTime = this->.startTime_;
+  double currentTime = this->startTime_;
   
-  for (int timeStepNo = 0; timeStepNo < this->.numberTimeSteps_;)
+  for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0 )
     {
@@ -54,17 +55,17 @@ advanceTimeSpan()
     ///   TO IMPLEMENT
     
     // adjust the full-order rhs vector such that boundary conditions are satisfied
-    this->fullTimestepping_->applyInRightHandSide(this->fullTimestepping_->solution(), this->fullTimestepping_->boundaryConditionsRightHandSideSummand());
+    this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
     
     // transfer rhs to reduced space
-    MatMultReduced(basisTransp,solution,redSolution); 
+    this->MatMultReduced(basisTransp,solution,redSolution); 
     
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(redSolution, redSolution);
     
     // transfer to full-order space
-    MatMultFull(basis,redSolution,solution);
+    this->MatMultFull(basis,redSolution,solution);
     
     ///   TO IMPLEMENT
     
@@ -93,7 +94,7 @@ template<typename TimeSteppingImplicitType>
 void ImplicitEulerReduced<TimeSteppingImplicitType>::
 run()
 {
-  TimeSteppingSchemeOdeReduced::run();
+  TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::run();
   
 }
   

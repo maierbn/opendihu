@@ -10,8 +10,8 @@ namespace ModelOrderReduction
 {
   template<typename TimeSteppingExplicitType>
   TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>::
-  TimeSteppingSchemeOdeReducedExplicit(DihuContext context):
-  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,"ExplicitEulerReduced")
+  TimeSteppingSchemeOdeReducedExplicit(DihuContext context,std::string name):
+  TimeSteppingSchemeOdeReduced<TimeSteppingExplicitType>(context,name)
   {
   }
   

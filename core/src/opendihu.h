@@ -31,8 +31,10 @@
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
 
 //#include "model_order_reduction/mor.h"
-#include "model_order_reduction/time_stepping_reduced_explicit.h"
-#include "model_order_reduction/time_stepping_reduced_implicit.h"
+//#include "model_order_reduction/time_stepping_reduced_explicit.h"
+//#include "model_order_reduction/time_stepping_reduced_implicit.h"
+#include "model_order_reduction/explicit_euler_reduced.h"
+#include "model_order_reduction/implicit_euler_reduced.h"
 
 #include "postprocessing/streamline_tracer.h"
 #include "postprocessing/parallel_fiber_estimation.h"

@@ -18,6 +18,7 @@ class TimeSteppingImplicit :
 public:
   
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
+  typedef Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> DataImplicit;
 
   //! constructor
   TimeSteppingImplicit(DihuContext context, const std::string name);
@@ -27,7 +28,10 @@ public:
   
   //! set the system matrix
   virtual void initialize();
-   
+  
+  //! data for implicit timestepping
+  DataImplicit &dataImplicit();
+  
 protected:
   
   //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme

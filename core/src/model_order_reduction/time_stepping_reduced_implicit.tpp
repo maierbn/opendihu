@@ -3,17 +3,19 @@
 #include <Python.h>
 #include "utility/python_utility.h"
 #include <petscksp.h>
+
+#include <petscmat.h> 
 #include "solver/solver_manager.h"
 #include "solver/linear.h"
 #include "data_management/time_stepping/time_stepping_implicit.h"
+#include "time_stepping_scheme/time_stepping_scheme_ode.h"
 
 namespace ModelOrderReduction
 {
 template<typename TimeSteppingImplicitType>
 TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
-TimeSteppingSchemeOdeReducedImplicit(DihuContext context):
-TimeSteppingSchemeOdeReduced<TimesteppingImplicitType>(context,"ImplicitEulerReduced"),
-initialized_(false)
+TimeSteppingSchemeOdeReducedImplicit(DihuContext context,std::string name):
+TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>(context,name)
 {
 }
 
@@ -27,19 +29,22 @@ initialize()
   LOG(TRACE) << "TimeSteppingSchemeOdeReducedImplicit::initialize()";
   
   // TO BE IMPLEMENTED
-  TimeSteppingSchemeOdeReduced::initialize();
+  TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
   // compute the system matrix
   this->setSystemMatrix(this->timeStepWidth_);
+  
+  // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
+  this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
   
   // initialize the linear solver that is used for solving the implicit system
   initializeLinearSolver();
   
   // set matrix used for linear system and preconditioner to ksp context
-  Mat &redSysMatrix = this->dataMOR_->redSysMatrix()->valuesGlobal();
+  Mat redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
   assert(this->ksp_);
   PetscErrorCode ierr;
-  ierr = KSPSetOperators(*ksp_, redSysMatrix, redSysMatrix); CHKERRV(ierr);
+  ierr = KSPSetOperators(*ksp_, redSystemMatrix, redSystemMatrix); CHKERRV(ierr);
   
   // TO BE IMPLEMENTED
   
@@ -50,24 +55,24 @@ initialize()
 }
 
 template<typename TimeSteppingImplicitType>
-void ImplicitEulerReduced<TimeSteppingImplicitType>::
+void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 setSystemMatrix(double timeStepWidth)
 {
-  this->fullTimestepping_.setSystemMatrix(timeStepWidth);
-  this->setRedSystemMatrix(this->fullTimestepping_.dataImplicit_->systemMatrix(), this->dataMOR_->redSystemMatrix());
+  // is it set by initializing the fullTimestepping?
+  //this->fullTimestepping_.setSystemMatrix(timeStepWidth);
+  this->setRedSystemMatrix();
 }
 
-template<typename FunctionSpaceRowsType>
-void MORBase<FunctionSpaceRowsType>::
+template<typename TimeSteppingImplicitType>
+void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 setRedSystemMatrix()
 {
   //to be implemented
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal(); 
-  
-  std::shared_ptr<PartitionedPetscMat<typename this->fullTimestepping_.FunctionSpace>> ptr_systemMatrix=this->fullTimestepping_.data().systemMatrix();
-  Mat systemMatrix=ptr_systemMatrix->valuesGlobal();
-  Mat redSystemMatrix=this->dataMOR_.redSystemMatrix()->valuesGlobal();
+   
+  Mat &systemMatrix=this->fullTimestepping_.dataImplicit().systemMatrix()->valuesGlobal();
+  Mat &redSystemMatrix=this->dataMOR_->redSystemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr; 
   
@@ -88,35 +93,38 @@ setRedSystemMatrix()
     MatMatMatMult(basisTransp,systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);      
   }
   else
-  {
+  {    
+    std::shared_ptr<Partition::MeshPartition<typename TimeSteppingImplicitType::FunctionSpace>> 
+    meshPartitionRows=this->fullTimestepping_.dataImplicit().systemMatrix()->meshPartitionRows(); //compatible for multiplication  
     
-    ////const std::shared_ptr<FunctionSpaceType> functionSpaceReduced=this->dataMOR->FunctionSpace();  
-    //std::shared_ptr<Partition::MeshPartition<::FunctionSpace::Generic>>
-    //meshPartitionRows_=this->dataMOR_->basisTransp()->meshPartitionRows();
+    std::shared_ptr<Partition::MeshPartition<typename ::FunctionSpace::Generic>>
+    meshPartitionColumns=this->dataMOR_->basisTransp()->meshPartitionRows();    
     
-    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>>
-    meshPartitionRows_=redSystemMatrix.meshPartitionRows();
+    //std::shared_ptr<PartitionedPetscMat<typename ::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> basis_submatrix;
+    std::shared_ptr<PartitionedPetscMat<typename ::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> basisTransp_submatrix;
     
-    std::shared_ptr<Partition::MeshPartition<ptr_systemMatrix.RowsFunctionSpace>> 
-    meshPartitionColumns_=ptr_systemMatrix.meshPartitionRows(); //compatible for multiplication  
+    //basis_submatrix = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>>(
+      //meshPartitionRows, meshPartitionColumns, 1, "basis_submatrix");
+    basisTransp_submatrix= std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>>(
+      meshPartitionColumns, meshPartitionRows, 1, "basisTransp_submatrix");
+      
+    //Mat &basis_sbm=basis_submatrix->valuesGlobal();
+    Mat basis_sbm;
+    Mat basisTransp_sbm=basisTransp_submatrix->valuesGlobal();
+    //Mat &basisTransp_sbm;
     
-    std::shared_ptr<PartitionedPetscMat<ptr_systemMatrix.RowsFunctionSpace,redSystemMatrix.RowsFunctionSpace>> basis_submatrix;
-    std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,ptr_systemMatrix.RowsFunctionSpace>> basisTransp_submatrix;
-    
-    Mat &basis_sbm=basis_submatrix->valuesGlobal();
-    Mat &basisTransp_sbm=basisTransp_submatrix->valuesGlobal();
-    
-    const PetscScalar vals_total[ncols_bs];
-    const PetscScalar vals_sbm[nrows_sys];
+    const PetscScalar *vals_total;
+    //const PetscScalar vals_total[ncols_bs];
+    //const PetscScalar vals_sbm[nrows_sys];
     
     for( int row=0; row<nrows_bs;row++)
     {
       // to get each row of the V_k^T
-      MatGetRow(basisTransp,row,Null,Null,&vals_total); CHKERRV(ierr);    
+      MatGetRow(basisTransp,row,NULL,NULL,&vals_total); CHKERRV(ierr);    
       MatSetValuesRow(basisTransp_sbm,row,vals_total); CHKERRV(ierr); //inconsistent sizes may work. Otherwise build vals_sbm.     
     }
     
-    MatTransposeGetMat(basisTransp_sbm,&basis_sbm); CHKERRV(ierr);
+    MatCreateTranspose(basisTransp_sbm,&basis_sbm); CHKERRV(ierr);
     
     //D=A*B*C
     MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
@@ -129,10 +137,10 @@ void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
   // solve systemMatrix*output = input for output
-  Mat &redSysMatrix = this->dataMOR_->redSysMatrix()->valuesGlobal();
+  Mat &redSystemMatrix = this->dataMOR_->redSystemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr;
-  PetscUtility::checkDimensionsMatrixVector(redSysMatrix, input);
+  PetscUtility::checkDimensionsMatrixVector(redSystemMatrix, input);
   
   // solve the system, KSPSolve(ksp,b,x)
   ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);

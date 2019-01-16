@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     {
       LOG(INFO) << "Reduced order ExplicitEuler";
       
-      ModelOrderReduction::TimeSteppingSchemeOdeReducedExplicit<
+      ModelOrderReduction::ExplicitEulerReduced<
         TimeSteppingScheme::ExplicitEuler<
           SpatialDiscretization::FiniteElementMethod<
             Mesh::StructuredRegularFixedOfDimension<1>,
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     else if(topLevelSettings_timeStepping.hasKey("ImplicitEulerReduced"))
     {
       LOG(INFO) << "Reduced order ImplicitEuler";
-      ModelOrderReduction::TimeSteppingSchemeOdeReducedImplicit<
+      ModelOrderReduction::ImplicitEulerReduced<
         TimeSteppingScheme::ImplicitEuler<
           SpatialDiscretization::FiniteElementMethod<
             Mesh::StructuredRegularFixedOfDimension<1>,

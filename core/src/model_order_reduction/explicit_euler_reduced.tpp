@@ -11,7 +11,7 @@ namespace ModelOrderReduction
   template<typename TimeSteppingExplicitType>
   ExplicitEulerReduced<TimeSteppingExplicitType>::
   ExplicitEulerReduced(DihuContext context):
-  TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>(context,"ExplicitEulerReduced"), initialized_(false) 
+  TimeSteppingSchemeOdeReducedExplicit<TimeSteppingExplicitType>(context,"ExplicitEulerReduced")
   {
   }
    

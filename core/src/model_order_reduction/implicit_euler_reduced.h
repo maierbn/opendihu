@@ -1,12 +1,12 @@
 #pragma once
 
 #include "control/dihu_context.h"
-#include "model_order_reduction/time_stepping_scheme_reduced_implicit.h"
+#include "model_order_reduction/time_stepping_reduced_implicit.h"
 
 namespace ModelOrderReduction
 {
   template<typename TimeSteppingImplicitType>
-  class  : ImplicitEulerReduced
+  class  ImplicitEulerReduced:
   public TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>
   {
   public:

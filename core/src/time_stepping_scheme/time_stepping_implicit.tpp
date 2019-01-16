@@ -49,6 +49,14 @@ initialize()
 }
 
 template<typename DiscretizableInTimeType>
+Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
+&TimeSteppingImplicit<DiscretizableInTimeType>::
+dataImplicit()
+{
+  return *dataImplicit_;
+}
+
+template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {

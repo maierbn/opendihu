@@ -93,7 +93,12 @@ setRedSystemMatrix()
   {
     //! Reduction of the system matrix in case of compatible row spaces of the system matrix and reduced basis    
     //D=A*B*C
-    MatMatMatMult(basisTransp,systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);      
+    //This method is not able to multiply combination of three sparse and dense matrices
+    //MatMatMatMult(basisTransp,systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+    Mat matrix;
+    MatDuplicate(basis,MAT_DO_NOT_COPY_VALUES,&matrix);
+    MatMatMult(systemMatrix,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);
+    MatMatMult(basisTransp,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
   }
   else
   {    
@@ -130,7 +135,13 @@ setRedSystemMatrix()
     MatCreateTranspose(basisTransp_sbm,&basis_sbm); CHKERRV(ierr);
     
     //D=A*B*C
-    MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+    //This method is not able to multiply combination of three sparse and dense matrices
+    //MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+    Mat matrix;
+    MatDuplicate(basis_sbm,MAT_DO_NOT_COPY_VALUES,&matrix);
+    MatMatMult(systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);
+    MatMatMult(basisTransp_sbm,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+        
   }
   
 }

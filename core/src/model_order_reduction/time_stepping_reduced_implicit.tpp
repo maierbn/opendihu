@@ -81,10 +81,13 @@ setRedSystemMatrix()
   MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
   PetscInt nrows_bs=mat_sz_1;
   PetscInt ncols_bs=mat_sz_2;
+  LOG(DEBUG) << "setRedSystemMatrix, nrows_bs: " << nrows_bs << " ncols_bs: " << ncols_bs;
   
   MatGetSize(systemMatrix,&mat_sz_1,&mat_sz_2);
   PetscInt nrows_sys=mat_sz_1; //square matrix
-  //PetscInt ncols_sys=mat_sz_2; 
+  PetscInt ncols_sys=mat_sz_2;
+  
+  LOG(DEBUG) << "setRedSystemMatrix, nrows_sys: " << nrows_sys << " ncols_sys: " << ncols_sys;
   
   if(ncols_bs == nrows_sys)
   {

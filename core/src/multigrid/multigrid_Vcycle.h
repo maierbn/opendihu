@@ -2,10 +2,10 @@
 
 #include "operator_splitting/operator_splitting.h"
 
-namespace OperatorSplitting
+namespace Multigrid
 {
 
-template<typename TimeStepping1, typename TimeStepping2>
+template<typename FiniteElement1, typename FiniteElement2>
 class multigrid_Vcycle :
   public OperatorSplitting<TimeStepping1,TimeStepping2>
 {

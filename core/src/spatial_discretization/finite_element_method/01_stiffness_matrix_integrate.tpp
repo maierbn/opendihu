@@ -130,4 +130,4 @@ setStiffnessMatrix()
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-};
+}  // namespace

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env ../../../../dependencies/python/install/bin/python3
 # -*- coding: utf-8 -*-
 
 #
@@ -21,7 +21,7 @@ if len(sys.argv) > 1:
   filename = sys.argv[1]
 
 # Create a new plot
-fig = plt.figure(dpi=600)
+fig = plt.figure(figsize=(15,15))
 ax = mplot3d.Axes3D(fig)
 
 # Load the STL files and add the vectors to the plot

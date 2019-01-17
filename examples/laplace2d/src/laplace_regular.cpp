@@ -3,6 +3,8 @@
 
 #include "opendihu.h"
 
+#include "easylogging++.h"
+
 int main(int argc, char *argv[])
 {
   // 2D Laplace equation 0 = du^2/dx^2 + du^2/dy^2
@@ -18,6 +20,6 @@ int main(int argc, char *argv[])
   > equationDiscretized(settings);
   
   equationDiscretized.run();
-  
+
   return EXIT_SUCCESS;
 }

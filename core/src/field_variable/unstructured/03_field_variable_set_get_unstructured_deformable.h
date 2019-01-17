@@ -109,6 +109,6 @@ public:
   void zeroEntries();
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/unstructured/03_field_variable_set_get_unstructured_deformable.tpp"

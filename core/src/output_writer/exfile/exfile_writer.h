@@ -48,7 +48,7 @@ public:
 };
 
 
-};  // namespace
+} // namespace
 
 #include "output_writer/exfile/exfile_writer_structured.tpp"
 #include "output_writer/exfile/exfile_writer_unstructured_deformable.tpp"

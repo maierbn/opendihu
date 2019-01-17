@@ -350,4 +350,4 @@ zeroEntries()
   this->values_->zeroEntries();
 }
 
-};  // namespace
+} // namespace

@@ -99,6 +99,6 @@ public:
 };
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/00_base.tpp"

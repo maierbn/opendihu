@@ -21,7 +21,7 @@ public:
 
   typedef std::vector<typename TimeSteppingScheme::TransferableSolutionDataType> TransferableSolutionDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
-  typedef typename TimeSteppingScheme::Data Data;
+  typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
 
   //! constructor
   MultipleInstances(DihuContext context);
@@ -41,6 +41,9 @@ public:
   //! returns the Petsc solution vector
   Vec &solution();
 */
+
+  //! return the data object
+  Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
@@ -65,9 +68,9 @@ protected:
   
   std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   ///< the rank nos of all computed instances of this MultipleInstances object
 
-  ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> data_;  ///< the data object
+  Data data_;  ///< the data object
 };
 
-};
+}  // namespace
 
 #include "control/multiple_instances.tpp"

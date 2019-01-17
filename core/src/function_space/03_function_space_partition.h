@@ -44,7 +44,7 @@ public:
 protected:
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object that can create partitions
   std::shared_ptr<Partition::MeshPartition<FunctionSpace<MeshType,BasisFunctionType>,MeshType>> meshPartition_;   ///< the partition information that is stored locally, i.e. the subdomain of the domain decomposition
-
+  bool forcePartitioningCreationFromLocalNumberOfElements_;    ///< if the meshPartition should be created from localNodePositions for StructuredDeformable meshes, ignoring values of config "inputMeshIsGlobal"
 };
 
 /** specialization for structured meshes 

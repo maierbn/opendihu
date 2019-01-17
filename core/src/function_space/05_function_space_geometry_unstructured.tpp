@@ -16,4 +16,4 @@ fieldVariable(std::string name)
     return nullptr;
 }*/
 
-};  // namespace
+} // namespace

@@ -93,4 +93,4 @@ buildPyDataObject(OutputFieldVariablesType fieldVariables,
   return data;
 }
 
-};
+}  // namespace

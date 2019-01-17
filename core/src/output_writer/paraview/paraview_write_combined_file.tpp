@@ -389,11 +389,11 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   // broadcast length of filename
   MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()));
 
-  char receiveBuffer[filenameLength+1];
-  strcpy(receiveBuffer, filename.str().c_str());
-  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer, filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
+  std::vector<char> receiveBuffer(filenameLength+1, char(0));
+  strcpy(receiveBuffer.data(), filename.str().c_str());
+  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
 
-  std::string filenameStr = receiveBuffer;
+  std::string filenameStr(receiveBuffer.begin(), receiveBuffer.end());
 
   // remove file if it exists, synchronization afterwards by MPI calls, that is why the remove call is already here
   assert(this->rankSubset_);
@@ -616,4 +616,4 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 }
 
-};  // namespace
+} // namespace

@@ -41,5 +41,5 @@ protected:
   std::array<std::string,nComponentsValue> componentNames_;   ///< names of the components, e.g. "x","y","z"
 };
 
-}; // namespace
+}  // namespace
 #include "field_variable/01_field_variable_components.tpp"

@@ -24,6 +24,8 @@ sconsconfig/packages/LAPACK.py
 sconsconfig/packages/METIS.py
 sconsconfig/packages/MPI.py
 sconsconfig/packages/Matplotlib.py
+sconsconfig/packages/MegaMol.py
+sconsconfig/packages/MegaMolConsole.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py
@@ -59,6 +61,7 @@ sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
 sconsconfig/packages/libxml2.py
 sconsconfig/packages/pugixml.py
+sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py
 sconsconfig/packages/re2.py
 sconsconfig/packages/sqlite3.py

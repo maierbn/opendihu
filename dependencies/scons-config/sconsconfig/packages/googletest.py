@@ -50,7 +50,11 @@ int main(int argc, char **argv) {
           
         self.libs = ["gtest"]
         self.headers = ["gtest/gtest.h"]
-
+        self.extra_libs=[
+          [],
+          ['pthread']
+        ]
+        
     def check(self, ctx):
         env = ctx.env
         ctx.Message('Checking for googletest ...    ')

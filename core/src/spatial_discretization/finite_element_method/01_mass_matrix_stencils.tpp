@@ -967,4 +967,4 @@ setMassMatrix()
   massMatrix->assembly(MAT_FINAL_ASSEMBLY);
 }
 
-};    // namespace
+}  // namespace

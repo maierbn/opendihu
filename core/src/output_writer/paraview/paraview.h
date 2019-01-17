@@ -77,7 +77,7 @@ protected:
   std::vector<int> nPreviousValues_;    ///< cached values used in writeCombinedValuesVector
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/paraview/paraview.tpp"
 #include "output_writer/paraview/paraview_write_combined_file.tpp"

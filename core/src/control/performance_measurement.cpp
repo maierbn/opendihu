@@ -175,7 +175,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     }
     else
     {
-      char b[0];
+      char b[1];
       MPI_Status status;
       MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
     }
@@ -301,4 +301,4 @@ void PerformanceMeasurement::parseStatusInformation()
    LOG(INFO) << "Total user time: " << message.str();
 }
 
-};  // namespace
+} // namespace

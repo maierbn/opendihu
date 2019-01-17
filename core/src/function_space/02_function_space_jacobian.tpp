@@ -80,4 +80,4 @@ computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFuncti
   return jacobian;
 }
 */
-};  // namespace
+} // namespace

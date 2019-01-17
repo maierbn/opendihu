@@ -166,4 +166,38 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
   return false;
 }
 
+template<typename FunctionSpace1Type, typename FunctionSpace2Type>
+void Manager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2)
+{
+  // check if mapping functionSpace1 -> functionSpace2 is defined in config
+  assert(functionSpaces_.find(functionSpace1->meshName()) != functionSpaces_.end());
+  assert(functionSpaces_.find(functionSpace2->meshName()) != functionSpaces_.end());
+
+  std::string sourceMeshName = functionSpace1->meshName();
+  std::string targetMeshName = functionSpace2->meshName();
+
+  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
+  {
+    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
+    {
+      mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
+        std::make_shared<MappingBetweenMeshes<FunctionSpace1Type,FunctionSpace2Type>>(functionSpace1,functionSpace2)
+      );
+    }
+  }
+  sourceMeshName = functionSpace2->meshName();
+  targetMeshName = functionSpace1->meshName();
+
+  if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
+  {
+    if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
+    {
+      mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
+        std::make_shared<MappingBetweenMeshes<FunctionSpace2Type,FunctionSpace1Type>>(functionSpace2,functionSpace1)
+      );
+    }
+  }
+}
+
+
 }   // namespace

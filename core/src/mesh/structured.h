@@ -44,6 +44,6 @@ protected:
   std::array<int, D> nRanks_;    ///< when the number of elements is specified locally the grid of ranks of the partitioning
 };
 
-};    // namespace
+}  // namespace
 
 #include "mesh/structured.tpp"

@@ -66,6 +66,6 @@ protected:
   TimeSteppingScheme timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
 };
 
-};
+}  // namespace
 
 #include "control/load_balancing/load_balancing.tpp"

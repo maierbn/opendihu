@@ -463,6 +463,13 @@ knowsMeshType()
   return true;
 }
 
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+data()
+{
+  return dataMultidomain_;
+}
+
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

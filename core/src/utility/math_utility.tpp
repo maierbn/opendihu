@@ -24,4 +24,4 @@ void normalize(VecD<D> &vector)
   vector *= 1./norm<D>(vector);
 }
 
-}; // namespace
+}  // namespace

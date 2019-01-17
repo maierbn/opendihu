@@ -16,6 +16,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
 
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
@@ -39,6 +40,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
 {
   assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
 
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
@@ -62,6 +64,8 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
 {
+  assert(this->values_);
+
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithGhosts();
   if (onlyNodalValues)
@@ -94,6 +98,8 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
 {
+  assert(this->values_);
+
   // determine the number of values to be retrived which is lower than the number of dofs for Hermite with only nodal values
   dof_no_t nValues = this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
   if (onlyNodalValues)
@@ -179,6 +185,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
 {
+  assert(this->values_);
   int nValues = dofLocalNo.size();
   values.resize(nValues*nComponents);
 
@@ -206,6 +213,7 @@ getElementValues(int componentNo, element_no_t elementNo,
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
     indices[dofIndex] = this->functionSpace_->getDofNo(elementNo, dofIndex);
+    //LOG(DEBUG) << "getElementValues el. " << elementNo << ", dof " << indices[dofIndex];
   }
   
   // get the values
@@ -272,6 +280,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 extractComponentCopy(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
 {
   assert(extractedFieldVariable->partitionedPetscVec());
+  assert(this->values_);
   this->values_->extractComponentCopy(componentNo, extractedFieldVariable->partitionedPetscVec());
 }
 
@@ -280,6 +289,7 @@ void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 extractComponentShared(int componentNo, std::shared_ptr<FieldVariable<FunctionSpaceType,1>> extractedFieldVariable)
 {
   assert(extractedFieldVariable->partitionedPetscVec());
+  assert(this->values_);
   this->values_->extractComponentShared(componentNo, extractedFieldVariable->partitionedPetscVec());
 }
 
@@ -288,6 +298,7 @@ template<int nComponents2>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents2>> extractedVec)
 {
+  assert(this->values_);
   this->values_->template restoreExtractedComponent<nComponents2>(extractedVec);
 }
 
@@ -332,6 +343,7 @@ setValues(int nValues, const std::vector<dof_no_t> &dofNosLocal, const std::vect
   if (nValues == 0)
     return;
 
+  assert(this->values_);
   if (dofNosLocal.size() < nValues)
   {
     LOG(ERROR) << "dofNosLocal.size()=" << dofNosLocal.size() << ", nValues=" << nValues;
@@ -449,4 +461,4 @@ zeroEntries()
   assert(this->values_);
   this->values_->zeroEntries();
 }
-};
+}  // namespace

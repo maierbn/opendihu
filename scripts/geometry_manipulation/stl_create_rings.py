@@ -226,13 +226,13 @@ def order_loop(loop, first_point):
     if not next_point_found:
       if debug: 
         print("no point found that continues loop")
-      print("Error: loop for z={} could not be closed. Maybe there are triangles missing?".format(z_samples[loop_no]))
+      print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][2]))
       break
   return new_loop
       
 def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh):
   """
-  Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip
+  Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip (including those)
   :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
   :param bottom_clip: the bottom z-value where to clip the muscle
   :param top_clip: the top z-value where to clip the muscle
@@ -258,11 +258,13 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
 
   debug = False
 
+  print("Create {} loops for z in [{},{}] from the mesh {}.".format(n_loops, bottom_clip, top_clip, input_filename))
   # loop over z samples
   for loop_no,z_value in enumerate(z_samples):
       
-    print("loop no {}/{}".format(loop_no,len(z_samples)))
+    print("Loop no {}/{}".format(loop_no,len(z_samples)))
 
+    # compute all intersecting line segments that lie in the surface and have the specified z_value
     create_loop(z_value, stl_mesh, loops[loop_no])
     
   if debug:      
@@ -314,9 +316,9 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
     print("")
     print("loops: ",loops)
           
-  print("The following rings have been extracted:")
+  print("The following loops have been extracted:")
   for (loop,z_value) in zip(loops,z_samples):
-    print("at z = {}, n segments: {}".format(z_value,len(loop)))
+    print("at z = {:0.3f} comprising {} segments".format(z_value,len(loop)))
           
   if write_output_mesh:
       
@@ -411,7 +413,6 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
   From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
-  The direction is such that the distance of the curve
   :param stl_mesh: stl mesh that contains the closed surface mesh of the muscle, aligned with the z-axis, can be retrieved by get_stl_mesh
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
@@ -423,11 +424,6 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   
   debug = False                 # set this to true to enable debugging output
   write_output_mesh = False    # set this to true to output 4 stl meshes that explain the algorithm
-  
-  if z_value == 155:
-    print("z_value = 155, set debug to true")
-    debug = True
-    write_output_mesh = True
   
   # create a full loop at the given z_value
   loop = []
@@ -453,7 +449,7 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   for i,edge in enumerate([[new_loop[i], new_loop[(i+1)%len(new_loop)]] for i in range(len(new_loop))]):
     p0 = np.array(edge[0])
     p1 = np.array(edge[1])
-    u = -p0 + p1
+    u = -p0 + p1   # edge
     
     if debug:
       print("edge {}, u: {}".format(edge, u))
@@ -755,10 +751,10 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
       
     markers_start_end = []
     markers_loop_start_end = []
-    create_point_marker(start_point, markers_start_end)
-    create_point_marker(end_point, markers_start_end)
-    create_point_marker(loop_start_point, markers_loop_start_end, 0.04)
-    create_point_marker(loop_end_point, markers_loop_start_end, 0.08)
+    create_point_marker(start_point, markers_start_end, 0.1)
+    create_point_marker(end_point, markers_start_end, 0.1)
+    create_point_marker(loop_start_point, markers_loop_start_end, 0.08)
+    create_point_marker(loop_end_point, markers_loop_start_end, 0.16)
         
     
     for point in result_points:

@@ -4,6 +4,7 @@
 #include <petscsys.h>
 #include <list>
 #include <memory>
+#include <thread>
 #include <map>
 #include "partition/partition_manager.h"
 #include "control/python_config.h"
@@ -65,6 +66,12 @@ private:
   //! initiaize the easylogging++ framework
   void initializeLogging(int argc, char *argv[]);
 
+  //! start MegaMol in a new thread
+  void initializeMegaMol(int argc, char *argv[]);
+
+  //! initialize python interpreter
+  void initializePython(int argc, char *argv[], bool explicitConfigFileGiven);
+
   PythonConfig pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
 
   static std::shared_ptr<Mesh::Manager> meshManager_;   ///< object that saves all meshes that are used
@@ -76,5 +83,8 @@ private:
   static int nRanksCommWorld_;   ///< number of ranks in MPI_COMM_WORLD
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
   static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
+  static std::shared_ptr<std::thread> megamolThread_;   ///< thread that runs megamol
+  static std::vector<char *> megamolArgv_;   ///< the arguments use for the megamol instance
+  static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments
   bool doNotFinalizeMpi_;  ///< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 };

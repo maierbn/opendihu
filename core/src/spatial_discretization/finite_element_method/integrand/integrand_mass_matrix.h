@@ -17,6 +17,6 @@ public:
 
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.tpp"

@@ -112,4 +112,4 @@ buildPyElementalDofsObject(std::shared_ptr<Mesh::Mesh> meshBase, bool onlyNodalV
   
   return pyElementalDofs;
 }
-};
+}  // namespace

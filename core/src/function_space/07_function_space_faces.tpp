@@ -192,4 +192,4 @@ getFaceDofs(Mesh::face_t face, std::array<dof_no_t,FunctionSpaceBaseDim<2,BasisF
   }
 }
 
-};  // namespace
+} // namespace

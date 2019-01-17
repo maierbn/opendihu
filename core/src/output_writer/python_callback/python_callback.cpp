@@ -15,4 +15,4 @@ PythonCallback::PythonCallback(DihuContext context, PythonConfig settings) : Gen
   onlyNodalValues_ = settings.getOptionBool("onlyNodalValues", true);
 }
 
-};
+}  // namespace

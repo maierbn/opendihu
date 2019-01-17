@@ -28,6 +28,6 @@ private:
   bool onlyNodalValues_;  ///< if only nodal values should be output, this omits the derivative values for Hermite ansatz functions, for Lagrange functions it has no effect
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/python_callback/python_callback.tpp"

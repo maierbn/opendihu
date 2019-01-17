@@ -130,4 +130,4 @@ void ElementToNodeMapping::outputElementExelem(std::ostream &file, element_no_t 
   }
 }
 
-};
+}  // namespace

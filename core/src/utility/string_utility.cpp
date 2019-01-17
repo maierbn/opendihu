@@ -81,4 +81,4 @@ std::string extractBasename(std::string str)
   return str;
 }
 
-}; // namespace
+}  // namespace

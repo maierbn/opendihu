@@ -125,4 +125,4 @@ void PythonFile::write(DataType& data, int timeStepNo, double currentTime)
 
 }
 
-};
+}  // namespace

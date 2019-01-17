@@ -14,4 +14,4 @@ enum values_representation_t
 
 extern const char *valuesRepresentationString[16];
 
-};  // namespace
+} // namespace

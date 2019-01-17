@@ -52,6 +52,6 @@ public:
   static constexpr int averageNNodesPerElement();
 };
 
-};  // namespace
+} // namespace
 
 #include "function_space/00_function_space_base_dim.tpp"

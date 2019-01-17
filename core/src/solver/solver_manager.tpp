@@ -86,4 +86,4 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   return solver;
 }
 
-};   // namespace
+}  // namespace

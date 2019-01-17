@@ -25,7 +25,7 @@ makeShared(const int nComponents, Args && ...args)
       break;
   }
   return nullptr;
-};
+}
 
 template<typename FunctionSpaceType>
 template<typename FieldVariableType>
@@ -61,4 +61,4 @@ createFromFieldVariable(FieldVariableType &fieldVariable, std::string name, std:
   return nullptr;
 }
 
-};  // namespace
+} // namespace

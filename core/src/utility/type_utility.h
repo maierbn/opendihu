@@ -23,4 +23,4 @@ struct isTuple : std::false_type {};
 template<typename... Types>
 struct isTuple<std::tuple<Types...>> : std::true_type {};
  
-};
+}  // namespace

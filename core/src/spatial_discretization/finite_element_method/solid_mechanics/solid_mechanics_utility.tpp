@@ -906,4 +906,4 @@ computePressureFromDisplacements(double deformationGradientDeterminant,
   return pressure;
 }
 
-};  // namespace
+} // namespace

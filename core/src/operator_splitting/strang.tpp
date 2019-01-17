@@ -116,4 +116,4 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-};    // namespace
+}  // namespace

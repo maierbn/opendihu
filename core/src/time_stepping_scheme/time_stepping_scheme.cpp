@@ -137,4 +137,4 @@ PythonConfig TimeSteppingScheme::specificSettings()
   return specificSettings_;
 }
 
-};  // namespace
+} // namespace

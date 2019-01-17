@@ -23,6 +23,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/factory.tpp"

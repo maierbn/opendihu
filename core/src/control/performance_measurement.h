@@ -59,5 +59,5 @@ private:
 template<>
 void PerformanceMeasurement::measureError<double>(std::string name, double differenceVector);
 
-};  // namespace
+} // namespace
 #include "control/performance_measurement.tpp"

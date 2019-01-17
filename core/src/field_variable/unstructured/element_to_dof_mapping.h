@@ -47,4 +47,4 @@ private:
   dof_no_t nDofs_ = 0;            ///< total number of dofs
 };
 
-};  // namespace
+} // namespace

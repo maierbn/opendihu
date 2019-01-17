@@ -357,7 +357,10 @@ class Package(object):
     if self.download_url:
       vars.Add(BoolVariable(upp + '_DOWNLOAD', help='Download and use a local copy of %s.'%name, default=False))
       vars.Add(BoolVariable(upp + '_REDOWNLOAD', help='Force update of previously downloaded copy of %s.'%name, default=False))
-      vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
+    vars.Add(BoolVariable('MPI_IGNORE_MPICC', help='Disable retrieving mpi compile information from mpicc --showme.', default=False))
+    vars.Add(BoolVariable('MPI_DEBUG', help='Build MPI with debugging support for memcheck.', default=False))
+    
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
   ## Set the build handler for an architecture and operating system. Pass in None to the handler
@@ -440,7 +443,10 @@ class Package(object):
     ctx.Log("Downloading into " + base_dir + "\n")
 
     # Setup the filename and build directory name and destination directory.
-    filename = self.download_url[self.download_url.rfind('/') + 1:]
+    if self.download_url == "":
+      filename = ""
+    else:
+      filename = self.download_url[self.download_url.rfind('/') + 1:]
     unpack_dir = "src"
     install_dir = os.path.abspath(os.path.join(base_dir, "install"))
     ctx.Log("Building into " + install_dir + "\n")
@@ -455,16 +461,18 @@ class Package(object):
     ctx.Log("  unpack_dir:  ["+unpack_dir+"] (where to unpack)\n")
 
     # Download if the file is not already available.
-    if not os.path.exists(filename) or force_redownload:
-      if not self.auto_download(ctx, filename):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(filename) or force_redownload:
+        if not self.auto_download(ctx, filename):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Unpack if there is not already a build directory by the same name.
-    if not os.path.exists(unpack_dir) or force_redownload:
-      if not self.auto_unpack(ctx, filename, unpack_dir):
-        os.chdir(old_dir)
-        return (0, '')
+    if filename != "":
+      if not os.path.exists(unpack_dir) or force_redownload:
+        if not self.auto_unpack(ctx, filename, unpack_dir):
+          os.chdir(old_dir)
+          return (0, '')
 
     # Move into the build directory. Most archives will place themselves
     # in a single directory which we should then move into.
@@ -998,7 +1006,7 @@ class Package(object):
         if res[0]:
           self.base_dir = base # set base directory
           
-          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.")
+          ctx.Log("Combination of (include, lib) directories "+str(inc_sub_dirs) + "," + str(lib_sub_dirs)+" was successful, done with combinations.\n")
           return res
           #break
         env_restore(ctx.env, bkp)

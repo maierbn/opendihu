@@ -494,4 +494,4 @@ reduceMatrix(std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> input, std:
   VLOG(1) << "reduced tangent stiffness matrix: " << PetscUtility::getStringMatrix(output);
 }
 
-}; // namespace
+}  // namespace

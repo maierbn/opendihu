@@ -424,7 +424,7 @@ config = {
     "endTime": 20.0,
     "FiniteElementMethod" : {
       "nElements": [n,n],
-      "physicalExtend": [4.0,4.0],
+      "physicalExtent": [4.0,4.0],
       "relativeTolerance": 1e-15,
     },
   },

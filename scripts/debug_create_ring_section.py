@@ -40,7 +40,10 @@ z_value=61.9
 n_points=9
 
 
-
+start_point=(53.1998,170.785,146)
+end_point=(64.406,187.789,146)
+z_value=72.0
+n_points=9
 result = stl_create_rings.create_ring_section(input_filename, start_point, end_point, z_value, n_points)
 
 print("n points: {}, should be {}".format(len(result), n_points))

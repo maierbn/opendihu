@@ -90,4 +90,4 @@ struct Interface
 
 };
 
-};  // namespace FieldVariable
+} // namespace FieldVariable

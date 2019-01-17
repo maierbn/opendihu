@@ -182,6 +182,6 @@ protected:
   std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/unstructured/02_field_variable_data_unstructured_deformable.tpp"

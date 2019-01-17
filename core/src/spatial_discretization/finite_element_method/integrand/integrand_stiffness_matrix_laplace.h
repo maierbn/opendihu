@@ -57,7 +57,7 @@ public:
 };
 
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_generalized_laplace.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_laplace.tpp"

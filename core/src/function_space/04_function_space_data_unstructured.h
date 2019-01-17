@@ -21,7 +21,7 @@ class FieldVariableBase;
 
 template<typename FunctionSpaceType,int nComponents>
 class Component;
-};
+}
 
 namespace FunctionSpace
 {

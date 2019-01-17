@@ -43,5 +43,7 @@ from bzip2 import bzip2
 from Matplotlib import Matplotlib
 from NumpySTL import NumpySTL
 from SvgPath import SvgPath
-from bison import bison
-from flex import flex
+#from bison import bison
+#from flex import flex
+from pythonPackages import pythonPackages
+from MegaMol import MegaMol

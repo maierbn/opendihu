@@ -50,7 +50,7 @@ public:
                        >> &transferableSolutionData2);
 };
 
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_bidomain.tpp"
+//#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_bidomain.tpp"
 
 /*
 /store/software/opendihu/core/src/operator_splitting/coupling_or_godunov.tpp:53:15: error: ‘transfer’ is not a member of ‘

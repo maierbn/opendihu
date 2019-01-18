@@ -122,7 +122,7 @@ double TimeSteppingScheme::endTime()
   return endTime_;
 }
 
-double TimeSteppingScheme::numberTimeSteps()
+int TimeSteppingScheme::numberTimeSteps()
 {
   return numberTimeSteps_;
 }

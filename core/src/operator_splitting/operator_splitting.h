@@ -12,7 +12,8 @@ namespace OperatorSplitting
 
 template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
-  public ::TimeSteppingScheme::TimeSteppingScheme, public Runnable
+  public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
+  public Runnable
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;

@@ -28,6 +28,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
   if (binaryOutput_)
   {
     VLOG(1) << "Paraview::writeCombinedValuesVector, values: " << values;
+    LOG(DEBUG) << "rankSubset: " << *this->rankSubset_;
 
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
     int nLocalValues = values.size() + (ownRankNo == 0? 1 : 0);
@@ -50,7 +51,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       MPIUtility::handleReturnValue(MPI_Exscan(&nLocalValues, &nPreviousValues, 1, MPI_INT, MPI_SUM, this->rankSubset_->mpiCommunicator()), "MPI_Exscan");
       nPreviousValues_[identifier] = nPreviousValues;
 
-      VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize;
+      VLOG(1) << "reduce data length of total vector, localValuesSize: " << localValuesSize << ", global size: " << globalValuesSize << ", nPreviousValues: " << nPreviousValues;
     }
 
     std::list<int32_t> valuesVector;
@@ -107,6 +108,8 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       MPI_Status status;
       MPIUtility::handleReturnValue(MPI_Wait(&sendRequest, &status), "MPI_Wait", &status);
     }
+
+    VLOG(1) << "firstValueNextRank: " << firstValueNextRank << ", nPreviousValues_[" << identifier << "]: " << nPreviousValues_[identifier] << ", %3=" << (nPreviousValues_[identifier]%3);
 
     // the end of the own values are contained in the own written data plus some part of the first value of the next rank
     if (nPreviousValues_[identifier] % 3 == 0)
@@ -224,7 +227,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
         // this should not happen
         writeBuffer += std::string("===");
 
-        LOG(ERROR) << "Base64 encoding in parallel has a bug, padding needs 3 '=' signs, but only 1 or 2 should be ever needed";
+        LOG(FATAL) << "Base64 encoding in parallel has a bug, padding needs 3 '=' signs, but only 1 or 2 should be ever needed";
       }
       else if (nBytesGlobal % 4 == 2)
       {
@@ -376,12 +379,15 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     }
   }
 
-  VLOG(1) << "vtkPiece: meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes << ", properties: " << vtkPiece.properties
+  LOG(DEBUG) << "vtkPiece: meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes << ", properties: " << vtkPiece.properties
     << ", firstScalarName: " << vtkPiece.firstScalarName << ", firstVectorName: " << vtkPiece.firstVectorName;
 
   combinedMeshesOut = vtkPiece.meshNamesCombinedMeshes;
 
-  // determine filename
+  // add field variable "partitioning" with 1 component
+  vtkPiece.properties.pointDataArrays.push_back(std::pair<std::string,int>("partitioning", 1));
+
+  // determine filename, broadcast from rank 0
   std::stringstream filename;
   filename << this->filenameBaseWithNo_ << ".vtp";
   int filenameLength = filename.str().length();
@@ -435,9 +441,26 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
     offsetValues[i] = 2*nCellsPreviousRanks + 2*i + 1;
   }
 
-  // collect all data for the field variables
-  std::vector<std::vector<double>> fieldVariableValues;
+  // collect all data for the field variables, organized by field variable names
+  std::map<std::string, std::vector<double>> fieldVariableValues;
   ParaviewLoopOverTuple::loopGetNodalValues<OutputFieldVariablesType>(fieldVariables, vtkPiece.meshNamesCombinedMeshes, fieldVariableValues);
+
+  assert (!fieldVariableValues.empty());
+  fieldVariableValues["partitioning"].resize(vtkPiece.properties.nPointsLocal, (double)this->rankSubset_->ownRankNo());
+
+  // if next assertion will fail, output why for debugging
+  if (fieldVariableValues.size() != vtkPiece.properties.pointDataArrays.size())
+  {
+    LOG(DEBUG) << "n field variable values: " << fieldVariableValues.size() << ", n point data arrays: "
+      << vtkPiece.properties.pointDataArrays.size();
+    LOG(DEBUG) << "vtkPiece.meshNamesCombinedMeshes: " << vtkPiece.meshNamesCombinedMeshes;
+    std::stringstream pointDataArraysNames;
+    for (int i = 0; i < vtkPiece.properties.pointDataArrays.size(); i++)
+    {
+      pointDataArraysNames << vtkPiece.properties.pointDataArrays[i].first << " ";
+    }
+    LOG(DEBUG) << "pointDataArraysNames: " <<  pointDataArraysNames.str();
+  }
 
   assert(fieldVariableValues.size() == vtkPiece.properties.pointDataArrays.size());
 
@@ -568,8 +591,10 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   for (std::vector<std::pair<std::string,int>>::iterator pointDataArrayIter = vtkPiece.properties.pointDataArrays.begin();
        pointDataArrayIter != vtkPiece.properties.pointDataArrays.end(); pointDataArrayIter++, fieldVariableNo++)
   {
+    assert(fieldVariableValues.find(pointDataArrayIter->first) != fieldVariableValues.end());
+
     // write values
-    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[fieldVariableNo], fieldVariableNo);
+    writeCombinedValuesVector(fileHandle, ownRankNo, fieldVariableValues[pointDataArrayIter->first], fieldVariableNo);
 
     // write next xml constructs
     writeAsciiDataShared(fileHandle, ownRankNo, outputFileParts[outputFilePartNo].str());

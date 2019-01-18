@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 10.0
+end_time = 1.0
 
 import numpy as np
 import matplotlib 
@@ -46,13 +46,17 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 if len(sys.argv) == 2:
   n_processes_per_fiber = 1
 else:
-  n_processes_per_fiber = (int)(sys.argv[0])
+  try:
+    n_processes_per_fiber = (int)(sys.argv[0])
+  except:
+    n_processes_per_fiber = 1
 
 scenario_name = ""
 if len(sys.argv) <= 3:
   scenario_name = ""
 else:
   scenario_name = sys.argv[1]
+
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -241,8 +245,8 @@ def get_instance_config(i):
             "solverName": "implicitSolver",
           },
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
-            {"format": "MegaMol",  "outputInterval": 1, "filename": "out/fibers", "timeStepCloseInterval": 7000}
+            #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
+            #{"format": "MegaMol",  "outputInterval": 1, "filename": "out/fibers", "timeStepCloseInterval": 7000}
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
             #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
             #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
@@ -343,5 +347,12 @@ config = {
   "MultipleInstances": {
     "nInstances": nInstances,
     "instances": [get_instance_config(i) for i in range(nInstances)],
-  }
+    "OutputWriter" : [
+      {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_all", "binary": True, "fixedFormat": False, "combineFiles": True},
+      #{"format": "MegaMol",  "outputInterval": 1, "filename": "out/fibers", "timeStepCloseInterval": 7000}
+      #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+      #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+      #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+    ]
+  },
 }

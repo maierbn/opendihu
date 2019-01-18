@@ -31,7 +31,7 @@ public:
   DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi=true);
 
   //! constructor with explicit pythonConfig
-  DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig);
+  DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset=nullptr);
 
   //! copy-constructor
   DihuContext(const DihuContext &rhs);
@@ -42,8 +42,8 @@ public:
   //! return the top-level python config object
   PythonConfig getPythonConfig() const;
   
-  //! create a context object, like with the operator[] but with given config
-  DihuContext createSubContext(PythonConfig config);
+  //! create a context object, like with the operator[] but with given config and rankSubset, if rankSubset is not given, reuse own rankSubset
+  DihuContext createSubContext(PythonConfig config, std::shared_ptr<Partition::RankSubset> rankSubset=nullptr);
 
   //! return the mesh manager object that contains all meshes
   static std::shared_ptr<Mesh::Manager> meshManager();
@@ -55,7 +55,10 @@ public:
   static std::shared_ptr<Partition::Manager> partitionManager();
 
   //! get the own MPI rank no in the world communicator
-  static int ownRankNo();
+  int ownRankNo();
+
+  //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
+  std::shared_ptr<Partition::RankSubset> rankSubset();
 
 #ifdef HAVE_ADIOS
   //! return the adios IO object
@@ -85,6 +88,7 @@ private:
   void initializePython(int argc, char *argv[], bool explicitConfigFileGiven);
 
   PythonConfig pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
+  std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively run the code where this context is valid
 
   static std::shared_ptr<Mesh::Manager> meshManager_;   ///< object that saves all meshes that are used
 //  static std::shared_ptr<Solver::Manager> solverManager_; ///< object that saves all solver configurations that are used

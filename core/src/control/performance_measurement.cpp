@@ -68,13 +68,13 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   const bool combined = true;   /// if the output is using MPI Output
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
 
   // determine file name
   std::stringstream filename;
   filename << logFileName;
   if (!combined)
-    filename << "." << std::setw(7) << std::setfill('0') << DihuContext::ownRankNo();
+    filename << "." << std::setw(7) << std::setfill('0') << ownRankNo;
   filename << ".csv";
   logFileName = filename.str();
 
@@ -161,10 +161,12 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
 
     // open file
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_File fileHandle;
     MPIUtility::handleReturnValue(MPI_File_open(MPI_COMM_WORLD, logFileName.c_str(),
                                                 //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
-                                                MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
+                                                //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_APPEND,
+                                                MPI_MODE_WRONLY | MPI_MODE_CREATE,
                                                 MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
     // collective blocking write, only rank 0 writes, but afterwards all have the same shared file pointer position

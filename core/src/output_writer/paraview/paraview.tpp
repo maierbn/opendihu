@@ -58,7 +58,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 }
 
 template<typename FieldVariableType>
-void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable, 
+void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
@@ -147,7 +147,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
 }
-  
+
 template<typename FieldVariableType>
 void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryField,
                                                    std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
@@ -245,13 +245,11 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
     memcpy(raw.data(), c, 4);
   }
 
-  std::vector<char> encoded(encodedLength+1, '\0');
+  std::vector<char> encoded(encodedLength, '\0');
 
   bool success = Base64::Encode(raw.data(), rawLength, encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
-
-  encoded[encodedLength] = '\0';
 
   return std::string(encoded.begin(), encoded.end());
 }
@@ -299,14 +297,11 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
     memcpy(raw.data(), c, 4);
   }
 
-  std::vector<char> encoded(encodedLength+1, '\0');
+  std::vector<char> encoded(encodedLength, '\0');
 
   bool success = Base64::Encode(raw.data(), rawLength, (char *)encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
-
-
-  encoded[encodedLength] = '\0';
 
   return std::string(encoded.begin(), encoded.end());
 }

@@ -41,7 +41,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime)
   s << filenameBase_;
   if (timeStepNo != -1)
   {
-    s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file 
+    s << "_" << std::setw(7) << std::setfill('0') << outputFileNo_;   // use a continuous counter for the output file
   }
   outputFileNo_++;
   filenameBaseWithNo_ = s.str();

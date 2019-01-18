@@ -16,7 +16,7 @@ namespace ParaviewLoopOverTuple
 template<typename OutputFieldVariablesType, int i>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<std::vector<double>> &values
+                   std::map<std::string,std::vector<double>> &values
 )
 {
   // call what to do in the loop body
@@ -32,7 +32,7 @@ loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std:
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+               std::map<std::string,std::vector<double>> &values)
 {
   // if mesh name is one of the specified meshNames (and it is not a geometry field)
   if (meshNames.find(currentFieldVariable->functionSpace()->meshName()) != meshNames.end()
@@ -68,15 +68,18 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
         index += nDofsPerNode;
       }
     }
-    values.emplace_back();
-    values.back().reserve(componentValues[0].size()*nComponents);
+
+    std::string fieldVariableName = currentFieldVariable->name();
+
+    // create entry for field variable name if it does not exist and reserve enough space for all values
+    values[fieldVariableName].reserve(values[fieldVariableName].size() + componentValues[0].size()*nComponents);
 
     // copy values in consecutive order (x y z x y z) to output
     for (int i = 0; i < componentValues[0].size(); i++)
     {
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
-        values.back().push_back(componentValues[componentNo][i]);
+        values[fieldVariableName].push_back(componentValues[componentNo][i]);
       }
     }
 
@@ -89,7 +92,7 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldV
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 getNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+               std::map<std::string,std::vector<double>> &values)
 {
   for (auto& currentFieldVariable : currentFieldVariableVector)
   {
@@ -104,7 +107,7 @@ getNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariables
 template<typename TupleType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isTuple<TupleType>::value, bool>::type
 getNodalValues(TupleType currentFieldVariableTuple, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values)
+               std::map<std::string,std::vector<double>> &values)
 {
   // call for tuple element
   loopGetNodalValues<TupleType>(currentFieldVariableTuple, meshNames, values);

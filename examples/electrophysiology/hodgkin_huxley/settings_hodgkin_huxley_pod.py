@@ -291,7 +291,7 @@ config = {
       "nRowsSnapshots" : n_total,
       "nReducedBases" : n_reduced,
       "nRowsComponents" : 1,
-      "ExplicitEuler" : {
+      "ImplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1e4,

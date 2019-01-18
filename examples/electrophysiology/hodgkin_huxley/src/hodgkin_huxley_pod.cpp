@@ -17,13 +17,13 @@ int main(int argc, char *argv[])
   LOG(DEBUG)<<std::string(80, '=');
   
   OperatorSplitting::Godunov<
-  ModelOrderReduction::TimeSteppingSchemeOdeReducedExplicit<
+  ModelOrderReduction::ExplicitEulerReduced<
       TimeSteppingScheme::ExplicitEuler<
         CellmlAdapter<4>
       >
     >,
-    ModelOrderReduction::TimeSteppingSchemeOdeReducedExplicit<
-      TimeSteppingScheme::ExplicitEuler<
+    ModelOrderReduction::ImplicitEulerReduced<
+      TimeSteppingScheme::ImplicitEuler<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredRegularFixedOfDimension<1>,
           BasisFunction::LagrangeOfOrder<1>,

@@ -85,6 +85,7 @@ vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
@@ -119,6 +120,8 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
 env['CC'] = env['cc']
+if not 'cmake' in env:
+  env['cmake'] = 'cmake'
 
 # Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)

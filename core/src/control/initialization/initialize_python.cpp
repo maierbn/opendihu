@@ -155,7 +155,8 @@ void DihuContext::loadPythonScriptFromFile(std::string filename)
 
 void DihuContext::loadPythonScript(std::string text)
 {
-  LOG(TRACE) << "loadPythonScript(" << text.substr(0,std::min(std::size_t(80),text.length())) << ")";
+  pythonScriptText_ = text;
+  LOG(TRACE) << "loadPythonScript(" << pythonScriptText_.substr(0,std::min(std::size_t(80),pythonScriptText_.length())) << ")";
 
   // execute python code
   int ret = 0;
@@ -170,7 +171,7 @@ void DihuContext::loadPythonScript(std::string text)
     }
 
     // execute config script
-    ret = PyRun_SimpleString(text.c_str());
+    ret = PyRun_SimpleString(pythonScriptText_.c_str());
 
     PythonUtility::checkForError();
   }

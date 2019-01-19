@@ -4,6 +4,7 @@
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
 #include "interfaces/splittable.h"
+#include "interfaces/multipliable.h"
 
 #include "easylogging++.h"
 
@@ -11,7 +12,8 @@ namespace TimeSteppingScheme
 {
 
 class TimeSteppingScheme :
-  public Splittable
+  public Splittable,
+  public Multipliable
 {
 public:
 
@@ -49,7 +51,7 @@ public:
   double endTime();
   
   //! number of time steps in simulation time
-  double numberTimeSteps();
+  int numberTimeSteps();
   
   //! time step for simulation
   double timeStepWidth();

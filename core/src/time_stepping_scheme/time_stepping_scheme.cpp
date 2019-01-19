@@ -97,7 +97,7 @@ void TimeSteppingScheme::initialize()
     Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
   }
 
-  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("durationLogKey"))
   {
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
@@ -122,7 +122,7 @@ double TimeSteppingScheme::endTime()
   return endTime_;
 }
 
-double TimeSteppingScheme::numberTimeSteps()
+int TimeSteppingScheme::numberTimeSteps()
 {
   return numberTimeSteps_;
 }

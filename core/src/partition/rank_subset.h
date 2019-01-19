@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <memory>
 
 #include "control/types.h"
 
@@ -19,13 +20,13 @@ public:
   //! constructor that constructs a rank subset with a single rank, from MPICommWorld
   RankSubset(int singleRank);
   
-  //! constructor that constructs a whole set of ranks
+  //! constructor that constructs a whole set of ranks which rank nos in terms of the communicator in rankSubset
+  //! if rankSubset is nullptr, use MPI_COMM_WORLD
   template<typename Iter>
-  RankSubset(Iter ranksBegin, Iter ranksEnd);
+  RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> rankSubset = nullptr);
  
   //! constructor that constructs a rank subset with all ranks (MPICommWorld)
   RankSubset();
-
 
   //! number of ranks in the current rank list
   element_no_t size() const;

@@ -9,6 +9,7 @@ scons_config.egg-info/top_level.txt
 sconsconfig/__init__.py
 sconsconfig/setup.py
 sconsconfig/data/patches/rapidxml.patch
+sconsconfig/packages/ADIOS.py
 sconsconfig/packages/AntTweakBar.py
 sconsconfig/packages/Base64.py
 sconsconfig/packages/CUDA.py

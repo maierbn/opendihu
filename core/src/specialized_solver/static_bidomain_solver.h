@@ -77,6 +77,7 @@ protected:
   std::vector<Vec> subvectorsSolution_; ///< the sub vectors that are used for the solution nested vector
 
   int lastNumberOfIterations_;   ///< the number of iterations that were needed the last time to solve the linear system
+  std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
 
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key

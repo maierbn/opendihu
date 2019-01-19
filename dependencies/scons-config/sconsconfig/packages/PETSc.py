@@ -95,6 +95,23 @@ class PETSc(Package):
           return True
       
         env = ctx.env
+        
+        
+        # debugging build handler 
+        if self.have_option(env, "PETSC_DEBUG"):
+          print("PETSc debugging build is on!")
+          self.set_build_handler([
+            #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+            --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+            --with-mpi-dir=${MPI_DIR}\
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch',
+            'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
+            'echo "sleep 3 s" && sleep 3',
+            'make install',
+            'make test',
+        ])
+        
         ctx.Message('Checking for PETSc ...         ')
         self.check_options(env)
 
@@ -122,6 +139,19 @@ class PETSc(Package):
               'make install',
               'make test',
           ])
+          
+          if self.have_option(env, "PETSC_DEBUG"):
+            # Setup the build handler.
+            self.set_build_handler([
+                './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+                --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+                --with-mpi-dir=${MPI_DIR}',
+                'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
+                'echo "sleep 3 s" && sleep 3',
+                'make install',
+                'make test',
+            ])
+          
           
           self.number_output_lines = 3990
           

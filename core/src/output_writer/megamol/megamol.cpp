@@ -11,6 +11,13 @@
 namespace OutputWriter
 {
 
+BoundingBox::BoundingBox():
+  min(Vec3({0.0,0.0,0.0})),
+  max(Vec3({0.0,0.0,0.0}))
+{
+
+}
+
 MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
   Generic(context, settings)
 {

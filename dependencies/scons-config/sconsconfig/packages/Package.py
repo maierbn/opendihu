@@ -1,5 +1,6 @@
 import os, sys, copy, shutil, subprocess, shlex
 import time
+import datetime
 from threading import Thread
 import sconsconfig.utils as utils
 from sconsconfig.utils import conv
@@ -75,6 +76,7 @@ class Package(object):
     self.number_output_lines = False    # number of output lines in typical compilation output (False to disable), used for monitoring compilation progress on stdout
     self.static = False                 # if the compiled test program is a static library
     self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
+    self.link_flags = None              # additional linker flags that can directly be set by the derived class
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
@@ -360,6 +362,7 @@ class Package(object):
     vars.Add(BoolVariable(upp + '_REBUILD', help='Force new build of previously downloaded copy of %s, even if it was installed successfully.'%name, default=False))
     vars.Add(BoolVariable('MPI_IGNORE_MPICC', help='Disable retrieving mpi compile information from mpicc --showme.', default=False))
     vars.Add(BoolVariable('MPI_DEBUG', help='Build MPI with debugging support for memcheck.', default=False))
+    vars.Add(BoolVariable('PETSC_DEBUG', help='Build Petsc with debugging support.', default=False))
     
     self.options.extend([upp + '_DIR', upp + '_INC_DIR', upp + '_LIB_DIR', upp + '_LIBS', upp + '_DOWNLOAD'])
 
@@ -484,7 +487,7 @@ class Package(object):
     source_dir = os.getcwd()
     ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
 
-    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success:"+str(not os.path.exists('scons_build_success'))+"\n")
+    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
 
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
@@ -568,6 +571,11 @@ class Package(object):
         import tarfile
         tf = tarfile.open(filename)
         tf.extractall(unpack_dir)
+        
+        # get name of extracted directory
+        entries = os.listdir(unpack_dir)
+        print("entries: {}".format(entries))
+        #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
         try:
@@ -655,12 +663,13 @@ class Package(object):
       ctx.Log("Failed to locate build handler\n")
       return False
 
-    # Make a file to log stdout from the commands.
-    stdout_log = open('stdout.log', 'w')
 
     # Process each command in turn.
     for cmd in handler:
 
+      # Make a file to log stdout from the commands.
+      stdout_log = open('stdout.log', 'w')
+      
       # It's possible to have a tuple, indicating a function and arguments.
       if isinstance(cmd, tuple):
         ctx.Log("Command is a Python function\n")
@@ -707,6 +716,7 @@ class Package(object):
     
         ctx.Log("  $"+cmd+"\n")
 
+        output = ""
         try:
           self.command_running = True
           t = Thread(target=self.monitor_progress, args=(self.number_output_lines,))
@@ -721,21 +731,26 @@ class Package(object):
     
           
           # get output
-          with file('stdout.log') as f:
-            output = f.read()
+          if os.path.exists('stdout.log'):
+            with file('stdout.log') as f:
+              output = f.read()    
+            stdout_log.close()
+            os.remove('stdout.log')
           ctx.Log(output+"\n")
         except:
           self.command_running = False
-          if not allow_errors:
-            stdout_log.close()
-            sys.stdout.write('failed.\n')
+          stdout_log.close()
+          if os.path.exists('stdout.log'):
             with file('stdout.log') as f:
-             output = f.read()
+              output = f.read()
+            stdout_log.close()
+            os.remove('stdout.log')
+          if not allow_errors:
+            sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
             return False
-
-    # Don't forget to close the log.
-    stdout_log.close()
+          else:
+            ctx.Log("Command failed (but allowed): \n"+output)
 
     # If it all seemed to work, write a dummy file to indicate this package has been built.
     success = open('scons_build_success', 'w')
@@ -771,7 +786,9 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    
+    
     bkp = env_setup(ctx.env, **kwargs)
     ctx.env.PrependUnique(CCFLAGS = self.build_flags)
     
@@ -785,6 +802,10 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
+      
+    if self.link_flags is not None:
+      ctx.Log("  link_flags is set, use additional link flags: {}".format(self.link_flags))
+      ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
       
     # compile with C++14 for cpp test files
     if 'cpp' in self.ext:

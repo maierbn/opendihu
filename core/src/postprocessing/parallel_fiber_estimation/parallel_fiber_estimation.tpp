@@ -379,9 +379,9 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> borderPointsSubdomain;  // [subdomain index][face_t][z-level][point index]
 
   // check if the algorithm is at the stage where no more subdomains are created and the final fibers are traced
-  int level;   // level = log2(nRanksPerCoordinateDirection_)
-  bool traceFinalFibers = checkTraceFinalFibers(level);
-  LOG(DEBUG) << "level " << level;
+  // level_ = log2(nRanksPerCoordinateDirection_)
+  bool traceFinalFibers = checkTraceFinalFibers();
+  LOG(DEBUG) << "level " << level_;
 
   bool refineSubdomainsOnThisRank = false;
 
@@ -422,7 +422,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
     // create function space
     std::stringstream meshName;
-    meshName << "meshLevel" << level;
+    meshName << "meshLevel" << level_;
 
     int nNodePositionsWithoutGhostsX = nBorderPointsXNew_ - 1;
     int nNodePositionsWithoutGhostsY = nBorderPointsXNew_ - 1;

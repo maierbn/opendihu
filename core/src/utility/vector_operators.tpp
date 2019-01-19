@@ -111,6 +111,20 @@ std::array<double,nComponents> operator*(std::array<double,nComponents> vector, 
   return result;
 }
 
+//! vector*scalar multiplication
+template<typename T>
+std::vector<T> operator*(std::vector<T> vector, double lambda)
+{
+  std::vector<T> result(vector.size());
+
+  //#pragma omp simd
+  for (int i = 0; i < vector.size(); i++)
+  {
+    result[i] = lambda * vector[i];
+  }
+  return result;
+}
+
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)

@@ -20,6 +20,12 @@ StaticBidomainSolver(DihuContext context) :
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
 
+  // read in the durationLogKey
+  if (specificSettings_.hasKey("durationLogKey"))
+  {
+    this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
+  }
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 }

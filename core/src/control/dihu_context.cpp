@@ -40,6 +40,7 @@ std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
+std::string DihuContext::pythonScriptText_ = "";
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
@@ -209,6 +210,51 @@ DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, boo
 PythonConfig DihuContext::getPythonConfig() const
 {
   return pythonConfig_;
+}
+
+std::string DihuContext::pythonScriptText()
+{
+  return pythonScriptText_;
+}
+
+std::string DihuContext::versionText()
+{
+  std::stringstream versionTextStr;
+
+  versionTextStr << "opendihu 0.1, build " << __DATE__ << " " << __TIME__;
+#ifdef __cplusplus
+  versionTextStr << ", C++ " << __cplusplus;
+#endif
+
+#ifdef __INTEL_COMPILER
+  versionTextStr << ", Intel";
+#elif defined _CRAYC
+  versionTextStr << ", Cray";
+#elif defined __GNUC__
+  versionTextStr << ", GCC";
+#endif
+#ifdef __VERSION__
+  versionTextStr << " " << __VERSION__;
+#endif
+
+  return versionTextStr.str();
+}
+
+std::string DihuContext::metaText()
+{
+  std::stringstream metaTextStr;
+
+  // time stamp
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  metaTextStr << "current time: " << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ", hostname: ";
+
+  // host name
+  char hostname[MAXHOSTNAMELEN+1];
+  gethostname(hostname, MAXHOSTNAMELEN+1);
+  metaTextStr << std::string(hostname) << ", n ranks: " << nRanksCommWorld_;
+
+  return metaTextStr.str();
 }
 
 int DihuContext::ownRankNo()

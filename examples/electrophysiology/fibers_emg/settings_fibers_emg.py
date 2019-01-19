@@ -446,9 +446,12 @@ config = {
               2, 0, 0,
               0, 1, 0,
               0, 0, 1
-            ]
+            ],
           },
-        }
+        },
+        "OutputWriter" : [
+          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d", "binary": True, "fixedFormat": False, "combineFiles": False},
+        ],
       }
     }
   }

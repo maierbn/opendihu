@@ -335,6 +335,30 @@ setValues(const std::vector<dof_no_t> &dofNosLocal, const std::vector<std::array
   // after this VecAssemblyBegin() and VecAssemblyEnd(), i.e. finishGhostManipulation must be called
 }
 
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+  assert(dofNosLocal.size() == values.size());
+
+  // set the values for the given component
+  this->values_->setValues(componentNo, dofNosLocal.size(), dofNosLocal.data(), values.data(), petscInsertMode);
+}
+
+template<typename FunctionSpaceType, int nComponents>
+template<int N>
+void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
+setValues(int componentNo, const std::array<dof_no_t,N> &dofNosLocal, const std::array<double,N> &values, InsertMode petscInsertMode)
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+  assert(this->values_);
+
+  // set the values for the given component
+  this->values_->setValues(componentNo, N, dofNosLocal.data(), values.data(), petscInsertMode);
+}
+
 //! set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
 template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::

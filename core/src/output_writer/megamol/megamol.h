@@ -14,6 +14,7 @@ struct BoundingBox
 {
   Vec3 min, max;   // minimum,maximum value of bounding box
   bool initialized = false;   // if values are set
+  BoundingBox();
 };
 
 class MegaMol : public Generic
@@ -32,6 +33,11 @@ private:
 #ifdef HAVE_ADIOS
   std::shared_ptr<adios2::Engine> writer_;    //< adios writer
   std::shared_ptr<adios2::Variable<double>> boxVariable_ = nullptr; ///< variable that contains bounding box
+  std::shared_ptr<adios2::Variable<int>> pCountVariable_ = nullptr; ///< variable that has number of particles/nodes
+
+  std::vector<double> boundingBoxValues_;   ///< bounding box
+  int globalNumberOfNodes_;   ///< the "particle count" value for MegaMol
+
 #endif
 
 };

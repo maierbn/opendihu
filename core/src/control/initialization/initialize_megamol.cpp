@@ -23,10 +23,11 @@ void DihuContext::initializeAdios(int argc, char *argv[])
 
 void DihuContext::initializeMegaMol(int argc, char *argv[])
 {
+  initializeAdios(argc, argv);
+
   // extract MegaMol arguments from config
   if (pythonConfig_.hasKey("MegaMolArguments"))
   {
-    initializeAdios(argc, argv);
 #ifdef HAVE_MEGAMOL
 
 

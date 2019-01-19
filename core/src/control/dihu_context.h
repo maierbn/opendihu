@@ -41,7 +41,16 @@ public:
 
   //! return the top-level python config object
   PythonConfig getPythonConfig() const;
-  
+
+  //! return the python code that was used to create the config object
+  static std::string pythonScriptText();
+
+  //! return a text specifying the version of this opendihu program
+  static std::string versionText();
+
+  //! return a text giving meta information
+  static std::string metaText();
+
   //! create a context object, like with the operator[] but with given config and rankSubset, if rankSubset is not given, reuse own rankSubset
   DihuContext createSubContext(PythonConfig config, std::shared_ptr<Partition::RankSubset> rankSubset=nullptr);
 
@@ -99,6 +108,7 @@ private:
   static int nRanksCommWorld_;   ///< number of ranks in MPI_COMM_WORLD
   static bool initialized_;  ///< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
   static int nObjects_;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize or MPI_Barrier, depending on doNotFinalizeMpi
+  static std::string pythonScriptText_;  ///< the text of the python config script
   static std::shared_ptr<std::thread> megamolThread_;   ///< thread that runs megamol
   static std::vector<char *> megamolArgv_;   ///< the arguments use for the megamol instance
   static std::vector<std::string> megamolArguments_;  ///< the string data of the megamol arguments

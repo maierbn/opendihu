@@ -17,24 +17,28 @@ template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 std::map<std::string, adios2::Variable<double>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::vmTable_;
 
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+std::map<std::string, std::shared_ptr<std::vector<double>>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::geometryTableData_;
+
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+std::map<std::string, std::shared_ptr<std::vector<double>>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::vmTableData_;
+
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 void MegaMolWriter<FunctionSpaceType, OutputFieldVariablesType>::
 outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
            PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox)
 {
-  LOG(DEBUG) << "MegaMolWriter::outputData";
-
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField;
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> scalarFieldVariables;
 
   // collect the geometryField and all scalar field variables for the current mesh
   MegaMolLoopOverTuple::loopCollectFieldVariables(fieldVariables, meshName, geometryField, scalarFieldVariables);
 
-  LOG(DEBUG) << "mesh \"" << meshName << "\", has " << scalarFieldVariables.size() << " scalar field variables";
-
   // retrieve the geometry field values
   std::vector<Vec3> geometryFieldValues;
   geometryField->getValuesWithoutGhosts(geometryFieldValues);
+  std::shared_ptr<Partition::RankSubset> rankSubset = DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
 
+  LOG(DEBUG) << "MegaMolWriter::outputDatam, mesh \"" << meshName << "\", has " << scalarFieldVariables.size() << " scalar field variables";
   LOG(DEBUG) << geometryFieldValues.size() << " geometryField values: " << geometryFieldValues;
 
   // get all other scalar field variables
@@ -45,41 +49,51 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
     LOG(DEBUG) << "field variable \"" << scalarFieldVariables[i]->name() << "\" has " << values[i].size() << " values: " << values[i];
   }
 
-  // determine the number of values on the local rank
-  const long unsigned int nValuesGeometryTable = (long unsigned int) geometryFieldValues.size()*3;
-
-  // create ADIOS fielddefine variable variable
+  // handle geometry variable
   if (geometryTable_.find(meshName) == geometryTable_.end())
   {
     std::stringstream variableName;
-    //variableName << meshName << "_geometry";
     variableName << "xyz";
 
-
-    int localSize = nValuesGeometryTable;
+    // communicate offset into the global values array
+    int localSize = geometryFieldValues.size()*3;
     int offset = 0;
-    MPI_Exscan(&localSize, &offset, 1, MPI_INT, MPI_SUM, functionSpace->meshPartition()->mpiCommunicator());
-    LOG(DEBUG) << "localSize: " << localSize << ", offset: " << offset << ", globalSize: " << geometryField->nDofsGlobal()*3;
+    int globalSize = 0;
 
-    LOG(DEBUG) << "define variable \"" << variableName.str() << "\". nValuesGeometryTable: " << nValuesGeometryTable;
-    geometryTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {(long unsigned int)geometryField->nDofsGlobal()*3}, {(long unsigned int)offset}, {(long unsigned int)nValuesGeometryTable});
+    MPI_Exscan(&localSize, &offset, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
+    MPI_Allreduce(&localSize, &globalSize, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
 
-    if (!values.empty())
-    {
-      std::stringstream variableName;
-      //variableName << meshName << "_vm";
-      variableName << "i";
-      LOG(DEBUG) << "define variable \"" << variableName.str() << "\". size: " << values[0].size();
-      vmTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {adios2::JoinedDim}, {}, {values[0].size()});
-    }
+    LOG(DEBUG) << "define variable \"" << variableName.str() << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
+
+    // name, global size, offset, local size
+    geometryTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {(long unsigned int)globalSize},
+                                                               {(long unsigned int)offset}, {(long unsigned int)localSize}, adios2::ConstantDims);
+
+    if (!geometryTable_[meshName])
+      LOG(ERROR) << "Failed to create geometryTable_ field variable for mesh \"" << meshName << "\".";
   }
-  else
+
+  // handle vm variable which is the first field variable
+  if (!values.empty() && vmTable_.find(meshName) == vmTable_.end())
   {
-    LOG(DEBUG) << "geometryTable[" << meshName << "] is already set:";
-    for(std::map<std::string, adios2::Variable<double>>::iterator iter = geometryTable_.begin(); iter != geometryTable_.end(); iter++)
-    {
-      LOG(DEBUG) << "key " << iter->first;
-    }
+    std::stringstream variableName;
+    //variableName << meshName << "_vm";
+    variableName << "i";
+
+
+    // communicate offset and global size
+    int localSize = values[0].size();
+    int offset = 0;
+    int globalSize = 0;
+
+    MPI_Exscan(&localSize, &offset, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
+    MPI_Allreduce(&localSize, &globalSize, 1, MPI_INT, MPI_SUM, rankSubset->mpiCommunicator());
+
+    LOG(DEBUG) << "define variable \"" << variableName.str() << "\", localSize: " << localSize << ", offset: " << offset << ", globalSize: " << globalSize;
+
+    vmTable_[meshName] = adiosIo->DefineVariable<double>(variableName.str(), {(long unsigned int)globalSize},
+                                                        {(long unsigned int)offset}, {(long unsigned int)localSize}, adios2::ConstantDims);
+
   }
 
   // compute local bounding box
@@ -104,32 +118,42 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
     }
   }
 
-  LOG(DEBUG) << "local min: " << boundingBox.min << ", local max: " << boundingBox.max;
-
   // convert data to be send to ADIOS
   // geometryTable
-  std::vector<double> geometryTableData(nValuesGeometryTable);
-  double maximum = 0;
+  if (!geometryTableData_[meshName])
+  {
+    geometryTableData_[meshName] = std::make_shared<std::vector<double>>();
+  }
+  geometryTableData_[meshName]->resize(geometryFieldValues.size()*3);
+
+  // copy geometry values to buffer
   for (int i = 0; i < geometryFieldValues.size(); i++)
   {
     for (int j = 0; j != 3; j++)
     {
-      geometryTableData[3*i + j] = geometryFieldValues[i][j];
-      maximum = std::max(maximum, geometryFieldValues[i][j]);
+      (*geometryTableData_[meshName])[3*i + j] = geometryFieldValues[i][j];
     }
   }
-  LOG(DEBUG) << "maximum of geometryFieldValues: " << maximum;
-
-  LOG(DEBUG) << "nValuesGeometryTable: " << nValuesGeometryTable << ", geometryTableData: " << geometryTableData;
-  LOG(DEBUG) << "values[0].size(): " << values[0].size() << ", values[0]: " << values[0];
 
   // vmTable
   if (!values.empty())
   {
-    adiosWriter->Put<double>(vmTable_[meshName], values[0].data());
+    // create persistent buffer, if it does not yet exist
+    if (!vmTableData_[meshName])
+    {
+      vmTableData_[meshName] = std::make_shared<std::vector<double>>();
+    }
+    vmTableData_[meshName]->resize(values[0].size());
+
+    // copy vm values to buffer
+    std::copy(values[0].begin(), values[0].end(), vmTableData_[meshName]->begin());
+
+    assert(vmTable_[meshName]);
+    adiosWriter->Put<double>(vmTable_[meshName], vmTableData_[meshName]->data());  // adios2::Mode::Sync
   }
 
-  adiosWriter->Put<double>(geometryTable_[meshName], geometryTableData.data());
+  assert(geometryTable_[meshName]);
+  adiosWriter->Put<double>(geometryTable_[meshName], geometryTableData_[meshName]->data());
 
 }
 #endif

@@ -80,7 +80,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   // compose header
   std::stringstream header;
-  header << "# timestamp;hostname;";
+  header << "# timestamp;hostname;version;";
 
   // write parameter names
   for (std::pair<std::string,std::string> parameter : parameters_)
@@ -107,6 +107,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   char hostname[MAXHOSTNAMELEN+1];
   gethostname(hostname, MAXHOSTNAMELEN+1);
   data << std::string(hostname) << ";";
+  data << DihuContext::versionText() << ";";
 
   // write parameters
   for (std::pair<std::string,std::string> parameter : parameters_)

@@ -22,8 +22,11 @@ public:
                          PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
 private:
 
-  static std::map<std::string, adios2::Variable<double>> geometryTable_;
-  static std::map<std::string, adios2::Variable<double>> vmTable_;
+  static std::map<std::string, adios2::Variable<double>> geometryTable_;    // the geometry data for each mesh
+  static std::map<std::string, adios2::Variable<double>> vmTable_;          // the vm datat for each mesh
+
+  static std::map<std::string, std::shared_ptr<std::vector<double>>> geometryTableData_;   ///< buffer for the values to be written by ADIOS
+  static std::map<std::string, std::shared_ptr<std::vector<double>>> vmTableData_;   ///< buffer for the values to be written by ADIOS
 #endif
 };
 

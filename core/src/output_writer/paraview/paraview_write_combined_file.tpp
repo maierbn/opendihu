@@ -482,6 +482,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
   outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 

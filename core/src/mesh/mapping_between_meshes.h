@@ -21,7 +21,7 @@ public:
   //! map data between field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
   void map(FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
-           FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableTarget, int componentNoTarget);
+           FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget);
 
 private:
 
@@ -34,7 +34,7 @@ private:
   struct targetDof_t
   {
     element_no_t elementNoLocal;   //< local element no of the target element
-    std::vector<double> scalingFactors;          //< factors for the dofs of the element with which to scale the value
+    std::array<double,FunctionSpaceTargetType::nDofsPerElement()> scalingFactors;          //< factors for the dofs of the element with which to scale the value
   };
 
   std::vector<targetDof_t> targetMappingInfo_;  ///< [localDofNo source functionSpace] information where in the target to store the value from local dof No of the source

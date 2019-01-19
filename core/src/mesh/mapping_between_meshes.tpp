@@ -45,7 +45,6 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     targetMappingInfo.elementNoLocal = elementNo;
 
     // determine factors how to distribute the value to the dofs of the target element
-    targetMappingInfo.scalingFactors.resize(nDofsPerTargetElement);
 
     // note: geometry value = sum over dofs of geometryValue_dof * phi_dof(xi)
     for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
@@ -64,27 +63,40 @@ template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   template<int nComponentsSource, int nComponentsTarget>
 void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map(
   FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
-  FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableTarget, int componentNoTarget)
+  FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget)
 {
   assert(componentNoSource >= 0 && componentNoSource < nComponentsSource);
   assert(componentNoTarget >= 0 && componentNoTarget < nComponentsTarget);
 
-  fieldVariableTarget->zeroValues();
+  fieldVariableTarget.zeroEntries();
 
-  const dof_no_t nDofsLocalSource = fieldVariableSource->functionSpace()->nDofsLocalWithoutGhosts();
+  const dof_no_t nDofsLocalSource = fieldVariableSource.functionSpace()->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
+
+  std::vector<dof_no_t> sourceLocalDofNos(nDofsLocalSource);
+  std::vector<double> sourceValues(nDofsLocalSource);
+
+  std::iota(sourceLocalDofNos.begin(), sourceLocalDofNos.end(), 0);
+
+  fieldVariableSource.getValues(componentNoSource, sourceLocalDofNos, sourceValues);
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
     // get value
-    double sourceValue;
-    fieldVariableSource->getValue(componentNoSource, sourceDofNoLocal, sourceValue);
+    double sourceValue = sourceValues[sourceDofNoLocal];
 
     // store the value to the target function space
     element_no_t targetElementNoLocal = targetMappingInfo_[sourceDofNoLocal].elementNoLocal;
     std::array<double,nDofsPerTargetElement> targetValues = targetMappingInfo_[sourceDofNoLocal].scalingFactors * sourceValue;
-    fieldVariableTarget->setElementalValues(componentNoTarget, targetElementNoLocal, targetValues, ADD_VALUES);
+
+    // determine dof nos of target element
+    std::array<dof_no_t,nDofsPerTargetElement> dofNosLocal;
+    for (int dofIndex = 0; dofIndex < nDofsPerTargetElement; dofIndex++)
+    {
+      dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
+    }
+    fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
   }
 }
 

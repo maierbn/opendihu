@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 1.0
+end_time = 10.0
 
 import numpy as np
 import matplotlib 
@@ -24,7 +24,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e0             # timestep for output files
+output_timestep = 4e-1             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -245,11 +245,12 @@ def get_instance_config(i):
             "solverName": "implicitSolver",
           },
           "OutputWriter" : [
-            #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
-            #{"format": "MegaMol",  "outputInterval": 1, "filename": "out/fibers", "timeStepCloseInterval": 7000}
+            {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
+            {"format": "MegaMol",  "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibers", "timeStepCloseInterval": 7000},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-            #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "sphereSize": "0.02*0.02*0.02"},
             #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":False, "onlyNodalValues":True},
           ]
         },
       },
@@ -333,7 +334,7 @@ with open(config_filename, "w") as f:
   f.write(config_file_contents)
 
 config = {
-  "MegaMolArguments": "--configfile {} -p /store/software/opendihu/dependencies/megamol/src/megamol-master/project_files/testspheres.lua ".format(config_filename),  
+  #"MegaMolArguments": "--configfile {} -p /store/software/opendihu/dependencies/megamol/src/megamol-master/project_files/testspheres.lua ".format(config_filename),  
   "scenarioName": scenario_name,
   "Meshes": meshes,
   "Solvers": {

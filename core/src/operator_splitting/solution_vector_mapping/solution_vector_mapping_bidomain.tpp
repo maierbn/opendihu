@@ -31,8 +31,10 @@ void SolutionVectorMapping<
     {
        std::shared_ptr<FieldVariableType1> transmembranePotential = std::get<0>(transferableSolutionData1[i][j]);
        std::shared_ptr<Mesh::MappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>> mappingBetweenMeshes
-         = DihuContext::meshManager()->mappingBetweenMeshes(transmembranePotential->functionSpace()->meshName(), transferableSolutionData2->functionSpace()->meshName());
-       mappingBetweenMeshes->map(transmembranePotential, 0, transferableSolutionData2, 0);
+         = std::static_pointer_cast<Mesh::MappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>>(
+           DihuContext::meshManager()->mappingBetweenMeshes(transmembranePotential->functionSpace()->meshName(), transferableSolutionData2->functionSpace()->meshName())
+         );
+       mappingBetweenMeshes->template map<1,FieldVariableType2::nComponents()>(*transmembranePotential, 0, *transferableSolutionData2, 0);
     }
   }
 }
@@ -50,7 +52,7 @@ void SolutionVectorMapping<
             std::tuple<
               std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunctionType>, 1>>,
               int, double>
-            >> &transferableSolutionData2)
+            >> transferableSolutionData2)
 {
-
+  // do nothing to map from 3D Vm field back to fibers
 }

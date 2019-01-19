@@ -5,21 +5,21 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 bool ParallelFiberEstimation<BasisFunctionType>::
-checkTraceFinalFibers(int &level)
+checkTraceFinalFibers()
 {
   // determine current level = log2(nRanksPerCoordinateDirection_)
-  level = 0;
+  level_ = 0;
   int nRanksPerCoordinateDirection = nRanksPerCoordinateDirection_[0];
   while (nRanksPerCoordinateDirection >>= 1)
   {
-    level++;
+    level_++;
   }
 
   int nRanksAvailable = this->context_.partitionManager()->nRanksCommWorld();
 
   // decide if the algorithm should no more refine the subdomains but trace the final fibers
   bool traceFinalFibers = false;
-  if (level == maxLevel_)
+  if (level_ == maxLevel_)
   {
     traceFinalFibers = true;
   }
@@ -28,9 +28,9 @@ checkTraceFinalFibers(int &level)
   {
     if (nRanksAvailable < currentRankSubset_->size()*8)
     {
-      LOG(WARNING) << "Cannot run algorithm until level " << maxLevel_ << ", currently at level " << level
+      LOG(WARNING) << "Cannot run algorithm until level " << maxLevel_ << ", currently at level " << level_
         << ", total number of ranks is " << nRanksAvailable << ", number needed for next level would be " << currentRankSubset_->size()*8 << "." << std::endl
-        << "Perform final step of algorithm now at level " << level;
+        << "Perform final step of algorithm now at level " << level_;
       traceFinalFibers = true;
     }
   }

@@ -12,7 +12,7 @@
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_BORDER_POINTS
+#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -270,7 +270,8 @@ generateParallelMesh()
 
 #else       // using previously stored data
 
-  std::vector<int> ranks = {0,1,2,3,4,5,6,7};
+  std::vector<int> ranks(64);
+  std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
   nRanksPerCoordinateDirection_.fill(2);
 

@@ -49,7 +49,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000004, 0.7999999999999998, 0.6000000000000001]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -1.25, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.4000000000000001, 0.1999999999999999, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -57,7 +57,7 @@ config = {
 
   nFails += ::testing::Test::HasFailure();
 }
-/*
+
 TEST(LaplaceTest, Structured1DQuadratic)
 {
   std::string pythonConfig = R"(
@@ -98,7 +98,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Lagrange\", \"basisOrder\": 2, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.4, 0.8, 1.2000000000000002, 1.6, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000004, 0.8999999999999994, 0.799999999999999, 0.699999999999998, 0.5999999999999972, 0.49999999999999767]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -3.333333333333333, 0.41666666666666674, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [6], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 2, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 2.8000000000000003, 3.2, 3.6, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.39999999999999736, 0.2999999999999976, 0.19999999999999823, 0.09999999999999895, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -147,7 +147,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.0000000000000002, 0.8000000000000003, 0.5999999999999999]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.0, -1.4999999999999993, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.3999999999999998, 0.1999999999999998, 0.0]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -197,7 +197,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [3], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [false], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": false, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.0, 0.8, 0.0, 1.6, 0.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [-1.731137919321699e-17, -0.24999999999999994, -2.2431623986420583e-18, -0.05628740946730341, 1.3321963259718046e-18, -0.01267457751408284]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [1.3877787807814457e-17, -0.25, -1.3877787807814457e-17, 0.026041666666666668, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [2], \"beginNodeGlobalNatural\": [3], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Hermite\", \"basisOrder\": 3, \"onlyNodalValues\": false, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [2.4000000000000004, 0.0, 3.2, 0.0, 4.0, 0.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.2293431050318027e-18, -0.002860618931749887, 1.0301064917240598e-18, -0.000674977500749973, 0.0, -0.0002892760717499882]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out.0.py", referenceOutput0);
     assertFileMatchesContent("out.1.py", referenceOutput1);
@@ -257,7 +257,7 @@ config = {
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [2, 2], \"beginNodeGlobalNatural\": [0, 0], \"hasFullNumberOfNodes\": [false, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 2.0, 0.0, 2.0, 0.0, 2.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 2.0, 2.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0000000000000002, 4.242857142857144, 5.971428571428574, 0.0, 10.000000000000005]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, -3.666666666666667, -11.000000000000002, 0.0, 10.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
   std::string referenceOutput1 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [1, 2], \"beginNodeGlobalNatural\": [2, 0], \"hasFullNumberOfNodes\": [true, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 2, \"ownRankNo\": 1, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [4.0, 6.0, 4.0, 6.0, 4.0, 6.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 2.0, 2.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [2.0000000000000004, 3.0000000000000018, 10.528571428571434, 12.257142857142862, 20.00000000000001, 30.000000000000007]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [2.0, 3.0, -22.0, -12.833333333333332, 20.0, 30.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out2d_p2.0.py", referenceOutput0);
     assertFileMatchesContent("out2d_p2.1.py", referenceOutput1);
@@ -324,7 +324,7 @@ config = {
 
   std::string referenceOutput0 = "{\"meshType\": \"StructuredDeformable\", \"dimension\": 2, \"nElementsGlobal\": [3, 2], \"nElementsLocal\": [3, 2], \"beginNodeGlobalNatural\": [0, 0], \"hasFullNumberOfNodes\": [true, true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 2.0, 4.0, 6.0, 0.0, 2.0, 4.0, 6.0, 0.0, 2.0, 4.0, 6.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 2.0, 4.0, 4.0, 4.0, 4.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, 2.0, 3.0, 4.242857142857142, 5.971428571428571, 10.52857142857143, 12.257142857142851, 0.0, 9.999999999999996, 19.999999999999993, 30.000000000000004]}]}, {\"name\": \"rhs\", \"components\": [{\"name\": \"0\", \"values\": [0.0, 1.0, 2.0, 3.0, -3.666666666666667, -11.000000000000002, -22.0, -12.833333333333332, 0.0, 10.0, 20.0, 30.0]}]}], \"timeStepNo\": -1, \"currentTime\": 0.0}";
 
-  if (DihuContext::ownRankNo() == 0)
+  if (settings.ownRankNo() == 0)
   {
     assertFileMatchesContent("out2d_p1.py", referenceOutput0);
   }
@@ -437,7 +437,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -558,7 +558,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -669,7 +669,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -787,7 +787,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -912,7 +912,7 @@ config = {
 )";
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1025,7 +1025,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1137,7 +1137,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1258,7 +1258,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1376,7 +1376,7 @@ config = {
 //
 //   DihuContext settings(argc, argv, pythonConfig);
 //
-//  int ownRankNo = DihuContext::ownRankNo();
+//  int ownRankNo = settings.ownRankNo();
 //
 //   typedef Control::MultipleInstances<
 //     SpatialDiscretization::FiniteElementMethod<
@@ -1491,7 +1491,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1608,7 +1608,7 @@ config = {
 
   DihuContext settings(argc, argv, pythonConfig);
 
-  int ownRankNo = DihuContext::ownRankNo();
+  int ownRankNo = settings.ownRankNo();
 
   typedef Control::MultipleInstances<
     SpatialDiscretization::FiniteElementMethod<
@@ -1725,7 +1725,7 @@ config = {
 //
 //   DihuContext settings(argc, argv, pythonConfig);
 //
-//  int ownRankNo = DihuContext::ownRankNo();
+//  int ownRankNo = settings.ownRankNo();
 //
 //   typedef Control::MultipleInstances<
 //     SpatialDiscretization::FiniteElementMethod<
@@ -1794,4 +1794,3 @@ config = {
 //
 //   nFails += ::testing::Test::HasFailure();
 // }
-*/

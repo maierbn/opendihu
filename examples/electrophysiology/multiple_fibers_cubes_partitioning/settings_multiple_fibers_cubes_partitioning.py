@@ -9,6 +9,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pickle
 import sys
+import struct
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -24,7 +25,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e0             # timestep for output files
+output_timestep = 4e-1             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -32,6 +33,7 @@ output_timestep = 1e0             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fibre_file = "../../input/3000fibers.bin"
+fibre_file = "../../input/49fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -44,7 +46,10 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 if len(sys.argv) == 2:
   n_processes_per_fiber = 1
 else:
-  n_processes_per_fiber = (int)(sys.argv[0])
+  try:
+    n_processes_per_fiber = (int)(sys.argv[0])
+  except:
+    n_processes_per_fiber = 1
 
 scenario_name = ""
 if len(sys.argv) <= 3:
@@ -177,23 +182,25 @@ meshes = {}
 with open(fibre_file, "rb") as f:
 
   # parse header
-  bytes_raw = infile.read(32)
+  bytes_raw = f.read(32)
   header_str = struct.unpack('32s', bytes_raw)[0]
-  header_length_raw = infile.read(4)
+  header_length_raw = f.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
   
   parameters = []
-  for i in range(header_length/4. - 1):
-    double_raw = infile.read(4)
+  for i in range(int(header_length/4.) - 1):
+    double_raw = f.read(4)
     value = struct.unpack('i', double_raw)[0]
     parameters.append(value)
     
   n_fibers_total = parameters[0]
   n_fibers_x = (int)(np.round(np.sqrt(n_fibers_total)))
+  n_fibers_y = n_fibers_x
   n_points_whole_fiber = parameters[1]
   
-  print("nFibersTotal:      {} ({} x {})".format(parameters[0], n_fibers_x, n_fibers_x))
-  print("nPointsWholeFiber: {}".format(parameters[1]))
+  if rank_no == 0:
+    print("nFibersTotal:      {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
+    print("nPointsWholeFiber: {}".format(n_points_whole_fiber))
   
   streamlines = []
   for streamline_no in range(n_fibers_total):
@@ -201,13 +208,13 @@ with open(fibre_file, "rb") as f:
     for point_no in range(n_points_whole_fiber):
       point = []
       for i in range(3):
-        double_raw = infile.read(8)
+        double_raw = f.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
       streamline.append(point)
     streamlines.append(streamline)
       
-n_instances = len(streamlines)
+n_instances = n_fibers_total
 if rank_no == 0:
   print("n_instances: {}".format(n_instances))
     
@@ -217,7 +224,7 @@ for i,streamline in enumerate(streamlines):
   #streamline = streamline[center_node-2:center_node+2]
   
   # define mesh
-  meshes["MeshFibre{}".format(i)] = {
+  meshes["MeshFibre_{}".format(i)] = {
     "nElements": len(streamline)-1,
     "nodePositions": streamline,
     "inputMeshIsGlobal": True,
@@ -244,20 +251,43 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, get_motor_unit_no(fibre_no_index), first_stimulation))
 
 # compute partitioning
-n_subdomains_x = 2
+n_subdomains_x = 2   # example values for 4 processes
 n_subdomains_y = 1
 n_subdomains_z = 2
 
-if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
-  print("Error! Number of ranks {} does not match given partitioning {} x {} x {} ".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+if rank_no == 0:
+  if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
+    print("Error! Number of ranks {} does not match given partitioning {} x {} x {} ".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
   
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
-n_fibers_per_subdomain_y = n_fibers_per_subdomain_x
+n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_x / n_subdomains_y))
 
-print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-print("{} x {} fibers, per partition: {} x {}".format(n_fibers_x, n_fibers_x, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
-n_fibers_x = n_subdomains_x*n_fibers_per_subdomain_x
+if rank_no == 0:
+  print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+  print("{} x {} fibers, per partition: {} x {}".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
+
+def n_fibers_in_subdomain_x(subdomain_coordinate_x):
+  return min(n_fibers_per_subdomain_x, n_fibers_x-subdomain_coordinate_x*n_fibers_per_subdomain_x)
+  
+def n_fibers_in_subdomain_y(subdomain_coordinate_y):
+  return min(n_fibers_per_subdomain_y, n_fibers_y-subdomain_coordinate_y*n_fibers_per_subdomain_y)
+
+def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
+  return (subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x
+
+if rank_no == 0:
+  print("rank configuration: ")
+  
+  for subdomain_coordinate_y in range(n_subdomains_y):
+    for subdomain_coordinate_x in range(n_subdomains_x):
+      print("subdomain ({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
+      for rankNo in range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y):
+        print("rank {}".format(rankNo))
+      print("  n_subdomains_z: {}".format(n_subdomains_z))
+      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+          print("  fiber {} in subdomain ({},{}) uses ranks {}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
 config = {
   "scenarioName": scenario_name,
@@ -274,7 +304,7 @@ config = {
     "nInstances": n_subdomains_xy,
     "instances": 
     [{
-      "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
+      "ranks": list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y)),
       "StrangSplitting": {
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_3D,  # 1e-1
@@ -285,10 +315,10 @@ config = {
 
         "Term1": {      # CellML
           "MultipleInstances": {
-            "nInstances": n_subdomains_z,
+            "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
             "instances": 
             [{
-              "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
+              "ranks": list(range(n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
               "Heun" : {
                 "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey": "dt_0D",
@@ -300,6 +330,7 @@ config = {
                   
                 "CellML" : {
                   "sourceFilename": cellml_file,             # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
+                  "compilerFlags": "-fPIC -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ",
                   #"simdSourceFilename" : "simdcode.cpp",     # transformed C++ source file that gets generated from sourceFilename and is ready for multiple instances
                   #"libraryFilename": "cellml_simd_lib.so",   # compiled library
                   "useGivenLibrary": False,
@@ -314,19 +345,19 @@ config = {
                   "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                  "meshName": "MeshFibre_{}".format((subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x),
+                  "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                   "prefactor": 1.0,
                 },
               },
-            } for fiber_in_subdomain_coordinate_x in range(n_fibers_per_subdomain_x) for fiber_in_subdomain_coordinate_y in range(n_fibers_per_subdomain_y)],
+            } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
           }
         },
         "Term2": {     # Diffusion
           "MultipleInstances": {
-            "nInstances": n_fibers_per_subdomain_x*n_fibers_per_subdomain_y,
+            "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
             "instances": 
             [{
-              "ranks": range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y),
+              "ranks": list(range(n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
               "ImplicitEuler" : {
                 "initialValues": [],
                 #"numberTimeSteps": 1,
@@ -341,18 +372,21 @@ config = {
                   "maxIterations": 1e4,
                   "relativeTolerance": 1e-10,
                   "inputMeshIsGlobal": True,
-                  "meshName": "MeshFibre_{}".format((subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x),
+                  "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                   "prefactor": Conductivity/(Am*Cm),
                   "solverName": "implicitSolver",
                 },
                 "OutputWriter" : [
-                  {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(xy_subdomain_no*n_fibers_per_subdomain + z_subdomain_no), "binary": True, "fixedFormat": False, "combineFiles": True},
+                  #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)), "binary": True, "fixedFormat": False, "combineFiles": True},
                   #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
                   #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
                   #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
-            } for fiber_in_subdomain_coordinate_x in range(n_fibers_per_subdomain_x) for fiber_in_subdomain_coordinate_y in range(n_fibers_per_subdomain_y)],
+            } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
+            "OutputWriter" : [
+              {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres", "binary": True, "fixedFormat": False, "combineFiles": True},
+            ],
           },
         },
       }

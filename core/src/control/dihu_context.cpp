@@ -40,16 +40,21 @@ std::shared_ptr<Mesh::Manager> DihuContext::meshManager_ = nullptr;
 //std::shared_ptr<Solver::Manager> DihuContext::solverManager_ = nullptr;
 std::map<int, std::shared_ptr<Solver::Manager>> DihuContext::solverManagerForThread_;
 std::shared_ptr<Partition::Manager> DihuContext::partitionManager_ = nullptr;
+std::string DihuContext::pythonScriptText_ = "";
 std::shared_ptr<std::thread> DihuContext::megamolThread_ = nullptr;
 std::vector<char *> DihuContext::megamolArgv_;
 std::vector<std::string> DihuContext::megamolArguments_;
 
+#ifdef HAVE_ADIOS
+std::shared_ptr<adios2::ADIOS> DihuContext::adios_ = nullptr;  ///< adios context option
+std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of adios
+#endif
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 int DihuContext::nRanksCommWorld_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 
 // copy-constructor
-DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_)
+DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_), rankSubset_(rhs.rankSubset_)
 {
   nObjects_++;
   VLOG(1) << "DihuContext(a), nObjects = " << nObjects_;
@@ -58,11 +63,17 @@ DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfi
 }
 
 
-DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig) :
-  pythonConfig_(pythonConfig), doNotFinalizeMpi_(doNotFinalizeMpi)
+DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, PythonConfig pythonConfig, std::shared_ptr<Partition::RankSubset> rankSubset) :
+  pythonConfig_(pythonConfig), rankSubset_(rankSubset), doNotFinalizeMpi_(doNotFinalizeMpi)
 {
   nObjects_++;
   VLOG(1) << "DihuContext(b), nObjects = " << nObjects_;
+
+  // if rank subset was not given
+  if (!rankSubset_)
+  {
+    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+  }
 }
 
 DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool settingsFromFile) :
@@ -142,7 +153,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     initialized_ = true;
   }
-  
+
+  rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+
   // if this is the first constructed DihuContext object, create global objects partition manager, mesh manager and solver manager
   if (!partitionManager_)
   {
@@ -199,11 +212,54 @@ PythonConfig DihuContext::getPythonConfig() const
   return pythonConfig_;
 }
 
+std::string DihuContext::pythonScriptText()
+{
+  return pythonScriptText_;
+}
+
+std::string DihuContext::versionText()
+{
+  std::stringstream versionTextStr;
+
+  versionTextStr << "opendihu 0.1, build " << __DATE__ << " " << __TIME__;
+#ifdef __cplusplus
+  versionTextStr << ", C++ " << __cplusplus;
+#endif
+
+#ifdef __INTEL_COMPILER
+  versionTextStr << ", Intel";
+#elif defined _CRAYC
+  versionTextStr << ", Cray";
+#elif defined __GNUC__
+  versionTextStr << ", GCC";
+#endif
+#ifdef __VERSION__
+  versionTextStr << " " << __VERSION__;
+#endif
+
+  return versionTextStr.str();
+}
+
+std::string DihuContext::metaText()
+{
+  std::stringstream metaTextStr;
+
+  // time stamp
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  metaTextStr << "current time: " << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ", hostname: ";
+
+  // host name
+  char hostname[MAXHOSTNAMELEN+1];
+  gethostname(hostname, MAXHOSTNAMELEN+1);
+  metaTextStr << std::string(hostname) << ", n ranks: " << nRanksCommWorld_;
+
+  return metaTextStr.str();
+}
+
 int DihuContext::ownRankNo()
 {
-  int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-  return rankNo;
+  return rankSubset_->ownRankNo();
 }
 
 std::shared_ptr<Mesh::Manager> DihuContext::meshManager()
@@ -238,21 +294,33 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   return solverManagerForThread_[threadId];
 }
 
+#ifdef HAVE_ADIOS
+std::shared_ptr<adios2::IO> DihuContext::adiosIo()
+{
+  return io_;
+}
+#endif
+
+std::shared_ptr<Partition::RankSubset> DihuContext::rankSubset()
+{
+  return rankSubset_;
+}
+
 DihuContext DihuContext::operator[](std::string keyString)
 {
   int argc = 0;
   char **argv = NULL;
-  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, PythonConfig(pythonConfig_, keyString));
+  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, PythonConfig(pythonConfig_, keyString), rankSubset_);
 
   return dihuContext;
 }
 
 //! create a context object, like with the operator[] but with given config
-DihuContext DihuContext::createSubContext(PythonConfig config)
+DihuContext DihuContext::createSubContext(PythonConfig config, std::shared_ptr<Partition::RankSubset> rankSubset)
 {
   int argc = 0;
   char **argv = NULL;
-  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, config);
+  DihuContext dihuContext(argc, argv, doNotFinalizeMpi_, config, rankSubset);
 
   return dihuContext;
 }

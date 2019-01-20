@@ -14,7 +14,10 @@ namespace SpatialDiscretization
  * Further classes derive from this base class and add special functionality such as setting stiffness matrix, rhs and timestepping
  */
 template<typename FunctionSpaceType,typename QuadratureType,typename Term>
-class FiniteElementMethodBase : public SpatialDiscretization, public Runnable
+class FiniteElementMethodBase :
+  public SpatialDiscretization,
+  public Runnable,
+  public Multipliable
 {
 public:
   //! constructor, if function space is not given, create new one according to settings

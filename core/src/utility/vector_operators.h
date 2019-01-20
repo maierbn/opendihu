@@ -42,6 +42,10 @@ std::array<double,nComponents> operator*(double lambda, std::array<double,nCompo
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector, double lambda);
 
+//! vector*scalar multiplication
+template<typename T>
+std::vector<T> operator*(std::vector<T> vector, double lambda);
+
 //! component-wise vector multiplication
 template<std::size_t nComponents>
 std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication

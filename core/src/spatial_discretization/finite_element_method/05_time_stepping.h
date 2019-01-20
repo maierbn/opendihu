@@ -4,6 +4,7 @@
 
 #include "mesh/mesh.h"
 #include "interfaces/discretizable_in_time.h"
+#include "interfaces/multipliable.h"
 
 namespace SpatialDiscretization
 {
@@ -48,6 +49,7 @@ public:
 
   //! return true because the object has a specified mesh type
   bool knowsMeshType();
+
 
   //! enable or disable boundary condition handling on initialization, set to false to not care for boundary conditions
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);

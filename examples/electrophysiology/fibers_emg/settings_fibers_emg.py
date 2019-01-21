@@ -203,32 +203,32 @@ with open(fibre_file, "rb") as f:
     print("nFibersTotal:      {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
     print("nPointsWholeFiber: {}".format(n_points_whole_fiber))
   
-  streamlines = []
-  for streamline_no in range(n_fibers_total):
-    streamline = []
+  fibers = []
+  for fiber_no in range(n_fibers_total):
+    fiber = []
     for point_no in range(n_points_whole_fiber):
       point = []
       for i in range(3):
         double_raw = f.read(8)
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
-      streamline.append(point)
-    streamlines.append(streamline)
+      fiber.append(point)
+    fibers.append(fiber)
       
 # determine number of fibers and create meshes
 n_instances = n_fibers_total
 if rank_no == 0:
   print("n_instances: {}".format(n_instances))
     
-for i,streamline in enumerate(streamlines):
+for i,fiber in enumerate(fibers):
   
-  center_node = int(len(streamline)/2)
-  #streamline = streamline[center_node-2:center_node+2]
+  center_node = int(len(fiber)/2)
+  #fiber = fiber[center_node-2:center_node+2]
   
   # define mesh
   meshes["MeshFibre_{}".format(i)] = {
-    "nElements": len(streamline)-1,
-    "nodePositions": streamline,
+    "nElements": len(fiber)-1,
+    "nodePositions": fiber,
     "inputMeshIsGlobal": True,
     "setHermiteDerivatives": False,
     "logKey": "Fiber{}".format(i)
@@ -263,22 +263,94 @@ if rank_no == 0:
   
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
-n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_x / n_subdomains_y))
+n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
+n_points_per_subdomain_z = (int)(np.ceil(n_points_whole_fiber / n_subdomains_z))
 
 if rank_no == 0:
   print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-  print("{} x {} fibers, per partition: {} x {}".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y))
+  print("{} x {} fibers, per partition: {} x {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_points_whole_fiber))
 
 # define helper functions for fiber numbering
+
+# number of fibers that are handled inside the subdomain x
 def n_fibers_in_subdomain_x(subdomain_coordinate_x):
   return min(n_fibers_per_subdomain_x, n_fibers_x-subdomain_coordinate_x*n_fibers_per_subdomain_x)
   
+# number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
   return min(n_fibers_per_subdomain_y, n_fibers_y-subdomain_coordinate_y*n_fibers_per_subdomain_y)
 
+# global fiber no, from subdomain coordinate and coordinate inside the subdomain
 def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
   return (subdomain_coordinate_y*n_fibers_per_subdomain_y + fiber_in_subdomain_coordinate_y)*n_fibers_x + subdomain_coordinate_x*n_fibers_per_subdomain_x + fiber_in_subdomain_coordinate_x
 
+# number of points that are handled inside the subdomain z
+def n_points_in_subdomain_z(subdomain_coordinate_z):
+  return min(n_points_per_subdomain_z, n_points_whole_fiber-subdomain_coordinate_z*n_points_per_subdomain_z)
+  
+# number of fibers that touch the elements in the subdomain with given coordinate
+def n_element_fibers_in_subdomain_x(subdomain_coordinate_x):
+  if subdomain_coordinate_x == n_subdomains_x-1:
+    return n_fibers_in_subdomain_x(subdomain_coordinate_x)
+  else:
+    return n_fibers_in_subdomain_x(subdomain_coordinate_x)+1
+  
+# number of fibers that touch the elements in the subdomain with given coordinate
+def n_element_fibers_in_subdomain_y(subdomain_coordinate_y):
+  if subdomain_coordinate_y == n_subdomains_y-1:
+    return n_fibers_in_subdomain_y(subdomain_coordinate_y)
+  else:
+    return n_fibers_in_subdomain_y(subdomain_coordinate_y)+1
+  
+# define 3D mesh 
+# loop over nodes
+node_positions = []
+subdomain_coordinate_x = rank_no % n_subdomains_x
+subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
+subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
+
+z_point_index_start = subdomain_coordinate_z * n_points_per_subdomain_z
+z_point_index_end = z_point_index_start + n_points_in_subdomain_z(subdomain_coordinate_z)
+
+n_elements = [
+    n_fibers_in_subdomain_x(subdomain_coordinate_x),
+    n_fibers_in_subdomain_y(subdomain_coordinate_y), 
+    n_points_in_subdomain_z(subdomain_coordinate_z)
+  ]
+
+# border subdomains have one element less than fibers
+if subdomain_coordinate_x == n_subdomains_x-1:
+  n_elements[0] -= 1
+if subdomain_coordinate_y == n_subdomains_y-1:
+  n_elements[1] -= 1
+if subdomain_coordinate_z == n_subdomains_z-1:
+  n_elements[2] -= 1
+
+# loop over z point indices
+for z_point_index in range(z_point_index_start, z_point_index_end):
+    
+  # loop over fibers for own rank
+  for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
+    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+      fiber_index = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
+        
+      point = fibers[fiber_index][z_point_index]
+      node_positions.append(point)
+      
+print("rank {}, n_elements: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, n_elements, subdomain_coordinate_x, subdomain_coordinate_y, subdomain_coordinate_z, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+print("   fibers x: [{}, {}]".format(0, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
+print("   fibers y: [{}, {}]".format(0, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
+print("   points z: [{}, {}] ({})".format(z_point_index_start, z_point_index_end, n_points_in_subdomain_z(subdomain_coordinate_z)))
+      
+meshes["3Dmesh"] = {
+  "nElements": n_elements,
+  "nRanks": [n_subdomains_x, n_subdomains_y, n_subdomains_z],
+  "nodePositions": node_positions,
+  "inputMeshIsGlobal": False,
+  "setHermiteDerivatives": False,
+  "logKey": "3Dmesh"
+}
+    
 if rank_no == 0:
   print("rank configuration: ")
   

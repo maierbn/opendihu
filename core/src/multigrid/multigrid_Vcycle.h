@@ -1,24 +1,22 @@
 #pragma once
 
-#include "operator_splitting/operator_splitting.h"
+#include "multigrid/multigrid.h"
 
 namespace Multigrid
 {
 
 template<typename FiniteElement1, typename FiniteElement2>
 class multigrid_Vcycle :
-  public OperatorSplitting<TimeStepping1,TimeStepping2>
+  public Multigrid<FiniteElement1,FiniteElement2>
 {
 public:
   //! constructor
   multigrid_Vcycle(DihuContext context);
 
-  //! advance time stepping by span
-  void advanceTimeSpan();
-
+  
 protected:
 };
 
 }  // namespace
 
-#include "operator_splitting/multigrid_Vcycle.tpp"
+#include "multigrid/multigrid_Vcycle.tpp"

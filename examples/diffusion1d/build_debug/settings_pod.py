@@ -4,8 +4,8 @@ k = 20
 
 config = {
   "ModelOrderReduction": {
-    "nRowsSnapshots" : k,
-    "nReducedBases" : k,   
+    "nRowsSnapshots" : n,
+    "nReducedBases" : k, 
     "ExplicitEuler" : {
       "numberTimeSteps": 1000,
       "endTime": 3,
@@ -18,7 +18,7 @@ config = {
       },
       "OutputWriter" : [
          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-        {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 10, "binary":False}
+        #{"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 10, "binary":False}
       ]
     },   
     "ExplicitEulerReduced" : {

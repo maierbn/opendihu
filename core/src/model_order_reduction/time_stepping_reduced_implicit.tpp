@@ -45,10 +45,6 @@ initialize()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp_, redSystemMatrix, redSystemMatrix); CHKERRV(ierr);
   
-  // TO BE IMPLEMENTED
-  
-  TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
-  
   this->initialized_=true;
   
 }

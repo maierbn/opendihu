@@ -179,7 +179,7 @@ initialize()
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   
-  //setInitialValues();
+  setInitialValues(); //necessary for the implicit scheme
     
   initialized_=true;
 }

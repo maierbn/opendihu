@@ -351,7 +351,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
 
       if (combineMesh)
       {
-        LOG(DEBUG) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes
+        VLOG(1) << "Combine mesh " << meshName << " with " << vtkPiece.meshNamesCombinedMeshes
           << ", add " << iter->second.nPointsLocal << " points, " << iter->second.nCellsLocal << " elements to "
           << vtkPiece.properties.nPointsLocal << " points, " << vtkPiece.properties.nCellsLocal << " elements";
 

@@ -166,6 +166,9 @@ MultipleInstances(DihuContext context) :
   }
 
   nInstancesLocal_ = instancesLocal_.size();
+
+  // clear rank subset for next created partitioning
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
 
 template<class TimeSteppingScheme>

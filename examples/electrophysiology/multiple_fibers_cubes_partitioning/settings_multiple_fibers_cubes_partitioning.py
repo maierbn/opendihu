@@ -261,7 +261,7 @@ if rank_no == 0:
   
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
-n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_x / n_subdomains_y))
+n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
 
 if rank_no == 0:
   print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))

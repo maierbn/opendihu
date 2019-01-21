@@ -33,7 +33,8 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_;
-  LOG(DEBUG) << "nRanks: " << nRanks_ << ", localSizesOnRanks_: " << localSizesOnRanks_ << ", beginElementGlobal_: " << beginElementGlobal_;
+  LOG(DEBUG) << "nRanks: " << nRanks_ << ", localSizesOnPartitions_: " << localSizesOnPartitions_
+    << ", beginElementGlobal_: " << beginElementGlobal_;
   
   LOG(DEBUG) << *this;
 }
@@ -60,18 +61,44 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
   {
     initializeHasFullNumberOfNodes();
 
-    // determine localSizesOnRanks_
+    // determine localSizesOnRanks
+    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;
     for (int i = 0; i < MeshType::dim(); i++)
     {
-      localSizesOnRanks_[i].resize(rankSubset->size());
+      localSizesOnRanks[i].resize(rankSubset->size());
     }
 
     for (int i = 0; i < MeshType::dim(); i++)
     {
       MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT,
-        localSizesOnRanks_[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
+        localSizesOnRanks[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
     }
-    VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks_;
+    VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks;
+
+    // create localSizesOnPartitions_ from localSizesOnRanks
+    for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
+    {
+      localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
+
+      // loop over the first rank of the respecive partion
+      int rankStride = 1;
+      if (dimensionIndex == 1)
+      {
+        rankStride = nRanks_[0];
+      }
+      else if (dimensionIndex == 2)
+      {
+        rankStride = nRanks_[0]*nRanks_[1];
+      }
+
+      int partitionIndex = 0;
+      for (int rankNo = 0; rankNo < this->nRanks(); rankNo += rankStride)
+      {
+        localSizesOnPartitions_[dimensionIndex][partitionIndex++] = localSizesOnRanks[dimensionIndex][rankNo];
+      }
+    }
+
+    VLOG(1) << "determined localSizesOnPartitions: " << localSizesOnPartitions_;
 
     setOwnRankPartitioningIndex();
 
@@ -197,8 +224,8 @@ initialize1NodeMesh()
   nElementsGlobal_[0] = 0;
   nRanks_[0] = 1;   // 1 rank
   ownRankPartitioningIndex_[0] = 0;
-  localSizesOnRanks_[0].resize(1);
-  localSizesOnRanks_[0][0] = 1;
+  localSizesOnPartitions_[0].resize(1);
+  localSizesOnPartitions_[0][0] = 1;
   hasFullNumberOfNodes_[0] = true;
 
   onlyNodalDofLocalNos_.resize(1);
@@ -235,8 +262,8 @@ createDmElements()
       beginElementGlobal_[dimensionIndex] = 0;
       nElementsLocal_[dimensionIndex] = nElementsGlobal_[dimensionIndex];
       nRanks_[dimensionIndex] = 1;
-      localSizesOnRanks_[dimensionIndex].resize(1);
-      localSizesOnRanks_[dimensionIndex][0] = 1;
+      localSizesOnPartitions_[dimensionIndex].resize(1);
+      localSizesOnPartitions_[dimensionIndex][0] = 1;
     }
   }
   else
@@ -264,12 +291,12 @@ createDmElements()
 
       VLOG(1) << "nRanks_[0] = " << nRanks_[0];
       VLOG(1) << "lxData: " << intptr_t(lxData);
-      localSizesOnRanks_[0].resize(nRanks_[0]);
+      localSizesOnPartitions_[0].resize(nRanks_[0]);
       for (int i = 0; i < nRanks_[0]; i++)
       {
         PetscInt l = lxData[i];
-        VLOG(1) << "set localSizesOnRanks_[0][" << i<< "]=" << l;
-        localSizesOnRanks_[0][i] = l;
+        VLOG(1) << "set localSizesOnPartitions_[0][" << i<< "]=" << l;
+        localSizesOnPartitions_[0][i] = l;
       }
     }
     else if (MeshType::dim() == 2)
@@ -294,8 +321,8 @@ createDmElements()
       const PetscInt *lxData;
       const PetscInt *lyData;
       ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
-      localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
-      localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
+      localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
+      localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
 
       std::array<int,2> meshIsPeriodicInDimension({false,false});
       MPI_Comm cartesianCommunicator;
@@ -332,9 +359,9 @@ createDmElements()
         const PetscInt *lyData;
         const PetscInt *lzData;
         ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData);
-        localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
-        localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
-        localSizesOnRanks_[2].assign(lzData, lzData + nRanks_[2]);
+        localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
+        localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
+        localSizesOnPartitions_[2].assign(lzData, lzData + nRanks_[2]);
 
     #if 0  // a suggestion from a HLRS course, not needed
         // create cartesian communciator using MPI_Cart_Create
@@ -374,10 +401,10 @@ createDmElements()
           const PetscInt *lxData;
           const PetscInt *lyData;
           ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
-          localSizesOnRanks_[0].resize(1);
-          localSizesOnRanks_[0][0] = 1;
-          localSizesOnRanks_[1].assign(lxData, lxData + nRanks_[1]);
-          localSizesOnRanks_[2].assign(lyData, lyData + nRanks_[2]);
+          localSizesOnPartitions_[0].resize(1);
+          localSizesOnPartitions_[0][0] = 1;
+          localSizesOnPartitions_[1].assign(lxData, lxData + nRanks_[1]);
+          localSizesOnPartitions_[2].assign(lyData, lyData + nRanks_[2]);
         }
         else if (nElementsGlobal_[1] == 1)
         {
@@ -404,10 +431,10 @@ createDmElements()
           const PetscInt *lxData;
           const PetscInt *lyData;
           ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
-          localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
-          localSizesOnRanks_[1].resize(1);
-          localSizesOnRanks_[1][0] = 1;
-          localSizesOnRanks_[2].assign(lyData, lyData + nRanks_[2]);
+          localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
+          localSizesOnPartitions_[1].resize(1);
+          localSizesOnPartitions_[1][0] = 1;
+          localSizesOnPartitions_[2].assign(lyData, lyData + nRanks_[2]);
         }
         else if (nElementsGlobal_[2] == 1)
         {
@@ -434,10 +461,10 @@ createDmElements()
           const PetscInt *lxData;
           const PetscInt *lyData;
           ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
-          localSizesOnRanks_[0].assign(lxData, lxData + nRanks_[0]);
-          localSizesOnRanks_[1].assign(lyData, lyData + nRanks_[1]);
-          localSizesOnRanks_[2].resize(1);
-          localSizesOnRanks_[2][0] = 1;
+          localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
+          localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
+          localSizesOnPartitions_[2].resize(1);
+          localSizesOnPartitions_[2][0] = 1;
         }
       }
     }
@@ -449,7 +476,7 @@ createDmElements()
   VLOG(1) << "createDmElements determined the following parameters: "
     << "beginElementGlobal_: " << beginElementGlobal_
     << ", nElementsLocal_: " << nElementsLocal_
-    << ", localSizesOnRanks_: " << localSizesOnRanks_
+    << ", localSizesOnPartitions_: " << localSizesOnPartitions_
     << ", hasFullNumberOfNodes_: " << hasFullNumberOfNodes_
     << ", ownRankPartitioningIndex/nRanks: " << ownRankPartitioningIndex_ << " / " << nRanks_;
 }
@@ -580,11 +607,11 @@ nNodesLocalWithGhosts(int coordinateDirection, int partitionIndex) const
   else
   {
     //VLOG(2) << "nNodesLocalWithGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-    //  << "), localSizesOnRanks: " << localSizesOnRanks_ << ", nNodesPer1DElement: " << nNodesPer1DElement
-    //  << ", result: " << this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+    //  << "), localSizesOnPartitions: " << localSizesOnPartitions_ << ", nNodesPer1DElement: " << nNodesPer1DElement
+    //  << ", result: " << this->localSizesOnPartitions_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
 
     // get the value for the given partition with index partitionIndex
-    return this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
+    return this->localSizesOnPartitions_[coordinateDirection][partitionIndex] * nNodesPer1DElement + 1;
   }
 }
 
@@ -629,7 +656,9 @@ nNodesLocalWithoutGhosts(int coordinateDirection, int partitionIndex) const
   else
   {
     // get the value for the given partition with index partitionIndex
-    return this->localSizesOnRanks_[coordinateDirection][partitionIndex] * nNodesPer1DElement
+    //VLOG(1) << "nNodesLocalWithoutGhosts(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex << "), localSizesOnPartitions: "
+    //  << this->localSizesOnPartitions_ << ": " << this->localSizesOnPartitions_[coordinateDirection][partitionIndex] << ", has full: " << this->hasFullNumberOfNodes(coordinateDirection, partitionIndex);
+    return this->localSizesOnPartitions_[coordinateDirection][partitionIndex] * nNodesPer1DElement
       + (this->hasFullNumberOfNodes(coordinateDirection, partitionIndex)? 1 : 0);
   }
 }
@@ -673,11 +702,11 @@ beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
     for (int i = 0; i < partitionIndex; i++)
     {
       // sum up the number of nodes on these previous partitions
-      nodeNoGlobalNatural += (localSizesOnRanks_[coordinateDirection][i]) * nNodesPer1DElement;
+      nodeNoGlobalNatural += (localSizesOnPartitions_[coordinateDirection][i]) * nNodesPer1DElement;
     }
 
     //VLOG(2) << "beginNodeGlobalNatural(coordinateDirection=" << coordinateDirection << ", partitionIndex=" << partitionIndex
-    //  << "), localSizesOnRanks_: " << localSizesOnRanks_ << ", result: " << nodeNoGlobalNatural;
+    //  << "), localSizesOnPartitions_: " << localSizesOnPartitions_ << ", result: " << nodeNoGlobalNatural;
 
     return nodeNoGlobalNatural;
   }
@@ -729,7 +758,7 @@ convertRankNoToPartitionIndex(int coordinateDirection, int rankNo)
   }
   else if (coordinateDirection == 1)
   {
-    // example: nRanks: 1,2   localSizesOnRanks_: ((20),(10,10))
+    // example: nRanks: 1,2   localSizesOnPartitions_: ((20),(10,10))
     return (rankNo % (nRanks_[0]*nRanks_[1])) / nRanks_[0];
   }
   else if (coordinateDirection == 2)
@@ -992,7 +1021,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
   global_no_t xGlobalNatural = 0;
   while (xGlobalNatural <= nodeNoGlobalNatural[0] && xGlobalNatural < nNodesGlobal(0)-1)
   {
-    xGlobalNatural += localSizesOnRanks_[0][partitionX++]*nNodesPer1DElement;
+    xGlobalNatural += localSizesOnPartitions_[0][partitionX++]*nNodesPer1DElement;
     VLOG(3) << "   x GlobalNatural=" << xGlobalNatural << ", partitionX=" << partitionX << ", nodeNoGlobalNatural[0]=" << nodeNoGlobalNatural[0];
   }
   partitionX--;
@@ -1007,7 +1036,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t yGlobalNatural = 0;
     while (yGlobalNatural <= nodeNoGlobalNatural[1] && yGlobalNatural < nNodesGlobal(1)-1)
     {
-      yGlobalNatural += localSizesOnRanks_[1][partitionY++]*nNodesPer1DElement;
+      yGlobalNatural += localSizesOnPartitions_[1][partitionY++]*nNodesPer1DElement;
       VLOG(3) << "   y GlobalNatural=" << yGlobalNatural << ", partitionY=" << partitionY << ", nodeNoGlobalNatural[1]=" << nodeNoGlobalNatural[1];
     }
     partitionY--;
@@ -1023,7 +1052,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t zGlobalNatural = 0;
     while (zGlobalNatural <= nodeNoGlobalNatural[2] && zGlobalNatural < nNodesGlobal(2)-1)
     {
-      zGlobalNatural += localSizesOnRanks_[2][partitionZ++]*nNodesPer1DElement;
+      zGlobalNatural += localSizesOnPartitions_[2][partitionZ++]*nNodesPer1DElement;
       VLOG(3) << "   z GlobalNatural=" << zGlobalNatural << ", partitionZ=" << partitionZ << ", nodeNoGlobalNatural[2]=" << nodeNoGlobalNatural[2];
     }
     partitionZ--;
@@ -2138,12 +2167,12 @@ output(std::ostream &stream)
   for (int i = 0; i < MeshType::dim(); i++)
     stream << hasFullNumberOfNodes_[i] << ",";
 
-  stream << " localSizesOnRanks: ";
+  stream << " localSizesOnPartitions: ";
   for (int i = 0; i < MeshType::dim(); i++)
   {
     stream << "(";
-    for (int j = 0; j < localSizesOnRanks_[i].size(); j++)
-      stream << localSizesOnRanks_[i][j] << ",";
+    for (int j = 0; j < localSizesOnPartitions_[i].size(); j++)
+      stream << localSizesOnPartitions_[i][j] << ",";
     stream << ")";
   }
 
@@ -2164,7 +2193,7 @@ output(std::ostream &stream)
     << ", dofNosLocal: [";
 
   int dofNosLocalEnd = std::min(100, (int)this->dofNosLocal_.size());
-  if (VLOG_IS_ON(1))
+  if (VLOG_IS_ON(2))
   {
     dofNosLocalEnd = this->dofNosLocal_.size();
   }
@@ -2176,7 +2205,7 @@ output(std::ostream &stream)
     stream << " ... ( " << this->dofNosLocal_.size() << " local dof nos)";
   stream << "], ghostDofNosGlobalPetsc: [";
 
-  for (int i = 0; i < ghostDofNosGlobalPetsc_.size(); i++)
+  for (int i = 0; i < std::min(100,(int)ghostDofNosGlobalPetsc_.size()); i++)
     stream << ghostDofNosGlobalPetsc_[i] << " ";
   stream << "], localToGlobalPetscMappingDofs_: ";
   if (localToGlobalPetscMappingDofs_)

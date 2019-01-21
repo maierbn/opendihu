@@ -280,9 +280,9 @@ config = {
           "prefactor": 1.0,
         },
         
-       # "OutputWriter" : [
-        #  {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": False, "onlyNodalValues": True},
-        #],
+        "OutputWriter" : [
+          {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": False, "onlyNodalValues": True},
+        ],
       },#ExplicitEulerReduced
      },# ModelOrderReduction
     },
@@ -291,7 +291,7 @@ config = {
       "nRowsSnapshots" : n_total,
       "nReducedBases" : n_reduced,
       "nRowsComponents" : 1,
-      "ImplicitEuler" : {
+      "ExplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1e4,
@@ -311,7 +311,7 @@ config = {
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },# ExplicitEulerReduced
-      "ImplicitEulerReduced" : {
+      "ExplicitEulerReduced" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
         "timeStepOutputInterval": 1e4,
@@ -326,7 +326,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": 10, "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],

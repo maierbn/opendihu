@@ -83,7 +83,6 @@ TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
 template<typename TimeSteppingType>
 void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
 {  
-  PetscErrorCode ierr;
    
   Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
   Vec &redSolution= this->data().solution()->getValuesContiguous();
@@ -101,7 +100,7 @@ void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   LOG(DEBUG) << "setInitialValues() mat_sz_1: " << mat_sz_1 << " mat_sz_2: " << mat_sz_2 << "========================";;
   
   // reduction step
-  ierr=MatMult(basisTransp, solution, redSolution); CHKERRV(ierr);  
+  this->MatMultReduced(basisTransp, solution, redSolution);  
 }
 
 template<typename TimeSteppingType>

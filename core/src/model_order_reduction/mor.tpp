@@ -143,7 +143,7 @@ void MORBase<FunctionSpaceRowsType>::
 MatMultReduced(Mat mat,Vec x,Vec y)
 {
   PetscErrorCode ierr;
-  
+  //PetscInt vec_sz_tmp;
   PetscInt vec_sz,mat_sz_1,mat_sz_2;
   VecGetSize(x,&vec_sz);
   MatGetSize(mat,&mat_sz_1,&mat_sz_2);
@@ -159,25 +159,48 @@ MatMultReduced(Mat mat,Vec x,Vec y)
   {
     LOG(TRACE) << "MatMultReduced";
     
-    const PetscInt *cols;    
+    PetscInt *idx;
+    PetscMalloc1(vec_sz,&idx);
+    for(PetscInt i=0; i<vec_sz; i++)
+          idx[i]=i;
+    
+    PetscInt *idx_2;
+    PetscMalloc1(mat_sz_1,&idx_2);
+    for(PetscInt i=0; i<mat_sz_1; i++)
+      idx_2[i]=i;
+           
     const PetscScalar *mat_row;
-    Vec mat_row_vec; //to allocate
+    PetscScalar mat_row_sbv[vec_sz];
+    
+    Vec mat_row_vec;
+    ierr=VecDuplicate(x,&mat_row_vec); CHKERRV(ierr);
     
     PetscScalar val[mat_sz_1];
-    // to allocate ??
-        
-    for(int i=0; i<mat_sz_1; i++)
+       
+    for(int i=0; i<mat_sz_1; i++) //must be square matrix
     {
-      ierr=MatGetRow(mat,i,NULL,&cols,&mat_row);  CHKERRV(ierr);
-      // use only the required part of the array      
-      ierr=VecCreateSeqWithArray(PETSC_COMM_SELF,vec_sz,vec_sz,mat_row,&mat_row_vec); CHKERRV(ierr);
+      ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr);
+      // use only the required part of the array  
+      for(int j=0; j<vec_sz;j++)
+      {
+        mat_row_sbv[j]=mat_row[j];
+        //LOG(DEBUG) << "mat_row[" << j << "]" << mat_row[j];
+      }
+           
+      ierr=VecSetValues(mat_row_vec,vec_sz,idx,mat_row_sbv,INSERT_VALUES); CHKERRV(ierr);
+      VecAssemblyBegin(mat_row_vec);
+      VecAssemblyEnd(mat_row_vec);
+      
+      //VecGetSize(mat_row_vec,&vec_sz_tmp);
+      //LOG(DEBUG) << "vec_sz_tmp: " << vec_sz_tmp;
       ierr=VecTDot(x,mat_row_vec,&val[i]);  CHKERRV(ierr);
+      //LOG(DEBUG) << "val[" << i << "]: " << val[i];
     }
     
-    ierr=VecCreateSeqWithArray(PETSC_COMM_SELF,mat_sz_1,mat_sz_1,val,&y);
-    //VecCreateMPIWithArray ???
+    ierr=VecSetValues(y,mat_sz_1,idx_2,val,INSERT_VALUES); CHKERRV(ierr); // would it work for parallel!?
+    VecAssemblyBegin(y);
+    VecAssemblyEnd(y);
     
-    //LOG(ERROR) << "MORBase::MatMultReduced to be implemented!";
   }
 }
 
@@ -199,24 +222,36 @@ MatMultFull(Mat mat,Vec x,Vec y)
     CHKERRV(ierr);
   }
   else
-  {
-    const PetscInt *cols;    
+  {   
+    PetscInt *idx;
+    PetscMalloc1(vec_sz,&idx);
+    for(PetscInt i=0; i<vec_sz; i++)
+      idx[i]=i;
+    
+    PetscInt *idx_2;
+    PetscMalloc1(mat_sz_1,&idx_2);
+    for(PetscInt i=0; i<mat_sz_2; i++) //square matrix
+      idx_2[i]=i;
+    
     const PetscScalar *mat_row;
     Vec mat_row_vec; //to allocate
+    ierr=VecDuplicate(x,&mat_row_vec); CHKERRV(ierr);
     
     PetscScalar val[vec_sz];
-    // to allocate ??
     
     for(int i=0; i<vec_sz; i++)
     {
-      ierr=MatGetRow(mat,i,NULL,&cols,&mat_row);  CHKERRV(ierr);      
-      ierr=VecCreateSeqWithArray(PETSC_COMM_SELF,mat_sz_2,mat_sz_2,mat_row,&mat_row_vec); CHKERRV(ierr);
+      ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr);      
+      ierr=VecSetValues(mat_row_vec,mat_sz_2,idx_2,mat_row,INSERT_VALUES); CHKERRV(ierr);
+      VecAssemblyBegin(mat_row_vec);
+      VecAssemblyEnd(mat_row_vec);
+      
       ierr=VecTDot(x,mat_row_vec,&val[i]);  CHKERRV(ierr);
     }
     
-    ierr=VecCreateSeqWithArray(PETSC_COMM_SELF,vec_sz,vec_sz,val,&y);
-    //VecCreateMPIWithArray ???
-    //LOG(ERROR) << "MORBase::MatMultFull to be implemented!";
+    ierr=VecSetValues(y,vec_sz,idx,val,INSERT_VALUES); CHKERRV(ierr); // would it work for parallel!?
+    VecAssemblyBegin(y);
+    VecAssemblyEnd(y);
   }
 }
 

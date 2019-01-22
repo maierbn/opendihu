@@ -459,6 +459,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
         << " pointIndex " << pointIndex0 << " valid: " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0];
       LOG(DEBUG) << "           " << subdomainIndex1 << " face " << Mesh::getString((Mesh::face_t)face1)
         << " pointIndex " << pointIndex1 << " valid: " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex1][face1][pointIndex1];
+      LOG(DEBUG) << "derive the corner streamline from the initial border points";
 
       // lower subdomain
       // loop over points of streamline from bottom to top

@@ -11,7 +11,6 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 {
   LOG(DEBUG) << "fillBorderPoints";
   MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
-  
   //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
   //PythonUtility::checkForError();
   //assert(stlMeshPy);

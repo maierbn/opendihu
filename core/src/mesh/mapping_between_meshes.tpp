@@ -16,9 +16,18 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   element_no_t elementNo;
   int ghostMeshNo;
   std::array<double,FunctionSpaceTargetType::dim()> xi;
-  bool startSearchInCurrentElement = false;
 
   targetMappingInfo_.resize(nDofsLocalSource);
+
+  VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+  VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
+  VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
+
+  double xiToleranceBase = 1e-2;
+
+  bool mappingSucceeded = true;
+  bool startSearchInCurrentElement = false;
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
@@ -27,18 +36,35 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     targetDof_t targetMappingInfo;
 
     // get node position of the source dof
-    Vec3 position;
-    dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
-    functionSpaceTarget->getGeometry(sourceDofNoGlobal);
 
-    // find element no in the target mesh where the position is
-    if (!functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement))
+    //dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
+    Vec3 position = functionSpaceSource->getGeometry(sourceDofNoLocal);
+
+    double xiTolerance = xiToleranceBase;
+    int nTries = 0;
+    for(nTries = 0; nTries < 10; nTries++)
     {
-      LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-        << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal << ", global " << sourceDofNoGlobal
-        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
-        << functionSpaceTarget->meshName() << "\".";
+      // find element no in the target mesh where the position is
+      if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
+      {
+        xiToleranceBase = xiTolerance;
         break;
+      }
+      else
+      {
+        xiTolerance *= 2;
+        LOG(DEBUG) << "Try again with xiTolerance = " << xiTolerance;
+      }
+    }
+
+    if (nTries == 10)
+    {
+      LOG(DEBUG) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+        << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal
+        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
+        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
+      mappingSucceeded = false;
+      break;
     }
 
     // store element no
@@ -49,13 +75,37 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     // note: geometry value = sum over dofs of geometryValue_dof * phi_dof(xi)
     for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
     {
-      targetMappingInfo.scalingFactors[targetDofIndex] = functionSpaceTarget->phi(targetDofIndex,xi);
+      targetMappingInfo.scalingFactors[targetDofIndex] = functionSpaceTarget->phi(targetDofIndex, xi);
     }
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 
+    if (VLOG_IS_ON(2))
+    {
+      double scalingFactorsSum = 0;
+      for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
+      {
+        scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].scalingFactors[targetDofIndex];
+      }
+      VLOG(3) << "  source dof local " << sourceDofNoLocal << ", pos: " << position << ", xi: " << xi
+        << ", element no: " << targetMappingInfo.elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
+        << ", sum: " << scalingFactorsSum;
+    }
+
     // next time when searching for the target element, start search from previous element
     startSearchInCurrentElement = true;
+  }
+
+  if (!mappingSucceeded)
+  {
+    LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      << functionSpaceTarget->meshName() << "\".";
+    LOG(FATAL) << "end";
+  }
+  else
+  {
+    LOG(DEBUG) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      << functionSpaceTarget->meshName() << "\".";
   }
 }
 
@@ -80,6 +130,13 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
 
   fieldVariableSource.getValues(componentNoSource, sourceLocalDofNos, sourceValues);
 
+  VLOG(1) << "map " << fieldVariableSource.name() << "." << componentNoSource <<
+    " (" << fieldVariableSource.functionSpace()->meshName() << ") -> " << fieldVariableTarget.name() << "." << componentNoTarget
+    << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
+
+  VLOG(1) << "source has " << nDofsLocalSource << " local dofs";
+  VLOG(1) << fieldVariableSource;
+
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
@@ -97,7 +154,12 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
       dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
     }
     fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
+
+    VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
+      << ", targetValues: " << targetValues
+      << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
   }
+  //LOG(FATAL) << "after mapping";
 }
 
 }  // namespace

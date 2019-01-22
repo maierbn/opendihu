@@ -166,6 +166,9 @@ MultipleInstances(DihuContext context) :
   }
 
   nInstancesLocal_ = instancesLocal_.size();
+
+  // clear rank subset for next created partitioning
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
 
 template<class TimeSteppingScheme>
@@ -294,6 +297,7 @@ getSolutionForTransfer()
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     output[i] = instancesLocal_[i].getSolutionForTransfer();
+    LOG(DEBUG) << "MultipleInstances::getSolutionForTransfer, instance " << i << "/" << nInstancesLocal_;
   }
   return output;
 }

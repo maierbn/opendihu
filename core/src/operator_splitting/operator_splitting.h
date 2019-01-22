@@ -14,6 +14,7 @@ template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
   public Runnable
+  //public Printer<typename TimeStepping2::TransferableSolutionDataType>
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
@@ -56,6 +57,15 @@ protected:
 
   bool initialized_;               ///< if initialize() was already called
 };
+
+/*
+template<typename TransferableSolutionDataType>
+class Printer
+{
+  void print(TransferableSolutionDataType &data);
+};
+
+*/
 
 }  // namespace
 

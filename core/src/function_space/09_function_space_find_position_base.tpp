@@ -13,7 +13,7 @@ namespace FunctionSpace
 // structured mesh
 template<typename MeshType, typename BasisFunctionType>
 bool FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement)
+findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, bool startSearchInCurrentElement, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
 
@@ -31,7 +31,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     if (ghostMeshNo != -1)
       functionSpace = ghostMesh_[ghostMeshNo].get();
 
-    if (functionSpace->pointIsInElement(point, elementNo, xi))
+    if (functionSpace->pointIsInElement(point, elementNo, xi, xiTolerance))
     {
 
       // debugging output
@@ -107,7 +107,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 
     VLOG(4) << "check element " << currentElementNo;
 
-    if (this->pointIsInElement(point, currentElementNo, xi))
+    if (this->pointIsInElement(point, currentElementNo, xi, xiTolerance))
     {
       if (startSearchInCurrentElement)
       {

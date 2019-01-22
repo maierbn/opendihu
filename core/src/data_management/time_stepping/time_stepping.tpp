@@ -130,6 +130,7 @@ template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
 getSolutionForTransfer()
 {
+  LOG(DEBUG) << "TimeStepping::getSolutionForTransfer, solution " << *this->solution_;
   return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
 }
 

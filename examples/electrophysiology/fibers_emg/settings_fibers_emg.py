@@ -226,7 +226,7 @@ for i,fiber in enumerate(fibers):
   #fiber = fiber[center_node-2:center_node+2]
   
   # define mesh
-  meshes["MeshFibre_{}".format(i)] = {
+  meshes["MeshFiber_{}".format(i)] = {
     "nElements": len(fiber)-1,
     "nodePositions": fiber,
     "inputMeshIsGlobal": True,
@@ -422,6 +422,7 @@ if rank_no == 0:
 config = {
   "scenarioName": scenario_name,
   "Meshes": meshes,
+  "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(n_fibers_total)},
   "Solvers": {
     "implicitSolver": {
       "maxIterations": 1e4,
@@ -494,7 +495,7 @@ config = {
                       "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                       "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                      "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
+                      "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                       "prefactor": 1.0,
                     },
                   },
@@ -521,7 +522,7 @@ config = {
                       "maxIterations": 1e4,
                       "relativeTolerance": 1e-10,
                       "inputMeshIsGlobal": True,
-                      "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
+                      "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                       "prefactor": Conductivity/(Am*Cm),
                       "solverName": "implicitSolver",
                     },

@@ -169,6 +169,8 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
 template<typename FunctionSpace1Type, typename FunctionSpace2Type>
 void Manager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2)
 {
+  LOG(DEBUG) << "initializeMappingsBetweenMeshes source: \"" << functionSpace1->meshName() << "\" target: \"" << functionSpace2->meshName() << "\".";
+
   // check if mapping functionSpace1 -> functionSpace2 is defined in config
   assert(functionSpaces_.find(functionSpace1->meshName()) != functionSpaces_.end());
   assert(functionSpaces_.find(functionSpace2->meshName()) != functionSpaces_.end());
@@ -178,24 +180,45 @@ void Manager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpac
 
   if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
   {
+    LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" declared";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
+      LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" declared";
       mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
         std::make_shared<MappingBetweenMeshes<FunctionSpace1Type,FunctionSpace2Type>>(functionSpace1,functionSpace2)
       );
     }
+    else
+    {
+      LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" -> \"" << functionSpace2->meshName() << "\" not declared";
+    }
   }
+  else
+  {
+    LOG(DEBUG) << "\"" << functionSpace1->meshName() << "\" not declared";
+  }
+
   sourceMeshName = functionSpace2->meshName();
   targetMeshName = functionSpace1->meshName();
 
   if (mappingsBetweenMeshes_.find(sourceMeshName) != mappingsBetweenMeshes_.end())
   {
+    LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" declared";
     if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) != mappingsBetweenMeshes_[sourceMeshName].end())
     {
+      LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" -> \"" << functionSpace1->meshName() << "\" declared";
       mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
         std::make_shared<MappingBetweenMeshes<FunctionSpace2Type,FunctionSpace1Type>>(functionSpace2,functionSpace1)
       );
     }
+    else
+    {
+      LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" -> \"" << functionSpace1->meshName() << "\" not declared";
+    }
+  }
+  else
+  {
+    LOG(DEBUG) << "\"" << functionSpace2->meshName() << "\" not declared";
   }
 }
 

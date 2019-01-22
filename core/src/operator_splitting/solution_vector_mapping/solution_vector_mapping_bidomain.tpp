@@ -29,15 +29,22 @@ void SolutionVectorMapping<
   {
     for (int j = 0; j < transferableSolutionData1[i].size(); j++)
     {
+
+
       std::shared_ptr<FieldVariableType1> transmembranePotential = std::get<0>(transferableSolutionData1[i][j]);
+
+      LOG(DEBUG) << *transmembranePotential;
+      LOG(FATAL) << "end";
+
       std::shared_ptr<Mesh::MappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>> mappingBetweenMeshes
         = std::static_pointer_cast<Mesh::MappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>>(
           DihuContext::meshManager()->mappingBetweenMeshes(transmembranePotential->functionSpace()->meshName(), transferableSolutionData2->functionSpace()->meshName())
         );
       if (!mappingBetweenMeshes)
       {
-        LOG(ERROR) << "Mapping from mesh \"" << transmembranePotential->functionSpace()->meshName() << "\" to \"" << transferableSolutionData2->functionSpace()->meshName()
-          << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"meshNameFrom\" : \"meshNameTo\" } as top level object of the python config.";
+        LOG(DEBUG) << "Mapping from mesh \"" << transmembranePotential->functionSpace()->meshName() << "\" to \"" << transferableSolutionData2->functionSpace()->meshName()
+          << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"meshNameFrom\" : \"meshNameTo\" } as top level object of the python config. "
+          << "(It could be that this was done, but because of MultipleInstances in the OperatorSplitting or Coupling, only the first mesh mapping got initialized.)";
         mappingBetweenMeshes = DihuContext::meshManager()->createMappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>(
           transmembranePotential->functionSpace(), transferableSolutionData2->functionSpace()
         );

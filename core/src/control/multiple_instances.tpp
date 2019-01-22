@@ -297,6 +297,7 @@ getSolutionForTransfer()
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     output[i] = instancesLocal_[i].getSolutionForTransfer();
+    LOG(DEBUG) << "MultipleInstances::getSolutionForTransfer, instance " << i << "/" << nInstancesLocal_;
   }
   return output;
 }

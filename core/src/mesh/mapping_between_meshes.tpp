@@ -16,11 +16,18 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   element_no_t elementNo;
   int ghostMeshNo;
   std::array<double,FunctionSpaceTargetType::dim()> xi;
-  bool startSearchInCurrentElement = false;
 
   targetMappingInfo_.resize(nDofsLocalSource);
 
   VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+  VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
+  VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
+
+  double xiToleranceBase = 1e-2;
+
+  bool mappingSucceeded = true;
+  bool startSearchInCurrentElement = false;
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
@@ -30,17 +37,34 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
     // get node position of the source dof
 
-    dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
-    Vec3 position = functionSpaceTarget->getGeometry(sourceDofNoGlobal);
+    //dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
+    Vec3 position = functionSpaceSource->getGeometry(sourceDofNoLocal);
 
-    // find element no in the target mesh where the position is
-    if (!functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement))
+    double xiTolerance = xiToleranceBase;
+    int nTries = 0;
+    for(nTries = 0; nTries < 10; nTries++)
     {
-      LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
-        << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal << ", global " << sourceDofNoGlobal
-        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
-        << functionSpaceTarget->meshName() << "\".";
+      // find element no in the target mesh where the position is
+      if (functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, xiTolerance))
+      {
+        xiToleranceBase = xiTolerance;
         break;
+      }
+      else
+      {
+        xiTolerance *= 2;
+        LOG(DEBUG) << "Try again with xiTolerance = " << xiTolerance;
+      }
+    }
+
+    if (nTries == 10)
+    {
+      LOG(DEBUG) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+        << functionSpaceTarget->meshName() << "\", dof local " << sourceDofNoLocal
+        << " of mesh \"" << functionSpaceSource->meshName() << "\" at position " << position << " is outside of mesh \""
+        << functionSpaceTarget->meshName() << "\" with tolerance " << xiTolerance << ".";
+      mappingSucceeded = false;
+      break;
     }
 
     // store element no
@@ -63,13 +87,25 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
       {
         scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].scalingFactors[targetDofIndex];
       }
-      VLOG(2) << "  source dof local " << sourceDofNoLocal << ", global " << sourceDofNoGlobal <<", pos: " << position << ", xi: " << xi
+      VLOG(3) << "  source dof local " << sourceDofNoLocal << ", pos: " << position << ", xi: " << xi
         << ", element no: " << targetMappingInfo.elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
         << ", sum: " << scalingFactorsSum;
     }
 
     // next time when searching for the target element, start search from previous element
     startSearchInCurrentElement = true;
+  }
+
+  if (!mappingSucceeded)
+  {
+    LOG(ERROR) << "Could not create mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      << functionSpaceTarget->meshName() << "\".";
+    LOG(FATAL) << "end";
+  }
+  else
+  {
+    LOG(DEBUG) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
+      << functionSpaceTarget->meshName() << "\".";
   }
 }
 
@@ -99,6 +135,7 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
     << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
 
   VLOG(1) << "source has " << nDofsLocalSource << " local dofs";
+  VLOG(1) << fieldVariableSource;
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)

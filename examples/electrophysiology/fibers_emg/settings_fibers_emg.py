@@ -253,9 +253,15 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, get_motor_unit_no(fibre_no_index), first_stimulation))
 
 # compute partitioning
+# this has to match the total number of processes
 n_subdomains_x = 2   # example values for 4 processes
 n_subdomains_y = 1
 n_subdomains_z = 2
+
+# here any number is possible
+sampling_stride_x = 3
+sampling_stride_y = 2
+sampling_stride_z = 30
 
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
@@ -288,20 +294,24 @@ def fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_
 def n_points_in_subdomain_z(subdomain_coordinate_z):
   return min(n_points_per_subdomain_z, n_points_whole_fiber-subdomain_coordinate_z*n_points_per_subdomain_z)
   
-# number of fibers that touch the elements in the subdomain with given coordinate
-def n_element_fibers_in_subdomain_x(subdomain_coordinate_x):
-  if subdomain_coordinate_x == n_subdomains_x-1:
-    return n_fibers_in_subdomain_x(subdomain_coordinate_x)
-  else:
-    return n_fibers_in_subdomain_x(subdomain_coordinate_x)+1
-  
-# number of fibers that touch the elements in the subdomain with given coordinate
-def n_element_fibers_in_subdomain_y(subdomain_coordinate_y):
-  if subdomain_coordinate_y == n_subdomains_y-1:
-    return n_fibers_in_subdomain_y(subdomain_coordinate_y)
-  else:
-    return n_fibers_in_subdomain_y(subdomain_coordinate_y)+1
-  
+def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
+  result = (int)(np.ceil(n_fibers_in_subdomain_x(subdomain_coordinate_x) / sampling_stride_x))
+  if subdomain_coordinate_x == n_subdomains_x-1 and (n_fibers_in_subdomain_x(subdomain_coordinate_x)-1) % sampling_stride_x != 0:
+    result += 1
+  return result
+
+def n_sampled_points_in_subdomain_y(subdomain_coordinate_y):
+  result = (int)(np.ceil(n_fibers_in_subdomain_y(subdomain_coordinate_y) / sampling_stride_y))
+  if subdomain_coordinate_y == n_subdomains_y-1 and (n_fibers_in_subdomain_y(subdomain_coordinate_y)-1) % sampling_stride_y != 0:
+    result += 1
+  return result
+
+def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
+  result = (int)(np.ceil(n_points_in_subdomain_z(subdomain_coordinate_z) / sampling_stride_z))
+  if subdomain_coordinate_z == n_subdomains_z-1 and (n_points_in_subdomain_z(subdomain_coordinate_z)-1) % sampling_stride_z != 0:
+    result += 1
+  return result
+
 # define 3D mesh 
 # loop over nodes
 node_positions = []
@@ -312,11 +322,21 @@ subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
 z_point_index_start = subdomain_coordinate_z * n_points_per_subdomain_z
 z_point_index_end = z_point_index_start + n_points_in_subdomain_z(subdomain_coordinate_z)
 
+# local number of elements
 n_elements = [
-    n_fibers_in_subdomain_x(subdomain_coordinate_x),
-    n_fibers_in_subdomain_y(subdomain_coordinate_y), 
-    n_points_in_subdomain_z(subdomain_coordinate_z)
+    n_sampled_points_in_subdomain_x(subdomain_coordinate_x),
+    n_sampled_points_in_subdomain_y(subdomain_coordinate_y), 
+    n_sampled_points_in_subdomain_z(subdomain_coordinate_z)
   ]
+
+n_global_points_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(n_subdomains_x)])
+n_global_points_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(n_subdomains_y)])
+n_global_points_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(n_subdomains_z)])
+
+print("n_global_points: {} x {} x {} = sum({}) x sum({}) x sum({})".format(n_global_points_x, n_global_points_y, n_global_points_z, \
+  [n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(n_subdomains_x)],\
+  [n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(n_subdomains_y)],\
+  [n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(n_subdomains_z)]))
 
 # border subdomains have one element less than fibers
 if subdomain_coordinate_x == n_subdomains_x-1:
@@ -327,16 +347,43 @@ if subdomain_coordinate_z == n_subdomains_z-1:
   n_elements[2] -= 1
 
 # loop over z point indices
-for z_point_index in range(z_point_index_start, z_point_index_end):
+for k in range(n_sampled_points_in_subdomain_z(subdomain_coordinate_z)):
+  z_point_index = z_point_index_start + k*sampling_stride_z
+  
+  if subdomain_coordinate_z == n_subdomains_z-1 and k == n_sampled_points_in_subdomain_z(subdomain_coordinate_z)-1:
+    z_point_index = z_point_index_end-1
     
+  #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, sampling_stride_z, k, z_point_index, z_point_index_end))
+  
   # loop over fibers for own rank
-  for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
+  for j in range(n_sampled_points_in_subdomain_y(subdomain_coordinate_y)):
+    fiber_in_subdomain_coordinate_y = j*sampling_stride_y
+    
+    if subdomain_coordinate_y == n_subdomains_y-1 and j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-1:
+      fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(subdomain_coordinate_y)-1
+    
+    #print("{}: sampling_stride_y: {}, j: {}, y: {}/{}".format(rank_no, sampling_stride_y, j, fiber_in_subdomain_coordinate_y, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
+      
+    for i in range(n_sampled_points_in_subdomain_x(subdomain_coordinate_x)):
+      fiber_in_subdomain_coordinate_x = i*sampling_stride_x
+      
+      if subdomain_coordinate_x == n_subdomains_x-1 and i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-1:
+        fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
+      
+      #print("{}: sampling_stride_x: {}, i: {}, x: {}/{}".format(rank_no, sampling_stride_x, i, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
+      
       fiber_index = fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
         
+      
       point = fibers[fiber_index][z_point_index]
       node_positions.append(point)
+      print("{}: {}".format(rank_no, point))
       
+# on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+if subdomain_coordinate_x == n_subdomains_x-1:
+  fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
+
+
 print("rank {}, n_elements: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, n_elements, subdomain_coordinate_x, subdomain_coordinate_y, subdomain_coordinate_z, n_subdomains_x, n_subdomains_y, n_subdomains_z))
 print("   fibers x: [{}, {}]".format(0, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
 print("   fibers y: [{}, {}]".format(0, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
@@ -350,6 +397,14 @@ meshes["3Dmesh"] = {
   "setHermiteDerivatives": False,
   "logKey": "3Dmesh"
 }
+
+# set Dirichlet BC values for bottom nodes to 0 and for top nodes to 1
+potential_flow_dirichlet_bc = {}
+for i in range(n_global_points_x*n_global_points_y):
+  potential_flow_dirichlet_bc[i] = 0.0
+  potential_flow_dirichlet_bc[(n_global_points_z-1)*n_global_points_x*n_global_points_y + i] = 1.0
+    
+print("potential_flow_dirichlet_bc: {}".format(potential_flow_dirichlet_bc))
     
 if rank_no == 0:
   print("rank configuration: ")
@@ -498,7 +553,7 @@ config = {
             "meshName": "3Dmesh",
             "solverName": "potentialFlowSolver",
             "prefactor": 1.0,
-            "dirichletBoundaryConditions": {},
+            "dirichletBoundaryConditions": potential_flow_dirichlet_bc,
             "inputMeshIsGlobal": True,
           },
         },

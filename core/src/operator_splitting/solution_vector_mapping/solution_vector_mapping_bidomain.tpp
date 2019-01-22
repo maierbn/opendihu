@@ -36,7 +36,11 @@ void SolutionVectorMapping<
         );
       if (!mappingBetweenMeshes)
       {
-
+        LOG(ERROR) << "Mapping from mesh \"" << transmembranePotential->functionSpace()->meshName() << "\" to \"" << transferableSolutionData2->functionSpace()->meshName()
+          << "\" was not initialized. Initializing now. Specify MappingsBetweenMeshes { \"meshNameFrom\" : \"meshNameTo\" } as top level object of the python config.";
+        mappingBetweenMeshes = DihuContext::meshManager()->createMappingBetweenMeshes<typename FieldVariableType1::FunctionSpace, typename FieldVariableType2::FunctionSpace>(
+          transmembranePotential->functionSpace(), transferableSolutionData2->functionSpace()
+        );
       }
       mappingBetweenMeshes->template map<1,FieldVariableType2::nComponents()>(*transmembranePotential, 0, *transferableSolutionData2, 0);
     }

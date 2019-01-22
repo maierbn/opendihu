@@ -25,9 +25,6 @@ public:
 
 private:
 
-  //! initialize the mapping
-  void initialize();
-
   std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   ///< the function space of the mesh from which to map data
   std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget_;   ///< the function space of the mesh to which to map data
 

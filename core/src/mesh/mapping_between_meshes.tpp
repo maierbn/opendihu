@@ -20,6 +20,8 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
   targetMappingInfo_.resize(nDofsLocalSource);
 
+  VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
@@ -27,9 +29,9 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     targetDof_t targetMappingInfo;
 
     // get node position of the source dof
-    Vec3 position;
+
     dof_no_t sourceDofNoGlobal = functionSpaceTarget->meshPartition()->getDofNoGlobalPetsc(sourceDofNoLocal);
-    functionSpaceTarget->getGeometry(sourceDofNoGlobal);
+    Vec3 position = functionSpaceTarget->getGeometry(sourceDofNoGlobal);
 
     // find element no in the target mesh where the position is
     if (!functionSpaceTarget->findPosition(position, elementNo, ghostMeshNo, xi, startSearchInCurrentElement))
@@ -49,10 +51,22 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     // note: geometry value = sum over dofs of geometryValue_dof * phi_dof(xi)
     for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
     {
-      targetMappingInfo.scalingFactors[targetDofIndex] = functionSpaceTarget->phi(targetDofIndex,xi);
+      targetMappingInfo.scalingFactors[targetDofIndex] = functionSpaceTarget->phi(targetDofIndex, xi);
     }
 
     targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
+
+    if (VLOG_IS_ON(2))
+    {
+      double scalingFactorsSum = 0;
+      for (int targetDofIndex = 0; targetDofIndex < nDofsPerTargetElement; targetDofIndex++)
+      {
+        scalingFactorsSum += targetMappingInfo_[sourceDofNoLocal].scalingFactors[targetDofIndex];
+      }
+      VLOG(2) << "  source dof local " << sourceDofNoLocal << ", global " << sourceDofNoGlobal <<", pos: " << position << ", xi: " << xi
+        << ", element no: " << targetMappingInfo.elementNoLocal << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
+        << ", sum: " << scalingFactorsSum;
+    }
 
     // next time when searching for the target element, start search from previous element
     startSearchInCurrentElement = true;
@@ -80,6 +94,12 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
 
   fieldVariableSource.getValues(componentNoSource, sourceLocalDofNos, sourceValues);
 
+  VLOG(1) << "map " << fieldVariableSource.name() << "." << componentNoSource <<
+    " (" << fieldVariableSource.functionSpace()->meshName() << ") -> " << fieldVariableTarget.name() << "." << componentNoTarget
+    << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
+
+  VLOG(1) << "source has " << nDofsLocalSource << " local dofs";
+
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
@@ -97,7 +117,12 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
       dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
     }
     fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
+
+    VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
+      << ", targetValues: " << targetValues
+      << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
   }
+  //LOG(FATAL) << "after mapping";
 }
 
 }  // namespace

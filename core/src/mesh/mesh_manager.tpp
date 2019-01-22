@@ -199,5 +199,23 @@ void Manager::initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpac
   }
 }
 
+template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
+std::shared_ptr<MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>> Manager::
+createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget)
+{
+  std::string sourceMeshName = functionSpaceSource->meshName();
+  std::string targetMeshName = functionSpaceTarget->meshName();
+
+  if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName])
+  {
+    LOG(WARNING) << "Mapping from mesh \"" << sourceMeshName << "\" to mesh \"" << targetMeshName << "\" is already defined.";
+  }
+
+  this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName] = std::static_pointer_cast<MappingBetweenMeshesBase>(
+    std::make_shared<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(functionSpaceSource,functionSpaceTarget)
+  );
+
+  return std::static_pointer_cast<MappingBetweenMeshes<FunctionSpaceSourceType,FunctionSpaceTargetType>>(this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName]);
+}
 
 }   // namespace

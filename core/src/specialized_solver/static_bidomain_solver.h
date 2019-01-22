@@ -31,8 +31,8 @@ public:
   //! initialize components of the simulation
   void initialize();
 
-  //! dummy method
-  void setTimeSpan(double startTime, double endTime){}
+  //! dummy method, set endTime as current output time
+  void setTimeSpan(double startTime, double endTime);
 
   //! run the simulation
   void run();
@@ -81,6 +81,7 @@ protected:
 
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
+  double endTime_;     ///< end time of current time step
 };
 
 }  // namespace

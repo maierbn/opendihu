@@ -19,7 +19,7 @@ solver_type = "gmres"   # solver for the linear system
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
+dt_0D = 1e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 
@@ -177,7 +177,7 @@ config = {
 
         "Term1": {      # CellML
           "LoadBalancing": {
-            "Heun" : {
+            "HeunAdaptiv" : {
               "timeStepWidth": dt_0D,  # 5e-5
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",

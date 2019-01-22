@@ -27,6 +27,7 @@
 #include "time_stepping_scheme/implicit_euler.h"
 #include "time_stepping_scheme/heun.h"
 #include "time_stepping_scheme/multidomain_solver.h"
+#include "time_stepping_scheme/heun_adaptiv.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"
 

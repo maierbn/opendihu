@@ -6,7 +6,7 @@
 #include <fstream>
 using namespace std;
 
-// applies SVD and returns vt
+// applies SVD and returns V transposed
 // m columns and n rows
 std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
 {
@@ -48,6 +48,21 @@ std::vector<double> SvdUtility::getSVD(vector<double> aData, int m, int n)
     }
 
   return std::vector<double>(vt, vt + sizeof vt / sizeof vt[0]);;
+}
+
+// takes input data as double array and writes Sigma, U and V transposed as output parameter double arrays
+//m columns, n rows
+void SvdUtility::getSVD(double a[], int m, int n, double* u, double* s, double* vt)
+{
+  //double a[aData.size()];
+  //copy(aData.begin(), aData.end(), a);
+
+  int lda = m, ldu = m, ldvt = n;
+  int matrix_order = LAPACK_COL_MAJOR;
+  int minmn = std::min(m,n) - 1;
+  double superb[minmn];
+
+  LAPACKE_dgesvd(matrix_order, 'a', 'a', m, n, a, lda, s, u, ldu, vt, ldvt, superb);
 }
 
 // reads CSV cell by cell as vector

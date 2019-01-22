@@ -16,7 +16,8 @@ if not env['no_examples']:
     "hodgkin_huxley_explicit",
     "hodgkin_huxley_strang",
     "hodgkin_huxley_godunov",
-    "svdexample"
+    "svdexample",
+    "test"
   ]
 
   # create the main executable

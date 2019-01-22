@@ -15,6 +15,8 @@ class SvdUtility
  public:
   static vector<double> getSVD(vector<double> aData, int m, int n);
 
+  static void getSVD(double a[], int m, int n, double* u, double* s, double* vt);
+
   static vector<double> readCSV(string filename);
 
   static vector<double> readCSV(string filename, int rows);

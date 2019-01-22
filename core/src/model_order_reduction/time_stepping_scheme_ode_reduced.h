@@ -21,6 +21,7 @@ public:
   typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;
   //typedef Data::TimeSteppingReduced<typename TimeSteppingType::FunctionSpace> DataReduced; //type of Data object  
   typedef ::FunctionSpace::Generic GenericFunctionSpace;
+  typedef TimeSteppingType FullTimeSteppingType;
   
   //! constructor
   TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);
@@ -54,6 +55,9 @@ public:
 
   //! return whether the scheme has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
+  
+  //! full-order timestepping object
+  TimeSteppingType fullTimestepping();
 
 protected:
   //! read initial values from settings and set field accordingly

@@ -178,7 +178,7 @@ initialize()
   
   MORBase<typename TimeSteppingType::FunctionSpace>::initialize();  
   
-  setInitialValues(); //necessary for the implicit scheme
+  setInitialValues(); //necessary for the explicit scheme
     
   initialized_=true;
 }
@@ -206,6 +206,13 @@ bool TimeSteppingSchemeOdeReduced<TimeSteppingType>::
 knowsMeshType()
 {
   return false;
+}
+
+template<typename TimeSteppingType>
+TimeSteppingType TimeSteppingSchemeOdeReduced<TimeSteppingType>::
+fullTimestepping()
+{
+  return fullTimestepping_;
 }
   
 } //namespace

@@ -222,7 +222,9 @@ MatMultFull(Mat mat,Vec x,Vec y)
     CHKERRV(ierr);
   }
   else
-  {   
+  {  
+    LOG(TRACE) << "MatMultFull";
+    
     PetscInt *idx;
     PetscMalloc1(vec_sz,&idx);
     for(PetscInt i=0; i<vec_sz; i++)

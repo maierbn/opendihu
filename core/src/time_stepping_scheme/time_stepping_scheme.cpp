@@ -137,4 +137,10 @@ PythonConfig TimeSteppingScheme::specificSettings()
   return specificSettings_;
 }
 
+OutputWriter::Manager TimeSteppingScheme::outputWriterManager()
+{
+  return outputWriterManager_;
+}
+
+
 };  // namespace

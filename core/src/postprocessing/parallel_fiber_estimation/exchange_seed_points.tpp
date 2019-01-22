@@ -12,7 +12,7 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
   if (nRanksZ == 1)
     return;
 
-  if (rankZNo != int(nRanksZ/2))
+  if (rankZNo != int(nRanksZ/2)+1)
   {
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
@@ -25,9 +25,16 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
     }
 
     // receive seed points
+    int tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 7;
+    if (rankZNo == int(nRanksZ/2))
+    {
+      tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
+    }
+
+    LOG(DEBUG) << "receive " << seedPoints.size()*3 << " seed points from rank " << neighbourRankNo << " (tag: " << tag << ")";
     std::vector<double> receiveBuffer(seedPoints.size()*3);
     MPIUtility::handleReturnValue(MPI_Recv(receiveBuffer.data(), receiveBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                            0, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
+                                           tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
     // fill seed points from receive buffer
     for (int seedPointIndex = 0; seedPointIndex < seedPoints.size(); seedPointIndex++)
@@ -42,6 +49,8 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
   }
 
   // on rank int(nRanksZ/2), send seed points to rank below
+  //  rank int(nRanksZ/2)+1   |_|_| tracing direction: ^
+  //  rank int(nRanksZ/2)     | | | tracing direction: v
   if (rankZNo == int(nRanksZ/2))
   {
     int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
@@ -56,11 +65,13 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
       }
     }
 
-    //LOG(DEBUG) << "send " << seedPoints.size() << " seed points to rank " << neighbourRankNo << ": " << seedPoints;
 
     // send seed points
+    int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 6;
+    LOG(DEBUG) << "send " << sendBuffer.size() << " initial seed points values to rank " << neighbourRankNo << " (tag: " << tag << ")";
     MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                            0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+                                            tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+
   }
 
 }
@@ -95,9 +106,11 @@ exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectio
       neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
     }
 
+    int tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 7;
+    LOG(DEBUG) << "send " << sendBuffer.size() << " seed point values to " << neighbourRankNo << ", tag: " << tag;
     // send end points of streamlines
     MPIUtility::handleReturnValue(MPI_Send(sendBuffer.data(), sendBuffer.size(), MPI_DOUBLE, neighbourRankNo,
-                                          0, currentRankSubset_->mpiCommunicator()), "MPI_Send");
+                                          tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
   }
 
 }

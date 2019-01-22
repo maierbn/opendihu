@@ -38,14 +38,14 @@ advanceTimeSpan()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
 
-  this->solveLinearSystem();
+  //this->solveLinearSystem();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_);
+  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -56,6 +56,13 @@ run()
   initialize();
 
   this->advanceTimeSpan();
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+setTimeSpan(double startTime, double endTime)
+{
+  endTime_ = endTime;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

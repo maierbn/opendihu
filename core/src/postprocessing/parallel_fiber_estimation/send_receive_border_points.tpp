@@ -112,8 +112,11 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 #endif
 
 #ifndef FILE_COMMUNICATION
-    LOG(DEBUG) << "oldRankIndex: " << oldRankIndex << ", new subdomainIndex: " << subdomainIndex << ", subdomainRankIndex: " << subdomainRankIndex << ", send from rank " << currentRankSubset_->ownRankNo() << " to " << subdomainRankNo;
-    MPIUtility::handleReturnValue(MPI_Isend(sendBuffers[subdomainIndex].data(), sendBufferSize, MPI_DOUBLE, subdomainRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
+    int tag = currentRankSubset_->ownRankNo()*10000 + subdomainRankNo*100 + level_*10 + 4;
+    LOG(DEBUG) << "oldRankIndex: " << oldRankIndex << ", new subdomainIndex: " << subdomainIndex << ", subdomainRankIndex: " << subdomainRankIndex
+      << ", send from rank " << currentRankSubset_->ownRankNo() << " to " << subdomainRankNo << "(tag: " << tag << ")";
+    MPIUtility::handleReturnValue(MPI_Isend(sendBuffers[subdomainIndex].data(), sendBufferSize, MPI_DOUBLE,
+                                            subdomainRankNo, tag, currentRankSubset_->mpiCommunicator(), &sendRequests[subdomainIndex]), "MPI_Isend");
 #endif
     LOG(DEBUG) << "subdomain " << subdomainIndex << " sendBuffer: " << sendBuffers[subdomainIndex];
 
@@ -144,7 +147,8 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   int rankToReceiveFrom = int(rankCoordinates[2]/2)*(nRanksPerCoordinateDirectionPreviously*nRanksPerCoordinateDirectionPreviously) + int(rankCoordinates[1]/2)*nRanksPerCoordinateDirectionPreviously + int(rankCoordinates[0]/2);
 
   int recvBufferSize = 4*nBorderPointsX_*nBorderPointsZ_*3;
-  LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
+  LOG(DEBUG) << "receive from rank " << rankToReceiveFrom << ", recvBufferSize: " << recvBufferSize
+    << "(nBorderPointsX_: " << nBorderPointsX_ << ", nBorderPointsZ_: " << nBorderPointsZ_ << ")";
 
   std::vector<double> recvBuffer(recvBufferSize);
 #ifdef FILE_COMMUNICATION
@@ -170,9 +174,11 @@ receiveBorderPoints(int nRanksPerCoordinateDirectionPreviously, std::array<std::
   MPI_Request receiveRequest;
 
   // receive border points
+  int tag = currentRankSubset_->ownRankNo()*100 + rankToReceiveFrom*10000 + level_*10 + 4;
   MPIUtility::handleReturnValue(MPI_Irecv(recvBuffer.data(), recvBufferSize, MPI_DOUBLE,
-                                          rankToReceiveFrom, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+                                          rankToReceiveFrom, tag, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
   MPIUtility::handleReturnValue(MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE), "MPI_Wait");
+  LOG(DEBUG) << " receive size " << recvBufferSize << ", tag: " << tag;
 
 #endif
   LOG(DEBUG) << "recv buffer: " << recvBuffer;

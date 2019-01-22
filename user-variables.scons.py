@@ -57,8 +57,8 @@ SEMT_DOWNLOAD=True
 EASYLOGGINGPP_DOWNLOAD=True
 
 # MegaMol
-MEGAMOL_DOWNLOAD=True     # install MegaMol from official git repo
-ADIOS_DOWNLOAD=True
+MEGAMOL_DOWNLOAD=False     # install MegaMol from official git repo
+ADIOS_DOWNLOAD=False
 
 # MPI
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.

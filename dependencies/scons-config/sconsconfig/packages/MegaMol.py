@@ -97,7 +97,7 @@ class MegaMol(Package):
       res = super(MegaMol, self).check(ctx)
       self.check_required(res[0], ctx)
     else:
-      ctx.Log("megamol src path {} does not exist\n".format(path))
+      ctx.Log("megamol src path {} does not exist\n".format(megamol_src_path))
       
     ctx.Result(res[0])
     return res[0]

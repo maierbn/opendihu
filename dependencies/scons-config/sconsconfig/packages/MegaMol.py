@@ -72,24 +72,27 @@ class MegaMol(Package):
       
       megamol_link_path = os.path.join(megamol_src_path, "build/console/CMakeFiles/mmconsole.dir/link.txt")
       ctx.Log("megamol_link_path: {}\n".format(megamol_link_path))
-      with open(megamol_link_path, "r") as f:
-        linker_flags = f.readline()
-        linker_flags = linker_flags[linker_flags.find(" "):]
-        #print(linker_flags)
+      try:
+        with open(megamol_link_path, "r") as f:
+          linker_flags = f.readline()
+          linker_flags = linker_flags[linker_flags.find(" "):]
+          #print(linker_flags)
 
-        new_linker_flags = []
-        for item in linker_flags.split():
-          if item == "../mmconsole" or item == "-o":
-            continue
-            
-          if item[0] != "-" and item[0] != "/":
-            item = os.path.join(os.path.join(megamol_src_path, "build/console/"), item)
-          new_linker_flags.append(item)
-        
-        ctx.Log("new_linker_flags: {}\n".format(new_linker_flags))
-        self.link_flags = new_linker_flags
-        
-      ctx.Log("The next check should succeed if MegaMol was installed correctly.\n")
+          new_linker_flags = []
+          for item in linker_flags.split():
+            if item == "../mmconsole" or item == "-o":
+              continue
+              
+            if item[0] != "-" and item[0] != "/":
+              item = os.path.join(os.path.join(megamol_src_path, "build/console/"), item)
+            new_linker_flags.append(item)
+          
+          ctx.Log("new_linker_flags: {}\n".format(new_linker_flags))
+          self.link_flags = new_linker_flags
+          
+        ctx.Log("The next check should succeed if MegaMol was installed correctly.\n")
+      except:
+        ctx.Log("Could not open {}".format(megamol_link_path))
       
       # run again with new linker flags and modified Console.cpp
       self.set_build_handler(None)

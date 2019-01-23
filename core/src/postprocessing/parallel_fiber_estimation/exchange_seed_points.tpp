@@ -8,11 +8,11 @@ void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   // determine if previously set seedPoints are used or if they are received from neighbouring rank
-  LOG(DEBUG) << "rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards;
+  LOG(DEBUG) << "rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards << ", int(nRanksZ/2): " << int(nRanksZ/2);
   if (nRanksZ == 1)
     return;
 
-  if (rankZNo != int(nRanksZ/2)+1)
+  if (rankZNo != int(nRanksZ/2))
   {
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
@@ -26,7 +26,7 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
 
     // receive seed points
     int tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 7;
-    if (rankZNo == int(nRanksZ/2))
+    if (rankZNo == int(nRanksZ/2)-1)
     {
       tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
     }
@@ -49,8 +49,8 @@ exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirecti
   }
 
   // on rank int(nRanksZ/2), send seed points to rank below
-  //  rank int(nRanksZ/2)+1   |_|_| tracing direction: ^
-  //  rank int(nRanksZ/2)     | | | tracing direction: v
+  //  rank int(nRanksZ/2)     |_|_| tracing direction: ^
+  //  rank int(nRanksZ/2)-1   | | | tracing direction: v
   if (rankZNo == int(nRanksZ/2))
   {
     int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);

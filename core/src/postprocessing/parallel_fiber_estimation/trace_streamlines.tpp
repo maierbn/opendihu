@@ -105,13 +105,13 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-//#ifdef STL_OUTPUT_VERBOSE
+#ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_raw_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
-//#endif
+#endif
 #endif
 #endif
 

@@ -163,17 +163,20 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
 #endif
 
     // post non-blocking receive call
+    int tag = this->currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_ + 8;
+    LOG(DEBUG) << "receive validity from rank " << neighbourRankNo << ", (" << tag << ")";
     MPI_Request receiveRequest;
     receiveBufferValidity[face].resize(nBorderPointsXNew_, 0);
     MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferValidity[face].data(), nBorderPointsXNew_, MPI_CHAR,
-                                            neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+                                            neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
     receiveRequests.push_back(receiveRequest);
 
     // post non-blocking send call
-    LOG(DEBUG) << "send validity to rank " << neighbourRankNo;
+    tag = this->currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_ + 8;
+    LOG(DEBUG) << "send validity to rank " << neighbourRankNo << ", (" << tag << ")";
     MPI_Request sendRequest;
     MPIUtility::handleReturnValue(MPI_Isend(sendBufferValidity[face].data(), nBorderPointsXNew_, MPI_CHAR,
-                                            neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+                                            neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
     sendRequests.push_back(sendRequest);
   }
 
@@ -282,11 +285,12 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
         }
 
         // post non-blocking send call
-        LOG(DEBUG) << "send streamline to rank " << neighbourRankNo;
+        int tag = this->currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_ + 9;
+        LOG(DEBUG) << "send streamline to rank " << neighbourRankNo << ", (" << tag << ")";
         MPI_Request sendRequest;
         assert(sendBufferStreamline[face][pointIndex].size() == nBorderPointsZNew_*3);
         MPIUtility::handleReturnValue(MPI_Isend(sendBufferStreamline[face][pointIndex].data(), nBorderPointsZNew_*3, MPI_DOUBLE,
-                                                neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
+                                                neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
         sendRequests.push_back(sendRequest);
       }
       else if (!sendBufferValidity[face][pointIndex] && receiveBufferValidity[face][pointIndex])
@@ -295,11 +299,12 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
         receiveBufferStreamline[face][pointIndex].resize(nBorderPointsZNew_*3);
 
         // post non-blocking receive call
-        LOG(DEBUG) << "receive streamline from rank " << neighbourRankNo;
+        int tag = this->currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_ + 9;
+        LOG(DEBUG) << "receive streamline from rank " << neighbourRankNo << ", (" << tag << ")";
         MPI_Request receiveRequest;
         assert (sizeof(bool) == 1);
         MPIUtility::handleReturnValue(MPI_Irecv(receiveBufferStreamline[face][pointIndex].data(), nBorderPointsZNew_*3, MPI_DOUBLE,
-                                                neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
+                                                neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
         receiveRequests.push_back(receiveRequest);
       }
     }

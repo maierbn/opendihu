@@ -306,7 +306,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << MathUtility::sqr(nBorderPointsXNew_) - nValid;
 
   // fix the invalid key fibers in the interior by interpolating from the neighbouring fibers
-  fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers);
+  //fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers);
 
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlineEndPoints);
@@ -524,6 +524,13 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         // if fibers are invalid, fill with 0.0
         if (fibers[fibersPointIndex].size() < nPointsCurrentFiber)
         {
+          fibers[fibersPointIndex].clear();
+          fibers[fibersPointIndex].resize(nPointsCurrentFiber, Vec3({0.0,0.0,0.0}));
+        }
+        if (fibers[fibersPointIndex][int(nPointsCurrentFiber/2)][0] == 0.0 && fibers[fibersPointIndex][int(nPointsCurrentFiber/2)][1] == 0.0 
+          && fibers[fibersPointIndex][int(nPointsCurrentFiber/2)][2] == 0.0)
+        {
+          fibers[fibersPointIndex].clear();
           fibers[fibersPointIndex].resize(nPointsCurrentFiber, Vec3({0.0,0.0,0.0}));
         }
 

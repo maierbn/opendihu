@@ -15,7 +15,7 @@
 namespace Control
 {
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
   context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
@@ -171,7 +171,7 @@ MultipleInstances(DihuContext context) :
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
@@ -189,7 +189,7 @@ advanceTimeSpan()
   }
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 setTimeSpan(double startTime, double endTime)
 {
@@ -199,7 +199,7 @@ setTimeSpan(double startTime, double endTime)
   }
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
@@ -217,7 +217,7 @@ initialize()
 // #endif
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 run()
 {
@@ -260,7 +260,7 @@ run()
   }
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 bool MultipleInstances<TimeSteppingScheme>::
 knowsMeshType()
 {
@@ -271,14 +271,14 @@ knowsMeshType()
 }
 
 //! return the data object
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
 data()
 {
   return data_;
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 reset()
 {
@@ -288,7 +288,7 @@ reset()
   }
 }
 
-template<class TimeSteppingScheme>
+template<typename TimeSteppingScheme>
 typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType MultipleInstances<TimeSteppingScheme>::
 getSolutionForTransfer()
 {
@@ -296,10 +296,31 @@ getSolutionForTransfer()
 
   for (int i = 0; i < nInstancesLocal_; i++)
   {
+    VLOG(1) << "MultipleInstances::getSolutionForTransfer";
     output[i] = instancesLocal_[i].getSolutionForTransfer();
-    LOG(DEBUG) << "MultipleInstances::getSolutionForTransfer, instance " << i << "/" << nInstancesLocal_;
+
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << instancesLocal_[i].getString(output[i]);
+    }
   }
   return output;
+}
+
+template<typename TimeSteppingScheme>
+std::string MultipleInstances<TimeSteppingScheme>::
+getString(typename MultipleInstances<TimeSteppingScheme>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<MultipleInstances(" << nInstancesLocal_ << "):";
+  for (int i = 0; i < std::min((int)data.size(), nInstancesLocal_); i++)
+  {
+    if (i != 0)
+      s << ", ";
+    s << instancesLocal_[i].getString(data[i]);
+  }
+  s << ">";
+  return s.str();
 }
 
 }  // namespace

@@ -515,7 +515,7 @@ config = {
                     "logTimeStepWidthAsKey": "dt_1D",
                     "durationLogKey": "duration_1D",
                     "timeStepOutputInterval": 1e4,
-                    "dirichletBoundaryConditions": {0: -75, -1: -75},
+                    "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal": True,
                     "solverName": "implicitSolver",
                     "FiniteElementMethod" : {

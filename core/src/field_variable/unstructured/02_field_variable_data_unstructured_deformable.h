@@ -135,7 +135,7 @@ public:
   void unifyMappings(FieldVariable<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents2> &fieldVariable);
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2);
+  void unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2);
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   void initializeValuesVector();

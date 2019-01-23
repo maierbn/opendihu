@@ -51,6 +51,9 @@ public:
   //! reset the objects state
   void reset();
 
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
+
 protected:
 
   DihuContext context_; ///< the context object that holds the config for this class

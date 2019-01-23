@@ -12,11 +12,11 @@ namespace FunctionSpace
 
 //! create a non-geometry field field variable with no values being set, with given component names
 template<typename MeshType, typename BasisFunctionType>
-std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 createFieldVariable(std::string name, std::vector<std::string> componentNames)
 {
   // create the field variable with template parameter nComponents by a factory class that perform the dynamic->static conversion
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = FieldVariable::Factory<FunctionSpace<MeshType,BasisFunctionType>>::createFromFieldVariable(this->geometryField(), name, componentNames);
 
   // set entries to 0
@@ -27,7 +27,7 @@ createFieldVariable(std::string name, std::vector<std::string> componentNames)
 
 //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
 template<typename MeshType, typename BasisFunctionType>
-std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 createFieldVariable(std::string name, int nComponents)
 {
   // create standard component names, the strings "0","1","2",...
@@ -36,7 +36,7 @@ createFieldVariable(std::string name, int nComponents)
   {
     componentNames[i] = std::to_string(i);
   }
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> fieldVariable
     = this->createFieldVariable(name, componentNames);
 
   // set entries to 0

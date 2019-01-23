@@ -9,6 +9,7 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   functionSpaceSource_(functionSpaceSource),
   functionSpaceTarget_(functionSpaceTarget)
 {
+  // create the mapping
 
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
@@ -21,8 +22,8 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 
   VLOG(1) << "create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
 
-  VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
-  VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
+  //VLOG(1) << "target meshPartition: " << *functionSpaceTarget->meshPartition();
+  //VLOG(1) << "geometryField: " << functionSpaceTarget->geometryField();
 
   double xiToleranceBase = 1e-2;
 
@@ -113,22 +114,21 @@ template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
   template<int nComponentsSource, int nComponentsTarget>
 void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map(
   FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
-  FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget)
+  FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget,
+  FieldVariable::FieldVariable<FunctionSpaceTargetType,1> &targetFactorSum)
 {
   assert(componentNoSource >= 0 && componentNoSource < nComponentsSource);
   assert(componentNoTarget >= 0 && componentNoTarget < nComponentsTarget);
 
-  fieldVariableTarget.zeroEntries();
-
   const dof_no_t nDofsLocalSource = fieldVariableSource.functionSpace()->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
 
-  std::vector<dof_no_t> sourceLocalDofNos(nDofsLocalSource);
-  std::vector<double> sourceValues(nDofsLocalSource);
+  std::vector<double> sourceValues;
+  fieldVariableSource.getValuesWithoutGhosts(componentNoSource, sourceValues);
 
-  std::iota(sourceLocalDofNos.begin(), sourceLocalDofNos.end(), 0);
-
-  fieldVariableSource.getValues(componentNoSource, sourceLocalDofNos, sourceValues);
+  //std::vector<dof_no_t> sourceLocalDofNos(nDofsLocalSource);
+  //std::iota(sourceLocalDofNos.begin(), sourceLocalDofNos.end(), 0);
+  //fieldVariableSource.getValues(componentNoSource, sourceLocalDofNos, sourceValues);
 
   VLOG(1) << "map " << fieldVariableSource.name() << "." << componentNoSource <<
     " (" << fieldVariableSource.functionSpace()->meshName() << ") -> " << fieldVariableTarget.name() << "." << componentNoTarget
@@ -136,6 +136,7 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
 
   VLOG(1) << "source has " << nDofsLocalSource << " local dofs";
   VLOG(1) << fieldVariableSource;
+  VLOG(1) << "extracted source values: " << sourceValues;
 
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
@@ -153,13 +154,14 @@ void MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::map
     {
       dofNosLocal[dofIndex] = fieldVariableTarget.functionSpace()->getDofNo(targetElementNoLocal, dofIndex);
     }
+
     fieldVariableTarget.template setValues<nDofsPerTargetElement>(componentNoTarget, dofNosLocal, targetValues, ADD_VALUES);
+    targetFactorSum.template setValues<nDofsPerTargetElement>(dofNosLocal, targetMappingInfo_[sourceDofNoLocal].scalingFactors, ADD_VALUES);
 
     VLOG(2) << "  source dof " << sourceDofNoLocal << ", value: " << sourceValue << ", scaling factors: " << targetMappingInfo_[sourceDofNoLocal].scalingFactors
       << ", targetValues: " << targetValues
       << ", targetElementNoLocal: " << targetElementNoLocal << ", target dofs: " << dofNosLocal;
   }
-  //LOG(FATAL) << "after mapping";
 }
 
 }  // namespace

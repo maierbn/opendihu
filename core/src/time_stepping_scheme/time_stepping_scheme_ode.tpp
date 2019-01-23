@@ -147,6 +147,7 @@ initialize()
   {
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
+  VLOG(1) << "initial solution vector: " << *data_->solution();
   
   data_->print();
   
@@ -185,5 +186,12 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
+//! output the given data for debugging
+template<typename DiscretizableInTimeType>
+std::string TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+getString(typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType &data)
+{
+  return data_->getString(data);
+}
 
 } // namespace

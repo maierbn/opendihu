@@ -226,4 +226,14 @@ getSolutionForTransfer()
   return this->data_.transmembranePotential();
 }
 
+//! output the given data for debugging
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<StaticBidomain:" << *data << ">";
+  return s.str();
+}
+
 } // namespace TimeSteppingScheme

@@ -4,6 +4,7 @@
 #include <vector>
 #include <fstream>
 #include <petscvec.h>
+#include "control/types.h"
 
 namespace FieldVariable
 {

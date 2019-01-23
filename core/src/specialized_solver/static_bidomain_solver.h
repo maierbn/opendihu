@@ -50,6 +50,9 @@ public:
   //! the transfer is done by the solution_vector_mapping class
   TransferableSolutionDataType getSolutionForTransfer();
 
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
+
 protected:
 
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems

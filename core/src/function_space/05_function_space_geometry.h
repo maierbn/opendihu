@@ -21,11 +21,11 @@ public:
   //! inherit constructor
   using FunctionSpaceNumbers<MeshType,BasisFunctionType>::FunctionSpaceNumbers;
 
-  typedef FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
+  typedef FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>> FieldVariableBaseFunctionSpaceType;  ///< the class typename of the a field variable
   typedef FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! return a field variable with given name, this is not implemented for structured meshes since there are no extra stored field variables, only for unstructured meshes is it implemented and then stores field variables that were present in parsed exfiles.
-  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name);
+  std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable(std::string name);
 
   //! get the local dof no. for the global coordinates
   dof_no_t getDofNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain);
@@ -45,10 +45,10 @@ public:
   //! inherited constructor
   using FunctionSpaceDataUnstructured<D,BasisFunctionType>::FunctionSpaceDataUnstructured;
 
-  typedef FieldVariable::FieldVariableBase<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;  ///< the class typename of the a field variable
+  typedef FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseFunctionSpaceType;  ///< the class typename of the a field variable
 
   //! return a field variable with given name, returns field variables that were present in parsed exfiles
-  std::shared_ptr<FieldVariableBaseType> fieldVariable(std::string name)
+  std::shared_ptr<FieldVariableBaseFunctionSpaceType> fieldVariable(std::string name)
   {
     if (this->fieldVariable_.find(name) != this->fieldVariable_.end())
       return this->fieldVariable_.at(name);

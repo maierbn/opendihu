@@ -13,14 +13,18 @@ class ElementToNodeMapping;
 class NodeToDofMapping;
 class ElementToDofMapping;
 
+class FieldVariableBase
+{};
+
 /** Base class for a field variable that just stores the mesh the field variable is defined on.
  */
 template<typename FunctionSpaceType>
-class FieldVariableBase :
+class FieldVariableBaseFunctionSpace :
+  public FieldVariableBase,
   public Interface<FunctionSpaceType>
 {
 public:
-  FieldVariableBase();
+  FieldVariableBaseFunctionSpace();
 
   //! return the functionSpace of this field variable
   std::shared_ptr<FunctionSpaceType> functionSpace();
@@ -76,7 +80,7 @@ public:
   virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode) = 0;
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpaceType>> fieldVariable2) = 0;
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> fieldVariable2) = 0;
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector() = 0;
@@ -125,7 +129,7 @@ protected:
 
 // output operator
 template<typename FunctionSpaceType>
-std::ostream &operator<<(std::ostream &stream, const FieldVariableBase<FunctionSpaceType> &rhs)
+std::ostream &operator<<(std::ostream &stream, const FieldVariableBaseFunctionSpace<FunctionSpaceType> &rhs)
 {
   stream << rhs.name();
   return stream;

@@ -67,7 +67,7 @@ diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpa
   //LOG(DEBUG) << "diffusionTensor before rotation: " << diffusionTensor;
 
   // rotate diffusion tensor in fiber direction
-  //MathUtility::rotateMatrix(diffusionTensor, directionVector);
+  MathUtility::rotateMatrix(diffusionTensor, directionVector);
 
   //LOG(DEBUG) << "diffusionTensor after rotation: " << diffusionTensor;
 

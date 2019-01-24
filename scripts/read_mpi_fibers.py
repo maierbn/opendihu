@@ -39,6 +39,7 @@ with open(input_filename, "rb") as infile:
   
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
+  #header_length = 32+8
   parameters = []
   for i in range(int(header_length/4) - 1):
     int_raw = infile.read(4)
@@ -58,11 +59,14 @@ with open(input_filename, "rb") as infile:
   print("nFibersPerRank:    {}".format(parameters[7]))
   print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.fromtimestamp(parameters[8])))
   
-  #input("Press any key to continue.")
+  input("Press any key to continue.")
   
   streamlines = []
+  n_streamlines_valid = 0
+  n_streamlines_invalid = 0
   for streamline_no in range(n_fibers_total):
     streamline = []
+    streamline_valid = True
     for point_no in range(n_points_whole_fiber):
       point = []
       for i in range(3):
@@ -70,10 +74,18 @@ with open(input_filename, "rb") as infile:
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
       if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
-        print("Error: streamline {} is invalid".format(streamline_no))
+        print("Error: streamline {} is invalid ({}. point)".format(streamline_no, point_no))
+        streamline_valid = False
+        break
       streamline.append(point)
+    if streamline_valid:
+      n_streamlines_valid += 1
+    else:
+      n_streamlines_invalid += 1
+      streamline = []
     streamlines.append(streamline)
 
+  print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   print("output pickle to filename: {}".format(pickle_output_filename))
   with open(pickle_output_filename, 'wb') as f:
     pickle.dump(streamlines, f)

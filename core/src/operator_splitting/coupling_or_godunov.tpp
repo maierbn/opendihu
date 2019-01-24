@@ -34,7 +34,7 @@ advanceTimeSpan()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
     {
-      LOG(INFO) << "CouplingOrGodunov, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << this->schemeName_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     LOG(DEBUG) << "  CouplingOrGodunov: time step " << timeStepNo << ", t: " << currentTime;
 

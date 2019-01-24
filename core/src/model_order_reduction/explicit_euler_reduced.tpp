@@ -32,7 +32,7 @@ namespace ModelOrderReduction
     Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
     Vec &redSolution= this->data().solution()->getValuesContiguous();
     Vec &redIncrement= this->data().increment()->getValuesContiguous();
-    
+        
     Mat &basis = this->dataMOR_->basis()->valuesGlobal();
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
@@ -46,57 +46,53 @@ namespace ModelOrderReduction
         threadNumberMessage << "[" << omp_get_thread_num() << "/" << omp_get_num_threads() << "]";
         LOG(INFO) << threadNumberMessage.str() << ": Timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
       }
-      
-      VLOG(1) << "starting from solution: " << this->fullTimestepping_.data().solution();
+                 
+      // full state recovery
+      //in case of operator splitting only the reduced solutions is transfered.
+      this->MatMultFull(basis, redSolution , solution);
+            
+      VLOG(1) << "starting from full-order solution: " << this->fullTimestepping_.data().solution();
       
       // advance computed value
       // compute next delta_u = f(u)
       this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
       
-      VLOG(1) << "computed increment: " << this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;
-            
-      PetscErrorCode ierr;
+      VLOG(1) << "computed full-order increment: " << this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;             
       
-      /*
-      PetscInt increment_size, redIncrement_size, mat_sz_1, mat_sz_2;
+      // reduction step
+      // solution may has been changed inside evaluateTimesteppingRightHandSideExplicit in case of 
+      // the stimulation in electrophysiology examples. Therefore, the reduced solution has to be updated.
+      this->MatMultReduced(basisTransp, solution, redSolution);
       
-      VecGetSize(increment,&increment_size);
-      VecGetSize(redIncrement,&redIncrement_size);
-      MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+      VLOG(2) << "reduced solution before adding the reduced increment" << this->data().solution();
       
-      LOG(DEBUG) << "increment_size: " << increment_size << "========================";
-      LOG(DEBUG) << "redIncrement_size: " << redIncrement_size;
-      LOG(DEBUG) << "mat_sz_1: " << mat_sz_1 << "mat_sz_2: " << mat_sz_2;
-      
-      // check the dimensions
-      if(mat_sz_2==increment_size)
-      {
-        // reduction step
-        ierr=MatMult(basisTransp, increment, redIncrement); CHKERRV(ierr);
-      }
-      else
-        LOG(ERROR) << "To be implemented";     
-      */
+      // reduction step
       // modified version of MatMult for MOR
       this->MatMultReduced(basisTransp, increment, redIncrement);
+      
+      VLOG(1) << "reduced increment: " << this->data().increment() << ", dt=" << this->timeStepWidth_;             
       
       // integrate, z += dt * delta_z
       VecAXPY(redSolution, this->timeStepWidth_, redIncrement);
       
-      // full state recovery
-      this->MatMultFull(basis, redSolution , solution); CHKERRV(ierr);
-      
+      VLOG(1) << "reduced solution after integration" << this->data().solution();      
+                 
       // advance simulation time
       timeStepNo++;
       currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
       
-      VLOG(1) << "solution after integration: " << this->fullTimestepping_.data().solution();
+      // write the current output values of the full-order timestepping
+      // full state recovery
+      this->MatMultFull(basis, redSolution , solution);
+      this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
       
-      // write current output values
-      this->outputWriterManager_.writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
+      // write the current output values of the (reduced) timestepping
+      this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
+                  
     }
     
     this->fullTimestepping_.data().solution()->restoreValuesContiguous();
+    this->fullTimestepping_.data().increment()->restoreValuesContiguous();
     
   }
   

@@ -5,7 +5,7 @@
 
 import sys
 
-end_time = 5.0   # [ms] end time of simulation
+end_time = 1   # [ms] end time of simulation
 n_elements = 20 # elements of pysical mesh
 n_total=83 # rows of the snapshot matrix
 n_reduced=83 # number of reduced bases, columns of the left singular vector
@@ -22,10 +22,10 @@ solver_type = "gmres"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e-1             # timestep for output files
+dt_1D = 1e-4                      # timestep width of diffusion
+dt_0D = 1e-4                      # timestep width of ODEs
+dt_3D = 1e-4                      # overall timestep width of splitting
+output_timestep = 1e-4             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -206,7 +206,7 @@ config = {
     "endTime": end_time,
     "logTimeStepWidthAsKey": "dt_3D",
     "durationLogKey": "duration_total",
-    "timeStepOutputInterval": 1000,
+    "timeStepOutputInterval": 1,
     "Term1": {      # CellML
      "ModelOrderReduction": {
       "nRowsSnapshots" : n_total,
@@ -215,7 +215,7 @@ config = {
       "ExplicitEuler" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_0D",
         "durationLogKey": "duration_0D",
         "inputMeshIsGlobal": True,
@@ -244,14 +244,14 @@ config = {
           "prefactor": 1.0,
         },
         
-        #"OutputWriter" : [
-         # {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": False, "onlyNodalValues": True},
-        #],
+        "OutputWriter" : [
+         {"format": "PythonFile", "outputInterval": 5e2, "filename": "out/states", "binary": True, "onlyNodalValues": True},
+        ],
       },# ExplicitEuler
         "ExplicitEulerReduced" : {
         "timeStepWidth": dt_0D,  # 5e-5
         "initialValues": [],
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_0D",
         "durationLogKey": "duration_0D",
         "inputMeshIsGlobal": True,
@@ -281,7 +281,7 @@ config = {
         },
         
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": 1e4, "filename": "out/states", "binary": False, "onlyNodalValues": True},
+          {"format": "PythonFile", "outputInterval": 5e2, "filename": "out/statesReduced", "binary": True, "onlyNodalValues": True},
         ],
       },#ExplicitEulerReduced
      },# ModelOrderReduction
@@ -294,7 +294,7 @@ config = {
       "ExplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",
         "inputMeshIsGlobal": True,
@@ -306,7 +306,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+          {"format": "PythonFile", "outputInterval": 5e2, "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
@@ -314,7 +314,7 @@ config = {
       "ExplicitEulerReduced" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
-        "timeStepOutputInterval": 1e4,
+        "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",
         "inputMeshIsGlobal": True,
@@ -326,7 +326,7 @@ config = {
           "solverName": "implicitSolver",
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "onlyNodalValues": False},
+          {"format": "PythonFile", "outputInterval": 5e2, "filename": "out/godunovReduced", "binary": True, "onlyNodalValues": False},
           #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/godunov", "binary": False, "fixedFormat": False, "combineFiles": True},
           #{"format": "ExFile", "filename": "out/fibre", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],

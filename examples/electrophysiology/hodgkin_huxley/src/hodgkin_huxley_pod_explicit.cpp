@@ -17,15 +17,19 @@ int main(int argc, char *argv[])
   LOG(DEBUG)<<std::string(80, '=');
   
   OperatorSplitting::Godunov<
-    TimeSteppingScheme::ExplicitEuler<
-      CellmlAdapter<4>
+  ModelOrderReduction::ExplicitEulerReduced<
+      TimeSteppingScheme::ExplicitEuler<
+        CellmlAdapter<4>
+      >
     >,
-    TimeSteppingScheme::ExplicitEuler<
-      SpatialDiscretization::FiniteElementMethod<
-        Mesh::StructuredRegularFixedOfDimension<1>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<2>,
-        Equation::Dynamic::IsotropicDiffusion
+    ModelOrderReduction::ExplicitEulerReduced<
+      TimeSteppingScheme::ExplicitEuler<
+        SpatialDiscretization::FiniteElementMethod<
+          Mesh::StructuredRegularFixedOfDimension<1>,
+          BasisFunction::LagrangeOfOrder<1>,
+          Quadrature::Gauss<2>,
+          Equation::Dynamic::IsotropicDiffusion
+        >
       >
     >
   >

@@ -109,6 +109,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
 
   # do not use googletest
   GOOGLETEST_DOWNLOAD=False  
+  PYTHONPACKAGES_DOWNLOAD=False
 
   #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   #LAPACK_DOWNLOAD = False

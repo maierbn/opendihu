@@ -594,7 +594,10 @@ createSimdSourceFile(std::string &simdSourceFilename)
         else
         {
           // add pragma omp here
-          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+#ifndef TEST_WITHOUT_PRAGMAS
+          simdSource << std::endl << "  #pragma omp for simd";
+#endif
+          simdSource << std::endl <<"  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
@@ -644,7 +647,7 @@ createSimdSourceFile(std::string &simdSourceFilename)
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
     int rankNoWorldCommunicator = DihuContext::ownRankNo();
-    s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
+    s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knows that it is c code
     simdSourceFilename = s.str();
 
     std::ofstream simdSourceFile = OutputWriter::Generic::openFile(simdSourceFilename.c_str());

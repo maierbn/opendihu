@@ -393,7 +393,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   // create ghost element meshes from received data
 
   LOG(DEBUG) << "split rank subset, own rank: " << currentRankSubset_->ownRankNo();
-  std::shared_ptr<Partition::RankSubset> rankSubsetSingleRank = std::make_shared<Partition::RankSubset>(currentRankSubset_->ownRankNo(), currentRankSubset_->mpiCommunicator());
+  std::shared_ptr<Partition::RankSubset> rankSubsetSingleRank = std::make_shared<Partition::RankSubset>(currentRankSubset_->ownRankNo(), currentRankSubset_);
 
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {

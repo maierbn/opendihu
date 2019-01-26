@@ -221,7 +221,7 @@ def get_instance_config(i):
             "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-            "meshName": "MeshFibre"+str(i),
+            "meshName": "MeshFiber"+str(i),
             "prefactor": 1.0,
           },
         },
@@ -241,7 +241,7 @@ def get_instance_config(i):
             "maxIterations": 1e4,
             "relativeTolerance": 1e-10,
             "inputMeshIsGlobal": True,
-            "meshName": "MeshFibre"+str(i),
+            "meshName": "MeshFiber"+str(i),
             "prefactor": Conductivity/(Am*Cm),
             "solverName": "implicitSolver",
           },
@@ -278,7 +278,7 @@ for i,streamline in enumerate(streamlines):
   #streamline = streamline[center_node-2:center_node+2]
   
   # define mesh
-  meshes["MeshFibre{}".format(i)] = {
+  meshes["MeshFiber{}".format(i)] = {
     "nElements": len(streamline)-1,
     "nodePositions": streamline,
     "inputMeshIsGlobal": True,

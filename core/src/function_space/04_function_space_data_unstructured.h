@@ -17,7 +17,7 @@ template<typename FunctionSpaceType,int nComponents>
 class FieldVariable;
 
 template<typename FunctionSpaceType>
-class FieldVariableBase;
+class FieldVariableBaseFunctionSpace;
 
 template<typename FunctionSpaceType,int nComponents>
 class Component;
@@ -38,7 +38,7 @@ class FunctionSpaceDataUnstructured :
 {
 public:
 
-  typedef ::FieldVariable::FieldVariableBase<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseType;
+  typedef ::FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FieldVariableBaseFunctionSpaceType;
   typedef FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
 
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
@@ -92,7 +92,7 @@ protected:
   //! initialize the meshPartition of this mesh (by calling FunctionSpacePartition::initialize()), then create the partitioned Petsc vectors in each field variable
   void initializeValuesVector();
   
-  std::map<std::string, std::shared_ptr<FieldVariableBaseType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
+  std::map<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField_ = nullptr;  ///< the geometry field variable
 
   std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position

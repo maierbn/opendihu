@@ -10,17 +10,24 @@
 namespace Partition 
 {
   
+int nWorldCommunicatorsSplit = 0;
+
 RankSubset::RankSubset() : ownRankNo_(-1)
 {
   VLOG(1) << "RankSubset empty constructor";
 
   // create copy MPI_COMM_WORLD
   MPIUtility::handleReturnValue(MPI_Comm_dup(MPI_COMM_WORLD, &mpiCommunicator_), "MPI_Comm_dup");
- 
+  nWorldCommunicatorsSplit++;
+  nCommunicatorsSplit_ = 0;
+
   if (mpiCommunicator_ == MPI_COMM_NULL)
   {
     LOG(FATAL) << "Failed to dup MPI_COMM_WORLD";
   }
+
+  communicatorName_ = "COMM_WORLD";
+  MPIUtility::handleReturnValue(MPI_Comm_set_name(mpiCommunicator_, communicatorName_.c_str()), "MPI_Comm_set_name");
 
   // get number of ranks
   int nRanks;
@@ -34,31 +41,72 @@ RankSubset::RankSubset() : ownRankNo_(-1)
   VLOG(1) << "initialized as COMM_WORLD: " << rankNo_;
 }
   
-RankSubset::RankSubset(int singleRank) : RankSubset::RankSubset(singleRank, MPI_COMM_WORLD)
-{
-}
-
-RankSubset::RankSubset(int singleRank, MPI_Comm mpiCommunicator) : ownRankNo_(-1)
+RankSubset::RankSubset(int singleRank, std::shared_ptr<RankSubset> parentRankSubset) : ownRankNo_(-1), nCommunicatorsSplit_(0)
 {
   rankNo_.clear();
   rankNo_.insert(singleRank);
 
+  MPI_Comm parentCommunicator = MPI_COMM_WORLD;
+  if (parentRankSubset)
+  {
+    parentCommunicator = parentRankSubset->mpiCommunicator();
+  }
   // get the own current MPI rank
-  int currentRank;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(mpiCommunicator, &currentRank), "MPI_Comm_rank");
+  int ownRankParentCommunicator = 0;
+  MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
 
-  LOG(DEBUG) << "currentRank: " << currentRank << ", singleRank for which to create RankSubset: " << singleRank;
+  LOG(DEBUG) << "ownRankParentCommunicator: " << ownRankParentCommunicator << ", singleRank for which to create RankSubset: " << singleRank;
 
-  // if currentRank is contained in rank subset
-  if (singleRank == currentRank)
+  // if ownRankParentCommunicator is contained in rank subset
+  if (singleRank == ownRankParentCommunicator)
     color = singleRank;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(mpiCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 
   // all ranks that are not part of the communicator will store "MPI_COMM_NULL" as mpiCommunicator_
+#if 1
+  // assign the name of the new communicator
+  if (ownRankIsContained())
+  {
+    // get name of old communicator
+    VLOG(1) << "MPI_MAX_OBJECT_NAME: " << MPI_MAX_OBJECT_NAME;
 
+    std::vector<char> oldCommunicatorNameStr(MPI_MAX_OBJECT_NAME);
+    int oldCommunicatorNameLength = 0;
+    MPIUtility::handleReturnValue(MPI_Comm_get_name(parentCommunicator, oldCommunicatorNameStr.data(), &oldCommunicatorNameLength), "MPI_Comm_get_name");
+
+    std::string oldCommunicatorName(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
+    VLOG(1) << "oldCommunicatorName: " << oldCommunicatorName;
+
+    // define new name
+    std::stringstream newCommunicatorName;
+    if (parentRankSubset)
+    {
+      newCommunicatorName << oldCommunicatorName << "_" << parentRankSubset->nCommunicatorsSplit();
+    }
+    else
+    {
+      newCommunicatorName << oldCommunicatorName << "_" << nWorldCommunicatorsSplit;
+    }
+    VLOG(1) << "newCommunicatorName: " << newCommunicatorName.str();
+
+    // assign name
+    communicatorName_ = newCommunicatorName.str();
+    MPIUtility::handleReturnValue(MPI_Comm_set_name(mpiCommunicator_, communicatorName_.c_str()), "MPI_Comm_set_name");
+  }
+
+  if (parentRankSubset)
+  {
+    parentRankSubset->incrementNCommunicatorSplit();
+  }
+  else
+  {
+    nWorldCommunicatorsSplit++;
+  }
+
+#endif
   // get number of ranks
 #if 0
   if (ownRankIsContained())
@@ -89,6 +137,16 @@ element_no_t RankSubset::size() const
   return rankNo_.size();
 }
 
+void RankSubset::incrementNCommunicatorSplit()
+{
+  nCommunicatorsSplit_++;
+}
+
+int RankSubset::nCommunicatorsSplit() const
+{
+  return nCommunicatorsSplit_;
+}
+
 bool RankSubset::ownRankIsContained() const
 {
   // all ranks that are not part of the communicator will store "MPI_COMM_NULL" as mpiCommunicator_
@@ -109,7 +167,17 @@ MPI_Comm RankSubset::mpiCommunicator() const
 {
   return mpiCommunicator_;
 }
+
+std::string RankSubset::communicatorName() const
+{
+  return communicatorName_;
+}
   
+bool RankSubset::equals(std::set<int> &rankSet) const
+{
+  return rankSet == rankNo_;
+}
+
 std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
 {
   if (rankSubset.size() == 0)
@@ -118,13 +186,15 @@ std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
   }
   else 
   {
-    std::set<int>::const_iterator iterRank = rankSubset.begin();
-    stream << "(" << *iterRank;
-    iterRank++;
+    stream << "(" << rankSubset.communicatorName() << ": ";
     
-    for (; iterRank != rankSubset.end(); iterRank++)
+    for (std::set<int>::const_iterator iterRank = rankSubset.begin(); iterRank != rankSubset.end(); iterRank++)
     {
-      stream << ", " << *iterRank;
+      if (iterRank != rankSubset.begin())
+        stream << ", ";
+      if (rankSubset.ownRankNo() == *iterRank)
+        stream << "*";
+      stream << *iterRank;
     }
     stream << ")";
   }

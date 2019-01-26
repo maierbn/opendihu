@@ -2,6 +2,8 @@
 
 #include <Python.h>  // has to be the first included header
 
+#include "field_variable/field_variable.h"
+
 namespace Mesh
 {
 
@@ -21,7 +23,8 @@ public:
   //! map data between field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
   void map(FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableSource, int componentNoSource,
-           FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget);
+           FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableTarget, int componentNoTarget,
+           FieldVariable::FieldVariable<FunctionSpaceTargetType,1> &targetFactorSum);
 
 private:
 

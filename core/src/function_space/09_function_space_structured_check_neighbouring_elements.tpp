@@ -18,11 +18,12 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   VLOG(1) << "checkNeighbouringElements<1D>(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
   ghostMeshNo = -1;
+  const double xiTolerance = 1e-4;
   for (element_no_t neighbourElementNo = elementNo - 1; neighbourElementNo != elementNo + 2; neighbourElementNo++)
   {
     if (0 <= neighbourElementNo && neighbourElementNo < this->meshPartition_->nElementsLocal(0))
     {
-      if (this->pointIsInElement(point, neighbourElementNo, xi))
+      if (this->pointIsInElement(point, neighbourElementNo, xi, xiTolerance))
       {
         elementNo = neighbourElementNo;
         return true;
@@ -39,6 +40,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 {
   VLOG(1) << "checkNeighbouringElements<2D>(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
+  const double xiTolerance = 1e-4;
   static std::array<int,3> xOffset;
   static std::array<int,3> yOffset;
 
@@ -240,7 +242,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
       // check if point is in current neighbour element
       if (neighbourElementNo != -1)
       {
-        if (functionSpace->pointIsInElement(point, neighbourElementNo, xi))
+        if (functionSpace->pointIsInElement(point, neighbourElementNo, xi, xiTolerance))
         {
           elementNo = neighbourElementNo;
           return true;
@@ -262,6 +264,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
 {
   VLOG(1) << "checkNeighbouringElements(elementNo = " << elementNo << ", ghostMeshNo = " << ghostMeshNo << ", initial xi = " << xi;
 
+  const double xiTolerance = 1e-4;
   static std::array<int,3> xOffset;
   static std::array<int,3> yOffset;
   static std::array<int,3> zOffset;
@@ -543,7 +546,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
         // check if point is in current neighbour element
         if (neighbourElementNo != -1)
         {
-          if (functionSpace->pointIsInElement(point, neighbourElementNo, xi))
+          if (functionSpace->pointIsInElement(point, neighbourElementNo, xi, xiTolerance))
           {
             elementNo = neighbourElementNo;
             return true;

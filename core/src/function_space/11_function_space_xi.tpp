@@ -9,14 +9,14 @@
 namespace FunctionSpace
 {
 
-const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
+//const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
 const int N_NEWTON_ITERATIONS = 7;    // (4) (5) number of newton iterations to find out if a point is inside an element
 const double RESIDUUM_NORM_TOLERANCE = 1e-4;    // usually 1e-2 takes 2-3 iterations
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 bool FunctionSpaceXi<MeshType,BasisFunctionType,DummyForTraits>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi, double xiTolerance)
 {
   // timing measurements are disabled, they showed that 'computeApproximateXiForPoint' makes sense and is faster than just initializing the initial guess to 0
 #if 0 
@@ -73,7 +73,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   
   // Phi(xi) = point
   // Phi(xi) = Phi(xi0) + J*(xi-xi0)  => xi = xi0 + Jinv*(point - Phi(xi0))
-  double epsilon = POINT_IN_ELEMENT_EPSILON;
+  double epsilon = xiTolerance;
   
   // check if point is inside the element by looking at the value of xi
   bool pointIsInElement = true;
@@ -99,7 +99,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 // regular fixed 1D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();  //=2
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -109,13 +109,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   
   xi[0] = MathUtility::norm<3>(point - geometryValues[0]) / elementLength;
   
-  return 0.0 <= xi[0] && xi[0] <= 1.0;
+  return -xiTolerance <= xi[0] && xi[0] <= 1.0+xiTolerance;
 }
 
 // regular fixed 2D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunctionType>::nDofsPerElement();
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -126,13 +126,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   const double xi1 = (point[0] - geometryValues[0][0]) / elementLength;
   const double xi2 = (point[1] - geometryValues[0][1]) / elementLength;
   
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
 }
 
 // regular fixed 3D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<3,BasisFunctionType>::nDofsPerElement();
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -144,13 +144,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi)
   const double xi2 = (point[1] - geometryValues[0][1]) / elementLength;
   const double xi3 = (point[2] - geometryValues[0][2]) / elementLength;
   
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0) && (0.0 <= xi3 && xi3 <= 1.0);
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance) && (-xiTolerance <= xi3 && xi3 <= 1.0+xiTolerance);
 }
 
 // 1D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<1,MeshType>>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=2
   const int nDofsPerElement = 2;
@@ -168,13 +168,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   const double xi1 = (x11 - xp1)/(x11 - x21);
   xi[0] = xi1;
   
-  return 0.0 <= xi1 && xi1 <= 1.0;
+  return -xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance;
 }
 
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
   const int nDofsPerElement = 4;
@@ -188,7 +188,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   const double xi1 = xi[0];
   const double xi2 = xi[1];
 
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
 }
 
 // 3D deformable meshes and linear shape function

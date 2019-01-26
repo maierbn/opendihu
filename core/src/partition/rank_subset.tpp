@@ -11,12 +11,12 @@ namespace Partition
 {
   
 template<typename Iter>
-RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> rankSubset) : ownRankNo_(-1)
+RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset) : ownRankNo_(-1), nCommunicatorsSplit_(0)
 {
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
-  if (rankSubset)
+  if (parentRankSubset)
   {
-    parentCommunicator = rankSubset->mpiCommunicator();
+    parentCommunicator = parentRankSubset->mpiCommunicator();
   }
 
   // get the own rank in the communicator
@@ -42,8 +42,22 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
     MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
     if (nRanksInCommunicator != rankNo_.size())
     {
-      LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
-        << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", because the program is only run with so many ranks.";
+      if (nRanksInCommunicator < rankNo_.size())
+      {
+        LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
+          << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", because the program is only run with so many ranks.";
+      }
+      else if (nRanksInCommunicator > rankNo_.size())
+      {
+        LOG(WARNING) << "Resizing nRanks from " << rankNo_.size() << " entr" << (rankNo_.size() == 1? "y" : "ies")
+          << " to " << nRanksInCommunicator << " entr" << (nRanksInCommunicator == 1? "y" : "ies") << ", rankNo_: " << rankNo_ << ", parentRankSubset: ";
+
+        if (parentRankSubset)
+          LOG(INFO) << *parentRankSubset;
+        else
+          LOG(INFO) << "MPI_COMM_WORLD";
+
+      }
 
       int i = 0;
       for (std::set<int>::iterator iter = rankNo_.begin(); iter != rankNo_.end(); iter++, i++)
@@ -59,6 +73,43 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   }
 
   // all ranks that are not part of the communcator will store "MPI_COMM_NULL" as mpiCommunicator_
+#if 1
+  // assign the name of the new communicator
+  if (ownRankIsContained())
+  {
+    // get name of old communicator
+    std::vector<char> oldCommunicatorNameStr(MPI_MAX_OBJECT_NAME);
+    int oldCommunicatorNameLength = 0;
+    MPIUtility::handleReturnValue(MPI_Comm_get_name(parentCommunicator, oldCommunicatorNameStr.data(), &oldCommunicatorNameLength), "MPI_Comm_get_name");
+
+    std::string oldCommunicatorName(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
+    VLOG(1) << "oldCommunicatorName: " << oldCommunicatorName;
+
+    // define new name
+    std::stringstream newCommunicatorName;
+    if (parentRankSubset)
+    {
+      newCommunicatorName << oldCommunicatorName << "_" << parentRankSubset->nCommunicatorsSplit();
+    }
+    else
+    {
+      newCommunicatorName << oldCommunicatorName << "_" << nWorldCommunicatorsSplit;
+    }
+    VLOG(1) << "newCommunicatorName: " << newCommunicatorName.str();
+
+    // assign name
+    communicatorName_ = newCommunicatorName.str();
+    MPIUtility::handleReturnValue(MPI_Comm_set_name(mpiCommunicator_, communicatorName_.c_str()), "MPI_Comm_set_name");
+  }
+#endif
+  if (parentRankSubset)
+  {
+    parentRankSubset->incrementNCommunicatorSplit();
+  }
+  else
+  {
+    nWorldCommunicatorsSplit++;
+  }
 
   VLOG(1) << "RankSubset constructor for ranks " << rankNo_ << " done";
 }

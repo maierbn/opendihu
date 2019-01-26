@@ -350,7 +350,7 @@ unifyMappings(FieldVariable<FunctionSpace::FunctionSpace<Mesh::UnstructuredDefor
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2)
+unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable2)
 {
   VLOG(1) << "unifyMappings 2";
   // loop over own components

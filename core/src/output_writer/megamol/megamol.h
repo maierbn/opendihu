@@ -31,13 +31,18 @@ public:
 private:
 
 #ifdef HAVE_ADIOS
+
+  void notifyMegaMol();
+
   std::shared_ptr<adios2::Engine> writer_;    //< adios writer
   std::shared_ptr<adios2::Variable<double>> boxVariable_ = nullptr; ///< variable that contains bounding box
   std::shared_ptr<adios2::Variable<int>> pCountVariable_ = nullptr; ///< variable that has number of particles/nodes
+  std::shared_ptr<adios2::Variable<double>> globalRadiusVariable_ = nullptr; ///< variable that defines the radius of a sphere in megamol
 
   std::vector<double> boundingBoxValues_;   ///< bounding box
   int globalNumberOfNodes_;   ///< the "particle count" value for MegaMol
-
+  std::string filenameSuffix_;   ///< the last part of the filename, either "_0" or "_1"
+  std::string lastFilename_;   ///< the last filename that was written to
 #endif
 
 };

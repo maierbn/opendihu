@@ -16,7 +16,7 @@ class ADIOS(Package):
     #    ('include/mysql', 'lib64'),
     #]
     #self.headers = ['mysql.h']
-    #self.libs = ['mysqlclient']
+    self.libs = ['adios2_sst']
     #self.extra_libs = ['ADIOS', 'blas']
     #self.set_rpath = False    # do not use dynamic linkage
     self.check_text = r'''

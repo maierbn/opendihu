@@ -73,11 +73,13 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
       MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT,
         localSizesOnRanks[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
     }
-    VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks;
-
-    // create localSizesOnPartitions_ from localSizesOnRanks
+    LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
+    LOG(DEBUG) << "nRanks: " << nRanks_;
+    
+    // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
+      VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];
       localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
 
       // loop over the first rank of the respecive partion
@@ -91,14 +93,18 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
         rankStride = nRanks_[0]*nRanks_[1];
       }
 
+      VLOG(1) << "   rankStride: " << rankStride;
       int partitionIndex = 0;
-      for (int rankNo = 0; rankNo < this->nRanks(); rankNo += rankStride)
+      for (int rankNo = 0; partitionIndex < nRanks_[dimensionIndex]; rankNo += rankStride, partitionIndex++)
       {
-        localSizesOnPartitions_[dimensionIndex][partitionIndex++] = localSizesOnRanks[dimensionIndex][rankNo];
+        VLOG(1) << "   rankNo: " << rankNo;
+        VLOG(1) << "   localSizesOnRanks: " << localSizesOnRanks[dimensionIndex][rankNo];
+        localSizesOnPartitions_[dimensionIndex][partitionIndex] = localSizesOnRanks[dimensionIndex][rankNo];
+        VLOG(1) << "    saved to partitionIndex " << partitionIndex;
       }
     }
 
-    VLOG(1) << "determined localSizesOnPartitions: " << localSizesOnPartitions_;
+    LOG(DEBUG) << "determined localSizesOnPartitions_: " << localSizesOnPartitions_;
 
     setOwnRankPartitioningIndex();
 

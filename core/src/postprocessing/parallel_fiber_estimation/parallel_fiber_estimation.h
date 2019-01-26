@@ -79,12 +79,15 @@ protected:
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
   void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
 
-  //! send end points of streamlines to next rank that continues the streamline
-  void exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
-
   //! determine if previously set seedPoints are used or if they are received from neighbouring rank, on rank int(nRanksZ/2), send seed points to rank below
   void exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
 
+  //! send end points of streamlines to next rank that continues the streamline
+  void exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
+  
+  //! send end points of streamlines to next rank that continues the streamline, only iterate over key fibers
+  void exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, int nFibersX, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &fibers);
+  
   //! sample the streamlines at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints);
 

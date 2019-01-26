@@ -190,7 +190,9 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
     LOG(ERROR) << e.what();
   }
 
+#ifdef HAVE_MEGAMOL
   notifyMegaMol();
+#endif
   LOG(DEBUG) << "(end)filenameSuffix_: " << filenameSuffix_;
 #endif
 }

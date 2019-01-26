@@ -30,10 +30,11 @@ public:
 
 private:
 
-#ifdef HAVE_ADIOS
-
+#if defined(HAVE_MEGAMOL) && defined(HAVE_ADIOS)
   void notifyMegaMol();
+#endif
 
+#ifdef HAVE_ADIOS
   std::shared_ptr<adios2::Engine> writer_;    //< adios writer
   std::shared_ptr<adios2::Variable<double>> boxVariable_ = nullptr; ///< variable that contains bounding box
   std::shared_ptr<adios2::Variable<int>> pCountVariable_ = nullptr; ///< variable that has number of particles/nodes

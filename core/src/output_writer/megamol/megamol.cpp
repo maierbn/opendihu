@@ -25,8 +25,7 @@ MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
   Generic(context, settings)
 {
 }
-
-#ifdef HAVE_MEGAMOL
+#if defined(HAVE_MEGAMOL) && defined(HAVE_ADIOS)
 
 void MegaMol::notifyMegaMol()
 {

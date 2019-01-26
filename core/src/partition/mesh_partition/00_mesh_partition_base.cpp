@@ -34,7 +34,7 @@ MPI_Comm MeshPartitionBase::mpiCommunicator() const
   return rankSubset_->mpiCommunicator();
 }
 
-//! fill the dofLocalNo vectors
+//! fill the dofNosLocal_ vectors
 void MeshPartitionBase::createLocalDofOrderings(dof_no_t nDofsLocal)
 {
   // fill dofNosLocal_ 

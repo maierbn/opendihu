@@ -57,8 +57,8 @@ SEMT_DOWNLOAD=True
 EASYLOGGINGPP_DOWNLOAD=True
 
 # MegaMol
-#MEGAMOL_DOWNLOAD=True     # install MegaMol from official git repo
-#USE_MEGAMOL=True          # link to mmconsole main function and start megamol, if config["MegaMolArguments"] is set
+MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo
+ADIOS_DOWNLOAD=True
 
 # MPI
 # MPI is normally detected using mpicc. If this is not available, you can provide the MPI_DIR as usual.
@@ -106,6 +106,10 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
 
   # use -hpl option with cray compiler to create an optimization program library
   USE_HPL=False
+
+  # do not use googletest
+  GOOGLETEST_DOWNLOAD=False  
+  PYTHONPACKAGES_DOWNLOAD=False
 
   #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
   #LAPACK_DOWNLOAD = False

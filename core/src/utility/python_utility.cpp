@@ -855,7 +855,7 @@ void PythonUtility::checkForError()
     PyObject* strValue = PyObject_Str(value);
     PyObject* reprValue = PyObject_Repr(value);
     if (strValue != NULL && reprValue != NULL)
-      LOG(ERROR) << convertFromPython<std::string>::get(strValue) << ", " << convertFromPython<std::string>::get(reprValue);
+      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
 
     Py_XDECREF(strType);
     Py_XDECREF(strValue);

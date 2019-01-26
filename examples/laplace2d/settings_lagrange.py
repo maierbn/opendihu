@@ -38,7 +38,7 @@ mmSetConfigValue("LRHostEnable", "true")
 
 return "done with megamolconfig.lua."
 -- error("megamolconfig.lua is not happy!")
-""".format(megamol_home="/store/software/opendihu/dependencies/megamol/install/install/")
+""".format(megamol_home="/store/software/opendihu/dependencies/megamol/install/install")
 
 config_filename = "megamol_config.lua"
 with open(config_filename, "w") as f:

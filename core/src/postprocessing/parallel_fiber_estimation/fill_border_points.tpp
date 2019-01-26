@@ -9,6 +9,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::vector<std::vector<Vec3>> &cornerStreamlines, std::array<std::array<std::vector<bool>,4>,8> &borderPointsSubdomainAreValid,
                  std::array<bool,4> &subdomainIsAtBorder)
 {
+  LOG(DEBUG) << "fillBorderPoints";
   //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
   //PythonUtility::checkForError();
   //assert(stlMeshPy);
@@ -72,13 +73,13 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
         if (cornerStreamlines[beginIndex].size() == nBorderPointsZNew_)
         {
-          LOG(DEBUG) << "cornerStreamline " << beginIndex << "is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
+          LOG(DEBUG) << "cornerStreamline " << beginIndex << " is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
           startPoint = cornerStreamlines[beginIndex][zLevelIndex];
         }
 
         if (cornerStreamlines[endIndex].size() == nBorderPointsZNew_)
         {
-          LOG(DEBUG) << "cornerStreamline " << endIndex << "is valid, use new end point " << cornerStreamlines[endIndex][zLevelIndex] << " instead of " << endPoint;
+          LOG(DEBUG) << "cornerStreamline " << endIndex << " is valid, use new end point " << cornerStreamlines[endIndex][zLevelIndex] << " instead of " << endPoint;
           endPoint = cornerStreamlines[endIndex][zLevelIndex];
         }
 
@@ -98,19 +99,33 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         int leftNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)leftNeighbourFace[face]);
         if (leftNeighbourRankNo != -1)
         {
+          LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
+            << ", send borderPoint " << leftBorderPoint << " to left rank " << leftNeighbourRankNo << ", receive from left rank";
+
           // send and receive left border point
-          MPIUtility::handleReturnValue(MPI_Sendrecv(leftBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 0,
-                                                     leftForeignBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 0,
+          MPIUtility::handleReturnValue(MPI_Sendrecv(leftBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 1,
+                                                     leftForeignBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 1,
                                                      currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Send");
+        }
+        else
+        {
+          LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", has no left neighbour";
         }
 
         int rightNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)rightNeighbourFace[face]);
         if (rightNeighbourRankNo != -1)
         {
+          LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
+            << ", send borderPoint " << rightBorderPoint << " to right rank " << rightNeighbourRankNo << ", receive from left rank";
+
           // send and receive right border point
-          MPIUtility::handleReturnValue(MPI_Sendrecv(rightBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 0,
-                                                     rightForeignBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 0,
+          MPIUtility::handleReturnValue(MPI_Sendrecv(rightBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 2,
+                                                     rightForeignBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 2,
                                                      currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Send");
+        }
+        else
+        {
+          LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", has no right neighbour";
         }
 
         LOG(DEBUG) << "left: neighbourRankNo: " << leftNeighbourRankNo << ", borderPoint: " << leftBorderPoint << ", foreignBorderPoint: " << leftForeignBorderPoint;

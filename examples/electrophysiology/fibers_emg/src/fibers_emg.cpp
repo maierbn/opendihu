@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   
   // define problem
   Control::Coupling<
-    Control::MultipleInstances<
+    Control::MultipleInstances<                       // fibers
       OperatorSplitting::Strang<
         Control::MultipleInstances<
           TimeSteppingScheme::Heun<                   // fiber reaction term
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    TimeSteppingScheme::MultidomainSolver<              // multidomain
+    TimeSteppingScheme::StaticBidomainSolver<              // bidomain
       SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
         Mesh::StructuredDeformableOfDimension<3>,
         BasisFunction::LagrangeOfOrder<1>,

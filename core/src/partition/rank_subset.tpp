@@ -11,23 +11,29 @@ namespace Partition
 {
   
 template<typename Iter>
-RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd) : ownRankNo_(-1)
+RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> rankSubset) : ownRankNo_(-1)
 {
-  std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
+  MPI_Comm parentCommunicator = MPI_COMM_WORLD;
+  if (rankSubset)
+  {
+    parentCommunicator = rankSubset->mpiCommunicator();
+  }
 
-  // get the own rank in the MPI_WORLD communcator
-  int ownRankWorldCommunicator;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankWorldCommunicator), "MPI_Comm_rank");
+  // get the own rank in the communicator
+  int ownRankParentCommunicator = 0;
+  MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
   
-  // if ownRankWorldCommunicator is contained in rank subset
-  if (std::find(ranksBegin,ranksEnd,ownRankWorldCommunicator) != ranksEnd)
+  std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
+
+  // if ownRankParentCommunicator is contained in rank subset
+  if (std::find(ranksBegin,ranksEnd,ownRankParentCommunicator) != ranksEnd)
     color = 1;
   
-  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankWorldCommunicator=" << ownRankWorldCommunicator << ", color=" << color;
+  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator << ", color=" << color;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(MPI_COMM_WORLD, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
 
   // update rankNo_ set
   if (color == 1)

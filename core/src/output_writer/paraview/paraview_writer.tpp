@@ -76,6 +76,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     // write file
     file << "<?xml version=\"1.0\"?>" << std::endl
+      << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
       << "<VTKFile type=\"PRectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
       << std::string(1, '\t') << "<PRectilinearGrid "
       << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
@@ -205,6 +206,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"RectilinearGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<RectilinearGrid "
     << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
@@ -351,6 +353,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
     // write file
     file << "<?xml version=\"1.0\"?>" << std::endl
+      << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
       << "<VTKFile type=\"PStructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
       << std::string(1, '\t') << "<PStructuredGrid "
       << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\" GhostLevel=\"0\"> " << std::endl;
@@ -446,6 +449,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"StructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<StructuredGrid "
     << "WholeExtent=\"" << "0 " << globalExtent[0] << " 0 " << globalExtent[1] << " 0 " << globalExtent[2] << "\"> " << std::endl     // dataset element
@@ -520,6 +524,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
   // write file
   file << "<?xml version=\"1.0\"?>" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
     << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<UnstructuredGrid> " << std::endl
     << std::string(2, '\t') << "<Piece "

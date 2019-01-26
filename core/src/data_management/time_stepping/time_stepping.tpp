@@ -128,7 +128,7 @@ setPrefactor(double prefactor)
 
 template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
   return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
 }

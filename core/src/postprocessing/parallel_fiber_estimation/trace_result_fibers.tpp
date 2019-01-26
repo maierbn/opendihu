@@ -196,12 +196,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   computeBottomTopZClip(bottomZClip, topZClip);
 
   // set seed points for interior fibers and trace fibers
-  // define and initialize vector that contains the end points of the traced streamlines.
-  // These serve as new seed points at the neighbouring rank which continues the streamlines.
-  std::vector<std::vector<Vec3>> streamlineEndPoints(nBorderPointsXNew_*nBorderPointsXNew_);
-  for (int i = 0; i < nBorderPointsXNew_*nBorderPointsXNew_; i++)
-    streamlineEndPoints[i].resize(1,Vec3({0.0,0.0,0.0}));
-
+  
   for (int j = 1; j < nBorderPointsXNew_-1; j++)
   {
     for (int i = 1; i < nBorderPointsXNew_-1; i++)
@@ -237,13 +232,6 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         this->traceStreamline(seedPoint, streamlineDirection, streamlinePoints);
       }
 
-      // if everything was cleared, add seed point
-      if (streamlinePoints.empty())
-        streamlinePoints.push_back(seedPoint);
-
-      // save end points of streamlines such that neighbouring rank can continue
-      streamlineEndPoints[j*nBorderPointsXNew_+i][0] = streamlinePoints.back();
-
       // reorder streamline points such that they go from bottom to top
       if (streamlineDirection < 0 && nRanksZ != 1)
       {
@@ -252,7 +240,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 
       // sample the streamline at equidistant z levels and store points in fibers vector
       int fibersPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
-      sampleStreamlineAtEquidistantZPoints(streamlinePoints, seedPoint, bottomZClip, topZClip, fibers[fibersPointIndex], fibersPointIndex*1000);
+      sampleStreamlineAtEquidistantZPoints(streamlinePoints, seedPoint, bottomZClip, topZClip, fibers[fibersPointIndex], fibersPointIndex*1000);  // last parameter is value for debugging output
     }
   }
 
@@ -306,24 +294,16 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << MathUtility::sqr(nBorderPointsXNew_) - nValid;
 
   // fix the invalid key fibers in the interior by interpolating from the neighbouring fibers
-  //fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers);
+  LOG(DEBUG) << "fixInvalidKeyFibers";
+  fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers);
 
   // send end points of streamlines to next rank that continues the streamline
-  exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlineEndPoints);
+  exchangeSeedPointsAfterTracingKeyFibers(nRanksZ, rankZNo, nFibersX, streamlineDirectionUpwards, seedPoints, fibers);
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
   PyObject_CallFunction(functionOutputPoints_, "s i O f", "13_final_seed_points", currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
-  PythonUtility::checkForError();
-#endif
-#endif
-
-
-#ifndef NDEBUG
-#ifdef STL_OUTPUT
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", "13_streamline_end_points", currentRankSubset_->ownRankNo(),
-                        PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(streamlineEndPoints), 0.2);
   PythonUtility::checkForError();
 #endif
 #endif

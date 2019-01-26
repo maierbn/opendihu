@@ -117,9 +117,6 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
     }
 
-    // send end points of streamlines to next rank that continues the streamline
-    exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlinePoints);
-
     // reorder streamline points such that they go from bottom to top
     if (streamlineDirection < 0)
     {
@@ -131,6 +128,10 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
         //LOG(DEBUG) << streamlineIndex << " after: " << streamlinePoints[streamlineIndex];
       }
     }
+    
+    // send end points of streamlines to next rank that continues the streamline
+    exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlinePoints);
+
   }
 
   //MPI_Barrier(currentRankSubset_->mpiCommunicator());

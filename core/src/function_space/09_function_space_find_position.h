@@ -48,7 +48,7 @@ public:
   bool findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double xiTolerance = 1e-4);
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 11_function_space_xi.h
-  virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,D> &xi) = 0;
+  virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,D> &xi, double xiTolerance) = 0;
 
 };
 

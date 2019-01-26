@@ -39,7 +39,7 @@ createPetscObjects()
 
   assert(this->functionSpace_);
 
-  this->transmembranePotentialSolution_ = this->functionSpace_->template createFieldVariable<1>("Vm_solution");
+  this->transmembraneFlow_ = this->functionSpace_->template createFieldVariable<1>("transmembraneFlow");
   this->transmembranePotential_ = this->functionSpace_->template createFieldVariable<1>("Vm");
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
@@ -77,9 +77,16 @@ transmembranePotential()
 
 template<typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> StaticBidomain<FunctionSpaceType>::
-transmembranePotentialSolution()
+transmembraneFlow()
 {
-  return this->transmembranePotentialSolution_;
+  return this->transmembraneFlow_;
+}
+
+template<typename FunctionSpaceType>
+Mat &StaticBidomain<FunctionSpaceType>::
+rhsMatrix()
+{
+  return this->rhsMatrix_;
 }
 
 template<typename FunctionSpaceType>
@@ -103,7 +110,7 @@ template<typename FunctionSpaceType>
 typename StaticBidomain<FunctionSpaceType>::OutputFieldVariables StaticBidomain<FunctionSpaceType>::
 getOutputFieldVariables()
 {
-  return std::make_tuple(this->fiberDirection_, this->flowPotential_, extraCellularPotential_, transmembranePotential_);
+  return std::make_tuple(this->fiberDirection_, this->flowPotential_, extraCellularPotential_, transmembranePotential_, transmembraneFlow_);
 }
 
 } // namespace

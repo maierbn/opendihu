@@ -8,11 +8,11 @@ namespace Mesh
 {
 
 Manager::Manager(PythonConfig specificSettings) :
-  partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
+  MappingBetweenMeshesManager::MappingBetweenMeshesManager(specificSettings),
+  partitionManager_(nullptr), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
-  storeMappingsBetweenMeshes();
 }
 
 void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager)
@@ -70,46 +70,6 @@ void Manager::storePreconfiguredMeshes()
   }
 }
 
-void Manager::storeMappingsBetweenMeshes()
-{
-  LOG(TRACE) << "MeshManager::storeMappingsBetweenMeshes";
-  if (specificSettings_.pyObject())
-  {
-    std::string keyString("MappingsBetweenMeshes");
-    if (specificSettings_.hasKey(keyString))
-    {
-      std::pair<std::string, PyObject *> dictItem
-        = specificSettings_.getOptionDictBegin<std::string, PyObject *>(keyString);
-
-      for (; !specificSettings_.getOptionDictEnd(keyString);
-          specificSettings_.getOptionDictNext<std::string, PyObject *>(keyString, dictItem))
-      {
-        std::string key = dictItem.first;
-        PyObject *value = dictItem.second;
-
-        if (value == NULL)
-        {
-          LOG(WARNING) << "Could not extract dict for MappingsBetweenMeshes[\"" << key << "\"].";
-        }
-        else if (!PyUnicode_Check(value))
-        {
-          LOG(WARNING) << "Value for MappingsBetweenMeshes from mesh \"" << key << "\" should be a string (the name of the mesh to map to).";
-        }
-        else
-        {
-          std::string targetMeshToMapTo = PythonUtility::convertFromPython<std::string>::get(value);
-          LOG(DEBUG) << "Store mapping between mesh \"" << key << "\" and " << targetMeshToMapTo;
-
-          if (mappingsBetweenMeshes_[key].find(key) == mappingsBetweenMeshes_[key].end())
-          {
-            mappingsBetweenMeshes_[key].insert(std::pair<std::string,std::shared_ptr<MappingBetweenMeshesBase>>(targetMeshToMapTo,nullptr));
-          }
-        }
-      }
-    }
-  }
-}
-
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> Manager::
 createGenericFieldVariable(int nEntries, std::string name)
 {
@@ -138,17 +98,6 @@ createGenericFieldVariable(int nEntries, std::string name)
 bool Manager::hasFunctionSpace(std::string meshName)
 {
   return functionSpaces_.find(meshName) != functionSpaces_.end();
-}
-
-std::shared_ptr<MappingBetweenMeshesBase> Manager::mappingBetweenMeshes(std::string sourceMeshName, std::string targetMeshName)
-{
-  if (mappingsBetweenMeshes_.find(sourceMeshName) == mappingsBetweenMeshes_.end())
-    return nullptr;
-
-  if (mappingsBetweenMeshes_[sourceMeshName].find(targetMeshName) == mappingsBetweenMeshes_[sourceMeshName].end())
-    return nullptr;
-
-  return mappingsBetweenMeshes_[sourceMeshName][targetMeshName];
 }
 
 } // namespace

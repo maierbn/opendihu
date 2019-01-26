@@ -29,6 +29,11 @@ int MeshPartitionBase::ownRankNo()
   return this->rankSubset_->ownRankNo();
 }
 
+std::shared_ptr<RankSubset> MeshPartitionBase::rankSubset() const
+{
+  return rankSubset_;
+}
+
 MPI_Comm MeshPartitionBase::mpiCommunicator() const
 {
   return rankSubset_->mpiCommunicator();

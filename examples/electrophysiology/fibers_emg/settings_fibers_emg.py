@@ -34,7 +34,8 @@ output_timestep = 4e-1             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fibre_file = "../../input/3000fibers.bin"
-fibre_file = "../../input/49fibers.bin"
+fibre_file = "../../input/500fibers.bin"
+#fibre_file = "../../input/49fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -199,6 +200,11 @@ with open(fibre_file, "rb") as f:
   n_fibers_y = n_fibers_x
   n_points_whole_fiber = parameters[1]
   
+  # for debugging:
+  #n_fibers_total = 4
+  #n_fibers_x = 2
+  #n_fibers_y = 2
+  
   if rank_no == 0:
     print("nFibersTotal:      {} ({} x {})".format(n_fibers_total, n_fibers_x, n_fibers_y))
     print("nPointsWholeFiber: {}".format(n_points_whole_fiber))
@@ -216,9 +222,8 @@ with open(fibre_file, "rb") as f:
     fibers.append(fiber)
       
 # determine number of fibers and create meshes
-n_instances = n_fibers_total
 if rank_no == 0:
-  print("n_instances: {}".format(n_instances))
+  print("n_fibers_total: {}".format(n_fibers_total))
     
 for i,fiber in enumerate(fibers):
   
@@ -243,7 +248,7 @@ if rank_no == 0:
   print("Debugging output about fibre firing: Taking input from file \"{}\"".format(firing_times_file))
   
   n_firing_times = np.size(firing_times,0)
-  for fibre_no_index in range(n_instances):
+  for fibre_no_index in range(n_fibers_total):
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
       if fibre_gets_stimulated(fibre_no_index, stimulation_frequency, current_time):
@@ -259,9 +264,9 @@ n_subdomains_y = 1
 n_subdomains_z = 2
 
 # here any number is possible
-sampling_stride_x = 3
-sampling_stride_y = 2
-sampling_stride_z = 30
+sampling_stride_x = 1
+sampling_stride_y = 1
+sampling_stride_z = 3
 
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
@@ -377,7 +382,7 @@ for k in range(n_sampled_points_in_subdomain_z(subdomain_coordinate_z)):
       
       point = fibers[fiber_index][z_point_index]
       node_positions.append(point)
-      print("{}: {}".format(rank_no, point))
+      #print("{}: {}".format(rank_no, point))
       
 # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
 if subdomain_coordinate_x == n_subdomains_x-1:
@@ -515,7 +520,7 @@ config = {
                     "logTimeStepWidthAsKey": "dt_1D",
                     "durationLogKey": "duration_1D",
                     "timeStepOutputInterval": 1e4,
-                    "dirichletBoundaryConditions": {0: -75, -1: -75},
+                    "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal": True,
                     "solverName": "implicitSolver",
                     "FiniteElementMethod" : {

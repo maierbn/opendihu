@@ -39,6 +39,7 @@ with open(input_filename, "rb") as infile:
   
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
+  #header_length = 32+8
   parameters = []
   for i in range(int(header_length/4) - 1):
     int_raw = infile.read(4)
@@ -58,11 +59,14 @@ with open(input_filename, "rb") as infile:
   print("nFibersPerRank:    {}".format(parameters[7]))
   print("date:              {:%d.%m.%Y %H:%M:%S}".format(datetime.datetime.fromtimestamp(parameters[8])))
   
-  #input("Press any key to continue.")
+  input("Press any key to continue.")
   
   streamlines = []
+  n_streamlines_valid = 0
+  n_streamlines_invalid = 0
   for streamline_no in range(n_fibers_total):
     streamline = []
+    streamline_valid = True
     for point_no in range(n_points_whole_fiber):
       point = []
       for i in range(3):
@@ -70,10 +74,73 @@ with open(input_filename, "rb") as infile:
         value = struct.unpack('d', double_raw)[0]
         point.append(value)
       if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
-        print("Error: streamline {} is invalid".format(streamline_no))
+        if streamline_valid:
+          print("Error: streamline {} is invalid ({}. point)".format(streamline_no, point_no))
+        streamline_valid = False
       streamline.append(point)
+    if streamline_valid:
+      n_streamlines_valid += 1
+    else:
+      n_streamlines_invalid += 1
+      streamline = []
     streamlines.append(streamline)
+  
+  # postprocess streamlines
+  invalid_streamlines = []
+  n_fibers_x = (int)(np.sqrt(n_fibers_total))
+  for j in range(0,n_fibers_x):
+    for i in range(0,n_fibers_x):
+      fiber_no = j*n_fibers_x + i
+      
+      fiber_no_0minus = None
+      fiber_no_0plus = None
+      fiber_no_1minus = None
+      fiber_no_1plus = None
+      if i > 0:
+        fiber_no_0minus = j*n_fibers_x + i-1
+      if i < n_fibers_x-1:
+        fiber_no_0plus = j*n_fibers_x + i+1
+      if j > 0:
+        fiber_no_1minus = (j-1)*n_fibers_x + i
+      if j < n_fibers_x-1:
+        fiber_no_1plus = (j+1)*n_fibers_x + i
+      
+      average_distance = 0
+      max_distance = 0
+      n_points = 0
+      for point_no in range(n_points_whole_fiber):
+        if len(streamlines[fiber_no]) > point_no:
+          if fiber_no_0minus is not None:
+            if len(streamlines[fiber_no_0minus]) > point_no:
+              #average_distance += np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_0minus][point_no]))
+              max_distance = max(max_distance, np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_0minus][point_no])))
+              n_points += 1
+          if fiber_no_1minus is not None:
+            if len(streamlines[fiber_no_1minus]) > point_no:
+              #average_distance += np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_1minus][point_no]))
+              max_distance = max(max_distance, np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_1minus][point_no])))
+              n_points += 1
+          if fiber_no_0plus is not None:
+            if len(streamlines[fiber_no_0plus]) > point_no:
+              #average_distance += np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_0plus][point_no]))
+              max_distance = max(max_distance, np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_0plus][point_no])))
+              n_points += 1
+          if fiber_no_1plus is not None:
+            if len(streamlines[fiber_no_1plus]) > point_no:
+              #average_distance += np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_1plus][point_no]))
+              max_distance = max(max_distance, np.linalg.norm(np.array(streamlines[fiber_no][point_no]) - np.array(streamlines[fiber_no_1plus][point_no])))
+              n_points += 1
+      #if n_points > 0:
+        #average_distance /= n_points
+      print (" fiber {},{}, average_distance: {}, n_points: {}, max_distance: {}".format(i,j,average_distance, n_points, max_distance))
+      if max_distance > 10:
+        invalid_streamlines.append(fiber_no)
+  
+  for invalid_streamline_no in invalid_streamlines:
+    streamlines[invalid_streamline_no] = []
 
+
+  print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   print("output pickle to filename: {}".format(pickle_output_filename))
   with open(pickle_output_filename, 'wb') as f:
     pickle.dump(streamlines, f)

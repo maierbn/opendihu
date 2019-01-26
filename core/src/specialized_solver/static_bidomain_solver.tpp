@@ -38,7 +38,18 @@ advanceTimeSpan()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
 
-  //this->solveLinearSystem();
+  /*
+  Bidomain equation:
+       K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0
+    => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
+   */
+
+  // update right hand side: transmembraneFlow = -K(sigma_i) Vm
+  PetscErrorCode ierr;
+  ierr = MatMult(data_.rhsMatrix(), data_.transmembranePotential()->valuesGlobal(), data_.transmembraneFlow()->valuesGlobal()); CHKERRV(ierr);
+
+  // solve K(sigma_i+sigma_e) phi_e = transmembraneFlow for phi_e
+  this->solveLinearSystem();
 
   // stop duration measurement
   if (this->durationLogKey_ != "")
@@ -97,13 +108,15 @@ initialize()
   LOG(DEBUG) << "fiber direction: " << *data_.fiberDirection();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
-  // diffusion object without prefactor, for normal diffusion (2nd multidomain eq.)
+  // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)
   finiteElementMethodDiffusionTransmembrane_.initialize(data_.fiberDirection(), nullptr);
   // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=false
   finiteElementMethodDiffusionExtracellular_.initialize(data_.fiberDirection(), nullptr, true);
 
-  // initialize system matrix
-  setSystemMatrix();
+  // initialize the matrix to be used for computing the rhs
+  data_.rhsMatrix() = finiteElementMethodDiffusionTransmembrane_.data().stiffnessMatrix()->valuesGlobal();
+  PetscErrorCode ierr;
+  ierr = MatScale(data_.rhsMatrix(), -1); CHKERRV(ierr);
 
   LOG(DEBUG) << "initialize linear solver";
 
@@ -118,27 +131,9 @@ initialize()
   LOG(DEBUG) << "set system matrix to linear solver";
 
   // set matrix used for linear solver and preconditioner to ksp context
+  Mat systemMatrix = finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal();
   assert(this->linearSolver_->ksp());
-  PetscErrorCode ierr;
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix_, systemMatrix_); CHKERRV(ierr);
-
-  // initialize rhs and solution vector
-  subvectorsRightHandSide_.resize(2);
-  subvectorsSolution_.resize(2);
-
-  // set values for Vm
-  subvectorsRightHandSide_[0] = data_.transmembranePotential()->valuesGlobal();
-  subvectorsSolution_[0] = data_.transmembranePotentialSolution()->valuesGlobal();
-
-  // set values for phi_e
-  subvectorsRightHandSide_[1] = data_.zero()->valuesGlobal();
-  subvectorsSolution_[1] = data_.extraCellularPotential()->valuesGlobal();
-  ierr = VecZeroEntries(subvectorsSolution_[1]); CHKERRV(ierr);
-
-  // create the nested vectors
-  LOG(DEBUG) << "create nested vector";
-  ierr = VecCreateNest(MPI_COMM_WORLD, 2, NULL, subvectorsRightHandSide_.data(), &rightHandSide_); CHKERRV(ierr);
-  ierr = VecCreateNest(MPI_COMM_WORLD, 2, NULL, subvectorsSolution_.data(), &solution_); CHKERRV(ierr);
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix, systemMatrix); CHKERRV(ierr);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -152,29 +147,6 @@ void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDi
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-setSystemMatrix()
-{
-  std::vector<Mat> submatrices(4, NULL);
-
-  LOG(TRACE) << "setSystemMatrix";
-
-  // fill submatrices, empty submatrices may be NULL
-  Mat stiffnessMatrixTopLeft = finiteElementMethodDiffusionTransmembrane_.data().stiffnessMatrix()->valuesGlobal();
-
-  // set bottom right matrix
-  Mat stiffnessMatrixBottomRight = finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal();
-
-  submatrices[0] = stiffnessMatrixTopLeft;
-  submatrices[3] = stiffnessMatrixBottomRight;
-
-  // create nested matrix
-  PetscErrorCode ierr;
-  ierr = MatCreateNest(this->data_.functionSpace()->meshPartition()->mpiCommunicator(),
-                       2, NULL, 2, NULL, submatrices.data(), &this->systemMatrix_); CHKERRV(ierr);
-}
-
-template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
   PetscErrorCode ierr;
@@ -184,9 +156,14 @@ solveLinearSystem()
   // configure that the initial value for the iterative solver is the value in solution, not zero
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
-  // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide_, solution_); CHKERRV(ierr);
+  // rename the involved vectors
+  Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();
+  Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
+  // solve the system, KSPSolve(ksp,b,x)
+  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide, solution); CHKERRV(ierr);
+
+  // print output message with iteration statistics
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;
   ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
@@ -224,6 +201,16 @@ StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusi
 getSolutionForTransfer()
 {
   return this->data_.transmembranePotential();
+}
+
+//! output the given data for debugging
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<StaticBidomain:" << *data << ">";
+  return s.str();
 }
 
 } // namespace TimeSteppingScheme

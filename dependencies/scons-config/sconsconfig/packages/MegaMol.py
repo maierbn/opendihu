@@ -13,8 +13,8 @@ class MegaMol(Package):
     self.sub_dirs = [
         ('include', 'lib'),
     ]
-    self.headers = ['Console.h']
-    #self.libs = ['mysqlclient']
+    self.headers = ['Console.h', 'zmq.h']
+    self.libs = ['zmq']
     #self.extra_libs = ['lapack', 'blas']
     self.check_text = r'''
       #include <stdlib.h>
@@ -40,7 +40,10 @@ class MegaMol(Package):
       'mkdir -p ${PREFIX}',
       "sed -i 's|int megamol_main(int argc, char\* argv\[\]) {|int main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # reverse eventual change to Console.cpp
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && \
-      '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME=  .. \
+      '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= -DADIOS2_DIR=${DEPENDENCIES_DIR}/adios/install/lib/cmake/adios2 \
+      -DBUILD_CINEEMATICCAMERA_PLUGIN=OFF -DBUILD_GEOMETRY_CALLS_PLUGIN=OFF -DBUILD_GUI_PLUGIN=OFF -DBUILD_IMAGEVIEWER2_PLUGIN=OFF -DBUILD_IMAGE_CALLS_PLUGIN=OFF -DBUILD_INFOVIS_PLUGIN -DBUILD_MDAO2_PLUGIN \
+      -DBUILD_MMSTD_MOLDYN_PLUGIN=OFF -DBUILD_MMSTD_TRISOUP_PLUGIN=OFF -DBUILD_MMSTD_VOLUME_PLUGIN=OFF -DBUILD_PROTEIN_PLUGIN=OFF -DBUILD_MWDEMOS_PLUGIN=OFF -DBUILD_PROTEIN_CALLS_PLUGIN=OFF \
+      CXXFLAGS="-Wno-int-in-bool-context -Wno-endif-labels -Wno-reorder -Wno-pedantic" .. \
       && make && make install',
       "cp ${SOURCE_DIR}/console/src/Console.cpp ${SOURCE_DIR}/console/src/Console.cpp.backup && \
       sed -i 's|int main(int argc, char\* argv\[\]) {|int megamol_main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # replace main() by megamol_main in Console.cpp
@@ -51,45 +54,56 @@ class MegaMol(Package):
 
     res = super(MegaMol, self).check(ctx)
     self.check_required(res[0], ctx)
-    
+    ctx.Log("Note, the previous check failed, because mmconsole cannot be linked. This is expected and no error (Just repeating in case you didn't read the full log.)\n")
+      
     # define custom linker flags, this needs the src tree present
     cwd = os.getcwd()
     opendihu_home = os.getcwd()
     ctx.Log("opendihu_home: {}\n".format(opendihu_home))
     
-    path = os.path.join(opendihu_home, "dependencies/megamol/src")
-    if os.path.exists(path):
-      entries = os.listdir(path)
+    megamol_src_path = os.path.join(opendihu_home, "dependencies/megamol/src")
+    if os.path.exists(megamol_src_path):
+      entries = os.listdir(megamol_src_path)
       if len(entries) == 1:
-        if (os.path.isdir(os.path.join(path, entries[0]))):
-          path = os.path.join(path, entries[0])
+        if (os.path.isdir(os.path.join(megamol_src_path, entries[0]))):
+          megamol_src_path = os.path.join(megamol_src_path, entries[0])
+      else:
+        ctx.Message("\nError! There are multiple folders in {}: \n{}\nPlease remove all but the one containing MegaMol!\n".format(megamol_src_path,entries))
+        megamol_src_path = os.path.join(megamol_src_path, entries[0])
       
-      megamol_link_path = os.path.join(path, "build/console/CMakeFiles/mmconsole.dir/link.txt")
+      ctx.Log("megamol_src_path: {}\n".format(megamol_src_path))
+      
+      megamol_link_path = os.path.join(megamol_src_path, "build/console/CMakeFiles/mmconsole.dir/link.txt")
       ctx.Log("megamol_link_path: {}\n".format(megamol_link_path))
-      with open(megamol_link_path, "r") as f:
-        linker_flags = f.readline()
-        linker_flags = linker_flags[linker_flags.find(" "):]
-        #print(linker_flags)
+      try:
+        with open(megamol_link_path, "r") as f:
+          linker_flags = f.readline()
+          linker_flags = linker_flags[linker_flags.find(" "):]
+          #print(linker_flags)
 
-        new_linker_flags = []
-        for item in linker_flags.split():
-          if item == "../mmconsole" or item == "-o":
-            continue
-            
-          if item[0] != "-" and item[0] != "/":
-            item = os.path.join(os.path.join(opendihu_home, "dependencies/megamol/src/megamol-master/build/console/"), item)
-          new_linker_flags.append(item)
-        
-        ctx.Log("new_linker_flags: {}\n".format(new_linker_flags))
-        self.link_flags = new_linker_flags
-        
+          new_linker_flags = []
+          for item in linker_flags.split():
+            if item == "../mmconsole" or item == "-o":
+              continue
+              
+            if item[0] != "-" and item[0] != "/":
+              item = os.path.join(os.path.join(megamol_src_path, "build/console/"), item)
+            new_linker_flags.append(item)
+          
+          ctx.Log("new_linker_flags: {}\n".format(new_linker_flags))
+          self.link_flags = new_linker_flags
+          
+        ctx.Log("The next check should succeed if MegaMol was installed correctly.\n")
+      except:
+        ctx.Log("Could not open {}".format(megamol_link_path))
+      
       # run again with new linker flags and modified Console.cpp
-      self.set_build_handler(None)
+      #self.set_build_handler(None)
 
       res = super(MegaMol, self).check(ctx)
       self.check_required(res[0], ctx)
     else:
-      ctx.Log("path {} does not exist\n".format(path))
+      ctx.Log("megamol src path {} does not exist\n".format(megamol_src_path))
       
     ctx.Result(res[0])
     return res[0]

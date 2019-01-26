@@ -19,7 +19,8 @@ public:
 #ifdef HAVE_ADIOS
   //! output the given field variable data for one mesh
   static void outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
-                         PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox);
+                         PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo,
+                         BoundingBox &boundingBox, double &minimalDistanceBetweenFibers);
 private:
 
   static std::map<std::string, adios2::Variable<double>> geometryTable_;    // the geometry data for each mesh
@@ -27,6 +28,7 @@ private:
 
   static std::map<std::string, std::shared_ptr<std::vector<double>>> geometryTableData_;   ///< buffer for the values to be written by ADIOS
   static std::map<std::string, std::shared_ptr<std::vector<double>>> vmTableData_;   ///< buffer for the values to be written by ADIOS
+  static std::shared_ptr<std::vector<Vec3>> geometryFieldValues_;    ///< buffer for geometry field values
 #endif
 };
 

@@ -147,6 +147,8 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
       loadPythonScriptFromFile(Control::settingsFileName);
     }
 
+    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+
     // start megamol console
     LOG(DEBUG) << "initializeMegaMol";
     initializeMegaMol(argc, argv);
@@ -154,7 +156,8 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     initialized_ = true;
   }
 
-  rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
+  if (!rankSubset_)
+    rankSubset_ = std::make_shared<Partition::RankSubset>();   // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
 
   // if this is the first constructed DihuContext object, create global objects partition manager, mesh manager and solver manager
   if (!partitionManager_)
@@ -295,13 +298,20 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 }
 
 #ifdef HAVE_ADIOS
-std::shared_ptr<adios2::IO> DihuContext::adiosIo()
+std::shared_ptr<adios2::IO> DihuContext::adiosIo() const
 {
   return io_;
 }
 #endif
 
-std::shared_ptr<Partition::RankSubset> DihuContext::rankSubset()
+#ifdef HAVE_MEGAMOL
+std::shared_ptr<zmq::socket_t> DihuContext::zmqSocket() const
+{
+  return zmqSocket_;
+}
+#endif
+
+std::shared_ptr<Partition::RankSubset> DihuContext::rankSubset() const
 {
   return rankSubset_;
 }

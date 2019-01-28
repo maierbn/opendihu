@@ -11,12 +11,12 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   examples = [
-    "shorten_implicit",
-    "shorten_explicit",
-    "hodgkin_huxley_explicit",
-    "hodgkin_huxley_strang",
-    "hodgkin_huxley_godunov",
-    "svdexample",
+#    "shorten_implicit",
+#    "shorten_explicit",
+#    "hodgkin_huxley_explicit",
+#    "hodgkin_huxley_strang",
+#    "hodgkin_huxley_godunov",
+#    "svdexample",
     "test"
   ]
 

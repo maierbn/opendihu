@@ -291,14 +291,31 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     }
   }
 
-  LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << MathUtility::sqr(nBorderPointsXNew_) - nValid;
+  int nInvalid = MathUtility::sqr(nBorderPointsXNew_) - nValid;
+  LOG(DEBUG) << "key fibers, number: " << MathUtility::sqr(nBorderPointsXNew_) << ", valid: " << nValid << ", invalid: " << nInvalid;
 
   // fix the invalid key fibers in the interior by interpolating from the neighbouring fibers
   LOG(DEBUG) << "fixInvalidKeyFibers";
-  fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers);
+  int nFibersFixed = 0;
+  fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers, nFibersFixed);
 
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracingKeyFibers(nRanksZ, rankZNo, nFibersX, streamlineDirectionUpwards, seedPoints, fibers);
+
+  // reduced number of valid/invalid fibers on ranks
+  int nValidGlobal = 0;
+  int nInvalidGlobal = 0;
+  int nFibersFixedGlobal = 0;
+  MPI_Reduce(&nValid, &nValidGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPI_Reduce(&nInvalid, &nInvalidGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPI_Reduce(&nFibersFixed, &nFibersFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+
+  if (currentRankSubset_->ownRankNo() == 0)
+  {
+    LOG(INFO) << "total number of key fibers, initially valid: " << nValidGlobal << ", initially invalid: " << nInvalidGlobal << ", fixed: " << nFibersFixedGlobal
+      << ", finally invalid: " << nInvalidGlobal - nFibersFixedGlobal << ", finally valid: " << nValidGlobal + nFibersFixedGlobal;
+  }
+
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
@@ -415,6 +432,16 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 #endif
   LOG(DEBUG) << "invalid fibers: " << nFibersNotInterpolated << ", valid fibers: " << nFibers - nFibersNotInterpolated;
 
+  int nFibersGlobal = 0;
+  int nFibersNotInterpolatedGlobal = 0;
+  MPI_Reduce(&nFibers, &nFibersGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPI_Reduce(&nFibersNotInterpolated, &nFibersNotInterpolatedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+
+  if (currentRankSubset_->ownRankNo() == 0)
+  {
+    LOG(INFO) << "total number of fibers, valid: " << nFibersGlobal-nFibersNotInterpolatedGlobal << ", invalid: " << nFibersNotInterpolatedGlobal;
+  }
+
   // write fiber data to file, the (x+,x-,y+,y-) border fibers of the global borders are not written to the file because they
   // were not traced but estimated from the border mesh which may be of bad quality
   int ownRankNo = currentRankSubset_->ownRankNo();
@@ -433,7 +460,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   int nFibersTotal = MathUtility::sqr(nFibersRow0);
 
   int headerOffset = 0;
-  const int nParameters = 10;
+  const int nParameters = 10;   // if I change this, also change the constant header length further down in resampleFibersInFile
   if (ownRankNo == 0)
   {
     std::string writeBuffer("opendihu binary fibers file     ");
@@ -547,6 +574,11 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   if (currentRankSubset_->ownRankNo() == 0)
   {
     fixInvalidFibersInFile();
+
+    if (nPointsWholeFiber != nNodesPerFiber_)
+    {
+      resampleFibersInFile(nPointsWholeFiber);
+    }
   }
 }
 
@@ -758,120 +790,128 @@ fixInvalidFibersInFile()
   }
 
   file.close();
-
-  if (nPointsPerFiber != nNodesPerFiber_)
-  {
-    // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
-
-    // rename existing file
-    std::string newFilename = resultFilename_ + std::string("_");
-    std::stringstream moveCommand;
-    moveCommand << "mv " << resultFilename_ << " " << newFilename;
-    int ret = std::system(moveCommand.str().c_str());
-    ret++;
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    // open existing file to read
-    std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
-    assert (fileOld.is_open());
-
-    LOG(DEBUG) << "write to file " << resultFilename_;
-    std::ofstream fileNew(resultFilename_.c_str(), std::ios::out | std::ios::binary);
-    assert (fileNew.is_open());
-
-    // copy header
-    std::vector<char> headerBuffer(32+headerLength);
-    fileOld.read(headerBuffer.data(), 32+headerLength);
-    fileNew.write(headerBuffer.data(), 32+headerLength);
-
-    // write new number of fibers
-    union
-    {
-      int32_t parameter;
-      char c[sizeof(int32_t)];
-    };
-    parameter = nNodesPerFiber_;
-
-    fileNew.seekp(32+8);
-    fileNew.write(c, 4);
-
-    fileNew.seekp(32+headerLength);
-
-    double oldZIncrement = double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
-
-    // loop over fibers in old file
-    for (int fiberIndex = 0; fiberIndex != nFibers; fiberIndex++)
-    {
-      Vec3 previousPoint;
-      Vec3 nextPoint;
-
-      int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loadad in previousPoint
-      int oldZIndexNext0 = -1;        /// z index of the point that is currently loadad in nextPoint
-
-      // loop over nodes of the new fiber and write them to the new file
-      for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)
-      {
-        // compute the z value of the current point in the new fiber
-        double currentZ = bottomZClip_ + zIndex * double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
-
-        //LOG(DEBUG) << "clip: " << bottomZClip_ << "," << topZClip_ << " zIndex: " << zIndex << "/" << nNodesPerFiber_ << ", currentZ: " << currentZ;
-
-        // compute z indices of the point in the old fiber between which the new point will be
-        int oldZIndexPrevious = int((currentZ-bottomZClip_) / oldZIncrement);
-        int oldZIndexNext = oldZIndexPrevious + 1;
-
-        // load previous point, only if it was not already loaded
-        if (oldZIndexPrevious != oldZIndexPrevious0)
-        {
-          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
-          MathUtility::readPoint(fileOld, previousPoint);
-          oldZIndexPrevious0 = oldZIndexPrevious;
-        }
-
-        // load next point
-        if (oldZIndexNext < nPointsPerFiber)
-        {
-          // only if it was not already loaded
-          if (oldZIndexNext != oldZIndexNext0)
-          {
-            fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
-            MathUtility::readPoint(fileOld, nextPoint);
-            oldZIndexNext0 = oldZIndexNext;
-          }
-        }
-        else
-        {
-          nextPoint = previousPoint;
-        }
-
-        // compute new point by interpolation between previousPoint and nextPoint
-        double alpha = (currentZ - (bottomZClip_ + oldZIndexPrevious*oldZIncrement)) / oldZIncrement;
-        Vec3 newPoint = (1.-alpha) * previousPoint + alpha * nextPoint;
-
-        if (fiberIndex < 10 || fiberIndex > nFibers-10)
-        {
-          LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
-            << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
-        }
-
-        // write point to file
-        MathUtility::writePoint(fileNew, newPoint);
-      }
-    }
-
-    fileOld.close();
-    fileNew.close();
-  }
 }
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers)
+resampleFibersInFile(int nPointsPerFiber)
+{
+  // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
+  LOG(INFO) << "resample fibers in file";
+
+  // rename existing file
+  std::string newFilename = resultFilename_ + std::string("_");
+  std::stringstream moveCommand;
+  moveCommand << "mv " << resultFilename_ << " " << newFilename;
+  int ret = std::system(moveCommand.str().c_str());
+  ret++;
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  // open existing file to read
+  std::ifstream fileOld(newFilename.c_str(), std::ios::in | std::ios::binary);
+  assert (fileOld.is_open());
+
+  LOG(DEBUG) << "write to file " << resultFilename_;
+  std::ofstream fileNew(resultFilename_.c_str(), std::ios::out | std::ios::binary);
+  assert (fileNew.is_open());
+
+  const int headerLength = sizeof(int32_t)*10;
+
+  // copy header
+  std::vector<char> headerBuffer(32+headerLength);
+  fileOld.read(headerBuffer.data(), 32+headerLength);
+  fileNew.write(headerBuffer.data(), 32+headerLength);
+
+  // write new number of fibers
+  union
+  {
+    int32_t parameter;
+    char c[sizeof(int32_t)];
+  };
+  parameter = nNodesPerFiber_;
+
+  fileNew.seekp(32+8);
+  fileNew.write(c, 4);
+
+  fileNew.seekp(32+headerLength);
+
+  double oldZIncrement = double(topZClip_ - bottomZClip_) / (nPointsPerFiber - 1);
+
+  int nFibersX = (nBorderPointsXNew_-1) * nFineGridFibers_ + nBorderPointsXNew_;
+  int nFibers = MathUtility::sqr(nFibersX);
+
+  // loop over fibers in old file
+  for (int fiberIndex = 0; fiberIndex != nFibers; fiberIndex++)
+  {
+    Vec3 previousPoint;
+    Vec3 nextPoint;
+
+    int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loadad in previousPoint
+    int oldZIndexNext0 = -1;        /// z index of the point that is currently loadad in nextPoint
+
+    // loop over nodes of the new fiber and write them to the new file
+    for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)
+    {
+      // compute the z value of the current point in the new fiber
+      double currentZ = bottomZClip_ + zIndex * double(topZClip_ - bottomZClip_) / (nNodesPerFiber_ - 1);
+
+      //LOG(DEBUG) << "clip: " << bottomZClip_ << "," << topZClip_ << " zIndex: " << zIndex << "/" << nNodesPerFiber_ << ", currentZ: " << currentZ;
+
+      // compute z indices of the point in the old fiber between which the new point will be
+      int oldZIndexPrevious = int((currentZ-bottomZClip_) / oldZIncrement);
+      int oldZIndexNext = oldZIndexPrevious + 1;
+
+      // load previous point, only if it was not already loaded
+      if (oldZIndexPrevious != oldZIndexPrevious0)
+      {
+        fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
+        MathUtility::readPoint(fileOld, previousPoint);
+        oldZIndexPrevious0 = oldZIndexPrevious;
+      }
+
+      // load next point
+      if (oldZIndexNext < nPointsPerFiber)
+      {
+        // only if it was not already loaded
+        if (oldZIndexNext != oldZIndexNext0)
+        {
+          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
+          MathUtility::readPoint(fileOld, nextPoint);
+          oldZIndexNext0 = oldZIndexNext;
+        }
+      }
+      else
+      {
+        nextPoint = previousPoint;
+      }
+
+      // compute new point by interpolation between previousPoint and nextPoint
+      double alpha = (currentZ - (bottomZClip_ + oldZIndexPrevious*oldZIncrement)) / oldZIncrement;
+      Vec3 newPoint = (1.-alpha) * previousPoint + alpha * nextPoint;
+
+      if (fiberIndex < 10 || fiberIndex > nFibers-10)
+      {
+        LOG(DEBUG) << "f" << fiberIndex << " z" << zIndex << "(" << currentZ << ") indices " << oldZIndexPrevious << "," << oldZIndexNext
+          << ", points " << previousPoint << nextPoint << ", alpha: " << alpha << ", newPoint: " << newPoint;
+      }
+
+      // write point to file
+      MathUtility::writePoint(fileNew, newPoint);
+    }
+  }
+
+  fileOld.close();
+  fileNew.close();
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed)
 {
   LOG(DEBUG) << "fixInvalidFibers";
 
   // fibers[fiberIndex][zLevelIndex]
-  int nFibersFixed = 0;
+  nFibersFixed = 0;
 
   // loop over invalid fibers and fix them from neighbouring fibers
   for (int fiberIndexY = 0; fiberIndexY != nBorderPointsXNew_; fiberIndexY++)
@@ -993,6 +1033,177 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
   }
 
   LOG(DEBUG) << "n key fibers fixed: " << nFibersFixed;
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+interpolateFineFibersFromFile()
+{
+  // open existing file to read
+  std::ifstream fileOld(resultFilename_.c_str(), std::ios::in | std::ios::binary);
+  assert (fileOld.is_open());
+
+  std::stringstream newFilename;
+  newFilename << resultFilename_ << ".fine";
+  LOG(DEBUG) << "write to file " << newFilename.str();
+  std::ofstream fileNew(newFilename.str().c_str(), std::ios::out | std::ios::binary);
+  assert (fileNew.is_open());
+
+  // parse header
+  // skip first part of header
+  fileOld.seekg(32);
+  union int32
+  {
+    char c[4];
+    int32_t i;
+  }
+  bufferHeaderLength, bufferNFibers, bufferNPointsPerFiber;
+
+  // get length of header
+  fileOld.read(bufferHeaderLength.c, 4);
+  int headerLength = bufferHeaderLength.i;
+  assert(headerLength == sizeof(int32_t)*10);
+
+  // get number of fibers
+  fileOld.read(bufferNFibers.c, 4);
+  int nFibersOld = bufferNFibers.i;
+
+  // get number of points per fiber
+  fileOld.read(bufferNPointsPerFiber.c, 4);
+  int nPointsPerFiber = bufferNPointsPerFiber.i;
+
+  int nFibersOldX = int(std::round(std::sqrt(nFibersOld)));
+
+  LOG(DEBUG) << "read header: nFibers: " << nFibersOld << ", nFibersX: " << nFibersOldX << ", nPointsPerFiber: " << nPointsPerFiber;
+
+  // reset to beginning of header
+  fileOld.seekg(0);
+
+  // copy header
+  std::vector<char> headerBuffer(32+headerLength);
+  fileOld.read(headerBuffer.data(), 32+headerLength);
+  fileNew.write(headerBuffer.data(), 32+headerLength);
+
+  int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
+  int nFibersNew = MathUtility::sqr(nFibersNewX);
+
+  LOG(INFO) << "interpolate from " <<  nFibersOldX << " x " << nFibersOldX << " = " << nFibersOld
+    << " to " << nFibersNewX << " x " << nFibersNewX << " = " << nFibersNew << ", (nFineGridFibers: " << nFineGridFibers_ << ")";
+
+  const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
+  long long nBytes = (32+headerLength) + (long long)(nFibersNew)*fiberDataSize;
+  long long nGibiBytes = nBytes / (long long)(1024) / (long long)(1024) / (long long)(1024);
+  LOG(INFO) << "estimated size: " << nGibiBytes << " GiB";
+
+  if (nGibiBytes >= 1)
+  {
+    LOG(INFO) << "Press any key to continue . . .";
+    std::cin.get();
+  }
+
+
+  union
+  {
+    int32_t parameter;
+    char c[sizeof(int32_t)];
+  };
+
+  // write new number of fibers
+  fileNew.seekp(32+4);
+  parameter = nFibersNew;
+  fileNew.write(c, 4);
+
+  fileNew.seekp(32+3*4);
+  parameter = nFibersOldX;
+  fileNew.write(c, 4);
+
+  fileNew.seekp(32+5*4);
+  parameter = nFineGridFibers_;
+  fileNew.write(c, 4);
+
+  fileNew.seekp(32+9*4);
+  parameter = time(NULL);
+  fileNew.write(c, 4);
+
+  fileNew.seekp(32+headerLength);
+
+  // loop over fibers in new file
+  std::array<std::vector<char>,4> buffer;
+
+  // initialize buffers
+  for (int i = 0; i < 4; i++)
+  {
+    buffer[i].resize(fiberDataSize);
+  }
+
+  for (int fiberIndexY = 0; fiberIndexY != nFibersNewX; fiberIndexY++)
+  {
+    for (int fiberIndexX = 0; fiberIndexX != nFibersNewX; fiberIndexX++)
+    {
+      int oldFiberIndexX = (int)(fiberIndexX / (nFineGridFibers_+1));
+      int oldFiberIndexY = (int)(fiberIndexY / (nFineGridFibers_+1));
+
+      // if fiber is key fiber
+      if (fiberIndexX % (nFineGridFibers_+1) == 0 && fiberIndexY % (nFineGridFibers_+1) == 0)
+      {
+        // copy fiber data from old file
+        int oldFiberIndex = oldFiberIndexY * nFibersOldX + oldFiberIndexX;
+
+        fileOld.seekg(32+headerLength + oldFiberIndex*fiberDataSize);
+        fileOld.read(buffer[0].data(), fiberDataSize);
+        fileNew.write(buffer[0].data(), fiberDataSize);
+      }
+      else
+      {
+        // if fiber is no key fiber, read 4 neighbouring fibers and interpolate
+        // determine indices
+        int oldFiberIndex[4] = {
+          oldFiberIndexY * nFibersOldX + oldFiberIndexX,
+          oldFiberIndexY * nFibersOldX + (oldFiberIndexX+1),
+          (oldFiberIndexY+1) * nFibersOldX + oldFiberIndexX,
+          (oldFiberIndexY+1) * nFibersOldX + (oldFiberIndexX+1)
+        };
+
+        for (int i = 0; i < 4; i++)
+        {
+          fileOld.seekg(32+headerLength + oldFiberIndex[i]*fiberDataSize);
+          fileOld.read(buffer[i].data(), fiberDataSize);
+        }
+
+        // compute interpolation factors
+        double alpha0 = double(fiberIndexX - oldFiberIndexX*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
+        double alpha1 = double(fiberIndexY - oldFiberIndexY*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
+
+        VLOG(1) << "(" << fiberIndexX << "," << fiberIndexY << ") alpha: " << alpha0 << "," << alpha1;
+
+        // loop over points of fiber
+        for (int zPointIndex = 0; zPointIndex < nPointsPerFiber; zPointIndex++)
+        {
+          // get edge points
+          std::array<Vec3,4> point;
+          for (int i = 0; i < 4; i++)
+          {
+            for (int j = 0; j < 3; j++)
+            {
+              double *memoryLocation = reinterpret_cast<double *>(&buffer[i][(zPointIndex*3 + j)*sizeof(double)]);
+              point[i][j] = *memoryLocation;
+            }
+          }
+
+          Vec3 resultPoint
+            = (1.-alpha0) * (1.-alpha1) * point[0]
+            + alpha0     * (1.-alpha1) * point[1]
+            + (1.-alpha0) * alpha1     * point[2]
+            + alpha0     * alpha1     * point[3];
+
+          // write result point
+          fileNew.write((char *)resultPoint.data(), 3*sizeof(double));
+        }
+      }
+    }
+  }
+
+  fileNew.close();
 }
 
 } // namespace

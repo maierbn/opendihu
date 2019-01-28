@@ -360,7 +360,8 @@ DihuContext::~DihuContext()
       LOG(DEBUG) << "wait for MegaMol to finish";
 
       // wait for megamol to finish
-      megamolThread_->join();
+      if (megamolThread_)
+        megamolThread_->join();
 #endif
 
       LOG(DEBUG) << "MPI_Finalize";

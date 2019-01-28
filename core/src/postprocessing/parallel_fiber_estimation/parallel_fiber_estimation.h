@@ -30,6 +30,9 @@ public:
   //! run tracing of stream lines
   void run();
 
+  //! open result file and interpolate fine fibers in between, the new file has the suffix ".fine"
+  void interpolateFineFibersFromFile();
+
   //! function space to use, i.e. 3D structured deformable grid
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpaceType;
   typedef SpatialDiscretization::FiniteElementMethod<
@@ -134,7 +137,10 @@ protected:
   void fixInvalidFibersInFile();
 
   //! fix the invalid key fibers at the end of the algorithm
-  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers);
+  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed);
+
+  //! resamples the final fibers in the output file to match the required number of nodes per fiber
+  void resampleFibersInFile(int nPointsPerFiber);
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class

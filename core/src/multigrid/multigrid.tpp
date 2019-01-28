@@ -3,15 +3,14 @@
 #include "utility/python_utility.h"
 #include "control/performance_measurement.h"
 
-
 namespace Multigrid
 {
 
 template<typename FiniteElement1, typename FiniteElement2>
-Multigrid<FiniteElement1, FiniteElement2>::
-Multigrid(DihuContext context)
-  {
-	
+Multigrid<FiniteElement1, FiniteElement2>::Multigrid(DihuContext context) :
+finiteElement1_(context["Term1"]), finiteElement2_(context["Term2"]), initialized_(false)
+{ 
+
 }
 template<typename FiniteElement1, typename FiniteElement2>
 void Multigrid<FiniteElement1, FiniteElement2>::
@@ -51,7 +50,13 @@ template<typename FiniteElement1, typename FiniteElement2>
 void Multigrid<FiniteElement1, FiniteElement2>::
 solveMG()
 {
-	
-}
+	for (int i = 0; i<numCycles_; i++)
+	{
+		finiteElement1_.solveMG();
+		//transfer
+		finiteElement1_.solveMG();
+		//transfer
+		}
+}		
 
 };    // namespace

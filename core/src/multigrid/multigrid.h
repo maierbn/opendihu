@@ -4,7 +4,6 @@
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
 #include "interfaces/runnable.h"
-#include "spatial_discretization/finite_element_method/finite_element_method.h"
 
 #include "easylogging++.h"
 
@@ -43,6 +42,7 @@ FiniteElement1 finiteElement1_;
 FiniteElement2 finiteElement2_;
 
 bool initialized_;
+int numCycles_ = 100;
 };
 
 }  // namespace

@@ -98,7 +98,7 @@ void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 run()
 {
   initialize();
-  solveMG();
+  solve();
   //TODO add solveMG based on specificSettings
   data_.print();
 
@@ -229,28 +229,21 @@ solveMG()
   // get stiffness matrix
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = data_.stiffnessMatrix();
 
-  // get stiffness matrix
-  //std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix2 = data_.stiffnessMatrix();
-
   // assemble matrix such that all entries are at their place
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
-  //stiffnessMatrix2->assembly(MAT_FINAL_ASSEMBLY);
 
   // get linearMG solver context from solver manager
   std::shared_ptr<Solver::LinearMG> linearSolver = this->context_.solverManager()->template solver<Solver::LinearMG>(
     this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
   std::shared_ptr<KSP> ksp = linearSolver->ksp();
-  //std::shared_ptr<KSP> ksp2 = linearSolver->ksp2();
   
   assert(ksp != nullptr);
-  //assert(ksp2 != nullptr);
 
   // set matrix used for linear system and preconditioner to ksp context
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
-  //PetscErrorCode ierr2;
-  //ierr2 = KSPSetOperators(*ksp2, stiffnessMatrix2->valuesGlobal(), stiffnessMatrix2->valuesGlobal()); CHKERRV(ierr2);
-
+  ierr =   KSPSetTolerances(*ksp,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT,1);
+  
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
@@ -258,15 +251,10 @@ solveMG()
   ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
   ierr = KSPSetInitialGuessNonzero(*ksp2, PETSC_TRUE); CHKERRV(ierr);
   
-  //ierr2 = VecSet(data_.solution()->values(), scalar); CHKERRV(ierr2);
-  //ierr2 = KSPSetInitialGuessNonzero(*ksp2, PETSC_TRUE); CHKERRV(ierr2);
-  //ierr2 = KSPSetInitialGuessNonzero(*ksp2, PETSC_TRUE); CHKERRV(ierr2);
-  
 #endif
 
   // solve the system
   ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
-  //ierr2 = KSPSolve(*ksp2, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr2);
 
   int numberOfIterations = 0;
   PetscReal residualNorm = 0.0;

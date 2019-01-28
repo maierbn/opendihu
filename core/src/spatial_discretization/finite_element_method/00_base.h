@@ -42,6 +42,9 @@ public:
 
   //! get the data object
   Data &data();
+  
+  //! solve finite element linear system with multigrid method
+  virtual void solveMG();
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:
@@ -58,9 +61,7 @@ protected:
   //! solve finite element linear system
   virtual void solve();
 
-  //! solve finite element linear system with multigrid method
-  virtual void solveMG();
-
+  
   //! after rhs is transferred to weak form this method is called and can be overriden later
   virtual void manipulateWeakRhs(){}
 

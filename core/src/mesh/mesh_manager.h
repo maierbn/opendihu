@@ -5,7 +5,7 @@
 
 #include "control/dihu_context.h"
 #include "function_space/function_space.h"
-#include "mesh/mapping_between_meshes.h"
+#include "mesh/mapping_between_meshes_manager.h"
 
 namespace Partition{
 class Manager;
@@ -21,7 +21,7 @@ class NodePositionsTester;
  * request their mesh by a call to mesh(name).
  * If a mesh was not defined earlier, it is created on the fly when it is requested.
  */
-class Manager
+class Manager : public MappingBetweenMeshesManager
 {
 public:
   //! constructor
@@ -29,10 +29,6 @@ public:
 
   //! store the pointer to the partition manager
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
-  
-  //! check if a MappingBetweenMeshes object need to be created and initialized
-  template<typename FunctionSpace1Type, typename FunctionSpace2Type>
-  void initializeMappingsBetweenMeshes(const std::shared_ptr<FunctionSpace1Type> functionSpace1, const std::shared_ptr<FunctionSpace2Type> functionSpace2);
 
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
@@ -69,20 +65,12 @@ private:
   //! store settings for all meshes that are specified in specificSettings_
   void storePreconfiguredMeshes();
 
-  //! create MappingBetweenMeshes objects from the config and store them under mappingsBetweenMeshes_
-  void storeMappingsBetweenMeshes();
-
-  //! indicate that on the mesh with name, "initialize()" has been called and now check if mappingsBetweenMeshes_ can be initialized
-  void checkInitializeMappingBetweenMeshes(std::string name);
-
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
   
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 
   std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
-  std::map<std::string, std::map<std::string, std::shared_ptr<MappingBetweenMeshesBase>>> mappingsBetweenMeshes_;  ///<["key mesh from"]["key mesh to"] mapping between meshes
 };
 
 }  // namespace

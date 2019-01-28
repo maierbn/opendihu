@@ -144,7 +144,7 @@ solution()
 
 template<typename FunctionSpaceType>
 typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
   LOG(INFO) << "retutrn FiniteElementsBase solution";
   return this->solution_;

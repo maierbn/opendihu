@@ -61,8 +61,8 @@ protected:
   //! create the mesh with given borderPoints, using harmonic maps by calling the python script
   void createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal);
 
-  //! check if the algorithm is at the stage where no more subdomains are created and the final fibers are traced
-  bool checkTraceFinalFibers(int &level);
+  //! check if the algorithm is at the stage where no more subdomains are created and the final fibers are traced, this sets the current level_
+  bool checkTraceFinalFibers();
 
   //! create Dirichlet BC object
   void createDirichletBoundaryConditions(const std::array<int,3> &nElementsPerCoordinateDirectionLocal, std::shared_ptr<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>> &dirichletBoundaryConditions);
@@ -127,6 +127,12 @@ protected:
   //! determine if the subdomain is at which borders, from rank no
   void setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew);
 
+  //! open the file again and interpolate all missing fibers
+  void fixInvalidFibersInFile();
+
+  //! fix the invalid key fibers at the end of the algorithm
+  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 
@@ -147,6 +153,9 @@ protected:
   int nBorderPointsXNew_;  ///< the value of nBorderPointsX_ in the next subdomain
   int nBorderPointsZNew_;  ///< the value of nBorderPointsZ_ in the next subdomain
   int nFineGridFibers_;   ///< the number of additional fibers between "key" fibers in one coordinate direction
+  int nNodesPerFiber_;    ///< the number of nodes of the final fiber, this is assured at the end, then the fibers get resampled to the required number of nodes per fiber
+  bool improveMesh_;      ///< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
+  int level_;             ///< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
 
   PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
   PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"

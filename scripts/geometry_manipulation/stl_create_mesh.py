@@ -2921,10 +2921,11 @@ def create_3d_mesh_simple(n_points_x, loops):
 
 
 
-def create_3d_mesh_from_border_points_faces(border_points_faces):
+def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
   """
   Create the 3D mesh from border points which are organised as faces.
   :param border_points_faces: [border_points_0minus, border_points_0plus, border_points_1minus, border_points_1plus]
+  :param improve_mesh: if the 2D meshes should be smoothed, this takes a lot of time but improves the result
   """
   
   print("create_3d_mesh_from_border_points_faces")
@@ -2941,7 +2942,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces):
   max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False
   debugging_stl_output = False
-  improve_mesh = True    # post-smooth mesh
+  #improve_mesh = True    # post-smooth mesh
 
   border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
   border_points_0plus = border_points_faces[1]

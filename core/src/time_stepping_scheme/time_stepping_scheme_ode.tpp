@@ -64,19 +64,12 @@ setInitialValues()
 
   VLOG(1) << data_->solution();
 }
-/*
-template<typename DiscretizableInTimeType>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-solution()
-{
-  return data_->solution();
-}*/
 
 template<typename DiscretizableInTimeType>
 typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
-  return data_->getSolutionForTransferInOperatorSplitting();
+  return data_->getSolutionForTransfer();
 }
 
 template<typename DiscretizableInTimeType>
@@ -154,6 +147,7 @@ initialize()
   {
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
+  VLOG(1) << "initial solution vector: " << *data_->solution();
   
   data_->print();
   
@@ -192,5 +186,12 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 
+//! output the given data for debugging
+template<typename DiscretizableInTimeType>
+std::string TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
+getString(typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType &data)
+{
+  return data_->getString(data);
+}
 
 } // namespace

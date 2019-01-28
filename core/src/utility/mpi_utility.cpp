@@ -39,11 +39,11 @@ void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *stat
   
   if (!descriptor.empty())
   {
-    LOG(ERROR) << "Error in " << descriptor << ": " << std::string(errorString.begin(), errorString.end());
+    LOG(ERROR) << "Error in " << descriptor << ": " << std::string(errorString.begin(), errorString.begin()+stringLength);
   }
   else 
   {
-    LOG(ERROR) << "Error in MPI function: " << std::string(errorString.begin(), errorString.end());
+    LOG(ERROR) << "Error in MPI function: " << std::string(errorString.begin(), errorString.begin()+stringLength);
   }
 }
  

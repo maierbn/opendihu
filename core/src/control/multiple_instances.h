@@ -37,23 +37,22 @@ public:
 
   //! return whether the scheme has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
-/*
-  //! returns the Petsc solution vector
-  Vec &solution();
-*/
 
   //! return the data object
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
   //! run solution process
   void run();
 
   //! reset the objects state
   void reset();
+
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
 
 protected:
 

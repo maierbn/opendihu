@@ -103,8 +103,17 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
     // if there was no point before the current z, this means the streamline begins way higher than the current z
     if (streamlineIter == streamlinePoints.begin())
     {
-      VLOG(1) << "no previous point, skip. first currentPoint: " << currentPoint;
-      continue;
+      if ((*streamlineIter)[2] < currentZ + 0.3 && streamlineIter+1 != streamlinePoints.end())
+      {
+        // if the streamline begins a little (0.3) higher than the bottom clip but not too much
+        currentPoint = *(streamlineIter+1);
+      }
+      else
+      {
+        // if the streamline begins way higher
+        VLOG(1) << "no previous point, skip. first currentPoint: " << currentPoint;
+        continue;
+      }
     }
     else
     {

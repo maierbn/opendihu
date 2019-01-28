@@ -5,7 +5,7 @@ class googletest(Package):
 
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://github.com/google/googletest/archive/master.zip',
+            'download_url': 'https://github.com/google/googletest/archive/release-1.8.1.zip',
         }
         defaults.update(kwargs)
         super(googletest, self).__init__(**defaults)

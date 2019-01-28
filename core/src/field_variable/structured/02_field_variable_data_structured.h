@@ -87,7 +87,7 @@ public:
   virtual void unifyMappings(std::shared_ptr<ElementToNodeMapping> elementToNodeMapping, const int nDofsPerNode){}
 
   //! eliminate duplicate elementToDof and exfileRepresentation objects in components of two field variables (this and one other)
-  virtual void unifyMappings(std::shared_ptr<FieldVariableBase<FunctionSpaceType>> fieldVariable2){}
+  virtual void unifyMappings(std::shared_ptr<FieldVariableBaseFunctionSpace<FunctionSpaceType>> fieldVariable2){}
 
   //! initialize PETSc vector with size of total number of dofs for all components of this field variable
   virtual void initializeValuesVector(){}

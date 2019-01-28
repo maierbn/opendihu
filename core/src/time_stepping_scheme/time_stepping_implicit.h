@@ -28,6 +28,8 @@ public:
   //! set the system matrix
   virtual void initialize();
    
+  //! output the given data for debugging
+  virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::TransferableSolutionDataType &data);
 protected:
   
   //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme

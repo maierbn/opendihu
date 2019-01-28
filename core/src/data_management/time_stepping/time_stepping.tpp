@@ -22,6 +22,7 @@ template<typename FunctionSpaceType,int nComponents>
 TimeStepping<FunctionSpaceType,nComponents>::
 TimeStepping(DihuContext context) : Data<FunctionSpaceType>(context), outputComponentNo_(0), prefactor_(1.0)
 {
+  this->debuggingName_ = "timestepping";
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -40,7 +41,7 @@ template<typename FunctionSpaceType,int nComponents>
 void TimeStepping<FunctionSpaceType,nComponents>::
 createPetscObjects()
 {
-  LOG(DEBUG) << "TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects(" <<nComponents << ")" << std::endl;
+  LOG(DEBUG) << "TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects(" <<nComponents << ")";
   assert(this->functionSpace_);
   assert(this->functionSpace_->meshPartition());
 
@@ -128,8 +129,9 @@ setPrefactor(double prefactor)
 
 template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType TimeStepping<FunctionSpaceType,nComponents>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
+  //LOG(DEBUG) << "TimeStepping::getSolutionForTransfer \"" << debuggingName_ << "\", solution " << *this->solution_;
   return std::tuple<std::shared_ptr<FieldVariableType>,int,double>(this->solution_,this->outputComponentNo_,this->prefactor_);
 }
 
@@ -142,6 +144,18 @@ getOutputFieldVariables()
     solution_
   );
 }
+
+//! output the given data for debugging
+template<typename FunctionSpaceType,int nComponents>
+std::string TimeStepping<FunctionSpaceType,nComponents>::
+getString(typename TimeStepping<FunctionSpaceType,nComponents>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<" << debuggingName_ << ":" << *std::get<0>(data) << ">";
+
+  return s.str();
+}
+
 
 
 } // namespace

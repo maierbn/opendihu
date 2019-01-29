@@ -99,7 +99,6 @@ run()
 {
   initialize();
   solve();
-  //TODO add solveMG based on specificSettings
   data_.print();
 
   outputWriterManager_.writeOutput(data_);
@@ -215,112 +214,130 @@ template<typename FunctionSpaceType,typename QuadratureType,typename Term>
 void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,Term>::
 solveMG()
 {
-  // solve linear system k*d=f for d
-  LOG(TRACE) << "FiniteElementMethod::solveMG";
-
-  // if equation was set to none, do not solve the problem (this is for unit tests that don't test for solution)
-  if (std::is_same<Term,Equation::None>::value)
-  {
-    // set solution to zero
-    data_.solution()->zeroEntries();
-    return;
-  }
-
-  // get stiffness matrix
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = data_.stiffnessMatrix();
-
-  // assemble matrix such that all entries are at their place
-  stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
-
-  // get linearMG solver context from solver manager
-  std::shared_ptr<Solver::LinearMG> linearSolver = this->context_.solverManager()->template solver<Solver::LinearMG>(
-    this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
-  std::shared_ptr<KSP> ksp = linearSolver->ksp();
   
-  assert(ksp != nullptr);
+	if(kspMG_ != nullptr)
+	{
+		//if ksp object was already set up
+		PetscErrorCode ierr;
+    ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(),data_.solution()->valuesGlobal()); CHKERRV(ierr);
+		int numberOfIterations = 0;
+		PetscReal residualNorm = 0.0;
+		ierr = KSPGetIterationNumber(*kspMG_, &numberOfIterations); CHKERRV(ierr);
+		ierr = KSPGetResidualNorm(*kspMG_, &residualNorm); CHKERRV(ierr);
 
-  // set matrix used for linear system and preconditioner to ksp context
-  PetscErrorCode ierr;
-  ierr = KSPSetOperators(*ksp, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
-  ierr =   KSPSetTolerances(*ksp,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT,1);
-  
-  // non-zero initial values
-#if 0  
-  PetscScalar scalar = 0.5;
-  ierr = VecSet(data_.solution()->values(), scalar); CHKERRV(ierr);
-  ierr = KSPSetInitialGuessNonzero(*ksp, PETSC_TRUE); CHKERRV(ierr);
-  ierr = KSPSetInitialGuessNonzero(*ksp2, PETSC_TRUE); CHKERRV(ierr);
-  
-#endif
+		KSPConvergedReason convergedReason;
+		ierr = KSPGetConvergedReason(*kspMG_, &convergedReason); CHKERRV(ierr);
 
-  // solve the system
-  ierr = KSPSolve(*ksp, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
+		LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
+		<< ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+		} else {
 
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp, &residualNorm); CHKERRV(ierr);
+		// solve linear system k*d=f for d
+		LOG(TRACE) << "FiniteElementMethod::solveMG";
 
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp, &convergedReason); CHKERRV(ierr);
+		// if equation was set to none, do not solve the problem (this is for unit tests that don't test for solution)
+		if (std::is_same<Term,Equation::None>::value)
+		{
+			// set solution to zero
+			data_.solution()->zeroEntries();
+		return;
+		}
 
-  LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+		// get stiffness matrix
+		std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = data_.stiffnessMatrix();
 
-  // check if solution is correct
-#if 0
-  {
-    // get rhs and solution from PETSc
-    int vectorSize = 0;
-    VecGetSize(data_.solution()->values(), &vectorSize);
+		// assemble matrix such that all entries are at their place
+		stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 
-    std::vector<int> indices(vectorSize);
-    std::iota(indices.begin(), indices.end(), 0);
-    std::vector<double> solution(vectorSize);
-    std::vector<double> rhs(vectorSize);
+		// get linearMG solver context from solver manager
+		std::shared_ptr<Solver::LinearMG> linearSolver = this->context_.solverManager()->template solver<Solver::LinearMG>(
+		this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
+		std::shared_ptr<KSP> kspMG_ = linearSolver->ksp();
 
-    VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
-    VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
+		assert(kspMG_ != nullptr);
 
-    // get stiffness matrix
-    int nRows, nColumns;
-    MatGetSize(data_.stiffnessMatrix(), &nRows, &nColumns);
-    std::vector<int> rowIndices(nRows);
-    std::iota(rowIndices.begin(), rowIndices.end(), 0);
-    std::vector<int> columnIndices(nColumns);
-    std::iota(columnIndices.begin(), columnIndices.end(), 0);
-    std::vector<double> matrixValues(nRows*nColumns);
+		// set matrix used for linear system and preconditioner to ksp context
+		PetscErrorCode ierr;
+		ierr = KSPSetOperators(*kspMG_, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
+		ierr =   KSPSetTolerances(*kspMG_,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT,1);
 
-    std::vector<long int> nEntries = {nRows, nColumns};
+		// non-zero initial values
+		#if 0  
+		PetscScalar scalar = 0.5;
+		ierr = VecSet(data_.solution()->values(), scalar); CHKERRV(ierr);
+		ierr = KSPSetInitialGuessNonzero(*kspMG_, PETSC_TRUE); CHKERRV(ierr);
 
-    MatGetValues(data_.stiffnessMatrix().values(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+		#endif
 
-    std::vector<double> f(vectorSize);
+		// solve the system
+		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
 
-    // compute f = matrix * solution
+		int numberOfIterations = 0;
+		PetscReal residualNorm = 0.0;
+		ierr = KSPGetIterationNumber(*kspMG_, &numberOfIterations); CHKERRV(ierr);
+		ierr = KSPGetResidualNorm(*kspMG_, &residualNorm); CHKERRV(ierr);
 
-    for (int i=0; i<vectorSize; i++)
-    {
-      f[i] = 0.0;
-      for (int j=0; j<vectorSize; j++)
-      {
-        f[i] += matrixValues[i*nColumns + j] * solution[j];
-      }
-    }
+		KSPConvergedReason convergedReason;
+		ierr = KSPGetConvergedReason(*kspMG_, &convergedReason); CHKERRV(ierr);
 
-    // compute residual norm
-    double res = 0.0;
-    for (int i=0; i<vectorSize; i++)
-    {
-      res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
-      LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
-    }
+		LOG(INFO) << "Solution obtained in " << numberOfIterations << " iterations, residual norm " << residualNorm
+		<< ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
 
-    LOG(DEBUG) << "res=" << res;
-  }
-#endif
+		// check if solution is correct
+		#if 0
+		{
+		// get rhs and solution from PETSc
+		int vectorSize = 0;
+		VecGetSize(data_.solution()->values(), &vectorSize);
 
-outputWriterManager_.writeOutput(data_);
+		std::vector<int> indices(vectorSize);
+		std::iota(indices.begin(), indices.end(), 0);
+		std::vector<double> solution(vectorSize);
+		std::vector<double> rhs(vectorSize);
+
+		VecGetValues(data_.solution()->values(), vectorSize, indices.data(), solution.data());
+		VecGetValues(data_.rightHandSide()->values(), vectorSize, indices.data(), rhs.data());
+
+		// get stiffness matrix
+		int nRows, nColumns;
+		MatGetSize(data_.stiffnessMatrix(), &nRows, &nColumns);
+		std::vector<int> rowIndices(nRows);
+		std::iota(rowIndices.begin(), rowIndices.end(), 0);
+		std::vector<int> columnIndices(nColumns);
+		std::iota(columnIndices.begin(), columnIndices.end(), 0);
+		std::vector<double> matrixValues(nRows*nColumns);
+
+		std::vector<long int> nEntries = {nRows, nColumns};
+
+		MatGetValues(data_.stiffnessMatrix().values(), nRows, rowIndices.data(), nColumns, columnIndices.data(), matrixValues.data());
+
+		std::vector<double> f(vectorSize);
+
+		// compute f = matrix * solution
+
+		for (int i=0; i<vectorSize; i++)
+		{
+		  f[i] = 0.0;
+		  for (int j=0; j<vectorSize; j++)
+		  {
+			f[i] += matrixValues[i*nColumns + j] * solution[j];
+		  }
+		}
+
+		// compute residual norm
+		double res = 0.0;
+		for (int i=0; i<vectorSize; i++)
+		{
+		  res += (f[i] - rhs[i]) * (f[i] - rhs[i]);
+		  LOG(DEBUG) << i << ". solution=" << solution[i]<< ", f=" <<f[i]<< ", rhs=" <<rhs[i]<< ", squared error: " <<(f[i] - rhs[i]) * (f[i] - rhs[i]);
+		}
+
+		LOG(DEBUG) << "res=" << res;
+		}
+		#endif 
+	}
+	
+	outputWriterManager_.writeOutput(data_);
 
 }
 

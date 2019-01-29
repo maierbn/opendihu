@@ -48,7 +48,7 @@ public:
 
   friend class StiffnessMatrixTester;    ///< a class used for testing
 protected:
-
+  std::shared_ptr<KSP> kspMG_;
   //! read in rhs values from config and creates a FE rhs vector out of it
   virtual void setRightHandSide() = 0;
 

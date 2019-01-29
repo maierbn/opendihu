@@ -13,6 +13,11 @@ HeunAdaptiv<DiscretizableInTime>::HeunAdaptiv(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "HeunAdaptiv")
 {
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+
+  max_timeStepWidth_ = this->specificSettings_.getOptionDouble("maxTimeStepWidth", 0.1, PythonUtility::Positive); //read maximal timeStepWidth
+
+  tolerance_ = this->specificSettings_.getOptionDouble("tolerance", 0.1, PythonUtility::Positive); //read allowed tolerance
+  savedTimeStepWidth_ = -1;
 }
 
 template<typename DiscretizableInTime>
@@ -29,7 +34,6 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   //--------------------------------------------------------------------------------------------------------------------
   // Create local variables
   double alpha = 0.0;
-  double toleranz = 10;
   double estimator = 0.0;
   PetscReal vecnorm;
   //--------------------------------------------------------------------------------------------------------------------
@@ -46,151 +50,152 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   Vec &increment = this->data_->increment()->getValuesContiguous();
   Vec &intermediateIncrement = dataHeun->intermediateIncrement()->getValuesContiguous();
 
-  //--------------------------------------------------------------------------------------------------------------------
-    //Create temporary vectors
-    Vec temp_solution_normal = solution;
-    Vec temp_solution_tilde = solution;
-    Vec temp_increment_1 = increment;
-    Vec temp_increment_2 = intermediateIncrement;
-  //--------------------------------------------------------------------------------------------------------------------
+  //Create temporary vectors for calculation
+  Vec temp_solution_normal;
+  Vec temp_solution_tilde;
+  Vec temp_solution_tilde_intermediate;
+  Vec temp_increment_1;
+  Vec temp_increment_1_2;
+  Vec temp_increment_2;
+
+  // Duplicate current solutions to create same-structured vectors
+  VecDuplicate(solution, &temp_solution_normal);
+  VecDuplicate(solution, &temp_solution_tilde);
+  VecDuplicate(solution, &temp_solution_tilde_intermediate);
+  VecDuplicate(increment, &temp_increment_1);
+  VecDuplicate(increment, &temp_increment_1_2);
+  VecDuplicate(intermediateIncrement, &temp_increment_2);
+
+  // Fill temporal vectors with current solution values
+  VecCopy(solution, temp_solution_normal);
+  VecCopy(solution, temp_solution_tilde);
+  VecCopy(solution, temp_solution_tilde_intermediate);
+  VecCopy(increment, temp_increment_1);
+  VecCopy(increment, temp_increment_1_2);
+  VecCopy(intermediateIncrement, temp_increment_2);
+
+  if (this->savedTimeStepWidth_ > 0)
+  {
+    this->timeStepWidth_ = std::min(this->savedTimeStepWidth_, timeSpan*0.5);
+  }
+
   // loop over time steps
   double currentTime = this->startTime_;
-  //for(int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   for(double time = 0.0; time < timeSpan;)
   {
+
+    LOG(DEBUG) << "time: " << time << ", timeStepWidth: " << this->timeStepWidth_;
+
     int timeStepNo = 0;
-    //if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
-    //{
-    //  LOG(INFO) << "Heun adaptiv, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
-    //}
-    VLOG(1) << "starting from solution: " << this->data_->solution();
+    bool timeSteppingFinished = false;
+    while (true)
+    {
+      VLOG(1) << "starting from solution: " << this->data_->solution();
 
-    //------------------------------------------------------------------------------------------------------------------
-    //----CALCULATION OF THE TEMPORARY SOLUTION
+      // Copy current solution in temporal vectors
+      VecCopy(solution, temp_solution_normal);
+      VecCopy(solution, temp_solution_tilde);
+      VecCopy(solution, temp_solution_tilde_intermediate);
 
-    //---- CALCULATION FOR X_NORMAL
-    //---- Create temporary vectors
-    temp_solution_normal = solution;
-    temp_solution_tilde = solution;
+      //---- Calculate next solution like always and store in temporary vector
+      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+      temp_solution_normal, temp_increment_1, timeStepNo, currentTime);
 
-    //---- Calculate x_{i+1} like always
-    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_normal, temp_increment_1, timeStepNo, currentTime);
+      VecAXPY(temp_solution_normal, this->timeStepWidth_, temp_increment_1);
 
-    VecAXPY(temp_solution_normal, this->timeStepWidth_, temp_increment_1);
+      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+      temp_solution_normal, temp_increment_2, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_normal, temp_increment_2, timeStepNo + 1, currentTime + this->timeStepWidth_);
+      VecAXPY(temp_increment_2, -1.0, temp_increment_1);
 
-    VecAXPY(temp_increment_2, -1.0, temp_increment_1);
+      VecAXPY(temp_solution_normal, 0.5*this->timeStepWidth_, temp_increment_2);
 
-    VecAXPY(temp_solution_normal, 0.5*this->timeStepWidth_, temp_increment_2);
+      //---- Now calculate x_tilde. Use previous values as good as possible
 
-    //---- NOW CALCULATE X_TILDE, atm easy way with euler explicit
-    VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_1);
+      VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
-    this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    temp_solution_tilde, temp_increment_2, timeStepNo + 10, currentTime + this->timeStepWidth_);
+      VecAXPY(temp_solution_tilde_intermediate, 0.5 * this->timeStepWidth_, temp_increment_1);
 
-    VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_2);
+      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+      temp_solution_tilde_intermediate, temp_increment_1_2, timeStepNo+1, currentTime + 0.5 * this->timeStepWidth_);
 
-    //Calculate estimator
-    PetscBool flag;
-    VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
-    if (!flag){
-        VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-        VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
-        estimator = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
-    } else{
-        estimator = this->timeStepWidth_;
+      VecAXPY(temp_increment_1, 1.0, temp_increment_1_2);
+
+      VecAXPY(temp_increment_2, 1.0, temp_increment_1_2);
+
+      VecScale(temp_increment_1, 0.5);
+
+      VecScale(temp_increment_2, 0.5);
+
+      VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_1);
+
+      VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_2);
+
+      //Calculate estimator based on current values
+      PetscBool flag;
+      VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+      if (!flag){
+          VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
+          VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
+          estimator = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
+      } else{
+          estimator = this->timeStepWidth_;
+          LOG(ERROR) << "Vecs are equal!";
+      }
+      //std::cout<<estimator<<"\n";
+      //Calculate alpha
+      alpha = pow((tolerance_/estimator), (1.0/3.0));
+      LOG(DEBUG) << "alpha=" << alpha;
+
+      //Fallunterscheidung
+      if (estimator <= tolerance_){
+
+          // Take already calculated value with normal timestep
+          VecCopy(temp_solution_normal, solution);
+
+          // apply the prescribed boundary condition values
+          this->applyBoundaryConditions();
+
+          VLOG(1) << *this->data_->solution();
+
+          // advance simulation time
+          timeStepNo++;
+          time = time + this->timeStepWidth_;
+          LOG(DEBUG) << "new time: " << time;
+
+          if (timeSteppingFinished)
+          {
+            LOG(DEBUG) << "break time stepping because timeSpan is reached";
+            break;
+          }
+
+          // Adjust timeStepWidth based on alpha
+          //this->timeStepWidth_ = this->timeStepWidth_*alpha;
+          this->timeStepWidth_ = this->timeStepWidth_*2.0;
+
+          currentTime = this->startTime_ + time;
+          LOG(DEBUG) << "estimator <= tolerance: " << estimator << ", set timeStepWidth to " << this->timeStepWidth_;
+
+      }
+      else
+      {
+          // Reject solution and repeat loop with adjusted timeStepWidth
+          this->timeStepWidth_ = this->timeStepWidth_*0.5;
+          timeSteppingFinished = false;
+
+          LOG(DEBUG) << "estimator > tolerance: " << estimator << ", set timeStepWidth to " << this->timeStepWidth_;
+      }
+
+      if (this->timeStepWidth_ > timeSpan - time)
+      {
+        this->savedTimeStepWidth_ = this->timeStepWidth_;
+        this->timeStepWidth_ = timeSpan - time;
+        LOG(DEBUG) << "adjust timeStepWitdh to " << this->timeStepWidth_ << ", left in time span: " << timeSpan - time;
+
+        timeSteppingFinished = true;
+      }
+
     }
-    //Calculate alpha
-    //std::cout<<"Estimator="<<estimator<<"\n";
-    alpha = pow((toleranz/estimator), (1/3));
-
-    //Fallunterscheidung
-    if (estimator <= toleranz){
-        // advance solution value to compute u* first
-        // compute  delta_u = f(u_{t})
-        // we call f(u_{t}) the "increment"
-        this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        solution, increment, timeStepNo, currentTime);
-
-        // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
-        VecAXPY(solution, this->timeStepWidth_, increment);
-
-        VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
-
-        // now, advance solution value to compute u_{t+1}
-        // compute  delta_u* = f(u*)
-        // we call f(u*) the "intermediateIncrement"
-        this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-        solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
-
-        // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
-        // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
-        //
-        // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
-        VecAXPY(intermediateIncrement, -1.0, increment);
-
-        // now compute overall step as described above (#)
-        VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
-
-        // apply the prescribed boundary condition values
-        this->applyBoundaryConditions();
-
-        VLOG(1) << *this->data_->solution();
-
-        // advance simulation time
-        //timeStepNo++;
-        time = time + this->timeStepWidth_;
-        //std::cout<<"Time = " << time;
-        //time = time + timeSpan;
-        this->timeStepWidth_ = this->timeStepWidth_*alpha;
-        //std::cout<<"Timestep accepted, alpha = " << alpha << " , next timestep: "<<this->timeStepWidth_<<"\n";
-        currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-    } else {
-        this->timeStepWidth_ = this->timeStepWidth_*alpha;
-        //std::cout<<"Timestep rejected, next timestep: "<<this->timeStepWidth_<<"\n";
-    }
-
-    //------------------------------------------------------------------------------------------------------------------
-
-    // advance solution value to compute u* first
-    // compute  delta_u = f(u_{t})
-    // we call f(u_{t}) the "increment"
-    //this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    //  solution, increment, timeStepNo, currentTime);
-
-    // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
-    //VecAXPY(solution, this->timeStepWidth_, increment);
-
-    //VLOG(1) << "increment: " << this->data_->increment() << ", dt: " << this->timeStepWidth_;
-
-    // now, advance solution value to compute u_{t+1}
-    // compute  delta_u* = f(u*)
-    // we call f(u*) the "intermediateIncrement"
-    //this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-    //  solution, intermediateIncrement, timeStepNo + 1, currentTime + this->timeStepWidth_);
-
-    // integrate u_{t+1} = u_{t} + dt*0.5(delta_u + delta_u_star)
-    // however, use: u_{t+1} = u* + 0.5*dt*(f(u*)-f(u_{t}))     (#)
-    //
-    // first calculate (f(u*)-f(u_{t})). to save storage we store into f(u*):
-    //VecAXPY(intermediateIncrement, -1.0, increment);
-
-    // now compute overall step as described above (#)
-    //VecAXPY(solution, 0.5*this->timeStepWidth_, intermediateIncrement);
-
-    // apply the prescribed boundary condition values
-    //this->applyBoundaryConditions();
-
-    //VLOG(1) << *this->data_->solution();
-
-    // advance simulation time
-    //timeStepNo++;
-    //time = time + timeSpan;
-    //currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
@@ -208,6 +213,8 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   this->data_->solution()->restoreValuesContiguous();
   this->data_->increment()->restoreValuesContiguous();
   dataHeun->intermediateIncrement()->restoreValuesContiguous();
+
+  LOG(DEBUG) << "final estimator <= tolerance: " << estimator;
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

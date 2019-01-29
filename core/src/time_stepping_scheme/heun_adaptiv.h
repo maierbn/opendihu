@@ -29,7 +29,15 @@ public:
 
   //! run the simulation
   void run();
+
 private:
+
+  // Allowed tolerance
+  double tolerance_;
+
+  // Maximale timestepwidth
+  double max_timeStepWidth_;
+  double savedTimeStepWidth_;    ///< this is the time step width at the and of the time stepping, saved because the actual time step width may be set smaller to exactly reach timeSpan
 };
 
 }  // namespace

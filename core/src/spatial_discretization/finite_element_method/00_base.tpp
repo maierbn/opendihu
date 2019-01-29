@@ -218,7 +218,7 @@ solveMG()
 	{
 		//if ksp object was already set up
 		PetscErrorCode ierr;
-		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.rightHandSide()->valuesGlobal()); CHKERRV(ierr);
+		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(),data_.rightHandSide()->valuesGlobal()); CHKERRV(ierr);
 		int numberOfIterations = 0;
 		PetscReal residualNorm = 0.0;
 		ierr = KSPGetIterationNumber(*kspMG_, &numberOfIterations); CHKERRV(ierr);

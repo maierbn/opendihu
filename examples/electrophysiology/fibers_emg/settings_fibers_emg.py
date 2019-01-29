@@ -34,7 +34,7 @@ output_timestep = 4e-1             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fibre_file = "../../input/3000fibers.bin"
-fibre_file = "../../input/500fibers.bin"
+fibre_file = "../../input/15x15fibers.bin"
 #fibre_file = "../../input/49fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
@@ -260,12 +260,13 @@ if rank_no == 0:
 # compute partitioning
 # this has to match the total number of processes
 n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
+n_subdomains_y = 2
 n_subdomains_z = 2
 
+# stride for sampling the 3D elements from the fiber data
 # here any number is possible
-sampling_stride_x = 1
-sampling_stride_y = 1
+sampling_stride_x = 2
+sampling_stride_y = 3
 sampling_stride_z = 3
 
 if rank_no == 0:
@@ -338,7 +339,8 @@ n_global_points_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x)
 n_global_points_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(n_subdomains_y)])
 n_global_points_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(n_subdomains_z)])
 
-print("n_global_points: {} x {} x {} = sum({}) x sum({}) x sum({})".format(n_global_points_x, n_global_points_y, n_global_points_z, \
+print("{}: point sampling for elements, unsampled points: {} x {} x {}, sampling stride: {}, {}, {}".format(rank_no, n_fibers_x, n_fibers_y, n_points_whole_fiber, sampling_stride_x, sampling_stride_y, sampling_stride_z))
+print("{}: sampled points, n_global_points: {} x {} x {} = sum({}) x sum({}) x sum({})".format(rank_no, n_global_points_x, n_global_points_y, n_global_points_z, \
   [n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(n_subdomains_x)],\
   [n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(n_subdomains_y)],\
   [n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(n_subdomains_z)]))
@@ -389,10 +391,13 @@ if subdomain_coordinate_x == n_subdomains_x-1:
   fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
 
 
-print("rank {}, n_elements: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, n_elements, subdomain_coordinate_x, subdomain_coordinate_y, subdomain_coordinate_z, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-print("   fibers x: [{}, {}]".format(0, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
-print("   fibers y: [{}, {}]".format(0, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
-print("   points z: [{}, {}] ({})".format(z_point_index_start, z_point_index_end, n_points_in_subdomain_z(subdomain_coordinate_z)))
+print("{}: rank {}, n_elements: {}, subdomain coordinate ({},{},{})/({},{},{})".format(rank_no, rank_no, n_elements, subdomain_coordinate_x, subdomain_coordinate_y, subdomain_coordinate_z, n_subdomains_x, n_subdomains_y, n_subdomains_z))
+print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
+print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
+print("{}:       ({})".format(rank_no, [fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y) \
+  for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+  for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))]))
+print("{}:    points z: [{}, {}] ({})".format(rank_no, z_point_index_start, z_point_index_end, n_points_in_subdomain_z(subdomain_coordinate_z)))
       
 meshes["3Dmesh"] = {
   "nElements": n_elements,
@@ -409,20 +414,20 @@ for i in range(n_global_points_x*n_global_points_y):
   potential_flow_dirichlet_bc[i] = 0.0
   potential_flow_dirichlet_bc[(n_global_points_z-1)*n_global_points_x*n_global_points_y + i] = 1.0
     
-print("potential_flow_dirichlet_bc: {}".format(potential_flow_dirichlet_bc))
+#print("potential_flow_dirichlet_bc: {}".format(potential_flow_dirichlet_bc))
     
 if rank_no == 0:
   print("rank configuration: ")
   
   for subdomain_coordinate_y in range(n_subdomains_y):
     for subdomain_coordinate_x in range(n_subdomains_x):
-      print("subdomain ({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
+      print("subdomain (x,y)=({},{})".format(subdomain_coordinate_x, subdomain_coordinate_y))
+      print("n_subdomains_z: {}".format(n_subdomains_z))
       for rankNo in range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y):
-        print("rank {}".format(rankNo))
-      print("  n_subdomains_z: {}".format(n_subdomains_z))
+        print("  rank {}".format(rankNo))
       for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
         for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          print("  fiber {} in subdomain ({},{}) uses ranks {}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
+          print("  fiber {} ({},{}) in subdomain uses ranks {}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
 config = {
   "scenarioName": scenario_name,
@@ -504,7 +509,8 @@ config = {
                       "prefactor": 1.0,
                     },
                   },
-                } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
+                } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
               }
             },
             "Term2": {     # Diffusion
@@ -538,7 +544,8 @@ config = {
                       #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                     ]
                   },
-                } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
+                } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+                    for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
                 "OutputWriter" : [
                   {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres", "binary": True, "fixedFormat": False, "combineFiles": True},
                 ],

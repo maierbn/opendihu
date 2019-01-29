@@ -57,7 +57,8 @@ class PETSc(Package):
         self.check_text = petsc_text
         self.static = False
         
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
+          
           #if os.environ.get("PE_ENV") == "GNU":
           #  self.libs = ["craypetsc_gnu_real"]
           #  self.extra_libs = ["sci_gnu_71_mpi_mp"]
@@ -88,7 +89,7 @@ class PETSc(Package):
         self.number_output_lines = 4121
         
     def check(self, ctx):
-        if os.environ.get("SITE_PLATFORM_NAME") == "hazelhen":
+        if os.environ.get("PE_ENV") is not None:  # if on hazelhen
           ctx.Message('Not checking for PETSc ... ')
           ctx.Result(True)
           return True
@@ -101,8 +102,12 @@ class PETSc(Package):
         
         # if installation of petsc fails, retry without mumps
         if not res[0]:
-          ctx.Log('Retry without MUMPS')
+          ctx.Log('Retry without MUMPS\n')
           ctx.Message('Retry to install PETSc without MUMPS ...')
+          if "PETSC_REDOWNLOAD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REDOWNLOAD')
+          if "PETSC_REBUILD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REBUILD')
           
           # Setup the build handler.
           self.set_build_handler([
@@ -125,6 +130,6 @@ class PETSc(Package):
           res = super(PETSc, self).check(ctx, loc_callback=find_conf)
 
           self.check_required(res[0], ctx)
-          ctx.Result(res[0])
-          
+        
+        ctx.Result(res[0])
         return res[0]

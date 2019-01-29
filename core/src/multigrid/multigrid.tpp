@@ -50,11 +50,13 @@ template<typename FiniteElement1, typename FiniteElement2>
 void Multigrid<FiniteElement1, FiniteElement2>::
 solveMG()
 {
+	finiteElement1_.solveMG();
+	finiteElement2_.solveMG();
 	for (int i = 0; i<numCycles_; i++)
 	{
 		finiteElement1_.solveMG();
 		//transfer
-		finiteElement1_.solveMG();
+		finiteElement2_.solveMG();
 		//transfer
 		}
 }		

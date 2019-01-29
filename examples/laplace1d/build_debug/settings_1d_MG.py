@@ -20,7 +20,7 @@ config = {
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out/p"}
+      {"format": "PythonFile", "filename": "out/p1"}
     ]
   }
   },
@@ -32,7 +32,7 @@ config = {
     "relativeTolerance": 1e-15,
     "OutputWriter" : [
       {"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out/p"}
+      {"format": "PythonFile", "filename": "out/p2"}
     ]
   }
   },

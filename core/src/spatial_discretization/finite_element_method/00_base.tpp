@@ -318,7 +318,10 @@ solveMG()
 
     LOG(DEBUG) << "res=" << res;
   }
-#endif  
+#endif
+
+outputWriterManager_.writeOutput(data_);
+
 }
 
 template<typename FunctionSpaceType,typename QuadratureType>

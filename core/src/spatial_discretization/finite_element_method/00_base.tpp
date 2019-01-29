@@ -99,7 +99,6 @@ run()
 {
   initialize();
   solve();
-  //TODO add solveMG based on specificSettings
   data_.print();
 
   outputWriterManager_.writeOutput(data_);
@@ -219,7 +218,7 @@ solveMG()
 	{
 		//if ksp object was already set up
 		PetscErrorCode ierr;
-		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
+		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.rightHandSide()->valuesGlobal()); CHKERRV(ierr);
 		int numberOfIterations = 0;
 		PetscReal residualNorm = 0.0;
 		ierr = KSPGetIterationNumber(*kspMG_, &numberOfIterations); CHKERRV(ierr);
@@ -270,7 +269,7 @@ solveMG()
 		#endif
 
 		// solve the system
-		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal()); CHKERRV(ierr);
+		ierr = KSPSolve(*kspMG_, data_.rightHandSide()->valuesGlobal(), data_.rightHandSide()->valuesGlobal()); CHKERRV(ierr);
 
 		int numberOfIterations = 0;
 		PetscReal residualNorm = 0.0;

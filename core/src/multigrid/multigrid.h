@@ -42,7 +42,7 @@ FiniteElement1 finiteElement1_;
 FiniteElement2 finiteElement2_;
 
 bool initialized_;
-int numCycles_ = 100;
+int numCycles_ ;
 };
 
 }  // namespace

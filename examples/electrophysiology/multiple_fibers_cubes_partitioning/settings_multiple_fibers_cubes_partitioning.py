@@ -224,7 +224,7 @@ for i,streamline in enumerate(streamlines):
   #streamline = streamline[center_node-2:center_node+2]
   
   # define mesh
-  meshes["MeshFibre_{}".format(i)] = {
+  meshes["MeshFiber_{}".format(i)] = {
     "nElements": len(streamline)-1,
     "nodePositions": streamline,
     "inputMeshIsGlobal": True,
@@ -345,7 +345,7 @@ config = {
                   "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                   "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                  "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
+                  "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                   "prefactor": 1.0,
                 },
               },
@@ -372,7 +372,7 @@ config = {
                   "maxIterations": 1e4,
                   "relativeTolerance": 1e-10,
                   "inputMeshIsGlobal": True,
-                  "meshName": "MeshFibre_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
+                  "meshName": "MeshFiber_{}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)),
                   "prefactor": Conductivity/(Am*Cm),
                   "solverName": "implicitSolver",
                 },
@@ -386,6 +386,7 @@ config = {
             } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres"},
             ],
           },
         },

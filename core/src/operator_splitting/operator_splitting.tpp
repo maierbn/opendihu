@@ -22,6 +22,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
 
   PythonConfig topLevelSettings = context_.getPythonConfig();
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
+  schemeName_ = schemeName;
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -64,6 +65,8 @@ initialize()
     timeStepping2_.initialize();
   }
 
+  LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
+    << timeStepping2_.data().functionSpace()->meshName() << "\".";
   context_.meshManager()->initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
     timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
 
@@ -110,7 +113,7 @@ template<typename TimeStepping1, typename TimeStepping2>
 typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType OperatorSplitting<TimeStepping1, TimeStepping2>::
 getSolutionForTransfer()
 {
-  return timeStepping2_.getSolutionForTransfer();
+  return timeStepping1_.getSolutionForTransfer();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -125,6 +128,16 @@ typename OperatorSplitting<TimeStepping1, TimeStepping2>::Data &OperatorSplittin
 data()
 {
   return timeStepping1_.data();
+}
+
+//! output the given data for debugging
+template<typename TimeStepping1, typename TimeStepping2>
+std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
+getString(typename OperatorSplitting<TimeStepping1, TimeStepping2>::TransferableSolutionDataType &data)
+{
+  std::stringstream s;
+  s << "<" << schemeName_ << ",Term1:" << timeStepping1_.getString(data) << ">";
+  return s.str();
 }
 
 

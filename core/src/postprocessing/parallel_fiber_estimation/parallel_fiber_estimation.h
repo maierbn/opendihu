@@ -130,6 +130,9 @@ protected:
   //! open the file again and interpolate all missing fibers
   void fixInvalidFibersInFile();
 
+  //! fix the invalid key fibers at the end of the algorithm
+  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers);
+
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
 

@@ -77,6 +77,7 @@ class Package(object):
     self.static = False                 # if the compiled test program is a static library
     self.set_rpath = True               # if the rpath in the linker should also be set (dynamic linkage)
     self.link_flags = None              # additional linker flags that can directly be set by the derived class
+    self.last_build_log = ""            # after performing a build this contains the console output of the build process
     
     self.base_dir = None                # will be set to the base directory that contains "include" and "lib"
     self._used_inc_dirs = None
@@ -574,7 +575,7 @@ class Package(object):
         
         # get name of extracted directory
         entries = os.listdir(unpack_dir)
-        print("entries: {}".format(entries))
+        print("top-level files: {}".format(entries))
         #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
@@ -736,6 +737,7 @@ class Package(object):
               output = f.read()    
             stdout_log.close()
             os.remove('stdout.log')
+          self.last_build_log = output
           ctx.Log(output+"\n")
         except:
           self.command_running = False
@@ -748,9 +750,11 @@ class Package(object):
           if not allow_errors:
             sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
+            self.last_build_log = output
             return False
           else:
             ctx.Log("Command failed (but allowed): \n"+output)
+            self.last_build_log = output
 
     # If it all seemed to work, write a dummy file to indicate this package has been built.
     success = open('scons_build_success', 'w')
@@ -786,7 +790,8 @@ class Package(object):
   ## try to compile (self.run=0) or compile and run (self.run=1) the given code snippet in self.check_text
   # Returns (1,'program output') on success and (0,'') on failure
   def try_link(self, ctx, **kwargs):
-    text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    text = self.check_text+'\n'   # ensure that file ends with newline for extra picky cray compiler
+    #text = self.check_text+'//'+"{:%Y/%m/%d %H:%m:%S}".format(datetime.datetime.now())+'\n'   # ensure that file ends with newline for extra picky cray compiler
     
     
     bkp = env_setup(ctx.env, **kwargs)
@@ -804,7 +809,7 @@ class Package(object):
       ctx.env.PrependUnique(LINKFLAGS = '-static')
       
     if self.link_flags is not None:
-      ctx.Log("  link_flags is set, use additional link flags: {}".format(self.link_flags))
+      ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))
       ctx.env.PrependUnique(LINKFLAGS = self.link_flags)
       
     # compile with C++14 for cpp test files

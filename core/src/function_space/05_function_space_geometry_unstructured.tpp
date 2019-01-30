@@ -6,7 +6,7 @@ namespace FunctionSpace
 {
 /*
 template<int D,typename BasisFunctionType>
-std::shared_ptr<typename FunctionSpaceGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableBaseType>
+std::shared_ptr<typename FunctionSpaceGeometryData<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::FieldVariableBaseFunctionSpaceType>
 FunctionSpaceGeometry<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>::
 fieldVariable(std::string name)
 {

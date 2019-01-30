@@ -23,9 +23,13 @@ template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 std::map<std::string, std::shared_ptr<std::vector<double>>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::vmTableData_;
 
 template<typename FunctionSpaceType, typename OutputFieldVariablesType>
+std::shared_ptr<std::vector<Vec3>> MegaMolWriter<FunctionSpaceType,OutputFieldVariablesType>::geometryFieldValues_;
+
+template<typename FunctionSpaceType, typename OutputFieldVariablesType>
 void MegaMolWriter<FunctionSpaceType, OutputFieldVariablesType>::
 outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::shared_ptr<FunctionSpaceType> functionSpace,
-           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo, BoundingBox &boundingBox)
+           PythonConfig specificSettings, std::shared_ptr<adios2::Engine> adiosWriter, std::shared_ptr<adios2::IO> adiosIo,
+           BoundingBox &boundingBox, double &minimalDistanceBetweenFibers)
 {
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField;
   std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> scalarFieldVariables;
@@ -33,13 +37,43 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   // collect the geometryField and all scalar field variables for the current mesh
   MegaMolLoopOverTuple::loopCollectFieldVariables(fieldVariables, meshName, geometryField, scalarFieldVariables);
 
-  // retrieve the geometry field values
-  std::vector<Vec3> geometryFieldValues;
-  geometryField->getValuesWithoutGhosts(geometryFieldValues);
+  // retrieve the new geometry field values
+  std::shared_ptr<std::vector<Vec3>> newGeometryFieldValues = std::make_shared<std::vector<Vec3>>();
+  geometryField->getValuesWithoutGhosts(*newGeometryFieldValues);
+
+  // compute the minimal distance between two neighbouring fibers, by comparing all points of the current fiber with the points of the previous fiber
+  // the previous fiber data is still in geometryFieldValues_
+  if (geometryFieldValues_ && geometryFieldValues_ != newGeometryFieldValues)
+  {
+    if (!geometryFieldValues_->empty() && !newGeometryFieldValues->empty())
+    {
+      // initialize minimalDistanceBetweenFibers the first time
+      double distanceBetweenPoints = MathUtility::distance<3>((*geometryFieldValues_)[0], (*newGeometryFieldValues)[0]);
+      if (minimalDistanceBetweenFibers == -1.0)
+      {
+        LOG(DEBUG) << "initialize minimalDistanceBetweenFibers to " << distanceBetweenPoints;
+        minimalDistanceBetweenFibers = distanceBetweenPoints;
+      }
+    }
+    for (int i = 1; i < std::min(geometryFieldValues_->size(), newGeometryFieldValues->size()); i++)
+    {
+      double distanceBetweenPoints = MathUtility::distance<3>((*geometryFieldValues_)[i], (*newGeometryFieldValues)[i]);
+      minimalDistanceBetweenFibers = std::min(minimalDistanceBetweenFibers, distanceBetweenPoints);
+      LOG(DEBUG) << "  i: " << i << ", minimalDistanceBetweenFibers: " << minimalDistanceBetweenFibers << ", distanceBetweenPoints: " << distanceBetweenPoints;
+    }
+  }
+  else
+  {
+    LOG(DEBUG) << "mesh: " << meshName << ", geometryFieldValues_ is not set or there is only one fiber per rank";
+  }
+
+  // update geometryFieldValues_ with the new values
+  geometryFieldValues_ = newGeometryFieldValues;
+
   std::shared_ptr<Partition::RankSubset> rankSubset = DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
 
   LOG(DEBUG) << "MegaMolWriter::outputDatam, mesh \"" << meshName << "\", has " << scalarFieldVariables.size() << " scalar field variables";
-  LOG(DEBUG) << geometryFieldValues.size() << " geometryField values: " << geometryFieldValues;
+  LOG(DEBUG) << geometryFieldValues_->size() << " geometryField values: " << geometryFieldValues_;
 
   // get all other scalar field variables
   std::vector<std::vector<double>> values(scalarFieldVariables.size());
@@ -56,7 +90,7 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
     variableName << "xyz";
 
     // communicate offset into the global values array
-    int localSize = geometryFieldValues.size()*3;
+    int localSize = geometryFieldValues_->size()*3;
     int offset = 0;
     int globalSize = 0;
 
@@ -99,11 +133,11 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   // compute local bounding box
   if (!boundingBox.initialized)
   {
-    boundingBox.min = geometryFieldValues[0];
-    boundingBox.max = geometryFieldValues[0];
+    boundingBox.min = (*geometryFieldValues_)[0];
+    boundingBox.max = (*geometryFieldValues_)[0];
     boundingBox.initialized = true;
   }
-  for(std::vector<Vec3>::iterator iter = geometryFieldValues.begin(); iter != geometryFieldValues.end(); iter++)
+  for(std::vector<Vec3>::iterator iter = geometryFieldValues_->begin(); iter != geometryFieldValues_->end(); iter++)
   {
     for (int i = 0; i < 3; i++)
     {
@@ -124,14 +158,14 @@ outputData(OutputFieldVariablesType fieldVariables, std::string meshName, std::s
   {
     geometryTableData_[meshName] = std::make_shared<std::vector<double>>();
   }
-  geometryTableData_[meshName]->resize(geometryFieldValues.size()*3);
+  geometryTableData_[meshName]->resize(geometryFieldValues_->size()*3);
 
   // copy geometry values to buffer
-  for (int i = 0; i < geometryFieldValues.size(); i++)
+  for (int i = 0; i < geometryFieldValues_->size(); i++)
   {
     for (int j = 0; j != 3; j++)
     {
-      (*geometryTableData_[meshName])[3*i + j] = geometryFieldValues[i][j];
+      (*geometryTableData_[meshName])[3*i + j] = (*geometryFieldValues_)[i][j];
     }
   }
 

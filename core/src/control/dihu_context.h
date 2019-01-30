@@ -6,8 +6,13 @@
 #include <memory>
 #include <thread>
 #include <map>
+
 #ifdef HAVE_ADIOS
 #include <adios2.h>
+#endif
+
+#ifdef HAVE_MEGAMOL
+#include <libzmq/zmq.hpp>
 #endif
 
 #include "partition/partition_manager.h"
@@ -67,11 +72,16 @@ public:
   int ownRankNo();
 
   //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
-  std::shared_ptr<Partition::RankSubset> rankSubset();
+  std::shared_ptr<Partition::RankSubset> rankSubset() const;
 
 #ifdef HAVE_ADIOS
   //! return the adios IO object
-  std::shared_ptr<adios2::IO> adiosIo();
+  std::shared_ptr<adios2::IO> adiosIo() const;
+#endif
+
+#ifdef HAVE_MEGAMOL
+  //! get the zmq socket that can be used to send messages to MegaMol
+  std::shared_ptr<zmq::socket_t> zmqSocket() const;
 #endif
 
   //! destructor
@@ -96,6 +106,9 @@ private:
   //! initialize python interpreter
   void initializePython(int argc, char *argv[], bool explicitConfigFileGiven);
 
+  //! initialize the library used for network communication with MegaMol
+  void initializeZMQ();
+
   PythonConfig pythonConfig_;    ///< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
   std::shared_ptr<Partition::RankSubset> rankSubset_; ///< the ranks that collectively run the code where this context is valid
 
@@ -117,5 +130,10 @@ private:
 #ifdef HAVE_ADIOS
   static std::shared_ptr<adios2::ADIOS> adios_;  ///< adios context option
   static std::shared_ptr<adios2::IO> io_;        ///< IO object of adios
+#endif
+
+#ifdef HAVE_MEGAMOL
+  static std::shared_ptr<zmq::context_t> zmqContext_;  ///< the 0mq context
+  static std::shared_ptr<zmq::socket_t> zmqSocket_;  ///< a socket that is connected to one megamol
 #endif
 };

@@ -50,10 +50,10 @@ public:
   //! the transfer is done by the solution_vector_mapping class
   TransferableSolutionDataType getSolutionForTransfer();
 
-protected:
+  //! output the given data for debugging
+  std::string getString(TransferableSolutionDataType &data);
 
-  //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
-  void setSystemMatrix();
+protected:
 
   //! solve the linear system of equations of the implicit scheme with rightHandSide_ and solution_
   void solveLinearSystem();
@@ -69,12 +69,6 @@ protected:
 
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<Partition::RankSubset> rankSubset_;  ///< the rankSubset for all involved ranks
-
-  Mat systemMatrix_;    ///< for now, the system matrix which has more components than dofs, later this should be placed inside the data object
-  Vec solution_;        ///< nested solution vector
-  Vec rightHandSide_;             ///< distributed rhs
-  std::vector<Vec> subvectorsRightHandSide_; ///< the sub vectors that are used in the nested vector rightHandSide_
-  std::vector<Vec> subvectorsSolution_; ///< the sub vectors that are used for the solution nested vector
 
   int lastNumberOfIterations_;   ///< the number of iterations that were needed the last time to solve the linear system
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log

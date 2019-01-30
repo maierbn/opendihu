@@ -10,6 +10,10 @@
 
 #include "output_writer/megamol/loop_output.h"
 
+#ifdef HAVE_MEGAMOL
+#include <libzmq/zmq.hpp>
+#endif
+
 namespace OutputWriter
 {
 
@@ -23,6 +27,8 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
   }
 #ifdef HAVE_ADIOS
 
+  LOG(INFO) << "filenameSuffix_: " << filenameSuffix_;
+
   // get io object of adios from context
   std::shared_ptr<adios2::IO> adiosIo = context_.adiosIo();
   std::shared_ptr<Partition::RankSubset> rankSubset = context_.partitionManager()->rankSubsetForCollectiveOperations();
@@ -30,16 +36,33 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
   try
   {
     // create ADIOS writer, if it does not yet exist
-    if (!writer_)
+    //if (!writer_)
     {
+      if (filenameSuffix_ == "0")
+      {
+        filenameSuffix_ = "1";
+      }
+      else
+      {
+        filenameSuffix_ = "0";
+      }
+
       assert(adiosIo);
-      adios2::Engine writer = adiosIo->Open(this->filenameBase_, adios2::Mode::Write, rankSubset->mpiCommunicator());
+      std::stringstream outputFileName;
+      outputFileName << this->filenameBase_ << "_" << filenameSuffix_;
+      LOG(INFO) << "this->filenameBase_: " << this->filenameBase_ << ", filenameSuffix_=" << filenameSuffix_
+        << ", outputFileName: [" << outputFileName.str() << "]";
+      lastFilename_ = outputFileName.str();
+
+      adios2::Engine writer = adiosIo->Open(lastFilename_, adios2::Mode::Write, rankSubset->mpiCommunicator());
       writer_ = std::make_shared<adios2::Engine>(writer);
 
+      LOG(INFO) << "open new writer, filenameSuffix_: " << filenameSuffix_ << ", lastFilename_: " << lastFilename_;
+
       // write python script and meta data as attribute
-      adiosIo->DefineAttribute<std::string>("config", this->context_.pythonScriptText());
-      adiosIo->DefineAttribute<std::string>("version", this->context_.versionText());
-      adiosIo->DefineAttribute<std::string>("meta", this->context_.metaText());
+      //adiosIo->DefineAttribute<std::string>("config", this->context_.pythonScriptText());
+      //adiosIo->DefineAttribute<std::string>("version", this->context_.versionText());
+      //adiosIo->DefineAttribute<std::string>("meta", this->context_.metaText());
     }
 
     // begin output to file for current time step
@@ -52,19 +75,26 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
     BoundingBox localBoundingBox, globalBoundingBox;
     localBoundingBox.initialized = false;
     std::map<std::string,int> nNodesGlobalAllMeshes;
+    double localMinimalDistanceBetweenFibers = -1.0;
+    double globalMinimalDistanceBetweenFibers = 0;
 
     // loop over meshes
     for (std::string meshName : meshNames)
     {
       // loop over all field variables and output those that are associated with the mesh given by meshName
-      MegaMolLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, specificSettings_, writer_, adiosIo, localBoundingBox, nNodesGlobalAllMeshes);
+      MegaMolLoopOverTuple::loopOutput(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, specificSettings_, writer_,
+                                       adiosIo, localBoundingBox, nNodesGlobalAllMeshes, localMinimalDistanceBetweenFibers);
     }
 
     // reduce the bounding box values
     MPI_Reduce(localBoundingBox.min.data(), globalBoundingBox.min.data(), 3, MPI_DOUBLE, MPI_MIN, 0, rankSubset->mpiCommunicator());
     MPI_Reduce(localBoundingBox.max.data(), globalBoundingBox.max.data(), 3, MPI_DOUBLE, MPI_MAX, 0, rankSubset->mpiCommunicator());
 
-    LOG(DEBUG) << "reduced bounding box: " << globalBoundingBox.min << ", " << globalBoundingBox.max;
+    // reduce the minimal distance between fibers
+    MPI_Reduce(&localMinimalDistanceBetweenFibers, &globalMinimalDistanceBetweenFibers, 1, MPI_DOUBLE, MPI_MIN, 0, rankSubset->mpiCommunicator());
+
+    LOG(DEBUG) << "reduced bounding box: " << globalBoundingBox.min << ", " << globalBoundingBox.max
+      << ", reduced minimalDistance: " << localMinimalDistanceBetweenFibers << ", " << globalMinimalDistanceBetweenFibers;
     // note: this assumes that all ranks execute the reduction calls, i.e. all have these type of meshes
 
     // write bounding box
@@ -90,6 +120,20 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
       assert(boxVariable_.get());
 
       writer_->Put<double>(*boxVariable_.get(), boundingBoxValues_.data());
+
+      // set radius
+
+      if (!globalRadiusVariable_)
+      {
+        globalRadiusVariable_ = std::make_shared<adios2::Variable<double>>(adiosIo->DefineVariable<double>("global_radius"));
+      }
+
+      LOG(DEBUG) << "globalMinimalDistanceBetweenFibers: " << globalMinimalDistanceBetweenFibers;
+      double globalRadius = globalMinimalDistanceBetweenFibers * 0.1;
+      if (globalMinimalDistanceBetweenFibers <= 1e-3)
+        globalRadius = 0.1;
+      writer_->Put<double>(*globalRadiusVariable_.get(), &globalRadius);
+
     }
 
     // write number of global nodes as variable p_count
@@ -126,11 +170,9 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
 
     LOG(DEBUG) << "timeStepCloseInterval: " << timeStepCloseInterval << ", writeCallCount_: " << writeCallCount_;
 
-    if (writeCallCount_ % timeStepCloseInterval == 0 && writeCallCount_ > 0)
-    {
-      writer_->Close();
-      //writer_ = nullptr;
-    }
+    //if (writeCallCount_ % timeStepCloseInterval == 0 && writeCallCount_ > 0)
+    writer_->Close();
+    writer_ = nullptr;
   }
   catch (std::invalid_argument &e)
   {
@@ -147,6 +189,11 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
     LOG(ERROR) << "Exception";
     LOG(ERROR) << e.what();
   }
+
+#ifdef HAVE_MEGAMOL
+  notifyMegaMol();
+#endif
+  LOG(DEBUG) << "(end)filenameSuffix_: " << filenameSuffix_;
 #endif
 }
 

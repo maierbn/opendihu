@@ -13,8 +13,8 @@ class MegaMol(Package):
     self.sub_dirs = [
         ('include', 'lib'),
     ]
-    self.headers = ['Console.h']
-    #self.libs = ['mysqlclient']
+    self.headers = ['Console.h', 'zmq.h']
+    self.libs = ['zmq']
     #self.extra_libs = ['lapack', 'blas']
     self.check_text = r'''
       #include <stdlib.h>
@@ -40,7 +40,10 @@ class MegaMol(Package):
       'mkdir -p ${PREFIX}',
       "sed -i 's|int megamol_main(int argc, char\* argv\[\]) {|int main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # reverse eventual change to Console.cpp
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && \
-      '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= CXXFLAGS="-Wno-int-in-bool-context -Wno-endif-labels -Wno-reorder -Wno-pedantic" .. \
+      '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= -DADIOS2_DIR=${DEPENDENCIES_DIR}/adios/install/lib/cmake/adios2 \
+      -DBUILD_CINEEMATICCAMERA_PLUGIN=OFF -DBUILD_GEOMETRY_CALLS_PLUGIN=OFF -DBUILD_GUI_PLUGIN=OFF -DBUILD_IMAGEVIEWER2_PLUGIN=OFF -DBUILD_IMAGE_CALLS_PLUGIN=OFF -DBUILD_INFOVIS_PLUGIN -DBUILD_MDAO2_PLUGIN \
+      -DBUILD_MMSTD_MOLDYN_PLUGIN=OFF -DBUILD_MMSTD_TRISOUP_PLUGIN=OFF -DBUILD_MMSTD_VOLUME_PLUGIN=OFF -DBUILD_PROTEIN_PLUGIN=OFF -DBUILD_MWDEMOS_PLUGIN=OFF -DBUILD_PROTEIN_CALLS_PLUGIN=OFF \
+      CXXFLAGS="-Wno-int-in-bool-context -Wno-endif-labels -Wno-reorder -Wno-pedantic" .. \
       && make && make install',
       "cp ${SOURCE_DIR}/console/src/Console.cpp ${SOURCE_DIR}/console/src/Console.cpp.backup && \
       sed -i 's|int main(int argc, char\* argv\[\]) {|int megamol_main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # replace main() by megamol_main in Console.cpp
@@ -95,7 +98,7 @@ class MegaMol(Package):
         ctx.Log("Could not open {}".format(megamol_link_path))
       
       # run again with new linker flags and modified Console.cpp
-      self.set_build_handler(None)
+      #self.set_build_handler(None)
 
       res = super(MegaMol, self).check(ctx)
       self.check_required(res[0], ctx)

@@ -23,10 +23,10 @@ public:
   using FunctionSpaceFindPosition<MeshType,BasisFunctionType>::FunctionSpaceFindPosition;
 
   //! create a non-geometry field field variable with no values being set, with given component names
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, std::vector<std::string> componentNames);
 
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
-  std::shared_ptr<FieldVariable::FieldVariableBase<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
+  std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<MeshType,BasisFunctionType>>> createFieldVariable(std::string name, int nComponents=1);
 
   //! create a non-geometry field field variable with no values being set, with given number of components, the component names will be the numbers
   template <int nComponents>

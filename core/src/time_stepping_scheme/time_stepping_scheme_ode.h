@@ -52,6 +52,9 @@ public:
   //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
 
+  //! output the given data for debugging
+  virtual std::string getString(TransferableSolutionDataType &data);
+
 protected:
 
   //! read initial values from settings and set field accordingly

@@ -595,7 +595,10 @@ createSimdSourceFile(std::string &simdSourceFilename)
         else
         {
           // add pragma omp here
-          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+#ifndef TEST_WITHOUT_PRAGMAS
+          simdSource << std::endl << "  #pragma omp for simd";
+#endif
+          simdSource << std::endl <<"  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
             << "  {" << std::endl << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";

@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 10.0
+end_time = 100.0
 
 import numpy as np
 import matplotlib 
@@ -25,6 +25,7 @@ dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
 output_timestep = 4e-1             # timestep for output files
+megamol_output_timestep = 5e-2    # timestep frequency for megamol
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -220,7 +221,7 @@ def get_instance_config(i):
             "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-            "meshName": "MeshFibre"+str(i),
+            "meshName": "MeshFiber"+str(i),
             "prefactor": 1.0,
           },
         },
@@ -240,17 +241,17 @@ def get_instance_config(i):
             "maxIterations": 1e4,
             "relativeTolerance": 1e-10,
             "inputMeshIsGlobal": True,
-            "meshName": "MeshFibre"+str(i),
+            "meshName": "MeshFiber"+str(i),
             "prefactor": Conductivity/(Am*Cm),
             "solverName": "implicitSolver",
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
-            {"format": "MegaMol",  "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibers", "timeStepCloseInterval": 7000},
+            {"format": "MegaMol",  "outputInterval": int(1./dt_1D*megamol_output_timestep), "filename": "out/fibers", "timeStepCloseInterval": 7000},
             #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-            {"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "sphereSize": "0.02*0.02*0.02"},
+            #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "sphereSize": "0.02*0.02*0.02"},
             #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
-            {"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":False, "onlyNodalValues":True},
+            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":False, "onlyNodalValues":True},
           ]
         },
       },
@@ -277,7 +278,7 @@ for i,streamline in enumerate(streamlines):
   #streamline = streamline[center_node-2:center_node+2]
   
   # define mesh
-  meshes["MeshFibre{}".format(i)] = {
+  meshes["MeshFiber{}".format(i)] = {
     "nElements": len(streamline)-1,
     "nodePositions": streamline,
     "inputMeshIsGlobal": True,
@@ -317,7 +318,7 @@ mmSetEchoLevel('*')
 mmAddShaderDir("{megamol_home}/share/shaders")
 mmAddResourceDir("{megamol_home}/share/resources")
 
-mmPluginLoaderInfo("{megamol_home}/bin", "*.mmplg", "include")
+mmPluginLoaderInfo("{megamol_home}/lib", "*.mmplg", "include")
 
 -- mmSetConfigValue("*-window", "w1280h720")
 mmSetConfigValue("*-window", "w720h720")
@@ -334,7 +335,10 @@ with open(config_filename, "w") as f:
   f.write(config_file_contents)
 
 config = {
-  #"MegaMolArguments": "--configfile {} -p /store/software/opendihu/dependencies/megamol/src/megamol-master/project_files/testspheres.lua ".format(config_filename),  
+  #"MegaMolArguments": "--configfile {} -p ../input/testspheres.lua ".format(config_filename),  
+  #"MegaMolArguments": "--configfile {} -p ../input/adios_sphere.lua ".format(config_filename),  
+  "MegaMolArguments": "--configfile {} -p ../input/adios_project.lua ".format(config_filename),  
+  #"MegaMolArguments": "--configfile {} -p ../input/empty_view.lua ".format(config_filename),  
   "scenarioName": scenario_name,
   "Meshes": meshes,
   "Solvers": {
@@ -349,7 +353,7 @@ config = {
     "nInstances": nInstances,
     "instances": [get_instance_config(i) for i in range(nInstances)],
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_all", "binary": True, "fixedFormat": False, "combineFiles": True},
+      #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_all", "binary": True, "fixedFormat": False, "combineFiles": True},
       #{"format": "MegaMol",  "outputInterval": 1, "filename": "out/fibers", "timeStepCloseInterval": 7000}
       #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
       #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},

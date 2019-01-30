@@ -44,6 +44,18 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
 
+# partitioning
+# this has to match the total number of processes
+n_subdomains_x = 1   # example values for 4 processes
+n_subdomains_y = 1
+n_subdomains_z = 3
+
+# stride for sampling the 3D elements from the fiber data
+# here any number is possible
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 3
+
 # parse arguments
 if len(sys.argv) == 2:
   n_processes_per_fiber = 1
@@ -258,17 +270,6 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, get_motor_unit_no(fibre_no_index), first_stimulation))
 
 # compute partitioning
-# this has to match the total number of processes
-n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
-n_subdomains_z = 2
-
-# stride for sampling the 3D elements from the fiber data
-# here any number is possible
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 3
-
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
     print("Error! Number of ranks {} does not match given partitioning {} x {} x {} ".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))

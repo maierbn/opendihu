@@ -260,13 +260,13 @@ if rank_no == 0:
 # compute partitioning
 # this has to match the total number of processes
 n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 2
+n_subdomains_y = 1
 n_subdomains_z = 2
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
 sampling_stride_x = 2
-sampling_stride_y = 3
+sampling_stride_y = 2
 sampling_stride_z = 3
 
 if rank_no == 0:
@@ -590,7 +590,8 @@ config = {
           },
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d", "binary": True, "fixedFormat": False, "combineFiles": False},
+          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_binary", "binary": True, "fixedFormat": False, "combineFiles": True},
+          #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_txt", "binary": False, "fixedFormat": False, "combineFiles": True},
         ],
       }
     }

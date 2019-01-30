@@ -110,7 +110,17 @@ template<typename FunctionSpaceType>
 typename StaticBidomain<FunctionSpaceType>::OutputFieldVariables StaticBidomain<FunctionSpaceType>::
 getOutputFieldVariables()
 {
-  return std::make_tuple(this->fiberDirection_, this->flowPotential_, extraCellularPotential_, transmembranePotential_, transmembraneFlow_);
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
+    = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
+
+  return std::make_tuple(
+    geometryField,
+    this->fiberDirection_,
+    this->flowPotential_,
+    extraCellularPotential_,
+    transmembranePotential_,
+    transmembraneFlow_
+  );
 }
 
 } // namespace

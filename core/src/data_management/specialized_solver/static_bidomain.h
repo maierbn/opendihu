@@ -55,6 +55,7 @@ public:
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
+    std::shared_ptr<GradientFieldVariableType>,     // geometry
     std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
     std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
     std::shared_ptr<FieldVariableType>,              // extra-cellular potential

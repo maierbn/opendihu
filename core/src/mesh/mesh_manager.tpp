@@ -147,8 +147,8 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
 template<typename FunctionSpaceType>
 bool Manager::hasFunctionSpaceOfType(std::string meshName)
 {
-  LOG(DEBUG) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
-  LOG(DEBUG) << "meshes size: " << functionSpaces_.size();
+  VLOG(1) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
+  VLOG(1) << "meshes size: " << functionSpaces_.size();
 
   if (functionSpaces_.find(meshName) != functionSpaces_.end()) // if mesh is found by name
   {

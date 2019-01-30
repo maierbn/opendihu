@@ -261,6 +261,8 @@ parseBoundaryConditionsForElements()
       }
     }
   }
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
 }
 
 template<typename FunctionSpaceType>

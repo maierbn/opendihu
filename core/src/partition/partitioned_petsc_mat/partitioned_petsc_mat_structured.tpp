@@ -408,10 +408,11 @@ output(std::ostream &stream) const
   // on every rank prepare a string with the local information
   std::string str;
   std::stringstream s;
-  s << "Rank " << ownRankNo << ": " << PetscUtility::getStringMatrix(localValues, nRowsLocal, nColumnsLocal, nRowsGlobal, nColumnsGlobal);
+  s << "Rank " << ownRankNo << " (" << *this->meshPartitionRows_->rankSubset() << "," << *this->meshPartitionColumns_->rankSubset() << "): "
+    << PetscUtility::getStringMatrix(localValues, nRowsLocal, nColumnsLocal, nRowsGlobal, nColumnsGlobal);
   str = s.str();
   
-  //VLOG(1) << str;
+  VLOG(1) << str;
 
   // exchange the lengths of the local information
   std::vector<int> localSizes(nRanks);

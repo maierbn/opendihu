@@ -135,6 +135,9 @@ solve()
   PetscErrorCode ierr;
   ierr = KSPSetOperators(*ksp, stiffnessMatrix->valuesGlobal(), stiffnessMatrix->valuesGlobal()); CHKERRV(ierr);
 
+  VLOG(1) << "rhs: " << *data_.rightHandSide();
+  VLOG(1) << "stiffnessMatrix: " << *stiffnessMatrix;
+
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;

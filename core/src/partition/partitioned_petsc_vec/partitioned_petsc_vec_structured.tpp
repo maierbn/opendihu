@@ -23,10 +23,8 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,Ba
   
   createVector();
 
-  VLOG(2) << "\"" << this->name_ << "\" contruct vector from rhs \"" << rhs.name() << "\", representation: "
+  LOG(DEBUG) << "\"" << this->name_ << "\" contruct vector from rhs \"" << rhs.name() << "\", representation: "
     << Partition::valuesRepresentationString[rhs.currentRepresentation()];
-
-  setValues(rhs);
 }
   
 //! create a distributed Petsc vector, according to partition
@@ -433,27 +431,33 @@ void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType
 setValues(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs)
 {
   VLOG(3) << "\"" << this->name_ << "\" setValues(rhs vector \"" << rhs.name() << "\"), rhs representation: "
-    << Partition::valuesRepresentationString[rhs.currentRepresentation()];
+    << Partition::valuesRepresentationString[rhs.currentRepresentation()] << ", own representation: "
+    << Partition::valuesRepresentationString[this->currentRepresentation()];
 
   // copy existing values from rhs PartitionedPetscVec, depending on the rhs representation
   PetscErrorCode ierr;
   if (rhs.currentRepresentation() == Partition::values_representation_t::representationGlobal)
   {
+    setRepresentationGlobal();
+
     // copy from global vector
     for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
     {
+      LOG(DEBUG) << "copy component " << componentNo << " from \"" << rhs.name() << "\" to \"" << this->name() << "\".";
       ierr = VecCopy(rhs.valuesGlobal(componentNo), vectorGlobal_[componentNo]); CHKERRV(ierr);
+
+      // this sometimes makes Petsc hang, sometimes even later in solve, use with caution!
     }
-    this->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
   }
   else if (rhs.currentRepresentation() == Partition::values_representation_t::representationLocal)
   {
+    setRepresentationLocal();
+
     // copy from local vector
     for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
     {
       ierr = VecCopy(rhs.valuesLocal(componentNo), vectorLocal_[componentNo]); CHKERRV(ierr);
     }
-    this->currentRepresentation_ = Partition::values_representation_t::representationLocal;
   }
   else if (rhs.currentRepresentation() == Partition::values_representation_t::representationContiguous)
   {
@@ -1008,7 +1012,7 @@ output(std::ostream &stream)
       if (componentNo == 0)
       {
         stream << "vector \"" << this->name_ << "\" (" << nEntries << " local entries (per component), "
-          << "representation: " << Partition::valuesRepresentationString[this->currentRepresentation_] << ")" << std::endl;
+          << "representation: " << Partition::valuesRepresentationString[this->currentRepresentation_] << "), rankSubset: " << *this->meshPartition_->rankSubset() << std::endl;
       }
 
       stream << "\"" << this->name_ << "\" component " << componentNo << ": local ordering: [";

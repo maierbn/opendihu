@@ -5,7 +5,7 @@
 
 import sys
 
-end_time = 1   # [ms] end time of simulation
+end_time = 1e-4   # [ms] end time of simulation
 n_elements = 20 # elements of pysical mesh
 n_total=83 # rows of the snapshot matrix
 n_reduced=83 # number of reduced bases, columns of the left singular vector

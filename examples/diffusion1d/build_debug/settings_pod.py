@@ -7,8 +7,8 @@ config = {
     "nRowsSnapshots" : n,
     "nReducedBases" : k, 
     "ExplicitEuler" : {
-      "numberTimeSteps": 1000,
-      "endTime": 3,
+      "numberTimeSteps": 1,
+      "endTime": 1e-3,
       "initialValues": [2,2,4,5,2,2],      
       "FiniteElementMethod" : {
         "nElements": n,
@@ -18,12 +18,12 @@ config = {
       },
       "OutputWriter" : [
          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-        #{"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 10, "binary":False}
+        {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 1, "binary":False}
       ]
     },   
     "ExplicitEulerReduced" : {
-      "numberTimeSteps": 1000,
-      "endTime": 3,
+      "numberTimeSteps": 1,
+      "endTime": 1e-3,
       "initialValues": [2,2,4,5,2,2],      
       "FiniteElementMethod" : {
         "nElements": n,
@@ -33,7 +33,7 @@ config = {
       },
       "OutputWriter" : [
          #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False},
-        {"format": "PythonFile", "filename": "out/diffusion1d", "outputInterval": 10, "binary":False}
+        {"format": "PythonFile", "filename": "out/diffusion1dReduced", "outputInterval": 1, "binary":False}
       ]
     },
   },

@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
           "sed -i.bak '150,166d' ${SOURCE_DIR}/semt/Semtfwd.h",    # remove bogus definition of operator<< for vectors
           "ln -s ${SOURCE_DIR}/semt ${PREFIX}/include/semt",
           "ln -s ${SOURCE_DIR}/loki ${PREFIX}/include/loki",
-          #"cd ${PREFIX}/../build && cmake \
+          #"cd ${PREFIX}/../build && '+ctx.env["cmake"]+' \
           #  -DBUILD_TYPE=Release \
           #  -DINSTALL_PREFIX=${PREFIX} \
           # -DLIBXML2_LIBRARIES=../../libxml2/install/lib/libxml2.a \

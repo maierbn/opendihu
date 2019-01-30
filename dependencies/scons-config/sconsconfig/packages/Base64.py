@@ -160,7 +160,7 @@ class Base64(Package):
         self.set_build_handler([
             'mkdir -p  ${PREFIX}/include',
             'pwd',                       # additional line by Aaron
-            'mkdir -p build && cd build && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} ..',
+            'mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} ..',
             'cd build && make install',
         ])
         

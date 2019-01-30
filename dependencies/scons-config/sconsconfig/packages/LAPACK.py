@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
           # reference blas, cmake based, dynamic libraries
           self.set_build_handler([
             'mkdir -p ${PREFIX}',
-            'cd ${PREFIX} && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
+            'cd ${PREFIX} && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON -DCBLAS=ON -DLAPACKE=ON -DBUILD_TESTING=OFF ${SOURCE_DIR}',
             'cd ${PREFIX} && make',
             'mkdir -p ${PREFIX}/include && cp ${SOURCE_DIR}/*/*/*.h ${PREFIX}/include',
           ])

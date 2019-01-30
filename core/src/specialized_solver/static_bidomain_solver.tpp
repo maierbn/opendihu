@@ -104,8 +104,8 @@ initialize()
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
 
-  LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
-  LOG(DEBUG) << "fiber direction: " << *data_.fiberDirection();
+  VLOG(1) << "flow potential: " << *data_.flowPotential();
+  VLOG(1) << "fiber direction: " << *data_.fiberDirection();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)

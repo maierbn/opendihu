@@ -42,7 +42,7 @@ PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independe
 #NUMPYSTL_DOWNLOAD=False
 #SVGPATH_DOWNLOAD=False
 
-PYTHONPACKAGES_DOWNLOAD=True
+PYTHONPACKAGES_DOWNLOAD=False
 
 # Base64
 BASE64_DOWNLOAD=True
@@ -57,7 +57,7 @@ SEMT_DOWNLOAD=True
 EASYLOGGINGPP_DOWNLOAD=True
 
 # MegaMol
-MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo
+MEGAMOL_DOWNLOAD=True    # install MegaMol from official git repo
 ADIOS_DOWNLOAD=True
 
 # MPI
@@ -100,6 +100,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc="cc"   # C compiler
   CC="CC"   # C++ compiler
   mpiCC="CC"  # mpi C++ compiler
+  cmake="/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT=False

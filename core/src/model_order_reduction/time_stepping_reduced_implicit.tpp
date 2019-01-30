@@ -62,15 +62,15 @@ template<typename TimeSteppingImplicitType>
 void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 setRedSystemMatrix()
 {
-  //to be implemented
+
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
   Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal(); 
-   
+  
   Mat &systemMatrix=this->fullTimestepping_.dataImplicit().systemMatrix()->valuesGlobal();
   Mat &redSystemMatrix=this->dataMOR_->redSystemMatrix()->valuesGlobal();
   
   PetscErrorCode ierr; 
-  
+    
   PetscInt mat_sz_1, mat_sz_2;
   
   MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
@@ -98,105 +98,74 @@ setRedSystemMatrix()
   else
   {    
     std::shared_ptr<Partition::MeshPartition<typename TimeSteppingImplicitType::FunctionSpace>> 
-    meshPartitionRows=this->fullTimestepping_.dataImplicit().systemMatrix()->meshPartitionRows(); //compatible for multiplication  
+    meshPartitionRows=this->dataMOR_->basis()->meshPartitionRows();
     
     std::shared_ptr<Partition::MeshPartition<typename ::FunctionSpace::Generic>>
-    meshPartitionColumns=this->dataMOR_->basisTransp()->meshPartitionRows();    
+    meshPartitionColumns=this->dataMOR_->basisTransp()->meshPartitionColumns();    
     
-    std::shared_ptr<PartitionedPetscMat<typename ::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> basis_submatrix;
-    std::shared_ptr<PartitionedPetscMat<typename ::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> basisTransp_submatrix;
+    std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> systemMatrix_ext;
     
-    basis_submatrix = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>>(
-      meshPartitionRows, meshPartitionColumns, 1, "basis_submatrix");
-    basisTransp_submatrix= std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>>(
-      meshPartitionColumns, meshPartitionRows, 1, "basisTransp_submatrix");
+    systemMatrix_ext= std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
+      meshPartitionRows, meshPartitionColumns, 1, "systemMatrix_ext");          
     
+    Mat &matrix_ext=systemMatrix_ext->valuesGlobal();    
+    ierr=MatShift(matrix_ext,1); CHKERRV(ierr);
     
-    
-    Mat &basis_sbm=basis_submatrix->valuesGlobal();
-    //Mat basis_sbm;
-    Mat &basisTransp_sbm=basisTransp_submatrix->valuesGlobal();
-    //Mat basisTransp_sbm;
-    
-    
-    const PetscScalar *vals_total;
+    PetscScalar *vals;
+    PetscMalloc1(nrows_sys*nrows_sys,&vals);
     
     PetscInt *idx;
-    PetscMalloc1(nrows_bs,&idx);
-    
-    for(PetscInt i=0; i<nrows_bs; i++)
+    PetscMalloc1(nrows_sys,&idx);
+    for( int i=0; i<nrows_sys;i++)
     {
       idx[i]=i;
     }
     
-    // building sub-matrix of the basis
-    for( int row=0; row<nrows_sys;row++)
+    ierr=MatGetValues(systemMatrix,nrows_sys,idx,nrows_sys,idx,vals); CHKERRV(ierr);
+    ierr=MatSetValuesLocal(matrix_ext,nrows_sys,idx,nrows_sys,idx,vals,INSERT_VALUES); CHKERRV(ierr); //would replace the extra ones on the diagonal
+    
+    MatAssemblyBegin(matrix_ext,MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(matrix_ext,MAT_FINAL_ASSEMBLY);
+    
+    /*
+    const PetscScalar *vals_ext; 
+    for(int i=0; i<nrows_bs;i++)
     {
-      // to get each row of the V_k
-      MatGetRow(basis,row,NULL,NULL,&vals_total); CHKERRV(ierr); 
-      MatSetValues(basis_sbm,1,&row,nrows_bs,idx,vals_total,INSERT_VALUES);
-      
-      //does not work with seqdens!?      
-      //MatSetValuesRow(basis_sbm,row,vals_total); CHKERRV(ierr); //inconsistent sizes may work. Otherwise build vals_sbm.     
-            
-      MatAssemblyBegin(basis_sbm,MAT_FINAL_ASSEMBLY);
-      MatAssemblyEnd(basis_sbm,MAT_FINAL_ASSEMBLY);
-      
-    }
-    
-    const PetscScalar *vals_2;
-    PetscInt *idx_2;
-    PetscMalloc1(nrows_sys,&idx_2);
-    PetscScalar *vals_sbm;
-    PetscMalloc1(nrows_sys,&vals_sbm);
-    
-    for(PetscInt i=0; i<nrows_sys; i++)
-    {
-      idx_2[i]=i;
-    }
-    
-    // building sub-matrix of the basisTranspos
-    for( int row=0; row<nrows_bs;row++)
-    {
-      // to get each row of the V_k^T
-      MatGetRow(basisTransp,row,NULL,NULL,&vals_2); CHKERRV(ierr);
-      
-      for(PetscInt i=0; i<nrows_sys; i++)
-        vals_sbm[i]=vals_2[i];
-           
-      MatSetValues(basisTransp_sbm,1,&row,nrows_sys,idx_2,vals_sbm,INSERT_VALUES);
-      
-      //does not work with seqdens!?      
-      //MatSetValuesRow(basisTransp_sbm,row,vals_sbm); CHKERRV(ierr); //inconsistent sizes may work. Otherwise build vals_sbm.     
-      
-      MatAssemblyBegin(basisTransp_sbm,MAT_FINAL_ASSEMBLY);
-      MatAssemblyEnd(basisTransp_sbm,MAT_FINAL_ASSEMBLY);
-           
-    }
-    
-    //MatCreateTranspose(basis_sbm,&basisTransp_sbm); CHKERRV(ierr);
+      MatGetRow(matrix_ext,i,NULL,NULL,&vals_ext);
+      for(int j=0; j<nrows_bs; j++)
+        LOG(DEBUG) << "matrix_ext[" << i << "," << j<< "]: " << vals_ext[j];
+    } 
+    */
     
     //D=A*B*C
     //This method is not able to multiply combination of three sparse and dense matrices
     //MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
     Mat matrix;
-    MatDuplicate(basis_sbm,MAT_DO_NOT_COPY_VALUES,&matrix);
-    MatMatMult(systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);
-    
-    MatGetSize(basisTransp_sbm,&mat_sz_1,&mat_sz_2);
-    LOG(DEBUG) << "basisTransp_sbm mat_sz_1, mat_sz_2: " << mat_sz_1 << " " << mat_sz_2;
+    MatDuplicate(basis,MAT_DO_NOT_COPY_VALUES,&matrix);
+    MatMatMult(matrix_ext,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);
+        
+    MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
+    LOG(DEBUG) << "basisTransp mat_sz_1, mat_sz_2: " << mat_sz_1 << " " << mat_sz_2;
     MatGetSize(matrix,&mat_sz_1,&mat_sz_2);
     LOG(DEBUG) << "matrix mat_sz_1, mat_sz_2: " << mat_sz_1 << " " << mat_sz_2;
     
     
-    MatMatMult(basisTransp_sbm,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
+    MatMatMult(basisTransp,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
     
-    // undeclared!?
-    //MatMatMultTranspose(basis_sbm,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
-    
+    /*
+    const PetscScalar *vals_total;    
+    for(int i=0; i<nrows_bs;i++)
+    {
+      MatGetRow(redSystemMatrix,i,NULL,NULL,&vals_total);
+      for(int j=0; j<nrows_bs; j++)
+        LOG(DEBUG) << "redSystemMatrix[" << i << "," << j<< "]: " << vals_total[j];
+    }
+    */
+       
   }
   
 }
+
 
 template<typename TimeSteppingImplicitType>
 void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::

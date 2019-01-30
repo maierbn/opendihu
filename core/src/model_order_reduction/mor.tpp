@@ -148,16 +148,15 @@ MatMultReduced(Mat mat,Vec x,Vec y)
   VecGetSize(x,&vec_sz);
   MatGetSize(mat,&mat_sz_1,&mat_sz_2);
   
-  LOG(TRACE) << "mat_sz_2: " << mat_sz_2 << " vec_sz: " << vec_sz;
+  //LOG(TRACE) << "mat_sz_2: " << mat_sz_2 << " vec_sz: " << vec_sz;
   
   if(mat_sz_2==vec_sz)
   {
-    ierr=MatMult(mat,x,y);
-    CHKERRV(ierr);
+    ierr=MatMult(mat,x,y); CHKERRV(ierr);
   }
   else
   {
-    LOG(TRACE) << "MatMultReduced";
+    //LOG(TRACE) << "MatMultReduced";
     
     PetscInt *idx;
     PetscMalloc1(vec_sz,&idx);
@@ -179,7 +178,7 @@ MatMultReduced(Mat mat,Vec x,Vec y)
        
     for(int i=0; i<mat_sz_1; i++) //must be square matrix
     {
-      ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr);
+      ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr); // can take only the rows of the current processor
       // use only the required part of the array  
       for(int j=0; j<vec_sz;j++)
       {
@@ -187,7 +186,7 @@ MatMultReduced(Mat mat,Vec x,Vec y)
         //LOG(DEBUG) << "mat_row[" << j << "]" << mat_row[j];
       }
            
-      ierr=VecSetValues(mat_row_vec,vec_sz,idx,mat_row_sbv,INSERT_VALUES); CHKERRV(ierr);
+      ierr=VecSetValuesLocal(mat_row_vec,vec_sz,idx,mat_row_sbv,INSERT_VALUES); CHKERRV(ierr);
       VecAssemblyBegin(mat_row_vec);
       VecAssemblyEnd(mat_row_vec);
       
@@ -214,7 +213,7 @@ MatMultFull(Mat mat,Vec x,Vec y)
   VecGetSize(y,&vec_sz);
   MatGetSize(mat,&mat_sz_1,&mat_sz_2);
   
-  LOG(TRACE) << "mat_sz_2: " << mat_sz_2 << " vec_sz: " << vec_sz;
+  //LOG(TRACE) << "mat_sz_2: " << mat_sz_2 << " vec_sz: " << vec_sz;
   
   if(mat_sz_1==vec_sz)
   {
@@ -223,7 +222,7 @@ MatMultFull(Mat mat,Vec x,Vec y)
   }
   else
   {  
-    LOG(TRACE) << "MatMultFull";
+    //LOG(TRACE) << "MatMultFull";
     
     PetscInt *idx;
     PetscMalloc1(vec_sz,&idx);
@@ -244,7 +243,7 @@ MatMultFull(Mat mat,Vec x,Vec y)
     for(int i=0; i<vec_sz; i++)
     {
       ierr=MatGetRow(mat,i,NULL,NULL,&mat_row);  CHKERRV(ierr);      
-      ierr=VecSetValues(mat_row_vec,mat_sz_2,idx_2,mat_row,INSERT_VALUES); CHKERRV(ierr);
+      ierr=VecSetValuesLocal(mat_row_vec,mat_sz_2,idx_2,mat_row,INSERT_VALUES); CHKERRV(ierr);
       VecAssemblyBegin(mat_row_vec);
       VecAssemblyEnd(mat_row_vec);
       

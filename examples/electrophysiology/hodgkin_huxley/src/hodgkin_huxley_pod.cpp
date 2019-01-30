@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         CellmlAdapter<4>
       >
     >,
-    ModelOrderReduction::ImplicitEulerReduced<
+    ModelOrderReduction::ImplicitEulerReduced< //! Diffusion term not to be used with the explicit timestepping. The reduced mass and stiffness matrices are not implemented.
       TimeSteppingScheme::ImplicitEuler<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredRegularFixedOfDimension<1>,

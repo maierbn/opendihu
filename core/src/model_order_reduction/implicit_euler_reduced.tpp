@@ -9,7 +9,7 @@ namespace ModelOrderReduction
 template<typename TimeSteppingImplicitType>
 ImplicitEulerReduced<TimeSteppingImplicitType>::
 ImplicitEulerReduced(DihuContext context):
-TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>(context,"ImplicitEuler")
+TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>(context,"ImplicitEulerReduced")
 {
 }
 
@@ -34,7 +34,6 @@ advanceTimeSpan()
   Vec &redSolution= this->data().solution()->getValuesContiguous();
   
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
-  Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
   
   // loop over time steps
   double currentTime = this->startTime_;
@@ -46,43 +45,53 @@ advanceTimeSpan()
       LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
-    VLOG(1) << "starting from solution: " << this->fullTimestepping_.data().solution();        
-    
     // advance simulation time
     timeStepNo++;
-    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+    currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;   
     
-    ///   TO IMPLEMENT
+    VLOG(1) << "starting from solution: " << *this->fullTimestepping_.data().solution();                   
     
     // adjust the full-order rhs vector such that boundary conditions are satisfied
     this->fullTimestepping_.dirichletBoundaryConditions()->applyInRightHandSide(this->fullTimestepping_.data().solution(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
-    
-    // transfer rhs to reduced space
-    this->MatMultReduced(basisTransp,solution,redSolution); 
     
     // advance computed value
     // solve A_R*z^{t+1} = z^{t} for z^{t+1} where A_R is the reduced system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem(redSolution, redSolution);
     
+    /*
+     P e*tscInt vec_sz;
+     PetscScalar val;
+     
+     VecGetSize(redSolution,&vec_sz);
+     std::cout << "vec_sz in ReducedOrderImplicitEuler: " << vec_sz;
+     
+     for(int i=0; i< vec_sz; i++)
+     {
+     VecGetValues(redSolution,1,&i,&val);
+     LOG(DEBUG) << "redSolution[" << i << "]: " << val;
+  }
+  */
+    
     // transfer to full-order space
-    this->MatMultFull(basis,redSolution,solution);
+    this->MatMultFull(basis,redSolution,solution);       
     
-    ///   TO IMPLEMENT
-    
-    VLOG(1) << "solution after integration: " << this->fullTimestepping_.data().solution();
+    VLOG(1) << "solution after integration: " << *this->fullTimestepping_.data().solution();
     
     // stop duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
     
-    // write current output values
-    this->outputWriterManager_.writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
+    // write the current output values of the full timestepping
+    this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
+    
+    // write the current output values of the (reduced) timestepping
+    this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
     
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
     
-    //this->fullTimestepping_.data().solution()->restoreValuesContiguous();
+    this->fullTimestepping_.data().solution()->restoreValuesContiguous();
   }
   
   // stop duration measurement

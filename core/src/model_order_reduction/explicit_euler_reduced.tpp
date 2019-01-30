@@ -48,34 +48,34 @@ namespace ModelOrderReduction
       }
                  
       // full state recovery
-      //in case of operator splitting only the reduced solutions is transfered.
+      //required in case of operator splitting because only the reduced solutions is transfered.
       this->MatMultFull(basis, redSolution , solution);
             
-      VLOG(1) << "starting from full-order solution: " << this->fullTimestepping_.data().solution();
+      VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();
       
       // advance computed value
       // compute next delta_u = f(u)
       this->evaluateTimesteppingRightHandSideExplicit(solution, increment, timeStepNo, currentTime);
       
-      VLOG(1) << "computed full-order increment: " << this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;             
+      VLOG(2) << "computed full-order increment: " << *this->fullTimestepping_.data().increment() << ", dt=" << this->timeStepWidth_;             
       
       // reduction step
       // solution may has been changed inside evaluateTimesteppingRightHandSideExplicit in case of 
       // the stimulation in electrophysiology examples. Therefore, the reduced solution has to be updated.
       this->MatMultReduced(basisTransp, solution, redSolution);
       
-      VLOG(2) << "reduced solution before adding the reduced increment" << this->data().solution();
+      VLOG(2) << "reduced solution before adding the reduced increment" << *this->data().solution();
       
       // reduction step
       // modified version of MatMult for MOR
       this->MatMultReduced(basisTransp, increment, redIncrement);
       
-      VLOG(1) << "reduced increment: " << this->data().increment() << ", dt=" << this->timeStepWidth_;             
+      VLOG(2) << "reduced increment: " << *this->data().increment() << ", dt=" << this->timeStepWidth_;             
       
       // integrate, z += dt * delta_z
       VecAXPY(redSolution, this->timeStepWidth_, redIncrement);
       
-      VLOG(1) << "reduced solution after integration" << this->data().solution();      
+      VLOG(1) << "reduced solution after integration" << *this->data().solution();      
                  
       // advance simulation time
       timeStepNo++;

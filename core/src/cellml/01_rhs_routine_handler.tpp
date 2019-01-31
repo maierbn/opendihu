@@ -142,10 +142,12 @@ initializeRhsRoutine()
     int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
     int ownRankNoCommunicator = this->functionSpace_->meshPartition()->ownRankNo();
     std::vector<int> nInstancesRanks(nRanksCommunicator);
-
-    LOG(DEBUG) << "Communicator has " << nRanksCommunicator << " ranks";
-
     nInstancesRanks[ownRankNoCommunicator] = this->nInstances_;
+
+    LOG(DEBUG) << "ownRankNoCommunicator: " << ownRankNoCommunicator << ", Communicator has " << nRanksCommunicator << " ranks, nInstancesRanks: " << nInstancesRanks;
+    MPI_Barrier(this->functionSpace_->meshPartition()->mpiCommunicator());
+
+
 
     MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nInstancesRanks.data(),
                                                 1, MPI_INT, this->functionSpace_->meshPartition()->mpiCommunicator()), "MPI_Allgather");

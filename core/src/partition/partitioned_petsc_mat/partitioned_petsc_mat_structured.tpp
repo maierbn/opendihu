@@ -223,11 +223,8 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
     stream << "], diag " << diag;
     VLOG(2) << stream.str();
   }
-
-    return;
   
   PetscErrorCode ierr;
-
   if (numRows != 0)
   {
     // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix

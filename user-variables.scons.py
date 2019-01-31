@@ -47,7 +47,7 @@ EASYLOGGINGPP_DOWNLOAD=True
 ADIOS_DOWNLOAD=True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
-MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+MEGAMOL_DOWNLOAD=True    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
@@ -93,6 +93,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc="cc"   # C compiler wrapper
   CC="CC"   # C++ compiler wrapper
   mpiCC="CC"  # mpi C++ compiler wrapper
+  cmake="/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT=False

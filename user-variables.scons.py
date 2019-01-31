@@ -72,6 +72,10 @@ try:
     print "Travis CI detected, del MPI_DIR"
     del MPI_DIR
     MPI_DOWNLOAD=True
+  
+  # on neon use custom cmake
+  if os.environ.get("HOSTNAME") == "neon":
+    cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
 except:
   pass

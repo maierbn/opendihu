@@ -1719,8 +1719,20 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(nodeNoLocal);
 
-  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal
-    << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal;
+
+  if (MeshType::dim() == 1)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << ")";
+  }
+  else if (MeshType::dim() == 2)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << ")";
+  }
+  else if (MeshType::dim() == 3)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+  }
 
   if (nodeNoLocal < nNodesLocalWithoutGhosts())
   {

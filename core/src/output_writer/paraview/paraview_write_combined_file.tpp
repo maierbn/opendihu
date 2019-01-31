@@ -301,6 +301,7 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
       properties.nCellsLocal = 0;
       properties.nPointsGlobal = 0;
       properties.nCellsGlobal = 0;
+      properties.dimensionality = 0;
     }
 
     //! assign the correct values to firstScalarName and firstVectorName, only if properties has been set

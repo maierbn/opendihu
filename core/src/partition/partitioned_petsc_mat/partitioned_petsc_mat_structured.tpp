@@ -224,12 +224,15 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
     VLOG(2) << stream.str();
   }
 
-  if (numRows == 0)
     return;
   
   PetscErrorCode ierr;
-  // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
-  ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+
+  if (numRows != 0)
+  {
+    // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
+    ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+  }
   
   // assemble the global matrix
   ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);

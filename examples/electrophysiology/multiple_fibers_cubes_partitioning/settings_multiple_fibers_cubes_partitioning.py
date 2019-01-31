@@ -33,7 +33,7 @@ output_timestep = 4e-1             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fibre_file = "../../input/3000fibers.bin"
-fibre_file = "../../input/49fibers.bin"
+fibre_file = "../../input/15x15fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
@@ -252,8 +252,8 @@ if rank_no == 0:
 
 # compute partitioning
 n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
-n_subdomains_z = 2
+n_subdomains_y = 2
+n_subdomains_z = 4
 
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
@@ -349,7 +349,8 @@ config = {
                   "prefactor": 1.0,
                 },
               },
-            } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
+            } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
           }
         },
         "Term2": {     # Diffusion
@@ -383,7 +384,8 @@ config = {
                   #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
-            } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
+            } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+                for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres", "binary": True, "fixedFormat": False, "combineFiles": True},
               {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres"},
@@ -391,6 +393,6 @@ config = {
           },
         },
       }
-    } for subdomain_coordinate_x in range(n_subdomains_x) for subdomain_coordinate_y in range(n_subdomains_y)]
+    } for subdomain_coordinate_y in range(n_subdomains_y) for subdomain_coordinate_x in range(n_subdomains_x)]
   }
 }

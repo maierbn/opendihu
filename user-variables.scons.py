@@ -47,7 +47,7 @@ EASYLOGGINGPP_DOWNLOAD=True
 ADIOS_DOWNLOAD=True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
-MEGAMOL_DOWNLOAD=True    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
@@ -74,7 +74,8 @@ try:
     MPI_DOWNLOAD=True
   
   # on neon use custom cmake
-  if os.environ.get("HOSTNAME") == "neon":
+  import socket
+  if socket.gethostname() == "neon":
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
 except:

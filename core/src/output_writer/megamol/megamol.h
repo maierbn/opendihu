@@ -63,6 +63,9 @@ private:
   int nNodesGlobal_ = 0;         ///< the global number of nodes or the particle count
   std::vector<double> boundingBoxValues_;    ///< the global bounding box that is needed for the visualization
 
+  std::string currentFilename_;   ///< the file to which is currently being written, the file is not yet ready
+  std::string lastFilename_;     ///< the last used filename for output
+
   int combineNInstances_;       ///< number of calls to MegaMol::write that should be combined into one timestep, this is needed when the output writer is given in a MultipleInstances environment
 #endif
 

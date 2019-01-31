@@ -75,7 +75,7 @@ try:
   
   # on neon use custom cmake
   import socket
-  if socket.gethostname() == "neon":
+  if socket.gethostname() == "neon" or socket.gethostname() == "helium":
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
 except:

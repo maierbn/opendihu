@@ -266,7 +266,7 @@ createDmElements()
       nElementsLocal_[dimensionIndex] = nElementsGlobal_[dimensionIndex];
       nRanks_[dimensionIndex] = 1;
       localSizesOnPartitions_[dimensionIndex].resize(1);
-      localSizesOnPartitions_[dimensionIndex][0] = 1;
+      localSizesOnPartitions_[dimensionIndex][0] = nElementsGlobal_[dimensionIndex];
     }
   }
   else
@@ -1024,6 +1024,8 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
   global_no_t xGlobalNatural = 0;
   while (xGlobalNatural <= nodeNoGlobalNatural[0] && xGlobalNatural < nNodesGlobal(0)-1)
   {
+    VLOG(3) << "   x GlobalNatural=" << xGlobalNatural << ", partitionX=" << partitionX << ", nodeNoGlobalNatural[0]=" << nodeNoGlobalNatural[0];
+    assert(localSizesOnPartitions_[0].size() > partitionX);
     xGlobalNatural += localSizesOnPartitions_[0][partitionX++]*nNodesPer1DElement;
     VLOG(3) << "   x GlobalNatural=" << xGlobalNatural << ", partitionX=" << partitionX << ", nodeNoGlobalNatural[0]=" << nodeNoGlobalNatural[0];
   }
@@ -1039,6 +1041,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t yGlobalNatural = 0;
     while (yGlobalNatural <= nodeNoGlobalNatural[1] && yGlobalNatural < nNodesGlobal(1)-1)
     {
+      assert(localSizesOnPartitions_[1].size() > partitionY);
       yGlobalNatural += localSizesOnPartitions_[1][partitionY++]*nNodesPer1DElement;
       VLOG(3) << "   y GlobalNatural=" << yGlobalNatural << ", partitionY=" << partitionY << ", nodeNoGlobalNatural[1]=" << nodeNoGlobalNatural[1];
     }
@@ -1055,6 +1058,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t zGlobalNatural = 0;
     while (zGlobalNatural <= nodeNoGlobalNatural[2] && zGlobalNatural < nNodesGlobal(2)-1)
     {
+      assert(localSizesOnPartitions_[2].size() > partitionZ);
       zGlobalNatural += localSizesOnPartitions_[2][partitionZ++]*nNodesPer1DElement;
       VLOG(3) << "   z GlobalNatural=" << zGlobalNatural << ", partitionZ=" << partitionZ << ", nodeNoGlobalNatural[2]=" << nodeNoGlobalNatural[2];
     }

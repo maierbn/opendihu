@@ -228,7 +228,13 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
   if (numRows != 0)
   {
     // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
+    // this call is collective, but apparently fails if numRows == 0
     ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+  }
+  else
+  {
+    std::vector<PetscInt> rows = {0};
+    ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, 0, rows.data(), diag, NULL, NULL); CHKERRV(ierr);
   }
   
   // assemble the global matrix

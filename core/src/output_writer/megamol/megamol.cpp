@@ -14,6 +14,8 @@
 namespace OutputWriter
 {
 
+std::array<std::shared_ptr<MegaMol::adios_writer_t>, 2> MegaMol::adiosWriters_({nullptr, nullptr});
+
 BoundingBox::BoundingBox():
   min(Vec3({0.0,0.0,0.0})),
   max(Vec3({0.0,0.0,0.0}))
@@ -22,9 +24,11 @@ BoundingBox::BoundingBox():
 }
 
 MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
-  Generic(context, settings)
+  Generic(context, settings), currentOpenWriterIndex_(0)
 {
+  combineNInstances_ = specificSettings_.getOptionInt("combineNInstances",1);
 }
+
 #if defined(HAVE_MEGAMOL) && defined(HAVE_ADIOS)
 
 void MegaMol::notifyMegaMol()
@@ -70,7 +74,6 @@ void MegaMol::notifyMegaMol()
         {
           std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
-
       }
       else
       {

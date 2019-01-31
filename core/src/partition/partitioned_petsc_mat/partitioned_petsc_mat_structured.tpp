@@ -223,10 +223,16 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
     stream << "], diag " << diag;
     VLOG(2) << stream.str();
   }
+
+    return;
   
   PetscErrorCode ierr;
-  // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
-  ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+
+  if (numRows != 0)
+  {
+    // execute zeroRowsColumns on the global matrix, because it is not defined on the local matrix
+    ierr = MatZeroRowsColumnsLocal(this->globalMatrix_, numRows, rows, diag, NULL, NULL); CHKERRV(ierr);
+  }
   
   // assemble the global matrix
   ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FLUSH_ASSEMBLY); CHKERRV(ierr);
@@ -408,10 +414,11 @@ output(std::ostream &stream) const
   // on every rank prepare a string with the local information
   std::string str;
   std::stringstream s;
-  s << "Rank " << ownRankNo << ": " << PetscUtility::getStringMatrix(localValues, nRowsLocal, nColumnsLocal, nRowsGlobal, nColumnsGlobal);
+  s << "Rank " << ownRankNo << " (" << *this->meshPartitionRows_->rankSubset() << "," << *this->meshPartitionColumns_->rankSubset() << "): "
+    << PetscUtility::getStringMatrix(localValues, nRowsLocal, nColumnsLocal, nRowsGlobal, nColumnsGlobal);
   str = s.str();
   
-  //VLOG(1) << str;
+  VLOG(1) << str;
 
   // exchange the lengths of the local information
   std::vector<int> localSizes(nRanks);

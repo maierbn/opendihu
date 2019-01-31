@@ -26,7 +26,6 @@ sconsconfig/packages/METIS.py
 sconsconfig/packages/MPI.py
 sconsconfig/packages/Matplotlib.py
 sconsconfig/packages/MegaMol.py
-sconsconfig/packages/MegaMolConsole.py
 sconsconfig/packages/MySQL.py
 sconsconfig/packages/NLopt.py
 sconsconfig/packages/NumpyC.py

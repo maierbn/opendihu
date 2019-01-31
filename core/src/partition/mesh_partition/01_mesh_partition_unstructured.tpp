@@ -69,6 +69,17 @@ nDofsLocalWithoutGhosts() const
   return nDofs_;
 }
 
+
+//! number of nodes in the local partition
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesLocalWithGhosts(int coordinateDirection) const
+{
+  if (coordinateDirection == 0)
+    return nNodes_;
+  return 1;
+}
+
 //! number of nodes in the local partition
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::

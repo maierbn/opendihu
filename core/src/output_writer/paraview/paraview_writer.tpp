@@ -585,7 +585,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-       << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
+       << Paraview::encodeBase64Int32(values.begin(), values.end()) << std::endl;
   }
   else 
   {
@@ -607,7 +607,7 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   if (binaryOutput)
   {
     file << "format=\"binary\">" << std::endl
-      << Paraview::encodeBase64Int(values.begin(), values.end()) << std::endl;
+      << Paraview::encodeBase64Int32(values.begin(), values.end()) << std::endl;
   }
   else
   {

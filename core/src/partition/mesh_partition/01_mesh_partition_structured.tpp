@@ -80,6 +80,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
       VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];
+      assert (nRanks_[dimensionIndex] != 0);
       localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
 
       // loop over the first rank of the respecive partion
@@ -101,6 +102,8 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
         VLOG(1) << "   localSizesOnRanks: " << localSizesOnRanks[dimensionIndex][rankNo];
         localSizesOnPartitions_[dimensionIndex][partitionIndex] = localSizesOnRanks[dimensionIndex][rankNo];
         VLOG(1) << "    saved to partitionIndex " << partitionIndex;
+        if (partitionIndex >= nRanks_[dimensionIndex]-1)
+          break;
       }
     }
 

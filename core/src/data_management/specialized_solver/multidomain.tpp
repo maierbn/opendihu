@@ -148,6 +148,9 @@ template<typename FunctionSpaceType>
 typename Multidomain<FunctionSpaceType>::OutputFieldVariables Multidomain<FunctionSpaceType>::
 getOutputFieldVariables()
 {
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
+    = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
+
   std::vector<std::shared_ptr<FieldVariableType>> transmembranePotentials;
   transmembranePotentials.reserve(nCompartments_);
   for (int i = 0; i < nCompartments_; i++)
@@ -162,7 +165,7 @@ getOutputFieldVariables()
     compartmentRelativeFactors.push_back(compartmentRelativeFactor_[i]);
   }
 
-  return std::make_tuple(this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
+  return std::make_tuple(geometryField, this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
                          transmembranePotentials, compartmentRelativeFactors);
 }
 

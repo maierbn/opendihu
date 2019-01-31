@@ -72,6 +72,11 @@ try:
     print "Travis CI detected, del MPI_DIR"
     del MPI_DIR
     MPI_DOWNLOAD=True
+  
+  # on neon use custom cmake
+  import socket
+  if socket.gethostname() == "neon":
+    cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
 except:
   pass
@@ -89,6 +94,7 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc="cc"   # C compiler wrapper
   CC="CC"   # C++ compiler wrapper
   mpiCC="CC"  # mpi C++ compiler wrapper
+  cmake="/lustre/cray/ws8/ws/icbbnmai-opendihu/cmake/cmake-3.13.2-Linux-x86_64/bin/cmake"
 
   # use cray-pat for profiling
   USE_CRAY_PAT=False

@@ -25,10 +25,15 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
   }
 
   std::set<std::string> combined1DMeshes;
+  std::set<std::string> combined3DMeshes;
+
   if (combineFiles_)
   {
     // create a PolyData file that combines all 1D meshes into one file
     writePolyDataFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined1DMeshes);
+
+    // create an UnstructuredMesh file that combines all 3D meshes into one file
+    writeCombinedUnstructuredGridFile<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), combined3DMeshes);
   }
 
   // output normal files, parallel or if combineFiles_, only the 2D and 3D meshes, combined
@@ -38,8 +43,13 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
   LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
 
   // remove 1D meshes that were already output by writePolyDataFile
-  std::set<std::string> meshesToOutput;
+  std::set<std::string> meshesWithout1D;
   std::set_difference(meshNames.begin(), meshNames.end(), combined1DMeshes.begin(), combined1DMeshes.end(),
+                      std::inserter(meshesWithout1D, meshesWithout1D.end()));
+
+  // remove 3D meshes that were already output by writePolyDataFile
+  std::set<std::string> meshesToOutput;
+  std::set_difference(meshesWithout1D.begin(), meshesWithout1D.end(), combined3DMeshes.begin(), combined3DMeshes.end(),
                       std::inserter(meshesToOutput, meshesToOutput.end()));
 
   // loop over meshes and create a paraview file for each
@@ -255,7 +265,7 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
 }
 
 template <typename Iter>
-std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+std::string Paraview::encodeBase64Int32(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
 {
   // encode as Paraview Int32
   assert(sizeof(int) == 4);
@@ -283,6 +293,52 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
     };
     integer = (int)(*iter);
     memcpy(raw.data() + dataStartPos + i*sizeof(float), c, 4);
+  }
+
+  // prepend number of bytes as uint32
+  if (withEncodedSizePrefix)
+  {
+    union {
+      uint32_t i;
+      char c[4];
+    };
+    i = dataLength;
+
+    memcpy(raw.data(), c, 4);
+  }
+
+  std::vector<char> encoded(encodedLength, '\0');
+
+  bool success = Base64::Encode(raw.data(), rawLength, (char *)encoded.data(), encodedLength);
+  if (!success)
+    LOG(WARNING) << "Base64 encoding failed";
+
+  return std::string(encoded.begin(), encoded.end());
+}
+
+template <typename Iter>
+std::string Paraview::encodeBase64UInt8(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix)
+{
+  // encode as Paraview UInt8
+
+  int dataLength = std::distance(iterBegin, iterEnd);
+  int rawLength = dataLength;
+  int dataStartPos = 0;
+
+  if (withEncodedSizePrefix)
+  {
+    rawLength += 4;
+    dataStartPos = 4;
+  }
+
+  int encodedLength = Base64::EncodedLength(rawLength);
+
+  std::vector<char> raw(rawLength, char(0));
+  // loop over vector entries and add bytes to raw buffer
+  int i = 0;
+  for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
+  {
+    raw[dataStartPos + i] = char(*iter);
   }
 
   // prepend number of bytes as uint32

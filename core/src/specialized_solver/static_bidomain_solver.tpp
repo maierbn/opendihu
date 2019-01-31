@@ -15,7 +15,7 @@ StaticBidomainSolver(DihuContext context) :
   context_(context["StaticBidomainSolver"]),
   data_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
   finiteElementMethodDiffusionTransmembrane_(this->context_["Activation"]), finiteElementMethodDiffusionExtracellular_(this->context_["Activation"]),
-  rankSubset_(std::make_shared<Partition::RankSubset>()), initialized_(false)
+  rankSubset_(this->context_.rankSubset()), initialized_(false)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();

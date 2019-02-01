@@ -77,7 +77,7 @@ class NumpySTL(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Numpy-stl ... ')
+        ctx.Message('Checking for Numpy-stl ...     ')
         self.check_options(env)
 
         res = super(NumpySTL, self).check(ctx)

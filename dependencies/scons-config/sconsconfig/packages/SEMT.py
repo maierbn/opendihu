@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
 
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for SEMT ... ')
+        ctx.Message('Checking for SEMT ...          ')
         self.check_options(env)
 
         res = super(SEMT, self).check(ctx)

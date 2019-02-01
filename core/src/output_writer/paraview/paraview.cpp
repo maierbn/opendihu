@@ -50,15 +50,19 @@ std::string Paraview::convertToAscii(const Vec &vector, bool fixedFormat)
 std::string Paraview::convertToAscii(const std::vector<double> &vector, bool fixedFormat)
 {
   std::stringstream result;
-  for (auto value : vector)
+  for (int i = 0; i < vector.size(); i++)
   {
     if (fixedFormat)
     {
-      result << std::setw(16) << std::scientific << value << " ";
+      result << std::setw(16) << std::scientific << vector[i] << " ";
     }
     else
     {
-      result << value << " ";
+      result << vector[i] << " ";
+    }
+    if (i % 3 == 2)
+    {
+      result << std::endl << std::string(5,'\t');
     }
   }
   return result.str();

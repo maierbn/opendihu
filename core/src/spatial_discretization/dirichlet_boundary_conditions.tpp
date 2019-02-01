@@ -333,7 +333,7 @@ initializeGhostElements()
           global_no_t nodeNoGlobalPetsc = this->functionSpace_->meshPartition()->getNodeNoGlobalPetsc(nodeNoLocal);
           global_no_t dofNoGlobalPetsc = nodeNoGlobalPetsc*nDofsPerNode + nodalDofIndex;
 
-          VLOG(1) << "    dof is ghost, dofNoGlobalPetsc: " << dofNoGlobalPetsc;
+          VLOG(1) << "    dof is ghost, dofNoGlobalPetsc: " << dofNoGlobalPetsc << ", neighbourRankNo: " << neighbourRankNo;
 
           nonBoundaryConditionDofsOfRankGlobalPetsc[neighbourRankNo].push_back(dofNoGlobalPetsc);
         }
@@ -551,7 +551,7 @@ initializeGhostElements()
       receiveBufferValuesSize += receiveBuffer[i][2*ghostElementIndex+1];
     }
 
-    VLOG(1) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
+    LOG(DEBUG) << "receive from " << foreignRankNo << ", size: " << receiveBufferValuesSize;
 
     receiveBufferGhostElements[i] = new long [receiveBufferSize];
     receiveBufferValues[i] = new double [receiveBufferValuesSize];

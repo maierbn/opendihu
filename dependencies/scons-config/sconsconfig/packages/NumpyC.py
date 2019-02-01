@@ -63,7 +63,7 @@ class NumpyC(Package):
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Numpy C-API ... ')
+        ctx.Message('Checking for Numpy C-API ...   ')
         self.check_options(env)
 
         res = super(NumpyC, self).check(ctx)

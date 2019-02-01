@@ -43,6 +43,9 @@ public:
   PartitionedPetscMat(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                       Mat &globalMatrix, std::string name);
 
+  //! destructor
+  virtual ~PartitionedPetscMat();
+
   //! wrapper of MatSetValues for a single value, sets a local value in the matrix
   void setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode);
   

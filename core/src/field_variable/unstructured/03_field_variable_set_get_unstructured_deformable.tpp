@@ -12,6 +12,53 @@ namespace FieldVariable
 
 using namespace StringUtility;
 
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
+{
+  assert(componentNo >= 0 && componentNo < nComponents);
+
+  this->component_[componentNo].getValues(values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  std::vector<double> buffer;
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // get values into buffer
+    this->component_[componentNo].getValues(buffer, onlyNodalValues);
+
+    values.resize(buffer.size());
+
+    // copy values from buffer to output vector
+    for (int valueIndex = 0; valueIndex < buffer.size(); valueIndex++)
+    {
+      values[valueIndex][componentNo] = buffer[valueIndex];
+    }
+  }
+}
+
+//! for a specific component, get all values
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValuesWithoutGhosts(std::vector<std::array<double,nComponents>> &values, bool onlyNodalValues) const
+{
+  this->getValuesWithGhosts(values, onlyNodalValues);
+}
+
 //! get values from their local dof no.s for all components, this eventually does not get all values if there are multiple versions
 template<typename FunctionSpaceType, int nComponents>
 template<int N>
@@ -36,24 +83,6 @@ getValues(std::array<dof_no_t,N> dofLocalNo, std::array<std::array<double,nCompo
       values[dofIndex][componentIndex] = resultVector[componentIndex*N + dofIndex];
     }
   }
-}
-
-//! for a specific component, get all values
-template<typename FunctionSpaceType, int nComponents>
-void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
-{
-  assert(componentNo >= 0 && componentNo < nComponents);
-  
-  this->component_[componentNo].getValues(values, onlyNodalValues);
-}
-
-//! for a specific component, get all values
-template<typename FunctionSpaceType, int nComponents>
-void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
-getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues) const
-{
-  this->getValuesWithGhosts(componentNo, values, onlyNodalValues);
 }
 
 //! for a specific component, get values from their local dof no.s

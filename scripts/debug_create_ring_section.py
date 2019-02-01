@@ -29,4 +29,18 @@ end_point = [66,  143,   51]
 z_value = 50
 n_points = 10
 
-stl_create_rings.create_ring_section(input_filename, start_point, end_point, z_value, n_points)
+start_point=(66.55195617675781, 149.58843994140625, 60.0)
+end_point=(76.11906433105469, 154.0915985107422, 60.0)
+z_value=60.0
+n_points=9
+
+start_point=(76.11097717285156, 139.17101287841797, 61.89999771118164)
+end_point=(85.38225555419922, 143.78616333007812, 60.000003814697266)
+z_value=61.9
+n_points=9
+
+
+
+result = stl_create_rings.create_ring_section(input_filename, start_point, end_point, z_value, n_points)
+
+print("n points: {}, should be {}".format(len(result), n_points))

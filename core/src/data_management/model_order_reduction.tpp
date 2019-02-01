@@ -69,34 +69,11 @@ initialize()
   }
 }
 
-//! the reduced solution
-template<typename FunctionSpaceRows>  
-std::shared_ptr<typename ModelOrderReduction<FunctionSpaceRows>::FieldVariableType> &
-ModelOrderReduction<FunctionSpaceRows>::
-redSolution()
-{
-  return redSolution_;
-}
-  
-//! The reduced order increment
-template<typename FunctionSpaceRows>  
-std::shared_ptr<typename ModelOrderReduction<FunctionSpaceRows>::FieldVariableType> &
-ModelOrderReduction<FunctionSpaceRows>::
-redIncrement()
-{
-  return redIncrement_;
-}
-
 template<typename FunctionSpaceRows>
 void ModelOrderReduction<FunctionSpaceRows>::
 createPetscObjects()
 {
   LOG(TRACE) << "ModelOrderReduction::createPetscObjects()";
-  
-  // create field variables on local partition
-  const int nComponents = 1;
-  this->redSolution_ = this->functionSpace_->template createFieldVariable<nComponents>("redSolution");
-  this->redIncrement_ = std::static_pointer_cast<FieldVariableType>(this->functionSpace_->createFieldVariable("redIncrement", 1));
   
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceRows>> 
@@ -105,7 +82,7 @@ createPetscObjects()
   std::shared_ptr<Partition::MeshPartition<::FunctionSpace::Generic>>
   meshPartitionColumns = this->functionSpace_->meshPartition();
   
-  this->basis_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRows>>(
+  this->basis_ = std::make_shared<PartitionedPetscMat<FunctionSpaceRows,::FunctionSpace::Generic>>(
     meshPartitionRows, meshPartitionColumns, 1, "basis");
   this->basisTransp_ = std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRows>>(
     meshPartitionColumns, meshPartitionRows, 1, "basisTransp");

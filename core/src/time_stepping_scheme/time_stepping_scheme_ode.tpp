@@ -78,16 +78,13 @@ namespace TimeSteppingScheme
   setRankSubset(Partition::RankSubset rankSubset)
   {
     data_->setRankSubset(rankSubset);
-    //discretizableInTime_.setRankSubset(rankSubset);
   } 
   
   template<typename FunctionSpaceType, int nComponents>
   void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
   reset()
   {
-    TimeSteppingScheme::reset();
-    //discretizableInTime_.reset();
-    
+    TimeSteppingScheme::reset();    
     initialized_ = false;
   }
   
@@ -100,23 +97,6 @@ namespace TimeSteppingScheme
     
     TimeSteppingScheme::initialize();
     LOG(TRACE) << "TimeSteppingSchemeOdeBase::initialize";
-    
-    //std::shared_ptr<typename DiscretizableInTimeType::FunctionSpace> functionSpace
-    //= discretizableInTime_.functionSpace();
-    
-    //assert(functionSpace->meshPartition());   // assert that the function space was retrieved correctly
-    //data_->setFunctionSpace(functionSpace);
-    
-    // create the vectors in the data object
-    //data_->initialize();
-    
-    // set initial values from settings
-    
-    // if it did not initialize it,
-    // load initial values from config under the timestepping section
-    //this->setInitialValues();
-    
-    //data_->print();
     
     initialized_ = true;
   }
@@ -131,13 +111,6 @@ namespace TimeSteppingScheme
     // do simulations
     this->advanceTimeSpan();
   }
-  
-///  template<typename FunctionSpaceType, int nComponents>
-///  bool TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-///  knowsMeshType()
-///  {
-///    return false;
-///  }
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename DiscretizableInTimeType>
@@ -158,14 +131,6 @@ TimeSteppingSchemeOdeBase(context,name), discretizableInTime_(context[name]), in
   SpatialDiscretization::DirichletBoundaryConditions<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
   >();
 }
-/*
-template<typename DiscretizableInTimeType>
-Data::TimeStepping<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> &TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-data()
-{
-  return *data_;
-}
-*/
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
@@ -199,21 +164,6 @@ setInitialValues()
   VLOG(1) << this->data_->solution();
 }
 
-/*
-template<typename DiscretizableInTimeType>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::Data::FieldVariableType> TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-solution()
-{
-  return data_->solution();
-}*/
-/*
-template<typename DiscretizableInTimeType>
-typename TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-getSolutionForTransferInOperatorSplitting()
-{
-  return data_->getSolutionForTransferInOperatorSplitting();
-}
-*/
 template<typename DiscretizableInTimeType>
 DiscretizableInTimeType &TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 discretizableInTime()
@@ -318,18 +268,7 @@ initialize()
   this->data_->setPrefactor(prefactor);
   this->data_->setOutputComponentNo(outputComponentNo);
 }
-/*
-template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBase<DiscretizableInTimeType>::
-run()
-{
-  // initialize
-  this->initialize();
 
-  // do simulations
-  this->advanceTimeSpan();
-}
-*/
 template<typename DiscretizableInTimeType>
 bool TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 knowsMeshType()

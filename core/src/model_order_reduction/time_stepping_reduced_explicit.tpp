@@ -34,6 +34,8 @@ namespace ModelOrderReduction
   evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime)
   {
     this->fullTimestepping_.discretizableInTime().evaluateTimesteppingRightHandSideExplicit(input, output, timeStepNo, currentTime);
+    
+    // for implementing DEIM
     //ISCreateGeneral(comm,n, idx[],mode,&is);
     //VecGetSubVector(X,is,&Y) should it be called every time step?
   }

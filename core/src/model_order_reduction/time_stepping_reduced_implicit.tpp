@@ -27,11 +27,10 @@ initialize()
   
   LOG(TRACE) << "TimeSteppingSchemeOdeReducedImplicit::initialize()";
   
-  // TO BE IMPLEMENTED
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::initialize();
   
-  // compute the system matrix
-  this->setSystemMatrix(this->timeStepWidth_);
+  // compute the reduced system matrix
+  setRedSystemMatrix();
   
   // set the boundary conditions to system matrix, i.e. zero rows and columns of Dirichlet BC dofs and set diagonal to 1
   this->fullTimestepping_.dirichletBoundaryConditions()->applyInSystemMatrix(this->fullTimestepping_.dataImplicit().systemMatrix(), this->fullTimestepping_.dataImplicit().boundaryConditionsRightHandSideSummand());
@@ -51,15 +50,6 @@ initialize()
 
 template<typename TimeSteppingImplicitType>
 void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
-setSystemMatrix(double timeStepWidth)
-{
-  // is it set by initializing the fullTimestepping?
-  //this->fullTimestepping_.setSystemMatrix(timeStepWidth);
-  this->setRedSystemMatrix();
-}
-
-template<typename TimeSteppingImplicitType>
-void TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>::
 setRedSystemMatrix()
 {
 
@@ -69,14 +59,13 @@ setRedSystemMatrix()
   Mat &systemMatrix=this->fullTimestepping_.dataImplicit().systemMatrix()->valuesGlobal();
   Mat &redSystemMatrix=this->dataMOR_->redSystemMatrix()->valuesGlobal();
   
-  PetscErrorCode ierr; 
-    
+  PetscErrorCode ierr;    
   PetscInt mat_sz_1, mat_sz_2;
   
   MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
-  PetscInt nrows_bs=mat_sz_1;
-  PetscInt ncols_bs=mat_sz_2;
-  LOG(DEBUG) << "setRedSystemMatrix, nrows_bs: " << nrows_bs << " ncols_bs: " << ncols_bs;
+  PetscInt nrows_bst=mat_sz_1;
+  PetscInt ncols_bst=mat_sz_2;
+  VLOG(2) << "In setRedSystemMatrix, nrows_bst: " << nrows_bst << " ncols_bst: " << ncols_bst;
   
   MatGetSize(systemMatrix,&mat_sz_1,&mat_sz_2);
   PetscInt nrows_sys=mat_sz_1; //square matrix
@@ -84,7 +73,7 @@ setRedSystemMatrix()
   
   LOG(DEBUG) << "setRedSystemMatrix, nrows_sys: " << nrows_sys << " ncols_sys: " << ncols_sys;
   
-  if(ncols_bs == nrows_sys)
+  if(ncols_bst == nrows_sys)
   {
     //! Reduction of the system matrix in case of compatible row spaces of the system matrix and reduced basis    
     //D=A*B*C
@@ -96,20 +85,23 @@ setRedSystemMatrix()
     MatMatMult(basisTransp,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
   }
   else
-  {    
-    std::shared_ptr<Partition::MeshPartition<typename TimeSteppingImplicitType::FunctionSpace>> 
-    meshPartitionRows=this->dataMOR_->basis()->meshPartitionRows();
-    
+  {
+    // For multiplication compatibility, the system matrix must be extended with ones on the diagonal 
+    // before it could be reduced (V^T A V). Therefore, its rows should be compatible to columns of V^T
+    // and its columns compatible to the rows of V (basis).    
     std::shared_ptr<Partition::MeshPartition<typename ::FunctionSpace::Generic>>
-    meshPartitionColumns=this->dataMOR_->basisTransp()->meshPartitionColumns();    
+    meshPartitionRows=this->dataMOR_->basisTransp()->meshPartitionColumns(); 
     
-    std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> systemMatrix_ext;
-    
+    std::shared_ptr<Partition::MeshPartition<typename TimeSteppingImplicitType::FunctionSpace>> 
+    meshPartitionColumns=this->dataMOR_->basis()->meshPartitionRows();
+       
+    std::shared_ptr<PartitionedPetscMat<
+    ::FunctionSpace::Generic,typename TimeSteppingImplicitType::FunctionSpace>> systemMatrix_ext;    
     systemMatrix_ext= std::make_shared<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>>(
-      meshPartitionRows, meshPartitionColumns, 1, "systemMatrix_ext");          
+    meshPartitionRows, meshPartitionColumns, 1, "systemMatrix_ext");          
     
     Mat &matrix_ext=systemMatrix_ext->valuesGlobal();    
-    ierr=MatShift(matrix_ext,1); CHKERRV(ierr);
+    ierr=MatShift(matrix_ext,1); CHKERRV(ierr); // some would be replaced below by insertin values
     
     PetscScalar *vals;
     PetscMalloc1(nrows_sys*nrows_sys,&vals);
@@ -117,9 +109,7 @@ setRedSystemMatrix()
     PetscInt *idx;
     PetscMalloc1(nrows_sys,&idx);
     for( int i=0; i<nrows_sys;i++)
-    {
       idx[i]=i;
-    }
     
     ierr=MatGetValues(systemMatrix,nrows_sys,idx,nrows_sys,idx,vals); CHKERRV(ierr);
     ierr=MatSetValuesLocal(matrix_ext,nrows_sys,idx,nrows_sys,idx,vals,INSERT_VALUES); CHKERRV(ierr); //would replace the extra ones on the diagonal
@@ -127,29 +117,12 @@ setRedSystemMatrix()
     MatAssemblyBegin(matrix_ext,MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(matrix_ext,MAT_FINAL_ASSEMBLY);
     
-    /*
-    const PetscScalar *vals_ext; 
-    for(int i=0; i<nrows_bs;i++)
-    {
-      MatGetRow(matrix_ext,i,NULL,NULL,&vals_ext);
-      for(int j=0; j<nrows_bs; j++)
-        LOG(DEBUG) << "matrix_ext[" << i << "," << j<< "]: " << vals_ext[j];
-    } 
-    */
-    
     //D=A*B*C
     //This method is not able to multiply combination of three sparse and dense matrices
     //MatMatMatMult(basisTransp_sbm,systemMatrix,basis_sbm,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
     Mat matrix;
     MatDuplicate(basis,MAT_DO_NOT_COPY_VALUES,&matrix);
-    MatMatMult(matrix_ext,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);
-        
-    MatGetSize(basisTransp,&mat_sz_1,&mat_sz_2);
-    LOG(DEBUG) << "basisTransp mat_sz_1, mat_sz_2: " << mat_sz_1 << " " << mat_sz_2;
-    MatGetSize(matrix,&mat_sz_1,&mat_sz_2);
-    LOG(DEBUG) << "matrix mat_sz_1, mat_sz_2: " << mat_sz_1 << " " << mat_sz_2;
-    
-    
+    MatMatMult(matrix_ext,basis,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&matrix); CHKERRV(ierr);       
     MatMatMult(basisTransp,matrix,MAT_INITIAL_MATRIX,PETSC_DEFAULT,&redSystemMatrix); CHKERRV(ierr);
     
     /*

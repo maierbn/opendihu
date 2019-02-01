@@ -36,13 +36,7 @@ public:
    
   //! initializes the redSysMatrix from an already existant Petsc Mat !?
   //void initializeRedSysMatrix(Mat &A_R);
-   
-  //! the reduced solution
-  std::shared_ptr<FieldVariableType> &redSolution();
-   
-  //! The reduced order increment
-  std::shared_ptr<FieldVariableType> &redIncrement();
-   
+      
   virtual void initialize() override;
    
 private:
@@ -50,10 +44,7 @@ private:
   std::shared_ptr<PartitionedPetscMat<FunctionSpaceRowsType,::FunctionSpace::Generic>> basis_; // V
   std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,FunctionSpaceRowsType>> basisTransp_; // V^T
   std::shared_ptr<PartitionedPetscMat<::FunctionSpace::Generic,::FunctionSpace::Generic>> redSystemMatrix_;
-   
-  std::shared_ptr<FieldVariableType> redSolution_; //reduced solution
-  std::shared_ptr<FieldVariableType> redIncrement_; //reduced increment
-  
+     
   std::shared_ptr<FunctionSpaceRowsType> functionSpaceRows_;
   
   //! Create the matrices and vectors for model order reduction

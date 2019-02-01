@@ -11,7 +11,6 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>
   {
   public:
-    typedef typename TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::FunctionSpace FunctionSpace;
     typedef typename TimeSteppingImplicitType::DiscretizableInTime_Type DiscretizableInTimeType;
     
     //! constructor
@@ -19,17 +18,11 @@ namespace ModelOrderReduction
     
     //! destructor
     virtual ~TimeSteppingSchemeOdeReducedImplicit(){};
-    
-    //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-    //virtual void advanceTimeSpan() = 0;
-    
+        
     //! initialize timestepping member and set the system matrix
     void initialize();
     
   protected:
-    
-    //! precomputes the integration matrix for example A = (I-dtM^(-1)K) for the implicit euler scheme
-    virtual void setSystemMatrix(double timeStepWidth);
     
     //! Set the reduced system matrix, A_R=V^T A V
     void setRedSystemMatrix();

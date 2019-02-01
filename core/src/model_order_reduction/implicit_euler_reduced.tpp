@@ -59,7 +59,7 @@ advanceTimeSpan()
     this->solveLinearSystem(redSolution, redSolution);
     
     /*
-     P e*tscInt vec_sz;
+     PetscInt vec_sz;
      PetscScalar val;
      
      VecGetSize(redSolution,&vec_sz);
@@ -67,10 +67,10 @@ advanceTimeSpan()
      
      for(int i=0; i< vec_sz; i++)
      {
-     VecGetValues(redSolution,1,&i,&val);
-     LOG(DEBUG) << "redSolution[" << i << "]: " << val;
-  }
-  */
+      VecGetValues(redSolution,1,&i,&val);
+      LOG(DEBUG) << "redSolution[" << i << "]: " << val;
+     }
+    */
     
     // transfer to full-order space
     this->MatMultFull(basis,redSolution,solution);       

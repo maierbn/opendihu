@@ -10,7 +10,6 @@ namespace ModelOrderReduction
   public TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>
   {
   public:
-    typedef typename TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::FunctionSpace FunctionSpace;
     
     //! constructor
     ImplicitEulerReduced(DihuContext context);

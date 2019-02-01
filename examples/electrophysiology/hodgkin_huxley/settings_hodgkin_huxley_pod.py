@@ -186,7 +186,7 @@ config = {
     },
     "MeshFibreReduced": {
       "nElements": n_total,
-      "physicalExtent": n_total/40.,
+      "physicalExtent": 0.0,
       "logKey": "Fiber",
       "inputMeshIsGlobal": True,
     },

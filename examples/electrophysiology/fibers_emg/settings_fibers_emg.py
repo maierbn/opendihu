@@ -46,8 +46,8 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 # partitioning
 # this has to match the total number of processes
-n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
+n_subdomains_x = 4   # example values for 4 processes
+n_subdomains_y = 4
 n_subdomains_z = 4
 
 # stride for sampling the 3D elements from the fiber data

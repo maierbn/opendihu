@@ -32,10 +32,11 @@ output_timestep = 4e-1             # timestep for output files
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
-fibre_file = "../../input/3000fibers.bin"
 fibre_file = "../../input/15x15fibers.bin"
+fiber_file = "../../input/3000fibers.bin"
+fiber_file = "../../input/7x7fibers.bin"
 
-fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
+fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../input/MU_firing_times_real.txt"
 firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
@@ -79,26 +80,26 @@ elif "hodgkin_huxley" in cellml_file:
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
 
-def get_motor_unit_no(fibre_no):
-  return int(fibre_distribution[fibre_no % len(fibre_distribution)]-1)
+def get_motor_unit_no(fiber_no):
+  return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
 
-def fibre_gets_stimulated(fibre_no, frequency, current_time):
+def fiber_gets_stimulated(fiber_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = (int)(get_motor_unit_no(fibre_no)*0.8)
+  mu_no = (int)(get_motor_unit_no(fiber_no)*0.8)
   
-  # determine if fibre fires now
+  # determine if fiber fires now
   index = int(current_time * frequency)
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
+def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
   pass
   
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fibre_no):
+def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
   
-  # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  # determine if fiber gets stimulated at the current time
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -110,7 +111,7 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     nodes_to_stimulate_global.append(innervation_node_global+1)
   
   # stimulation value
-  if is_fibre_gets_stimulated:
+  if is_fiber_gets_stimulated:
     stimulation_current = nodal_stimulation_current
   else:
     stimulation_current = 0.
@@ -126,16 +127,16 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
  
       #print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
   
-  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fibre no {}, MU {}, stimulated: {}".\
-        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fibre_no, get_motor_unit_no(fibre_no), is_fibre_gets_stimulated))
+  #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fiber no {}, MU {}, stimulated: {}".\
+        #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fiber_no, get_motor_unit_no(fiber_no), is_fiber_gets_stimulated))
     
   #wait = input("Press any key to continue...")
     
 # callback function that can set parameters, i.e. stimulation current
-def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fibre_no):
+def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fiber_no):
   
-  # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  # determine if fiber gets stimulated at the current time
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
   
   # determine nodes to stimulate (center node, left and right neighbour)
   innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
@@ -149,7 +150,7 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
       nodes_to_stimulate_global.append(innervation_node_global+k)
   
   # stimulation value
-  if is_fibre_gets_stimulated:
+  if is_fiber_gets_stimulated:
     stimulation_current = 40.
   else:
     stimulation_current = 0.
@@ -158,12 +159,12 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
     parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
 
 # callback function that can set states, i.e. prescribed values for stimulation
-def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
   
-  # determine if fibre gets stimulated at the current time
-  is_fibre_gets_stimulated = fibre_gets_stimulated(fibre_no, stimulation_frequency, current_time)
+  # determine if fiber gets stimulated at the current time
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
 
-  if is_fibre_gets_stimulated:  
+  if is_fiber_gets_stimulated:  
     # determine nodes to stimulate (center node, left and right neighbour)
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
@@ -175,11 +176,11 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibr
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
   pass
     
-# create fibre meshes
+# create fiber meshes
 meshes = {}
 
 # parse fibers from a binary fiber file that was created by parallel_fiber_estimation
-with open(fibre_file, "rb") as f:
+with open(fiber_file, "rb") as f:
 
   # parse header
   bytes_raw = f.read(32)
@@ -233,22 +234,22 @@ for i,streamline in enumerate(streamlines):
   }
     
 # load MU distribution and firing times
-fibre_distribution = np.genfromtxt(fibre_distribution_file, delimiter=" ")
+fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
 
-# determine when the fibres will fire, for debugging output
+# determine when the fibers will fire, for debugging output
 if rank_no == 0:
-  print("Debugging output about fibre firing: Taking input from file \"{}\"".format(firing_times_file))
+  print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
   
   n_firing_times = np.size(firing_times,0)
-  for fibre_no_index in range(n_instances):
+  for fiber_no_index in range(n_instances):
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
-      if fibre_gets_stimulated(fibre_no_index, stimulation_frequency, current_time):
+      if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
         first_stimulation = current_time
         break
   
-    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, get_motor_unit_no(fibre_no_index), first_stimulation))
+    print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
 
 # compute partitioning
 n_subdomains_x = 2   # example values for 4 processes
@@ -289,7 +290,38 @@ if rank_no == 0:
         for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
           print("  fiber {} in subdomain ({},{}) uses ranks {}".format(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y), fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y, list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y))))
 
-config = {
+# create megamol config file
+config_file_contents = \
+"""print('Hi, I am the megamolconfig.lua!')
+
+-- mmSetAppDir("{megamol_home}/bin")
+mmSetAppDir(".")
+
+mmSetLogFile("")
+mmSetLogLevel(0)
+mmSetEchoLevel('*')
+
+mmAddShaderDir("{megamol_home}/share/shaders")
+mmAddResourceDir("{megamol_home}/share/resources")
+
+mmPluginLoaderInfo("{megamol_home}/lib", "*.mmplg", "include")
+
+-- mmSetConfigValue("*-window", "w1280h720")
+mmSetConfigValue("*-window", "w720h720")
+mmSetConfigValue("consolegui", "on")
+
+mmSetConfigValue("LRHostEnable", "true")
+
+return "done with megamolconfig.lua."
+-- error("megamolconfig.lua is not happy!")
+""".format(megamol_home="/store/software/opendihu/dependencies/megamol/install")
+
+config_filename = "megamol_config.lua"
+with open(config_filename, "w") as f:
+  f.write(config_file_contents)
+
+config = {  
+  "MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),
   "scenarioName": scenario_name,
   "Meshes": meshes,
   "Solvers": {
@@ -307,7 +339,7 @@ config = {
       "ranks": list(range(subdomain_coordinate_y*n_subdomains_x + subdomain_coordinate_x, n_ranks, n_subdomains_x*n_subdomains_y)),
       "StrangSplitting": {
         #"numberTimeSteps": 1,
-        "timeStepWidth": dt_3D,  # 1e-1
+        "timeStepWidth": dt_3D,  # 3e-1
         "logTimeStepWidthAsKey": "dt_3D",
         "durationLogKey": "duration_total",
         "timeStepOutputInterval" : 1000,
@@ -378,17 +410,17 @@ config = {
                   "solverName": "implicitSolver",
                 },
                 "OutputWriter" : [
-                  #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)), "binary": True, "fixedFormat": False, "combineFiles": True},
-                  #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-                  #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                  #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
+                  #{"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)), "binary": True, "fixedFormat": False, "combineFiles": True},
+                  #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
+                  #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+                  #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
             } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
                 for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres", "binary": True, "fixedFormat": False, "combineFiles": True},
-              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibres"},
+              #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "combineNInstances": n_subdomains_xy},
             ],
           },
         },

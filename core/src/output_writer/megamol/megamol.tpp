@@ -50,6 +50,7 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
       // determine current filename
       std::stringstream outputFileName;
       outputFileName << this->filenameBase_ << "_" << currentOpenWriterIndex_;
+      currentFilename_ = outputFileName.str();
       LOG(DEBUG) << "create new engine, on outputFileName: \"" << outputFileName.str() << "\"";
 
       // create new writer
@@ -254,6 +255,8 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
       writer->megaMolWriterContext.scalarFieldVariableValues.clear();
       writer->megaMolWriterContext.approximateDistanceBetweenFibers = -1;
 
+      lastFilename_ = currentFilename_;
+
       if (currentOpenWriterIndex_ == 1)
       {
         currentOpenWriterIndex_ = 0;
@@ -264,6 +267,10 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
       }
       writer->nOpenWriters = 0;
       LOG(DEBUG) << "closing time step and writer, next currentOpenWriterIndex will be " << currentOpenWriterIndex_;
+
+#ifdef HAVE_MEGAMOL
+      notifyMegaMol();
+#endif
     }
   }
   catch (std::invalid_argument &e)
@@ -282,9 +289,6 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
     LOG(ERROR) << e.what();
   }
 
-#ifdef HAVE_MEGAMOL
-  notifyMegaMol();
-#endif
 #endif
 }
 

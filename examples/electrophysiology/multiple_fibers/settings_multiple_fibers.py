@@ -337,7 +337,7 @@ with open(config_filename, "w") as f:
 config = {
   #"MegaMolArguments": "--configfile {} -p ../input/testspheres.lua ".format(config_filename),  
   #"MegaMolArguments": "--configfile {} -p ../input/adios_sphere.lua ".format(config_filename),  
-  "MegaMolArguments": "--configfile {} -p ../input/adios_project.lua ".format(config_filename),  
+  "MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),  
   #"MegaMolArguments": "--configfile {} -p ../input/empty_view.lua ".format(config_filename),  
   "scenarioName": scenario_name,
   "Meshes": meshes,

@@ -49,7 +49,15 @@ void MegaMol::write(DataType& data, int timeStepNo, double currentTime)
 
       // determine current filename
       std::stringstream outputFileName;
-      outputFileName << this->filenameBase_ << "_" << currentOpenWriterIndex_;
+      if (useFrontBackBuffer_)
+      {
+        outputFileName << this->filenameBase_ << "_" << currentOpenWriterIndex_;
+      }
+      else
+      {
+        outputFileName << filenameBaseWithNo_;
+      }
+
       currentFilename_ = outputFileName.str();
       LOG(DEBUG) << "create new engine, on outputFileName: \"" << outputFileName.str() << "\"";
 

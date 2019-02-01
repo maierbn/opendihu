@@ -67,6 +67,7 @@ private:
   std::string lastFilename_;     ///< the last used filename for output
 
   int combineNInstances_;       ///< number of calls to MegaMol::write that should be combined into one timestep, this is needed when the output writer is given in a MultipleInstances environment
+  bool useFrontBackBuffer_;      ///< if the two buffers, *_0 and *_1 should be used, otherwise is uses a standard file naming scheme with increasing counter number
 #endif
 
 };

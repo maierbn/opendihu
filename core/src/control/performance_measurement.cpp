@@ -117,6 +117,10 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   {
     if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
+
+    // remove newlines
+    StringUtility::replace(parameter.second, "\n", "");
+    StringUtility::replace(parameter.second, "\r", "");
     data << parameter.second << ";";
   }
 

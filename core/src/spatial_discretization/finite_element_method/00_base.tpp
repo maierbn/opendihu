@@ -78,9 +78,21 @@ initialize()
     return;
 
   data_.initialize();
+
+  // assemble stiffness matrix
+  Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
   setStiffnessMatrix();
+  Control::PerformanceMeasurement::stop("durationSetStiffnessMatrix");
+
+  // set the rhs
+  Control::PerformanceMeasurement::start("durationSetRightHandSide");
   setRightHandSide();
+  Control::PerformanceMeasurement::stop("durationSetRightHandSide");
+
+  // apply boundary conditions
+  Control::PerformanceMeasurement::start("durationAssembleBoundaryConditions");
   this->applyBoundaryConditions();
+  Control::PerformanceMeasurement::stop("durationAssembleBoundaryConditions");
 
   initialized_ = true;
 }

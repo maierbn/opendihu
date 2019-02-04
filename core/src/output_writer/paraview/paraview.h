@@ -32,11 +32,16 @@ public:
   static void writeParaviewPartitionFieldVariable(FieldVariableType &geometryField, std::ofstream &file,
                                                   bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement=false);
   
-  //! write a single *.vtp file that contains all data of all field variables. This is uses MPI IO. It can be enabled with the "combineFiles" option.
+  //! write a single *.vtp file that contains all data of all 1D field variables. This is uses MPI IO. It can be enabled with the "combineFiles" option.
   //! on return, combinedMeshesOut contains the 1D mesh names that were written to the vtp file.
   template<typename OutputFieldVariablesType>
   void writePolyDataFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut);
 
+
+  //! write a single *.vtu file that contains all data of all 3D field variables. This is uses MPI IO. It can be enabled with the "combineFiles" option.
+  //! on return, combinedMeshesOut contains the 3D mesh names that were written to the vtu file.
+  template<typename OutputFieldVariablesType>
+  void writeCombinedUnstructuredGridFile(const OutputFieldVariablesType &fieldVariables, std::set<std::string> &combinedMeshesOut);
 
   //! encode a Petsc vector in Base64,
   //! @param withEncodedSizePrefix if the length of the vector should be added as encoded prefix
@@ -46,9 +51,13 @@ public:
   template <typename Iter>
   static std::string encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
 
-  //! encode a std::vector<int> as base64
+  //! encode a std::vector<int> as 32bit base64 values
   template <typename Iter>
-  static std::string encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
+  static std::string encodeBase64Int32(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
+
+  //! encode a vector as UInt64 values
+  template <typename Iter>
+  std::string encodeBase64UInt8(Iter iterBegin, Iter iterEnd, bool withEncodedSizePrefix=true);
 
   //! convert to a string with space separated values
   static std::string convertToAscii(const Vec &vector, bool humanReadable);
@@ -67,6 +76,9 @@ protected:
   //! write the values vector combined to the file, correctly encoded, identifier is an id to access cached values
   template<typename T>
   void writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, const std::vector<T> &values, int identifier);
+
+  //! write a vector containing nValues 12 values for the types for an unstructured grid
+  void writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, int identifier);
 
   bool binaryOutput_;  ///< if the data output should be binary encoded using base64
   bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5

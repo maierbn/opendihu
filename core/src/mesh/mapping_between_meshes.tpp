@@ -14,8 +14,8 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
 
-  element_no_t elementNo;
-  int ghostMeshNo;
+  element_no_t elementNo = 0;
+  int ghostMeshNo = 0;
   std::array<double,FunctionSpaceTargetType::dim()> xi;
 
   targetMappingInfo_.resize(nDofsLocalSource);

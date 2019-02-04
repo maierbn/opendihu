@@ -285,6 +285,9 @@ public:
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithoutGhosts() const;
   
+  //! return the number of local nodes for coordinateDirection == 0 and 1 otherwise (this is needed for combineFiles with paraview output writer and 3D meshes)
+  node_no_t nNodesLocalWithGhosts(int coordinateDirection) const;
+
   //! number of nodes in the local partition
   node_no_t nNodesLocalWithGhosts() const;
   

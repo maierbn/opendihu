@@ -33,7 +33,6 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
-  LOG(DEBUG) << "iterating over field variable of mesh " << meshName << ", name: " << currentFieldVariable->functionSpace()->meshName();
   // if mesh name is not the specified meshName step over this field variable but do not exit the loop over field variables
   if (currentFieldVariable->functionSpace()->meshName() != meshName)
   {

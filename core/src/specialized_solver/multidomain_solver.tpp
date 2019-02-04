@@ -156,8 +156,8 @@ initialize()
   dataMultidomain_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
   dataMultidomain_.flowPotential()->computeGradientField(dataMultidomain_.fiberDirection());
 
-  LOG(DEBUG) << "flow potential: " << *dataMultidomain_.flowPotential();
-  LOG(DEBUG) << "fiber direction: " << *dataMultidomain_.fiberDirection();
+  VLOG(1) << "flow potential: " << *dataMultidomain_.flowPotential();
+  VLOG(1) << "fiber direction: " << *dataMultidomain_.fiberDirection();
 
   initializeCompartmentRelativeFactors();
 

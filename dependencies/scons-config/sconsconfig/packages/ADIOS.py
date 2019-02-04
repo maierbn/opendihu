@@ -131,14 +131,6 @@ int main(int argc, char *argv[])
 }
 '''
 
-    # reference blas, cmake based, dynamic libraries
-    self.set_build_handler([
-      'mkdir -p ${PREFIX}',
-      'cd ${SOURCE_DIR} && mkdir -p build && cd build && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-      -DCMAKE_BUILD_TYPE=RELEASE -DADIOS2_USE_SST=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_BUILD_TESTING=OFF -DADIOS2_BUILD_EXAMPLE=OFF ..',
-      'cd ${SOURCE_DIR}/build && make all install'
-    ])
-    
     self.number_output_lines = 4626
       
     self.libs = ["adios2"]
@@ -149,6 +141,14 @@ int main(int argc, char *argv[])
     ctx.Message('Checking for ADIOS ...         ')
     self.check_options(env)
 
+    # reference blas, cmake based, dynamic libraries
+    self.set_build_handler([
+      'mkdir -p ${PREFIX}',
+      'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+      -DCMAKE_BUILD_TYPE=RELEASE -DADIOS2_USE_SST=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_BUILD_TESTING=OFF -DADIOS2_BUILD_EXAMPLE=OFF ..',
+      'cd ${SOURCE_DIR}/build && make all install'
+    ])
+    
     res = super(ADIOS, self).check(ctx)
 
     self.check_required(res[0], ctx)

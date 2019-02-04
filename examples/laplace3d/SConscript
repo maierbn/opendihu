@@ -12,3 +12,4 @@ if not env['no_examples']:
     
   # create the main executable
   env.Program(target = 'laplace', source = "src/laplace.cpp")
+  #env.Program(target = 'petsc_test', source = "src/petsc_test.cpp")

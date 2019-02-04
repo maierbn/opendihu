@@ -261,6 +261,8 @@ parseBoundaryConditionsForElements()
       }
     }
   }
+
+  LOG(DEBUG) << "boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_ << ", boundaryConditionValues: " << boundaryConditionValues_;
 }
 
 template<typename FunctionSpaceType>
@@ -375,12 +377,21 @@ initializeGhostElements()
 
   // exchange number of ghost elements to send/receive, open a window for other processes to write into how many ghost elements they will send
   // open window for MPI RMA
-  int *remoteAccessibleMemory = nullptr;
+  /*void *remoteAccessibleMemory = nullptr;
   MPI_Win mpiMemoryWindow;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nRanks*sizeof(int), sizeof(int), MPI_INFO_NULL, communicator, &remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // set to 0
   memset(remoteAccessibleMemory, 0, sizeof(int)*nRanks);
+*/
+
+
+  LOG(DEBUG) << "rankSubset " << *this->functionSpace_->meshPartition()->rankSubset() << ", create new window";
+  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  int nBytes = nRanks*sizeof(int);
+  int displacementUnit = sizeof(int);
+  MPI_Win mpiMemoryWindow;
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
 
   std::vector<int> localMemory(nRanks);
 

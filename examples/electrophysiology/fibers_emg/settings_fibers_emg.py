@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 10.0
+end_time = 1.0
 
 import numpy as np
 import matplotlib 
@@ -26,7 +26,7 @@ dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
 dt_bidomain = 1e-3                # time step width for bidomain equation
-output_timestep = 4e-1             # timestep for output files
+output_timestep = 1e0             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -34,21 +34,22 @@ output_timestep = 4e-1             # timestep for output files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fibre_file = "../../input/3000fibers.bin"
-fibre_file = "../../input/15x15fibers.bin"
+#fibre_file = "../../input/15x15fibers.bin"
+fibre_file = "../../input/43x43fibers.bin"
 #fibre_file = "../../input/49fibers.bin"
 
 fibre_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
 
 # partitioning
 # this has to match the total number of processes
-n_subdomains_x = 4   # example values for 4 processes
-n_subdomains_y = 4
-n_subdomains_z = 4
+n_subdomains_x = 5   # example values for 4 processes
+n_subdomains_y = 5
+n_subdomains_z = 5
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -443,7 +444,7 @@ config = {
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
-      "maxIterations": 10000,
+      "maxIterations": 100000,
       "solverType": "gmres",
       "preconditionerType": "none"
     },

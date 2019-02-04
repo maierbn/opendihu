@@ -1,5 +1,7 @@
 #include "mesh/mapping_between_meshes.h"
 
+#include "control/performance_measurement.h"
+
 namespace Mesh
 {
 
@@ -10,6 +12,8 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
   functionSpaceTarget_(functionSpaceTarget)
 {
   // create the mapping
+
+  Control::PerformanceMeasurement::start("compute mapping");
 
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
@@ -96,6 +100,8 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     // next time when searching for the target element, start search from previous element
     startSearchInCurrentElement = true;
   }
+
+  Control::PerformanceMeasurement::stop("compute mapping");
 
   if (!mappingSucceeded)
   {

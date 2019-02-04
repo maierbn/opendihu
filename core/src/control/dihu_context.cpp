@@ -63,16 +63,28 @@ void handleSignal(int signalNo)
   Control::PerformanceMeasurement::setParameter("exit",signalName);
   Control::PerformanceMeasurement::writeLogFile();
 
-  if (signalNo == SIGRTMIN)
-  {
-    LOG(INFO) << "SIGRTMIN received!";
-  }
-  else
+  int rankNo = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rankNo);
+  LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
+    << " (" << signalNo << "): " << signalName;
+  if (signalNo != SIGRTMIN)
   {
     MPI_Abort(MPI_COMM_WORLD,0);
   }
 
-  // set back to normal in case program continues execution (for example after SIGINFO (Ctrl+T))
+  if (signalNo == SIGSEGV)
+  {
+    // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+    void *array[100];
+
+    // get void*'s for all entries on the stack
+    size_t size = backtrace(array, 100);
+
+    // print stack trace
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+  }
+
+  // set back to normal in case program continues execution
   Control::PerformanceMeasurement::setParameter("exit","normal");
 }
 
@@ -152,9 +164,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     signalHandler.sa_flags = 0;
 
     sigaction(SIGINT, &signalHandler, NULL);
-    sigaction(SIGKILL, &signalHandler, NULL);
+    //sigaction(SIGKILL, &signalHandler, NULL);
     sigaction(SIGTERM, &signalHandler, NULL);
-    sigaction(SIGABRT, &signalHandler, NULL);
+    //sigaction(SIGABRT, &signalHandler, NULL);
     sigaction(SIGFPE, &signalHandler, NULL);
     sigaction(SIGILL, &signalHandler, NULL);
     sigaction(SIGSEGV, &signalHandler, NULL);
@@ -401,7 +413,8 @@ DihuContext::~DihuContext()
       LOG(DEBUG) << "wait for MegaMol to finish";
 
       // wait for megamol to finish
-      megamolThread_->join();
+      if (megamolThread_)
+        megamolThread_->join();
 #endif
 
       LOG(DEBUG) << "MPI_Finalize";

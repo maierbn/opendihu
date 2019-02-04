@@ -27,7 +27,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
 
   if (binaryOutput_)
   {
-    VLOG(1) << "Paraview::writeCombinedValuesVector, values: " << values;
+    VLOG(1) << "Paraview::writeCombinedValuesVector, " << values.size() << " values: " << values;
     LOG(DEBUG) << "rankSubset: " << *this->rankSubset_;
 
     int localValuesSize = values.size() * sizeof(float);  // number of bytes
@@ -198,11 +198,11 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       writeBuffer = stringData;
     }
 
-    if (VLOG_IS_ON(1))
+    if (VLOG_IS_ON(3))
     {
-      VLOG(1) << " rank " << ownRankNo << ", values: ";
+      VLOG(3) << " rank " << ownRankNo << ", values: ";
       for (std::list<int32_t>::iterator iter=valuesVector.begin(); iter != valuesVector.end(); iter++)
-        VLOG(1) << *iter << " ";
+        VLOG(3) << *iter << " ";
     }
 
     // info << " (rank " << ownRankNo << ", values:";
@@ -244,7 +244,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     writeBuffer = Paraview::convertToAscii(values, fixedFormat_);
   }
 
-  VLOG(1) << "writeBuffer [" << writeBuffer << "]";
+  VLOG(2) << "writeBuffer [" << writeBuffer << "]";
 
   // writeBuffer = info.str() + writeBuffer;
 

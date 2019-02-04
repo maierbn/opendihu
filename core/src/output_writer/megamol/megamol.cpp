@@ -36,7 +36,7 @@ MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
 
 void MegaMol::notifyMegaMol()
 {
-  if (context_.partitionManager()->rankNoCommWorld() == 0)
+  if (context_.partitionManager()->rankNoCommWorld() == 0 && context_.zmqSocket())
   {
     std::stringstream message;
     //message << "return mmHelp()";

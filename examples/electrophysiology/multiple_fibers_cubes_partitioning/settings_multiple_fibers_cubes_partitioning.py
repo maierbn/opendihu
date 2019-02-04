@@ -1,7 +1,7 @@
 # multiple fibers, biceps
 #
 
-end_time = 10.0
+end_time = 1.0
 
 import numpy as np
 import matplotlib 
@@ -43,26 +43,19 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 #print("numpy path: ",np.__path__)
 
 # parse arguments
-if len(sys.argv) == 2:
-  n_processes_per_fiber = 1
-else:
-  try:
-    n_processes_per_fiber = (int)(sys.argv[0])
-  except:
-    n_processes_per_fiber = 1
-
 scenario_name = ""
-if len(sys.argv) <= 3:
-  scenario_name = ""
-else:
-  scenario_name = sys.argv[1]
+if len(sys.argv) > 2:
+  scenario_name = sys.argv[0]
+if len(sys.argv) > 3:
+  try:
+    n_subdomains_x = (int)(sys.argv[1])
+    n_subdomains_y = (int)(sys.argv[2])
+    n_subdomains_z = (int)(sys.argv[3])
+  except:
+    pass
 
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-
-if rank_no == 0:
-  print("n_processes_per_fiber: {}".format(n_processes_per_fiber))
-  print("scenario_name: {}".format(scenario_name))
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
@@ -251,14 +244,11 @@ if rank_no == 0:
     print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
 
 # compute partitioning
-n_subdomains_x = 2   # example values for 4 processes
-n_subdomains_y = 1
-n_subdomains_z = 2
-
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
-    print("Error! Number of ranks {} does not match given partitioning {} x {} x {} ".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-  
+    print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_subdomains_x*n_subdomains_y*n_subdomains_z))
+    quit()
+    
 n_subdomains_xy = n_subdomains_x * n_subdomains_y
 n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
 n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
@@ -320,7 +310,7 @@ with open(config_filename, "w") as f:
   f.write(config_file_contents)
 
 config = {  
-  "MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),
+  #"MegaMolArguments": "--configfile {} -p ../../input/adios_project.lua ".format(config_filename),
   "scenarioName": scenario_name,
   "Meshes": meshes,
   "Solvers": {
@@ -416,7 +406,7 @@ config = {
               },
             } for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))],
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
               {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "combineNInstances": n_subdomains_xy, "useFrontBackBuffer": False},
             ],
           },

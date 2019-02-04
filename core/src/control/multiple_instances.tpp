@@ -32,6 +32,19 @@ MultipleInstances(DihuContext context) :
   specificSettings_.getKeys(configKeys);
   LOG(DEBUG) << "initialize outputWriterManager_, keys: " << configKeys;
 
+  // parse log key
+  if (specificSettings_.hasKey("durationLogKey") || specificSettings_.hasKey("logKey"))
+  {
+    if (specificSettings_.hasKey("logKey"))
+    {
+      this->logKey_ = specificSettings_.getOptionString("logKey", "");
+    }
+    else
+    {
+      this->logKey_ = specificSettings_.getOptionString("durationLogKey", "");
+    }
+  }
+
   outputWriterManager_.initialize(context_, specificSettings_);
   
   //LOG(DEBUG) << "MultipleInstances constructor, settings: ";
@@ -193,6 +206,13 @@ MultipleInstances(DihuContext context) :
 
   nInstancesLocal_ = instancesLocal_.size();
 
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_n";
+    Control::PerformanceMeasurement::setParameter(logKey.str(), nInstancesLocal_);
+  }
+
   // clear rank subset for next created partitioning
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
@@ -201,11 +221,20 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
+  // start duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::start(this->logKey_);
+
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     instancesLocal_[i].advanceTimeSpan();
   }
+
+  // stop duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::stop(this->logKey_);
+
 
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
@@ -229,6 +258,13 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::start(logKey.str());
+  }
+
   LOG(TRACE) << "MultipleInstances::initialize()";
   for (int i = 0; i < nInstancesLocal_; i++)
   {
@@ -237,6 +273,13 @@ initialize()
   }
   
   data_.setInstancesData(instancesLocal_);
+
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::stop(logKey.str());
+  }
 
 // #ifdef HAVE_PAT
   // PAT_region_end(1);    // end region "initialization", id 1

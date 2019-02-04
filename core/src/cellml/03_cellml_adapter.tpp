@@ -42,6 +42,8 @@ initialize()
 {
   LOG(TRACE) << "CellmlAdapter<nStates_,FunctionSpaceType>::initialize";
 
+  Control::PerformanceMeasurement::start("init cellml");
+
   CellmlAdapterBase<nStates_,FunctionSpaceType>::initialize();
   
   // load rhs routine
@@ -49,6 +51,8 @@ initialize()
 
   this->initializeCallbackFunctions();
   
+  Control::PerformanceMeasurement::stop("init cellml");
+
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
   this->internalTimeStepNo_ = 0;

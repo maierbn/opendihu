@@ -80,11 +80,13 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   // compose header
   std::stringstream header;
-  header << "# timestamp;hostname;version;";
+  header << "# timestamp;hostname;version;nRanks;rankNo;";
 
   // write parameter names
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
     header << parameter.first << ";";
   }
 
@@ -108,10 +110,17 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   gethostname(hostname, MAXHOSTNAMELEN+1);
   data << std::string(hostname) << ";";
   data << DihuContext::versionText() << ";";
+  data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
 
   // write parameters
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
+
+    // remove newlines
+    StringUtility::replace(parameter.second, "\n", "");
+    StringUtility::replace(parameter.second, "\r", "");
     data << parameter.second << ";";
   }
 

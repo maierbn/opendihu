@@ -420,7 +420,7 @@ config = {
                 for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
             "OutputWriter" : [
               #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
-              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "combineNInstances": n_subdomains_xy},
+              {"format": "MegaMol", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "combineNInstances": n_subdomains_xy, "useFrontBackBuffer": False},
             ],
           },
         },

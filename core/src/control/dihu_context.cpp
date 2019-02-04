@@ -14,6 +14,9 @@
 #include <sys/types.h>  // getpid
 #include <unistd.h>     // getpid
 #include <omp.h>
+#include <csignal>
+#include <cstdlib>
+#include <cctype>
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -52,6 +55,26 @@ std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 int DihuContext::nRanksCommWorld_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
+
+void handleSignal(int signalNo)
+{
+  std::string signalName = strsignal(signalNo);
+  Control::PerformanceMeasurement::setParameter("exit_signal",signalNo);
+  Control::PerformanceMeasurement::setParameter("exit",signalName);
+  Control::PerformanceMeasurement::writeLogFile();
+
+  if (signalNo == SIGRTMIN)
+  {
+    LOG(INFO) << "SIGRTMIN received!";
+  }
+  else
+  {
+    MPI_Abort(MPI_COMM_WORLD,0);
+  }
+
+  // set back to normal in case program continues execution (for example after SIGINFO (Ctrl+T))
+  Control::PerformanceMeasurement::setParameter("exit","normal");
+}
 
 // copy-constructor
 DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_), rankSubset_(rhs.rankSubset_)
@@ -120,6 +143,24 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     {
       MPIUtility::gdbParallelDebuggingBarrier();
     }
+
+    // register signal handler functions on various signals. This enforces dumping of the log file
+    struct sigaction signalHandler;
+
+    signalHandler.sa_handler = handleSignal;
+    sigemptyset(&signalHandler.sa_mask);
+    signalHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &signalHandler, NULL);
+    sigaction(SIGKILL, &signalHandler, NULL);
+    sigaction(SIGTERM, &signalHandler, NULL);
+    sigaction(SIGABRT, &signalHandler, NULL);
+    sigaction(SIGFPE, &signalHandler, NULL);
+    sigaction(SIGILL, &signalHandler, NULL);
+    sigaction(SIGSEGV, &signalHandler, NULL);
+    sigaction(SIGXCPU, &signalHandler, NULL);
+    sigaction(SIGRTMIN, &signalHandler, NULL);
+    Control::PerformanceMeasurement::setParameter("exit","normal");
 
     // determine settings filename
     Control::settingsFileName = "settings.py";

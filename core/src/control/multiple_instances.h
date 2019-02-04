@@ -66,6 +66,7 @@ protected:
   int nInstancesLocal_;   ///< the number of local instances, i.e. the size of the instancesLocal_ vector
   
   std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   ///< the rank nos of all computed instances of this MultipleInstances object
+  std::string logKey_;   ///< the key under which the duration of all instances together is saved in the log
 
   Data data_;  ///< the data object
 };

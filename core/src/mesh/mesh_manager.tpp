@@ -51,9 +51,9 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(PythonConfig settings)
         logKey = meshConfiguration.getOptionString("logKey", "");
       }
 
-      Control::PerformanceMeasurement::setParameter(std::string("nDofs") + logKey, functionSpace->nDofsGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("nNodes") + logKey, functionSpace->nNodesGlobal());
-      Control::PerformanceMeasurement::setParameter(std::string("nElements") + logKey, functionSpace->nElementsGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nDofs") + logKey, functionSpace->nDofsGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nNodes") + logKey, functionSpace->nNodesGlobal());
+      Control::PerformanceMeasurement::setParameter(std::string("~nElements") + logKey, functionSpace->nElementsGlobal());
 
       return functionSpace;
     }

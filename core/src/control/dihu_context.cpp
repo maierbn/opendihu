@@ -74,6 +74,8 @@ void handleSignal(int signalNo)
 
   if (signalNo == SIGSEGV)
   {
+#ifndef NDEBUG
+#ifdef __GNUC__
     // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
     void *array[100];
 
@@ -82,6 +84,8 @@ void handleSignal(int signalNo)
 
     // print stack trace
     backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
+#endif
   }
 
   // set back to normal in case program continues execution

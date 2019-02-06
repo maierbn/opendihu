@@ -20,7 +20,20 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, Pyt
 {
   this->meshWidth_ = 0;
   // meshWidth will be initialized in initialize
+}
 
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig specificSettings) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, specificSettings)
+{
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent) :
+  FunctionSpaceDofsNodes<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(partitionManager, nElements, physicalExtent)
+{
 }
 
 template<int D,typename BasisFunctionType>

@@ -29,6 +29,13 @@ FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManag
 }
 
 template<int D,typename BasisFunctionType>
+FunctionSpaceDataUnstructured<D,BasisFunctionType>::
+FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig settings, bool noGeometryField) :
+  FunctionSpaceDataUnstructured<D,BasisFunctionType>::FunctionSpaceDataUnstructured(partitionManager, settings)
+{
+}
+
+template<int D,typename BasisFunctionType>
 void FunctionSpaceDataUnstructured<D,BasisFunctionType>::
 initialize()
 { 

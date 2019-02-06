@@ -104,7 +104,19 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name
   LOG(DEBUG) << "Create new mesh with type " << typeid(FunctionSpaceType).name() << " and name \"" <<name << "\".";
 
   // create mesh and initialize
-  std::shared_ptr<FunctionSpaceType> functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+  std::shared_ptr<FunctionSpaceType> functionSpace;
+
+  // check if node positions from file are available
+  if (nodePositionsFromFile_.find(name) != nodePositionsFromFile_.end())
+  {
+    std::vector<double> &nodePositions = nodePositionsFromFile_[name].data;
+    functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, nodePositions, std::forward<Args>(args)...);
+  }
+  else
+  {
+    // construct normally
+    functionSpace = std::make_shared<FunctionSpaceType>(this->partitionManager_, std::forward<Args>(args)...);
+  }
 
   functionSpace->setMeshName(name);
   functionSpace->initialize();

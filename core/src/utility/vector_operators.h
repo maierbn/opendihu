@@ -93,6 +93,18 @@ std::ostream &operator<<(std::ostream &stream, const std::map<T1,T2> &map);
 template<typename T>
 std::ostream &operator<<(std::ostream &stream, const std::set<T> &set);
 
+//! output operators for tuples or arbitrary type
+template <size_t index, typename... T>
+typename std::enable_if<(index >= sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple);
+
+template <size_t index, typename... T>
+typename std::enable_if<(index < sizeof...(T))>::type
+  getString(std::ostream &stream, const std::tuple<T...> &tuple);
+
+template <typename... T>
+std::ostream &operator<<(std::ostream& stream, const std::tuple<T...> &tuple);
+
 //! output operator for PETSc matrices
 //std::ostream &operator<<(std::ostream &stream, const Mat &mat);
 

@@ -82,6 +82,12 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   std::stringstream header;
   header << "# timestamp;hostname;version;nRanks;rankNo;";
 
+  // write measurement names
+  for (std::pair<std::string, Measurement> measurement : measurements_)
+  {
+    header << measurement.first << ";n;";
+  }
+
   // write parameter names
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
@@ -90,11 +96,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     header << parameter.first << ";";
   }
 
-  // write measurement names
-  for (std::pair<std::string, Measurement> measurement : measurements_)
-  {
-    header << measurement.first << ";n;";
-  }
   header << std::endl;
 
   // compose data
@@ -112,6 +113,13 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   data << DihuContext::versionText() << ";";
   data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
 
+  // write measurement values
+  for (std::pair<std::string, Measurement> measurement : measurements_)
+  {
+    data << measurement.second.totalDuration << ";"
+    << measurement.second.nTimeSpans << ";";
+  }
+
   // write parameters
   for (std::pair<std::string,std::string> parameter : parameters_)
   {
@@ -124,12 +132,6 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << parameter.second << ";";
   }
 
-  // write measurement values
-  for (std::pair<std::string, Measurement> measurement : measurements_)
-  {
-    data << measurement.second.totalDuration << ";"
-    << measurement.second.nTimeSpans << ";";
-  }
   data << std::endl;
 
   // check if header has to be added to file

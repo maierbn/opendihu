@@ -437,6 +437,7 @@ config = {
     }
   },
   "MultipleInstances": {
+    "logKey": "duration_subdomains_xy",
     "nInstances": n_subdomains_xy,
     "instances": 
     [{
@@ -451,7 +452,7 @@ config = {
 
         "Term1": {      # CellML
           "MultipleInstances": {
-            "logKey": "subdomains_z",
+            "logKey": "duration_subdomains_z",
             "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
             "instances": 
             [{

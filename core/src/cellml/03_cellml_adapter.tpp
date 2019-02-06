@@ -42,7 +42,7 @@ initialize()
 {
   LOG(TRACE) << "CellmlAdapter<nStates_,FunctionSpaceType>::initialize";
 
-  Control::PerformanceMeasurement::start("init cellml");
+  Control::PerformanceMeasurement::start("durationInitCellml");
 
   CellmlAdapterBase<nStates_,FunctionSpaceType>::initialize();
   
@@ -51,7 +51,7 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  Control::PerformanceMeasurement::stop("init cellml");
+  Control::PerformanceMeasurement::stop("durationInitCellml");
 
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);

@@ -175,6 +175,8 @@ void Manager::loadGeometryFromFile()
 
     LOG(DEBUG) << "number times that node positions for a mesh are given by a file: local: " << nTimesInFile << ", global: " << nTimesInFileGlobal;
 
+    LOG(INFO) << "Read from file \"" << openFileName << "\", " << nTimesInFileGlobal << " collective chunks.";
+
     // collectively open the file for reading
     MPI_File fileHandle;
     MPIUtility::handleReturnValue(MPI_File_open(mpiCommunicator, openFileName.c_str(),
@@ -182,6 +184,7 @@ void Manager::loadGeometryFromFile()
                                                 MPI_MODE_RDONLY,
                                                 MPI_INFO_NULL, &fileHandle), "MPI_File_open");
 
+    double progress = 0;
     // loop over node positions in file to be read
     int nNodePositionsRead = 0;
     for (std::map<std::string, NodePositionsFromFile>::iterator nodePositionsFromFileIter = nodePositionsFromFile_.begin();
@@ -194,6 +197,17 @@ void Manager::loadGeometryFromFile()
         // loop over chunks
         for (std::vector<std::pair<MPI_Offset,int>>::iterator chunksIter = nodePositions.chunks.begin(); chunksIter != nodePositions.chunks.end(); chunksIter++)
         {
+          double newProgress = (double)nNodePositionsRead / nTimesInFileGlobal;
+          if (int(newProgress*10) != int(progress*10))
+          {
+            progress = newProgress;
+            if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+            {
+              std::cout << "\b\b\b\b" << int(progress*100) << "%" << std::flush;
+            }
+          }
+          progress = newProgress;
+
           MPI_Offset offset = chunksIter->first;
           int nValues = chunksIter->second*3;
 
@@ -214,8 +228,23 @@ void Manager::loadGeometryFromFile()
     LOG(DEBUG) << "collectively read other node positions, only on other ranks (" << nTimesInFileGlobal-nNodePositionsRead << " remaining)";
     for(; nNodePositionsRead < nTimesInFileGlobal; nNodePositionsRead++)
     {
+      double newProgress = (double)nNodePositionsRead / nTimesInFileGlobal;
+      if (int(newProgress*10) != int(progress*10))
+      {
+        progress = newProgress;
+        if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+        {
+          std::cout << "\b\b\b\b" << int(progress*100) << "%" << std::flush;
+        }
+      }
+      progress = newProgress;
+
       std::vector<double> readBuffer(1);
       MPIUtility::handleReturnValue(MPI_File_read_at_all(fileHandle, 0, readBuffer.data(), 0, MPI_DOUBLE, MPI_STATUS_IGNORE), "MPI_Read_at_all");
+    }
+    if (DihuContext::partitionManager()->rankNoCommWorld() == 0)
+    {
+      std::cout << "\b\b\b\bdone." << std::endl;
     }
 
     MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");

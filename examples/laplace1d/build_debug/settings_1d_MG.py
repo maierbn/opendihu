@@ -14,7 +14,7 @@ config = {
   "disableMatrixPrinting": False,
   
   "Multigrid" : {
-      "numCycles" : 100,
+      "numCycles" :10,
       "Term1":{
           "FiniteElementMethod" : {
               "nElements": n,

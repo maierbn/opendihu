@@ -13,7 +13,7 @@ namespace Multigrid
 
 template<typename FiniteElement1, typename FiniteElement2>
 Multigrid<FiniteElement1, FiniteElement2>::Multigrid(DihuContext context) :
-finiteElement1_(context["Term1"]), finiteElement2_(context["Term2"]), initialized_(false),
+finiteElement1_(context["Multigrid"]["Term1"]), finiteElement2_(context["Multigrid"]["Term2"]), initialized_(false),
 numCycles_(100)
 { 
 

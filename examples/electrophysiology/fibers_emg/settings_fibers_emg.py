@@ -110,6 +110,11 @@ if rank_no == 0:
   print("firing_times_file:       {}".format(firing_times_file))
   print("********************************************************************************")
 
+n_subdomains_xy = n_subdomains_x * n_subdomains_y
+own_subdomain_coordinate_x = rank_no % n_subdomains_x
+own_subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
+own_subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
+
 #print("rank: {}/{}".format(rank_no,n_ranks))
 
 # set values for cellml model
@@ -295,7 +300,6 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_subdomains_x*n_subdomains_y*n_subdomains_z))
     quit()
   
-n_subdomains_xy = n_subdomains_x * n_subdomains_y
 n_fibers_per_subdomain_x = (int)(np.ceil(n_fibers_x / n_subdomains_x))
 n_fibers_per_subdomain_y = (int)(np.ceil(n_fibers_y / n_subdomains_y))
 n_points_per_subdomain_z = (int)(np.ceil(n_points_whole_fiber / n_subdomains_z))
@@ -344,10 +348,6 @@ def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
 # define 3D mesh 
 # loop over nodes
 node_positions_3d_mesh = []
-own_subdomain_coordinate_x = rank_no % n_subdomains_x
-own_subdomain_coordinate_y = (int)(rank_no / n_subdomains_x) % n_subdomains_y
-own_subdomain_coordinate_z = (int)(rank_no / n_subdomains_xy)
-
 z_point_index_start = own_subdomain_coordinate_z * n_points_per_subdomain_z
 z_point_index_end = z_point_index_start + n_points_in_subdomain_z(own_subdomain_coordinate_z)
 

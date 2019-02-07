@@ -122,6 +122,16 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
     kspType = KSPPREONLY;
     pcType = PCGAMG;
   }
+  else if (solverType == "jacobi")
+  {
+    kspType = KSPPREONLY;
+    pcType = PCJACOBI;
+  }
+  else if (solverType == "sor")
+  {
+    kspType = KSPPREONLY;
+    pcType = PCSOR;
+  }
 
   std::stringstream optionKey;
   optionKey << this->name_ << "_solverType";

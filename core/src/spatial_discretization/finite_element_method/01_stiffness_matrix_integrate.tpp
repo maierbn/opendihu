@@ -12,6 +12,8 @@
 namespace SpatialDiscretization
 {
 
+bool outputAssemble3DStiffnessMatrix_ = true;
+
 // 1D,2D,3D stiffness matrix of Deformable mesh
 template<typename FunctionSpaceType,typename QuadratureType,typename Term,typename Dummy1, typename Dummy2, typename Dummy3>
 void FiniteElementMethodMatrix<FunctionSpaceType,QuadratureType,Term,Dummy1,Dummy2,Dummy3>::
@@ -39,6 +41,14 @@ setStiffnessMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
   functionSpace->geometryField().setRepresentationGlobal();
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
+
+  bool outputAssemble3DStiffnessMatrixHere = false;
+  if (outputAssemble3DStiffnessMatrix_)
+  {
+    LOG(INFO) << "Compute stiffness matrix for 3D problem with " << functionSpace->nDofsGlobal() << " global dofs.";
+    outputAssemble3DStiffnessMatrix_ = false;
+    outputAssemble3DStiffnessMatrixHere = true;
+  }
 
   // initialize values to zero
   int cntr = 1;
@@ -78,10 +88,23 @@ setStiffnessMatrix()
   // allow switching between stiffnessMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
   stiffnessMatrix->assembly(MAT_FLUSH_ASSEMBLY);
   
+  double progress = 0;
+  element_no_t nElementsLocal = functionSpace->nElementsLocal();
+
   // fill entries in stiffness matrix
   // loop over elements
-  for (element_no_t elementNo = 0; elementNo < functionSpace->nElementsLocal(); elementNo++)
+  for (element_no_t elementNo = 0; elementNo < nElementsLocal; elementNo++)
   {
+    if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+    {
+      double newProgress = (double)elementNo / nElementsLocal;
+      if (int(newProgress*10) != int(progress*10))
+      {
+        std::cout << "\b\b\b\b" << int(newProgress*100) << "%" << std::flush;
+      }
+      progress = newProgress;
+    }
+
     // get indices of element-local dofs
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNo);
 
@@ -127,7 +150,18 @@ setStiffnessMatrix()
     }  // i
   }  // elementNo
 
+  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+  {
+    std::cout << "\b\b\b\bparallel assembly..." << std::flush;
+  }
+
   stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNo() == 0)
+  {
+    std::cout << std::string(100,'\b') << "done.                       " << std::endl;
+  }
+
 }
 
 }  // namespace

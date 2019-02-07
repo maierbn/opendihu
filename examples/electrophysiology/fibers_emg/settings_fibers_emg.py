@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import pickle
 import sys
 import struct
+import argparse
 
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
@@ -19,7 +20,7 @@ Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 1.  # cm
 innervation_zone_width = 0.  # cm
-diffusion_solver_type = "gmres"
+diffusion_solver_type = "cg"
 potential_flow_solver_type = "gmres"
 emg_solver_type = "cg"
 
@@ -64,21 +65,50 @@ sampling_stride_z = 3
 
 # parse arguments
 scenario_name = ""
-if len(sys.argv) > 2:
-  scenario_name = sys.argv[0]
-if len(sys.argv) > 3:
-  try:
-    n_subdomains_x = (int)(sys.argv[1])
-    n_subdomains_y = (int)(sys.argv[2])
-    n_subdomains_z = (int)(sys.argv[3])
-  except:
-    pass
-
-if len(sys.argv) > 4:
-  diffusion_solver_type = sys.argv[4]
-
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+
+# define command line arguments
+parser = argparse.ArgumentParser(description='fibers_emg')
+parser.add_argument('--scenario_name',            help='The name to identify this run in the log.', default=scenario_name)
+parser.add_argument('--n_subdomains', nargs=3,    type=int, help='Number of subdomains in x,y,z direction.')
+parser.add_argument('--n_subdomains_x', '-x',     type=int, help='Number of subdomains in x direction.', default=n_subdomains_x)
+parser.add_argument('--n_subdomains_y', '-y',     type=int, help='Number of subdomains in y direction.', default=n_subdomains_y)
+parser.add_argument('--n_subdomains_z', '-z',     type=int, help='Number of subdomains in z direction.', default=n_subdomains_z)
+parser.add_argument('--diffusion_solver_type',    help='The solver for the diffusion.', default=diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
+parser.add_argument('--potential_flow_solver_type', help='The solver for the potential flow (non-spd matrix).', default=potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
+parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
+parser.add_argument('--fiber_file',               help='The filename of the file that contains the fiber data.', default=fiber_file)
+parser.add_argument('--cellml_file',              help='The filename of the file that contains the cellml model.', default=cellml_file)
+parser.add_argument('--fiber_distribution_file',  help='The filename of the file that contains the MU firing times.', default=fiber_distribution_file)
+parser.add_argument('--firing_times_file',        help='The filename of the file that contains the cellml model.', default=firing_times_file)
+parser.add_argument('--end_time', '--tend', '-t', type=float, help='The end simulation time.', default=end_time)
+parser.add_argument('--output_timestep',          type=float, help='The timestep for writing outputs.', default=output_timestep)
+parser.add_argument('--dt_0D',                    type=float, help='The timestep for the 0D model.', default=dt_0D)
+parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
+parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
+parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
+ 
+# parse arguments and assign values to global variables
+args = parser.parse_args(args=sys.argv[:-2])
+globals().update(args.__dict__)
+if n_subdomains is not None:
+  n_subdomains_x = n_subdomains[0]
+  n_subdomains_y = n_subdomains[1]
+  n_subdomains_z = n_subdomains[2]
+  
+if rank_no == 0:
+  print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(scenario_name, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_ranks, end_time))
+  print("dt_0D:           {}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
+  print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
+  print("dt_3D:           {}, emg_solver_type:            {}".format(dt_3D, emg_solver_type))
+  print("dt_bidomain:     {}".format(dt_bidomain))
+  print("output_timestep: {}".format(output_timestep))
+  print("fiber_file:              {}".format(fiber_file))
+  print("cellml_file:             {}".format(cellml_file))
+  print("fiber_distribution_file: {}".format(fiber_distribution_file))
+  print("firing_times_file:       {}".format(firing_times_file))
+  print("********************************************************************************")
 
 #print("rank: {}/{}".format(rank_no,n_ranks))
 

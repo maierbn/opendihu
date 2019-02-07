@@ -372,8 +372,8 @@ computeApproximateXiForPoint(Vec3 point, element_no_t elementNo, std::array<doub
 {
   // This computes a fast approximation to xi, which can then be refined by a newton scheme
  
-  const int nDofsPerElement = FunctionSpaceBaseDim<3,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=8
-  std::array<Vec3, nDofsPerElement> geometryValues;
+  //const int nDofsPerElement = FunctionSpaceBaseDim<3,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=8
+  std::array<Vec3, 8> geometryValues;
   
   this->getElementGeometry(elementNo, geometryValues);
   

@@ -74,3 +74,5 @@ public:
 // include all other solution_vector_mapping partial specializations
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_finite_element_method_cellml.h"
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping_multidomain.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_vector.h"
+#include "operator_splitting/solution_vector_mapping/solution_vector_mapping_bidomain.h"

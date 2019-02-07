@@ -718,6 +718,54 @@ struct PythonUtility::convertFromPython<std::size_t>
   }
 };
 
+//partial specialization for long long which is also MPI_Offset
+template<>
+struct PythonUtility::convertFromPython<long long>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static long long get(PyObject *object, long long defaultValue)
+  {
+    if (object == NULL)
+      return defaultValue;
+
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    if (PyLong_Check(object))
+    {
+      long long valueLong = PyLong_AsLongLong(object);
+      return valueLong;
+    }
+    else if (PyFloat_Check(object))
+    {
+      double valueDouble = PyFloat_AsDouble(object);
+
+      if (double((long long)(valueDouble)) != valueDouble)      // if value is not e.g. 2.0
+      {
+        LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+      }
+
+      return (long long)(valueDouble);
+    }
+    else if (PyUnicode_Check(object))
+    {
+      std::string valueString = pyUnicodeToString(object);
+      return atoi(valueString.c_str());
+    }
+    else
+    {
+      LOG(WARNING) << "convertFromPython: object is no long long: " << object;
+    }
+    return defaultValue;
+  }
+
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible use trivial default value (0 or 0.0 or "")
+  static long long get(PyObject *object)
+  {
+    return convertFromPython<long long>::get(object, 0);
+  }
+};
+
 //partial specialization for PyObject *
 template<>
 struct PythonUtility::convertFromPython<PyObject *>

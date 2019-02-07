@@ -87,7 +87,7 @@ void Manager::storePreconfiguredMeshes()
                       nodePositionsFromFile_[key] = NodePositionsFromFile();
                       nodePositionsFromFile_[key].filename = filename;
 
-                      nodePositionsFromFile_[key].chunks = PythonUtility::convertFromPython<std::vector<std::pair<int,int>>>::get(item);
+                      nodePositionsFromFile_[key].chunks = PythonUtility::convertFromPython<std::vector<std::pair<MPI_Offset,int>>>::get(item);
                     }
                     else
                     {
@@ -192,9 +192,9 @@ void Manager::loadGeometryFromFile()
       if (filename == openFileName)
       {
         // loop over chunks
-        for (std::vector<std::pair<int,int>>::iterator chunksIter = nodePositions.chunks.begin(); chunksIter != nodePositions.chunks.end(); chunksIter++)
+        for (std::vector<std::pair<MPI_Offset,int>>::iterator chunksIter = nodePositions.chunks.begin(); chunksIter != nodePositions.chunks.end(); chunksIter++)
         {
-          int offset = chunksIter->first;
+          MPI_Offset offset = chunksIter->first;
           int nValues = chunksIter->second*3;
 
           int oldSize = nodePositions.data.size();

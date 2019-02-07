@@ -66,7 +66,7 @@ private:
   struct NodePositionsFromFile
   {
     std::string filename;            ///< filename of the file to read
-    std::vector<std::pair<int,int>> chunks;   ///< pairs of (offset, number of values), where each value corresponds to 3 double values (position x,y,z) in data
+    std::vector<std::pair<MPI_Offset,int>> chunks;   ///< pairs of (offset, number of values), where each value corresponds to 3 double values (position x,y,z) in data
     std::vector<double> data;      ///< the values of the node positions
   };
 

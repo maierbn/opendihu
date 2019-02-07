@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 15.0     # end time for the simulation
+end_time = 150.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -20,7 +20,7 @@ solver_type = "gmres"   # solver for the linear system
 stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
-dt_3D = 1                         # overall timestep width of splitting
+dt_3D = 0.1                         # overall timestep width of splitting
 output_timestep = 1e0            # timestep for output files
 
 # input files
@@ -172,19 +172,19 @@ config = {
         "timeStepWidth": dt_3D,  # 1e-1
         "logTimeStepWidthAsKey": "dt_3D",
         "durationLogKey": "duration_total",
-        "timeStepOutputInterval" : 1000,
+        "timeStepOutputInterval" : 1,
         "endTime": end_time,
 
         "Term1": {      # CellML
           "LoadBalancing": {
-            "HeunAdaptiv" : {
+            "Heun" : {
               "timeStepWidth": dt_0D,  # 5e-5
               "maxTimeStepWidth": 0.1,
-              "tolerance": 0.1,
+              "tolerance": 0.001,
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",
               "initialValues": [],
-              "timeStepOutputInterval": 1e4,
+              "timeStepOutputInterval": 1,
               "inputMeshIsGlobal": True,
               "dirichletBoundaryConditions": {},
                 

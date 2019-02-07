@@ -12,11 +12,16 @@ template<typename DiscretizableInTime>
 HeunAdaptiv<DiscretizableInTime>::HeunAdaptiv(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "HeunAdaptiv")
 {
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);  // create data object for heun
+  // create data object for heun
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);
 
-  max_timeStepWidth_ = this->specificSettings_.getOptionDouble("maxTimeStepWidth", 0.1, PythonUtility::Positive); //read maximal timeStepWidth
+  // read maximal timeStepWidth from settings
+  max_timeStepWidth_ = this->specificSettings_.getOptionDouble("max_timeStepWidth", 0.1, PythonUtility::Positive);
 
-  tolerance_ = this->specificSettings_.getOptionDouble("tolerance", 0.1, PythonUtility::Positive); //read allowed tolerance
+  //read allowed tolerance from settings
+  tolerance_ = this->specificSettings_.getOptionDouble("tolerance", 0.1, PythonUtility::Positive);
+
+  // backup time step width, initialized as -1 and less then timespan/2
   savedTimeStepWidth_ = -1;
 }
 
@@ -28,17 +33,16 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
 
-  // compute timestep width
+  // compute timeSpan of current step
   double timeSpan = this->endTime_ - this->startTime_;
 
-  //--------------------------------------------------------------------------------------------------------------------
   // Create local variables
   double alpha = 0.0;
   double estimator = 0.0;
   PetscReal vecnorm;
-  //--------------------------------------------------------------------------------------------------------------------
 
-  LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+  // Log info
+  LOG(DEBUG) << "HeunAdaptiv::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
@@ -74,127 +78,124 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   VecCopy(increment, temp_increment_1_2);
   VecCopy(intermediateIncrement, temp_increment_2);
 
-  if (this->savedTimeStepWidth_ > 0)
+  // Check for savedTimeStepWidth
+  if (savedTimeStepWidth_ > 0)
   {
-    this->timeStepWidth_ = std::min(this->savedTimeStepWidth_, timeSpan*0.5);
+    this->timeStepWidth_ = std::min(savedTimeStepWidth_, timeSpan*0.5);
+    LOG(DEBUG) << "SavedTimeStepWidth loaded and timeStepWidth set to:  " << this->timeStepWidth_;
   }
 
-  // loop over time steps
+  // counting time steps in one loop
+  int timeStepNo = 0;
+
+  // calculate current time
   double currentTime = this->startTime_;
+  LOG(DEBUG) << "New timeSpan started. Current time: " << currentTime;
+
+  // loop over time steps
   for(double time = 0.0; time < timeSpan;)
   {
 
-    LOG(DEBUG) << "time: " << time << ", timeStepWidth: " << this->timeStepWidth_;
+    LOG(DEBUG) << "time: " << time << "/"<<timeSpan<<", timeStepWidth: " << this->timeStepWidth_ << ", time remaining: " << timeSpan - time;
 
-    int timeStepNo = 0;
-    bool timeSteppingFinished = false;
-    while (true)
-    {
-      VLOG(1) << "starting from solution: " << this->data_->solution();
+    //Loop till next solution is found
+    while(true){
 
-      // Copy current solution in temporal vectors
-      VecCopy(solution, temp_solution_normal);
-      VecCopy(solution, temp_solution_tilde);
-      VecCopy(solution, temp_solution_tilde_intermediate);
+        // Copy current solution in temporal vectors
+        VecCopy(solution, temp_solution_normal);
+        VecCopy(solution, temp_solution_tilde);
+        VecCopy(solution, temp_solution_tilde_intermediate);
 
-      //---- Calculate next solution like always and store in temporary vector
-      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      temp_solution_normal, temp_increment_1, timeStepNo, currentTime);
+        VLOG(1) << "starting from solution: " << this->data_->solution();
 
-      VecAXPY(temp_solution_normal, this->timeStepWidth_, temp_increment_1);
+        //---- Calculate next solution like always and store in temporary vector
+        this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+        temp_solution_normal, temp_increment_1, timeStepNo, currentTime);
 
-      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      temp_solution_normal, temp_increment_2, timeStepNo + 1, currentTime + this->timeStepWidth_);
+        VecAXPY(temp_solution_normal, this->timeStepWidth_, temp_increment_1);
 
-      VecAXPY(temp_increment_2, -1.0, temp_increment_1);
+        this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+        temp_solution_normal, temp_increment_2, timeStepNo + 1, currentTime + this->timeStepWidth_);
 
-      VecAXPY(temp_solution_normal, 0.5*this->timeStepWidth_, temp_increment_2);
+        VecAXPY(temp_increment_2, -1.0, temp_increment_1);
 
-      //---- Now calculate x_tilde. Use previous values as good as possible
+        VecAXPY(temp_solution_normal, 0.5*this->timeStepWidth_, temp_increment_2);
 
-      VecAXPY(temp_increment_2, 1.0, temp_increment_1);
+        //---- Now calculate x_tilde. Use previous values as good as possible
+        VecAXPY(temp_increment_2, 1.0, temp_increment_1);
 
-      VecAXPY(temp_solution_tilde_intermediate, 0.5 * this->timeStepWidth_, temp_increment_1);
+        VecAXPY(temp_solution_tilde_intermediate, 0.5 * this->timeStepWidth_, temp_increment_1);
 
-      this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
-      temp_solution_tilde_intermediate, temp_increment_1_2, timeStepNo+1, currentTime + 0.5 * this->timeStepWidth_);
+        this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
+        temp_solution_tilde_intermediate, temp_increment_1_2, timeStepNo+1, currentTime + 0.5 * this->timeStepWidth_);
 
-      VecAXPY(temp_increment_1, 1.0, temp_increment_1_2);
+        VecAXPY(temp_increment_1, 1.0, temp_increment_1_2);
+        VecAXPY(temp_increment_2, 1.0, temp_increment_1_2);
 
-      VecAXPY(temp_increment_2, 1.0, temp_increment_1_2);
+        VecScale(temp_increment_1, 0.5);
 
-      VecScale(temp_increment_1, 0.5);
+        VecScale(temp_increment_2, 0.5);
 
-      VecScale(temp_increment_2, 0.5);
+        VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_1);
 
-      VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_1);
+        VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_2);
 
-      VecAXPY(temp_solution_tilde, 0.5*this->timeStepWidth_, temp_increment_2);
+        //Calculate estimator based on current values
+        PetscBool flag;
+        VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+        if (!flag){
+            VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
+            VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
+            estimator = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
+        }else{
+            estimator = this->timeStepWidth_;
+            LOG(ERROR) << "Vecs are equal!";
+        }
 
-      //Calculate estimator based on current values
-      PetscBool flag;
-      VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
-      if (!flag){
-          VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-          VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
-          estimator = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
-      } else{
-          estimator = this->timeStepWidth_;
-          LOG(ERROR) << "Vecs are equal!";
-      }
-      //std::cout<<estimator<<"\n";
-      //Calculate alpha
-      alpha = pow((tolerance_/estimator), (1.0/3.0));
-      LOG(DEBUG) << "alpha=" << alpha;
+        //Calculate alpha
+        alpha = pow((tolerance_/estimator), (1.0/3.0));
+        LOG(DEBUG) << "alpha=" << alpha << ", estimator: " << estimator << ", tolerance: " << tolerance_;
 
-      //Fallunterscheidung
-      if (estimator <= tolerance_){
+        //Fallunterscheidung
+        if (estimator <= tolerance_){
 
-          // Take already calculated value with normal timestep
-          VecCopy(temp_solution_normal, solution);
+            // Take already calculated value with normal timestep
+            VecCopy(temp_solution_normal, solution);
 
-          // apply the prescribed boundary condition values
-          this->applyBoundaryConditions();
+            // apply the prescribed boundary condition values
+            this->applyBoundaryConditions();
 
-          VLOG(1) << *this->data_->solution();
+            VLOG(1) << *this->data_->solution();
 
-          // advance simulation time
-          timeStepNo++;
-          time = time + this->timeStepWidth_;
-          LOG(DEBUG) << "new time: " << time;
+            // advance simulation time
+            timeStepNo++;
+            time = time + this->timeStepWidth_;
+            LOG(DEBUG) << "new time: " << time;
 
-          if (timeSteppingFinished)
-          {
-            LOG(DEBUG) << "break time stepping because timeSpan is reached";
+            // Adjust timeStepWidth based on alpha
+            //this->timeStepWidth_ = this->timeStepWidth_*alpha;
+            this->timeStepWidth_ = this->timeStepWidth_*2.0;
+
+            currentTime = this->startTime_ + time;
+            LOG(DEBUG) << "Solution accepted. Next timeStepWidth: " << this->timeStepWidth_;
+
+            if ((timeSpan - time) < this->timeStepWidth_)
+            {
+                if ((timeSpan - time) > 0)
+                {
+                    this->savedTimeStepWidth_ = this->timeStepWidth_;
+                    this->timeStepWidth_ = timeSpan - time;
+                    LOG(DEBUG) << "Remaining time to small for timeStepWidth. Setting timestepwidth to " << this->timeStepWidth_;
+                }
+            }
             break;
-          }
 
-          // Adjust timeStepWidth based on alpha
-          //this->timeStepWidth_ = this->timeStepWidth_*alpha;
-          this->timeStepWidth_ = this->timeStepWidth_*2.0;
-
-          currentTime = this->startTime_ + time;
-          LOG(DEBUG) << "estimator <= tolerance: " << estimator << ", set timeStepWidth to " << this->timeStepWidth_;
-
-      }
-      else
-      {
-          // Reject solution and repeat loop with adjusted timeStepWidth
-          this->timeStepWidth_ = this->timeStepWidth_*0.5;
-          timeSteppingFinished = false;
-
-          LOG(DEBUG) << "estimator > tolerance: " << estimator << ", set timeStepWidth to " << this->timeStepWidth_;
-      }
-
-      if (this->timeStepWidth_ > timeSpan - time)
-      {
-        this->savedTimeStepWidth_ = this->timeStepWidth_;
-        this->timeStepWidth_ = timeSpan - time;
-        LOG(DEBUG) << "adjust timeStepWitdh to " << this->timeStepWidth_ << ", left in time span: " << timeSpan - time;
-
-        timeSteppingFinished = true;
-      }
-
+        } else {
+            // Reject solution and repeat loop with adjusted timeStepWidth
+            //this->timeStepWidth_ = this->timeStepWidth_*alpha;
+            this->timeStepWidth_ = this->timeStepWidth_*0.5;
+            LOG(DEBUG) << "Solution rejected. Next timeStepWidth " << this->timeStepWidth_;
+        }
     }
 
     // stop duration measurement
@@ -213,8 +214,6 @@ void HeunAdaptiv<DiscretizableInTime>::advanceTimeSpan()
   this->data_->solution()->restoreValuesContiguous();
   this->data_->increment()->restoreValuesContiguous();
   dataHeun->intermediateIncrement()->restoreValuesContiguous();
-
-  LOG(DEBUG) << "final estimator <= tolerance: " << estimator;
 
   // stop duration measurement
   if (this->durationLogKey_ != "")

@@ -114,6 +114,7 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
 env['CC'] = env['cc']
+env['cmake'] = 'cmake'
 
 # Create configuration environment, passing the set of custom tests.
 sconf = env.Configure(custom_tests=sconsconfig.custom_tests)

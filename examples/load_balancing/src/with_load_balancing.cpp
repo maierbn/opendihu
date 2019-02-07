@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     OperatorSplitting::Strang<
       Control::LoadBalancing
       <
-        TimeSteppingScheme::HeunAdaptiv<
+        TimeSteppingScheme::Heun<
           CellmlAdapter<
             4,   // 57 for Hodgkin-Huxley
             FunctionSpace::FunctionSpace<

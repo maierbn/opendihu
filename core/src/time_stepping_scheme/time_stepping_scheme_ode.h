@@ -38,10 +38,13 @@ namespace TimeSteppingScheme
     
     //! get the data that will be transferred in the operator splitting to the other term of the splitting
     //! the transfer is done by the solution_vector_mapping class
-    TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+    TransferableSolutionDataType getSolutionForTransfer();
     
     //! return the data object
     Data &data();
+    
+    //! output the given data for debugging
+    virtual std::string getString(TransferableSolutionDataType &data);
     
     //! initialize discretizableInTime
     virtual void initialize();

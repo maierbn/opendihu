@@ -61,8 +61,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 collectMeshProperties(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables,
                            std::map<std::string,PolyDataPropertiesForMesh> &meshProperties);
 
-};  //namespace ParaviewLoopOverTuple
+}  // namespace ParaviewLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/paraview/loop_collect_mesh_properties.tpp"

@@ -70,4 +70,4 @@ void Manager::storePreconfiguredSolvers()
   }
 }
 
-};   // namespace
+}  // namespace

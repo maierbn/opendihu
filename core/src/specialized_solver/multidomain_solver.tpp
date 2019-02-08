@@ -1,10 +1,10 @@
-#include "time_stepping_scheme/multidomain_solver.h"
+#include "specialized_solver/multidomain_solver.h"
 
 #include <Python.h>  // has to be the first included header
 
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
-#include "data_management/time_stepping/multidomain.h"
+#include "data_management/specialized_solver/multidomain.h"
 
 //#define MONODOMAIN
 
@@ -463,14 +463,21 @@ knowsMeshType()
   return true;
 }
 
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+data()
+{
+  return dataMultidomain_;
+}
+
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the solution_vector_mapping class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
 MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getSolutionForTransferInOperatorSplitting()
+getSolutionForTransfer()
 {
-  LOG(DEBUG) << "getSolutionForTransferInOperatorSplitting, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
+  LOG(DEBUG) << "getSolutionForTransfer, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
   return std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>>(
     this->subvectorsSolution_, this->dataMultidomain_.transmembranePotential());

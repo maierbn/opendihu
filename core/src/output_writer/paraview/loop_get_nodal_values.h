@@ -25,7 +25,7 @@ namespace ParaviewLoopOverTuple
 template<typename OutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i == std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<std::vector<double>> &values
+                   std::map<std::string,std::vector<double>> &values
 )
 {}
 
@@ -35,31 +35,31 @@ loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std:
 template<typename OutputFieldVariablesType, int i=0>
 inline typename std::enable_if<i < std::tuple_size<OutputFieldVariablesType>::value, void>::type
 loopGetNodalValues(const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<std::vector<double>> &values);
+                   std::map<std::string,std::vector<double>> &values);
 
 /** Loop body for a vector element
  */
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
 getNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values);
+               std::map<std::string,std::vector<double>> &values);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename OutputFieldVariablesType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
 getNodalValues(VectorType currentFieldVariableVector, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values);
+               std::map<std::string,std::vector<double>> &values);
 
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename OutputFieldVariablesType>
 typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
 getNodalValues(CurrentFieldVariableType currentFieldVariable, const OutputFieldVariablesType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<std::vector<double>> &values);
+               std::map<std::string,std::vector<double>> &values);
 
-};  //namespace ParaviewLoopOverTuple
+}  // namespace ParaviewLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/paraview/loop_get_nodal_values.tpp"

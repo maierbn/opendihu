@@ -115,7 +115,8 @@ namespace ModelOrderReduction
         Vec mat_row_vec;
         ierr=VecDuplicate(x,&mat_row_vec); CHKERRV(ierr);
         
-        PetscScalar val[mat_sz_1];
+        PetscScalar *val;
+        PetscMalloc1(mat_sz_1,&val);
           
         for(int i=0; i<mat_sz_1; i++)
         {
@@ -177,7 +178,8 @@ namespace ModelOrderReduction
       Vec mat_row_vec;
       ierr=VecDuplicate(x,&mat_row_vec); CHKERRV(ierr);
       
-      PetscScalar val[vec_sz];
+      PetscScalar *val;
+      PetscMalloc1(vec_sz,&val);
       
       for(int i=0; i<vec_sz; i++) // not all rows of the mat (basis) would be multiplied because size of y (full-order solution) could be smaller than rows of mat.
       {

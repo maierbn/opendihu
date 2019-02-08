@@ -20,6 +20,7 @@ template<typename FunctionSpaceType,int nComponents>
 TimeSteppingHeun<FunctionSpaceType,nComponents>::
 TimeSteppingHeun(DihuContext context) : TimeStepping<FunctionSpaceType,nComponents>::TimeStepping(context)
 {
+  this->debuggingName_ = "Heun";
 }
 
 template<typename FunctionSpaceType,int nComponents>

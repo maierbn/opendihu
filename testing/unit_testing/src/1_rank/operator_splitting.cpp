@@ -43,7 +43,7 @@ config = {
   "Meshes": {
     "MeshFibre": {
       "nElements": nElements,
-      "physicalExtend": 5.0,
+      "physicalExtent": 5.0,
     },
   },
   "GodunovSplitting": {
@@ -83,7 +83,7 @@ config = {
         "timeStepOutputInterval": 1e4,
         "FiniteElementMethod" : {
           #"nElements": 0,
-          "physicalExtend": 1.0,
+          "physicalExtent": 1.0,
           "relativeTolerance": 1e-15,
           "meshName": "MeshFibre",
           "prefactor": Conductivity/(Am*Cm),
@@ -149,7 +149,7 @@ config = {
   "Meshes": {
     "MeshFibre": {
       "nElements": nElements,
-      "physicalExtend": 5.0,
+      "physicalExtent": 5.0,
     },
   },
   "Solvers": {
@@ -194,7 +194,7 @@ config = {
         "timeStepOutputInterval": 1e4,
         "FiniteElementMethod" : {
           #"nElements": 0,
-          "physicalExtend": 1.0,
+          "physicalExtent": 1.0,
           "meshName": "MeshFibre",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "linearSolver",

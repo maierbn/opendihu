@@ -70,8 +70,8 @@ namespace ModelOrderReduction
   void TimeSteppingSchemeOdeReduced<TimeSteppingType>::setInitialValues()
   {  
     
-    Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();
-    Vec &redSolution= this->data().solution()->getValuesContiguous();
+    Vec &solution = this->fullTimestepping_.data().solution()->valuesGlobal();
+    Vec &redSolution= this->data().solution()->valuesGlobal();
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
     
     PetscInt mat_sz_1, mat_sz_2;

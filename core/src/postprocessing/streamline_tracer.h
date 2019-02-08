@@ -56,6 +56,6 @@ protected:
   std::string csvFilenameBeforePostprocessing_;      ///< a csv output filename to write the node positions of the streamlines to (before postprocessing)
 };
 
-};  // namespace
+} // namespace
 
 #include "postprocessing/streamline_tracer.tpp"

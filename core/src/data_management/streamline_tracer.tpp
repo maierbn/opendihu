@@ -57,9 +57,9 @@ createPetscObjects()
 
 template<typename FunctionSpaceType,typename BaseDataType>
 void StreamlineTracer<FunctionSpaceType,BaseDataType>::
-createfiberMesh(const std::vector<Vec3> &nodePositions)
+createFiberMesh(const std::vector<Vec3> &nodePositions)
 {
-  std::shared_ptr<FunctionSpacefiber> meshPtr;
+  std::shared_ptr<FunctionSpaceFiber> meshPtr;
  
   // create name for fiber mesh 
   std::stringstream name;
@@ -71,10 +71,11 @@ createfiberMesh(const std::vector<Vec3> &nodePositions)
   std::array<element_no_t,1> nElementsPerCoordinateDirection{nElements}; 
   
   // create mesh by meshManager
-  meshPtr = this->context_.meshManager()->template createFunctionSpace<FunctionSpacefiber>(name.str(), nodePositions, nElementsPerCoordinateDirection);
+  std::array<int,1> nRanks({1});  // this is completely serial
+  meshPtr = this->context_.meshManager()->template createFunctionSpace<FunctionSpaceFiber>(name.str(), nodePositions, nElementsPerCoordinateDirection, nRanks);
   
   // get geometry field 
-  std::shared_ptr<FieldVariablefiberGeometry> geometryField = std::make_shared<FieldVariablefiberGeometry>(meshPtr->geometryField());
+  std::shared_ptr<FieldVariableFiberGeometry> geometryField = std::make_shared<FieldVariableFiberGeometry>(meshPtr->geometryField());
   
   // add geometry field
   this->fiberGeometry_.push_back(geometryField);
@@ -126,7 +127,7 @@ getOutputFieldVariables()
 {
   return std::tuple_cat(baseData_->getOutputFieldVariables(),
                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(gradient_),
-                        std::tuple<std::vector<std::shared_ptr<FieldVariablefiberGeometry>>>(fiberGeometry_)
+                        std::tuple<std::vector<std::shared_ptr<FieldVariableFiberGeometry>>>(fiberGeometry_)
                        );
 }
 

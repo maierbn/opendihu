@@ -68,9 +68,9 @@ namespace TimeSteppingScheme
   
   template<typename FunctionSpaceType, int nComponents>
   typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-  getSolutionForTransferInOperatorSplitting()
+  getSolutionForTransfer()
   {
-    return data_->getSolutionForTransferInOperatorSplitting();
+    return data_->getSolutionForTransfer();
   }
   
   template<typename FunctionSpaceType, int nComponents>
@@ -111,6 +111,15 @@ namespace TimeSteppingScheme
     // do simulations
     this->advanceTimeSpan();
   }
+  
+  //! output the given data for debugging
+  template<typename FunctionSpaceType, int nComponents>
+  std::string TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
+  getString(typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::TransferableSolutionDataType &data)
+  {
+    return data_->getString(data);
+  }
+  
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename DiscretizableInTimeType>
@@ -241,6 +250,7 @@ initialize()
   {
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
+  VLOG(1) << "initial solution vector: " << *this->data_->solution();
   
   this->data_->print();
   
@@ -276,6 +286,5 @@ knowsMeshType()
   return this->discretizableInTime_.knowsMeshType();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 } // namespace

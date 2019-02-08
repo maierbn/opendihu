@@ -82,7 +82,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   int nStatesInput, nRates;
   ierr = VecGetSize(input, &nStatesInput); CHKERRV(ierr);
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
+
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+
   if (nStatesInput != nStates_*this->nInstances_)
   {
     LOG(ERROR) << "nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;

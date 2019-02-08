@@ -137,4 +137,4 @@ std::shared_ptr<KSP> Linear::ksp()
   return ksp_;
 }
 
-};   //namespace
+}   //namespace

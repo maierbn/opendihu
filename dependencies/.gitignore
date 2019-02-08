@@ -23,3 +23,7 @@ svgpath
 bison
 flex
 mpi
+mpi_debug
+pythonpackages
+megamol
+adios

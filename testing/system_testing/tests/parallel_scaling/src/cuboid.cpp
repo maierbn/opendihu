@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
           >
         >  
       >,
-      TimeSteppingScheme::ImplicitEuler<
+      TimeSteppingScheme::CrankNicolson<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredDeformableOfDimension<1>,
           BasisFunction::LagrangeOfOrder<1>,

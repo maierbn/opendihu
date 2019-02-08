@@ -200,7 +200,7 @@ public:
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
   int neighbourRank(Mesh::face_t face);
 
-  //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction
+  //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);
 
 protected:
@@ -213,6 +213,9 @@ protected:
 
   //! initialize the value of nDofsLocalWithoutGhosts
   void setNDofsLocalWithoutGhosts();
+
+  //! initialize the localSizesOnPartitions_ array from localSizesOnPartitions_
+  void setLocalSizesOnPartitions();
 
   //! create the DM object for the node partitioning, such that is follows the element partitioning
   void createDmElements();
@@ -240,7 +243,7 @@ protected:
   std::array<int,MeshType::dim()> nRanks_;    ///<  number of ranks in each coordinate direction that decompose the total domain
   std::array<int,MeshType::dim()> ownRankPartitioningIndex_;   ///< the index in terms of partitions of the own partition
 
-  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks_;  ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnRanks_[0] is (width partition #0, width partition #1, ...)
+  std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnPartitions_;  ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
 
   std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;   ///< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
   

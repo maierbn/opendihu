@@ -236,4 +236,5 @@ bool ElementToDofMapping::operator==(const ElementToDofMapping &rhs)
   }
   return true;
 }
-};
+
+}  // namespace

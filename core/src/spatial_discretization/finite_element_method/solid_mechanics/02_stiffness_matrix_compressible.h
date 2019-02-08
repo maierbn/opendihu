@@ -60,6 +60,6 @@ private:
 
 };
 */
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_compressible.tpp"

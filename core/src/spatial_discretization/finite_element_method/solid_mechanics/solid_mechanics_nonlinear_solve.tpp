@@ -54,7 +54,7 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec u, Vec f, void *context)
   //object->writeOutput();
 
   return 0;
-};
+}
 
 /**
  * Evaluates Jacobian matrix
@@ -87,7 +87,7 @@ PetscErrorCode jacobianFunctionAnalytic(SNES snes, Vec x, Mat jac, Mat b, void *
 
   object->writeOutput();
   return 0;
-};
+}
 
 
 template<typename T>
@@ -104,7 +104,7 @@ PetscErrorCode jacobianFunctionFiniteDifferences(SNES snes, Vec x, Mat jac, Mat 
 
   object->writeOutput();
   return 0;
-};
+}
 
 
 template<typename T>
@@ -128,7 +128,7 @@ PetscErrorCode jacobianFunctionCombined(SNES snes, Vec x, Mat jac, Mat b, void *
   LOG(INFO) << "terminate in jacobianFunctionCombined";
   exit(0);
   return 0;
-};
+}
 
 /**
  * Monitor convergence of nonlinear solver
@@ -153,7 +153,7 @@ PetscErrorCode monitorFunction(SNES snes, PetscInt its, PetscReal norm, void *mc
   }
 
   return 0;
-};
+}
 
 template<typename FunctionSpaceType, typename QuadratureType, typename Term>
 void SolidMechanicsNonlinearSolve<FunctionSpaceType,QuadratureType,Term>::
@@ -581,4 +581,4 @@ updateGeometryActual()
   }
 }
 
-};
+}  // namespace

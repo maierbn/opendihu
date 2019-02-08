@@ -25,4 +25,4 @@ bool Solver::configEquals(PythonConfig config)
 
 
 
-};  // namespace
+} // namespace

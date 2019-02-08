@@ -8,7 +8,8 @@ namespace Mesh
 {
 
 Manager::Manager(PythonConfig specificSettings) :
-  partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
+  MappingBetweenMeshesManager::MappingBetweenMeshesManager(specificSettings),
+  partitionManager_(nullptr), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
@@ -99,4 +100,4 @@ bool Manager::hasFunctionSpace(std::string meshName)
   return functionSpaces_.find(meshName) != functionSpaces_.end();
 }
 
-};  // namespace
+} // namespace

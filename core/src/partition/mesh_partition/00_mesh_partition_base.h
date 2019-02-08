@@ -25,7 +25,10 @@ public:
 
   //! own rank id in the current communcator
   int ownRankNo();
-  
+
+  //! own rank id in the current communcator
+  std::shared_ptr<RankSubset> rankSubset() const;
+
   //! number of entries in the current partition (this usually refers to the elements)
   virtual element_no_t nElementsLocal() const = 0;
   

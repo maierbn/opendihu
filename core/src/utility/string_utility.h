@@ -36,6 +36,6 @@ std::string multiply(std::string str);
 //! extract the basename of a file, i.e. remove leading path and trailing .*
 std::string extractBasename(std::string str);
 
-};  // namespace
+} // namespace
 
 #include "utility/string_utility.tpp"

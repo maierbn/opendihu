@@ -50,6 +50,6 @@ protected:
   PythonConfig specificSettings_;    ///< the python dict containing settings relevant to this object
 };
 
-};  // namespace
+} // namespace
 
 #include "output_writer/generic.tpp"

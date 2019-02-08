@@ -5,7 +5,7 @@
 
 import sys
 
-end_time = 20.0   # [ms] end time of simulation
+end_time = 20   # [ms] end time of simulation
 n_elements = 100
 
 # global parameters
@@ -22,7 +22,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-output_timestep = 1e-1             # timestep for output files
+output_timestep = 1e0             # timestep for output files
 
 # input files
 #cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
@@ -176,7 +176,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
 config = {
   "scenarioName": scenario_name,
   "Meshes": {
-    "MeshFibre": {
+    "MeshFiber": {
       "nElements": n_elements,
       "physicalExtent": n_elements/10.,
       "logKey": "Fiber",
@@ -227,7 +227,7 @@ config = {
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "meshName": "MeshFibre",
+          "meshName": "MeshFiber",
           "prefactor": 1.0,
         },
         
@@ -247,7 +247,7 @@ config = {
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
         "FiniteElementMethod" : {
-          "meshName": "MeshFibre",
+          "meshName": "MeshFiber",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "implicitSolver",
         },
@@ -296,7 +296,7 @@ config = {
           "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-          "meshName": "MeshFibre",
+          "meshName": "MeshFiber",
           "prefactor": 1.0,
         },
         
@@ -317,7 +317,7 @@ config = {
         "dirichletBoundaryConditions": {},
         "solverName": "implicitSolver",
         "FiniteElementMethod" : {
-          "meshName": "MeshFibre",
+          "meshName": "MeshFiber",
           "prefactor": Conductivity/(Am*Cm),
           "solverName": "implicitSolver",
         },

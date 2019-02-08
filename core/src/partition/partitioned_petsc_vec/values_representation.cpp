@@ -10,4 +10,4 @@ const char *valuesRepresentationString[16] =
   "contiguous"
 };
 
-};  // namespace
+} // namespace

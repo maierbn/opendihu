@@ -30,8 +30,8 @@ namespace ModelOrderReduction
     
     Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
     Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
-    Vec &redSolution= this->data().solution()->getValuesContiguous();
-    Vec &redIncrement= this->data().increment()->getValuesContiguous();
+    Vec &redSolution= this->data().solution()->valuesGlobal();
+    Vec &redIncrement= this->data().increment()->valuesGlobal();
         
     Mat &basis = this->dataMOR_->basis()->valuesGlobal();
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();

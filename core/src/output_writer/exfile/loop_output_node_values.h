@@ -54,8 +54,8 @@ typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value &
 outputNodeValues(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                  std::ostream &stream, node_no_t nodeGlobalNo);
 
-};  //namespace ExfileLoopOverTuple
+}  // namespace ExfileLoopOverTuple
 
-};  //namespace OutputWriter
+}  // namespace OutputWriter
 
 #include "output_writer/exfile/loop_output_node_values.tpp"

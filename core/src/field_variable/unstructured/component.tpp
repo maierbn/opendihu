@@ -386,4 +386,4 @@ std::ostream &operator<<(std::ostream &stream, const Component<FunctionSpaceType
   return stream;
 }
 
-};
+}  // namespace

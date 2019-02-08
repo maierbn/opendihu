@@ -6,11 +6,6 @@
 #include "field_variable/field_variable_data.h"
 #include "function_space/function_space.h"
 
-namespace FunctionSpace
-{
-
-};
-
 namespace FieldVariable
 {
 
@@ -28,6 +23,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/structured/05_field_variable_data_structured_deformable.tpp"

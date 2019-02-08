@@ -25,4 +25,4 @@ void PythonCallback::write(DataType& data, int timeStepNo, double currentTime)
     callCallback(callback_, data.getOutputFieldVariables(), this->timeStepNo_, this->currentTime_, this->onlyNodalValues_);
 }
 
-};
+}  // namespace

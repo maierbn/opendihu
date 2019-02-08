@@ -135,7 +135,8 @@ initializeRhsRoutine()
       }
     }
 
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+    // get the global rank no, needed for the output filenames
+    int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
 
     // gather what number of instances all ranks have
     int nRanksCommunicator = this->functionSpace_->meshPartition()->nRanks();
@@ -593,9 +594,13 @@ createSimdSourceFile(std::string &simdSourceFilename)
         }
         else
         {
-          // add pragma omp here
-          simdSource << std::endl << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
-            << "  {" << std::endl << "    ";
+          simdSource << std::endl
+            << "#ifndef TEST_WITHOUT_PRAGMAS" << std::endl
+            << "  #pragma omp for simd" << std::endl
+            << "#endif" << std::endl
+            << "  for (int i = 0; i < " << this->nInstances_ << "; i++)" << std::endl
+            << "  {" << std::endl
+            << "    ";
 
           VLOG(2) << "parsed " << entries.size() << " entries";
 
@@ -643,7 +648,8 @@ createSimdSourceFile(std::string &simdSourceFilename)
 
     // add .rankNoWorldCommunicator to simd source filename
     s.str("");
-    int rankNoWorldCommunicator = DihuContext::ownRankNo();
+    // get the global rank no, needed for the output filenames
+    int rankNoWorldCommunicator = DihuContext::partitionManager()->rankNoCommWorld();
     s << simdSourceFilename << "." << rankNoWorldCommunicator << ".c";  // .c suffix is needed such that cray compiler knowns that it is c code
     simdSourceFilename = s.str();
 

@@ -9,13 +9,14 @@
 namespace FunctionSpace
 {
 
-const int N_NEWTON_ITERATIONS = 4;    // (5) number of newton iterations to find out if a point is inside an element
-const double POINT_IN_ELEMENT_EPSILON = 1e-5;    // (1e-12)
+//const double POINT_IN_ELEMENT_EPSILON = 1e-4;    // (1e-5 is too small)
+const int N_NEWTON_ITERATIONS = 7;    // (4) (5) number of newton iterations to find out if a point is inside an element
+const double RESIDUUM_NORM_TOLERANCE = 1e-4;    // usually 1e-2 takes 2-3 iterations
  
 // general implementation
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 bool FunctionSpaceXi<MeshType,BasisFunctionType,DummyForTraits>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType::dim()> &xi, double xiTolerance)
 {
   // timing measurements are disabled, they showed that 'computeApproximateXiForPoint' makes sense and is faster than just initializing the initial guess to 0
 #if 0 
@@ -47,11 +48,16 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   std::array<Vec3,nDofsPerElement> geometryValues;
   this->getElementGeometry(elementNo, geometryValues);
 
+  VLOG(2) << "point " << point << ", geometryValues: " << geometryValues;
+
   Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
-  VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+  if (VLOG_IS_ON(2))
+  {
+    VLOG(2) << " xi0 = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+  }
   
-  for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > 1e-10; iterationNo++)
+  for (int iterationNo = 0; iterationNo < N_NEWTON_ITERATIONS && residuumNormSquared > MathUtility::sqr(RESIDUUM_NORM_TOLERANCE); iterationNo++)
   {
     Tensor2<D> inverseJacobian = this->getInverseJacobian(geometryValues, elementNo, xi);
     xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
@@ -59,12 +65,15 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
     residuumNormSquared = MathUtility::normSquared<3>(residuum);
     
-    VLOG(2) << " xi_i = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    if (VLOG_IS_ON(2))
+    {
+      VLOG(2) << " xi_i = " << xi << ", residuum: " << residuum << " (norm: " << sqrt(residuumNormSquared) << ")";
+    }
   }
   
   // Phi(xi) = point
   // Phi(xi) = Phi(xi0) + J*(xi-xi0)  => xi = xi0 + Jinv*(point - Phi(xi0))
-  double epsilon = POINT_IN_ELEMENT_EPSILON;
+  double epsilon = xiTolerance;
   
   // check if point is inside the element by looking at the value of xi
   bool pointIsInElement = true;
@@ -85,12 +94,12 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 #endif  
    VLOG(2) << "  " << (pointIsInElement? "inside" : "outside");
   return pointIsInElement;
-};
+}
 
 // regular fixed 1D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();  //=2
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -100,13 +109,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   
   xi[0] = MathUtility::norm<3>(point - geometryValues[0]) / elementLength;
   
-  return 0.0 <= xi[0] && xi[0] <= 1.0;
-};
+  return -xiTolerance <= xi[0] && xi[0] <= 1.0+xiTolerance;
+}
 
 // regular fixed 2D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunctionType>::nDofsPerElement();
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -117,13 +126,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   const double xi1 = (point[0] - geometryValues[0][0]) / elementLength;
   const double xi2 = (point[1] - geometryValues[0][1]) / elementLength;
   
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
-};
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
+}
 
 // regular fixed 3D
 template<typename BasisFunctionType>
 bool FunctionSpaceXi<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunctionType>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi, double xiTolerance)
 {
   const int nDofsPerElement = FunctionSpaceBaseDim<3,BasisFunctionType>::nDofsPerElement();
   std::array<Vec3, nDofsPerElement> geometryValues;
@@ -135,13 +144,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,3> &xi)
   const double xi2 = (point[1] - geometryValues[0][1]) / elementLength;
   const double xi3 = (point[2] - geometryValues[0][2]) / elementLength;
   
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0) && (0.0 <= xi3 && xi3 <= 1.0);
-};
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance) && (-xiTolerance <= xi3 && xi3 <= 1.0+xiTolerance);
+}
 
 // 1D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<1,MeshType>>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=2
   const int nDofsPerElement = 2;
@@ -159,13 +168,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi)
   const double xi1 = (x11 - xp1)/(x11 - x21);
   xi[0] = xi1;
   
-  return 0.0 <= xi1 && xi1 <= 1.0;
-};
+  return -xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance;
+}
 
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpaceXi<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
   const int nDofsPerElement = 4;
@@ -174,48 +183,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi)
   // get needed variables
   this->getElementGeometry(elementNo, geometryValues);
   
-  const double xp1 = point[0];
-  const double xp2 = point[1];
-  
-  double x11 = geometryValues[0][0];
-  double x12 = geometryValues[0][1];
-  
-  const double x21 = geometryValues[1][0];
-  const double x22 = geometryValues[1][1];
-  
-  const double x31 = geometryValues[2][0];
-  const double x32 = geometryValues[2][1];
-  
-  const double x41 = geometryValues[3][0];
-  const double x42 = geometryValues[3][1];
-  
-  // compute analytic solution for xi
-  // avoid division by 0
-  const double divisor = (x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
-  const double eps = 1e-12;
-  if (fabs(divisor) < eps)
-  {
-    x11 += eps;
-    x12 += 0.8*eps;
-  }
-  
-  double xi1 = 0.5*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
-  
-  
-  // avoid division by 0
-  const double divisor2 = (x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-  if (fabs(divisor2) < eps)
-  {
-    x11 -= 0.6*eps;
-    xi1 += 0.8*eps;
-  }
-  const double xi2 = (x11*xi1 - x11 - x21*xi1 + xp1)/(x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-  
-  xi[0] = xi1;
-  xi[1] = xi2;
+  MathUtility::quadrilateralGetPointCoordinates(geometryValues, point, xi);
  
-  return (0.0 <= xi1 && xi1 <= 1.0) && (0.0 <= xi2 && xi2 <= 1.0);
-};
+  const double xi1 = xi[0];
+  const double xi2 = xi[1];
+
+  return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
+}
 
 // 3D deformable meshes and linear shape function
 
@@ -506,4 +480,4 @@ computeApproximateXiForPoint(Vec3 point, element_no_t elementNo, std::array<doub
     xi /= nSummands;
 }
 
-};  // namespace
+} // namespace

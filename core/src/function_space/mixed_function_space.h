@@ -47,6 +47,6 @@ private:
   std::shared_ptr<HighOrderFunctionSpaceType> highOrderFunctionSpace_;   ///< the FunctionSpace object for the high order basis
 };
 
-};  // namespace
+} // namespace
 
 #include "function_space/mixed_function_space.tpp"

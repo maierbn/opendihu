@@ -82,4 +82,4 @@ void PythonFile::outputPyObject(PyObject *file, PyObject *pyData)
 #endif
 }
 
-};
+}  // namespace

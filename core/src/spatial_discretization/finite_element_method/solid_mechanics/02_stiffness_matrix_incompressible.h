@@ -141,7 +141,7 @@ protected:
   double getPressure(double deformationGradientDeterminant, VecD<FunctionSpaceType::dim()> xi, double &pressureTilde) override;
 };
 
-};  // namespace
+} // namespace
 
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible_mixed.tpp"
 #include "spatial_discretization/finite_element_method/solid_mechanics/02_stiffness_matrix_incompressible_mixed_condensation.tpp"

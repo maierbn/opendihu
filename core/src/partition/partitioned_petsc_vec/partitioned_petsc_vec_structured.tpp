@@ -574,21 +574,58 @@ getValuesContiguous()
   // create contiguos vector if it does not exist yet
   if (valuesContiguous_ == PETSC_NULL)
   {
-    ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    //ierr = VecCreate(this->meshPartition_->mpiCommunicator(), &valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+    ierr = VecCreate(MPI_COMM_SELF, &valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
     ierr = PetscObjectSetName((PetscObject) valuesContiguous_, this->name_.c_str()); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
     // initialize size of vector
     int nEntriesLocal = this->meshPartition_->nDofsLocalWithoutGhosts() * nComponents;
-    int nEntriesGlobal = nEntriesLocal;
+    //int nEntriesGlobal = this->meshPartition_->nDofsGlobal() * nComponents;   // this could also be set the nEntriesLocal, but the the communicator would have to be different (MPI_COMM_SELF)
+    int nEntriesGlobal = nEntriesLocal;   // this could also be set the nEntriesLocal, but the the communicator would have to be different (MPI_COMM_SELF)
     ierr = VecSetSizes(valuesContiguous_, nEntriesLocal, nEntriesGlobal); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
     // set sparsity type and other options
     ierr = VecSetFromOptions(valuesContiguous_); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
     LOG(DEBUG) << "\"" << this->name_ << "\" (structured) create valuesContiguous_, nComponents = " << nComponents
-      << ", nEntriesLocal = " << nEntriesLocal << ", nEntriesGlobal = " << nEntriesGlobal;
+      << ", nEntriesLocal = " << nEntriesLocal << ", nEntriesGlobal = " << nEntriesGlobal << ", rank subset: "
+      << *this->meshPartition_->rankSubset() << ", but using MPI_COMM_SELF because valuesContiguous_ is completely local";
   }
 
+  if (VLOG_IS_ON(1))
+  {
+    std::stringstream s;
+    output(s);
+    VLOG(1) << "before copy: " << s.str();
+  }
+
+  // implementation with get and set values
+#if 0
+  int nEntries = this->meshPartition_->nDofsLocalWithoutGhosts();
+
+  std::vector<PetscInt> getIndices(nEntries);
+  std::iota(getIndices.begin(), getIndices.end(), 0);
+
+  std::vector<PetscInt> setIndices(nEntries);
+
+  std::vector<double> values(nEntries);
+
+  // copy values from component vectors to contiguous vector
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    // retrive values from local vector
+    ierr = VecGetValues(vectorLocal_[componentNo], nEntries, getIndices.data(), values.data()); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+
+    LOG(DEBUG) << "get values " << values;
+
+    // set values in contiguous vector
+    std::iota(setIndices.begin(), setIndices.end(), this->meshPartition_->nDofsLocalWithoutGhosts() * componentNo);
+    ierr = VecSetValues(valuesContiguous_, nEntries, setIndices.data(), values.data(), INSERT_VALUES); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  }
+
+#endif
+// more efficient implementation that avoids data copy
+#if 1
   double *valuesDataContiguous;
   ierr = VecGetArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
@@ -598,7 +635,7 @@ getValuesContiguous()
     const double *valuesDataComponent;
     ierr = VecGetArrayRead(vectorLocal_[componentNo], &valuesDataComponent); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
-    VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to contiguous array";
+    VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes to contiguous array, first two values: " << valuesDataComponent[0] << "," << valuesDataComponent[1];
     memcpy(
       valuesDataContiguous + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts(),
       valuesDataComponent,
@@ -609,7 +646,15 @@ getValuesContiguous()
   }
 
   ierr = VecRestoreArray(valuesContiguous_, &valuesDataContiguous); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+#endif
   this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
+
+  if (VLOG_IS_ON(1))
+  {
+    std::stringstream s;
+    output(s);
+    VLOG(1) << "after copy: " << s.str();
+  }
 
   return valuesContiguous_;
 }
@@ -658,7 +703,7 @@ restoreValuesContiguous()
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedPartitionedPetscVec)
 {
   if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
@@ -676,12 +721,31 @@ extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<Func
   PetscErrorCode ierr;
   ierr = VecGetArrayRead(this->valuesContiguous_, &extractedData_);
 
-  // set array in field variable
-  extractedFieldVariable->setRepresentationGlobal();
+  int nDofsLocalWithGhosts = this->meshPartition()->nDofsLocalWithGhosts();
+  int nDofsLocalWithoutGhosts = this->meshPartition()->nDofsLocalWithoutGhosts();
+  int nGhostValuesExtractedFieldVariable = nDofsLocalWithGhosts - nDofsLocalWithoutGhosts;
 
-  LOG(DEBUG) << "\"" << extractedFieldVariable->name() << "\": place array";
-  //extractedFieldVariable->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
-  ierr = VecPlaceArray(extractedFieldVariable->valuesGlobal(0), extractedData_ + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts()); CHKERRV(ierr);
+  int nValuesFollowingExtractedComponent = nDofsLocalWithoutGhosts * (nComponents - 1 - componentNo);
+  if (nGhostValuesExtractedFieldVariable > nValuesFollowingExtractedComponent)
+  {
+    LOG(ERROR) << "Getting array of component " << componentNo << "/" << nComponents << "."
+      << " This may lead to usage of unallocated memory for the ghosts "
+      << "in the extracted field variable. (read the comment below in the code why)";
+  }
+
+  // Save the values following the normal range in extractedData_.
+  // This is because after VecPlaceArray the extractedPartitionedPetscVec uses the space immediately after the local values to store its ghost values.
+  // This is only possible because valuesContiguous_ is assumed to be long enough after the component to be extracted (dangerous heuristic).
+  // When the array is later restored back to valuesContiguous_ (by restoreExtractedComponent), these following values have also changed.
+  savedValues_.resize(nGhostValuesExtractedFieldVariable);
+  std::copy(extractedData_ + nDofsLocalWithoutGhosts, extractedData_ + nDofsLocalWithGhosts, savedValues_.data());
+
+  // set array in field variable
+  extractedPartitionedPetscVec->setRepresentationGlobal();
+
+  LOG(DEBUG) << "\"" << extractedPartitionedPetscVec->name() << "\": place array";
+  //extractedPartitionedPetscVec->currentRepresentation_ = Partition::values_representation_t::representationGlobal;
+  ierr = VecPlaceArray(extractedPartitionedPetscVec->valuesGlobal(0), extractedData_ + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts()); CHKERRV(ierr);
 
   this->currentRepresentation_ = Partition::values_representation_t::representationInvalid;
 }
@@ -689,7 +753,7 @@ extractComponentShared(int componentNo, std::shared_ptr<PartitionedPetscVec<Func
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2>> extractedVec)
+restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2>> extractedPartitionedPetscVec)
 {
   if (this->currentRepresentation_ != Partition::values_representation_t::representationInvalid)
   {
@@ -702,6 +766,12 @@ restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::Fun
   // assert that the extracted data array is set
   assert(extractedData_);
 
+  // restore the saved values
+  if (!savedValues_.empty())
+  {
+    int nDofsLocalWithoutGhosts = this->meshPartition()->nDofsLocalWithoutGhosts();
+    std::copy(savedValues_.data(), savedValues_.data()+savedValues_.size(), (double *)extractedData_ + nDofsLocalWithoutGhosts);
+  }
 
   LOG(DEBUG) << "\"" << this->name() << "\": restore array read";
 
@@ -709,16 +779,17 @@ restoreExtractedComponent(std::shared_ptr<PartitionedPetscVec<FunctionSpace::Fun
   PetscErrorCode ierr;
   ierr = VecRestoreArrayRead(this->valuesContiguous_, &extractedData_); CHKERRV(ierr);
 
-  LOG(DEBUG) << "\"" << extractedVec->name() << "\": reset array";
+  LOG(DEBUG) << "\"" << extractedPartitionedPetscVec->name() << "\": reset array";
+
   // restore the data array in the extracted vector
-  ierr = VecResetArray(extractedVec->getValuesContiguous()); CHKERRV(ierr);
+  ierr = VecResetArray(extractedPartitionedPetscVec->getValuesContiguous()); CHKERRV(ierr);
 
   this->currentRepresentation_ = Partition::values_representation_t::representationContiguous;
 }
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedFieldVariable)
+extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,1>> extractedPartitionedPetscVec)
 {
   if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
   {
@@ -747,12 +818,12 @@ extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<Functi
   PetscErrorCode ierr;
   ierr = VecGetArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
-  extractedFieldVariable->setRepresentationLocal();
+  extractedPartitionedPetscVec->setRepresentationLocal();
   double *valuesTarget;
-  ierr = VecGetArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecGetArray(extractedPartitionedPetscVec->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 
   VLOG(1) << "  copy " << this->meshPartition_->nDofsLocalWithoutGhosts()*sizeof(double) << " bytes (\"" << this->name_ << "\" component " << componentNo
-    << ") to \"" << extractedFieldVariable->name() << "\"";
+    << ") to \"" << extractedPartitionedPetscVec->name() << "\"";
   memcpy(
     valuesTarget,
     valuesSource + dofStart,
@@ -760,7 +831,7 @@ extractComponentCopy(int componentNo, std::shared_ptr<PartitionedPetscVec<Functi
   );
 
   // restore memory
-  ierr = VecRestoreArray(extractedFieldVariable->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
+  ierr = VecRestoreArray(extractedPartitionedPetscVec->valuesLocal(0), &valuesTarget); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
   ierr = VecRestoreArrayRead(vectorSource, &valuesSource); CHKERRABORT(this->meshPartition_->mpiCommunicator(),ierr);
 }
 
@@ -834,38 +905,59 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 output(std::ostream &stream)
 {
-#ifndef NDEBUG  
+#ifndef NDEBUG
   // this method gets all local non-ghost values and outputs them to stream, only on rank 0
   PetscMPIInt ownRankNo, nRanks;
   MPIUtility::handleReturnValue(MPI_Comm_rank(this->meshPartition_->mpiCommunicator(), &ownRankNo), "MPI_Comm_rank");
   MPIUtility::handleReturnValue(MPI_Comm_size(this->meshPartition_->mpiCommunicator(), &nRanks), "MPI_Comm_size");
-  
+
+  int componentNo = 0;
+  Vec vector = vectorLocal_[componentNo];
+  if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+    vector = valuesContiguous_;
+  else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+    vector = vectorGlobal_[componentNo];
+
+  // get global size of vector
+  int nEntries, nEntriesLocal;
+  PetscErrorCode ierr;
+  ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
+  ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
+
+  stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
+    << " local entries (per component), representation " << Partition::valuesRepresentationString[this->currentRepresentation_]
+    << ")" << std::endl;
+
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
-
     Vec vector = vectorLocal_[componentNo];
     if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
+    {
       vector = valuesContiguous_;
+    }
+    else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+    {
+      vector = vectorGlobal_[componentNo];
+    }
 
     // get global size of vector
     int nEntries, nEntriesLocal;
     PetscErrorCode ierr;
     ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
     ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
-    
-    if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+
+    /*if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
     {
-      stream << "vector \"" << this->name_ << "\", (" << nEntries << " local entries (per component), representation global)";
       if (nRanks > 1)
         continue;
-    }
+    }*/
 
     // retrieve local values
     int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
     std::vector<PetscInt> &indices = temporaryIndicesVector_;
     indices.resize(nDofsLocal);
-    if (valuesContiguous_)
+    if (vector == valuesContiguous_)
     {
       for (int i = 0; i < nDofsLocal; i++)
       {
@@ -948,28 +1040,60 @@ output(std::ostream &stream)
     {
       Vec vector = vectorLocal_[componentNo];
       if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
-        vector = valuesContiguous_;
-
-      stream << "component " << componentNo << " locally stored values: [";
-      // retrieve local values
-      int nDofsLocalWithGhosts = this->meshPartition_->nDofsLocalWithGhosts();
-      std::vector<double> localValuesWithGhosts(nDofsLocalWithGhosts);
-
-      std::vector<PetscInt> &indices = temporaryIndicesVector_;
-      indices.resize(nDofsLocalWithGhosts);
-      for (int i = 0; i < nDofsLocalWithGhosts; i++)
       {
-        indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
+        vector = valuesContiguous_;
+      }
+      else if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
+      {
+        vector = vectorGlobal_[componentNo];
       }
 
-      PetscErrorCode ierr;
-      ierr = VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), localValuesWithGhosts.data()); CHKERRV(ierr);
+      stream << "component " << componentNo << " locally stored values (dof no global: value) [";
+
+      // retrieve local values
+      int nDofsLocal = this->meshPartition_->nDofsLocalWithoutGhosts();
+      int nDofsLocalWithGhosts = this->meshPartition_->nDofsLocalWithGhosts();
+      std::vector<double> locallyStoredValues;
+
+      std::vector<PetscInt> &indices = temporaryIndicesVector_;
+      if (vector == valuesContiguous_)
+      {
+        indices.resize(nDofsLocal);
+        locallyStoredValues.resize(nDofsLocal);
+
+        for (int i = 0; i < nDofsLocal; i++)
+        {
+          indices[i] = this->meshPartition_->dofNosLocal()[i] + componentNo*nDofsLocal;
+        }
+
+        PetscErrorCode ierr;
+        ierr = VecGetValues(vector, nDofsLocal, indices.data(), locallyStoredValues.data()); CHKERRV(ierr);
+      }
+      else
+      {
+        indices.resize(nDofsLocalWithGhosts);
+        locallyStoredValues.resize(nDofsLocalWithGhosts);
+
+        for (int i = 0; i < nDofsLocalWithGhosts; i++)
+        {
+          indices[i] = this->meshPartition_->dofNosLocal()[i];
+        }
+
+        PetscErrorCode ierr;
+        ierr = VecGetValues(vector, nDofsLocalWithGhosts, indices.data(), locallyStoredValues.data()); CHKERRV(ierr);
+      }
+
       //VLOG(1) << "localValues: " << localValues;
 
       const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();
-      for (dof_no_t dofNoLocal = 0; dofNoLocal < std::min(100,this->meshPartition_->nDofsLocalWithoutGhosts()); dofNoLocal++)
+      dof_no_t dofNoLocalEnd = this->meshPartition_->nDofsLocalWithoutGhosts();
+      if (!VLOG_IS_ON(1))
       {
-        double value = localValuesWithGhosts[dofNoLocal];
+        dofNoLocalEnd = std::min(100, dofNoLocalEnd);
+      }
+      for (dof_no_t dofNoLocal = 0; dofNoLocal < dofNoLocalEnd; dofNoLocal++)
+      {
+        double value = locallyStoredValues[dofNoLocal];
 
         // store value for global dof no
         node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
@@ -980,34 +1104,49 @@ output(std::ostream &stream)
 
         global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
 
-        stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
-        if (dofNoLocal == 99)
+        stream << dofNoGlobal << ": " << value << ", ";
+        if (dofNoLocal == 99 && !VLOG_IS_ON(1))
         {
           stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 100)";
         }
       }
-      stream << "], ghosts: [";
 
-      for (dof_no_t dofNoLocal = this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal < std::min(100,this->meshPartition_->nDofsLocalWithGhosts()); dofNoLocal++)
+      if (vector == valuesContiguous_)
       {
-        double value = localValuesWithGhosts[dofNoLocal];
-
-        // store value for global dof no
-        node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
-        int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
-
-        std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
-        global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
-
-        global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
-
-        stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
-        if (dofNoLocal == 99)
-        {
-          stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 100)";
-        }
+        stream << "]" << std::endl;
       }
-      stream << "]" << std::endl;
+      else
+      {
+        stream << "], ghosts: [";
+
+        dofNoLocalEnd = this->meshPartition_->nDofsLocalWithGhosts();
+        if (!VLOG_IS_ON(1))
+        {
+          dofNoLocalEnd = std::min(this->meshPartition_->nDofsLocalWithoutGhosts()+100, dofNoLocalEnd);
+        }
+
+        for (dof_no_t dofNoLocal = this->meshPartition_->nDofsLocalWithoutGhosts(); dofNoLocal < dofNoLocalEnd; dofNoLocal++)
+        {
+          double value = locallyStoredValues[dofNoLocal];
+
+          // store value for global dof no
+          node_no_t nodeNoLocal = dofNoLocal / nDofsPerNode;
+          int dofOnNodeIndex = dofNoLocal % nDofsPerNode;
+
+          std::array<global_no_t,MeshType::dim()> globalCoordinates = this->meshPartition_->getCoordinatesGlobal(nodeNoLocal);
+          global_no_t nodeNoGlobal = this->meshPartition_->getNodeNoGlobalNatural(globalCoordinates);
+
+          global_no_t dofNoGlobal = nodeNoGlobal*nDofsPerNode + dofOnNodeIndex;
+
+          stream << "dofNoGlobal=" << dofNoGlobal << ": " << value << ", ";
+          if (dofNoLocal == this->meshPartition_->nDofsLocalWithoutGhosts()+99 && !VLOG_IS_ON(1))
+          {
+            stream << " (" << (this->meshPartition_->nDofsLocalWithGhosts()-this->meshPartition_->nDofsLocalWithoutGhosts())
+              << " ghosts total, only showing the first 100)";
+          }
+        }
+        stream << "]" << std::endl;
+      }
 
       // also output vector using Petsc viewer (not so nice and fails after 1000 files)
 #if 0

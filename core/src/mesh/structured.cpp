@@ -41,4 +41,4 @@ global_no_t Structured<3>::nElementsGlobal() const
 }
 
 
-}; // namespace
+}  // namespace

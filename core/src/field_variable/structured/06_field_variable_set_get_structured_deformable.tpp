@@ -17,4 +17,4 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
   this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
-};
+}  // namespace

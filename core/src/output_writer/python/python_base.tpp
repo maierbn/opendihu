@@ -35,4 +35,4 @@ buildPyFieldVariablesObject(OutputFieldVariablesType fieldVariables, std::string
   return pyData;
 }
 
-};
+}  // namespace

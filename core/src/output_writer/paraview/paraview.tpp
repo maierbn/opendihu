@@ -58,7 +58,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime)
 }
 
 template<typename FieldVariableType>
-void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable, 
+void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
                                           std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
 {
   // here we have the type of the mesh with meshName (which is typedef to FunctionSpace)
@@ -147,7 +147,7 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
       << std::string(4, '\t') << "</DataArray>" << std::endl;
   }
 }
-  
+
 template<typename FieldVariableType>
 void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryField,
                                                    std::ofstream &file, bool binaryOutput, bool fixedFormat, bool onlyParallelDatasetElement)
@@ -157,7 +157,7 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
   {
     file << std::string(3, '\t') << "<PDataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Int32\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" ";
 
     if (binaryOutput)
@@ -174,18 +174,18 @@ void Paraview::writeParaviewPartitionFieldVariable(FieldVariableType &geometryFi
     // write normal data element
     file << std::string(4, '\t') << "<DataArray "
         << "Name=\"partitioning\" "
-        << "type=\"Int32\" "
+        << "type=\"Float32\" "
         << "NumberOfComponents=\"1\" ";
 
     std::string stringData;
 
     // get own rank no
-    int ownRankNoCommWorld;
+    int ownRankNoCommWorld = 0;
     MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankNoCommWorld));
 
     const node_no_t nNodesLocal = geometryField.functionSpace()->meshPartition()->nNodesLocalWithGhosts();
 
-    std::vector<int> values(nNodesLocal, ownRankNoCommWorld);
+    std::vector<double> values(nNodesLocal, (double)ownRankNoCommWorld);
 
     if (binaryOutput)
     {
@@ -220,7 +220,7 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
 
   int encodedLength = Base64::EncodedLength(rawLength);
 
-  char raw[rawLength];
+  std::vector<char> raw(rawLength, char(0));
   // loop over vector entries and add bytes to raw buffer
   int i = 0;
   for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
@@ -230,7 +230,7 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
       char c[4];
     };
     d = (float)(*iter);
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+    memcpy(raw.data() + dataStartPos + i*sizeof(float), c, 4);
   }
 
   // prepend number of bytes as uint32
@@ -242,18 +242,16 @@ std::string Paraview::encodeBase64Float(Iter iterBegin, Iter iterEnd, bool withE
     };
     i = rawLength;
 
-    memcpy(raw, c, 4);
+    memcpy(raw.data(), c, 4);
   }
 
-  char encoded[encodedLength+1];
+  std::vector<char> encoded(encodedLength, '\0');
 
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw.data(), rawLength, encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
 
-  encoded[encodedLength] = '\0';
-
-  return std::string(encoded);
+  return std::string(encoded.begin(), encoded.end());
 }
 
 template <typename Iter>
@@ -274,7 +272,7 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
 
   int encodedLength = Base64::EncodedLength(rawLength);
 
-  char raw[rawLength];
+  std::vector<char> raw(rawLength, char(0));
   // loop over vector entries and add bytes to raw buffer
   int i = 0;
   for (Iter iter = iterBegin; iter != iterEnd; iter++, i++)
@@ -284,7 +282,7 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
       char c[4];
     };
     integer = (int)(*iter);
-    memcpy(raw + dataStartPos + i*sizeof(float), c, 4);
+    memcpy(raw.data() + dataStartPos + i*sizeof(float), c, 4);
   }
 
   // prepend number of bytes as uint32
@@ -296,20 +294,17 @@ std::string Paraview::encodeBase64Int(Iter iterBegin, Iter iterEnd, bool withEnc
     };
     i = dataLength;
 
-    memcpy(raw, c, 4);
+    memcpy(raw.data(), c, 4);
   }
 
-  char encoded[encodedLength+1];
+  std::vector<char> encoded(encodedLength, '\0');
 
-  bool success = Base64::Encode(raw, rawLength, encoded, encodedLength);
+  bool success = Base64::Encode(raw.data(), rawLength, (char *)encoded.data(), encodedLength);
   if (!success)
     LOG(WARNING) << "Base64 encoding failed";
 
-
-  encoded[encodedLength] = '\0';
-
-  return std::string(encoded);
+  return std::string(encoded.begin(), encoded.end());
 }
 
 
-};  // namespace
+} // namespace

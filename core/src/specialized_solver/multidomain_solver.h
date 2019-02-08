@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include "time_stepping_scheme/time_stepping_scheme_ode.h"
 #include "interfaces/runnable.h"
-#include "data_management/time_stepping/multidomain.h"
+#include "data_management/specialized_solver/multidomain.h"
 #include "control/dihu_context.h"
 #include "partition/rank_subset.h"
 
@@ -20,6 +20,7 @@ public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
   typedef std::pair<std::vector<Vec>,std::vector<std::shared_ptr<FieldVariableType>>> TransferableSolutionDataType;
+  typedef typename Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
 
   //! constructor
   MultidomainSolver(DihuContext context);
@@ -36,9 +37,12 @@ public:
   //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
   bool knowsMeshType();
 
+  //! return the data object
+  Data &data();
+
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the solution_vector_mapping class
-  TransferableSolutionDataType getSolutionForTransferInOperatorSplitting();
+  TransferableSolutionDataType getSolutionForTransfer();
 
 protected:
 
@@ -51,7 +55,7 @@ protected:
   //! initialize the relative factors fr_k
   void initializeCompartmentRelativeFactors();
 
-  Data::Multidomain<typename FiniteElementMethodDiffusion::FunctionSpace> dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
+  Data dataMultidomain_;  ///< the data object of the multidomain solver which stores all field variables and matrices
 
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   ///< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
   std::vector<FiniteElementMethodDiffusion> finiteElementMethodDiffusionCompartment_;   ///< the finite element object that is used for the diffusion of the compartments, with prefactor f_r
@@ -74,4 +78,4 @@ protected:
 
 }  // namespace
 
-#include "time_stepping_scheme/multidomain_solver.tpp"
+#include "specialized_solver/multidomain_solver.tpp"

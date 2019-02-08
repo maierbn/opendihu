@@ -100,6 +100,13 @@ initializeLinearSolver()
   }
 }
 
+//! output the given data for debugging
+template<typename DiscretizableInTimeType>
+std::string TimeSteppingImplicit<DiscretizableInTimeType>::
+getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::TransferableSolutionDataType &data)
+{
+  return dataImplicit_->getString(data);
+}
 
 
 } // namespace TimeSteppingScheme

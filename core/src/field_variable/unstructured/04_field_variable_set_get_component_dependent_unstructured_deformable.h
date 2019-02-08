@@ -92,6 +92,6 @@ public:
 
 };
 
-};  // namespace
+} // namespace
 
 #include "field_variable/unstructured/04_field_variable_set_get_component_dependent_unstructured_deformable.tpp"

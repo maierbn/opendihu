@@ -5,10 +5,11 @@
 
 #include "control/dihu_context.h"
 #include "function_space/function_space.h"
+#include "mesh/mapping_between_meshes_manager.h"
 
 namespace Partition{
 class Manager;
-};
+}
 namespace Mesh
 {
 class NodePositionsTester;
@@ -20,7 +21,7 @@ class NodePositionsTester;
  * request their mesh by a call to mesh(name).
  * If a mesh was not defined earlier, it is created on the fly when it is requested.
  */
-class Manager
+class Manager : public MappingBetweenMeshesManager
 {
 public:
   //! constructor
@@ -28,7 +29,7 @@ public:
 
   //! store the pointer to the partition manager
   void setPartitionManager(std::shared_ptr<Partition::Manager> partitionManager);
-  
+
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
   std::shared_ptr<FunctionSpaceType> functionSpace(PythonConfig settings);
@@ -70,13 +71,12 @@ private:
 
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
   
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key, for meshManager
   int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 
   std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
 };
 
-};    // namespace
+}  // namespace
 
 #include "mesh/mesh_manager.tpp"

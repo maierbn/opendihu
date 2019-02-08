@@ -30,8 +30,8 @@ advanceTimeSpan()
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
-  Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution= this->data().solution()->getValuesContiguous();
+  Vec &solution = this->fullTimestepping_.data().solution()->valuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
+  Vec &redSolution= this->data().solution()->valuesGlobal();
   
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
   
@@ -91,7 +91,6 @@ advanceTimeSpan()
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
     
-    this->fullTimestepping_.data().solution()->restoreValuesContiguous();
   }
   
   // stop duration measurement

@@ -21,9 +21,10 @@ if len(sys.argv) > 3:
 
 if len(sys.argv) > 4:
   output_filename = sys.argv[4]
-  
-print("n_subdomains: {} {} {}".format(n_subdomains_x, n_subdomains_y, n_subdomains_z))
-print("output_filename: {}".format(output_filename))
+
+if output_filename != "":  
+  print("n_subdomains: {} {} {}".format(n_subdomains_x, n_subdomains_y, n_subdomains_z))
+  print("output_filename: {}".format(output_filename))
 
 # loop over subdomains = ranks
 cpu_no = 0
@@ -43,7 +44,7 @@ if output_filename != "":
       outfile.write("{}".format(cpu_no))
     outfile.write("\n")
 else:
-  for i,cpuvno in enumerate(cpu_list):
+  for i,cpu_no in enumerate(cpu_list):
     if i != 0:
       sys.stdout.write(",")
     sys.stdout.write("{}".format(cpu_no))

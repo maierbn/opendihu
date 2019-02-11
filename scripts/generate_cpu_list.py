@@ -35,9 +35,16 @@ for y in range(n_subdomains_y):
       cpu_list.append(cpu_no)
       cpu_no += 1
 
-with open(output_filename, "w") as outfile:
-  for i,cpu_no in enumerate(cpu_list):
+if output_filename != "":
+  with open(output_filename, "w") as outfile:
+    for i,cpu_no in enumerate(cpu_list):
+      if i != 0:
+        outfile.write(",")
+      outfile.write("{}".format(cpu_no))
+    outfile.write("\n")
+else:
+  for i,cpuvno in enumerate(cpu_list):
     if i != 0:
-      outfile.write(",")
-    outfile.write("{}".format(cpu_no))
-  outfile.write("\n")
+      sys.stdout.write(",")
+    sys.stdout.write("{}".format(cpu_no))
+    sys.stdout.flush()

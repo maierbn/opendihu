@@ -105,20 +105,17 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
-//#ifdef STL_OUTPUT_VERBOSE
+#ifdef STL_OUTPUT_VERBOSE
       std::stringstream name;
       name << "04_raw_streamline_" << i << "_";
       PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                             PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlinePoints[i]), 0.1);
       PythonUtility::checkForError();
-//#endif
+#endif
 #endif
 #endif
 
     }
-
-    // send end points of streamlines to next rank that continues the streamline
-    exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlinePoints);
 
     // reorder streamline points such that they go from bottom to top
     if (streamlineDirection < 0)
@@ -131,6 +128,10 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
         //LOG(DEBUG) << streamlineIndex << " after: " << streamlinePoints[streamlineIndex];
       }
     }
+    
+    // send end points of streamlines to next rank that continues the streamline
+    exchangeSeedPointsAfterTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints, streamlinePoints);
+
   }
 
   //MPI_Barrier(currentRankSubset_->mpiCommunicator());

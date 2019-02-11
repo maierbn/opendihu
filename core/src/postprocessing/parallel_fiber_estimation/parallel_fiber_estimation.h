@@ -30,6 +30,9 @@ public:
   //! run tracing of stream lines
   void run();
 
+  //! open result file and interpolate fine fibers in between, the new file has the suffix ".fine"
+  void interpolateFineFibersFromFile();
+
   //! function space to use, i.e. 3D structured deformable grid
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpaceType;
   typedef SpatialDiscretization::FiniteElementMethod<
@@ -79,12 +82,15 @@ protected:
   //! trace the streamlines starting from the seed points, this uses functionality from the parent class
   void traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
 
-  //! send end points of streamlines to next rank that continues the streamline
-  void exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
-
   //! determine if previously set seedPoints are used or if they are received from neighbouring rank, on rank int(nRanksZ/2), send seed points to rank below
   void exchangeSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints);
 
+  //! send end points of streamlines to next rank that continues the streamline
+  void exchangeSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints);
+  
+  //! send end points of streamlines to next rank that continues the streamline, only iterate over key fibers
+  void exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, int nFibersX, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &fibers);
+  
   //! sample the streamlines at equidistant z points, if the streamline does not run from bottom to top, only add seedPoint
   void sampleAtEquidistantZPoints(std::vector<std::vector<Vec3>> &streamlinePoints, const std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlineZPoints);
 
@@ -131,7 +137,10 @@ protected:
   void fixInvalidFibersInFile();
 
   //! fix the invalid key fibers at the end of the algorithm
-  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers);
+  void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed);
+
+  //! resamples the final fibers in the output file to match the required number of nodes per fiber
+  void resampleFibersInFile(int nPointsPerFiber);
 
   const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class

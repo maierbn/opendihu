@@ -45,7 +45,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
- 
+
   this->noGeometryField_ = false;
   this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirectionLocal;
   this->nRanks_ = nRanksPerCoordinateDirection;
@@ -64,6 +64,15 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
     for (int i = 0; i < 3; i++)
       localNodePositions_.push_back(vector[i]);
   }
+}
+
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &localNodePositions,
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
+  FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(
+    partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
+{
 }
 
 template<int D,typename BasisFunctionType>

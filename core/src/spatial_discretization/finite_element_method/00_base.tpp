@@ -250,7 +250,7 @@ solveMG()
 		stiffnessMatrix->assembly(MAT_FINAL_ASSEMBLY);
 
 		// get linearMG solver context from solver manager
-		std::shared_ptr<Solver::LinearMG> linearSolver = this->context_.solverManager()->template solver<Solver::LinearMG>(
+		std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(
 		this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
 		std::shared_ptr<KSP> kspMG_ = linearSolver->ksp();
 

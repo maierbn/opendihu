@@ -41,8 +41,12 @@ protected:
 FiniteElement1 finiteElement1_;
 FiniteElement2 finiteElement2_;
 
+DihuContext context_;
+PythonConfig specificSettings_;
+
 bool initialized_;
 int numCycles_ ;
+std::string multigridType_;
 };
 
 }  // namespace

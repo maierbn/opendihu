@@ -862,44 +862,78 @@ fixInvalidFibersInFile()
 
                   // assert that fiber points are on same z position
                   assert(neighbouringFiberFirstPoint[0][2] - neighbouringFiberFirstPoint[1][2] < 1e-12);
-                  assert(firstPoint[2] - neighbouringFiberFirstPoint[1][2] < 1e-12);
-
-                  // the two neighbouring valid fibers are the indices validIndex0 and validIndex1
-                  // consider the triangle between the first valid point is of the to be interpolated fiber and the two neighbouring fibers
-                  double angle = std::atan2(firstPoint[1]-neighbouringFiberFirstPoint[0][1], firstPoint[0]-neighbouringFiberFirstPoint[0][0]);
-                  double relativeLength = MathUtility::distance<3>(firstPoint, neighbouringFiberFirstPoint[0])
-                    / MathUtility::distance<3>(neighbouringFiberFirstPoint[1], neighbouringFiberFirstPoint[0]);
-
-                  // interpolate points
-                  // loop over all points of the fiber
-                  for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
                   {
-                    // get the two valid fibers
-                    Vec3 point0, point1;
-                    assert(validIndex0 < nFibers);
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = nPointsPerFiber - 1;
                     file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
 
-                    MathUtility::readPoint(file, point0);
-
-                    assert(validIndex1 < nFibers);
                     file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
-
-                    MathUtility::readPoint(file, point1);
-
-                    double distance = MathUtility::distance<3>(point0, point1);
-
-                    // compute the interpolated point
-                    Vec3 interpolatedPoint = point0 + Vec3({cos(angle)*relativeLength*distance, sin(angle)*relativeLength*distance, 0.0});
-
-                    // write the interpolated value back
-                    int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-                    assert(interpolatedFiberIndex < nFibers);
-
-                    file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
-
-                    MathUtility::writePoint(file, interpolatedPoint);
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
                   }
-                  nFibersFixed++;
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = int(nPointsPerFiber/2);
+                    file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                    file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+                  }
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
+                    LOG(ERROR) << "Could not fixed fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                      << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+                  }
+                  else
+                  {
+                    //assert(firstPoint[2] - neighbouringFiberFirstPoint[1][2] < 1e-12);
+
+                    // the two neighbouring valid fibers are the indices validIndex0 and validIndex1
+                    // consider the triangle between the first valid point is of the to be interpolated fiber and the two neighbouring fibers
+                    double angle = std::atan2(firstPoint[1]-neighbouringFiberFirstPoint[0][1], firstPoint[0]-neighbouringFiberFirstPoint[0][0]);
+                    double relativeLength = MathUtility::distance<3>(firstPoint, neighbouringFiberFirstPoint[0])
+                      / MathUtility::distance<3>(neighbouringFiberFirstPoint[1], neighbouringFiberFirstPoint[0]);
+
+                    // interpolate points
+                    // loop over all points of the fiber
+                    for (int zIndex = 0; zIndex != nPointsPerFiber; zIndex++)
+                    {
+                      // get the two valid fibers
+                      Vec3 point0, point1;
+                      assert(validIndex0 < nFibers);
+                      file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::readPoint(file, point0);
+
+                      assert(validIndex1 < nFibers);
+                      file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::readPoint(file, point1);
+
+                      double distance = MathUtility::distance<3>(point0, point1);
+
+                      // compute the interpolated point
+                      Vec3 interpolatedPoint = point0 + Vec3({cos(angle)*relativeLength*distance, sin(angle)*relativeLength*distance, 0.0});
+
+                      // write the interpolated value back
+                      int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
+                      assert(interpolatedFiberIndex < nFibers);
+
+                      file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
+
+                      MathUtility::writePoint(file, interpolatedPoint);
+                    }
+                    nFibersFixed++;
+                  }
                 }
               }
             }

@@ -7,6 +7,7 @@
 #include "function_space/function_space.h"
 #include "field_variable/field_variable.h"
 #include "control/types.h"
+#include "multigrid/transfer.h"
 
 namespace Multigrid
 {
@@ -84,6 +85,9 @@ solveMG()
     
     values1.clear();
     solution1->getValuesWithoutGhosts(values1);
+    
+    //restriction
+    Transfer::restriction(&values1);
    
     solution2->setValuesWithoutGhosts(values1);
     //solution2->startGhostManipulation();    
@@ -94,6 +98,9 @@ solveMG()
     //--------
     values2.clear();
     solution2->getValuesWithoutGhosts(values2);
+    
+    //prolongation
+    Transfer::prolongation(&values2);
     
     solution1->setValuesWithoutGhosts(values2);
     //solution1->startGhostManipulation();    

@@ -890,6 +890,19 @@ fixInvalidFibersInFile()
 
                   if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
                   {
+                    LOG(WARNING) << "Could not fixe fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
+                     << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
+
+                    int zIndex = int(nPointsPerFiber/2)+1;
+                    file.seekg(32+headerLength + validIndex0*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[0]);
+
+                    file.seekg(32+headerLength + validIndex1*fiberDataSize + zIndex*3*sizeof(double));
+                    MathUtility::readPoint(file, neighbouringFiberFirstPoint[1]);
+                  }
+
+                  if (firstPoint[2] - neighbouringFiberFirstPoint[1][2] > 1e-12)
+                  {
                     LOG(ERROR) << "Could not fixed fiber (" << fiberIndexX << "," << fiberIndexY << ") / (" << nFibersX << "," << nFibersX << "),"
                       << " first point: " << firstPoint << ", neighbouring points: " << neighbouringFiberFirstPoint[0] << "," << neighbouringFiberFirstPoint[1];
                   }

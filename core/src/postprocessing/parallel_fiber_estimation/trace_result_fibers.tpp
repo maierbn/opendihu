@@ -1040,14 +1040,44 @@ void ParallelFiberEstimation<BasisFunctionType>::
 interpolateFineFibersFromFile()
 {
   // open existing file to read
+
+  struct stat statBuffer;
+  int rc = stat(resultFilename_.c_str(), &statBuffer);
+  if (rc != 0)
+  {
+    LOG(FATAL) << "Could not open file \"" << resultFilename_ << "\".";
+  }
+  int fileOldSize = statBuffer.st_size;
+
   std::ifstream fileOld(resultFilename_.c_str(), std::ios::in | std::ios::binary);
   assert (fileOld.is_open());
 
   std::stringstream newFilename;
-  newFilename << resultFilename_ << ".fine";
-  LOG(DEBUG) << "write to file " << newFilename.str();
-  std::ofstream fileNew(newFilename.str().c_str(), std::ios::out | std::ios::binary);
-  assert (fileNew.is_open());
+
+  // check if old file name is like "7x7fibers"
+  bool filenameHasXFormat = false;
+  bool xFound = false;
+  int suffixPos = 0;
+  for(int i = 0; i < resultFilename_.size(); i++)
+  {
+    if (!isdigit(resultFilename_[i]))
+    {
+      if (xFound)
+      {
+        suffixPos = i;
+        filenameHasXFormat = true;
+        break;
+      }
+      if (resultFilename_[i] == 'x')
+      {
+        xFound = true;
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
 
   // parse header
   // skip first part of header
@@ -1082,11 +1112,30 @@ interpolateFineFibersFromFile()
   // copy header
   std::vector<char> headerBuffer(32+headerLength);
   fileOld.read(headerBuffer.data(), 32+headerLength);
-  fileNew.write(headerBuffer.data(), 32+headerLength);
 
   int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
   int nFibersNew = MathUtility::sqr(nFibersNewX);
 
+  if (filenameHasXFormat)
+  {
+    newFilename << nFibersNewX << "x" << resultFilename_.substr(suffixPos);
+  }
+  else
+  {
+    newFilename << resultFilename_ << ".fine";
+  }
+
+  LOG(DEBUG) << "write to file " << newFilename.str();
+  std::ofstream fileNew(newFilename.str().c_str(), std::ios::out | std::ios::binary);
+  if (!fileNew.is_open())
+  {
+    LOG(FATAL) << "Could not write to file \"" << newFilename.str() << "\".";
+  }
+
+  // write header to new file
+  fileNew.write(headerBuffer.data(), 32+headerLength);
+
+  LOG(INFO) << "\"" << resultFilename_ << "\" -> \"" << newFilename.str() << "\"";
   LOG(INFO) << "interpolate from " <<  nFibersOldX << " x " << nFibersOldX << " = " << nFibersOld
     << " to " << nFibersNewX << " x " << nFibersNewX << " = " << nFibersNew << ", (nFineGridFibers: " << nFineGridFibers_ << ")";
 
@@ -1101,6 +1150,11 @@ interpolateFineFibersFromFile()
     std::cin.get();
   }
 
+  if (int((fileOldSize-(32+headerLength)) / fiberDataSize) != nFibersOld)
+  {
+    LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
+      << int((fileOldSize-(32+headerLength)) / fiberDataSize) << " fibers!";
+  }
 
   union
   {
@@ -1109,25 +1163,29 @@ interpolateFineFibersFromFile()
   };
 
   // write new number of fibers
+  // nFibersTotal
   fileNew.seekp(32+4);
   parameter = nFibersNew;
   fileNew.write(c, 4);
 
+  // nBorderPointsXNew
   fileNew.seekp(32+3*4);
   parameter = nFibersOldX;
   fileNew.write(c, 4);
 
+  // nFineGridFibers
   fileNew.seekp(32+5*4);
   parameter = nFineGridFibers_;
   fileNew.write(c, 4);
 
+  // date
   fileNew.seekp(32+9*4);
   parameter = time(NULL);
   fileNew.write(c, 4);
 
   fileNew.seekp(32+headerLength);
 
-  // loop over fibers in new file
+  // define 4 buffers that can each hold data for one fiber
   std::array<std::vector<char>,4> buffer;
 
   // initialize buffers
@@ -1136,6 +1194,7 @@ interpolateFineFibersFromFile()
     buffer[i].resize(fiberDataSize);
   }
 
+  // loop over fibers in new file
   for (int fiberIndexY = 0; fiberIndexY != nFibersNewX; fiberIndexY++)
   {
     for (int fiberIndexX = 0; fiberIndexX != nFibersNewX; fiberIndexX++)
@@ -1143,11 +1202,20 @@ interpolateFineFibersFromFile()
       int oldFiberIndexX = (int)(fiberIndexX / (nFineGridFibers_+1));
       int oldFiberIndexY = (int)(fiberIndexY / (nFineGridFibers_+1));
 
+      VLOG(1) << "fiber " << fiberIndexX << "," << fiberIndexY << ", oldFiberIndex: " << oldFiberIndexX << "," << oldFiberIndexY;
+
       // if fiber is key fiber
       if (fiberIndexX % (nFineGridFibers_+1) == 0 && fiberIndexY % (nFineGridFibers_+1) == 0)
       {
         // copy fiber data from old file
         int oldFiberIndex = oldFiberIndexY * nFibersOldX + oldFiberIndexX;
+
+        // assert that file is long enough
+        if (32+headerLength + (oldFiberIndex+1)*fiberDataSize > fileOldSize)
+        {
+          LOG(ERROR) << "Read past end of file, oldFiberIndex: " << oldFiberIndex;
+        }
+        assert(32+headerLength + (oldFiberIndex+1)*fiberDataSize <= fileOldSize);
 
         fileOld.seekg(32+headerLength + oldFiberIndex*fiberDataSize);
         fileOld.read(buffer[0].data(), fiberDataSize);
@@ -1164,8 +1232,16 @@ interpolateFineFibersFromFile()
           (oldFiberIndexY+1) * nFibersOldX + (oldFiberIndexX+1)
         };
 
+        std::array<bool,4> edgeFiberIsValid({true,true,true,true});
         for (int i = 0; i < 4; i++)
         {
+          std::size_t fileEndPos = 32+headerLength + (oldFiberIndex[i]+1)*fiberDataSize;
+          if (fileEndPos > fileOldSize)
+          {
+            edgeFiberIsValid[i] = false;
+            continue;
+          }
+
           fileOld.seekg(32+headerLength + oldFiberIndex[i]*fiberDataSize);
           fileOld.read(buffer[i].data(), fiberDataSize);
         }
@@ -1173,6 +1249,13 @@ interpolateFineFibersFromFile()
         // compute interpolation factors
         double alpha0 = double(fiberIndexX - oldFiberIndexX*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
         double alpha1 = double(fiberIndexY - oldFiberIndexY*(nFineGridFibers_+1)) / (nFineGridFibers_+1);
+
+        // 2 3
+        // 0 1
+        if (!edgeFiberIsValid[2] || !edgeFiberIsValid[3])
+        {
+          alpha1 = 0.0;
+        }
 
         VLOG(1) << "(" << fiberIndexX << "," << fiberIndexY << ") alpha: " << alpha0 << "," << alpha1;
 

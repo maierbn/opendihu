@@ -598,6 +598,11 @@ fixInvalidFibersInFile()
   }
   else
   {
+    // determine size of file
+    struct stat statBuffer;
+    stat(resultFilename_.c_str(), &statBuffer);
+    int fileSize = statBuffer.st_size;
+
     // skip first part of header
     file.seekg(32);
     union int32
@@ -625,8 +630,15 @@ fixInvalidFibersInFile()
     int nFibersX = int(std::round(std::sqrt(nFibers)));
     int nFibersInvalid = 0;
     int nFibersFixed = 0;
+    const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
     LOG(DEBUG) << "headerLength: " << headerLength << ", nFibers: " << nFibers << ", nPointsPerFiber: " << nPointsPerFiber << ", nFibersX: " << nFibersX;
+
+    if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
+    {
+      LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibers << " fibers in header, but actually has "
+        << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!";
+    }
 
     // determine which fibers are valid
     std::vector<std::vector<bool>> fiberIsValid(nFibersX, std::vector<bool>(nFibersX, true));
@@ -636,17 +648,21 @@ fixInvalidFibersInFile()
       for (int fiberIndexX = 0; fiberIndexX != nFibersX; fiberIndexX++)
       {
         int fiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-        file.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double));
+        file.seekg(32+headerLength + fiberIndex*fiberDataSize);
 
-        // read first value of fiber
-        Vec3 firstPoint;
-        MathUtility::readPoint(file, firstPoint);
-
-        // if fiber is invalid
-        if (firstPoint[0] == 0.0 && firstPoint[1] == 0.0 && firstPoint[2] == 0.0)
+        // read all points of fiber
+        for (int zPointIndex = 0; zPointIndex < nPointsPerFiber; zPointIndex++)
         {
-          fiberIsValid[fiberIndexY][fiberIndexX] = false;
-          nFibersInvalid++;
+          Vec3 point;
+          MathUtility::readPoint(file, point);
+
+          // if fiber is invalid
+          if (point[0] == 0.0 && point[1] == 0.0 && point[2] == 0.0)
+          {
+            fiberIsValid[fiberIndexY][fiberIndexX] = false;
+            nFibersInvalid++;
+            break;
+          }
         }
       }
     }
@@ -727,12 +743,15 @@ fixInvalidFibersInFile()
               // get the left and right valid fibers
               Vec3 point0, point1;
               int previousFiberIndex = fiberIndexY*nFibersX + leftNeighbourIndex;
-              file.seekg(32+headerLength + previousFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(previousFiberIndex < nFibers);
+              file.seekg(32+headerLength + previousFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::readPoint(file, point0);
 
               int nextFiberIndex = fiberIndexY*nFibersX + rightNeighbourIndex;
-              file.seekg(32+headerLength + nextFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(nextFiberIndex < nFibers);
+
+              file.seekg(32+headerLength + nextFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::readPoint(file, point1);
 
@@ -741,7 +760,9 @@ fixInvalidFibersInFile()
 
               // write the interpolated value back
               int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-              file.seekp(32+headerLength + interpolatedFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(interpolatedFiberIndex < nFibers);
+
+              file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::writePoint(file, interpolatedPoint);
             }
@@ -762,12 +783,16 @@ fixInvalidFibersInFile()
               // get the left and right valid fibers
               Vec3 point0, point1;
               int previousFiberIndex = frontNeighbourIndex*nFibersX + fiberIndexX;
-              file.seekg(32+headerLength + previousFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(previousFiberIndex < nFibers);
+
+              file.seekg(32+headerLength + previousFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::readPoint(file, point0);
 
               int nextFiberIndex = backNeighbourIndex*nFibersX + fiberIndexX;
-              file.seekg(32+headerLength + nextFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(nextFiberIndex < nFibers);
+
+              file.seekg(32+headerLength + nextFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::readPoint(file, point1);
 
@@ -776,7 +801,9 @@ fixInvalidFibersInFile()
 
               // write the interpolated value back
               int interpolatedFiberIndex = fiberIndexY*nFibersX + fiberIndexX;
-              file.seekp(32+headerLength + interpolatedFiberIndex*nPointsPerFiber*3*sizeof(double) + zIndex*3*sizeof(double));
+              assert(interpolatedFiberIndex < nFibers);
+
+              file.seekp(32+headerLength + interpolatedFiberIndex*fiberDataSize + zIndex*3*sizeof(double));
 
               MathUtility::writePoint(file, interpolatedPoint);
             }
@@ -839,6 +866,7 @@ resampleFibersInFile(int nPointsPerFiber)
 
   int nFibersX = (nBorderPointsXNew_-1) * nFineGridFibers_ + nBorderPointsXNew_;
   int nFibers = MathUtility::sqr(nFibersX);
+  const long long fiberDataSize = nPointsPerFiber*3*sizeof(double);
 
   // loop over fibers in old file
   for (int fiberIndex = 0; fiberIndex != nFibers; fiberIndex++)
@@ -864,7 +892,7 @@ resampleFibersInFile(int nPointsPerFiber)
       // load previous point, only if it was not already loaded
       if (oldZIndexPrevious != oldZIndexPrevious0)
       {
-        fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexPrevious*3*sizeof(double));
+        fileOld.seekg(32+headerLength + fiberIndex*fiberDataSize + oldZIndexPrevious*3*sizeof(double));
         MathUtility::readPoint(fileOld, previousPoint);
         oldZIndexPrevious0 = oldZIndexPrevious;
       }
@@ -875,7 +903,7 @@ resampleFibersInFile(int nPointsPerFiber)
         // only if it was not already loaded
         if (oldZIndexNext != oldZIndexNext0)
         {
-          fileOld.seekg(32+headerLength + fiberIndex*nPointsPerFiber*3*sizeof(double) + oldZIndexNext*3*sizeof(double));
+          fileOld.seekg(32+headerLength + fiberIndex*fiberDataSize + oldZIndexNext*3*sizeof(double));
           MathUtility::readPoint(fileOld, nextPoint);
           oldZIndexNext0 = oldZIndexNext;
         }

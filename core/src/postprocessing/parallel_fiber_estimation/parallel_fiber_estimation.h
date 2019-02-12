@@ -33,6 +33,9 @@ public:
   //! open result file and interpolate fine fibers in between, the new file has the suffix ".fine"
   void interpolateFineFibersFromFile();
 
+  //! open the result file and interpolate all missing fibers, write fixed fibers to same file
+  void fixInvalidFibersInFile();
+
   //! function space to use, i.e. 3D structured deformable grid
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType> FunctionSpaceType;
   typedef SpatialDiscretization::FiniteElementMethod<
@@ -132,9 +135,6 @@ protected:
 
   //! determine if the subdomain is at which borders, from rank no
   void setSubdomainIsAtBorder(int rankNo, std::array<bool,4> &subdomainIsAtBorderNew);
-
-  //! open the file again and interpolate all missing fibers
-  void fixInvalidFibersInFile();
 
   //! fix the invalid key fibers at the end of the algorithm
   void fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, std::vector<std::vector<Vec3>> &fibers, int &nFibersFixed);

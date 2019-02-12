@@ -5,18 +5,18 @@
 
 int main(int argc, char *argv[])
 {
-  // Given a binary file with fibers interpolate between given fibers and create new file with more fibers.
+  // Fix the invalid fibers in a given file.
 
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
-  
+
   Postprocessing::ParallelFiberEstimation<
     BasisFunction::LagrangeOfOrder<1>
   >
   problem(settings);
-  
-  // read in the file under resultFilename and refine the fibers by interpolating nFineGridFibers between existing fibers
-  problem.interpolateFineFibersFromFile();
-  
+
+  // read in the file under resultFilename and fix all invalid fibers by interpolating from neighbouring fibers
+  problem.fixInvalidFibersInFile();
+
   return EXIT_SUCCESS;
 }

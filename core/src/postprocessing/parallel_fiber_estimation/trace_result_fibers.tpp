@@ -588,6 +588,14 @@ fixInvalidFibersInFile()
 {
   // open the file again and interpolate all missing fibers
 
+  // copy existing file
+  std::string newFilename = resultFilename_ + std::string(".unfixed");
+  std::stringstream moveCommand;
+  moveCommand << "cp " << resultFilename_ << " " << newFilename;
+  int ret = std::system(moveCommand.str().c_str());
+  ret++;
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
   int nPointsPerFiber = 0;
   int nFibers = 0;
   int headerLength = 0;

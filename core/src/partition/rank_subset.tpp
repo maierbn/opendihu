@@ -14,19 +14,22 @@ template<typename Iter>
 RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset) : ownRankNo_(-1), nCommunicatorsSplit_(0)
 {
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
+  int ownRankParentCommunicator = 0;
   if (parentRankSubset)
   {
     LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, use parent communicator";
     parentCommunicator = parentRankSubset->mpiCommunicator();
+    ownRankParentCommunicator = parentRankSubset->ownRankNo();
+    LOG(DEBUG) << "determined own rank: " << ownRankParentCommunicator;
   }
   else
   {
     LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, from MPI_COMM_WORLD";
+    MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankParentCommunicator), "MPI_Comm_rank");
+    LOG(DEBUG) << "determined own rank: " << ownRankParentCommunicator;
   }
 
   // get the own rank in the communicator
-  int ownRankParentCommunicator = 0;
-  MPIUtility::handleReturnValue(MPI_Comm_rank(parentCommunicator, &ownRankParentCommunicator), "MPI_Comm_rank");
   int color = MPI_UNDEFINED;
   
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));

@@ -635,6 +635,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   LOG(DEBUG) << "create subdomains";
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // create subdomains
   // create new rank subset i.e. a new MPI communicator
   int nRanksPerCoordinateDirectionPreviously = nRanksPerCoordinateDirection_[0];

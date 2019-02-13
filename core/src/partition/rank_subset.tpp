@@ -16,7 +16,12 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
   if (parentRankSubset)
   {
+    LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, use parent communicator";
     parentCommunicator = parentRankSubset->mpiCommunicator();
+  }
+  else
+  {
+    LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, from MPI_COMM_WORLD";
   }
 
   // get the own rank in the communicator

@@ -439,20 +439,11 @@ solveLinearSystem()
   ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
 
   // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide_, solution_); CHKERRV(ierr);
-
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*this->linearSolver_->ksp(), &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
-
-  lastNumberOfIterations_ = numberOfIterations;
-
-  LOG(DEBUG) << "Linear system of multidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+#ifndef NDEBUG
+  this->linearSolver_->solve(rightHandSide_, solution_);
+#else
+  this->linearSolver_->solve(rightHandSide_, solution_, "Linear system of multidomain problem solved");
+#endif
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type

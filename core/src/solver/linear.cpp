@@ -56,6 +56,15 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
   //                                    relative tol,      absolute tol,  diverg tol.,   max_iterations
   ierr = KSPSetTolerances (*ksp_, relativeTolerance_, PETSC_DEFAULT, PETSC_DEFAULT, maxIterations_); CHKERRV(ierr);
+
+  // prepare log keys to log number of iterations and residual norm
+  std::stringstream nIterationsLogKey;
+  nIterationsLogKey << "nIterations_" << name_;
+  nIterationsLogKey_ = nIterationsLogKey.str();
+
+  std::stringstream residualNormLogKey;
+  residualNormLogKey << "residualNorm_" << name_;
+  residualNormLogKey_ = residualNormLogKey.str();
 }
 
 void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
@@ -145,6 +154,36 @@ void Linear::parseSolverTypes(KSPType &kspType, PCType &pcType)
 std::shared_ptr<KSP> Linear::ksp()
 {
   return ksp_;
+}
+
+void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
+{
+  PetscErrorCode ierr;
+
+  // solve the system
+  ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRV(ierr);
+
+  // determine meta data
+  int numberOfIterations = 0;
+  PetscReal residualNorm = 0.0;
+  int nDofsGlobal = 0;
+
+  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
+  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
+
+  KSPConvergedReason convergedReason;
+  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
+  ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
+
+  if (message != "")
+  {
+    LOG(INFO) << message << " in " << numberOfIterations << " iterations, " << nDofsGlobal << " dofs, residual norm " << residualNorm
+      << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+  }
+
+  // store parameter values to be logged
+  Control::PerformanceMeasurement::setParameter(nIterationsLogKey_, numberOfIterations);
+  Control::PerformanceMeasurement::setParameter(residualNormLogKey_, residualNorm);
 }
 
 }   //namespace

@@ -55,22 +55,16 @@ solveLinearSystem(Vec &input, Vec &output)
   // solve systemMatrix*output = input for output
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   
-  PetscErrorCode ierr;
   PetscUtility::checkDimensionsMatrixVector(systemMatrix, input);
   
-  // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*ksp_, input, output); CHKERRV(ierr);
-  
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*ksp_, &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*ksp_, &residualNorm); CHKERRV(ierr);
-  
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
-  
-  VLOG(1) << "Linear system of implicit time stepping solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+  if (VLOG_IS_ON(1))
+  {
+    linearSolver_->solve(input, output, "Linear system of implicit time stepping solved");
+  }
+  else
+  {
+    linearSolver_->solve(input, output);
+  }
 }
 
 template<typename DiscretizableInTimeType>

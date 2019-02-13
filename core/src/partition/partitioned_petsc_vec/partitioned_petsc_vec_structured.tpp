@@ -125,24 +125,6 @@ setRepresentationLocal()
 
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
-setRepresentationContiguous()
-{
-  VLOG(2) << "\"" << this->name_ << "\" setrepresentationContiguous, previous representation: "
-    << Partition::valuesRepresentationString[this->currentRepresentation_];
-
-  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
-  {
-    getValuesContiguous();
-  }
-  if (this->currentRepresentation_ == Partition::values_representation_t::representationGlobal)
-  {
-    setRepresentationLocal();
-    getValuesContiguous();
-  }
-}
-
-template<typename MeshType,typename BasisFunctionType,int nComponents>
-void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
 startGhostManipulation()
 {
   VLOG(2) << "\"" << this->name_ << "\" startGhostManipulation";
@@ -550,15 +532,29 @@ getValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" getValuesContiguous()";
 
+  // if there is only one component, do not use the contiguous vector
   if (nComponents == 1)
   {
     return vectorGlobal_[0];
   }
 
-  // if the contiguous representation is already being used, return contiguous vector
+  setRepresentationContiguous();
+
+  return valuesContiguous_;
+}
+
+//! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
+//! after manipulation of the vector has finished one has to call restoreValuesContiguous
+template<typename MeshType,typename BasisFunctionType,int nComponents>
+void PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents,Mesh::isStructured<MeshType>>::
+setRepresentationContiguous()
+{
+  VLOG(2) << "\"" << this->name_ << "\" setRepresentationContiguous()";
+
+  // if the contiguous representation is already being used, do nothing
   if (this->currentRepresentation_ == Partition::values_representation_t::representationContiguous)
   {
-    return valuesContiguous_;
+    return;
   }
 
   // if the representation is global, set to local without considering ghosts, because in contiguous values we do not have ghosts
@@ -655,8 +651,6 @@ getValuesContiguous()
     output(s);
     VLOG(1) << "after copy: " << s.str();
   }
-
-  return valuesContiguous_;
 }
 
 //! copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component.
@@ -667,6 +661,7 @@ restoreValuesContiguous()
 {
   VLOG(2) << "\"" << this->name_ << "\" restoreValuesContiguous()";
 
+  // if there is only one component, do not use the contiguous vector
   if (nComponents == 1)
     return;
 

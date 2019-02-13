@@ -1297,7 +1297,7 @@ interpolateFineFibersFromFile()
 
   if (filenameHasXFormat)
   {
-    newFilename << nFibersNewX << "x" << resultFilename_.substr(suffixPos);
+    newFilename << nFibersNewX << "x" << nFibersNewX  << resultFilename_.substr(suffixPos);
   }
   else
   {

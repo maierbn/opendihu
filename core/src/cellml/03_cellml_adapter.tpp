@@ -134,10 +134,10 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
 
-    Control::PerformanceMeasurement::start("rhsEvaluationTime");
+    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
-    Control::PerformanceMeasurement::stop("rhsEvaluationTime");
+    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
   // handle intermediates, call callback function of python config

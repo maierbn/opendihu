@@ -49,7 +49,6 @@ protected:
   std::shared_ptr<Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>> dataImplicit_;  ///< a pointer to the data_ object but of type Data::TimeSteppingImplicit
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<KSP> ksp_;     ///< the ksp object of the linear solver
-
 };
 
 }  // namespace

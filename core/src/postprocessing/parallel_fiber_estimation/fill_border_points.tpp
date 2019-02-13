@@ -10,6 +10,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   LOG(DEBUG) << "fillBorderPoints";
+  MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
   //PyObject *stlMeshPy = PyObject_CallFunction(functionGetStlMesh_, "s", stlFilename_.c_str());
   //PythonUtility::checkForError();
   //assert(stlMeshPy);
@@ -116,11 +117,11 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         if (rightNeighbourRankNo != -1)
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
-            << ", send borderPoint " << rightBorderPoint << " to right rank " << rightNeighbourRankNo << ", receive from left rank";
+            << ", send borderPoint " << rightBorderPoint << " to right rank " << rightNeighbourRankNo << ", receive from right rank";
 
           // send and receive right border point
-          MPIUtility::handleReturnValue(MPI_Sendrecv(rightBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 2,
-                                                     rightForeignBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 2,
+          MPIUtility::handleReturnValue(MPI_Sendrecv(rightBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 1,
+                                                     rightForeignBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 1,
                                                      currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Send");
         }
         else

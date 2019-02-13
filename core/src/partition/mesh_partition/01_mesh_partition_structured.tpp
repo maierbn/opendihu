@@ -73,11 +73,14 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
       MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPI_INT,
         localSizesOnRanks[i].data(), 1, MPI_INT, rankSubset->mpiCommunicator()));
     }
-    VLOG(1) << "determined localSizesOnRanks: " << localSizesOnRanks;
-
-    // create localSizesOnPartitions_ from localSizesOnRanks
+    LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
+    LOG(DEBUG) << "nRanks: " << nRanks_;
+    
+    // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
+      VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];
+      assert (nRanks_[dimensionIndex] != 0);
       localSizesOnPartitions_[dimensionIndex].resize(nRanks_[dimensionIndex]);
 
       // loop over the first rank of the respecive partion
@@ -91,14 +94,20 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
         rankStride = nRanks_[0]*nRanks_[1];
       }
 
+      VLOG(1) << "   rankStride: " << rankStride;
       int partitionIndex = 0;
-      for (int rankNo = 0; rankNo < this->nRanks(); rankNo += rankStride)
+      for (int rankNo = 0; partitionIndex < nRanks_[dimensionIndex]; rankNo += rankStride, partitionIndex++)
       {
-        localSizesOnPartitions_[dimensionIndex][partitionIndex++] = localSizesOnRanks[dimensionIndex][rankNo];
+        VLOG(1) << "   rankNo: " << rankNo;
+        VLOG(1) << "   localSizesOnRanks: " << localSizesOnRanks[dimensionIndex][rankNo];
+        localSizesOnPartitions_[dimensionIndex][partitionIndex] = localSizesOnRanks[dimensionIndex][rankNo];
+        VLOG(1) << "    saved to partitionIndex " << partitionIndex;
+        if (partitionIndex >= nRanks_[dimensionIndex]-1)
+          break;
       }
     }
 
-    VLOG(1) << "determined localSizesOnPartitions: " << localSizesOnPartitions_;
+    LOG(DEBUG) << "determined localSizesOnPartitions_: " << localSizesOnPartitions_;
 
     setOwnRankPartitioningIndex();
 
@@ -263,7 +272,7 @@ createDmElements()
       nElementsLocal_[dimensionIndex] = nElementsGlobal_[dimensionIndex];
       nRanks_[dimensionIndex] = 1;
       localSizesOnPartitions_[dimensionIndex].resize(1);
-      localSizesOnPartitions_[dimensionIndex][0] = 1;
+      localSizesOnPartitions_[dimensionIndex][0] = nElementsGlobal_[dimensionIndex];
     }
   }
   else
@@ -1021,6 +1030,8 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
   global_no_t xGlobalNatural = 0;
   while (xGlobalNatural <= nodeNoGlobalNatural[0] && xGlobalNatural < nNodesGlobal(0)-1)
   {
+    VLOG(3) << "   x GlobalNatural=" << xGlobalNatural << ", partitionX=" << partitionX << ", nodeNoGlobalNatural[0]=" << nodeNoGlobalNatural[0];
+    assert(localSizesOnPartitions_[0].size() > partitionX);
     xGlobalNatural += localSizesOnPartitions_[0][partitionX++]*nNodesPer1DElement;
     VLOG(3) << "   x GlobalNatural=" << xGlobalNatural << ", partitionX=" << partitionX << ", nodeNoGlobalNatural[0]=" << nodeNoGlobalNatural[0];
   }
@@ -1036,6 +1047,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t yGlobalNatural = 0;
     while (yGlobalNatural <= nodeNoGlobalNatural[1] && yGlobalNatural < nNodesGlobal(1)-1)
     {
+      assert(localSizesOnPartitions_[1].size() > partitionY);
       yGlobalNatural += localSizesOnPartitions_[1][partitionY++]*nNodesPer1DElement;
       VLOG(3) << "   y GlobalNatural=" << yGlobalNatural << ", partitionY=" << partitionY << ", nodeNoGlobalNatural[1]=" << nodeNoGlobalNatural[1];
     }
@@ -1052,6 +1064,7 @@ getPartitioningIndex(std::array<global_no_t,MeshType::dim()> nodeNoGlobalNatural
     global_no_t zGlobalNatural = 0;
     while (zGlobalNatural <= nodeNoGlobalNatural[2] && zGlobalNatural < nNodesGlobal(2)-1)
     {
+      assert(localSizesOnPartitions_[2].size() > partitionZ);
       zGlobalNatural += localSizesOnPartitions_[2][partitionZ++]*nNodesPer1DElement;
       VLOG(3) << "   z GlobalNatural=" << zGlobalNatural << ", partitionZ=" << partitionZ << ", nodeNoGlobalNatural[2]=" << nodeNoGlobalNatural[2];
     }
@@ -1716,8 +1729,20 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(nodeNoLocal);
 
-  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal
-    << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+  VLOG(2) << "isNonGhost(" << nodeNoLocal << "), coordinatesLocal: " << coordinatesLocal;
+
+  if (MeshType::dim() == 1)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << ")";
+  }
+  else if (MeshType::dim() == 2)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << ")";
+  }
+  else if (MeshType::dim() == 3)
+  {
+    VLOG(2) << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")";
+  }
 
   if (nodeNoLocal < nNodesLocalWithoutGhosts())
   {

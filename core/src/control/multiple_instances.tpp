@@ -15,10 +15,13 @@
 namespace Control
 {
 
+bool outputInitialize_ = true;
+
 template<typename TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
-  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
+  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()),
+  data_(context_), outputInitializeThisInstance_(false)
 {
 // #ifdef HAVE_PAT
   // PAT_record(PAT_STATE_OFF);
@@ -31,6 +34,19 @@ MultipleInstances(DihuContext context) :
   std::vector<std::string> configKeys;
   specificSettings_.getKeys(configKeys);
   LOG(DEBUG) << "initialize outputWriterManager_, keys: " << configKeys;
+
+  // parse log key
+  if (specificSettings_.hasKey("durationLogKey") || specificSettings_.hasKey("logKey"))
+  {
+    if (specificSettings_.hasKey("logKey"))
+    {
+      this->logKey_ = specificSettings_.getOptionString("logKey", "");
+    }
+    else
+    {
+      this->logKey_ = specificSettings_.getOptionString("durationLogKey", "");
+    }
+  }
 
   outputWriterManager_.initialize(context_, specificSettings_);
   
@@ -193,6 +209,13 @@ MultipleInstances(DihuContext context) :
 
   nInstancesLocal_ = instancesLocal_.size();
 
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_n";
+    Control::PerformanceMeasurement::setParameter(logKey.str(), nInstancesLocal_);
+  }
+
   // clear rank subset for next created partitioning
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
@@ -201,11 +224,20 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan()
 {
+  // start duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::start(this->logKey_);
+
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     instancesLocal_[i].advanceTimeSpan();
   }
+
+  // stop duration measurement
+  if (this->logKey_ != "")
+    Control::PerformanceMeasurement::stop(this->logKey_);
+
 
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
@@ -229,14 +261,56 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::start(logKey.str());
+  }
+
   LOG(TRACE) << "MultipleInstances::initialize()";
+
+  // initialize output of progress in %, it is only output for once instance and then only for rank 0
+  if (outputInitialize_)
+  {
+    outputInitializeThisInstance_ = true;
+    outputInitialize_ = false;
+    LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
+  }
+
+  double progress = 0;
   for (int i = 0; i < nInstancesLocal_; i++)
   {
+    // output progress
+    double newProgress = (double)i/nInstancesLocal_;
+    if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+    {
+      if (int(progress*10) != int(newProgress*10))
+      {
+        std::cout << "\b\b\b\b" << int(newProgress*100) << "%" << std::flush;
+      }
+    }
+    progress = newProgress;
+
     LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
   }
+
+  // end output of progress
+  if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+  {
+    std::cout << "\b\b\b\bdone." << std::endl;
+  }
+
   
   data_.setInstancesData(instancesLocal_);
+
+  if (this->logKey_ != "")
+  {
+    std::stringstream logKey;
+    logKey << this->logKey_ << "_init";
+    Control::PerformanceMeasurement::stop(logKey.str());
+  }
 
 // #ifdef HAVE_PAT
   // PAT_region_end(1);    // end region "initialization", id 1

@@ -80,19 +80,22 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   // compose header
   std::stringstream header;
-  header << "# timestamp;hostname;version;";
-
-  // write parameter names
-  for (std::pair<std::string,std::string> parameter : parameters_)
-  {
-    header << parameter.first << ";";
-  }
+  header << "# timestamp;hostname;version;nRanks;rankNo;";
 
   // write measurement names
   for (std::pair<std::string, Measurement> measurement : measurements_)
   {
     header << measurement.first << ";n;";
   }
+
+  // write parameter names
+  for (std::pair<std::string,std::string> parameter : parameters_)
+  {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
+    header << parameter.first << ";";
+  }
+
   header << std::endl;
 
   // compose data
@@ -108,12 +111,7 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   gethostname(hostname, MAXHOSTNAMELEN+1);
   data << std::string(hostname) << ";";
   data << DihuContext::versionText() << ";";
-
-  // write parameters
-  for (std::pair<std::string,std::string> parameter : parameters_)
-  {
-    data << parameter.second << ";";
-  }
+  data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
 
   // write measurement values
   for (std::pair<std::string, Measurement> measurement : measurements_)
@@ -121,6 +119,19 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     data << measurement.second.totalDuration << ";"
     << measurement.second.nTimeSpans << ";";
   }
+
+  // write parameters
+  for (std::pair<std::string,std::string> parameter : parameters_)
+  {
+    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+      continue;
+
+    // remove newlines
+    StringUtility::replace(parameter.second, "\n", "");
+    StringUtility::replace(parameter.second, "\r", "");
+    data << parameter.second << ";";
+  }
+
   data << std::endl;
 
   // check if header has to be added to file

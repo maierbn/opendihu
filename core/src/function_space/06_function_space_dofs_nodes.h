@@ -37,6 +37,12 @@ public:
   //! construct from element numbers and physical extent
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
 
+  //! constructor from python settings, null argument is ignored
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig specificSettings);
+
+  //! construct from element numbers and physical extent, null argument is ignored
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent);
+
   typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  ///< the class typename of the geometry field variable
 
   //! get mesh width (=distance between nodes) of the given coordinate direction
@@ -64,6 +70,9 @@ class FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunct
 public:
   //! constructor from python settings, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField=false);
+
+  //! constructor from python settings with additionally given node positions
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings, bool noGeometryField=false);
 
   //! constructor from node positions
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,

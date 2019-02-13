@@ -15,3 +15,10 @@ if not env['no_examples']:
 
   # create the main executable
   env.Program(target = 'parallel_fiber_estimation', source = src_files)
+
+
+  # define the source files
+  src_files = ["src/refine.cpp"]
+
+  # create the main executable
+  env.Program(target = 'refine', source = src_files)

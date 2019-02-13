@@ -1,0 +1,3 @@
+[submodule "dependencies/megamol/src/megamol-tobiasrau"]
+	path = dependencies/megamol/src/megamol-tobiasrau
+	url = git@github.com:tobiasrau/megamol-dev.git

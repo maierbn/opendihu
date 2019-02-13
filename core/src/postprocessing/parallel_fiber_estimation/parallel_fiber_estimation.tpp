@@ -12,7 +12,7 @@
 //#define USE_CHECKPOINT_BORDER_POINTS
 //#define USE_CHECKPOINT_MESH
 //#define WRITE_CHECKPOINT_MESH
-//#define WRITE_CHECKPOINT_BORDER_POINTS
+#define WRITE_CHECKPOINT_BORDER_POINTS
 //#define WRITE_CHECKPOINT_GHOST_MESH
 //#define USE_CHECKPOINT_GHOST_MESH
 
@@ -270,7 +270,8 @@ generateParallelMesh()
 
 #else       // using previously stored data
 
-  std::vector<int> ranks = {0,1,2,3,4,5,6,7};
+  std::vector<int> ranks(64);
+  std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
   nRanksPerCoordinateDirection_.fill(2);
 
@@ -644,7 +645,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   std::iota(ranks.begin(), ranks.end(), 0);
   currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
 
-  LOG(DEBUG) << "refineSubdomainsOnThisRank: " << refineSubdomainsOnThisRank;
+  LOG(DEBUG) << "refineSubdomainsOnThisRank: " << refineSubdomainsOnThisRank << ", rankSubset: " << *currentRankSubset_;
 
   // send border points to ranks that will handle the new subdomains
   std::vector<MPI_Request> sendRequests;

@@ -36,13 +36,16 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
 
     assert(sendBufferIndex == sendBufferSize);
 
-    // determine rank so to which the border points should be sent to
+    // determine rank to which the border points should be sent to
     std::array<int,3> oldRankIndex;
 
     for (int i = 0; i < 3; i++)
     {
       oldRankIndex[i] = meshPartition_->ownRankPartitioningIndex(i);
     }
+    
+    LOG(DEBUG) << " --- ";
+    LOG(DEBUG) << "subdomain " << subdomainIndex << ", oldRankIndex: " << oldRankIndex;
 
     std::array<int,3> subdomainRankIndex;
     subdomainRankIndex[0] = oldRankIndex[0]*2 + subdomainIndex % 2;
@@ -52,46 +55,70 @@ sendBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bor
     int subdomainRankNo = subdomainRankIndex[2]*(nRanksPerCoordinateDirection_[0]*nRanksPerCoordinateDirection_[1])
       + subdomainRankIndex[1]*nRanksPerCoordinateDirection_[0] + subdomainRankIndex[0];
 
+    LOG(DEBUG) << "subdomainRankIndex: " << subdomainRankIndex << ", subdomainRankNo: " << subdomainRankNo;
+
     // determine if the subdomain is at any border of the whole domain
-    std::array<bool,4> subdomainIsAtBorderNew;
+    std::array<bool,4> subdomainIsAtBorderNew = {false,false,false,false};
     setSubdomainIsAtBorder(subdomainRankNo, subdomainIsAtBorderNew);
 
-    LOG(DEBUG) << "sendBuffer size: " << sendBufferSize << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:"
+    LOG(DEBUG) << "subdomainIsAtBorderNew: " << subdomainIsAtBorderNew << ", sendBuffer size: " << sendBufferSize << ", nBorderPointsX_:" << nBorderPointsX_ << ", nBorderPointsZ_:"
       << nBorderPointsZ_ << ", " << nBorderPointsX_*nBorderPointsZ_*3*4;
 
     // save subdomains to be send to a file
 #ifdef WRITE_CHECKPOINT_BORDER_POINTS
     std::stringstream filename;
     filename << "checkpoint_borderPoints_subdomain_" << subdomainRankNo << ".csv";
+    LOG(DEBUG) << " filename \"" << filename.str() << "\".";
     std::ofstream file(filename.str().c_str(), std::ios::out | std::ios::trunc);
-    assert(file.is_open());
-
-    // header
-    file << borderPointsSubdomain[subdomainIndex][0].size() << ";" << borderPointsSubdomain[subdomainIndex][0][0].size() << ";";
-    for (int i = 0; i < 4; i++)
+    if(!file.is_open())
     {
-      file << (subdomainIsAtBorderNew[i]? "1" : "0") << ";";
+      LOG(WARNING) << "Could not open file \"" << filename.str() << "\".";
     }
-    file << std::endl;
-
-    // data
-    for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
+    else 
     {
-      for (int zLevelIndex = 0; zLevelIndex < borderPointsSubdomain[subdomainIndex][faceNo].size(); zLevelIndex++)
+      LOG(DEBUG) << " opened file.";
+
+      // header
+      file << borderPointsSubdomain[subdomainIndex][0].size() << ";";
+      LOG(DEBUG) << "a";
+      if (borderPointsSubdomain[subdomainIndex][0].size() == 0)
       {
-        for (int pointIndex = 0; pointIndex < borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].size(); pointIndex++)
-        {
-          for (int i = 0; i < 3; i++)
-          {
-            file << borderPointsSubdomain[subdomainRankNo][faceNo][zLevelIndex][pointIndex][i] << ";";
-          }
-        }
-        file << std::endl;
+        file << "0;";
       }
-    }
+      else
+      {
+        file << borderPointsSubdomain[subdomainIndex][0][0].size() << ";";
+      }
+      LOG(DEBUG) << "b";
+      for (int i = 0; i < 4; i++)
+      {
+        file << (subdomainIsAtBorderNew[i]? "1" : "0") << ";";
+        LOG(DEBUG) << "c" << i;
+      }
+      file << std::endl;
+      LOG(DEBUG) << "d";
+      
+      // data
+      for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
+      {
+        for (int zLevelIndex = 0; zLevelIndex < borderPointsSubdomain[subdomainIndex][faceNo].size(); zLevelIndex++)
+        {
+          for (int pointIndex = 0; pointIndex < borderPointsSubdomain[subdomainIndex][faceNo][zLevelIndex].size(); pointIndex++)
+          {
+            for (int i = 0; i < 3; i++)
+            {
+              LOG(DEBUG) << "e " << faceNo << " " << zLevelIndex << " " << pointIndex << " " << i;
+              file << borderPointsSubdomain[subdomainRankNo][faceNo][zLevelIndex][pointIndex][i] << ";";
+            }
+          }
+          file << std::endl;
+        }
+      }
+      LOG(DEBUG) << "f";
 
-    file.close();
-    LOG(DEBUG) << " saved data for subdomain " << subdomainRankNo << " to file \"" << filename.str() << "\".";
+      file.close();
+      LOG(DEBUG) << " saved data for subdomain " << subdomainRankNo << " to file \"" << filename.str() << "\".";
+    }
 #endif
 
 #ifdef FILE_COMMUNICATION

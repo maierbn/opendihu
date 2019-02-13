@@ -72,6 +72,9 @@ advanceTimeSpan()
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
+
+    // store the current simulation in case the program gets interrupted, then the last time gets logged
+    Control::PerformanceMeasurement::setParameter("currentSimulationTime", std::to_string(currentTime));
   }
 
   // stop duration measurement

@@ -14,7 +14,7 @@ template<typename DataType>
 void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentTime) const
 {
   // start duration measurement
-  Control::PerformanceMeasurement::start("write output");
+  Control::PerformanceMeasurement::start("durationWriteOutput");
 
   for (auto &outputWriter : this->outputWriter_)
   {
@@ -46,7 +46,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   }
 
   // stop duration measurement
-  Control::PerformanceMeasurement::stop("write output");
+  Control::PerformanceMeasurement::stop("durationWriteOutput");
 }
 
 }  // namespace

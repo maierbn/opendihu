@@ -14,6 +14,9 @@
 #include <sys/types.h>  // getpid
 #include <unistd.h>     // getpid
 #include <omp.h>
+#include <csignal>
+#include <cstdlib>
+#include <cctype>
 
 #include "utility/python_utility.h"
 #include "output_writer/paraview/paraview.h"
@@ -52,6 +55,42 @@ std::shared_ptr<adios2::IO> DihuContext::io_ = nullptr;        ///< IO object of
 bool DihuContext::initialized_ = false;
 int DihuContext::nObjects_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
 int DihuContext::nRanksCommWorld_ = 0;   ///< number of objects of DihuContext, if the last object gets destroyed, call MPI_Finalize
+
+void handleSignal(int signalNo)
+{
+  std::string signalName = strsignal(signalNo);
+  Control::PerformanceMeasurement::setParameter("exit_signal",signalNo);
+  Control::PerformanceMeasurement::setParameter("exit",signalName);
+  Control::PerformanceMeasurement::writeLogFile();
+
+  int rankNo = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rankNo);
+  LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
+    << " (" << signalNo << "): " << signalName;
+  if (signalNo != SIGRTMIN)
+  {
+    MPI_Abort(MPI_COMM_WORLD,0);
+  }
+
+  if (signalNo == SIGSEGV)
+  {
+#ifndef NDEBUG
+#ifdef __GNUC__
+    // source: https://stackoverflow.com/questions/77005/how-to-automatically-generate-a-stacktrace-when-my-program-crashes
+    void *array[100];
+
+    // get void*'s for all entries on the stack
+    size_t size = backtrace(array, 100);
+
+    // print stack trace
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+#endif
+#endif
+  }
+
+  // set back to normal in case program continues execution
+  Control::PerformanceMeasurement::setParameter("exit","normal");
+}
 
 // copy-constructor
 DihuContext::DihuContext(const DihuContext &rhs) : pythonConfig_(rhs.pythonConfig_), rankSubset_(rhs.rankSubset_)
@@ -120,6 +159,24 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     {
       MPIUtility::gdbParallelDebuggingBarrier();
     }
+
+    // register signal handler functions on various signals. This enforces dumping of the log file
+    struct sigaction signalHandler;
+
+    signalHandler.sa_handler = handleSignal;
+    sigemptyset(&signalHandler.sa_mask);
+    signalHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &signalHandler, NULL);
+    //sigaction(SIGKILL, &signalHandler, NULL);
+    sigaction(SIGTERM, &signalHandler, NULL);
+    //sigaction(SIGABRT, &signalHandler, NULL);
+    sigaction(SIGFPE, &signalHandler, NULL);
+    sigaction(SIGILL, &signalHandler, NULL);
+    sigaction(SIGSEGV, &signalHandler, NULL);
+    sigaction(SIGXCPU, &signalHandler, NULL);
+    sigaction(SIGRTMIN, &signalHandler, NULL);
+    Control::PerformanceMeasurement::setParameter("exit","normal");
 
     // determine settings filename
     Control::settingsFileName = "settings.py";
@@ -283,15 +340,15 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
   
   if (solverManagerForThread_.find(threadId) == solverManagerForThread_.end())
   {
-    LOG(DEBUG) << "create solver manager for thread " << threadId;
+    VLOG(1) << "create solver manager for thread " << threadId;
     // create solver manager
     solverManagerForThread_[threadId] = std::make_shared<Solver::Manager>(pythonConfig_);
     
-    LOG(DEBUG) << "(done)";
+    VLOG(1) << "(done)";
   }
   else 
   {
-    LOG(DEBUG) << "solver manager for thread " << threadId << " exists";
+    VLOG(1) << "solver manager for thread " << threadId << " exists";
   }
   
   return solverManagerForThread_[threadId];
@@ -360,7 +417,8 @@ DihuContext::~DihuContext()
       LOG(DEBUG) << "wait for MegaMol to finish";
 
       // wait for megamol to finish
-      megamolThread_->join();
+      if (megamolThread_)
+        megamolThread_->join();
 #endif
 
       LOG(DEBUG) << "MPI_Finalize";

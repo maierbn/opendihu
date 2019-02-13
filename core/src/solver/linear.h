@@ -21,6 +21,9 @@ public:
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();
 
+  //! perform the solve
+  void solve(Vec rightHandSide, Vec solution, std::string message="");
+
 protected:
 
   //! parse the solver and preconditioner type from settings
@@ -29,6 +32,9 @@ protected:
   std::shared_ptr<KSP> ksp_;   ///< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;    ///< relative solver tolerance
   long int maxIterations_;     ///< maximum number of iterations
+
+  std::string nIterationsLogKey_;  ///< the keyword for the log with which the number of iterations will be stored
+  std::string residualNormLogKey_;  ///< the keyword for the log with which the residual norm gets stored
 };
 
 }  // namespace

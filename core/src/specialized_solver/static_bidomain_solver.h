@@ -70,7 +70,6 @@ protected:
   std::shared_ptr<Solver::Linear> linearSolver_;   ///< the linear solver used for solving the system
   std::shared_ptr<Partition::RankSubset> rankSubset_;  ///< the rankSubset for all involved ranks
 
-  int lastNumberOfIterations_;   ///< the number of iterations that were needed the last time to solve the linear system
   std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
 
   bool initialized_;   ///< if this object was already initialized

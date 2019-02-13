@@ -15,7 +15,7 @@ StaticBidomainSolver(DihuContext context) :
   context_(context["StaticBidomainSolver"]),
   data_(this->context_), finiteElementMethodPotentialFlow_(this->context_["PotentialFlow"]),
   finiteElementMethodDiffusionTransmembrane_(this->context_["Activation"]), finiteElementMethodDiffusionExtracellular_(this->context_["Activation"]),
-  rankSubset_(std::make_shared<Partition::RankSubset>()), initialized_(false)
+  rankSubset_(this->context_.rankSubset()), initialized_(false)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -104,8 +104,8 @@ initialize()
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
 
-  LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
-  LOG(DEBUG) << "fiber direction: " << *data_.fiberDirection();
+  VLOG(1) << "flow potential: " << *data_.flowPotential();
+  VLOG(1) << "fiber direction: " << *data_.fiberDirection();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)
@@ -161,21 +161,11 @@ solveLinearSystem()
   Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
   // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide, solution); CHKERRV(ierr);
-
-  // print output message with iteration statistics
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*this->linearSolver_->ksp(), &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
-
-  lastNumberOfIterations_ = numberOfIterations;
-
-  LOG(DEBUG) << "Linear system of bidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+#ifndef NDEBUG
+  this->linearSolver_->solve(rightHandSide, solution);
+#else
+  this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#endif
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type

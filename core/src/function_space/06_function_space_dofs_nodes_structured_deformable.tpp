@@ -24,6 +24,20 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, Pyt
   this->noGeometryField_ = noGeometryField;
 }
 
+// constructor
+template<int D,typename BasisFunctionType>
+FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
+FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &localNodePositions, PythonConfig specificSettings, bool noGeometryField) :
+  FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, specificSettings)
+{
+  LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, noGeometryField_=" << this->noGeometryField_;
+
+  localNodePositions_ = localNodePositions;
+  LOG(DEBUG) << "store " << localNodePositions_.size() << " node positions";
+
+  this->noGeometryField_ = noGeometryField;
+}
+
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions,
@@ -150,6 +164,13 @@ parseNodePositionsFromSettings(PythonConfig specificSettings)
     if (nodesStoredAsLists)
     {
       node_no_t nNodesInList = PyList_Size(nodePositionsListPy);
+
+      if (nNodesInList != nNodes)
+      {
+        LOG(ERROR) << specificSettings.getStringPath() << "[\"nodePositions\"]: Number of nodes in list (" << nNodesInList << ") "
+          << "does not match expected number of the mesh (" << nNodes << "). inputMeshIsGlobal is " << std::boolalpha << inputMeshIsGlobal;
+      }
+
       node_no_t nodeNo = 0;
       for (; nodeNo < nNodesInList; nodeNo++)
       {

@@ -87,7 +87,7 @@ void TimeSteppingScheme::initialize()
     setNumberTimeSteps(numberTimeSteps);
   }
 
-  LOG(INFO) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
+  LOG(DEBUG) << "Time span: [" << startTime_ << "," << endTime_ << "], Number of time steps: " << numberTimeSteps_
     << ", time step width: " << timeStepWidth_;
 
   // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"

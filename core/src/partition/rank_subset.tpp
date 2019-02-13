@@ -85,6 +85,8 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   // assign the name of the new communicator
   if (ownRankIsContained())
   {
+    LOG(DEBUG) << "ownRankIsContained";
+
     // get name of old communicator
     std::vector<char> oldCommunicatorNameStr(MPI_MAX_OBJECT_NAME);
     int oldCommunicatorNameLength = 0;

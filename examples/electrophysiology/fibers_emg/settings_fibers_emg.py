@@ -21,8 +21,12 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 innervation_zone_width = 1.  # cm
 innervation_zone_width = 0.  # cm
 diffusion_solver_type = "cg"
+diffusion_preconditioner_type = "none"
 potential_flow_solver_type = "gmres"
+potential_flow_preconditioner_type = "none"
 emg_solver_type = "cg"
+emg_preconditioner_type = "none"
+emg_initial_guess_nonzero = False
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
@@ -45,8 +49,8 @@ load_data_from_file = False
 debug_output = False
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
@@ -75,9 +79,13 @@ parser.add_argument('--n_subdomains', nargs=3,    type=int, help='Number of subd
 parser.add_argument('--n_subdomains_x', '-x',     type=int, help='Number of subdomains in x direction.', default=n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',     type=int, help='Number of subdomains in y direction.', default=n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',     type=int, help='Number of subdomains in z direction.', default=n_subdomains_z)
-parser.add_argument('--diffusion_solver_type',    help='The solver for the diffusion.', default=diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
-parser.add_argument('--potential_flow_solver_type', help='The solver for the potential flow (non-spd matrix).', default=potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
-parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor"])
+parser.add_argument('--diffusion_solver_type',    help='The solver for the diffusion.', default=diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--diffusion_preconditioner_type',    help='The preconditioner for the diffusion.', default=diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--potential_flow_solver_type', help='The solver for the potential flow (non-spd matrix).', default=potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--potential_flow_preconditioner_type',    help='The preconditioner for the potential flow.', default=potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_solver_type',          help='The solver for the static bidomain.', default=emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
+parser.add_argument('--emg_preconditioner_type',  help='The preconditioner for the static bidomain.', default=emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
+parser.add_argument('--emg_initial_guess_nonzero',  help='It the initial guess for the emg linear system should be set to the previous solution.', default=False, action='store_true')
 parser.add_argument('--fiber_file',               help='The filename of the file that contains the fiber data.', default=fiber_file)
 parser.add_argument('--cellml_file',              help='The filename of the file that contains the cellml model.', default=cellml_file)
 parser.add_argument('--fiber_distribution_file',  help='The filename of the file that contains the MU firing times.', default=fiber_distribution_file)
@@ -101,7 +109,7 @@ if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(scenario_name, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_ranks, end_time))
   print("dt_0D:           {}, diffusion_solver_type:      {}".format(dt_0D, diffusion_solver_type))
   print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
-  print("dt_3D:           {}, emg_solver_type:            {}".format(dt_3D, emg_solver_type))
+  print("dt_3D:           {}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_3D, emg_solver_type, emg_initial_guess_nonzero))
   print("dt_bidomain:     {}".format(dt_bidomain))
   print("output_timestep: {}".format(output_timestep))
   print("fiber_file:              {}".format(fiber_file))
@@ -570,24 +578,24 @@ config = {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
       "solverType": diffusion_solver_type,
-      "preconditionerType": "none",
+      "preconditionerType": diffusion_preconditioner_type,
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
       "maxIterations": 10000,
       "solverType": potential_flow_solver_type,
-      "preconditionerType": "none"
+      "preconditionerType": potential_flow_preconditioner_type,
     },
     "activationSolver": {
-      "relativeTolerance": 1e-5,
+      "relativeTolerance": 1e-2,
       "maxIterations": 10000,
       "solverType": emg_solver_type,
-      "preconditionerType": "none"
+      "preconditionerType": emg_preconditioner_type,
     }
   },
   "Coupling": {
-    "timeStepWidth": dt_3D,  # 1e-1
-    "logTimeStepWidthAsKey": "dt_3D",
+    "timeStepWidth": dt_bidomain,  # 1e-1
+    "logTimeStepWidthAsKey": "dt_bidomain",
     "durationLogKey": "duration_total",
     "timeStepOutputInterval" : 10,
     "endTime": end_time,
@@ -696,6 +704,7 @@ config = {
         "timeStepOutputInterval": 50,
         "solverName": "activationSolver",
         "inputIsGlobal": True,
+        "initialGuessNonzero": emg_initial_guess_nonzero,
         "PotentialFlow": {
           "FiniteElementMethod" : {  
             "meshName": "3Dmesh",
@@ -725,7 +734,7 @@ config = {
           },
         },
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": int(1./dt_bidomain*output_timestep), "filename": "out/" + scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True},
           #{"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/3d_txt", "binary": False, "fixedFormat": False, "combineFiles": True},
         ],
       }

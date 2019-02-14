@@ -75,6 +75,7 @@ protected:
   bool initialized_;   ///< if this object was already initialized
   PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
   double endTime_;     ///< end time of current time step
+  bool initialGuessNonzero_;   ///< if the initial guess for the linear solver is set to the previous solution
 };
 
 }  // namespace

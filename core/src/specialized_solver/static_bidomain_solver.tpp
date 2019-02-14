@@ -26,6 +26,8 @@ StaticBidomainSolver(DihuContext context) :
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
 
+  this->initialGuessNonzero_ = specificSettings_.getOptionBool("initialGuessNonzero", true);
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 }
@@ -149,12 +151,15 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
-  PetscErrorCode ierr;
 
   VLOG(1) << "in solveLinearSystem";
 
   // configure that the initial value for the iterative solver is the value in solution, not zero
-  ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  if (initialGuessNonzero_)
+  {
+    PetscErrorCode ierr;
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  }
 
   // rename the involved vectors
   Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();

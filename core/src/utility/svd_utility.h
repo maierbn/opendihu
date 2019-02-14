@@ -27,4 +27,11 @@ class SvdUtility
 
   static int getCSVColumnCount(string filename);
 
+  static double getEuclideanNorm(double input[], int size, int range);
+
+  static void resizeMatrix(double a[], double b[], int originalRows, int originalColumns, int firstRow, int lastRow, int firstColumn, int lastColumn);
+
+  static void printMatrix(string name, double a[], int rows, int columns);
+
+  static void getMatrixProduct(double a[], double b[], double c[], int rowsA, int colsA_rowsB, int colsB);
 };

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
   LOG(DEBUG)<<std::string(80, '=');
   
   OperatorSplitting::Godunov<
-  ModelOrderReduction::ExplicitEulerReduced<
+    ModelOrderReduction::ExplicitEulerReduced<
       TimeSteppingScheme::ExplicitEuler<
         CellmlAdapter<4>
       >

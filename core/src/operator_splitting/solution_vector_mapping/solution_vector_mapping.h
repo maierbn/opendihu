@@ -69,7 +69,6 @@ public:
                        const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,1>>,int,double> &transferableSolutionData2);
 };
 
-
 #include "operator_splitting/solution_vector_mapping/solution_vector_mapping.tpp"
 
 // include all other solution_vector_mapping partial specializations

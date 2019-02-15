@@ -215,12 +215,14 @@ protected:
   
   std::array<Vec,nComponents> vectorLocal_;   ///< local vector that holds the local Vecs, is filled by startGhostManipulation and can the be manipulated, afterwards the results need to get copied back by finishGhostManipulation
   std::array<Vec,nComponents> vectorGlobal_;  ///< the global distributed vector that holds the actual data
-  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout
+  Vec valuesContiguous_ = PETSC_NULL;   ///< global vector that has all values of the components concatenated, i.e. in a "struct of arrays" memory layout. This is never used if nComponents = 1
 
   std::vector<PetscInt> temporaryIndicesVector_;   ///< a temporary vector that will be used whenever indices are to be computed, this avoids creating and deleting local vectors which is time-consuming (found out by perftools on hazelhen)
 
   const double *extractedData_ = nullptr;   ///< the data array of valuesContiguous_, used when a component is extracted by extractComponentShared, then the representation is set to invalid
   std::vector<double> savedValues_;   ///< temporary storage of values that would be overwritten by ghost value operations of the extracted field variable
+  Vec savedVectorLocal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
+  Vec savedVectorGlobal_;        ///< when this PartitionedPetscVec has nComponents=1 and extractComponentShared is called, there is no valuesContiguous_ vector in use (because it is only one component anyway, replacement is globalVector_[0]). Then the extracted field variable gets copies of the own vectorLocal_ and vectorGlobal_ set, the original pointer vectorLocal_ and vectorGlobal_ are saved in this variable and reset when restoreValuesContiguous is called.
 };
 
 

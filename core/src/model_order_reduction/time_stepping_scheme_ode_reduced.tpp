@@ -17,7 +17,7 @@ namespace ModelOrderReduction
   TimeSteppingSchemeOdeReduced(DihuContext context, std::string name):
   MORBase<typename TimeSteppingType::FunctionSpace>(context["ModelOrderReduction"]),
   ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>(context["ModelOrderReduction"],name),
-  fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
+    fullTimestepping_(context["ModelOrderReduction"]), initialized_(false)
   {  
     this->specificSettingsMOR_ = this->context_.getPythonConfig();
     

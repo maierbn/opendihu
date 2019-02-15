@@ -25,14 +25,19 @@ namespace ModelOrderReduction
   setBasis()
   {
     assert(dataMOR_);
+
+    // assemble matrices for parallel use, see https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MatAssemblyBegin.html
+    this->dataMOR_->basisTransp()->assembly(MAT_FINAL_ASSEMBLY);
+    this->dataMOR_->basis()->assembly(MAT_FINAL_ASSEMBLY);
+
     Mat &basisTransp=this->dataMOR_->basisTransp()->valuesGlobal();
     
     PetscErrorCode ierr;
-    ierr=MatShift(basisTransp, 1); CHKERRV(ierr); //identitty matrix to check
+    ierr=MatShift(basisTransp, 1); CHKERRV(ierr); //identity matrix to check
     
     Mat &basis=this->dataMOR_->basis()->valuesGlobal();
     
-    ierr=MatShift(basis, 1); CHKERRV(ierr); //identitty matrix to check
+    ierr=MatShift(basis, 1); CHKERRV(ierr); //identity matrix to check
     
     
     //MatTransposeGetMat(Mat A,Mat *M)

@@ -23,15 +23,15 @@ namespace ModelOrderReduction
     double timeSpan = this->endTime_ - this->startTime_;
     
     LOG(DEBUG) << "ReducedOrderExplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-    << " n steps: " << this->numberTimeSteps_;
+      << " n steps: " << this->numberTimeSteps_;
     
     // debugging output of matrices
     //this->fullTimestepping_.data().print();
     
     Vec &solution = this->fullTimestepping_.data().solution()->getValuesContiguous();   // vector of all components in struct-of-array order, as needed by CellML
     Vec &increment = this->fullTimestepping_.data().increment()->getValuesContiguous();
-    Vec &redSolution= this->data().solution()->valuesGlobal();
-    Vec &redIncrement= this->data().increment()->valuesGlobal();
+    Vec &redSolution = this->data().solution()->valuesGlobal();
+    Vec &redIncrement = this->data().increment()->valuesGlobal();
         
     Mat &basis = this->dataMOR_->basis()->valuesGlobal();
     Mat &basisTransp = this->dataMOR_->basisTransp()->valuesGlobal();
@@ -49,7 +49,7 @@ namespace ModelOrderReduction
                  
       // full state recovery
       //required in case of operator splitting because only the reduced solutions is transfered.
-      this->MatMultFull(basis, redSolution , solution);
+      this->MatMultFull(basis, redSolution, solution);
             
       VLOG(1) << "starting from full-order solution: " << *this->fullTimestepping_.data().solution();
       

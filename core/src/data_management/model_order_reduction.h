@@ -5,7 +5,8 @@
 #include "function_space/function_space.h"
 
 
-namespace Data{
+namespace Data
+{
 
 template<typename FunctionSpaceRowsType>  
 class ModelOrderReduction:

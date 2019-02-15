@@ -25,13 +25,13 @@ advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   
   LOG(DEBUG) << "ReducedOrderImplicitEuler::advanceTimeSpan(), timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-  << " n steps: " << this->numberTimeSteps_;
+    << " n steps: " << this->numberTimeSteps_;
   
   // debugging output of matrices
   //this->timestepping_.data_->print();
   
   Vec &solution = this->fullTimestepping_.data().solution()->valuesGlobal();   // vector of all components in struct-of-array order, as needed by CellML
-  Vec &redSolution= this->data().solution()->valuesGlobal();
+  Vec &redSolution = this->data().solution()->valuesGlobal();
   
   Mat &basis = this->dataMOR_->basis()->valuesGlobal();
   

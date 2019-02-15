@@ -38,22 +38,6 @@ public:
                        const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2);
 };
 
-
-///** Transfer between two field variables with given component number,
-// *  the first field variable has only 1 component
-// */
-//template<typename FunctionSpaceType1, typename FunctionSpaceType2, int nComponents2>
-//class SolutionVectorMapping<
-//  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>, int, double>,   // <fieldVariableType,componentNo,prefactor>
-//  std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>, int, double>
-//>
-//{
-//public:
-//  //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible
-//  static void transfer(const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType1,1>>,int,double> &transferableSolutionData1,
-//                       const std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2>>,int,double> &transferableSolutionData2);
-//};
-//
 /** Transfer between two field variables with given component number,
  *  the second field variable has only 1 component
  */

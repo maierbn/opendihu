@@ -15,21 +15,25 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   LOG(DEBUG)<<std::string(80, '=');
+
+  // SvdUtility::getSVD(SvdUtility::loadCSV(out.csv));
   
   OperatorSplitting::Godunov<
-    ModelOrderReduction::ExplicitEulerReduced<
-      TimeSteppingScheme::ExplicitEuler<
-        CellmlAdapter<4>
+    TimeSteppingScheme::ExplicitEuler<
+      ModelOrderReduction::POD<
+        CellmlAdapter<57>,
+        ModelOrderReduction::LinearPart
       >
     >,
-    ModelOrderReduction::ImplicitEulerReduced< //! Diffusion term not to be used with the explicit timestepping. The reduced mass and stiffness matrices are not implemented.
-      TimeSteppingScheme::ImplicitEuler<
+    TimeSteppingScheme::ImplicitEuler<
+      ModelOrderReduction::POD<
         SpatialDiscretization::FiniteElementMethod<
           Mesh::StructuredRegularFixedOfDimension<1>,
           BasisFunction::LagrangeOfOrder<1>,
           Quadrature::Gauss<2>,
           Equation::Dynamic::IsotropicDiffusion
-        >
+        >,
+        ModelOrderReduction::LinearPart
       >
     >
   >

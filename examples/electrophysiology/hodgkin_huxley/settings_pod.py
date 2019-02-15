@@ -186,7 +186,7 @@ config = {
       "ModelOrderReduction": {
         "nFullBasis" : n_elements,
         "nReducedBasis" : n_elements/10,
-        "ImplicitEuler" : {
+        "ExplicitEuler" : {
           #"initialValues": [2,2,4,5,2,2],
           #"numberTimeSteps": 1,
           "timeStepWidth": dt_1D,

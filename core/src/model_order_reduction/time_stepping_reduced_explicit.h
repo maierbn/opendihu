@@ -1,9 +1,8 @@
 #pragma once 
 
 #include "control/dihu_context.h"
+#include "function_space/function_space.h"
 #include "model_order_reduction/time_stepping_scheme_ode_reduced.h"
-
-
 
 namespace ModelOrderReduction
 {
@@ -14,29 +13,21 @@ namespace ModelOrderReduction
   public:
     
     //! constructor
-    TimeSteppingSchemeOdeReducedExplicit(DihuContext context);
+    TimeSteppingSchemeOdeReducedExplicit(DihuContext context,std::string name);
     
     //! destructor
     virtual ~TimeSteppingSchemeOdeReducedExplicit(){};
     
-    //! run simulation
-    void run();
-    
     //! initialize timestepping member
     void initialize();
     
-    //! advance the simulation by the time step
-    void advanceTimeSpan();
-    
     //! evaluates the right hand side function 
-    virtual void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
+    void evaluateTimesteppingRightHandSideExplicit(Vec &input, Vec &output, int timeStepNo, double currentTime);
     
-  protected:
+  protected:    
     
-  private:
-    bool initialized_;     ///< if initialize() was already called
   };
   
 } // namespace
 
-#include "model_order_reduction/time_stepping_scheme_ode_reduced_explicit.tpp"
+#include "model_order_reduction/time_stepping_reduced_explicit.tpp"

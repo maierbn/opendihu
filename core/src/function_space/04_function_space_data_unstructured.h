@@ -44,6 +44,9 @@ public:
   //! constructor, it is possible to create a basisOnMesh object without geometry field, e.g. for the lower order mesh of a mixed formulation
   FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig settings, bool noGeometryField=false);
 
+  //! constructor, null argument is ignored
+  FunctionSpaceDataUnstructured(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &null, PythonConfig settings, bool noGeometryField=false);
+
   //! return the global dof number of element-local dof dofIndex of element elementNo, nElements is the total number of elements
   dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
 

@@ -62,8 +62,19 @@ public:
   friend class NodePositionsTester;    ///< a class used for testing
 
 private:
+
+  struct NodePositionsFromFile
+  {
+    std::string filename;            ///< filename of the file to read
+    std::vector<std::pair<MPI_Offset,int>> chunks;   ///< pairs of (offset, number of values), where each value corresponds to 3 double values (position x,y,z) in data
+    std::vector<double> data;      ///< the values of the node positions
+  };
+
   //! store settings for all meshes that are specified in specificSettings_
   void storePreconfiguredMeshes();
+
+  //! resolves the requested geometry data in nodePositionsFromFile_
+  void loadGeometryFromFile();
 
   std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
   
@@ -71,6 +82,7 @@ private:
 
   std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
   std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
+  std::map<std::string, NodePositionsFromFile> nodePositionsFromFile_;   ///< filename, offset, length, data of nodePosition data specified in a binary file
 };
 
 }  // namespace

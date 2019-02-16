@@ -111,8 +111,10 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     {
       if (startSearchInCurrentElement)
       {
+#ifndef NDEBUG
         LOG(WARNING) << "Could not find element that contains point " << point << " in neighbourhood of element " << elementNo
           << ", tested all elements (no ghost elements) and found element " << currentElementNo;
+#endif
       }
 
       elementNo = currentElementNo;

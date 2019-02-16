@@ -15,10 +15,13 @@
 namespace Control
 {
 
+bool outputInitialize_ = true;
+
 template<typename TimeSteppingScheme>
 MultipleInstances<TimeSteppingScheme>::
 MultipleInstances(DihuContext context) :
-  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()), data_(context_)
+  context_(context["MultipleInstances"]), specificSettings_(context_.getPythonConfig()),
+  data_(context_), outputInitializeThisInstance_(false)
 {
 // #ifdef HAVE_PAT
   // PAT_record(PAT_STATE_OFF);
@@ -266,11 +269,39 @@ initialize()
   }
 
   LOG(TRACE) << "MultipleInstances::initialize()";
+
+  // initialize output of progress in %, it is only output for once instance and then only for rank 0
+  if (outputInitialize_)
+  {
+    outputInitializeThisInstance_ = true;
+    outputInitialize_ = false;
+    LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
+  }
+
+  double progress = 0;
   for (int i = 0; i < nInstancesLocal_; i++)
   {
+    // output progress
+    double newProgress = (double)i/nInstancesLocal_;
+    if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+    {
+      if (int(progress*10) != int(newProgress*10))
+      {
+        std::cout << "\b\b\b\b" << int(newProgress*100) << "%" << std::flush;
+      }
+    }
+    progress = newProgress;
+
     LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
   }
+
+  // end output of progress
+  if (outputInitializeThisInstance_ && this->context_.ownRankNo() == 0)
+  {
+    std::cout << "\b\b\b\bdone." << std::endl;
+  }
+
   
   data_.setInstancesData(instancesLocal_);
 

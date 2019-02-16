@@ -26,6 +26,8 @@ StaticBidomainSolver(DihuContext context) :
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
 
+  this->initialGuessNonzero_ = specificSettings_.getOptionBool("initialGuessNonzero", true);
+
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
 }
@@ -149,33 +151,26 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
-  PetscErrorCode ierr;
 
   VLOG(1) << "in solveLinearSystem";
 
   // configure that the initial value for the iterative solver is the value in solution, not zero
-  ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  if (initialGuessNonzero_)
+  {
+    PetscErrorCode ierr;
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  }
 
   // rename the involved vectors
   Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();
   Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
   // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide, solution); CHKERRV(ierr);
-
-  // print output message with iteration statistics
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*this->linearSolver_->ksp(), &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
-
-  lastNumberOfIterations_ = numberOfIterations;
-
-  LOG(DEBUG) << "Linear system of bidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+#ifndef NDEBUG
+  this->linearSolver_->solve(rightHandSide, solution);
+#else
+  this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#endif
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type

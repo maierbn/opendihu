@@ -52,7 +52,7 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
 
     VLOG(1) << "nComponents: " << nComponents;
 
-    // get all local values without ghosts for the components
+    // get all local values with ghosts for the components
     for (int componentNo = 0; componentNo < nComponents; componentNo++)
     {
       std::vector<double> retrievedLocalValues;

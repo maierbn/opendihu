@@ -22,11 +22,12 @@ output_filename = "{}.stl".format(input_filename)
   
 if len(sys.argv) >= 3:
   output_filename = sys.argv[2]
+output_filename2 = output_filename+"_"
   
 pickle_output_filename = "{}.pickle".format(input_filename)
 if len(sys.argv) == 4:
   pickle_output_filename = sys.argv[3]
-  
+pickle_output_filename2 = pickle_output_filename+"_"
   
 print("{} -> {}, {}".format(input_filename, output_filename, pickle_output_filename))
 
@@ -49,7 +50,7 @@ with open(input_filename, "rb") as infile:
   n_fibers_total = parameters[0]
   n_points_whole_fiber = parameters[1]
   
-  print("nFibersTotal:      {}".format(parameters[0]))
+  print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_x}".format(n_fibers=parameters[0], n_fibers_x=(int)(np.sqrt(parameters[0]))))
   print("nPointsWholeFiber: {}".format(parameters[1]))
   print("nBorderPointsXNew: {}".format(parameters[2]))
   print("nBorderPointsZNew: {}".format(parameters[3]))
@@ -84,6 +85,38 @@ with open(input_filename, "rb") as infile:
       n_streamlines_invalid += 1
       streamline = []
     streamlines.append(streamline)
+  
+  print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
+  print("output pickle to filename: {}".format(pickle_output_filename))
+  with open(pickle_output_filename, 'wb') as f:
+    pickle.dump(streamlines, f)
+  print("done")
+    
+  triangles = []
+  for points in streamlines:
+    previous_point = None
+    
+    for p in points:
+      point = np.array([p[0], p[1], p[2]])
+      if np.linalg.norm(point) < 1e-3:
+        continue
+      if previous_point is not None:
+        triangles.append([previous_point, point, 0.5*(previous_point+point)])
+      previous_point = point
+
+  #---------------------------------------
+  # Create the mesh
+  out_mesh = mesh.Mesh(np.zeros(len(triangles), dtype=mesh.Mesh.dtype))
+  for i, f in enumerate(triangles):
+    out_mesh.vectors[i] = f
+  #out_mesh.update_normals()
+
+  out_mesh.save(output_filename)
+  print("saved {} triangles to \"{}\"".format(len(triangles),output_filename))
+  
+  print("postprocessing where fibres with too high distance to neighbouring fibers are removed (may take long)")
+  input("Press any key to continue.")
+  
   
   # postprocess streamlines
   invalid_streamlines = []
@@ -140,9 +173,8 @@ with open(input_filename, "rb") as infile:
     streamlines[invalid_streamline_no] = []
 
 
-  print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
-  print("output pickle to filename: {}".format(pickle_output_filename))
-  with open(pickle_output_filename, 'wb') as f:
+  print("output other pickle to filename: {}".format(pickle_output_filename2))
+  with open(pickle_output_filename2, 'wb') as f:
     pickle.dump(streamlines, f)
   
   #streamlines = [streamlines[5]]
@@ -167,5 +199,5 @@ with open(input_filename, "rb") as infile:
     out_mesh.vectors[i] = f
   #out_mesh.update_normals()
 
-  out_mesh.save(output_filename)
-  print("saved {} triangles to \"{}\"".format(len(triangles),output_filename))
+  out_mesh.save(output_filename2)
+  print("saved {} triangles to \"{}\"".format(len(triangles),output_filename2))

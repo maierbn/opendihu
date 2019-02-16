@@ -148,7 +148,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
     );
   }
 
-  Control::PerformanceMeasurement::start("map");
+  Control::PerformanceMeasurement::start("durationMap");
 
   // assert that targetFactorSum_ field variable exists, this should have been created by prepareMapping()
   assert(targetFactorSum_.find(fieldVariableTarget->name()) != targetFactorSum_.end());
@@ -161,7 +161,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource, int componentN
     *fieldVariableSource, componentNoSource, *fieldVariableTarget, componentNoTarget, *targetFactorSum
   );
 
-  Control::PerformanceMeasurement::stop("map");
+  Control::PerformanceMeasurement::stop("durationMap");
 }
 
 //! finalize the mapping to the fieldVariableTarget, this computes the final values at the dofs from the accumulated values by dividing by the targetFactorSums

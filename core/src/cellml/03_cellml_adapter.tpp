@@ -42,7 +42,7 @@ initialize()
 {
   LOG(TRACE) << "CellmlAdapter<nStates_,FunctionSpaceType>::initialize";
 
-  Control::PerformanceMeasurement::start("init cellml");
+  Control::PerformanceMeasurement::start("durationInitCellml");
 
   CellmlAdapterBase<nStates_,FunctionSpaceType>::initialize();
   
@@ -51,7 +51,7 @@ initialize()
 
   this->initializeCallbackFunctions();
   
-  Control::PerformanceMeasurement::stop("init cellml");
+  Control::PerformanceMeasurement::stop("durationInitCellml");
 
   this->outputStateIndex_ = this->specificSettings_.getOptionInt("outputStateIndex", 0, PythonUtility::NonNegative);
   this->prefactor_ = this->specificSettings_.getOptionDouble("prefactor", 1.0);
@@ -134,8 +134,10 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     VLOG(1) << "call rhsRoutine_ with " << this->intermediates_.size() << " intermediates, " << this->parameters_.size() << " parameters";
     VLOG(2) << "intermediates: " << this->intermediates_ << ", parameters: " << this->parameters_;
 
+    //Control::PerformanceMeasurement::start("rhsEvaluationTime");  // commented out because it takes too long in this very inner loop
     // call actual rhs routine from cellml code
     this->rhsRoutine_((void *)this, currentTime, states, rates, this->intermediates_.data(), this->parameters_.data());
+    //Control::PerformanceMeasurement::stop("rhsEvaluationTime");
   }
 
   // handle intermediates, call callback function of python config

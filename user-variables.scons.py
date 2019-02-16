@@ -62,6 +62,10 @@ try:
     if lsb_info["RELEASE"] == "18.04":
       MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
 
+  import platform
+  if 'debian' in platform.dist():
+    MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"    # path for debian (on Aaron's workstation)
+
   # use value of environment variable 'MPI_HOME' if it is set
   import os
   if os.environ.get("MPI_HOME") is not None:
@@ -75,7 +79,7 @@ try:
   
   # on neon use custom cmake
   import socket
-  if socket.gethostname() == "neon":
+  if socket.gethostname() == "neon" or socket.gethostname() == "helium":
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
 except:

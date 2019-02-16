@@ -43,7 +43,7 @@ computeBottomTopZClip(double &bottomZClip, double &topZClip)
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const Vec3 &seedPoint, double bottomZClip, double topZClip,
-                                     std::vector<Vec3> &streamlineZPoints, int i)
+                                     std::vector<Vec3> &streamlineZPoints, int streamlineNoDebugging)
 {
   // the streamline is expected to have at least one point, the seed point
   assert(!streamlinePoints.empty());
@@ -147,7 +147,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
 #ifdef STL_OUTPUT
 //#ifdef STL_OUTPUT_VERBOSE
   std::stringstream name;
-  name << "05_sampled_streamline_" << i << "_";
+  name << "05_sampled_streamline_" << streamlineNoDebugging << "_";
   PyObject_CallFunction(functionOutputStreamline_, "s i O f", name.str().c_str(), currentRankSubset_->ownRankNo(),
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(streamlineZPoints), 0.1);
   PythonUtility::checkForError();
@@ -158,7 +158,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   // if streamline is not complete
   if (streamlineZPoints.size() != nBorderPointsZNew_)
   {
-    LOG(DEBUG) << "Streamline " << i << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
+    LOG(DEBUG) << "Streamline " << streamlineNoDebugging << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
 
     // assign seed point instead of incomplete streamline
     streamlineZPoints.resize(1);

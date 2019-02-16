@@ -13,7 +13,7 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
 {
   // create the mapping
 
-  Control::PerformanceMeasurement::start("compute mapping");
+  Control::PerformanceMeasurement::start("durationComputeMappingBetweenMeshes");
 
   const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
@@ -101,7 +101,7 @@ MappingBetweenMeshes<FunctionSpaceSourceType, FunctionSpaceTargetType>::MappingB
     startSearchInCurrentElement = true;
   }
 
-  Control::PerformanceMeasurement::stop("compute mapping");
+  Control::PerformanceMeasurement::stop("durationComputeMappingBetweenMeshes");
 
   if (!mappingSucceeded)
   {

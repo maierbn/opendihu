@@ -582,15 +582,9 @@ config = {
     },
     "potentialFlowSolver": {
       "relativeTolerance": 1e-10,
-<<<<<<< HEAD
-      "maxIterations": 100000,
-      "solverType": "gmres",
-      "preconditionerType": "none"
-=======
       "maxIterations": 10000,
       "solverType": potential_flow_solver_type,
       "preconditionerType": potential_flow_preconditioner_type,
->>>>>>> b2c7482dbbfdb5470167a40b02fa7a20d2dd607e
     },
     "activationSolver": {
       "relativeTolerance": 1e-2,

@@ -29,7 +29,7 @@ emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
 # timing parameters
-stimulation_frequency = 100*1e-3 # stimulations per ms
+stimulation_frequency = 100*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting

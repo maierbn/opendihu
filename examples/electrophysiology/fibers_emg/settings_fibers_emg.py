@@ -2,7 +2,7 @@
 # arguments: <scenario_name> <n_subdomains_x> <n_subdomains_y> <n_subdomains_z> <diffusion_solver_type>
 #
 
-end_time = 1.0
+end_time = 100.0
 
 import numpy as np
 import matplotlib 
@@ -24,7 +24,7 @@ diffusion_solver_type = "cg"
 diffusion_preconditioner_type = "none"
 potential_flow_solver_type = "gmres"
 potential_flow_preconditioner_type = "none"
-emg_solver_type = "cg"
+emg_solver_type = "lu"
 emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
@@ -33,7 +33,7 @@ stimulation_frequency = 10.0      # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
-dt_bidomain = 1e-3                # time step width for bidomain equation
+dt_bidomain = 1e0                # time step width for bidomain equation
 output_timestep = 1e0             # timestep for output files
 
 # input files
@@ -43,7 +43,7 @@ cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fiber_file = "../../input/3000fibers.bin"
 fiber_file = "../../input/7x7fibers.bin"
-#fiber_file = "../../input/15x15fibers.bin"
+fiber_file = "../../input/15x15fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 load_data_from_file = False
 debug_output = False
@@ -144,11 +144,15 @@ def get_motor_unit_no(fiber_no):
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
 
   # determine motor unit
-  mu_no = (int)(get_motor_unit_no(fiber_no)*0.8)
+  alpha = 1.0   # 0.8
+  mu_no = (int)(get_motor_unit_no(fiber_no)*alpha)
   
   # determine if fiber fires now
   index = int(current_time * frequency)
   n_firing_times = np.size(firing_times,0)
+  
+  #print("{}: fiber {} is mu {}, t = {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+  
   return firing_times[index % n_firing_times, mu_no] == 1
   
 def set_parameters_null(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
@@ -227,6 +231,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
     nodes_to_stimulate_global = [innervation_node_global]
+    #if rank_no == 0:
+    #  print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -292,15 +298,45 @@ firing_times = np.genfromtxt(firing_times_file)
 if rank_no == 0:
   print("Debugging output about fiber firing: Taking input from file \"{}\"".format(firing_times_file))
   
+  first_stimulation_info = []
+  
   n_firing_times = np.size(firing_times,0)
-  for fiber_no_index in range(min(n_fibers_total,20)):
+  for fiber_no_index in range(n_fibers_total):
     first_stimulation = None
     for current_time in np.linspace(0,1./stimulation_frequency*n_firing_times,n_firing_times):
       if fiber_gets_stimulated(fiber_no_index, stimulation_frequency, current_time):
         first_stimulation = current_time
         break
+    mu_no = get_motor_unit_no(fiber_no_index)
+    first_stimulation_info.append([fiber_no_index,mu_no,first_stimulation])
   
-    print("   Fiber {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
+  first_stimulation_info.sort(key=lambda x: 1e5+1e-5*x[1]+1e-10*x[0] if x[2] is None else x[2]+1e-5*x[1]+1e-10*x[0])
+  
+  print("First stimulation times")
+  print("    Time  MU fibers")
+  n_stimulated_mus = 0
+  n_not_stimulated_mus = 0
+  fibers = []
+  last_time = 0
+  last_mu_no = first_stimulation_info[0][1]
+  for stimulation_info in first_stimulation_info:
+    mu_no = stimulation_info[1]
+    fiber_no = stimulation_info[0]
+    if mu_no == last_mu_no:
+      fibers.append(fiber_no)
+    else:
+      if last_time is not None:
+        print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(fibers)))
+        n_stimulated_mus += 1
+      else:
+        print("not stimulated before {}: MU {:3}, fibers {}".format(end_time,last_mu_no,str(fibers)))
+        n_not_stimulated_mus += 1
+      fibers = [fiber_no]
+
+    last_time = stimulation_info[2]
+    last_mu_no = mu_no
+    
+  print("stimulated MUs: {}, not stimulated MUs: {}".format(n_stimulated_mus,n_not_stimulated_mus))
 
 # compute partitioning
 if rank_no == 0:
@@ -641,7 +677,7 @@ config = {
                       #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                       "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                      "additionalArgument": i,
+                      "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
                       "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
                       "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
@@ -723,8 +759,8 @@ config = {
             "dirichletBoundaryConditions": {},
             "diffusionTensor": [                 # fiber direction is (1,0,0)
               1, 0, 0,
-              0, 1, 0,
-              0, 0, 1
+              0, 0, 0,
+              0, 0, 0
             ], 
             "extracellularDiffusionTensor": [
               2, 0, 0,

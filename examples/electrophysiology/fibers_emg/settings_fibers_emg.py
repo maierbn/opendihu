@@ -29,9 +29,9 @@ emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
 # timing parameters
-stimulation_frequency = 100*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
+stimulation_frequency = 10000*1e-3 # stimulations per ms, number before 1e-3 factor is in Hertz
 dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 3e-3                      # timestep width of ODEs
+dt_0D = 1.5e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
 dt_bidomain = 1e0                # time step width for bidomain equation
 output_timestep = 1e0             # timestep for output files
@@ -43,14 +43,14 @@ cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 fiber_file = "../../input/3000fibers.bin"
 fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/15x15fibers.bin"
+#fiber_file = "../../input/15x15fibers.bin"
 #fiber_file = "../../input/49fibers.bin"
 load_data_from_file = False
 debug_output = False
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)
@@ -114,7 +114,7 @@ if rank_no == 0:
   print("dt_1D:           {}, potential_flow_solver_type: {}".format(dt_1D, potential_flow_solver_type))
   print("dt_3D:           {}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(dt_3D, emg_solver_type, emg_initial_guess_nonzero))
   print("dt_bidomain:     {}".format(dt_bidomain))
-  print("output_timestep: {}".format(output_timestep))
+  print("output_timestep: {}  stimulation_frequency: {} 1/ms = {} Hz".format(output_timestep, stimulation_frequency, stimulation_frequency*1e3))
   print("fiber_file:              {}".format(fiber_file))
   print("cellml_file:             {}".format(cellml_file))
   print("fiber_distribution_file: {}".format(fiber_distribution_file))
@@ -154,7 +154,8 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   index = int(current_time * frequency)
   n_firing_times = np.size(firing_times,0)
   
-  #print("{}: fiber {} is mu {}, t = {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+  #if firing_times[index % n_firing_times, mu_no] == 1:
+  #  print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
   
   return firing_times[index % n_firing_times, mu_no] == 1
   
@@ -234,8 +235,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
     nodes_to_stimulate_global = [innervation_node_global]
-    #if rank_no == 0:
-    #  print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
+    if rank_no == 0:
+      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -679,7 +680,7 @@ config = {
                       #"setSpecificParametersFunction": set_specific_parameters,    # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                      "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+                      "setSpecificStatesCallInterval": 2*int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                       "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                       
                       "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma

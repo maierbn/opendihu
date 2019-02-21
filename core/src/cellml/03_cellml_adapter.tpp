@@ -75,8 +75,6 @@ template<int nStates_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,FunctionSpaceType>::
 evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
 {
-  this->internalTimeStepNo_++;
-
   //PetscUtility::getVectorEntries(input, states_);
   double *states, *rates;
   PetscErrorCode ierr;
@@ -88,6 +86,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
 
   VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+  VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
 
   if (nStatesInput != nStates_*this->nInstances_)
   {
@@ -125,6 +124,7 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
     // PythonUtility::GlobalInterpreterLock lock;
 
     VLOG(1) << "call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
+    LOG(INFO) << "currentTime: " << currentTime << ", call setSpecificStates, this->internalTimeStepNo_ = " << this->internalTimeStepNo_ << ", this->setSpecificStatesCallInterval_: " << this->setSpecificStatesCallInterval_;
     this->setSpecificStates_((void *)this, this->nInstances_, this->internalTimeStepNo_, currentTime, states);
   }
 
@@ -157,15 +157,9 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   // give control of data back to Petsc
   ierr = VecRestoreArray(input, &states); CHKERRV(ierr);
   ierr = VecRestoreArray(output, &rates); CHKERRV(ierr);
-}
 
-/*
-template<int nStates_, typename FunctionSpaceType>
-void CellmlAdapter<nStates_,FunctionSpaceType>::
-evaluateTimesteppingRightHandSideImplicit(Vec& input, Vec& output, int timeStepNo, double currentTime)
-{
+  this->internalTimeStepNo_++;
 }
-*/
 
 //! return false because the object is independent of mesh type
 template<int nStates_, typename FunctionSpaceType>

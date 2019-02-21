@@ -501,7 +501,7 @@ computeElasticityTensorCoupledStrainEnergy(const Tensor2<FunctionSpaceType::dim(
   const double factor7 = -4*I3*dPsidI3;
   const double factor8 = -4*dPsidI2;
 
-  std::array<double,21> elasticity({0});
+  ElasticityTensor elasticity({0});
   // loop over distinct entries in elasticity tensor
   for (int entryNo = 0; entryNo < 21; entryNo++)
   {
@@ -539,7 +539,7 @@ computeElasticityTensorCoupledStrainEnergy(const Tensor2<FunctionSpaceType::dim(
     elasticity[entryNo] += factor8 * (i==k) * (j==l);
   }
 
-  return elasticity;
+  return (elasticity);
 }
 
 template<typename FunctionSpaceType, typename Term>

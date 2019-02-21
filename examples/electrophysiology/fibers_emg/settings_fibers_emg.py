@@ -761,14 +761,14 @@ config = {
             "inputMeshIsGlobal": True,
             "dirichletBoundaryConditions": {},
             "diffusionTensor": [                 # fiber direction is (1,0,0)
-              1, 0, 0,
-              0, 0, 0,
-              0, 0, 0
+              8.93, 0, 0,
+              0, 0.893, 0,
+              0, 0, 0.893
             ], 
             "extracellularDiffusionTensor": [
-              2, 0, 0,
-              0, 1, 0,
-              0, 0, 1
+              6.7, 0, 0,
+              0, 6.7, 0,
+              0, 0, 6.7
             ],
           },
         },

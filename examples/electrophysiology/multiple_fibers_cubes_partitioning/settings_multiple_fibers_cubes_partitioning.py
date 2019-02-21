@@ -33,6 +33,7 @@ output_timestep = 4e-1             # timestep for output files
 #cellml_file = "../../input/shorten.cpp"
 cellml_file = "../../input/hodgkin_huxley_1952.c"
 
+fibre_file = "../../input/15x15fibers.bin"
 fiber_file = "../../input/3000fibers.bin"
 fiber_file = "../../input/7x7fibers.bin"
 #fiber_file = "../../input/15x15fibers.bin"
@@ -257,6 +258,7 @@ if rank_no == 0:
     print("   Fiber {} is of MU {} and will be stimulated for the first time at {}".format(fiber_no_index, get_motor_unit_no(fiber_no_index), first_stimulation))
 
 # compute partitioning
+
 if rank_no == 0:
   if n_ranks != n_subdomains_x*n_subdomains_y*n_subdomains_z:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z, n_subdomains_x*n_subdomains_y*n_subdomains_z))
@@ -477,7 +479,7 @@ config = {
                   #"setSpecificParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # set_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                   "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                   "setSpecificStatesCallInterval": int(1./stimulation_frequency/dt_0D),     # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                  "additionalArgument": i,
+                  "additionalArgument": fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y),
                   
                   "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
                   "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
@@ -522,7 +524,11 @@ config = {
                   #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
                 ]
               },
+<<<<<<< HEAD
+            } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+=======
             } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y))
+>>>>>>> b2c7482dbbfdb5470167a40b02fa7a20d2dd607e
                 for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x))],
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./dt_3D*output_timestep), "filename": "out/all_fibers", "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -531,7 +537,11 @@ config = {
           },
         },
       }
+<<<<<<< HEAD
+    } for subdomain_coordinate_y in range(n_subdomains_y) for subdomain_coordinate_x in range(n_subdomains_x)]
+=======
     } for subdomain_coordinate_y in range(n_subdomains_y)
         for subdomain_coordinate_x in range(n_subdomains_x)]
+>>>>>>> b2c7482dbbfdb5470167a40b02fa7a20d2dd607e
   }
 }

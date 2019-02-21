@@ -489,7 +489,8 @@ void Paraview::writePolyDataFile(const OutputFieldVariablesType &fieldVariables,
   std::vector<std::stringstream> outputFileParts(nOutputFileParts);
   int outputFilePartNo = 0;
   outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
-    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
+    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+    << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
     << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
     << std::string(1, '\t') << "<PolyData>" << std::endl;
 
@@ -835,7 +836,8 @@ void Paraview::writeCombinedUnstructuredGridFile(const OutputFieldVariablesType 
       std::vector<std::stringstream> outputFileParts(nOutputFileParts);
       int outputFilePartNo = 0;
       outputFileParts[outputFilePartNo] << "<?xml version=\"1.0\"?>" << std::endl
-        << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText() << "-->" << std::endl
+        << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
+        << ", currentTime: " << this->currentTime_ << ", timeStepNo: " << this->timeStepNo_ << " -->" << std::endl
         << "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
         << std::string(1, '\t') << "<UnstructuredGrid>" << std::endl;
 

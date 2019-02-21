@@ -473,7 +473,7 @@ getElementValues(int componentNo, element_no_t elementNo, std::array<double,Func
   std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
 
   // get the values
-  this->getValues<nDofsPerElement>(componentNo, elementDofs, values);
+  this->template getValues<nDofsPerElement>(componentNo, elementDofs, values);
 }
 
 //! get the values corresponding to all element-local dofs for all components
@@ -496,7 +496,7 @@ getElementValues(element_no_t elementNo, std::array<std::array<double,nComponent
   std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNo);
 
   // compute the corresponding geometry values
-  this->getValues<nDofsPerElement>(elementDofs, values);
+  this->template getValues<nDofsPerElement>(elementDofs, values);
 }
 
 //! for a specific component, get a single value from local dof no.

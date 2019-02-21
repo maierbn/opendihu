@@ -49,8 +49,8 @@ load_data_from_file = False
 debug_output = False
 
 fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
+#firing_times_file = "../../input/MU_firing_times_real.txt"
+firing_times_file = "../../input/MU_firing_times_immediately.txt"
 
 #print("prefactor: ",Conductivity/(Am*Cm))
 #print("numpy path: ",np.__path__)

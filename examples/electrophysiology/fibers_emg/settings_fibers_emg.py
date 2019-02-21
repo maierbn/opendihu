@@ -29,7 +29,7 @@ emg_preconditioner_type = "none"
 emg_initial_guess_nonzero = False
 
 # timing parameters
-stimulation_frequency = 10.0      # stimulations per ms
+stimulation_frequency = 100*1e-3 # stimulations per ms
 dt_1D = 1e-3                      # timestep width of diffusion
 dt_0D = 3e-3                      # timestep width of ODEs
 dt_3D = 3e-3                      # overall timestep width of splitting
@@ -354,7 +354,7 @@ n_points_per_subdomain_z = (int)(np.ceil(n_points_whole_fiber / n_subdomains_z))
 if rank_no == 0:
   print("diffusion solver type: {}".format(diffusion_solver_type))
   print("{} ranks, partitioning: x{} x y{} x z{}".format(n_ranks, n_subdomains_x, n_subdomains_y, n_subdomains_z))
-  print("{} x {} fibers, per partition: {} x {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_points_whole_fiber))
+  print("{} x {} = {} fibers, per partition: {} x {} = {}, {} points per fiber".format(n_fibers_x, n_fibers_y, n_fibers_total, n_fibers_per_subdomain_x, n_fibers_per_subdomain_y, n_fibers_per_subdomain_x*n_fibers_per_subdomain_y, n_points_whole_fiber))
 
 # define helper functions for fiber numbering
 

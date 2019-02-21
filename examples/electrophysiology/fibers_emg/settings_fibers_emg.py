@@ -151,11 +151,11 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   mu_no = (int)(get_motor_unit_no(fiber_no)*alpha)
   
   # determine if fiber fires now
-  index = int(current_time * frequency)
+  index = int(np.round(current_time * frequency))
   n_firing_times = np.size(firing_times,0)
   
   #if firing_times[index % n_firing_times, mu_no] == 1:
-  #  print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
+    #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), firing_times[index % n_firing_times, mu_no], "true" if firing_times[index % n_firing_times, mu_no] == 1 else "false"))
   
   return firing_times[index % n_firing_times, mu_no] == 1
   

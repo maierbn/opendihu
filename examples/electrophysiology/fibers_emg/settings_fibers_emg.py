@@ -332,7 +332,7 @@ if rank_no == 0:
         print("{:8.2f} {:3} {}".format(last_time,last_mu_no,str(fibers)))
         n_stimulated_mus += 1
       else:
-        print("not stimulated before {}: MU {:3}, fibers {}".format(end_time,last_mu_no,str(fibers)))
+        print("never stimulated: MU {:3}, fibers {}".format(last_mu_no,str(fibers)))
         n_not_stimulated_mus += 1
       fibers = [fiber_no]
 

@@ -18,6 +18,7 @@
 # set compiler to use
 cc="gcc"   # c compiler
 CC="g++"   # c++ compiler
+cmake="cmake"
 
 # LAPACK, includes also BLAS, OpenBLAS is used
 LAPACK_DOWNLOAD=True

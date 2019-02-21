@@ -96,6 +96,9 @@ parser.add_argument('--dt_0D',                    type=float, help='The timestep
 parser.add_argument('--dt_1D',                    type=float, help='The timestep for the 1D model.', default=dt_1D)
 parser.add_argument('--dt_3D',                    type=float, help='The timestep for the splitting.', default=dt_3D)
 parser.add_argument('--dt_bidomain',              type=float, help='The timestep for the bidomain model.', default=dt_bidomain)
+parser.add_argument('--v',                        help='Enable full verbosity')
+parser.add_argument('-v',                         help='enable verbosity level')
+parser.add_argument('-vmodule',                   help='enable verbosity level')
  
 # parse arguments and assign values to global variables
 args = parser.parse_args(args=sys.argv[:-2])
@@ -553,7 +556,7 @@ for i in range(n_global_points_x*n_global_points_y):
   potential_flow_dirichlet_bc[i] = 0.0
   potential_flow_dirichlet_bc[(n_global_points_z-1)*n_global_points_x*n_global_points_y + i] = 1.0
     
-if rank_no == 0 and n_ranks < 10:
+if rank_no == 0 and n_ranks < 10 and False:
   print("rank configuration: ")
   
   for subdomain_coordinate_y in range(n_subdomains_y):
@@ -703,7 +706,7 @@ config = {
         "timeStepWidth": dt_bidomain,
         "timeStepOutputInterval": 50,
         "solverName": "activationSolver",
-        "inputIsGlobal": True,
+#        "inputIsGlobal": True,
         "initialGuessNonzero": emg_initial_guess_nonzero,
         "PotentialFlow": {
           "FiniteElementMethod" : {  

@@ -8,4 +8,20 @@ PartitionedPetscMatBase(std::shared_ptr<Partition::MeshPartition<RowsFunctionSpa
   meshPartitionRows_(meshPartitionRows), meshPartitionColumns_(meshPartitionColumns), name_(name)
 {
 }
-  
+
+
+template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>
+std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>>
+PartitionedPetscMatBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::  
+meshPartitionRows()
+{
+  return meshPartitionRows_;
+}
+
+template<typename RowsFunctionSpaceType,typename ColumnsFunctionSpaceType>
+std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>>
+PartitionedPetscMatBase<RowsFunctionSpaceType,ColumnsFunctionSpaceType>::
+meshPartitionColumns()
+{
+  return meshPartitionColumns_;
+}

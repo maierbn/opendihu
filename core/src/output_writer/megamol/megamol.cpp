@@ -25,12 +25,20 @@ BoundingBox::BoundingBox():
 
 }
 
+#ifdef HAVE_ADIOS
 MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
-  Generic(context, settings), currentOpenWriterIndex_(0)
+  Generic(context, settings),currentOpenWriterIndex_(0)
 {
   combineNInstances_ = specificSettings_.getOptionInt("combineNInstances", 1);
   useFrontBackBuffer_ = specificSettings_.getOptionBool("useFrontBackBuffer", true);
 }
+#else
+
+MegaMol::MegaMol(DihuContext context, PythonConfig settings) :
+Generic(context, settings)
+{
+}
+#endif
 
 #if defined(HAVE_MEGAMOL) && defined(HAVE_ADIOS)
 

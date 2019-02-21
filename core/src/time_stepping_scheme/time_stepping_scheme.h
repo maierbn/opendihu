@@ -58,6 +58,9 @@ public:
   
   //! python object containing the value of the python config dict with corresponding key
   PythonConfig specificSettings();
+  
+  //! manager object holding all output writer
+  OutputWriter::Manager outputWriterManager(); 
 
   //! destructor
   virtual ~TimeSteppingScheme() {}

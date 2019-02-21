@@ -33,7 +33,11 @@ public:
   //! return previously created mesh or create on the fly, already call functionSpace->initialize()
   template<typename FunctionSpaceType=FunctionSpace::Generic>
   std::shared_ptr<FunctionSpaceType> functionSpace(PythonConfig settings);
-
+  
+  //! return previously created mesh
+  template<typename FunctionSpaceType=FunctionSpace::Generic>
+  std::shared_ptr<FunctionSpaceType> functionSpace(std::string meshName);
+  
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
   bool hasFunctionSpaceOfType(std::string meshName);

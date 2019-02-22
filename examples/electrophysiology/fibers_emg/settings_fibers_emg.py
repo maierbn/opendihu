@@ -145,6 +145,9 @@ def get_motor_unit_no(fiber_no):
   return int(fiber_distribution[fiber_no % len(fiber_distribution)]-1)
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
+  """
+  determine if fiber fiber_no gets stimulated at simulation time current_time
+  """
 
   # determine motor unit
   alpha = 1.0   # 0.8
@@ -235,6 +238,10 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
     innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
     nodes_to_stimulate_global = [innervation_node_global]
+    if innervation_node_global > 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-1)
+    if innervation_node_global < n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+1)
     if rank_no == 0:
       print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 

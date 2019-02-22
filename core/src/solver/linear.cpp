@@ -173,9 +173,8 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   ierr = KSPGetConvergedReason(*ksp_, &convergedReason); CHKERRV(ierr);
   ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRV(ierr);
 
-  if (kspType_ == PCLU)
+  if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
   {
-
     if (!residual_)
     {
       temporaryVectorLeft_ = std::make_shared<Vec>();     ///< temporary vector for computation of residual for direct solvers
@@ -192,6 +191,8 @@ void Linear::solve(Vec rightHandSide, Vec solution, std::string message)
 
     // compute residual
     ierr = KSPBuildResidual(*ksp_, *temporaryVectorLeft_, *temporaryVectorRight_, &(*residual_)); CHKERRV(ierr);
+
+    LOG(INFO) << "r: " << PetscUtility::getStringVector(*residual_);
 
     // compute norm of residual
     ierr = VecNorm(*residual_, NORM_2, &residualNorm); CHKERRV(ierr);

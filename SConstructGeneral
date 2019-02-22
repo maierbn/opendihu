@@ -19,6 +19,7 @@
 import os
 import sys
 import random
+import socket
 
 sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
 
@@ -33,9 +34,16 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 
 #
 # Select the packages we want to use in the configuration.
+##
+#
+# if on cmcs09 then turn off MPI.
+if socket.gethostname() == 'cmcs09':
+  MPI_used=False
+else:
+  MPI_used=True
 #
 sconsconfig.select(
-    packages.MPI(required=True),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
+    #packages.MPI(required=MPI_used),     # This downloads and compiles OpenMPI, but it is recommended to use the system MPI by setting the path in user-variables.scons.py
     packages.LAPACK(required=True),  # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
@@ -54,7 +62,7 @@ sconsconfig.select(
     #packages.libxml2(required=True),
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),          # relies on libxml2 and SWIG
-    packages.SEMT(required=True),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
+    packages.SEMT(required=False),           # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
     packages.MegaMol(required=False),       # Adds the MegaMol visualization framework
     packages.ADIOS(required=False),       # ADIOS
     packages.EasyLoggingPP(required=True),      # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
@@ -84,7 +92,8 @@ vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
-vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
+if socket.gethostname() != 'cmcs09':
+  vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cmake', help='The cmake executable', default='cmake')
     
 # Add options from any packages we want to use.
@@ -199,7 +208,7 @@ elif env["BUILD_TYPE"] == "preprocess":
   # only the preprocessing step
   variant_dir = os.path.join(path_where_to_call_sconscript,'preprocess')         # output folder for build
   env.MergeFlags('-DDEBUG -O2 -ggdb3 -g3 -DELPP_DISABLE_DEBUG_LOGS -DELPP_DISABLE_VERBOSE_LOGS -DELPP_DISABLE_TRACE_LOGS -E -C -P ')   # gcc flags, will be sorted automatically into linker and compiler flags
-  
+
 else:
   # release build
   variant_dir = os.path.join(path_where_to_call_sconscript,'build_release')         # output folder for build
@@ -209,6 +218,8 @@ else:
   
   if os.environ.get("PE_ENV") == "CRAY":
     env.MergeFlags('-O3')   # fastest with cray (same performance as -02)
+  elif socket.gethostname() == 'cmcs09':
+    env.MergeFlags('-fast -acc -ta=host,tesla,time -Minfo=accel -noswitcherror -std=c++14') # for PGI (pgcc and pgc++), could also use '-fastsse'.
   else:
     env.MergeFlags('-Ofast')   # fastest with GNU and Intel
   
@@ -219,7 +230,7 @@ else:
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
 
 # flags to always include, except with cray compiler
-if os.environ.get("PE_ENV") != "CRAY":
+if os.environ.get("PE_ENV") != "CRAY" and MPI_used == "True":
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
   env.MergeFlags('-std=c++14 -fopenmp -march=native')
 
@@ -240,7 +251,10 @@ env.Append(CPPPATH = [os.path.join(opendihu_home, 'core/src')])
 
 #print(env.Dump())
 # output compilers
-print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+if MPI_used==True:
+  print("Compilers: C: {}, C++: {}, MPI: {}".format(env['CC'],env['CXX'],env['mpiCC']))
+else:
+  print("Compilers: C: {}, C++: {}, MPI: -- ".format(env['CC'],env['CXX']))
 
 # call SConscript file for the actual build in the specified build directory variant_dir
 SConscript(dirs=path_where_to_call_sconscript,

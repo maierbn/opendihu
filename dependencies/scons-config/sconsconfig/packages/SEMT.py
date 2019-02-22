@@ -19,6 +19,14 @@ class SEMT(Package):
     #self.extra_libs = ['lapack', 'blas']
     #self.build_flags = "-DSEMT_DISABLE_PRINT"
     self.check_text = r'''
+
+#if __cplusplus >= 201103L
+__attribute__((weak))
+void operator delete(void * ptr, unsigned long){ ::operator delete(ptr);}
+__attribute__((weak))
+void operator delete[](void * ptr, unsigned long){ ::operator delete(ptr);}
+#endif  // __cplusplus >= 201103L
+
 #include <iostream>
 using namespace std;
 
@@ -68,23 +76,30 @@ int main(int argc, char* argv[])
     ctx.Message('Checking for SEMT ...          ')
     self.check_options(env)
 
-    # Setup the build handler.
+    # Setup the build handler
     self.set_build_handler([
       "mkdir -p ${PREFIX}/include ",
       "sed -i.bak '150,166d' ${SOURCE_DIR}/semt/Semtfwd.h",    # remove bogus definition of operator<< for vectors
+     #'sed -i \'' + ln + 'i //\' ${SOURCE_DIR}/semt/Semt.h', # last line 
+     #'sed -i \'' + ln + 'i #endif  // __cplusplus >= 201103L\' ${SOURCE_DIR}/semt/Semt.h',
+     #'sed -i \'' + ln + 'i void operator delete[](void * ptr, unsigned long){ ::operator delete(ptr);}\' ${SOURCE_DIR}/semt/Semt.h',
+     #'sed -i \'' + ln + 'i __attribute__((weak))\' ${SOURCE_DIR}/semt/Semt.h',
+     #'sed -i \'' + ln + 'i void operator delete(void * ptr, unsigned long){ ::operator delete(ptr);}\' ${SOURCE_DIR}/semt/Semt.h',
+     #'sed -i \'' + ln + 'i __attribute__((weak))\' ${SOURCE_DIR}/semt/Semt.h',
+     #'sed -i \'' + ln + 'i #if __cplusplus >= 201103L\' ${SOURCE_DIR}/semt/Semt.h', # first line
       "ln -s ${SOURCE_DIR}/semt ${PREFIX}/include/semt",
       "ln -s ${SOURCE_DIR}/loki ${PREFIX}/include/loki",
-      #"cd ${PREFIX}/../build && '+ctx.env["cmake"]+' \
-      #  -DBUILD_TYPE=Release \
-      #  -DINSTALL_PREFIX=${PREFIX} \
-      # -DLIBXML2_LIBRARIES=../../libxml2/install/lib/libxml2.a \
-      #  -DLIBXML2_INCLUDE_DIR=../../libxml2/install/include \
-      #  -DLIBCELLML_BUILD_SHARED=Off \
-      #  -DLIBCELLML_COVERAGE=Off \
-      #  -DLIBCELLML_MEMCHECK=Off \
-      #  -DLIBCELLML_UNIT_TESTS=Off \
-      #  ${SOURCE_DIR} && make && make install",
-      #"ln -s ${PREFIX}/include/libcellml/module/libcellml ${PREFIX}/include/libcellml"
+     #"cd ${PREFIX}/../build && '+ctx.env["cmake"]+' \
+     #  -DBUILD_TYPE=Release \
+     #  -DINSTALL_PREFIX=${PREFIX} \
+     #  -DLIBXML2_LIBRARIES=../../libxml2/install/lib/libxml2.a \
+     #  -DLIBXML2_INCLUDE_DIR=../../libxml2/install/include \
+     #  -DLIBCELLML_BUILD_SHARED=Off \
+     #  -DLIBCELLML_COVERAGE=Off \
+     #  -DLIBCELLML_MEMCHECK=Off \
+     #  -DLIBCELLML_UNIT_TESTS=Off \
+     #  ${SOURCE_DIR} && make && make install",
+     # "ln -s ${PREFIX}/include/libcellml/module/libcellml ${PREFIX}/include/libcellml"
     ])
     
     res = super(SEMT, self).check(ctx)

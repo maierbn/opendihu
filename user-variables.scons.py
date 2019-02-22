@@ -15,7 +15,7 @@
 # 3. Specify <PACKAGE>_INC_DIR and <PACKAGE>_LIB_DIR to point to the header and library directories. They are usually named "include" and "lib".
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
-# set compiler to use
+# set compiler to use, in SconstructGeneral, there will be set CXX=$CC and CC=$cc (if not on cmcs09)
 cc="gcc"   # c compiler
 CC="g++"   # c++ compiler
 
@@ -24,6 +24,9 @@ LAPACK_DOWNLOAD=True
 
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD=True
+PETSC_REBUILD=False#True#False
+PETSC_DISABLE_CHECKS=True
+#PETSC_DIR="/usr/local/home/kraemer/opendihu/dependencies/petsc/install"
 
 # Python 3.6
 PYTHON_DOWNLOAD=True    # This downloads and uses Python, use it to be independent of an eventual system python
@@ -39,9 +42,12 @@ GOOGLETEST_DOWNLOAD=True
 
 # SEMT, library for symbolic differentiation
 SEMT_DOWNLOAD=True
+SEMT_REDOWLOAD=False#True
+SEMT_REBUILD=False#True
 
 # EasyLoggingPP, provides logging facilities
-EASYLOGGINGPP_DOWNLOAD=True
+EASYLOGGINGPP_DOWNLOAD=True#False
+EASYLOGGINGPP_REBUILD=False
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
 ADIOS_DOWNLOAD=True
@@ -52,7 +58,6 @@ MEGAMOL_DOWNLOAD=False    # install MegaMol from official git repo, but needed i
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 MPI_DIR="/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
-#MPI_DIR="/usr/lib64/mpich/"
 
 # automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
 try:
@@ -81,6 +86,20 @@ try:
   import socket
   if socket.gethostname() == "neon":
     cmake="~/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
+  
+  # on cmcs09 (CPU-GPU):
+  if socket.gethostname() == 'cmcs09':
+    print "Setting PGI settings for GPU-offloading, since host cmcs09 was detected."
+    del MPI_DIR
+    #MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
+    #MPI_DOWNLOAD=False
+    cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
+    CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
+    mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
+    mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
+    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
+    #CC=mpiCC
+    MPI_DISABLE_CHECKS=True
 
 except:
   pass
@@ -117,8 +136,9 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
   #PETSC_DOWNLOAD = False
   #PETSC_DIR = os.environ.get("PETSC_DIR")
-
-# Steps for getting started on HazelHen
+else:
+  print("...no more changes.")
+#Steps for getting started on HazelHen
 #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
 #   module load cray-libsci
 #   module load cray-petsc  (or cray-petsc-64 for big data)

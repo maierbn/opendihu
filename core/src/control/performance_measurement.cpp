@@ -11,6 +11,7 @@
 #include <string>
 #include <sys/param.h>
 #include <iomanip>
+//#include <stdlib.h>  //was only for function getenv()
 
 #include "output_writer/generic.h"
 
@@ -23,6 +24,31 @@ std::map<std::string,std::string> PerformanceMeasurement::parameters_;
 PerformanceMeasurement::Measurement::Measurement() :
   start(0.0), totalDuration(0.0), nTimeSpans(0), totalError(0.0), nErrors(0)
 {
+}
+
+std::string timeToString_ymd( const tm* const time )
+{   // to format: %Y/%m/%d %H:%M:%S
+  std::string date;
+
+  date += std::to_string( time->tm_year + 1900 ) + "/"
+       +  std::to_string( time->tm_mon + 1 ) + "/"
+       +  std::to_string( time->tm_mday ) + " ";
+  if( time->tm_hour < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_hour ) + ":";
+   if( time->tm_min < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_min ) + ":";
+  if( time->tm_sec < 10 )
+  {
+      date += "0";
+  }
+  date += std::to_string( time->tm_sec );
+  return date;
 }
 
 void PerformanceMeasurement::start(std::string name)
@@ -66,6 +92,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 
   parseStatusInformation();
 
+  //char *PGI_used = getenv("PGI");
+  //const bool combined = (PGI_used==NULL ? true : false);
   const bool combined = true;   /// if the output is using MPI Output
 
   int ownRankNo = DihuContext::partitionManager()->rankNoCommWorld();
@@ -101,7 +129,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
+  //data << std::put_time(&tm, "%Y/%m/%d %H:%M:%S") << ";";
+  data << timeToString_ymd(&tm) << ";";
 
   // host name
   char hostname[MAXHOSTNAMELEN+1];
@@ -154,7 +183,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
     std::ofstream file;
     if (ownRankNo == 0)
     {
-      file = OutputWriter::Generic::openFile(filename.str(), true);
+      //file = OutputWriter::Generic::openFile(filename.str(), true);
+      OutputWriter::Generic::openFile(file, filename.str(), true);
       file.close();
     }
 
@@ -190,7 +220,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   else  // standard POSIX output
   {
     // open log file
-    std::ofstream file = OutputWriter::Generic::openFile(filename.str(), true);
+    std::ofstream file; // = OutputWriter::Generic::openFile(filename.str(), true);
+    OutputWriter::Generic::openFile(file, filename.str(), true);
 
     if (outputHeader)
     {
